@@ -1,0 +1,361 @@
+import numpy as np
+import os
+import tempfile
+
+from warnings import warn
+
+from netlens import backend as B
+from netlens.slices import InputCut, OutputCut, LogitCut
+from netlens.models._model_base import ModelWrapper
+
+if B.backend == 'keras':
+    import keras
+elif B.backend == 'tf.keras' or B.backend == 'tensorflow':
+    import tensorflow.keras as keras
+
+
+class KerasModelWrapper(ModelWrapper):
+    """
+    Model wrapper that exposes internal layers of Keras models.
+    """
+
+    def __init__(
+            self,
+            model,
+            logit_layer=None,
+            replace_softmax=False,
+            softmax_layer=-1,
+            custom_objects=None):
+        """
+        __init__ Constructor
+
+        Parameters
+        ----------
+        model : keras.Model
+            Keras model instance to wrap
+        custom_objects : list of keras.Layer, optional
+            If the model uses any user-defined layers, they must be passed
+            in as a list. By default `None`.
+        replace_softmax : bool, optional
+            If `True`, then remove the final layer's activation function.
+            By default `False`.
+        clone_model : bool, optional
+            Whether to make a copy of the target model. If this is `False` and
+            replace_softmax is `True`, then the passed-in model will be
+            modified. By default `False`.
+        """
+        if not isinstance(model, keras.models.Model):
+            raise ValueError(
+                'Model must be an instance of `{}.models.Model`.\n\n'
+                '(you may be seeing this error if you passed a '
+                '`tensorflow.keras` model while using the \'keras\' backend or '
+                'vice-versa)'.format(B.backend))
+
+        if replace_softmax:
+            self._model = KerasModelWrapper._replace_probits_with_logits(
+                model,
+                probits_layer_name=softmax_layer,
+                custom_objects=custom_objects)
+
+            self._logit_layer = softmax_layer
+
+        else:
+            self._model = model
+            self._logit_layer = logit_layer
+
+        self._layers = model.layers
+        self._layernames = [l.name for l in self._layers]
+
+    @staticmethod
+    def _replace_probits_with_logits(
+            model, probits_layer_name=-1, custom_objects=None):
+        """
+        _replace_softmax_with_logits Remove the final layer's activation 
+        function
+
+        When computing gradient-based attribution methods, better results 
+        usually obtain by removing the typical softmax activation function.
+
+        Parameters
+        ----------
+        model : keras.Model
+            Target model
+        softmax_layer : int, optional
+            Layer containing relevant activation, by default -1
+        custom_objects : list of keras.Layer, optional
+            If the model uses any user-defined layers, they must be passed in. 
+            By default None.
+
+        Returns
+        -------
+        keras.Model
+            Clone of original model with specified activation function removed.
+        """
+        probits_layer = (
+            model.get_layer(probits_layer_name) if isinstance(
+                probits_layer_name, str) else model.layers[probits_layer_name])
+
+        # Make sure the specified layer has an activation.
+        try:
+            activation = probits_layer.activation
+        except AttributeError:
+            raise ValueError(
+                'The specified layer to `_replace_probits_with_logits` has no '
+                '`activation` attribute. The specified layer should convert '
+                'its input to probits, i.e., it should have an `activation` '
+                'attribute that is either a softmax or a sigmoid.')
+
+        # Warn if the specified layer's activation is not a softmax or a
+        # sigmoid.
+        if not (activation == keras.activations.softmax or
+                activation == keras.activations.sigmoid):
+            warn(
+                'The activation of the specified layer to '
+                '`_replace_probits_with_logits` is not a softmax or a sigmoid; '
+                'it may not currently convert its input to probits.')
+
+        try:
+            # Temporarily replace the softmax activation.
+            probits_layer.activation = keras.activations.linear
+
+            # Save and reload the model; this ensures we get a clone of the
+            # model, but with the activation updated.
+            tmp_path = os.path.join(
+                tempfile.gettempdir(),
+                next(tempfile._get_candidate_names()) + '.h5')
+
+            model.save(tmp_path)
+
+            return keras.models.load_model(
+                tmp_path, custom_objects=custom_objects)
+
+        finally:
+            # Revert the activation in the original model back to its original
+            # state.
+            probits_layer.activation = activation
+
+            # Remove the temporary file.
+            os.remove(tmp_path)
+
+    def _get_logit_layer(self):
+        if self._logit_layer is not None:
+            return self._get_layers_by_name(self._logit_layer)
+
+        elif 'logits' in self._layernames:
+            return self._get_layers_by_name('logits')
+
+        else:
+            raise ValueError(
+                '`LogitCut` was used, but the model has not specified the '
+                'layer whose outputs correspond to the logit output.\n\n'
+                'To use the `LogitCut`, either ensure that the model has a '
+                'layer named "logits", specify the `logit_layer` in the '
+                'model wrapper constructor, or use the `replace_softmax` '
+                'option in the model wrapper constructor.')
+
+    def _get_layers_by_name(self, name):
+        '''
+        _get_layers_by_name Return a list of layers specified by the `name`
+        field in a cut.
+
+        Parameters
+        ----------
+        name : int | str | list of int or str
+
+        Returns
+        -------
+        list of keras.backend.Layer
+
+        Raises
+        ------
+        ValueError
+            Unsupported type for cut name.
+        ValueError
+            No layer with given name string identifier.
+        ValueError
+            Layer index out of bounds.
+        '''
+        if isinstance(name, str):
+            if not name in self._layernames:
+                raise ValueError('No such layer tensor:', name)
+
+            return [self._model.get_layer(name=name)]
+
+        elif isinstance(name, int):
+            if len(self._layers) <= name:
+                raise ValueError('Layer index out of bounds:', name)
+
+            return [self._model.get_layer(index=name)]
+
+        elif isinstance(name, list):
+            return sum([self._get_layers_by_name(n) for n in name], [])
+
+        else:
+            raise ValueError('Unsupported type for cut name:', type(name))
+
+    def _get_layers(self, cut):
+        '''
+        get_layer Return the tensor(s) representing the layer(s) specified by 
+        the given cut.
+
+        Parameters
+        ----------
+        cut : Cut
+            Cut specifying which tensor in the model to return.
+
+        Returns
+        -------
+        list of keras.backend.Tensor
+            Tensors representing the layer(s) specified by the given cut.
+
+        Raises
+        ------
+        ValueError
+            Unsupported type for cut name.
+        ValueError
+            No layer with given name string identifier.
+        ValueError
+            Layer index out of bounds.
+        '''
+        if isinstance(cut, InputCut):
+            return self._model.inputs
+
+        elif isinstance(cut, OutputCut):
+            return self._model.outputs
+
+        elif isinstance(cut, LogitCut):
+            layers = self._get_logit_layer()
+
+        else:
+            layers = self._get_layers_by_name(cut.name)
+
+        flat = lambda l: [
+            item for items in l
+            for item in (items if isinstance(items, list) else [items])
+        ]
+
+        return (
+            flat([layer.input for layer in layers])
+            if cut.anchor == 'in' else flat([layer.output for layer in layers]))
+
+    def fprop(self, x, from_cut=None, to_cut=None):
+        """
+        fprop Forward propagate the model
+
+        Parameters
+        ----------
+        x : np.Array
+            Input tensor to propagate through the model. If an np.array, 
+            will be converted to a tensor on the same device as the model.
+        from_cut: Cut, optional
+            The Cut from which to begin propagation. The shape of `x` must
+            match the input shape of this layer. By default 0.
+        to_cut : Cut, optional
+            The Cut to return output activation tensors for. If None,
+            assumed to be just the final layer. By default None
+        latent_cut : Cut, optional
+            An additional Cut to return activation tensors for. This is
+            usually used to apply distributions of interest (DoI)
+
+        Returns
+        -------
+        list of np.Array
+            A list of output activations are returned; one per tensor specified
+            by `to_cut`.
+        """
+        if from_cut is None:
+            from_cut = InputCut()
+        if to_cut is None:
+            to_cut = OutputCut()
+
+        from_tensors = self._get_layers(from_cut)
+        to_tensors = self._get_layers(to_cut)
+
+        # Convert `x` to a list of inputs if it isn't already.
+        if not isinstance(x, list):
+            x = [x]
+
+        # Tensorlow doesn't allow you to make a function that returns the same
+        # tensor as it takes in. Thus, we have to have a special case for the
+        # identity function. Any tensors that are both in `from_tensors` and
+        # `to_tensors` cannot be computed via a `keras.backend.function` and
+        # thus need to be taken from the input, `x`.
+        identity_map = {
+            i: j for i, to_tensor in enumerate(to_tensors)
+            for j, from_tensor in enumerate(from_tensors)
+            if to_tensor == from_tensor
+        }
+
+        non_identity_to_tensors = [
+            to_tensor for i, to_tensor in enumerate(to_tensors)
+            if i not in identity_map.keys()
+        ]
+
+        # Compute the output values of `to_tensors` unless all `to_tensor`s were
+        # also `from_tensors`.
+        if non_identity_to_tensors:
+            fprop_fn = keras.backend.function(
+                from_tensors, non_identity_to_tensors)
+            out_vals = fprop_fn(x)
+            del fprop_fn
+
+        else:
+            out_vals = []
+
+        # For any `to_tensor`s that were also `from_tensor`s, insert the
+        # corresponding concrete input value from `x` in the output's place.
+        for i in sorted(identity_map):
+            out_vals.insert(i, x[identity_map[i]])
+
+        return out_vals
+
+    def qoi_bprop(self, x, qoi, from_cut=None, to_cut=None, doi_cut=None):
+        """
+        qoi_bprop Run the model from the from_layer to the qoi layer
+            and give the gradients w.r.t x
+
+        Parameters
+        ----------
+        x : backend.Tensor or np.array
+            Input tensor to propagate through the model. If an np.array,
+            will be converted to a tensor on the same device as the model.
+        qoi: a Quantity of Interest
+            This method will accumulate all gradients of the qoi w.r.t x
+        from_cut: Cut, optional
+            if `from_cut` is None, this refers to the InputCut.
+            The Cut in which attribution will be calculated. This is generally
+            taken from the attribution slyce's from_cut.
+        to_cut: Cut, optional
+            if `to_cut` is None, this refers to the OutputCut.
+            The Cut in which qoi will be calculated. This is generally
+            taken from the attribution slyce's to_cut.
+        doi_cut: Cut, 
+            if `doi_cut` is None, this refers to the InputCut.
+            Cut from which to begin propagation. The shape of `x` must
+            match the output shape of this layer.
+
+        Returns
+        -------
+        np.Array or list of np.Array
+            the gradients of `qoi` w.r.t. `x`
+        """
+
+        if from_cut is None:
+            from_cut = InputCut()
+        if to_cut is None:
+            to_cut = OutputCut()
+
+        input_cut = doi_cut if doi_cut else InputCut()
+
+        latent_tensors = self._get_layers(from_cut)
+        to_tensors = self._get_layers(to_cut)
+        input_tensors = self._get_layers(input_cut)
+
+        x = x if isinstance(x, list) else [x]
+
+        Q = qoi(to_tensors[0]) if len(to_tensors) == 1 else qoi(to_tensors)
+
+        gradients = [keras.backend.function(input_tensors, B.gradient(q, latent_tensors))(x) for q in Q] \
+            if isinstance(Q, list) else keras.backend.function(input_tensors, B.gradient(Q, latent_tensors))(x)
+
+        return gradients[0] if len(gradients) == 1 else gradients
