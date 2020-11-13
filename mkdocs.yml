@@ -1,0 +1,80 @@
+site_name: Netlens
+
+markdown_extensions:
+  # https://squidfunk.github.io/mkdocs-material/reference/mathjax/
+  - pymdownx.arithmatex:
+      generic: true
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+  - mdx_math:
+      enable_dollar_delimiter: True #for use of inline $..$
+
+
+plugins:
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          rendering:
+            show_root_heading: false
+            show_source: true
+          selection:
+            filters:
+              - "!^_"  # exlude all members starting with _
+              - "^__init__$"  # but always include __init__ modules and methods
+              - "^__call__$"  # and __call__ methods
+      watch:
+        - netlens
+
+
+theme:
+  name: material
+  palette:
+    scheme: truera
+  font:
+    text: Inter
+  favicon: img/favicon.ico
+  logo: img/logo.png
+
+nav:
+  - Welcome to Netlens!: index.md
+  - Installation: install.md
+  - Quickstart: quickstart.md
+  - User Guide: userguide.md
+  - API Reference: 
+    - Attribution: api/attribution.md
+    - Models: api/model_wrappers.md
+    - Slices: api/slices.md
+    - Quantities: api/quantities.md
+    - Distributions: api/distributions.md
+    - Visualizations: api/visualizations.md
+
+extra_css:
+  - stylesheets/extra.css
+
+# https://squidfunk.github.io/mkdocs-material/reference/mathjax/
+# Polyfill provides backcompat for JS. We need to import it before
+# importing MathJax.
+extra_javascript:
+  - javascript/config.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - javascript/tex-mml-chtml-3.0.0.js
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
