@@ -251,12 +251,11 @@ class InternalInfluence(AttributionMethod):
             attributions = [
                 B.mean(
                     B.reshape(qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
-                    axis=0)
-                for qoi_grad in qoi_grads]
+                    axis=0) for qoi_grad in qoi_grads
+            ]
         else:
             attributions = B.mean(
-                B.reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]),
-                axis=0)
+                B.reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]), axis=0)
 
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
@@ -266,8 +265,8 @@ class InternalInfluence(AttributionMethod):
 
             if isinstance(attributions, list):
                 for i in range(len(attributions)):
-                    if isinstance(z_val, list) and (
-                            len(z_val) == len(attributions)):
+                    if isinstance(z_val, list) and (len(z_val)
+                                                    == len(attributions)):
 
                         attributions[i] *= (
                             self.doi.get_activation_multiplier(z_val[i]))
@@ -421,8 +420,8 @@ class InternalInfluence(AttributionMethod):
                     transposed[i].append(v)
 
             return [
-                np.concatenate(D_i) if isinstance(D_i[0], np.ndarray) else 
-                D_i[0] 
+                np.concatenate(D_i)
+                if isinstance(D_i[0], np.ndarray) else D_i[0]
                 for D_i in transposed
             ]
 
