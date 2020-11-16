@@ -11,7 +11,6 @@ These installation instructions assume that you have conda installed and added t
 conda create -n "<my_name>" python=3.7  # Skip if using existing environment.
 conda activate <my_name>
 ```
- 
 1. Install dependencies.
 ```
 conda install tensorflow-gpu=1  # Or whatever backend you're using.
@@ -19,8 +18,7 @@ conda install keras             # Or whatever backend you're using.
 conda install matplotlib        # For visualizations.
 conda install scikit-learn      # To get LFW dataset.
 ```
-
-1. Install the netlens repo
+2. Install the netlens repo
 ```
 pip install netlens
 ```
