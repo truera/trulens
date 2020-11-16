@@ -17,12 +17,12 @@ conda install matplotlib        # For visualizations.
 
 2. Clone the netlens repo.
 ```
-git clone https://github.com/truera/lens-api.git
+git clone https://github.com/truera/netlens.git
 ```
 
 3. Install the netlens repo.
 ```
-cd lens-api
+cd netlens
 pip install -e .
 ```
 
