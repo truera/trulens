@@ -32,7 +32,7 @@ class Tiler(object):
     Used to tile batched images or attributions.
     """
 
-    def tile(self, a : np.ndarray) -> np.ndarray:
+    def tile(self, a: np.ndarray) -> np.ndarray:
         """
         Tiles the given array into a grid that is as square as possible.
 
@@ -76,11 +76,11 @@ class Visualizer(object):
     """
 
     def __init__(
-            self, 
-            combine_channels : bool=False, 
-            normalization_type : str=None,
-            blur : float=0.,
-            cmap : Colormap=None):
+            self,
+            combine_channels: bool = False,
+            normalization_type: str = None,
+            blur: float = 0.,
+            cmap: Colormap = None):
         """
         Configures the default parameters for the `__call__` method (these can 
         be overridden by passing in values to `__call__`).
@@ -883,12 +883,8 @@ class ChannelMaskVisualizer(object):
         """
 
         self.mask_visualizer = MaskVisualizer(
-            blur, 
-            threshold, 
-            masked_opacity, 
-            combine_channels, 
-            use_attr_as_opacity, 
-            positive_only)
+            blur, threshold, masked_opacity, combine_channels,
+            use_attr_as_opacity, positive_only)
 
         self.infl_input = InternalInfluence(
             model, (InputCut(), Cut(layer)),

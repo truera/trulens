@@ -1,0 +1,83 @@
+trigger:
+  - master
+
+pr:
+  - master
+  - releases/*
+
+jobs:
+  - job: lensApiTests
+    pool:
+      vmImage: "ubuntu-latest"
+    timeoutInMinutes: 30
+
+    strategy:
+      matrix:
+        py37_tf1_keras:
+          condaEnvFileSuffix: "python37"
+          requirementsFile: "tests/keras/requirements_tfv1.txt"
+          testSubdirectory: "tests/keras"
+
+        py37_tf1_tf_keras:
+          condaEnvFileSuffix: "python37"
+          requirementsFile: "tests/tf_keras/requirements_tfv1.txt"
+          testSubdirectory: "tests/tf_keras"
+
+        py37_pytorch:
+          condaEnvFileSuffix: "python37"
+          requirementsFile: "tests/pytorch/requirements.txt"
+          testSubdirectory: "tests/pytorch"
+
+        py37_tf1:
+          condaEnvFileSuffix: "python37"
+          requirementsFile: "tests/tf/requirements.txt"
+          testSubdirectory: "tests/tf"
+
+        py37_tf2:
+          condaEnvFileSuffix: "python37"
+          requirementsFile: "tests/tf2/requirements.txt"
+          testSubdirectory: "tests/tf2"
+
+    steps:
+      - checkout: self
+        clean: true
+      - bash: echo "##vso[task.prependpath]$CONDA/bin"
+        displayName: Add conda to PATH
+      - bash: |
+          set -e
+          CONDA_FILENAME=$(condaEnvFileSuffix)
+          CONDA_YAML="tools/conda_${CONDA_FILENAME}.yaml"
+          echo $CONDA
+          conda env create --force --quiet --file $CONDA_YAML
+          conda init bash
+        displayName: Create Anaconda environment
+      - bash: |
+          set -e
+          source activate $(condaEnvFileSuffix)
+          which python
+        displayName: Which Python
+      - bash: |
+          set -e
+          source activate $(condaEnvFileSuffix)
+          pip install -r $(requirementsFile)
+        displayName: Install pip package
+      - bash: |
+          set -e
+          source activate $(condaEnvFileSuffix)
+          ./format.sh
+        displayName: Format Code
+      - bash: |
+          num_changed_files=`git ls-files --others -m --exclude-standard | wc -l`
+          if [ $num_changed_files -ne 0 ]; then
+            echo "The following files have changed after running format.sh. Please format your code and update the PR."
+            git ls-files --others -m --exclude-standard
+            echo "\n\nOutputting git diff for checked in files.\n"
+            git diff
+            exit 1
+          fi
+        displayName: NoDiffCheck
+      - bash: |
+          source activate $(condaEnvFileSuffix)
+          pip install pytest pytest-azurepipelines
+          python -m pytest $(testSubdirectory)
+        displayName: Run unit tests

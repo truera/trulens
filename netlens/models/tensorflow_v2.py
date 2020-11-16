@@ -319,16 +319,14 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
             if isinstance(Q, list) and len(Q) == 1:
                 Q = B.sum(Q)
 
-        grads = [
-            tape.gradient(q, latent_features) for q in Q
-        ] if isinstance(Q, list) else tape.gradient(Q, latent_features)
+        grads = [tape.gradient(q, latent_features) for q in Q] if isinstance(
+            Q, list) else tape.gradient(Q, latent_features)
         grads = (
             grads[0] if isinstance(grads, list) and len(grads) == 1 else grads)
-        grads = [
-            from_cut.access_layer(g) for g in grads
-        ] if isinstance(grads, list) else from_cut.access_layer(grads)
+        grads = [from_cut.access_layer(g) for g in grads] if isinstance(
+            grads, list) else from_cut.access_layer(grads)
 
-        del tape 
+        del tape
 
         if return_numpy:
             grads = [ModelWrapper._nested_apply(g, B.as_array) for g in grads] \
