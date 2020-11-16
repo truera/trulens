@@ -3,7 +3,7 @@ from os import path
 import sys
 from setuptools import setup, find_namespace_packages
 
-version = "0.0.4"
+version = "0.0.1"
 versionArgument = "--customVersion"
 if versionArgument in sys.argv:
     versionArgumentLoc = sys.argv.index(versionArgument)
