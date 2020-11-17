@@ -93,7 +93,10 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
         return output_layers
 
     def _is_input_layer(self, layer):
-        return any([inpt is layer.output for inpt in self._model.inputs])
+        if (self._model.inputs):
+            return any([inpt is layer.output for inpt in self._model.inputs])
+        else:
+            return False
 
     def _input_layer_index(self, layer):
         for i, inpt in enumerate(self._model.inputs):

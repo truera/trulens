@@ -197,7 +197,7 @@ class ModelWrapperTestBase(object):
                 [3.,2.],
                 [3.,2.]])))
 
-    def test_qoibprop_multiple_intputs(self):
+    def test_qoibprop_multiple_inputs(self):
         r = self.model.qoi_bprop(
                 np.array([
                     [2.,1.],
