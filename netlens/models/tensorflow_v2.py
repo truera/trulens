@@ -93,7 +93,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
         return output_layers
 
     def _is_input_layer(self, layer):
-        if (self._model.inputs):
+        if (self._model.inputs is not None):
             return any([inpt is layer.output for inpt in self._model.inputs])
         else:
             return False
