@@ -123,8 +123,10 @@ def expand_dims(t, axis=-1):
 
 def reshape(t, shape):
     if isinstance(t, np.ndarray):
+        print('reshaping with numpy')
         return t.reshape(shape)
 
+    print('reshaping with tensorflow')
     return tf.reshape(t, shape)
 
 
@@ -429,11 +431,3 @@ def is_tensor(x):
     if isinstance(x, Tensor):
         return True
     return False
-
-
-def reshape(x, shape):
-    return tf.reshape(x, shape)
-
-
-def mean(x, axis=None):
-    return tf.math.reduce_mean(x, axis=axis)
