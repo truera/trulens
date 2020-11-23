@@ -123,10 +123,8 @@ def expand_dims(t, axis=-1):
 
 def reshape(t, shape):
     if isinstance(t, np.ndarray):
-        print('reshaping with numpy')
         return t.reshape(shape)
 
-    print('reshaping with tensorflow')
     return tf.reshape(t, shape)
 
 
