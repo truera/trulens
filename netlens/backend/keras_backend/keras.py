@@ -438,11 +438,3 @@ def is_tensor(x):
     if isinstance(x, Tensor) or isinstance(x, TensorVar):
         return True
     return False
-
-
-def reshape(x, shape):
-    return K.reshape(x, shape)
-
-
-def mean(x, axis=None):
-    return K.mean(x, axis=axis)
