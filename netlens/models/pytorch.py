@@ -61,6 +61,10 @@ class PytorchModelWrapper(ModelWrapper):
         else:
             self._gives_logits = True
 
+    def print_layer_names(self):
+        for name in self._layernames:
+            print(f'\'{name}\':\t{self._layers[name]}')
+
     @staticmethod
     def _get_model_layers(model):
         """
