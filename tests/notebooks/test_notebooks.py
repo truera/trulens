@@ -18,7 +18,6 @@ def test_for_filename(filename):
     return test      
 
 for filename in listdir('notebooks'):
-    print(filename)
     if filename.endswith('.ipynb'):
         setattr(
             KerasNotebookTests, 
