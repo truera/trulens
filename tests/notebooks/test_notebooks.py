@@ -7,7 +7,7 @@ from unittest import TestCase, main
 class KerasNotebookTests(TestCase):
     pass
 
-def test_for_filename(filename):
+def get_unit_test_for_filename(filename):
     
     def test(self):
         with open(f'notebooks/{filename}') as f:
@@ -22,7 +22,7 @@ for filename in listdir('notebooks'):
         setattr(
             KerasNotebookTests, 
             'test_' + filename.split('.ipynb')[0], 
-            test_for_filename(filename))
+            get_unit_test_for_filename(filename))
 
 if __name__ == '__main__':
     main()
