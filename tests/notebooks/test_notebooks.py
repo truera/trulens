@@ -10,7 +10,7 @@ class KerasNotebookTests(TestCase):
 def test_for_filename(filename):
     
     def test(self):
-        with open(filename) as f:
+        with open(f'notebooks/{filename}') as f:
             nb = read(f, as_version=4)
             (ExecutePreprocessor(timeout=600, kernel_name='python3')
                 .preprocess(nb, {}))
@@ -18,6 +18,7 @@ def test_for_filename(filename):
     return test      
 
 for filename in listdir('notebooks'):
+    print(filename)
     if filename.endswith('.ipynb'):
         setattr(
             KerasNotebookTests, 

@@ -1,2 +1,4 @@
+nbformat==5.0.8
+nbconvert==6.0.7
 tensorflow==2.2.1
 torch==1.4.0
