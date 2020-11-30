@@ -12,7 +12,7 @@ def test_for_filename(filename):
     def test(self):
         with open(f'notebooks/{filename}') as f:
             nb = read(f, as_version=4)
-            (ExecutePreprocessor(timeout=600, kernel_name='python3')
+            (ExecutePreprocessor(timeout=600)
                 .preprocess(nb, {}))
             
     return test      
