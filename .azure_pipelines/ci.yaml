@@ -38,6 +38,11 @@ jobs:
           requirementsFile: "tests/tf2/requirements.txt"
           testSubdirectory: "tests/tf2"
 
+        py37_notebooks:
+          condaEnvFileSuffix: "python37"
+          requirementsFile: "tests/notebooks/requirements.txt"
+          testSubdirectory: "tests/notebooks"
+
     steps:
       - checkout: self
         clean: true
@@ -59,7 +64,9 @@ jobs:
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
+          pip install ipykernel
           pip install -r $(requirementsFile)
+          python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name "$(condaEnvFileSuffix)"
         displayName: Install pip package
       - bash: |
           set -e
