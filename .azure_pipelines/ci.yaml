@@ -38,6 +38,11 @@ jobs:
           requirementsFile: "tests/tf2/requirements.txt"
           testSubdirectory: "tests/tf2"
 
+        py37_notebooks:
+          condaEnvFileSuffix: "python37"
+          requirementsFile: "tests/notebooks/requirements.txt"
+          testSubdirectory: "tests/notebooks"
+
     steps:
       - checkout: self
         clean: true
