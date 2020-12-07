@@ -262,7 +262,7 @@ class TensorflowModelWrapper(ModelWrapper):
             doi_cut=None,
             to_cut=None,
             attribution_cut=None,
-            intervention=None) -> ArrayLike:
+            intervention=None):
         """
         qoi_bprop Run the model from the from_layer to the qoi layer
             and give the gradients w.r.t `attribution_cut`
