@@ -112,7 +112,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
             doi_cut=None,
             to_cut=None,
             attribution_cut=None,
-            intervention=None) -> ArrayLike:
+            intervention=None):
         """
         fprop Forward propagate the model
 
