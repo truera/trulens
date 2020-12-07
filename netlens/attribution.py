@@ -25,7 +25,7 @@ from netlens.distributions import DoI
 from netlens.distributions import LinearDoi
 from netlens.distributions import PointDoi
 from netlens.models import ModelWrapper
-from netlens.models._model_base import DATA_CONTAINER_TYPE, ArrayLike
+from netlens.models._model_base import DATA_CONTAINER_TYPE
 from netlens.quantities import ComparativeQoI
 from netlens.quantities import InternalChannelQoI
 from netlens.quantities import QoI
@@ -228,7 +228,7 @@ class InternalInfluence(AttributionMethod):
         self.doi = InternalInfluence.__get_doi(doi)
         self._do_multiply = multiply_activation
 
-    def attributions(self, *model_args, **model_kwargs) -> ArrayLike:
+    def attributions(self, *model_args, **model_kwargs):
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
         doi_val = self.model.fprop(model_args, model_kwargs, to_cut=doi_cut)
@@ -581,7 +581,7 @@ class IntegratedGradients(InputAttribution):
     def __init__(
             self,
             model: ModelWrapper,
-            baseline: Optional[ArrayLike] = None,
+            baseline=None,
             resolution: int = 50):
         """
         Parameters:
