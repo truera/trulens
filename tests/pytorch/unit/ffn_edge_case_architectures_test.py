@@ -40,9 +40,9 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             ClassQoI(1), 
             PointDoi())
 
-        res = infl.attributions([
+        res = infl.attributions(
             np.array([[1.,2.,3.,4.,5.]]).astype('float32'),
-            np.array([[1.]]).astype('float32')])
+            np.array([[1.]]).astype('float32'))
 
         self.assertEqual(len(res), 2)
         self.assertEqual(res[0].shape, (1,5))
@@ -76,9 +76,9 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             ClassQoI(1), 
             PointDoi())
 
-        res = infl.attributions([
+        res = infl.attributions(
             np.array([[1.,2.,3.,4.,5.]]).astype('float32'),
-            np.array([[1.]]).astype('float32')])
+            np.array([[1.]]).astype('float32'))
 
         self.assertEqual(len(res), 2)
         self.assertEqual(res[0].shape, (1,6))
@@ -111,9 +111,9 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             ClassQoI(1), 
             PointDoi())
 
-        res = infl.attributions([
+        res = infl.attributions(
             np.array([[1.,2.,3.,4.,5.]]).astype('float32'),
-            np.array([[1.]]).astype('float32')])
+            np.array([[1.]]).astype('float32'))
 
         self.assertEqual(len(res), 2)
         self.assertEqual(res[0].shape, (1,6))
