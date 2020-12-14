@@ -6,7 +6,7 @@ from warnings import warn
 
 from netlens import backend as B
 from netlens.slices import InputCut, OutputCut, LogitCut
-from netlens.models._model_base import ModelWrapper
+from netlens.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 
 if B.backend == 'keras':
     import keras
@@ -187,7 +187,7 @@ class KerasModelWrapper(ModelWrapper):
 
             return [self._model.get_layer(index=name)]
 
-        elif isinstance(name, list):
+        elif isinstance(name, DATA_CONTAINER_TYPE):
             return sum([self._get_layers_by_name(n) for n in name], [])
 
         else:
@@ -230,59 +230,80 @@ class KerasModelWrapper(ModelWrapper):
             layers = self._get_layers_by_name(cut.name)
 
         flat = lambda l: [
-            item for items in l
-            for item in (items if isinstance(items, list) else [items])
+            item for items in l for item in
+            (items if isinstance(items, DATA_CONTAINER_TYPE) else [items])
         ]
 
         return (
             flat([layer.input for layer in layers])
             if cut.anchor == 'in' else flat([layer.output for layer in layers]))
 
-    def fprop(self, x, from_cut=None, to_cut=None):
+    def fprop(
+            self,
+            model_args,
+            model_kwargs={},
+            doi_cut=None,
+            to_cut=None,
+            attribution_cut=None,
+            intervention=None):
         """
         fprop Forward propagate the model
 
         Parameters
         ----------
-        x : np.Array
+        model_args, model_kwargs: 
+            The args and kwargs given to the call method of a model.
+            This should represent the instances to obtain attributions for, 
+            assumed to be a *batched* input. if `self.model` supports evaluation 
+            on *data tensors*, the  appropriate tensor type may be used (e.g., 
+            Pytorch models may accept Pytorch tensors in additon to 
+            `np.ndarray`s). The shape of the inputs must match the input shape
+            of `self.model`.
+        doi_cut: Cut, optional
+            The Cut from which to begin propagation. The shape of `intervention`
+            must match the input shape of this layer. This is usually used to 
+            apply distributions of interest (DoI)
+        to_cut : Cut, optional
+            The Cut to return output activation tensors for. If `None`,
+            assumed to be just the final layer. By default None
+        attribution_cut : Cut, optional
+            An Cut to return activation tensors for. If `None`, 
+            assumed to be the doi_cut
+            
+        intervention : backend.Tensor or np.array
             Input tensor to propagate through the model. If an np.array, 
             will be converted to a tensor on the same device as the model.
-        from_cut: Cut, optional
-            The Cut from which to begin propagation. The shape of `x` must
-            match the input shape of this layer. By default 0.
-        to_cut : Cut, optional
-            The Cut to return output activation tensors for. If None,
-            assumed to be just the final layer. By default None
-        latent_cut : Cut, optional
-            An additional Cut to return activation tensors for. This is
-            usually used to apply distributions of interest (DoI)
 
         Returns
         -------
-        list of np.Array
-            A list of output activations are returned; one per tensor specified
-            by `to_cut`.
+        (list of backend.Tensor or np.ndarray)
+            A list of output activations are returned, keeping the same type as
+            the input. If `attribution_cut` is supplied, also return the cut 
+            activations.
         """
-        if from_cut is None:
-            from_cut = InputCut()
+        if doi_cut is None:
+            doi_cut = InputCut()
         if to_cut is None:
             to_cut = OutputCut()
 
-        from_tensors = self._get_layers(from_cut)
+        doi_tensors = self._get_layers(doi_cut)
         to_tensors = self._get_layers(to_cut)
 
-        # Convert `x` to a list of inputs if it isn't already.
-        if not isinstance(x, list):
-            x = [x]
+        if intervention is None:
+            intervention = model_args[0]
 
-        # Tensorlow doesn't allow you to make a function that returns the same
+        # Convert `intervention` to a list of inputs if it isn't already.
+        if not isinstance(intervention, DATA_CONTAINER_TYPE):
+            intervention = [intervention]
+
+        # Tensorflow doesn't allow you to make a function that returns the same
         # tensor as it takes in. Thus, we have to have a special case for the
-        # identity function. Any tensors that are both in `from_tensors` and
+        # identity function. Any tensors that are both in `doi_tensors` and
         # `to_tensors` cannot be computed via a `keras.backend.function` and
-        # thus need to be taken from the input, `x`.
+        # thus need to be taken from the input, `intervention`.
         identity_map = {
             i: j for i, to_tensor in enumerate(to_tensors)
-            for j, from_tensor in enumerate(from_tensors)
+            for j, from_tensor in enumerate(doi_tensors)
             if to_tensor == from_tensor
         }
 
@@ -290,72 +311,98 @@ class KerasModelWrapper(ModelWrapper):
             to_tensor for i, to_tensor in enumerate(to_tensors)
             if i not in identity_map.keys()
         ]
-
         # Compute the output values of `to_tensors` unless all `to_tensor`s were
-        # also `from_tensors`.
+        # also `doi_tensors`.
         if non_identity_to_tensors:
             fprop_fn = keras.backend.function(
-                from_tensors, non_identity_to_tensors)
-            out_vals = fprop_fn(x)
+                doi_tensors, non_identity_to_tensors)
+            out_vals = fprop_fn(intervention)
             del fprop_fn
 
         else:
             out_vals = []
 
         # For any `to_tensor`s that were also `from_tensor`s, insert the
-        # corresponding concrete input value from `x` in the output's place.
+        # corresponding concrete input value from `intervention` in the output's
+        # place.
         for i in sorted(identity_map):
-            out_vals.insert(i, x[identity_map[i]])
+            out_vals.insert(i, intervention[identity_map[i]])
 
         return out_vals
 
-    def qoi_bprop(self, x, qoi, from_cut=None, to_cut=None, doi_cut=None):
+    def qoi_bprop(
+            self,
+            qoi,
+            model_args,
+            model_kwargs={},
+            doi_cut=None,
+            to_cut=None,
+            attribution_cut=None,
+            intervention=None):
         """
         qoi_bprop Run the model from the from_layer to the qoi layer
-            and give the gradients w.r.t x
+            and give the gradients w.r.t `attribution_cut`
 
         Parameters
         ----------
-        x : backend.Tensor or np.array
+        model_args, model_kwargs: 
+            The args and kwargs given to the call method of a model.
+            This should represent the instances to obtain attributions for, 
+            assumed to be a *batched* input. if `self.model` supports evaluation 
+            on *data tensors*, the  appropriate tensor type may be used (e.g.,
+            Pytorch models may accept Pytorch tensors in additon to
+            `np.ndarray`s). The shape of the inputs must match the input shape
+            of `self.model`. 
+        
+        qoi: a Quantity of Interest
+            This method will accumulate all gradients of the qoi w.r.t
+            `attribution_cut`
+        doi_cut: Cut, 
+            If `doi_cut` is None, this refers to the InputCut. Cut from which to
+            begin propagation. The shape of `intervention` must match the output
+            shape of this layer.
+        attribution_cut: Cut, optional
+            If `attribution_cut` is None, this refers to the InputCut. The Cut
+            in which attribution will be calculated. This is generally taken
+            from the attribution slyce's attribution_cut.
+        to_cut: Cut, optional
+            If `to_cut` is None, this refers to the OutputCut. The Cut in which
+            qoi will be calculated. This is generally taken from the attribution
+            slice's `to_cut`.
+        intervention : backend.Tensor or np.array
             Input tensor to propagate through the model. If an np.array,
             will be converted to a tensor on the same device as the model.
-        qoi: a Quantity of Interest
-            This method will accumulate all gradients of the qoi w.r.t x
-        from_cut: Cut, optional
-            if `from_cut` is None, this refers to the InputCut.
-            The Cut in which attribution will be calculated. This is generally
-            taken from the attribution slyce's from_cut.
-        to_cut: Cut, optional
-            if `to_cut` is None, this refers to the OutputCut.
-            The Cut in which qoi will be calculated. This is generally
-            taken from the attribution slyce's to_cut.
-        doi_cut: Cut, 
-            if `doi_cut` is None, this refers to the InputCut.
-            Cut from which to begin propagation. The shape of `x` must
-            match the output shape of this layer.
 
         Returns
         -------
-        np.Array or list of np.Array
-            the gradients of `qoi` w.r.t. `x`
+        (backend.Tensor or np.ndarray)
+            The gradients of `qoi` w.r.t. `attribution_cut`, keeping same type
+            as the input.
         """
 
-        if from_cut is None:
-            from_cut = InputCut()
+        if attribution_cut is None:
+            attribution_cut = InputCut()
         if to_cut is None:
             to_cut = OutputCut()
 
-        input_cut = doi_cut if doi_cut else InputCut()
+        doi_cut = doi_cut if doi_cut else InputCut()
 
-        latent_tensors = self._get_layers(from_cut)
+        attribution_tensors = self._get_layers(attribution_cut)
         to_tensors = self._get_layers(to_cut)
-        input_tensors = self._get_layers(input_cut)
+        doi_tensors = self._get_layers(doi_cut)
+        if intervention is None:
+            intervention = model_args
 
-        x = x if isinstance(x, list) else [x]
+        intervention = intervention if isinstance(
+            intervention, DATA_CONTAINER_TYPE) else [intervention]
 
         Q = qoi(to_tensors[0]) if len(to_tensors) == 1 else qoi(to_tensors)
 
-        gradients = [keras.backend.function(input_tensors, B.gradient(q, latent_tensors))(x) for q in Q] \
-            if isinstance(Q, list) else keras.backend.function(input_tensors, B.gradient(Q, latent_tensors))(x)
+        gradients = [
+            keras.backend.function(
+                doi_tensors, B.gradient(q, attribution_tensors))(intervention) 
+            for q in Q
+        ] if isinstance(Q, DATA_CONTAINER_TYPE) else keras.backend.function(
+            doi_tensors, B.gradient(Q, attribution_tensors))(intervention)
 
         return gradients[0] if len(gradients) == 1 else gradients

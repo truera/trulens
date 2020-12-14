@@ -50,13 +50,13 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
 
     # Overriden tests.
 
-    def test_qoibprop_multiple_intputs(self):
+    def test_qoibprop_multiple_inputs(self):
         r = self.model.qoi_bprop(
-                np.array([
-                    [2.,1.],
-                    [1.,2.]]), 
                 MaxClassQoI(),
-                from_cut=Cut(['l1', 'l2'], anchor='in'))
+                (np.array([
+                    [2.,1.],
+                    [1.,2.]]),),                 
+                attribution_cut=Cut(['l1', 'l2'], anchor='in'))
 
         self.assertEqual(len(r), 2)
         self.assertTrue(np.allclose(

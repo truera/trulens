@@ -421,14 +421,3 @@ def is_tensor(x):
     x : backend.Tensor or other
     """
     return isinstance(x, Tensor)
-
-
-def reshape(x, shape):
-    return torch.reshape(x, shape)
-
-
-def mean(x, axis=None):
-    if not axis:
-        return torch.mean(x)
-    else:
-        return torch.mean(x, axis)

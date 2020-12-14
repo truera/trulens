@@ -25,6 +25,7 @@ from netlens.distributions import DoI
 from netlens.distributions import LinearDoi
 from netlens.distributions import PointDoi
 from netlens.models import ModelWrapper
+from netlens.models._model_base import DATA_CONTAINER_TYPE
 from netlens.quantities import ComparativeQoI
 from netlens.quantities import InternalChannelQoI
 from netlens.quantities import QoI
@@ -41,7 +42,6 @@ CutLike = Union[Cut, int, str, None]
 SliceLike = Union[Slice, Tuple[CutLike], CutLike]
 QoiLike = Union[QoI, int, Tuple[int], Callable, str]
 DoiLike = Union[DoI, str]
-ArrayLike = Union[np.ndarray, Any, List[Union[np.ndarray, Any]]]
 
 
 class AttributionMethod(AbstractBaseClass):
@@ -72,24 +72,25 @@ class AttributionMethod(AbstractBaseClass):
         return self._model
 
     @abstractmethod
-    def attributions(self, x: ArrayLike) -> ArrayLike:
+    def attributions(self, *model_args, **model_kwargs):
         """
-        Returns attributions for the given points.
+        Returns attributions for the given input.
 
         Parameters:
-            x: 
-                Instances to obtain attributions for, assumed to be a *batched*
-                array. Expected to be an instance of `np.ndarray`, or, if
-                `self.model` supports evaluation on *data tensors*, the 
-                appropriate tensor type may be used (e.g., Pytorch models may
-                accept Pytorch tensors in additon to `np.ndarray`s). The shape 
-                of `x` must match the input shape of `self.model`. 
+            model_args, model_kwargs: 
+                The args and kwargs given to the call method of a model.
+                This should represent the instances to obtain attributions for, 
+                assumed to be a *batched* input. if `self.model` supports
+                evaluation on *data tensors*, the  appropriate tensor type may
+                be used (e.g., Pytorch models may accept Pytorch tensors in 
+                addition to `np.ndarray`s). The shape of the inputs must match
+                the input shape of `self.model`. 
 
         Returns:
-            An array of attributions, matching the shape and type of `x`. Each
-            entry in the returned array represents the degree to which the
-            corresponding feature affected the model's outcome on the 
-            corresponding point.
+            An array of attributions, matching the shape and type of `from_cut`
+            of the slice. Each entry in the returned array represents the degree
+            to which the corresponding feature affected the model's outcome on
+            the corresponding point.
         """
         raise NotImplementedError
 
@@ -227,27 +228,39 @@ class InternalInfluence(AttributionMethod):
         self.doi = InternalInfluence.__get_doi(doi)
         self._do_multiply = multiply_activation
 
-    def attributions(self, x):
+    def attributions(self, *model_args, **model_kwargs):
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
-        doi_val = self.model.fprop(x, to_cut=doi_cut)
+        doi_val = self.model.fprop(model_args, model_kwargs, to_cut=doi_cut)
 
-        if isinstance(doi_val, list) and len(doi_val) == 1:
+        # DoI supports tensor or list of tensor. unwrap args to perform DoI on
+        # top level list
+
+        # Depending on the model_arg input, the data may be nested in data
+        # containers. We unwrap so that there operations are working on a single
+        # level of data container.
+        if isinstance(doi_val, DATA_CONTAINER_TYPE) and isinstance(
+                doi_val[0], DATA_CONTAINER_TYPE):
             doi_val = doi_val[0]
 
-        D = self.doi(doi_val) if doi_cut is not None else self.doi(x)
+        if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
+            doi_val = doi_val[0]
 
+        D = self.doi(doi_val)
         n_doi = len(D)
+        D = InternalInfluence.__concatenate_doi(D)
 
         # Calculate the gradient of each of the points in the DoI.
         qoi_grads = self.model.qoi_bprop(
-            InternalInfluence.__concatenate_doi(D),
             self.qoi,
-            self.slice.from_cut,
-            self.slice.to_cut,
+            model_args,
+            model_kwargs,
+            attribution_cut=self.slice.from_cut,
+            to_cut=self.slice.to_cut,
+            intervention=D,
             doi_cut=doi_cut)
-
-        if isinstance(qoi_grads, list):
+        # Take the mean across the samples in the DoI.
+        if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
             attributions = [
                 B.mean(
                     B.reshape(qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
@@ -259,17 +272,17 @@ class InternalInfluence(AttributionMethod):
 
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
-            z_val = self.model.fprop(x, to_cut=self.slice.from_cut)
-            if isinstance(z_val, list) and len(z_val) == 1:
+            z_val = self.model.fprop(
+                model_args, model_kwargs, to_cut=self.slice.from_cut)
+            if isinstance(z_val, DATA_CONTAINER_TYPE) and len(z_val) == 1:
                 z_val = z_val[0]
 
-            if isinstance(attributions, list):
+            if isinstance(attributions, DATA_CONTAINER_TYPE):
                 for i in range(len(attributions)):
-                    if isinstance(z_val, list) and (len(z_val)
-                                                    == len(attributions)):
-
-                        attributions[i] *= (
-                            self.doi.get_activation_multiplier(z_val[i]))
+                    if isinstance(z_val, DATA_CONTAINER_TYPE) and len(
+                            z_val) == len(attributions):
+                        attributions[i] *= self.doi.get_activation_multiplier(
+                            z_val[i])
                     else:
                         attributions[i] *= (
                             self.doi.get_activation_multiplier(z_val))
@@ -302,9 +315,9 @@ class InternalInfluence(AttributionMethod):
             # is for, but `InternalChannelQoI` generalizes to both).
             return InternalChannelQoI(qoi_arg)
 
-        elif isinstance(qoi_arg, tuple) or isinstance(qoi_arg, list):
-            # If we receive a tuple (or list), we take it to be two classes for
-            # which we are performing a comparative quantity of interest.
+        elif isinstance(qoi_arg, DATA_CONTAINER_TYPE):
+            # If we receive a DATA_CONTAINER_TYPE, we take it to be two classes
+            # for which we are performing a comparative quantity of interest.
             if len(qoi_arg) is 2:
                 return ComparativeQoI(*qoi_arg)
 
@@ -370,9 +383,9 @@ class InternalInfluence(AttributionMethod):
             # If we receive a Cut, we take it to be the Cut of the start layer.
             return Slice(InternalInfluence.__get_cut(slice_arg), OutputCut())
 
-        elif isinstance(slice_arg, tuple) or isinstance(slice_arg, list):
-            # If we receive a tuple or list, we take it to be the start and end
-            # layer of the slice.
+        elif isinstance(slice_arg, DATA_CONTAINER_TYPE):
+            # If we receive a DATA_CONTAINER_TYPE, we take it to be the start
+            # and end layer of the slice.
             if len(slice_arg) is 2:
                 return Slice(
                     InternalInfluence.__get_cut(slice_arg[0]),
@@ -413,7 +426,7 @@ class InternalInfluence(AttributionMethod):
                 'Got empty distribution of interest. `DoI` must return at '
                 'least one point.')
 
-        if isinstance(D[0], list):
+        if isinstance(D[0], DATA_CONTAINER_TYPE):
             transposed = [[] for _ in range(len(D[0]))]
             for point in D:
                 for i, v in enumerate(point):
@@ -568,7 +581,7 @@ class IntegratedGradients(InputAttribution):
     def __init__(
             self,
             model: ModelWrapper,
-            baseline: Optional[ArrayLike] = None,
+            baseline=None,
             resolution: int = 50):
         """
         Parameters:

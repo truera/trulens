@@ -6,7 +6,7 @@ import torch
 
 from netlens import backend as B
 from netlens.slices import InputCut, OutputCut, LogitCut
-from netlens.models._model_base import ModelWrapper
+from netlens.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 
 
 class PytorchModelWrapper(ModelWrapper):
@@ -34,7 +34,8 @@ class PytorchModelWrapper(ModelWrapper):
         input_dtype: torch.dtype
             The dtype of the input.
         logit_layer: str
-            The name of the logit layer. If not supplied, it will assume any layer named 'logits' is the logit layer
+            The name of the logit layer. If not supplied, it will assume any 
+            layer named 'logits' is the logit layer.
         device : string, optional
             device on which to run model, by default None
         """
@@ -60,6 +61,10 @@ class PytorchModelWrapper(ModelWrapper):
             self._gives_logits = False
         else:
             self._gives_logits = True
+
+    def print_layer_names(self):
+        for name in self._layernames:
+            print(f'\'{name}\':\t{self._layers[name]}')
 
     @staticmethod
     def _get_model_layers(model):
@@ -117,7 +122,7 @@ class PytorchModelWrapper(ModelWrapper):
             if len(self._layers) <= name:
                 raise ValueError('layer index out of bounds:', name)
             return self._layers[self._layernames[name]]
-        elif isinstance(name, list):
+        elif isinstance(name, DATA_CONTAINER_TYPE):
             return [self._get_layer(n) for n in name]
         else:
             return name
@@ -129,14 +134,15 @@ class PytorchModelWrapper(ModelWrapper):
                     'logits' if self._logit_layer is None else
                     self._logit_layer, cut.anchor))
 
-        elif isinstance(cut.name, list):
+        elif isinstance(cut.name, DATA_CONTAINER_TYPE):
             for name in cut.name:
                 names_and_anchors.append((name, cut.anchor))
 
         elif not (isinstance(cut, OutputCut) or isinstance(cut, InputCut)):
             names_and_anchors.append((cut.name, cut.anchor))
 
-    def _extract_outputs_from_hooks(self, cut, hooks, output, x, return_tensor):
+    def _extract_outputs_from_hooks(
+            self, cut, hooks, output, model_input, return_tensor):
         if isinstance(cut, OutputCut):
             return (
                 ModelWrapper._flatten(output)
@@ -145,9 +151,9 @@ class PytorchModelWrapper(ModelWrapper):
 
         elif isinstance(cut, InputCut):
             return (
-                ModelWrapper._flatten(x)
+                ModelWrapper._flatten(model_input)
                 if return_tensor else ModelWrapper._nested_apply(
-                    ModelWrapper._flatten(x), B.as_array))
+                    ModelWrapper._flatten(model_input), B.as_array))
 
         elif isinstance(cut, LogitCut):
             y = hooks['logits' if self._logit_layer is None else self.
@@ -157,7 +163,7 @@ class PytorchModelWrapper(ModelWrapper):
                 if return_tensor else ModelWrapper._nested_apply(
                     ModelWrapper._flatten(y), B.as_array))
 
-        elif isinstance(cut.name, list):
+        elif isinstance(cut.name, DATA_CONTAINER_TYPE):
             zs = [hooks[name] for name in cut.name]
             return (
                 ModelWrapper._flatten(zs)
@@ -171,90 +177,150 @@ class PytorchModelWrapper(ModelWrapper):
                 if return_tensor else ModelWrapper._nested_apply(
                     ModelWrapper._flatten(z), B.as_array))
 
+    def _to_tensor(self, x):
+        # Convert `x` to a tensor on `self.device`. Note that layer input can be
+        # a nested DATA_CONTAINER_TYPE.
+        if isinstance(x, np.ndarray) or isinstance(x[0], np.ndarray):
+            x = ModelWrapper._nested_apply(
+                x, partial(B.as_tensor, device=self.device))
+
+        elif isinstance(x, DATA_CONTAINER_TYPE):
+            x = [self._to_tensor(x_i) for x_i in x]
+
+        else:
+            x = ModelWrapper._nested_apply(x, lambda x: x.to(self.device))
+
+        return x
+
     def fprop(
             self,
-            x,
-            from_cut=None,
+            model_args,
+            model_kwargs={},
+            doi_cut=None,
             to_cut=None,
-            latent_cut=None,
+            attribution_cut=None,
+            intervention=None,
             return_tensor=False,
             input_timestep=None):
         """
         fprop Forward propagate the model
+
         Parameters
         ----------
-        x : backend.Tensor or np.array
+        model_args, model_kwargs: 
+            The args and kwargs given to the call method of a model.
+            This should represent the instances to obtain attributions for, 
+            assumed to be a *batched* input. if `self.model` supports evaluation 
+            on *data tensors*, the  appropriate tensor type may be used (e.g.,
+            Pytorch models may accept Pytorch tensors in additon to
+            `np.ndarray`s). The shape of the inputs must match the input shape
+            of `self.model`. 
+        doi_cut: Cut, optional
+            The Cut from which to begin propagation. The shape of `intervention`
+            must match the input shape of this layer. This is usually used to 
+            apply distributions of interest (DoI)
+        to_cut : Cut, optional
+            The Cut to return output activation tensors for. If `None`,
+            assumed to be just the final layer. By default None
+        attribution_cut : Cut, optional
+            An Cut to return activation tensors for. If `None` 
+            attributions layer output is not returned.
+        intervention : backend.Tensor or np.array
             Input tensor to propagate through the model. If an np.array, 
             will be converted to a tensor on the same device as the model.
-        from_cut: Cut, optional
-            The Cut from which to begin propagation. The shape of `x` must
-            match the input shape of this layer. By default 0.
-        to_cut : Cut, optional
-            The Cut to return output activation tensors for. If None,
-            assumed to be just the final layer. By default None
-        latent_cut : Cut, optional
-            An additional Cut to return activation tensors for. This is
-            usually used to apply distributions of interest (DoI)
+        input_timestep: int, optional
+            Specifies a specific timestep to apply the DoI if using an RNN
 
         Returns
         -------
-        (list of backend.Tensor)
-            A list of output activations are returned.
-        if `latent_cut` is supplied, also return the latent cut activations
+        (list of backend.Tensor or np.ndarray)
+            A list of output activations are returned, keeping the same type as
+            the input. If `attribution_cut` is supplied, also return the cut 
+            activations.
         """
 
-        if from_cut is None:
-            from_cut = InputCut()
+        if doi_cut is None:
+            doi_cut = InputCut()
         if to_cut is None:
             to_cut = OutputCut()
 
-        # Convert `x` to a tensor on `self.device`. Note that layer input can be
-        # a nested tuple/list.
-        if isinstance(x, np.ndarray) or isinstance(x[0], np.ndarray):
-            x = ModelWrapper._nested_apply(
-                x, partial(B.as_tensor, device=self.device))
-        else:
-            x = ModelWrapper._nested_apply(x, lambda x: x.to(self.device))
+        model_args = self._to_tensor(model_args)
 
-        # Specify that we want to preserve gradient information.
-        x = ModelWrapper._nested_apply(x, lambda x: x.requires_grad_(True))
+        if intervention is None:
+            intervention = model_args
+
+        intervention = intervention if isinstance(
+            intervention, DATA_CONTAINER_TYPE) else [intervention]
+        intervention = self._to_tensor(intervention)
+
+        if (isinstance(doi_cut, InputCut)):
+            model_args = intervention
+
+        else:
+            doi_repeated_batch_size = intervention[0].shape[0]
+            batched_model_args = []
+
+            for val in model_args:
+                doi_resolution = int(doi_repeated_batch_size / val.shape[0])
+                tile_shape = [1 for _ in range(len(val.shape))]
+                tile_shape[0] = doi_resolution
+                repeat_shape = tuple(tile_shape)
+
+                if isinstance(val, np.ndarray):
+                    val = np.tile(val, repeat_shape)
+
+                elif torch.is_tensor(val):
+                    val = val.repeat(repeat_shape)
+
+                batched_model_args.append(val)
+
+            model_args = batched_model_args
+
+        if (attribution_cut is not None):
+            # Specify that we want to preserve gradient information.
+            intervention = ModelWrapper._nested_apply(
+                intervention,
+                lambda intervention: intervention.requires_grad_(True))
+            model_args = ModelWrapper._nested_apply(
+                model_args, lambda model_args: model_args.requires_grad_(True))
 
         # Set up the intervention hookfn if we are starting from an intermediate
         # layer.
-        if not isinstance(from_cut, InputCut):
+        if not isinstance(doi_cut, InputCut):
             # Define the hookfn.
             counter = 0
 
             def intervene_hookfn(self, inpt, outpt):
-                nonlocal counter, input_timestep, from_cut, x
+                nonlocal counter, input_timestep, doi_cut, intervention
 
                 if input_timestep is None or input_timestep == counter:
-                    # FIXME: generalize to multi-input layers
+                    # FIXME: generalize to multi-input layers. Currently can 
+                    #   only intervene on one layer.
                     inpt = inpt[0] if len(inpt) == 1 else inpt
-                    if from_cut.anchor == 'in':
-                        ModelWrapper._nested_assign(inpt, x)
+                    if doi_cut.anchor == 'in':
+                        ModelWrapper._nested_assign(inpt, intervention[0])
                     else:
-                        ModelWrapper._nested_assign(outpt, x)
+                        ModelWrapper._nested_assign(outpt, intervention[0])
 
                 counter += 1
 
             # Register according to the anchor.
-            if from_cut.anchor == 'in':
+            if doi_cut.anchor == 'in':
                 in_handle = (
-                    self._get_layer(from_cut.name).register_forward_pre_hook(
+                    self._get_layer(doi_cut.name).register_forward_pre_hook(
                         partial(intervene_hookfn, outpt=None)))
             else:
                 in_handle = (
                     self._get_layer(
-                        from_cut.name).register_forward_hook(intervene_hookfn))
+                        doi_cut.name).register_forward_hook(intervene_hookfn))
 
         # Collect the names and anchors of the layers we want to return.
         names_and_anchors = []
 
         self._add_cut_name_and_anchor(to_cut, names_and_anchors)
 
-        if latent_cut:
-            self._add_cut_name_and_anchor(latent_cut, names_and_anchors)
+        if attribution_cut:
+            self._add_cut_name_and_anchor(attribution_cut, names_and_anchors)
 
         # Create hookfns to extract the results from the specified layers.
         hooks = {}
@@ -292,24 +358,12 @@ class PytorchModelWrapper(ModelWrapper):
             for name, anchor in names_and_anchors
             if name is not None
         ]
-
         # Run the network.
-        if isinstance(from_cut, InputCut):
-            inputs = x if isinstance(x, list) else [x]
-            output = self._model(*inputs)
-            if isinstance(output, tuple):
-                output = output[0]
+        output = self._model(*model_args, *model_kwargs)
+        if isinstance(output, tuple):
+            output = output[0]
 
-        else:
-            # TODO: generalize batch axis to others:
-            # https://pytorch.org/docs/stable/nn.html#torch.nn.LSTM
-            batch_size = len(x[0]) if isinstance(x, tuple) else len(x)
-            output = self._model(
-                B.as_tensor(
-                    np.zeros((batch_size,) + self._input_shape),
-                    dtype=self._input_dtype,
-                    device=self.device))
-
+        if not isinstance(doi_cut, InputCut):
             # Clean up in handle.
             in_handle.remove()
 
@@ -317,55 +371,78 @@ class PytorchModelWrapper(ModelWrapper):
         for handle in handles:
             handle.remove()
 
-        if latent_cut:
+        if attribution_cut:
             return [
                 self._extract_outputs_from_hooks(
-                    to_cut, hooks, output, x, return_tensor),
+                    to_cut, hooks, output, model_args, return_tensor),
                 self._extract_outputs_from_hooks(
-                    latent_cut, hooks, output, x, return_tensor)
+                    attribution_cut, hooks, output, model_args, return_tensor)
             ]
         else:
             return self._extract_outputs_from_hooks(
-                to_cut, hooks, output, x, return_tensor)
+                to_cut, hooks, output, model_args, return_tensor)
 
-    def qoi_bprop(self, x, qoi, from_cut=None, to_cut=None, doi_cut=None):
+    def qoi_bprop(
+            self,
+            qoi,
+            model_args,
+            model_kwargs={},
+            doi_cut=None,
+            to_cut=None,
+            attribution_cut=None,
+            intervention=None):
         """
         qoi_bprop Run the model from the from_layer to the qoi layer
-            and give the gradients w.r.t x
+            and give the gradients w.r.t `attribution_cut`
 
         Parameters
         ----------
-        x : backend.Tensor or np.array
-            Input tensor to propagate through the model. If an np.array,
-            will be converted to a tensor on the same device as the model.
+        model_args, model_kwargs: 
+            The args and kwargs given to the call method of a model.
+            This should represent the instances to obtain attributions for, 
+            assumed to be a *batched* input. if `self.model` supports evaluation 
+            on *data tensors*, the  appropriate tensor type may be used (e.g.,
+            Pytorch models may accept Pytorch tensors in additon to 
+            `np.ndarray`s). The shape of the inputs must match the input shape
+            of `self.model`. 
+        
         qoi: a Quantity of Interest
-            This method will accumulate all gradients of the qoi w.r.t x
-        from_cut: Cut, optional
-            if `from_cut` is None, this refers to the InputCut.
+            This method will accumulate all gradients of the qoi w.r.t
+            `attribution_cut`.
+        doi_cut: Cut, 
+            if `doi_cut` is None, this refers to the InputCut.
+            Cut from which to begin propagation. The shape of `intervention`
+            must match the output shape of this layer.
+        attribution_cut: Cut, optional
+            if `attribution_cut` is None, this refers to the InputCut.
             The Cut in which attribution will be calculated. This is generally
-            taken from the attribution slyce's from_cut.
+            taken from the attribution slyce's attribution_cut.
         to_cut: Cut, optional
             if `to_cut` is None, this refers to the OutputCut.
             The Cut in which qoi will be calculated. This is generally
             taken from the attribution slyce's to_cut.
-        doi_cut: Cut, 
-            if `doi_cut` is None, this refers to the InputCut.
-            Cut from which to begin propagation. The shape of `x` must
-            match the output shape of this layer.
+        intervention : backend.Tensor or np.array
+            Input tensor to propagate through the model. If an np.array,
+            will be converted to a tensor on the same device as the model.
 
         Returns
         -------
-        np.array of the gradients of `qoi` w.r.t. `from_cut`
+        (backend.Tensor or np.ndarray)
+            the gradients of `qoi` w.r.t. `attribution_cut`, keeping same type 
+            as the input.
         """
-        if from_cut is None:
-            from_cut = InputCut()
+        if attribution_cut is None:
+            attribution_cut = InputCut()
         if to_cut is None:
             to_cut = OutputCut()
+
         y, zs = self.fprop(
-            x,
-            from_cut=doi_cut if doi_cut else InputCut(),
+            model_args,
+            model_kwargs,
+            doi_cut=doi_cut if doi_cut else InputCut(),
             to_cut=to_cut,
-            latent_cut=from_cut,
+            attribution_cut=attribution_cut,
+            intervention=intervention,
             return_tensor=True)
 
         y = to_cut.access_layer(y)
@@ -373,17 +450,27 @@ class PytorchModelWrapper(ModelWrapper):
         for z in zs:
             z_flat = ModelWrapper._flatten(z)
             qoi_out = qoi(y)
-            grads_flat = [B.gradient(B.sum(q), z_flat) for q in qoi_out
-                         ] if isinstance(qoi_out, list) else B.gradient(
-                             B.sum(qoi_out), z_flat)
+
+            grads_flat = [
+                B.gradient(B.sum(q), z_flat) for q in qoi_out
+            ] if isinstance(qoi_out, DATA_CONTAINER_TYPE) else B.gradient(
+                B.sum(qoi_out), z_flat)
+
             grads = [
                 ModelWrapper._unflatten(g, z, count=[0]) for g in grads_flat
-            ] if isinstance(qoi_out, list) else ModelWrapper._unflatten(
-                grads_flat, z, count=[0])
-            grads = [from_cut.access_layer(g) for g in grads] if isinstance(
-                qoi_out, list) else from_cut.access_layer(grads)
+            ] if isinstance(
+                qoi_out, DATA_CONTAINER_TYPE) else ModelWrapper._unflatten(
+                    grads_flat, z, count=[0])
+
+            grads = [
+                attribution_cut.access_layer(g) for g in grads
+            ] if isinstance(
+                qoi_out,
+                DATA_CONTAINER_TYPE) else attribution_cut.access_layer(grads)
+
             grads = [B.as_array(g) for g in grads] if isinstance(
-                qoi_out, list) else B.as_array(grads)
+                qoi_out, DATA_CONTAINER_TYPE) else B.as_array(grads)
+            
             grads_list.append(grads)
 
         del y  # TODO: garbage collection

@@ -429,11 +429,3 @@ def is_tensor(x):
     if isinstance(x, Tensor):
         return True
     return False
-
-
-def reshape(x, shape):
-    return tf.reshape(x, shape)
-
-
-def mean(x, axis=None):
-    return tf.math.reduce_mean(x, axis=axis)
