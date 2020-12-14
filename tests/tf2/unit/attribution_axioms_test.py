@@ -48,19 +48,5 @@ class AxiomsTest(AxiomsTestBase, TestCase):
         self.layer3 = 3
 
 
-    def test_data_tensor_compatibility(self):
-        c = 2
-        infl = InternalInfluence(
-            self.model_deep, 
-            InputCut(), 
-            ClassQoI(c), 
-            LinearDoi(self.baseline, resolution=100), 
-            multiply_activation=True)
- 
-        res = infl.attributions(B.as_tensor(self.x))
-
-        self.assertTrue(isinstance(res, B.Tensor))
-
-
 if __name__ == '__main__':
     main()
