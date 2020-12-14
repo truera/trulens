@@ -11,6 +11,9 @@ from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
 
 
+DATA_CONTAINER_TYPE = (list, tuple)
+
+
 class ModelWrapper(AbstractBaseClass):
     """
     A wrapper interface for models that exposes the components needed for 
@@ -116,74 +119,114 @@ class ModelWrapper(AbstractBaseClass):
         return self.fprop(x)[0]
 
     @abstractmethod
-    def fprop(self, x, from_cut=None, to_cut=None, **kwargs):
+    def fprop(
+            self,
+            model_args,
+            model_kwargs={},
+            doi_cut=None,
+            to_cut=None,
+            attribution_cut=None,
+            intervention=None,
+            **kwargs):
         """
         **_Used internally by `AttributionMethod`._**
 
-        Forward propagate the model beginning at `from_cut`, with input `x`, and
-        ending at `to_cut`.
+        Forward propagate the model beginning at `doi_cut`, with input 
+        `intervention`, and ending at `to_cut`.
 
         Parameters:
-            x:
-                Input to propagate through the model. If the model operates on
-                *data tensors* (Pytorch, TensorFlow2 with eager execution) and
-                `x` is a `np.ndarray`, it will be converted to a data tensor on
-                the same device as the model.
+            model_args, model_kwargs: 
+                The args and kwargs given to the call method of a model.
+                This should represent the instances to obtain attributions for,
+                assumed to be a *batched* input. if `self.model` supports
+                evaluation on *data tensors*, the  appropriate tensor type may
+                be used (e.g., Pytorch models may accept Pytorch tensors in 
+                addition to `np.ndarray`s). The shape of the inputs must match
+                the input shape of `self.model`. 
 
-                The shape of `x` must match the input shape of the layer(s)
-                defined by `to_cut`.
-
-            from_cut:
-                Cut defining the layer(s) from which to begin propagation. The
-                shape of `x` must match the input shape of the layer(s)
-                specified by the cut. If `from_cut` is `None`, the input to the
-                model will be used (i.e., `InputCut()`).
+            doi_cut:
+                Cut defining where the Distribution of Interest is applied. The
+                shape of `intervention` must match the input shape of the 
+                layer(s) specified by the cut. If `doi_cut` is `None`, the input
+                to the model will be used (i.e., `InputCut()`).
 
             to_cut:
                 Cut defining the layer(s) at which the propagation will end. The
                 If `to_cut` is `None`, the output of the model will be used
                 (i.e., `OutputCut()`).
+            
+            attribution_cut:
+                Cut defining where the attributions are collected. If 
+                `attribution_cut` is `None`, it will be assumed to be the
+                `doi_cut`
+            
+            intervention:
+                The intervention created from the Distribution of Interest. If 
+                `intervention` is `None`, then it is equivalent to the point
+                DoI.
 
         Returns:
-            A list of the computed activations at the layer(s) defined by
-            `to_cut`.
+            (list of backend.Tensor or np.ndarray)
+                A list of output activations are returned, keeping the same type
+                as the input. If `attribution_cut` is supplied, also return the
+                cut activations.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def qoi_bprop(self, x, qoi, from_cut=None, to_cut=None, doi_cut=None):
+    def qoi_bprop(
+            self,
+            qoi,
+            model_args,
+            model_kwargs={},
+            doi_cut=None,
+            to_cut=None,
+            attribution_cut=None,
+            intervention=None,
+            **kwargs):
         """
         **_Used internally by `AttributionMethod`._**
         
-        Runs the model beginning at `from_cut` on input `x`, and returns the
-        gradients with respect to `x` of the quantity of interest.
+        Runs the model beginning at `doi_cut` on input `intervention`, and 
+        returns the gradients calculated from `to_cut` with respect to 
+        `attribution_cut` of the quantity of interest.
 
         Parameters:
-            x:
-                Input tensor to propagate through the model. If an np.array,
-                will be converted to a tensor on the same device as the model.
+            model_args, model_kwargs: 
+                The args and kwargs given to the call method of a model.
+                This should represent the instances to obtain attributions for, 
+                assumed to be a *batched* input. if `self.model` supports
+                evaluation on *data tensors*, the  appropriate tensor type may
+                be used (e.g., Pytorch models may accept Pytorch tensors in 
+                addition to `np.ndarray`s). The shape of the inputs must match
+                the input shape of `self.model`. 
 
-            qoi:
-                This method will accumulate all gradients of the qoi w.r.t x
+            doi_cut:
+                Cut defining where the Distribution of Interest is applied. The
+                shape of `intervention` must match the input shape of the 
+                layer(s) specified by the cut. If `doi_cut` is `None`, the input
+                to the model will be used (i.e., `InputCut()`).
 
-            from_cut: Cut, optional
-                if `from_cut` is None, this refers to the InputCut.
-                The Cut in which attribution will be calculated. This is generally
-                taken from the attribution slyce's from_cut.
-
-            to_cut: Cut, optional
-                if `to_cut` is None, this refers to the OutputCut.
-                The Cut in which qoi will be calculated. This is generally
-                taken from the attribution slyce's to_cut.
-                
-            doi_cut: Cut, 
-                if `doi_cut` is None, this refers to the InputCut.
-                Cut from which to begin propagation. The shape of `x` must
-                match the output shape of this layer.
+            to_cut:
+                Cut defining the layer(s) at which the propagation will end. The
+                If `to_cut` is `None`, the output of the model will be used
+                (i.e., `OutputCut()`).
+            
+            attribution_cut:
+                Cut defining where the attributions are collected. If 
+                `attribution_cut` is `None`, it will be assumed to be the
+                `doi_cut`
+            
+            intervention:
+                The intervention created from the Distribution of Interest. If 
+                `intervention` is `None`, then it is equivalent to the point 
+                DoI.
 
 
         Returns:
-            The gradients of the quantity of interest w.r.t. `x`.
+            (backend.Tensor or np.ndarray)
+                the gradients of `qoi` w.r.t. `attribution_cut`, keeping same
+                type as the input.
         """
         raise NotImplementedError
 

@@ -174,7 +174,7 @@ class AxiomsTestBase(object):
 
         self.assertEqual(res.shape, (2, self.internal1_size))
 
-        z = self.model_deep.fprop(self.x, to_cut=Cut(self.layer2))[0]
+        z = self.model_deep.fprop((self.x,), to_cut=Cut(self.layer2))[0]
 
         self.assertTrue(
             np.allclose(
@@ -197,8 +197,8 @@ class AxiomsTestBase(object):
             LinearDoi(self.baseline), 
             multiply_activation=False)
 
-        out_x = self.model_deep.fprop(self.x[0:1])[0][:,c]
-        out_baseline = self.model_deep.fprop(self.baseline)[0][:,c]
+        out_x = self.model_deep.fprop((self.x[0:1],))[0][:,c]
+        out_baseline = self.model_deep.fprop((self.baseline,))[0][:,c]
 
         if not np.allclose(out_x, out_baseline):
             res = infl.attributions(self.x)
@@ -300,8 +300,8 @@ class AxiomsTestBase(object):
             LinearDoi(self.baseline, resolution=100), 
             multiply_activation=True)
 
-        out_x = self.model_deep.fprop(self.x)[0][:,c]
-        out_baseline = self.model_deep.fprop(self.baseline)[0][:,c]
+        out_x = self.model_deep.fprop((self.x,))[0][:,c]
+        out_baseline = self.model_deep.fprop((self.baseline,))[0][:,c]
  
         res = infl.attributions(self.x)
 
@@ -319,8 +319,8 @@ class AxiomsTestBase(object):
             LinearDoi(resolution=100), 
             multiply_activation=True)
 
-        out_x = self.model_deep.fprop(self.x)[0][:,c]
-        out_baseline = self.model_deep.fprop(self.baseline * 0)[0][:,c]
+        out_x = self.model_deep.fprop((self.x,))[0][:,c]
+        out_baseline = self.model_deep.fprop((self.baseline * 0,))[0][:,c]
  
         res = infl.attributions(self.x)
 
@@ -341,10 +341,10 @@ class AxiomsTestBase(object):
             LinearDoi(baseline, resolution=100, cut=Cut(self.layer2)), 
             multiply_activation=True)
 
-        g = partial(self.model_deep.fprop, from_cut=Cut(self.layer2))
+        g = partial(self.model_deep.fprop, doi_cut=Cut(self.layer2), intervention=np.tile(baseline,(2,1)))
 
-        out_x = self.model_deep.fprop(self.x)[0][:,c]
-        out_baseline = g(baseline)[0][:,c]
+        out_x = self.model_deep.fprop((self.x,))[0][:,c]
+        out_baseline = g((self.x,))[0][:,c]
 
         res = infl.attributions(self.x)
 
@@ -363,10 +363,9 @@ class AxiomsTestBase(object):
             LinearDoi(resolution=100, cut=Cut(self.layer2)), 
             multiply_activation=True)
 
-        g = partial(self.model_deep.fprop, from_cut=Cut(self.layer2))
-
-        out_x = self.model_deep.fprop(self.x)[0][:,c]
-        out_baseline = g(np.zeros((1,10)))[0][:,c]
+        g = partial(self.model_deep.fprop, doi_cut=Cut(self.layer2), intervention=np.zeros((2,10)))
+        out_x = self.model_deep.fprop((self.x,))[0][:,c]
+        out_baseline = g((self.x,))[0][:,c]
 
         res = infl.attributions(self.x)
 
