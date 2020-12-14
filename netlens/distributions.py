@@ -156,6 +156,9 @@ class LinearDoi(DoI):
         self._cut = cut
 
     def __call__(self, z: ArrayLike) -> List[ArrayLike]:
+        if isinstance(z, (list, tuple)) and len(z) == 1:
+            z = z[0]
+
         self._assert_cut_contains_only_one_tensor(z)
 
         if self._baseline is None:

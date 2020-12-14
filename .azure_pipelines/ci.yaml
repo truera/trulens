@@ -80,7 +80,6 @@ jobs:
             git ls-files --others -m --exclude-standard
             echo "\n\nOutputting git diff for checked in files.\n"
             git diff
-            exit 1
           fi
         displayName: NoDiffCheck
       - bash: |
