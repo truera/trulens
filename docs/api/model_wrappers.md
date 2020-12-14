@@ -1,3 +1,3 @@
 # Model Wrappers
 
-::: netlens.models._model_base
+::: trulens.nn.models._model_base

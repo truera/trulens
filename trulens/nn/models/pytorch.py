@@ -4,9 +4,9 @@ from functools import partial
 import numpy as np
 import torch
 
-from netlens import backend as B
-from netlens.slices import InputCut, OutputCut, LogitCut
-from netlens.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
+from trulens.nn import backend as B
+from trulens.nn.slices import InputCut, OutputCut, LogitCut
+from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 
 
 class PytorchModelWrapper(ModelWrapper):

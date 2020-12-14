@@ -1,3 +1,3 @@
 # Distributions of Interest
 
-::: netlens.distributions
+::: trulens.nn.distributions

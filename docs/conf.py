@@ -12,14 +12,14 @@
 #
 import os
 import sys
-os.environ['NETLENS_BACKEND'] = 'keras'
+os.environ['TRULENS_BACKEND'] = 'keras'
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../'))
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'netlens'
+project = 'trulens'
 copyright = '2020, Klas Leino'
 author = 'Klas Leino'
 

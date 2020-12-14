@@ -1,5 +1,5 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'pytorch'
+os.environ['TRULENS_BACKEND'] = 'pytorch'
 
 import numpy as np
 
@@ -7,10 +7,10 @@ from torch import Tensor
 from torch.nn import Linear, Module, ReLU
 from unittest import TestCase, main
 
-from netlens import backend as B 
-from netlens.models.pytorch import PytorchModelWrapper
-from netlens.quantities import MaxClassQoI
-from netlens.slices import Cut
+from trulens.nn import backend as B 
+from trulens.nn.models.pytorch import PytorchModelWrapper
+from trulens.nn.quantities import MaxClassQoI
+from trulens.nn.slices import Cut
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 
 

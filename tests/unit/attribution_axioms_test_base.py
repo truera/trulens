@@ -15,11 +15,11 @@ import numpy as np
 
 from functools import partial
 
-from netlens import backend as B
-from netlens.attribution import InternalInfluence
-from netlens.distributions import DoI, LinearDoi, PointDoi
-from netlens.quantities import ClassQoI, InternalChannelQoI, MaxClassQoI
-from netlens.slices import Cut, InputCut
+from trulens.nn import backend as B
+from trulens.nn.attribution import InternalInfluence
+from trulens.nn.distributions import DoI, LinearDoi, PointDoi
+from trulens.nn.quantities import ClassQoI, InternalChannelQoI, MaxClassQoI
+from trulens.nn.slices import Cut, InputCut
 
 
 class AxiomsTestBase(object):

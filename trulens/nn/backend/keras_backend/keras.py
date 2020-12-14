@@ -1,19 +1,26 @@
-"""Pytorch backend
+"""Keras backend
 """
 # pylint: disable=no-member
 # pylint: disable=not-callable
 
 import numpy as np
-import torch
 
-from netlens.backend.load_backend import _ALL_BACKEND_API_FUNCTIONS
+from trulens.nn.backend.load_backend import _BACKEND, _ALL_BACKEND_API_FUNCTIONS
+
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
-floatX = np.float32
-Tensor = torch.Tensor
-dim_order = 'channels_first'
-channel_axis = 1
-backend = 'pytorch'
+if _BACKEND == 'keras':
+    import keras.backend as K
+elif _BACKEND == 'tf.keras':
+    import tensorflow.keras.backend as K
+    import tensorflow as tf
+
+floatX = K.floatx()
+Tensor = type(K.constant((1, 1), dtype=floatX))
+TensorVar = type(K.zeros((1, 1), dtype=floatX))
+dim_order = K.image_data_format()
+channel_axis = 1 if dim_order == 'channels_first' else 3
+backend = _BACKEND
 
 
 def gradient(scalar, wrt):
@@ -30,12 +37,18 @@ def gradient(scalar, wrt):
 
     Returns
     -------
-    list 
+    list
         A list of computed gradient; same shape as wrt
     """
-    grads = torch.autograd.grad(
-        scalar, wrt, retain_graph=True, allow_unused=True, create_graph=True)
-    return list(grads)
+    if not isinstance(wrt, list):
+        wrt = [wrt]
+
+    grads = K.gradients(scalar, wrt)
+
+    if not isinstance(grads, list):
+        return [grads]
+    else:
+        return grads
 
 
 def as_array(t, dtype=floatX):
@@ -53,12 +66,10 @@ def as_array(t, dtype=floatX):
     np.array
         Same contents as t
     """
-    if isinstance(t, np.ndarray):
-        return t
-    return t.cpu().detach().numpy().astype(dtype)
+    return K.get_value(t)
 
 
-def as_tensor(x, dtype=torch.float32, device=None):
+def as_tensor(x, device=None):
     """
     as_tensor Convert numpy array to tensor
 
@@ -66,18 +77,14 @@ def as_tensor(x, dtype=torch.float32, device=None):
     ----------
     x : np.array
     device : string, optional
-        Which device to  associate with the tensor. If None, then
-        use the first available cuda device ('cuda:0'), otherwise cpu. 
-        By default None
+        Ignored
 
     Returns
     -------
     backend.Tensor
         Same contents as x
     """
-    if device is None:
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    return torch.tensor(x, dtype=dtype).to(device)
+    return K.constant(x)
 
 
 def int_shape(t):
@@ -95,12 +102,12 @@ def int_shape(t):
     tuple of int
         Tuple contains the size of each dimension of the tensor.
     """
-    return tuple(t.shape)
+    return K.int_shape(t)
 
 
 def shape(t):
     """
-    shape Return shape tuple of tensor
+    shape Return shape of a tensor as a tensor
 
     [extended_summary]
 
@@ -113,28 +120,25 @@ def shape(t):
     tuple of int
         Tuple contains the size of each dimension of the tensor.
     """
-    return tuple(t.shape)
+    return K.shape(t)
 
 
 def expand_dims(t, axis=-1):
-    return torch.unsqueeze(t, axis)
+    return K.expand_dims(t, axis)
 
 
 def reshape(t, shape):
     if isinstance(t, np.ndarray):
         return t.reshape(shape)
 
-    return torch.reshape(t, shape)
+    return K.reshape(t, shape)
 
 
 def mean(t, axis=None, keepdims=False):
     if isinstance(t, np.ndarray):
         return t.mean(axis=axis, keepdims=keepdims)
 
-    if axis is not None:
-        return torch.mean(t, dim=axis, keepdim=keepdims)
-    else:
-        return torch.mean(t)
+    return K.mean(t, axis, keepdims)
 
 
 def sum(t, axis=None, keepdims=False):
@@ -160,16 +164,13 @@ def sum(t, axis=None, keepdims=False):
     if isinstance(t, np.ndarray):
         return t.sum(axis=axis, keepdims=keepdims)
 
-    if axis is not None:
-        return torch.sum(t, dim=axis, keepdim=keepdims)
-    else:
-        return torch.sum(t)
+    return K.sum(t, axis, keepdims)
 
 
 def max(t, axis=None, keepdims=False):
     """
     max Maximum values of tensor, element-wise
-    
+
     Parameters
     ----------
     t : backend.Tensor
@@ -178,24 +179,23 @@ def max(t, axis=None, keepdims=False):
         dimensions. By default None
     keepdims : bool, optional
         If `keepdims` is `False`, the rank of the tensor is reduced 
-        by 1. If `keepdims` is `True`, the reduced dimension is retained 
+        by 1. If `keepdims` is `True`, the reduced dimension is  retained 
         with length 1., by default False
 
     Returns
     -------
-    backend.Tensor, or tuple
-        Max of t, or a tuple of the max of t with the indices
-
+    backend.Tensor
+        Max of t
     """
     if isinstance(t, np.ndarray):
         return t.max(axis=axis, keepdims=keepdims)
 
-    return torch.max(t, dim=axis, keepdim=keepdims)[0]
+    return K.max(t, axis, keepdims)
 
 
 def min(t, axis=None, keepdims=False):
     """
-    min Minimum values of tensor, element-wise
+    min Minimum values of tensor, element-wise 
 
     Parameters
     ----------
@@ -205,29 +205,23 @@ def min(t, axis=None, keepdims=False):
         dimensions. By default None
     keepdims : bool, optional
         If `keepdims` is `False`, the rank of the tensor is reduced 
-        by 1. If `keepdims` is `True`, the reduced dimension is retained 
+        by 1. If `keepdims` is `True`, the reduced dimension is  retained 
         with length 1., by default False
-    return_indices : bool, optional
-        if `return_indices` is `True`, returns a tuple (values, indices) 
-        where values is the minimum value of each row of the input tensor 
-        in the given dimension dim. And indices is the index location of 
-        each minimum value found (argmin). by default False
 
     Returns
     -------
-    backend.Tensor, or tuple
-        Min of t, or a tuple of the min of t with the indices
-
+    backend.Tensor
+        Min of t
     """
     if isinstance(t, np.ndarray):
-        return t.min(axis=axis, keepdims=keepdims)
+        return t.sum(axis=axis, keepdims=keepdims)
 
-    return torch.min(t, dim=axis, keepdim=keepdims)[0]
+    return K.min(t, axis, keepdims)
 
 
 def maximum(x, y):
     """
-    maximum Element-wise maximum of two input tensors
+    maximum Element-wise max of two input tensors
     
     Parameters
     ----------
@@ -239,7 +233,8 @@ def maximum(x, y):
     backend.Tensor
         Element-wise maximum tensor
     """
-    return torch.max(x, y)
+
+    return K.maximum(x, y)
 
 
 def minimum(x, y):
@@ -256,7 +251,7 @@ def minimum(x, y):
     backend.Tensor
         Element-wise minimum tensor
     """
-    return torch.min(x, y)
+    return K.minimum(x, y)
 
 
 def abs(t):
@@ -272,10 +267,10 @@ def abs(t):
     backend.Tensor
         Each coordinate contains absolute value of corresponding input
     """
-    return torch.abs(t)
+    return K.abs(t)
 
 
-def ones_like(t, dtype=None, requires_grad=False):
+def ones_like(t, dtype=None, name=None):
     """
     ones_like Create a tensor of ones with the same shape of the input tensor
     on the same device
@@ -283,7 +278,7 @@ def ones_like(t, dtype=None, requires_grad=False):
     Parameters
     ----------
     t : backend.Tensor
-    dtype : torch.dtype, optional
+    dtype : string, optional
         The desired data type of returned Tensor. If None, 
         defaults to the dtype of input, by default None
     requires_grad : bool, optional
@@ -295,10 +290,10 @@ def ones_like(t, dtype=None, requires_grad=False):
     backend.Tensor
         A tensor of ones has the same shape of input tensor
     """
-    return torch.ones_like(t, dtype=dtype, requires_grad=requires_grad)
+    return K.ones_like(t, dtype=dtype, name=name)
 
 
-def zeros_like(t, dtype=None, requires_grad=False):
+def zeros_like(t, dtype=None, name=None):
     """
     zeros_like Create a tensor of ones with the same shape of the input tensor
     on the same device
@@ -306,7 +301,7 @@ def zeros_like(t, dtype=None, requires_grad=False):
     Parameters
     ----------
     t : backend.Tensor
-    dtype : torch.dtype, optional
+    dtype : string, optional
         The desired data type of returned Tensor. If None, 
         defaults to the dtype of input, by default None
     requires_grad : bool, optional
@@ -318,30 +313,50 @@ def zeros_like(t, dtype=None, requires_grad=False):
     backend.Tensor
         A tensor of zeros has the same shape of input tensor
     """
-    if not is_tensor(t):
-        t = as_tensor(t)
-    return torch.zeros_like(t, dtype=dtype, requires_grad=requires_grad)
+    return K.zeros_like(t, dtype=dtype, name=name)
 
 
 def random_normal_like(t, mean=0., var=1.):
-    return torch.empty_like(t).normal_(mean, std=np.sqrt(var))
+    return K.random_normal(K.shape(t), mean, stddev=np.sqrt(var))
 
 
-def clone(t):
+def clone(t, name=None):
     """
     clone Return a tensor with the same content as the input tensor.
 
     Parameters
     ----------
     t : backend.Tensor
-
+    name: string, optional
+        Name for the variable to create., by default None
+    
     Returns
     -------
     backend.Tensor
         A tensor with the same content as the input tensor.
-
     """
-    return t.clone()
+    return identity(t, name=name)
+
+
+def identity(t, name=None):
+    """
+    identity An alias function for Keras naming convention 
+
+    Parameters
+    ----------
+    t : backend.Tensor
+    name: string, optional
+        Name for the variable to create., by default None
+    
+    Returns
+    -------
+    backend.Tensor
+        A tensor of zeros has the same shape of input tensor
+    """
+    if backend == 'keras':
+        return K.identity(t, name=name)
+    elif backend == 'tf.keras':
+        return tf.identity(t, name=name)
 
 
 def sign(t):
@@ -357,7 +372,23 @@ def sign(t):
     backend.Tensor
 
     """
-    return torch.sign(t)
+    return K.sign(t)
+
+
+def stack(t):
+    """
+    stack Return a tensor with the input tensors vertically stacked
+
+    Parameters
+    ----------
+    t : list of backend.Tensors
+
+    Returns
+    -------
+    backend.Tensor
+
+    """
+    return K.stack(t)
 
 
 def sigmoid(t, axis=None):
@@ -375,23 +406,7 @@ def sigmoid(t, axis=None):
     backend.Tensor
 
     """
-    return torch.sigmoid(t)
-
-
-def stack(t):
-    """
-    stack Return a tensor with the input tensors vertically stacked
-
-    Parameters
-    ----------
-    t : list of backend.Tensors
-
-    Returns
-    -------
-    backend.Tensor
-
-    """
-    return torch.stack(t)
+    return K.sigmoid(t)
 
 
 def softmax(t, axis=-1):
@@ -409,7 +424,7 @@ def softmax(t, axis=-1):
     -------
     backend.Tensor
     """
-    return torch.nn.Softmax(dim=axis)(t)
+    return K.softmax(t, axis=axis)
 
 
 def is_tensor(x):
@@ -420,4 +435,6 @@ def is_tensor(x):
     ----------
     x : backend.Tensor or other
     """
-    return isinstance(x, Tensor)
+    if isinstance(x, Tensor) or isinstance(x, TensorVar):
+        return True
+    return False

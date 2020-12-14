@@ -5,7 +5,7 @@ compute the gradient of a model with respect to its inputs to describe how
 important each input is towards the output prediction. These methods can be
 applied to assist in explaining deep networks.
 
-Netlens provides implementations of several such techniques, found in this
+TruLens provides implementations of several such techniques, found in this
 package.
 """
 #from __future__ import annotations # Avoid expanding type aliases in mkdocs.
@@ -21,21 +21,21 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from netlens.distributions import DoI
-from netlens.distributions import LinearDoi
-from netlens.distributions import PointDoi
-from netlens.models import ModelWrapper
-from netlens.models._model_base import DATA_CONTAINER_TYPE
-from netlens.quantities import ComparativeQoI
-from netlens.quantities import InternalChannelQoI
-from netlens.quantities import QoI
-from netlens.quantities import LambdaQoI
-from netlens.quantities import MaxClassQoI
-from netlens.slices import Cut
-from netlens.slices import InputCut
-from netlens.slices import OutputCut
-from netlens.slices import Slice
-from netlens import backend as B
+from trulens.nn.distributions import DoI
+from trulens.nn.distributions import LinearDoi
+from trulens.nn.distributions import PointDoi
+from trulens.nn.models import ModelWrapper
+from trulens.nn.models._model_base import DATA_CONTAINER_TYPE
+from trulens.nn.quantities import ComparativeQoI
+from trulens.nn.quantities import InternalChannelQoI
+from trulens.nn.quantities import QoI
+from trulens.nn.quantities import LambdaQoI
+from trulens.nn.quantities import MaxClassQoI
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
+from trulens.nn.slices import OutputCut
+from trulens.nn.slices import Slice
+from trulens.nn import backend as B
 
 # Define some type aliases.
 CutLike = Union[Cut, int, str, None]
@@ -452,7 +452,7 @@ class InputAttribution(InternalInfluence):
     ```python
     InternalInfluence(
         model,
-        (netlens.slices.InputCut(), cut),
+        (trulens.nn.slices.InputCut(), cut),
         qoi,
         doi,
         multiply_activation)
@@ -571,9 +571,9 @@ class IntegratedGradients(InputAttribution):
     ```python
     InternalInfluence(
         model,
-        (netlens.slices.InputCut(), netlens.slices.OutputCut()),
+        (trulens.nn.slices.InputCut(), trulens.nn.slices.OutputCut()),
         'max',
-        netlens.distributions.LinearDoi(baseline, resolution),
+        trulens.nn.distributions.LinearDoi(baseline, resolution),
         multiply_activation=True)
     ```
     """

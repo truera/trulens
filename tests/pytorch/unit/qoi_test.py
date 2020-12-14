@@ -1,5 +1,5 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'pytorch'
+os.environ['TRULENS_BACKEND'] = 'pytorch'
 
 from unittest import TestCase, main
 

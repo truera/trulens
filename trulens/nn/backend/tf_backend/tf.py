@@ -6,7 +6,7 @@
 import numpy as np
 import tensorflow as tf
 
-from netlens.backend.load_backend import _ALL_BACKEND_API_FUNCTIONS
+from trulens.nn.backend.load_backend import _ALL_BACKEND_API_FUNCTIONS
 __all__ = _ALL_BACKEND_API_FUNCTIONS + ['tf1']
 
 floatX = np.float32

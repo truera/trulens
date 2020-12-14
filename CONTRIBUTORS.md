@@ -1,4 +1,4 @@
-# Netlens contributors (alphabetical)
+# TruLens contributors (alphabetical)
 
 
 * Anupam: <au@truera.com>
