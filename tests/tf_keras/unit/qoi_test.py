@@ -1,5 +1,5 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'tf.keras'
+os.environ['TRULENS_BACKEND'] = 'tf.keras'
 
 from tensorflow.python.util import deprecation
 deprecation._PRINT_DEPRECATION_WARNINGS = False

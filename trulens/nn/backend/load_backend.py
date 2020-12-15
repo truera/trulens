@@ -1,14 +1,14 @@
 # pylint:disable=unused-wildcard-import
 #from __future__ import absolute_import
-from netlens import _NETLENS_BACKEND
+from trulens.nn import _TRULENS_BACKEND
 import importlib
 
 import os
 
-if _NETLENS_BACKEND is not None:
-    _BACKEND = _NETLENS_BACKEND
-elif 'NETLENS_BACKEND' in os.environ.keys():
-    _BACKEND = os.environ['NETLENS_BACKEND']
+if _TRULENS_BACKEND is not None:
+    _BACKEND = _TRULENS_BACKEND
+elif 'TRULENS_BACKEND' in os.environ.keys():
+    _BACKEND = os.environ['TRULENS_BACKEND']
 else:
     _BACKEND = 'pytorch'
 

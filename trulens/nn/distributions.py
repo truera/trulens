@@ -15,8 +15,8 @@ from typing import List
 from typing import Optional
 from typing import Union
 
-from netlens.slices import Cut
-from netlens import backend as B
+from trulens.nn.slices import Cut
+from trulens.nn import backend as B
 
 # Define some type aliases.
 ArrayLike = Union[np.ndarray, Any, List[Union[np.ndarray, Any]]]

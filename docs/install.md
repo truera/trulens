@@ -1,4 +1,4 @@
-## Getting access to Netlens
+## Getting access to TruLens
 
 These installation instructions assume that you have conda installed and added to your path.
 
@@ -15,14 +15,14 @@ conda install keras             # Or whatever backend you're using.
 conda install matplotlib        # For visualizations.
 ```
 
-2. Clone the netlens repo.
+2. Clone the trulens repo.
 ```
-git clone https://github.com/truera/netlens.git
+git clone https://github.com/truera/trulens.git
 ```
 
-3. Install the netlens repo.
+3. Install the trulens repo.
 ```
-cd netlens
+cd trulens
 pip install -e .
 ```
 

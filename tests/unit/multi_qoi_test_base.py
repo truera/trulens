@@ -2,11 +2,11 @@ from unittest import TestCase, main
 
 import numpy as np
 
-from netlens import backend as B
-from netlens.attribution import InternalInfluence
-from netlens.distributions import DoI
-from netlens.quantities import QoI
-from netlens.slices import InputCut, Cut
+from trulens.nn import backend as B
+from trulens.nn.attribution import InternalInfluence
+from trulens.nn.distributions import DoI
+from trulens.nn.quantities import QoI
+from trulens.nn.slices import InputCut, Cut
 
 class PerTimestepQoI(QoI):
     def __call__(self, x):

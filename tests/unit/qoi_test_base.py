@@ -1,7 +1,7 @@
 import numpy as np
 
-from netlens import backend as B
-from netlens.quantities import *
+from trulens.nn import backend as B
+from trulens.nn.quantities import *
 
 
 class QoiTestBase(object):

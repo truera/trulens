@@ -1,7 +1,7 @@
 import numpy as np
 
-from netlens.quantities import MaxClassQoI
-from netlens.slices import Cut, InputCut, LogitCut
+from trulens.nn.quantities import MaxClassQoI
+from trulens.nn.slices import Cut, InputCut, LogitCut
 
 
 class ModelWrapperTestBase(object):

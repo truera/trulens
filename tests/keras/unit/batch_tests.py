@@ -1,11 +1,11 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'keras'
+os.environ['TRULENS_BACKEND'] = 'keras'
 
 from unittest import TestCase, main
 from keras.layers import Activation, Dense, Input
 from keras.models import Model
 
-from netlens.models import ModelWrapper
+from trulens.nn.models import ModelWrapper
 from tests.unit.batch_test_base import BatchTestBase
 
 class BatchTest(BatchTestBase, TestCase):

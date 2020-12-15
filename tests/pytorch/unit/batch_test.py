@@ -1,12 +1,12 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'pytorch'
+os.environ['TRULENS_BACKEND'] = 'pytorch'
 
 from torch import Tensor
 from torch.nn import Linear, Module, ReLU
 from unittest import TestCase, main
 
-from netlens import backend as B
-from netlens.models import ModelWrapper
+from trulens.nn import backend as B
+from trulens.nn.models import ModelWrapper
 from tests.unit.batch_test_base import BatchTestBase
 
 class BatchTest(BatchTestBase, TestCase):

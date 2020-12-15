@@ -1,3 +1,3 @@
 # Visualization Methods
 
-::: netlens.visualizations
+::: trulens.visualizations
