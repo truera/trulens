@@ -1,0 +1,2056 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<link href="../../img/favicon.ico" rel="shortcut icon"/>
+<meta content="mkdocs-1.1.2, mkdocs-material-5.5.7" name="generator"/>
+<title>Visualizations - TruLens</title>
+<link href="../../assets/stylesheets/main.b8ac9624.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/palette.28f3ef9a.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Inter:300,400,400i,700%7C&amp;display=fallback" rel="stylesheet"/>
+<style>body,input{font-family:"Inter",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"",SFMono-Regular,Consolas,Menlo,monospace}</style>
+<link href="../../stylesheets/extra.css" rel="stylesheet"/>
+</head>
+<body data-md-color-accent="" data-md-color-primary="" data-md-color-scheme="truera" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#visualization-methods">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header" data-md-component="header">
+<nav aria-label="Header" class="md-header-nav md-grid">
+<a aria-label="TruLens" class="md-header-nav__button md-logo" href="../.." title="TruLens">
+<img alt="logo" src="../../img/logo.png"/>
+</a>
+<label class="md-header-nav__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"></path></svg>
+</label>
+<div class="md-header-nav__title" data-md-component="header-title">
+<div class="md-header-nav__ellipsis">
+<span class="md-header-nav__topic md-ellipsis">
+            TruLens
+          </span>
+<span class="md-header-nav__topic md-ellipsis">
+            
+              Visualizations
+            
+          </span>
+</div>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="TruLens" class="md-nav__button md-logo" href="../.." title="TruLens">
+<img alt="logo" src="../../img/logo.png"/>
+</a>
+    TruLens
+  </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../.." title="Welcome to TruLens!">
+      Welcome to TruLens!
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../install/" title="Installation">
+      Installation
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../quickstart/" title="Quickstart">
+      Quickstart
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../userguide/" title="User Guide">
+      User Guide
+    </a>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" data-md-toggle="nav-5" id="nav-5" type="checkbox"/>
+<label class="md-nav__link" for="nav-5">
+      API Reference
+      <span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"></path></svg>
+</span>
+</label>
+<nav aria-label="API Reference" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="nav-5">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
+        API Reference
+      </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../attribution/" title="Attribution">
+      Attribution
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../model_wrappers/" title="Models">
+      Models
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../slices/" title="Slices">
+      Slices
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../quantities/" title="Quantities">
+      Quantities
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../distributions/" title="Distributions">
+      Distributions
+    </a>
+</li>
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" data-md-toggle="toc" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+        Visualizations
+        <span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"></path></svg>
+</span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./" title="Visualizations">
+      Visualizations
+    </a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations">
+    trulens.visualizations
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.ChannelMaskVisualizer">
+    ChannelMaskVisualizer
+  </a>
+<nav aria-label="ChannelMaskVisualizer" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.ChannelMaskVisualizer.__call__">
+    __call__()
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#parameters">
+    Parameters
+  </a>
+<nav aria-label="Parameters" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.ChannelMaskVisualizer.__init__">
+    __init__()
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.HeatmapVisualizer">
+    HeatmapVisualizer
+  </a>
+<nav aria-label="HeatmapVisualizer" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.HeatmapVisualizer.__call__">
+    __call__()
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.HeatmapVisualizer.__init__">
+    __init__()
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.MaskVisualizer">
+    MaskVisualizer
+  </a>
+<nav aria-label="MaskVisualizer" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.MaskVisualizer.__init__">
+    __init__()
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.Tiler">
+    Tiler
+  </a>
+<nav aria-label="Tiler" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.Tiler.tile">
+    tile()
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.Visualizer">
+    Visualizer
+  </a>
+<nav aria-label="Visualizer" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.Visualizer.__call__">
+    __call__()
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.Visualizer.__init__">
+    __init__()
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations">
+    trulens.visualizations
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.ChannelMaskVisualizer">
+    ChannelMaskVisualizer
+  </a>
+<nav aria-label="ChannelMaskVisualizer" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.ChannelMaskVisualizer.__call__">
+    __call__()
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#parameters">
+    Parameters
+  </a>
+<nav aria-label="Parameters" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.ChannelMaskVisualizer.__init__">
+    __init__()
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.HeatmapVisualizer">
+    HeatmapVisualizer
+  </a>
+<nav aria-label="HeatmapVisualizer" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.HeatmapVisualizer.__call__">
+    __call__()
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.HeatmapVisualizer.__init__">
+    __init__()
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.MaskVisualizer">
+    MaskVisualizer
+  </a>
+<nav aria-label="MaskVisualizer" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.MaskVisualizer.__init__">
+    __init__()
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.Tiler">
+    Tiler
+  </a>
+<nav aria-label="Tiler" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.Tiler.tile">
+    tile()
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.Visualizer">
+    Visualizer
+  </a>
+<nav aria-label="Visualizer" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.Visualizer.__call__">
+    __call__()
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.visualizations.Visualizer.__init__">
+    __init__()
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<h1 id="visualization-methods">Visualization Methods<a class="headerlink" href="#visualization-methods" title="Permanent link">¶</a></h1>
+<div class="doc doc-object doc-module">
+<h2 class="hidden-toc" href="#trulens.visualizations" id="trulens.visualizations" style="visibility: hidden; width: 0; height: 0;">
+<a class="headerlink" href="#trulens.visualizations" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents first">
+<p>One clear use case for measuring attributions is for human consumption. In order
+to be fully leveraged by humans, explanations need to be interpretable — a
+large vector of numbers doesn’t in general make us more confident we understand
+what a network is doing. We therefore view an <em>explanation</em> as comprised of both
+an <em>attribution measurement</em> and an <em>interpretation</em> of what the attribution 
+values represent.</p>
+<p>One obvious way to interpret attributions, particularly in the image domain, is
+via visualization. This module provides several visualization methods for
+interpreting attributions as images.</p>
+<div class="doc doc-children">
+<div class="doc doc-object doc-class">
+<h2 class="doc doc-heading" id="trulens.visualizations.ChannelMaskVisualizer">
+<code>ChannelMaskVisualizer</code>
+<a class="headerlink" href="#trulens.visualizations.ChannelMaskVisualizer" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
+<p>Uses internal influence to visualize the pixels that are most salient
+towards a particular internal channel or neuron.</p>
+<div class="doc doc-children">
+<div class="doc doc-object doc-method">
+<h3 class="doc doc-heading" id="trulens.visualizations.ChannelMaskVisualizer.__call__">
+<code class="highlight language-python">
+__call__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_preprocessed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">masked_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">combine_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.visualizations.ChannelMaskVisualizer.__call__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>Visualizes the given attributions by overlaying an attribution heatmap 
+over the given image.</p>
+<h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">¶</a></h2>
+<p>attributions : numpy.ndarray
+    The attributions to visualize. Expected to be in 4-D image format.</p>
+<p>x : numpy.ndarray
+    The original image(s) over which the attributions are calculated.
+    Must be the same shape as expected by the model used with this
+    visualizer.</p>
+<p>x_preprocessed : numpy.ndarray, optional
+    If the model requires a preprocessed input (e.g., with the mean
+    subtracted) that is different from how the image should be 
+    visualized, <code>x_preprocessed</code> should be specified. In this case 
+    <code>x</code> will be used for visualization, and <code>x_preprocessed</code> will be
+    passed to the model when calculating attributions. Must be the same 
+    shape as <code>x</code>.</p>
+<p>output_file : str, optional
+    If specified, the resulting visualization will be saved to a file
+    with the name given by <code>output_file</code>.</p>
+<p>blur : float, optional
+    If specified, gives the radius of a Gaussian blur to be applied to
+    the attributions before visualizing. This can be used to help focus
+    on salient regions rather than specific salient pixels. If None, 
+    defaults to the value supplied to the constructor. Default None.</p>
+<p>threshold : float
+    Value in the range [0, 1]. Attribution values at or  below the 
+    percentile given by <code>threshold</code> will be masked. If None, defaults 
+    to the value supplied to the constructor. Default None.</p>
+<div class="admonition masked_opacity">
+<p class="admonition-title">float</p>
+<p>Value in the range [0, 1] specifying the opacity for the parts of
+the image that are masked. Default 0.2. If None, defaults to the 
+value supplied to the constructor. Default None.</p>
+</div>
+<p>combine_channels : bool
+    If True, the attributions will be averaged across the channel
+    dimension, resulting in a 1-channel attribution map. If None, 
+    defaults to the value supplied to the constructor. Default None.</p>
+<details class="quote">
+<summary>Source code in <code>trulens/visualizations.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">,</span>
+        <span class="n">x_preprocessed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">masked_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">combine_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Visualizes the given attributions by overlaying an attribution heatmap </span>
+<span class="sd">    over the given image.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    attributions : numpy.ndarray</span>
+<span class="sd">        The attributions to visualize. Expected to be in 4-D image format.</span>
+
+<span class="sd">    x : numpy.ndarray</span>
+<span class="sd">        The original image(s) over which the attributions are calculated.</span>
+<span class="sd">        Must be the same shape as expected by the model used with this</span>
+<span class="sd">        visualizer.</span>
+
+<span class="sd">    x_preprocessed : numpy.ndarray, optional</span>
+<span class="sd">        If the model requires a preprocessed input (e.g., with the mean</span>
+<span class="sd">        subtracted) that is different from how the image should be </span>
+<span class="sd">        visualized, ``x_preprocessed`` should be specified. In this case </span>
+<span class="sd">        ``x`` will be used for visualization, and ``x_preprocessed`` will be</span>
+<span class="sd">        passed to the model when calculating attributions. Must be the same </span>
+<span class="sd">        shape as ``x``.</span>
+
+<span class="sd">    output_file : str, optional</span>
+<span class="sd">        If specified, the resulting visualization will be saved to a file</span>
+<span class="sd">        with the name given by ``output_file``.</span>
+
+<span class="sd">    blur : float, optional</span>
+<span class="sd">        If specified, gives the radius of a Gaussian blur to be applied to</span>
+<span class="sd">        the attributions before visualizing. This can be used to help focus</span>
+<span class="sd">        on salient regions rather than specific salient pixels. If None, </span>
+<span class="sd">        defaults to the value supplied to the constructor. Default None.</span>
+
+<span class="sd">    threshold : float</span>
+<span class="sd">        Value in the range [0, 1]. Attribution values at or  below the </span>
+<span class="sd">        percentile given by ``threshold`` will be masked. If None, defaults </span>
+<span class="sd">        to the value supplied to the constructor. Default None.</span>
+
+<span class="sd">    masked_opacity: float</span>
+<span class="sd">        Value in the range [0, 1] specifying the opacity for the parts of</span>
+<span class="sd">        the image that are masked. Default 0.2. If None, defaults to the </span>
+<span class="sd">        value supplied to the constructor. Default None.</span>
+
+<span class="sd">    combine_channels : bool</span>
+<span class="sd">        If True, the attributions will be averaged across the channel</span>
+<span class="sd">        dimension, resulting in a 1-channel attribution map. If None, </span>
+<span class="sd">        defaults to the value supplied to the constructor. Default None.</span>
+<span class="sd">    """</span>
+
+    <span class="n">attrs_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">infl_input</span><span class="o">.</span><span class="n">attributions</span><span class="p">(</span>
+        <span class="n">x</span> <span class="k">if</span> <span class="n">x_preprocessed</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x_preprocessed</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_visualizer</span><span class="p">(</span>
+        <span class="n">attrs_input</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">blur</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">masked_opacity</span><span class="p">,</span>
+        <span class="n">combine_channels</span><span class="p">)</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
+<h3 class="doc doc-heading" id="trulens.visualizations.ChannelMaskVisualizer.__init__">
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">channel_axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">agg_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">doi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">masked_opacity</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">combine_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_attr_as_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">positive_only</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.visualizations.ChannelMaskVisualizer.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>Configures the default parameters for the <code>__call__</code> method (these can 
+be overridden by passing in values to <code>__call__</code>).</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model</code></td>
+<td><code></code></td>
+<td>
+<p>The wrapped model whose channel we're visualizing.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>layer</code></td>
+<td><code></code></td>
+<td>
+<p>The identifier (either index or name) of the layer in which the 
+channel we're visualizing resides.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>channel</code></td>
+<td><code></code></td>
+<td>
+<p>Index of the channel (for convolutional layers) or internal 
+neuron (for fully-connected layers) that we'd like to visualize.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>channel_axis</code></td>
+<td><code></code></td>
+<td>
+<p>If different from the channel axis specified by the backend, the
+supplied <code>channel_axis</code> will be used if operating on a 
+convolutional layer with 4-D image format.</p>
+</td>
+<td><code>1</code></td>
+</tr>
+<tr>
+<td><code>agg_fn</code></td>
+<td><code></code></td>
+<td>
+<p>Function with which to aggregate the remaining dimensions 
+(except the batch dimension) in order to get a single scalar 
+value for each channel; If <code>None</code>, a sum over each neuron in the
+channel will be taken. This argument is not used when the 
+channels are scalars, e.g., for dense layers.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>doi</code></td>
+<td><code></code></td>
+<td>
+<p>The distribution of interest to use when computing the input
+attributions towards the specified channel. If <code>None</code>, 
+<code>PointDoI</code> will be used.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>blur</code></td>
+<td><code></code></td>
+<td>
+<p>Gives the radius of a Gaussian blur to be applied to the 
+attributions before visualizing. This can be used to help focus
+on salient regions rather than specific salient pixels.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>threshold</code></td>
+<td><code></code></td>
+<td>
+<p>Value in the range [0, 1]. Attribution values at or  below the 
+percentile given by <code>threshold</code> (after normalization, blurring,
+etc.) will be masked.</p>
+</td>
+<td><code>0.5</code></td>
+</tr>
+<tr>
+<td><code>masked_opacity</code></td>
+<td><code></code></td>
+<td>
+<p>Value in the range [0, 1] specifying the opacity for the parts
+of the image that are masked.</p>
+</td>
+<td><code>0.2</code></td>
+</tr>
+<tr>
+<td><code>combine_channels</code></td>
+<td><code></code></td>
+<td>
+<p>If <code>True</code>, the attributions will be averaged across the channel
+dimension, resulting in a 1-channel attribution map.</p>
+</td>
+<td><code>True</code></td>
+</tr>
+<tr>
+<td><code>use_attr_as_opacity</code></td>
+<td><code></code></td>
+<td>
+<p>If <code>True</code>, instead of using <code>threshold</code> and <code>masked_opacity</code>,
+the opacity of each pixel is given by the 0-1-normalized 
+attribution value.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>positive_only</code></td>
+<td><code></code></td>
+<td>
+<p>If <code>True</code>, only pixels with positive attribution will be 
+unmasked (or given nonzero opacity when <code>use_attr_as_opacity</code> is
+true).</p>
+</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>trulens/visualizations.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">,</span>
+        <span class="n">layer</span><span class="p">,</span>
+        <span class="n">channel</span><span class="p">,</span>
+        <span class="n">channel_axis</span><span class="o">=</span><span class="n">B</span><span class="o">.</span><span class="n">channel_axis</span><span class="p">,</span>
+        <span class="n">agg_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">doi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">masked_opacity</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+        <span class="n">combine_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">use_attr_as_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">positive_only</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Configures the default parameters for the `__call__` method (these can </span>
+<span class="sd">    be overridden by passing in values to `__call__`).</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        model:</span>
+<span class="sd">            The wrapped model whose channel we're visualizing.</span>
+
+<span class="sd">        layer:</span>
+<span class="sd">            The identifier (either index or name) of the layer in which the </span>
+<span class="sd">            channel we're visualizing resides.</span>
+
+<span class="sd">        channel:</span>
+<span class="sd">            Index of the channel (for convolutional layers) or internal </span>
+<span class="sd">            neuron (for fully-connected layers) that we'd like to visualize.</span>
+
+<span class="sd">        channel_axis:</span>
+<span class="sd">            If different from the channel axis specified by the backend, the</span>
+<span class="sd">            supplied `channel_axis` will be used if operating on a </span>
+<span class="sd">            convolutional layer with 4-D image format.</span>
+
+<span class="sd">        agg_fn:</span>
+<span class="sd">            Function with which to aggregate the remaining dimensions </span>
+<span class="sd">            (except the batch dimension) in order to get a single scalar </span>
+<span class="sd">            value for each channel; If `None`, a sum over each neuron in the</span>
+<span class="sd">            channel will be taken. This argument is not used when the </span>
+<span class="sd">            channels are scalars, e.g., for dense layers.</span>
+
+<span class="sd">        doi:</span>
+<span class="sd">            The distribution of interest to use when computing the input</span>
+<span class="sd">            attributions towards the specified channel. If `None`, </span>
+<span class="sd">            `PointDoI` will be used.</span>
+
+<span class="sd">        blur:</span>
+<span class="sd">            Gives the radius of a Gaussian blur to be applied to the </span>
+<span class="sd">            attributions before visualizing. This can be used to help focus</span>
+<span class="sd">            on salient regions rather than specific salient pixels.</span>
+
+<span class="sd">        threshold:</span>
+<span class="sd">            Value in the range [0, 1]. Attribution values at or  below the </span>
+<span class="sd">            percentile given by `threshold` (after normalization, blurring,</span>
+<span class="sd">            etc.) will be masked.</span>
+
+<span class="sd">        masked_opacity: </span>
+<span class="sd">            Value in the range [0, 1] specifying the opacity for the parts</span>
+<span class="sd">            of the image that are masked.</span>
+
+<span class="sd">        combine_channels:</span>
+<span class="sd">            If `True`, the attributions will be averaged across the channel</span>
+<span class="sd">            dimension, resulting in a 1-channel attribution map.</span>
+
+<span class="sd">        use_attr_as_opacity:</span>
+<span class="sd">            If `True`, instead of using `threshold` and `masked_opacity`,</span>
+<span class="sd">            the opacity of each pixel is given by the 0-1-normalized </span>
+<span class="sd">            attribution value.</span>
+
+<span class="sd">        positive_only:</span>
+<span class="sd">            If `True`, only pixels with positive attribution will be </span>
+<span class="sd">            unmasked (or given nonzero opacity when `use_attr_as_opacity` is</span>
+<span class="sd">            true).</span>
+<span class="sd">    """</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">mask_visualizer</span> <span class="o">=</span> <span class="n">MaskVisualizer</span><span class="p">(</span>
+        <span class="n">blur</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">masked_opacity</span><span class="p">,</span> <span class="n">combine_channels</span><span class="p">,</span>
+        <span class="n">use_attr_as_opacity</span><span class="p">,</span> <span class="n">positive_only</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">infl_input</span> <span class="o">=</span> <span class="n">InternalInfluence</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span> <span class="p">(</span><span class="n">InputCut</span><span class="p">(),</span> <span class="n">Cut</span><span class="p">(</span><span class="n">layer</span><span class="p">)),</span>
+        <span class="n">InternalChannelQoI</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">channel_axis</span><span class="p">,</span> <span class="n">agg_fn</span><span class="p">),</span>
+        <span class="n">PointDoi</span><span class="p">()</span> <span class="k">if</span> <span class="n">doi</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">doi</span><span class="p">)</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="doc doc-object doc-class">
+<h2 class="doc doc-heading" id="trulens.visualizations.HeatmapVisualizer">
+<code>HeatmapVisualizer</code>
+<a class="headerlink" href="#trulens.visualizations.HeatmapVisualizer" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
+<p>Visualizes attributions by overlaying an attribution heatmap over the
+original image, similar to how GradCAM visualizes attributions.</p>
+<div class="doc doc-children">
+<div class="doc doc-object doc-method">
+<h3 class="doc doc-heading" id="trulens.visualizations.HeatmapVisualizer.__call__">
+<code class="highlight language-python">
+__call__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attributions</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">imshow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_tiled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">overlay_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.visualizations.HeatmapVisualizer.__call__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>Visualizes the given attributions by overlaying an attribution heatmap 
+over the given image.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attributions</code></td>
+<td><code></code></td>
+<td>
+<p>A <code>np.ndarray</code> containing the attributions to be visualized.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>x</code></td>
+<td><code></code></td>
+<td>
+<p>A <code>np.ndarray</code> of instances in the same shape as <code>attributions</code>
+corresponding to the instances explained by the given 
+attributions. The visualization will be superimposed onto the
+corresponding set of instances.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>output_file</code></td>
+<td><code></code></td>
+<td>
+<p>File name to save the visualization image to. If <code>None</code>, no
+image will be saved, but the figure can still be displayed.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>imshow</code></td>
+<td><code></code></td>
+<td>
+<p>If true, a the visualization will be displayed. Otherwise the
+figure will not be displayed, but the figure can still be saved.</p>
+</td>
+<td><code>True</code></td>
+</tr>
+<tr>
+<td><code>fig</code></td>
+<td><code></code></td>
+<td>
+<p>The <code>pyplot</code> figure to display the visualization in. If <code>None</code>,
+a new figure will be created.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>return_tiled</code></td>
+<td><code></code></td>
+<td>
+<p>If true, the returned array will be in the same shape as the
+visualization, with no batch dimension and the instances in the
+batch tiled along the width and height dimensions. If false, the
+returned array will be reshaped to match <code>attributions</code>.</p>
+</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>overlay_opacity</code></td>
+<td><code></code></td>
+<td>
+<p>float
+Value in the range [0, 1] specifying the opacity for the heatmap
+overlay. If <code>None</code>, defaults to the value supplied to the 
+constructor.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>combine_channels</code></td>
+<td><code></code></td>
+<td>
+<p>If <code>True</code>, the attributions will be averaged across the channel
+dimension, resulting in a 1-channel attribution map. If <code>None</code>,
+defaults to the value supplied to the constructor.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>normalization_type</code></td>
+<td><code></code></td>
+<td>
+<p>Specifies one of the following configurations for normalizing
+the attributions (each instance is normalized separately):</p>
+<ul>
+<li><code>'unsigned_max'</code>: normalizes the attributions to the range 
+  [-1, 1] by dividing the attributions by the maximum absolute 
+  attribution value.</li>
+<li><code>'unsigned_max_positive_centered'</code>: same as above, but scales
+  the values to the range [0, 1], with negative scores less than
+  0.5 and positive scores greater than 0.5. </li>
+<li><code>'magnitude_max'</code>: takes the absolute value of the 
+  attributions, then normalizes the attributions to the range 
+  [0, 1] by dividing by the maximum absolute attribution value.</li>
+<li><code>'magnitude_sum'</code>: takes the absolute value of the 
+  attributions, then scales them such that they sum to 1. If 
+  this option is used, each channel is normalized separately, 
+  such that each channel sums to 1.</li>
+<li><code>'signed_max'</code>: normalizes the attributions to the range 
+  [-1, 1] by dividing the positive values by the maximum 
+  positive attribution value and the negative values by the 
+  minimum negative attribution value.</li>
+<li><code>'signed_max_positive_centered'</code>: same as above, but scales 
+  the values to the range [0, 1], with negative scores less than
+  0.5 and positive scores greater than 0.5.</li>
+<li><code>'signed_sum'</code>: scales the positive attributions such that 
+  they sum to 1 and the negative attributions such that they
+  scale to -1. If this option is used, each channel is 
+  normalized separately.</li>
+<li><code>'01'</code>: normalizes the attributions to the range [0, 1] by 
+  subtracting the minimum attribution value then dividing by the
+  maximum attribution value.</li>
+<li><code>'unnormalized'</code>: leaves the attributions unaffected.</li>
+</ul>
+<p>If <code>None</code>, defaults to the value supplied to the constructor.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>blur</code></td>
+<td><code></code></td>
+<td>
+<p>Gives the radius of a Gaussian blur to be applied to the 
+attributions before visualizing. This can be used to help focus
+on salient regions rather than specific salient pixels. If
+<code>None</code>, defaults to the value supplied to the constructor.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>cmap</code></td>
+<td><code></code></td>
+<td>
+<p>matplotlib.colors.Colormap | str, optional
+Colormap or name of a Colormap to use for the visualization. If
+<code>None</code>, defaults to the value supplied to the constructor.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code></code></td>
+<td>
+<p>A <code>np.ndarray</code> array of the numerical representation of the
+attributions as modified for the visualization. This includes 
+normalization, blurring, etc.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>trulens/visualizations.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">attributions</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">,</span>
+        <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">imshow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">return_tiled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">overlay_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Visualizes the given attributions by overlaying an attribution heatmap </span>
+<span class="sd">    over the given image.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        attributions:</span>
+<span class="sd">            A `np.ndarray` containing the attributions to be visualized.</span>
+
+<span class="sd">        x:</span>
+<span class="sd">            A `np.ndarray` of instances in the same shape as `attributions`</span>
+<span class="sd">            corresponding to the instances explained by the given </span>
+<span class="sd">            attributions. The visualization will be superimposed onto the</span>
+<span class="sd">            corresponding set of instances.</span>
+
+<span class="sd">        output_file:</span>
+<span class="sd">            File name to save the visualization image to. If `None`, no</span>
+<span class="sd">            image will be saved, but the figure can still be displayed.</span>
+
+<span class="sd">        imshow:</span>
+<span class="sd">            If true, a the visualization will be displayed. Otherwise the</span>
+<span class="sd">            figure will not be displayed, but the figure can still be saved.</span>
+
+<span class="sd">        fig:</span>
+<span class="sd">            The `pyplot` figure to display the visualization in. If `None`,</span>
+<span class="sd">            a new figure will be created.</span>
+
+<span class="sd">        return_tiled:</span>
+<span class="sd">            If true, the returned array will be in the same shape as the</span>
+<span class="sd">            visualization, with no batch dimension and the instances in the</span>
+<span class="sd">            batch tiled along the width and height dimensions. If false, the</span>
+<span class="sd">            returned array will be reshaped to match `attributions`.</span>
+
+<span class="sd">        overlay_opacity: float</span>
+<span class="sd">            Value in the range [0, 1] specifying the opacity for the heatmap</span>
+<span class="sd">            overlay. If `None`, defaults to the value supplied to the </span>
+<span class="sd">            constructor.</span>
+
+<span class="sd">        combine_channels:</span>
+<span class="sd">            If `True`, the attributions will be averaged across the channel</span>
+<span class="sd">            dimension, resulting in a 1-channel attribution map. If `None`,</span>
+<span class="sd">            defaults to the value supplied to the constructor.</span>
+
+<span class="sd">        normalization_type:</span>
+<span class="sd">            Specifies one of the following configurations for normalizing</span>
+<span class="sd">            the attributions (each instance is normalized separately):</span>
+
+<span class="sd">            - `'unsigned_max'`: normalizes the attributions to the range </span>
+<span class="sd">              [-1, 1] by dividing the attributions by the maximum absolute </span>
+<span class="sd">              attribution value.</span>
+<span class="sd">            - `'unsigned_max_positive_centered'`: same as above, but scales</span>
+<span class="sd">              the values to the range [0, 1], with negative scores less than</span>
+<span class="sd">              0.5 and positive scores greater than 0.5. </span>
+<span class="sd">            - `'magnitude_max'`: takes the absolute value of the </span>
+<span class="sd">              attributions, then normalizes the attributions to the range </span>
+<span class="sd">              [0, 1] by dividing by the maximum absolute attribution value.</span>
+<span class="sd">            - `'magnitude_sum'`: takes the absolute value of the </span>
+<span class="sd">              attributions, then scales them such that they sum to 1. If </span>
+<span class="sd">              this option is used, each channel is normalized separately, </span>
+<span class="sd">              such that each channel sums to 1.</span>
+<span class="sd">            - `'signed_max'`: normalizes the attributions to the range </span>
+<span class="sd">              [-1, 1] by dividing the positive values by the maximum </span>
+<span class="sd">              positive attribution value and the negative values by the </span>
+<span class="sd">              minimum negative attribution value.</span>
+<span class="sd">            - `'signed_max_positive_centered'`: same as above, but scales </span>
+<span class="sd">              the values to the range [0, 1], with negative scores less than</span>
+<span class="sd">              0.5 and positive scores greater than 0.5.</span>
+<span class="sd">            - `'signed_sum'`: scales the positive attributions such that </span>
+<span class="sd">              they sum to 1 and the negative attributions such that they</span>
+<span class="sd">              scale to -1. If this option is used, each channel is </span>
+<span class="sd">              normalized separately.</span>
+<span class="sd">            - `'01'`: normalizes the attributions to the range [0, 1] by </span>
+<span class="sd">              subtracting the minimum attribution value then dividing by the</span>
+<span class="sd">              maximum attribution value.</span>
+<span class="sd">            - `'unnormalized'`: leaves the attributions unaffected.</span>
+
+<span class="sd">            If `None`, defaults to the value supplied to the constructor.</span>
+
+<span class="sd">        blur:</span>
+<span class="sd">            Gives the radius of a Gaussian blur to be applied to the </span>
+<span class="sd">            attributions before visualizing. This can be used to help focus</span>
+<span class="sd">            on salient regions rather than specific salient pixels. If</span>
+<span class="sd">            `None`, defaults to the value supplied to the constructor.</span>
+
+<span class="sd">        cmap: matplotlib.colors.Colormap | str, optional</span>
+<span class="sd">            Colormap or name of a Colormap to use for the visualization. If</span>
+<span class="sd">            `None`, defaults to the value supplied to the constructor.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `np.ndarray` array of the numerical representation of the</span>
+<span class="sd">        attributions as modified for the visualization. This includes </span>
+<span class="sd">        normalization, blurring, etc.</span>
+<span class="sd">    """</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">normalization_type</span><span class="p">,</span> <span class="n">blur</span><span class="p">,</span> <span class="n">cmap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_args</span><span class="p">(</span>
+        <span class="n">attributions</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalization_type</span><span class="p">,</span> <span class="n">blur</span><span class="p">,</span> <span class="n">cmap</span><span class="p">)</span>
+
+    <span class="c1"># Combine the channels.</span>
+    <span class="n">attributions</span> <span class="o">=</span> <span class="n">attributions</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">B</span><span class="o">.</span><span class="n">channel_axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Blur the attributions so the explanation is smoother.</span>
+    <span class="k">if</span> <span class="n">blur</span><span class="p">:</span>
+        <span class="n">attributions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blur</span><span class="p">(</span><span class="n">attributions</span><span class="p">,</span> <span class="n">blur</span><span class="p">)</span>
+
+    <span class="c1"># Normalize the attributions.</span>
+    <span class="n">attributions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize</span><span class="p">(</span><span class="n">attributions</span><span class="p">,</span> <span class="n">normalization_type</span><span class="p">)</span>
+
+    <span class="n">tiled_attributions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tiler</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">attributions</span><span class="p">)</span>
+
+    <span class="c1"># Normalize the pixels to be in the range [0, 1].</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'01'</span><span class="p">)</span>
+    <span class="n">tiled_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tiler</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">cmap</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cmap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_cmap</span>
+
+    <span class="k">if</span> <span class="n">overlay_opacity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">overlay_opacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_opacity</span>
+
+    <span class="c1"># Display the figure:</span>
+    <span class="n">_fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span> <span class="k">if</span> <span class="n">fig</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">fig</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">tiled_x</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">tiled_attributions</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">overlay_opacity</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">output_file</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">imshow</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">elif</span> <span class="n">fig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">_fig</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tiled_attributions</span> <span class="k">if</span> <span class="n">return_tiled</span> <span class="k">else</span> <span class="n">attributions</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
+<h3 class="doc doc-heading" id="trulens.visualizations.HeatmapVisualizer.__init__">
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay_opacity</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blur</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'jet'</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.visualizations.HeatmapVisualizer.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>Configures the default parameters for the <code>__call__</code> method (these can 
+be overridden by passing in values to <code>__call__</code>).</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>overlay_opacity</code></td>
+<td><code></code></td>
+<td>
+<p>float
+Value in the range [0, 1] specifying the opacity for the heatmap
+overlay.</p>
+</td>
+<td><code>0.5</code></td>
+</tr>
+<tr>
+<td><code>normalization_type</code></td>
+<td><code></code></td>
+<td>
+<p>Specifies one of the following configurations for normalizing
+the attributions (each instance is normalized separately):</p>
+<ul>
+<li><code>'unsigned_max'</code>: normalizes the attributions to the range 
+  [-1, 1] by dividing the attributions by the maximum absolute 
+  attribution value.</li>
+<li><code>'unsigned_max_positive_centered'</code>: same as above, but scales
+  the values to the range [0, 1], with negative scores less than
+  0.5 and positive scores greater than 0.5. </li>
+<li><code>'magnitude_max'</code>: takes the absolute value of the 
+  attributions, then normalizes the attributions to the range 
+  [0, 1] by dividing by the maximum absolute attribution value.</li>
+<li><code>'magnitude_sum'</code>: takes the absolute value of the 
+  attributions, then scales them such that they sum to 1. If 
+  this option is used, each channel is normalized separately, 
+  such that each channel sums to 1.</li>
+<li><code>'signed_max'</code>: normalizes the attributions to the range 
+  [-1, 1] by dividing the positive values by the maximum 
+  positive attribution value and the negative values by the 
+  minimum negative attribution value.</li>
+<li><code>'signed_max_positive_centered'</code>: same as above, but scales 
+  the values to the range [0, 1], with negative scores less than
+  0.5 and positive scores greater than 0.5.</li>
+<li><code>'signed_sum'</code>: scales the positive attributions such that 
+  they sum to 1 and the negative attributions such that they
+  scale to -1. If this option is used, each channel is 
+  normalized separately.</li>
+<li><code>'01'</code>: normalizes the attributions to the range [0, 1] by 
+  subtracting the minimum attribution value then dividing by the
+  maximum attribution value.</li>
+<li><code>'unnormalized'</code>: leaves the attributions unaffected.</li>
+</ul>
+<p>If <code>None</code>, either <code>'unsigned_max'</code> (for single-channel data) or 
+<code>'unsigned_max_positive_centered'</code> (for multi-channel data) is
+used.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>blur</code></td>
+<td><code></code></td>
+<td>
+<p>Gives the radius of a Gaussian blur to be applied to the 
+attributions before visualizing. This can be used to help focus
+on salient regions rather than specific salient pixels.</p>
+</td>
+<td><code>10.0</code></td>
+</tr>
+<tr>
+<td><code>cmap</code></td>
+<td><code></code></td>
+<td>
+<p>matplotlib.colors.Colormap | str, optional
+Colormap or name of a Colormap to use for the visualization. If 
+<code>None</code>, the colormap will be chosen based on the normalization 
+type. This argument is only used for single-channel data
+(including when <code>combine_channels</code> is True).</p>
+</td>
+<td><code>'jet'</code></td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>trulens/visualizations.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">overlay_opacity</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">blur</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span>
+        <span class="n">cmap</span><span class="o">=</span><span class="s1">'jet'</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Configures the default parameters for the `__call__` method (these can </span>
+<span class="sd">    be overridden by passing in values to `__call__`).</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        overlay_opacity: float</span>
+<span class="sd">            Value in the range [0, 1] specifying the opacity for the heatmap</span>
+<span class="sd">            overlay.</span>
+
+<span class="sd">        normalization_type:</span>
+<span class="sd">            Specifies one of the following configurations for normalizing</span>
+<span class="sd">            the attributions (each instance is normalized separately):</span>
+
+<span class="sd">            - `'unsigned_max'`: normalizes the attributions to the range </span>
+<span class="sd">              [-1, 1] by dividing the attributions by the maximum absolute </span>
+<span class="sd">              attribution value.</span>
+<span class="sd">            - `'unsigned_max_positive_centered'`: same as above, but scales</span>
+<span class="sd">              the values to the range [0, 1], with negative scores less than</span>
+<span class="sd">              0.5 and positive scores greater than 0.5. </span>
+<span class="sd">            - `'magnitude_max'`: takes the absolute value of the </span>
+<span class="sd">              attributions, then normalizes the attributions to the range </span>
+<span class="sd">              [0, 1] by dividing by the maximum absolute attribution value.</span>
+<span class="sd">            - `'magnitude_sum'`: takes the absolute value of the </span>
+<span class="sd">              attributions, then scales them such that they sum to 1. If </span>
+<span class="sd">              this option is used, each channel is normalized separately, </span>
+<span class="sd">              such that each channel sums to 1.</span>
+<span class="sd">            - `'signed_max'`: normalizes the attributions to the range </span>
+<span class="sd">              [-1, 1] by dividing the positive values by the maximum </span>
+<span class="sd">              positive attribution value and the negative values by the </span>
+<span class="sd">              minimum negative attribution value.</span>
+<span class="sd">            - `'signed_max_positive_centered'`: same as above, but scales </span>
+<span class="sd">              the values to the range [0, 1], with negative scores less than</span>
+<span class="sd">              0.5 and positive scores greater than 0.5.</span>
+<span class="sd">            - `'signed_sum'`: scales the positive attributions such that </span>
+<span class="sd">              they sum to 1 and the negative attributions such that they</span>
+<span class="sd">              scale to -1. If this option is used, each channel is </span>
+<span class="sd">              normalized separately.</span>
+<span class="sd">            - `'01'`: normalizes the attributions to the range [0, 1] by </span>
+<span class="sd">              subtracting the minimum attribution value then dividing by the</span>
+<span class="sd">              maximum attribution value.</span>
+<span class="sd">            - `'unnormalized'`: leaves the attributions unaffected.</span>
+
+<span class="sd">            If `None`, either `'unsigned_max'` (for single-channel data) or </span>
+<span class="sd">            `'unsigned_max_positive_centered'` (for multi-channel data) is</span>
+<span class="sd">            used.</span>
+
+<span class="sd">        blur:</span>
+<span class="sd">            Gives the radius of a Gaussian blur to be applied to the </span>
+<span class="sd">            attributions before visualizing. This can be used to help focus</span>
+<span class="sd">            on salient regions rather than specific salient pixels.</span>
+
+<span class="sd">        cmap: matplotlib.colors.Colormap | str, optional</span>
+<span class="sd">            Colormap or name of a Colormap to use for the visualization. If </span>
+<span class="sd">            `None`, the colormap will be chosen based on the normalization </span>
+<span class="sd">            type. This argument is only used for single-channel data</span>
+<span class="sd">            (including when `combine_channels` is True).</span>
+<span class="sd">    """</span>
+
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="n">combine_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">normalization_type</span><span class="o">=</span><span class="n">normalization_type</span><span class="p">,</span>
+        <span class="n">blur</span><span class="o">=</span><span class="n">blur</span><span class="p">,</span>
+        <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">default_overlay_opacity</span> <span class="o">=</span> <span class="n">overlay_opacity</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="doc doc-object doc-class">
+<h2 class="doc doc-heading" id="trulens.visualizations.MaskVisualizer">
+<code>MaskVisualizer</code>
+<a class="headerlink" href="#trulens.visualizations.MaskVisualizer" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
+<p>Visualizes attributions by masking the original image to highlight the
+regions with influence above a given threshold percentile. Intended 
+particularly for use with input-attributions.</p>
+<div class="doc doc-children">
+<div class="doc doc-object doc-method">
+<h3 class="doc doc-heading" id="trulens.visualizations.MaskVisualizer.__init__">
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blur</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">masked_opacity</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">combine_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_attr_as_opacity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">positive_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.visualizations.MaskVisualizer.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>Configures the default parameters for the <code>__call__</code> method (these can 
+be overridden by passing in values to <code>__call__</code>).</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>blur</code></td>
+<td><code></code></td>
+<td>
+<p>Gives the radius of a Gaussian blur to be applied to the 
+attributions before visualizing. This can be used to help focus
+on salient regions rather than specific salient pixels.</p>
+</td>
+<td><code>5.0</code></td>
+</tr>
+<tr>
+<td><code>threshold</code></td>
+<td><code></code></td>
+<td>
+<p>Value in the range [0, 1]. Attribution values at or  below the 
+percentile given by <code>threshold</code> (after normalization, blurring,
+etc.) will be masked.</p>
+</td>
+<td><code>0.5</code></td>
+</tr>
+<tr>
+<td><code>masked_opacity</code></td>
+<td><code></code></td>
+<td>
+<p>Value in the range [0, 1] specifying the opacity for the parts
+of the image that are masked.</p>
+</td>
+<td><code>0.2</code></td>
+</tr>
+<tr>
+<td><code>combine_channels</code></td>
+<td><code></code></td>
+<td>
+<p>If <code>True</code>, the attributions will be averaged across the channel
+dimension, resulting in a 1-channel attribution map.</p>
+</td>
+<td><code>True</code></td>
+</tr>
+<tr>
+<td><code>use_attr_as_opacity</code></td>
+<td><code></code></td>
+<td>
+<p>If <code>True</code>, instead of using <code>threshold</code> and <code>masked_opacity</code>,
+the opacity of each pixel is given by the 0-1-normalized 
+attribution value.</p>
+</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>positive_only</code></td>
+<td><code></code></td>
+<td>
+<p>If <code>True</code>, only pixels with positive attribution will be 
+unmasked (or given nonzero opacity when <code>use_attr_as_opacity</code> is
+true).</p>
+</td>
+<td><code>True</code></td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>trulens/visualizations.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">blur</span><span class="o">=</span><span class="mf">5.</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">masked_opacity</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+        <span class="n">combine_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">use_attr_as_opacity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">positive_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Configures the default parameters for the `__call__` method (these can </span>
+<span class="sd">    be overridden by passing in values to `__call__`).</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        blur:</span>
+<span class="sd">            Gives the radius of a Gaussian blur to be applied to the </span>
+<span class="sd">            attributions before visualizing. This can be used to help focus</span>
+<span class="sd">            on salient regions rather than specific salient pixels.</span>
+
+<span class="sd">        threshold:</span>
+<span class="sd">            Value in the range [0, 1]. Attribution values at or  below the </span>
+<span class="sd">            percentile given by `threshold` (after normalization, blurring,</span>
+<span class="sd">            etc.) will be masked.</span>
+
+<span class="sd">        masked_opacity: </span>
+<span class="sd">            Value in the range [0, 1] specifying the opacity for the parts</span>
+<span class="sd">            of the image that are masked.</span>
+
+<span class="sd">        combine_channels:</span>
+<span class="sd">            If `True`, the attributions will be averaged across the channel</span>
+<span class="sd">            dimension, resulting in a 1-channel attribution map.</span>
+
+<span class="sd">        use_attr_as_opacity:</span>
+<span class="sd">            If `True`, instead of using `threshold` and `masked_opacity`,</span>
+<span class="sd">            the opacity of each pixel is given by the 0-1-normalized </span>
+<span class="sd">            attribution value.</span>
+
+<span class="sd">        positive_only:</span>
+<span class="sd">            If `True`, only pixels with positive attribution will be </span>
+<span class="sd">            unmasked (or given nonzero opacity when `use_attr_as_opacity` is</span>
+<span class="sd">            true).</span>
+<span class="sd">    """</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">default_blur</span> <span class="o">=</span> <span class="n">blur</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">default_thresh</span> <span class="o">=</span> <span class="n">threshold</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">default_masked_opacity</span> <span class="o">=</span> <span class="n">masked_opacity</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">default_combine_channels</span> <span class="o">=</span> <span class="n">combine_channels</span>
+
+    <span class="c1"># TODO(klas): in the future we can allow configuring of tiling settings</span>
+    <span class="c1">#   by allowing the user to specify the tiler.</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tiler</span> <span class="o">=</span> <span class="n">Tiler</span><span class="p">()</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="doc doc-object doc-class">
+<h2 class="doc doc-heading" id="trulens.visualizations.Tiler">
+<code>Tiler</code>
+<a class="headerlink" href="#trulens.visualizations.Tiler" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
+<p>Used to tile batched images or attributions.</p>
+<div class="doc doc-children">
+<div class="doc doc-object doc-method">
+<h3 class="doc doc-heading" id="trulens.visualizations.Tiler.tile">
+<code class="highlight language-python">
+tile<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> </code>
+<a class="headerlink" href="#trulens.visualizations.Tiler.tile" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>Tiles the given array into a grid that is as square as possible.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a</code></td>
+<td><code>ndarray</code></td>
+<td>
+<p>An array of 4D batched image data.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ndarray</code></td>
+<td>
+<p>A tiled array of the images from <code>a</code>. The resulting array has rank
+3 for color images, and 2 for grayscale images (the batch dimension
+is removed, as well as the channel dimension for grayscale images).
+The resulting array has its color channel dimension ordered last to
+fit the requirements of the <code>matplotlib</code> library.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>trulens/visualizations.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="nf">tile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">"""</span>
+<span class="sd">    Tiles the given array into a grid that is as square as possible.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        a:</span>
+<span class="sd">            An array of 4D batched image data.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tiled array of the images from `a`. The resulting array has rank</span>
+<span class="sd">        3 for color images, and 2 for grayscale images (the batch dimension</span>
+<span class="sd">        is removed, as well as the channel dimension for grayscale images).</span>
+<span class="sd">        The resulting array has its color channel dimension ordered last to</span>
+<span class="sd">        fit the requirements of the `matplotlib` library.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># `pyplot` expects the channels to come last.</span>
+    <span class="k">if</span> <span class="n">B</span><span class="o">.</span><span class="n">dim_order</span> <span class="o">==</span> <span class="s1">'channels_first'</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">n</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="n">rows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="n">rows</span><span class="p">))</span>
+
+    <span class="n">new_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">h</span> <span class="o">*</span> <span class="n">rows</span><span class="p">,</span> <span class="n">w</span> <span class="o">*</span> <span class="n">cols</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">i</span> <span class="o">//</span> <span class="n">cols</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="n">cols</span>
+        <span class="n">new_a</span><span class="p">[</span><span class="n">row</span> <span class="o">*</span> <span class="n">h</span><span class="p">:(</span><span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">h</span><span class="p">,</span> <span class="n">col</span> <span class="o">*</span> <span class="n">w</span><span class="p">:(</span><span class="n">col</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">new_a</span><span class="p">)</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="doc doc-object doc-class">
+<h2 class="doc doc-heading" id="trulens.visualizations.Visualizer">
+<code>Visualizer</code>
+<a class="headerlink" href="#trulens.visualizations.Visualizer" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
+<p>Visualizes attributions directly as a color image. Intended particularly for
+use with input-attributions.</p>
+<p>This can also be used for viewing images (rather than attributions).</p>
+<div class="doc doc-children">
+<div class="doc doc-object doc-method">
+<h3 class="doc doc-heading" id="trulens.visualizations.Visualizer.__call__">
+<code class="highlight language-python">
+__call__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attributions</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">imshow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_tiled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">combine_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.visualizations.Visualizer.__call__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>Visualizes the given attributions.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attributions</code></td>
+<td><code></code></td>
+<td>
+<p>A <code>np.ndarray</code> containing the attributions to be visualized.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>output_file</code></td>
+<td><code></code></td>
+<td>
+<p>File name to save the visualization image to. If <code>None</code>, no
+image will be saved, but the figure can still be displayed.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>imshow</code></td>
+<td><code></code></td>
+<td>
+<p>If true, a the visualization will be displayed. Otherwise the
+figure will not be displayed, but the figure can still be saved.</p>
+</td>
+<td><code>True</code></td>
+</tr>
+<tr>
+<td><code>fig</code></td>
+<td><code></code></td>
+<td>
+<p>The <code>pyplot</code> figure to display the visualization in. If <code>None</code>,
+a new figure will be created.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>return_tiled</code></td>
+<td><code></code></td>
+<td>
+<p>If true, the returned array will be in the same shape as the
+visualization, with no batch dimension and the instances in the
+batch tiled along the width and height dimensions. If false, the
+returned array will be reshaped to match <code>attributions</code>.</p>
+</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>combine_channels</code></td>
+<td><code></code></td>
+<td>
+<p>If <code>True</code>, the attributions will be averaged across the channel
+dimension, resulting in a 1-channel attribution map. If <code>None</code>,
+defaults to the value supplied to the constructor.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>normalization_type</code></td>
+<td><code></code></td>
+<td>
+<p>Specifies one of the following configurations for normalizing
+the attributions (each instance is normalized separately):</p>
+<ul>
+<li><code>'unsigned_max'</code>: normalizes the attributions to the range 
+  [-1, 1] by dividing the attributions by the maximum absolute 
+  attribution value.</li>
+<li><code>'unsigned_max_positive_centered'</code>: same as above, but scales
+  the values to the range [0, 1], with negative scores less than
+  0.5 and positive scores greater than 0.5. </li>
+<li><code>'magnitude_max'</code>: takes the absolute value of the 
+  attributions, then normalizes the attributions to the range 
+  [0, 1] by dividing by the maximum absolute attribution value.</li>
+<li><code>'magnitude_sum'</code>: takes the absolute value of the 
+  attributions, then scales them such that they sum to 1. If 
+  this option is used, each channel is normalized separately, 
+  such that each channel sums to 1.</li>
+<li><code>'signed_max'</code>: normalizes the attributions to the range 
+  [-1, 1] by dividing the positive values by the maximum 
+  positive attribution value and the negative values by the 
+  minimum negative attribution value.</li>
+<li><code>'signed_max_positive_centered'</code>: same as above, but scales 
+  the values to the range [0, 1], with negative scores less than
+  0.5 and positive scores greater than 0.5.</li>
+<li><code>'signed_sum'</code>: scales the positive attributions such that 
+  they sum to 1 and the negative attributions such that they
+  scale to -1. If this option is used, each channel is 
+  normalized separately.</li>
+<li><code>'01'</code>: normalizes the attributions to the range [0, 1] by 
+  subtracting the minimum attribution value then dividing by the
+  maximum attribution value.</li>
+<li><code>'unnormalized'</code>: leaves the attributions unaffected.</li>
+</ul>
+<p>If <code>None</code>, defaults to the value supplied to the constructor.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>blur</code></td>
+<td><code></code></td>
+<td>
+<p>Gives the radius of a Gaussian blur to be applied to the 
+attributions before visualizing. This can be used to help focus
+on salient regions rather than specific salient pixels. If
+<code>None</code>, defaults to the value supplied to the constructor.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>cmap</code></td>
+<td><code></code></td>
+<td>
+<p>matplotlib.colors.Colormap | str, optional
+Colormap or name of a Colormap to use for the visualization. If
+<code>None</code>, defaults to the value supplied to the constructor.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code></code></td>
+<td>
+<p>A <code>np.ndarray</code> array of the numerical representation of the
+attributions as modified for the visualization. This includes 
+normalization, blurring, etc.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>trulens/visualizations.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">attributions</span><span class="p">,</span>
+        <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">imshow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">return_tiled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">combine_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Visualizes the given attributions.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        attributions:</span>
+<span class="sd">            A `np.ndarray` containing the attributions to be visualized.</span>
+
+<span class="sd">        output_file:</span>
+<span class="sd">            File name to save the visualization image to. If `None`, no</span>
+<span class="sd">            image will be saved, but the figure can still be displayed.</span>
+
+<span class="sd">        imshow:</span>
+<span class="sd">            If true, a the visualization will be displayed. Otherwise the</span>
+<span class="sd">            figure will not be displayed, but the figure can still be saved.</span>
+
+<span class="sd">        fig:</span>
+<span class="sd">            The `pyplot` figure to display the visualization in. If `None`,</span>
+<span class="sd">            a new figure will be created.</span>
+
+<span class="sd">        return_tiled:</span>
+<span class="sd">            If true, the returned array will be in the same shape as the</span>
+<span class="sd">            visualization, with no batch dimension and the instances in the</span>
+<span class="sd">            batch tiled along the width and height dimensions. If false, the</span>
+<span class="sd">            returned array will be reshaped to match `attributions`.</span>
+
+<span class="sd">        combine_channels:</span>
+<span class="sd">            If `True`, the attributions will be averaged across the channel</span>
+<span class="sd">            dimension, resulting in a 1-channel attribution map. If `None`,</span>
+<span class="sd">            defaults to the value supplied to the constructor.</span>
+
+<span class="sd">        normalization_type:</span>
+<span class="sd">            Specifies one of the following configurations for normalizing</span>
+<span class="sd">            the attributions (each instance is normalized separately):</span>
+
+<span class="sd">            - `'unsigned_max'`: normalizes the attributions to the range </span>
+<span class="sd">              [-1, 1] by dividing the attributions by the maximum absolute </span>
+<span class="sd">              attribution value.</span>
+<span class="sd">            - `'unsigned_max_positive_centered'`: same as above, but scales</span>
+<span class="sd">              the values to the range [0, 1], with negative scores less than</span>
+<span class="sd">              0.5 and positive scores greater than 0.5. </span>
+<span class="sd">            - `'magnitude_max'`: takes the absolute value of the </span>
+<span class="sd">              attributions, then normalizes the attributions to the range </span>
+<span class="sd">              [0, 1] by dividing by the maximum absolute attribution value.</span>
+<span class="sd">            - `'magnitude_sum'`: takes the absolute value of the </span>
+<span class="sd">              attributions, then scales them such that they sum to 1. If </span>
+<span class="sd">              this option is used, each channel is normalized separately, </span>
+<span class="sd">              such that each channel sums to 1.</span>
+<span class="sd">            - `'signed_max'`: normalizes the attributions to the range </span>
+<span class="sd">              [-1, 1] by dividing the positive values by the maximum </span>
+<span class="sd">              positive attribution value and the negative values by the </span>
+<span class="sd">              minimum negative attribution value.</span>
+<span class="sd">            - `'signed_max_positive_centered'`: same as above, but scales </span>
+<span class="sd">              the values to the range [0, 1], with negative scores less than</span>
+<span class="sd">              0.5 and positive scores greater than 0.5.</span>
+<span class="sd">            - `'signed_sum'`: scales the positive attributions such that </span>
+<span class="sd">              they sum to 1 and the negative attributions such that they</span>
+<span class="sd">              scale to -1. If this option is used, each channel is </span>
+<span class="sd">              normalized separately.</span>
+<span class="sd">            - `'01'`: normalizes the attributions to the range [0, 1] by </span>
+<span class="sd">              subtracting the minimum attribution value then dividing by the</span>
+<span class="sd">              maximum attribution value.</span>
+<span class="sd">            - `'unnormalized'`: leaves the attributions unaffected.</span>
+
+<span class="sd">            If `None`, defaults to the value supplied to the constructor.</span>
+
+<span class="sd">        blur:</span>
+<span class="sd">            Gives the radius of a Gaussian blur to be applied to the </span>
+<span class="sd">            attributions before visualizing. This can be used to help focus</span>
+<span class="sd">            on salient regions rather than specific salient pixels. If</span>
+<span class="sd">            `None`, defaults to the value supplied to the constructor.</span>
+
+<span class="sd">        cmap: matplotlib.colors.Colormap | str, optional</span>
+<span class="sd">            Colormap or name of a Colormap to use for the visualization. If</span>
+<span class="sd">            `None`, defaults to the value supplied to the constructor.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `np.ndarray` array of the numerical representation of the</span>
+<span class="sd">        attributions as modified for the visualization. This includes </span>
+<span class="sd">        normalization, blurring, etc.</span>
+<span class="sd">    """</span>
+    <span class="n">combine_channels</span><span class="p">,</span> <span class="n">normalization_type</span><span class="p">,</span> <span class="n">blur</span><span class="p">,</span> <span class="n">cmap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_args</span><span class="p">(</span>
+        <span class="n">attributions</span><span class="p">,</span> <span class="n">combine_channels</span><span class="p">,</span> <span class="n">normalization_type</span><span class="p">,</span> <span class="n">blur</span><span class="p">,</span> <span class="n">cmap</span><span class="p">)</span>
+
+    <span class="c1"># Combine the channels if specified.</span>
+    <span class="k">if</span> <span class="n">combine_channels</span><span class="p">:</span>
+        <span class="n">attributions</span> <span class="o">=</span> <span class="n">attributions</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">B</span><span class="o">.</span><span class="n">channel_axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Blur the attributions so the explanation is smoother.</span>
+    <span class="k">if</span> <span class="n">blur</span><span class="p">:</span>
+        <span class="n">attributions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blur</span><span class="p">(</span><span class="n">attributions</span><span class="p">,</span> <span class="n">blur</span><span class="p">)</span>
+
+    <span class="c1"># Normalize the attributions.</span>
+    <span class="n">attributions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize</span><span class="p">(</span><span class="n">attributions</span><span class="p">,</span> <span class="n">normalization_type</span><span class="p">)</span>
+
+    <span class="n">tiled_attributions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tiler</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">attributions</span><span class="p">)</span>
+
+    <span class="c1"># Display the figure:</span>
+    <span class="n">_fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span> <span class="k">if</span> <span class="n">fig</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">fig</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">tiled_attributions</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">output_file</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">imshow</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">elif</span> <span class="n">fig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">_fig</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tiled_attributions</span> <span class="k">if</span> <span class="n">return_tiled</span> <span class="k">else</span> <span class="n">attributions</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
+<h3 class="doc doc-heading" id="trulens.visualizations.Visualizer.__init__">
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">combine_channels</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blur</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.visualizations.Visualizer.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>Configures the default parameters for the <code>__call__</code> method (these can 
+be overridden by passing in values to <code>__call__</code>).</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>combine_channels</code></td>
+<td><code>bool</code></td>
+<td>
+<p>If <code>True</code>, the attributions will be averaged across the channel
+dimension, resulting in a 1-channel attribution map.</p>
+</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>normalization_type</code></td>
+<td><code>str</code></td>
+<td>
+<p>Specifies one of the following configurations for normalizing
+the attributions (each instance is normalized separately):</p>
+<ul>
+<li><code>'unsigned_max'</code>: normalizes the attributions to the range 
+  [-1, 1] by dividing the attributions by the maximum absolute 
+  attribution value.</li>
+<li><code>'unsigned_max_positive_centered'</code>: same as above, but scales
+  the values to the range [0, 1], with negative scores less than
+  0.5 and positive scores greater than 0.5. </li>
+<li><code>'magnitude_max'</code>: takes the absolute value of the 
+  attributions, then normalizes the attributions to the range 
+  [0, 1] by dividing by the maximum absolute attribution value.</li>
+<li><code>'magnitude_sum'</code>: takes the absolute value of the 
+  attributions, then scales them such that they sum to 1. If 
+  this option is used, each channel is normalized separately, 
+  such that each channel sums to 1.</li>
+<li><code>'signed_max'</code>: normalizes the attributions to the range 
+  [-1, 1] by dividing the positive values by the maximum 
+  positive attribution value and the negative values by the 
+  minimum negative attribution value.</li>
+<li><code>'signed_max_positive_centered'</code>: same as above, but scales 
+  the values to the range [0, 1], with negative scores less than
+  0.5 and positive scores greater than 0.5.</li>
+<li><code>'signed_sum'</code>: scales the positive attributions such that 
+  they sum to 1 and the negative attributions such that they
+  scale to -1. If this option is used, each channel is 
+  normalized separately.</li>
+<li><code>'01'</code>: normalizes the attributions to the range [0, 1] by 
+  subtracting the minimum attribution value then dividing by the
+  maximum attribution value.</li>
+<li><code>'unnormalized'</code>: leaves the attributions unaffected.</li>
+</ul>
+<p>If <code>None</code>, either <code>'unsigned_max'</code> (for single-channel data) or 
+<code>'unsigned_max_positive_centered'</code> (for multi-channel data) is
+used.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>blur</code></td>
+<td><code>float</code></td>
+<td>
+<p>Gives the radius of a Gaussian blur to be applied to the 
+attributions before visualizing. This can be used to help focus
+on salient regions rather than specific salient pixels.</p>
+</td>
+<td><code>0.0</code></td>
+</tr>
+<tr>
+<td><code>cmap</code></td>
+<td><code>Colormap</code></td>
+<td>
+<p>matplotlib.colors.Colormap | str, optional
+Colormap or name of a Colormap to use for the visualization. If 
+<code>None</code>, the colormap will be chosen based on the normalization 
+type. This argument is only used for single-channel data
+(including when <code>combine_channels</code> is True).</p>
+</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+<summary>Source code in <code>trulens/visualizations.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">combine_channels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">normalization_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">blur</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span>
+        <span class="n">cmap</span><span class="p">:</span> <span class="n">Colormap</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Configures the default parameters for the `__call__` method (these can </span>
+<span class="sd">    be overridden by passing in values to `__call__`).</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        combine_channels:</span>
+<span class="sd">            If `True`, the attributions will be averaged across the channel</span>
+<span class="sd">            dimension, resulting in a 1-channel attribution map.</span>
+
+<span class="sd">        normalization_type:</span>
+<span class="sd">            Specifies one of the following configurations for normalizing</span>
+<span class="sd">            the attributions (each instance is normalized separately):</span>
+
+<span class="sd">            - `'unsigned_max'`: normalizes the attributions to the range </span>
+<span class="sd">              [-1, 1] by dividing the attributions by the maximum absolute </span>
+<span class="sd">              attribution value.</span>
+<span class="sd">            - `'unsigned_max_positive_centered'`: same as above, but scales</span>
+<span class="sd">              the values to the range [0, 1], with negative scores less than</span>
+<span class="sd">              0.5 and positive scores greater than 0.5. </span>
+<span class="sd">            - `'magnitude_max'`: takes the absolute value of the </span>
+<span class="sd">              attributions, then normalizes the attributions to the range </span>
+<span class="sd">              [0, 1] by dividing by the maximum absolute attribution value.</span>
+<span class="sd">            - `'magnitude_sum'`: takes the absolute value of the </span>
+<span class="sd">              attributions, then scales them such that they sum to 1. If </span>
+<span class="sd">              this option is used, each channel is normalized separately, </span>
+<span class="sd">              such that each channel sums to 1.</span>
+<span class="sd">            - `'signed_max'`: normalizes the attributions to the range </span>
+<span class="sd">              [-1, 1] by dividing the positive values by the maximum </span>
+<span class="sd">              positive attribution value and the negative values by the </span>
+<span class="sd">              minimum negative attribution value.</span>
+<span class="sd">            - `'signed_max_positive_centered'`: same as above, but scales </span>
+<span class="sd">              the values to the range [0, 1], with negative scores less than</span>
+<span class="sd">              0.5 and positive scores greater than 0.5.</span>
+<span class="sd">            - `'signed_sum'`: scales the positive attributions such that </span>
+<span class="sd">              they sum to 1 and the negative attributions such that they</span>
+<span class="sd">              scale to -1. If this option is used, each channel is </span>
+<span class="sd">              normalized separately.</span>
+<span class="sd">            - `'01'`: normalizes the attributions to the range [0, 1] by </span>
+<span class="sd">              subtracting the minimum attribution value then dividing by the</span>
+<span class="sd">              maximum attribution value.</span>
+<span class="sd">            - `'unnormalized'`: leaves the attributions unaffected.</span>
+
+<span class="sd">            If `None`, either `'unsigned_max'` (for single-channel data) or </span>
+<span class="sd">            `'unsigned_max_positive_centered'` (for multi-channel data) is</span>
+<span class="sd">            used.</span>
+
+<span class="sd">        blur:</span>
+<span class="sd">            Gives the radius of a Gaussian blur to be applied to the </span>
+<span class="sd">            attributions before visualizing. This can be used to help focus</span>
+<span class="sd">            on salient regions rather than specific salient pixels.</span>
+
+<span class="sd">        cmap: matplotlib.colors.Colormap | str, optional</span>
+<span class="sd">            Colormap or name of a Colormap to use for the visualization. If </span>
+<span class="sd">            `None`, the colormap will be chosen based on the normalization </span>
+<span class="sd">            type. This argument is only used for single-channel data</span>
+<span class="sd">            (including when `combine_channels` is True).</span>
+<span class="sd">    """</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">default_combine_channels</span> <span class="o">=</span> <span class="n">combine_channels</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">default_normalization_type</span> <span class="o">=</span> <span class="n">normalization_type</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">default_blur</span> <span class="o">=</span> <span class="n">blur</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">default_cmap</span> <span class="o">=</span> <span class="n">cmap</span> <span class="k">if</span> <span class="n">cmap</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_hotcold</span><span class="p">()</span>
+
+    <span class="c1"># TODO(klas): in the future we can allow configuring of tiling settings</span>
+    <span class="c1">#   by allowing the user to specify the tiler.</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tiler</span> <span class="o">=</span> <span class="n">Tiler</span><span class="p">()</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-nav">
+<nav aria-label="Footer" class="md-footer-nav__inner md-grid">
+<a class="md-footer-nav__link md-footer-nav__link--prev" href="../distributions/" rel="prev" title="Distributions">
+<div class="md-footer-nav__button md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</div>
+<div class="md-footer-nav__title">
+<div class="md-ellipsis">
+<span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Distributions
+              </div>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+          Material for MkDocs
+        </a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src="../../assets/javascripts/vendor.d1f5a259.min.js"></script>
+<script src="../../assets/javascripts/bundle.d5fec882.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+<script>
+        app = initialize({
+          base: "../..",
+          features: [],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.fae956e7.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+<script src="../../javascript/config.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src="../../javascript/tex-mml-chtml-3.0.0.js"></script>
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</body>
+</html>
