@@ -19,7 +19,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name="netlens",
+    name="trulens",
     version=version,
     author="Truera Inc",
     author_email="all@truera.com",
@@ -27,7 +27,7 @@ setup(
     "Library containing attribution and interpretation methods for deep nets.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    packages=find_namespace_packages(include=["netlens", "netlens.*"]),
+    packages=find_namespace_packages(include=["trulens", "trulens.*"]),
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",

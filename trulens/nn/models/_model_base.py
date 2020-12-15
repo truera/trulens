@@ -1,5 +1,5 @@
 """ 
-The Netlens library is designed to support models implemented via a variety of
+The TruLens library is designed to support models implemented via a variety of
 different popular python neural network frameworks: Keras (with TensorFlow or 
 Theano backend), TensorFlow, and Pytorch. In order provide the same 
 functionality to models made with frameworks that implement things (e.g., 

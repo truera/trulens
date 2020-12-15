@@ -1,12 +1,12 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'tensorflow'
+os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
 from unittest import TestCase, main
 
 import numpy as np
 
-from netlens import backend as B
-from netlens.models import ModelWrapper
+from trulens.nn import backend as B
+from trulens.nn.models import ModelWrapper
 
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, GRU, Input

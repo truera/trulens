@@ -19,7 +19,7 @@ from typing import Optional
 from typing import Union
 from warnings import warn
 
-from netlens import backend as B
+from trulens.nn import backend as B
 
 # Define some type aliases.
 LayerIdentifier = Union[int, str, List[Union[int, str]]]

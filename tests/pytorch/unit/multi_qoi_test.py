@@ -1,12 +1,12 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'pytorch'
+os.environ['TRULENS_BACKEND'] = 'pytorch'
 
 from unittest import TestCase, main
 
 import numpy as np
 
-from netlens import backend as B
-from netlens.models import ModelWrapper
+from trulens.nn import backend as B
+from trulens.nn.models import ModelWrapper
 
 from torch import cat
 from torch.nn import GRU, Linear, Module

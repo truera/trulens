@@ -1,5 +1,5 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'tf.keras'
+os.environ['TRULENS_BACKEND'] = 'tf.keras'
 
 from tensorflow.python.util import deprecation
 deprecation._PRINT_DEPRECATION_WARNINGS = False
@@ -10,7 +10,7 @@ from tensorflow.keras.layers import Input, Dense
 from tensorflow.keras.models import Model
 from unittest import TestCase, main
 
-from netlens.models.keras import KerasModelWrapper
+from trulens.nn.models.keras import KerasModelWrapper
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 
 

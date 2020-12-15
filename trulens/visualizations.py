@@ -19,12 +19,12 @@ import numpy as np
 
 from scipy.ndimage.filters import gaussian_filter
 
-from netlens import backend as B
+from trulens.nn import backend as B
 
-from netlens.attribution import InternalInfluence
-from netlens.distributions import PointDoi
-from netlens.quantities import InternalChannelQoI
-from netlens.slices import Cut, InputCut
+from trulens.nn.attribution import InternalInfluence
+from trulens.nn.distributions import PointDoi
+from trulens.nn.quantities import InternalChannelQoI
+from trulens.nn.slices import Cut, InputCut
 
 
 class Tiler(object):

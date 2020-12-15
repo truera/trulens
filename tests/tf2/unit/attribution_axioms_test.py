@@ -1,18 +1,18 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'tensorflow'
+os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
 from tensorflow.keras.layers import Activation, Dense, Input
 from tensorflow.keras.models import Model
 from unittest import TestCase, main
 
-from netlens.models import ModelWrapper
+from trulens.nn.models import ModelWrapper
 from tests.unit.attribution_axioms_test_base import AxiomsTestBase
 
-from netlens import backend as B
-from netlens.attribution import InternalInfluence
-from netlens.distributions import LinearDoi
-from netlens.quantities import ClassQoI
-from netlens.slices import InputCut
+from trulens.nn import backend as B
+from trulens.nn.attribution import InternalInfluence
+from trulens.nn.distributions import LinearDoi
+from trulens.nn.quantities import ClassQoI
+from trulens.nn.slices import InputCut
 
 
 class AxiomsTest(AxiomsTestBase, TestCase):

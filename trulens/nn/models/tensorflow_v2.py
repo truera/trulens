@@ -3,10 +3,10 @@ import tensorflow as tf
 import tensorflow.keras as keras
 import tensorflow.keras.backend as K
 
-from netlens import backend as B
-from netlens.models.keras import KerasModelWrapper
-from netlens.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
-from netlens.slices import InputCut, OutputCut, LogitCut
+from trulens.nn import backend as B
+from trulens.nn.models.keras import KerasModelWrapper
+from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
+from trulens.nn.slices import InputCut, OutputCut, LogitCut
 
 
 class Tensorflow2ModelWrapper(KerasModelWrapper):

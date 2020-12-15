@@ -1,5 +1,5 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'tf.keras'
+os.environ['TRULENS_BACKEND'] = 'tf.keras'
 
 from unittest import TestCase, main
 

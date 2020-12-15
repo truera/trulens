@@ -1,5 +1,5 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'tensorflow'
+os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
 from tensorflow.python.util import deprecation
 deprecation._PRINT_DEPRECATION_WARNINGS = False
@@ -8,7 +8,7 @@ from tensorflow import Graph, placeholder
 from tensorflow.nn import relu
 from unittest import TestCase, main
 
-from netlens.models import ModelWrapper
+from trulens.nn.models import ModelWrapper
 from tests.unit.batch_test_base import BatchTestBase
 
 
