@@ -1,5 +1,5 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'tensorflow'
+os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
 import numpy as np
 
@@ -7,9 +7,9 @@ from tensorflow.keras.layers import Input, Dense
 from tensorflow.keras.models import Model
 from unittest import TestCase, main
 
-from netlens.models import ModelWrapper
-from netlens.quantities import MaxClassQoI
-from netlens.slices import Cut
+from trulens.nn.models import ModelWrapper
+from trulens.nn.quantities import MaxClassQoI
+from trulens.nn.slices import Cut
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 
 

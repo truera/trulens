@@ -1,3 +1,3 @@
 # Attribution Methods
 
-::: netlens.attribution
+::: trulens.nn.attribution

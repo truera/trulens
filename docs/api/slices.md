@@ -1,3 +1,3 @@
 # Slices
 
-::: netlens.slices
+::: trulens.nn.slices

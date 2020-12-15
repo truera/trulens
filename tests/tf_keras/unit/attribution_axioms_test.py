@@ -1,5 +1,5 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'tf.keras'
+os.environ['TRULENS_BACKEND'] = 'tf.keras'
 
 from tensorflow.python.util import deprecation
 deprecation._PRINT_DEPRECATION_WARNINGS = False
@@ -8,7 +8,7 @@ from tensorflow.keras.layers import Activation, Dense, Input
 from tensorflow.keras.models import Model
 from unittest import TestCase, main
 
-from netlens.models import ModelWrapper
+from trulens.nn.models import ModelWrapper
 from tests.unit.attribution_axioms_test_base import AxiomsTestBase
 
 

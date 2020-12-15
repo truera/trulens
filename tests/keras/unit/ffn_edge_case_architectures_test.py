@@ -1,5 +1,5 @@
 import os
-os.environ['NETLENS_BACKEND'] = 'keras'
+os.environ['TRULENS_BACKEND'] = 'keras'
 
 from unittest import TestCase, main
 
@@ -8,12 +8,12 @@ import numpy as np
 from tensorflow.python.util import deprecation
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
-from netlens import backend as B
-from netlens.attribution import InternalInfluence
-from netlens.distributions import PointDoi
-from netlens.models import ModelWrapper
-from netlens.quantities import ClassQoI
-from netlens.slices import InputCut, Cut
+from trulens.nn import backend as B
+from trulens.nn.attribution import InternalInfluence
+from trulens.nn.distributions import PointDoi
+from trulens.nn.models import ModelWrapper
+from trulens.nn.quantities import ClassQoI
+from trulens.nn.slices import InputCut, Cut
 
 from keras.layers import Activation, Dense, Input, Concatenate
 from keras.models import Model

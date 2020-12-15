@@ -1,4 +1,4 @@
-site_name: Netlens
+site_name: TruLens
 
 markdown_extensions:
   # https://squidfunk.github.io/mkdocs-material/reference/mathjax/
@@ -42,7 +42,7 @@ plugins:
               - "^__init__$"  # but always include __init__ modules and methods
               - "^__call__$"  # and __call__ methods
       watch:
-        - netlens
+        - trulens
 
 
 theme:
@@ -55,7 +55,7 @@ theme:
   logo: img/logo.png
 
 nav:
-  - Welcome to Netlens!: index.md
+  - Welcome to TruLens!: index.md
   - Installation: install.md
   - Quickstart: quickstart.md
   - User Guide: userguide.md

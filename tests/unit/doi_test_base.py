@@ -1,7 +1,7 @@
 import numpy as np
 
-from netlens import backend as B
-from netlens.distributions import PointDoi, LinearDoi, GaussianDoi
+from trulens.nn import backend as B
+from trulens.nn.distributions import PointDoi, LinearDoi, GaussianDoi
 
 
 class DoiTestBase(object):

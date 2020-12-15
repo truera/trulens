@@ -22,7 +22,7 @@ from typing import List
 from typing import Optional
 from typing import Union
 
-from netlens import backend as B
+from trulens.nn import backend as B
 
 # Define some type aliases.
 TensorLike = Union[Any, List[Union[Any]]]
