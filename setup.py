@@ -3,7 +3,7 @@ from os import path
 import sys
 from setuptools import setup, find_namespace_packages
 
-version = "0.0.1"
+version = "0.0.3"
 versionArgument = "--customVersion"
 if versionArgument in sys.argv:
     versionArgumentLoc = sys.argv.index(versionArgument)
@@ -27,10 +27,13 @@ setup(
     "Library containing attribution and interpretation methods for deep nets.",
     long_description=long_description,
     long_description_content_type="text/markdown",
+    license="AGPL-3.0",
+    url="https://truera.github.io/trulens/",
     packages=find_namespace_packages(include=["trulens", "trulens.*"]),
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
         "Development Status :: 3 - Alpha",
+        "License :: OSI Approved :: GNU Affero General Public License v3",
     ],
     python_requires='>=3.6')
