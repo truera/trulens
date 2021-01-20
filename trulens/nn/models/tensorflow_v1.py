@@ -1,5 +1,4 @@
-# TODO(klas): this code is stale and needs to be re-written with the changes to
-#   the API, e.g., Cuts.
+import sys
 
 import numpy as np
 import tensorflow as tf
@@ -122,6 +121,7 @@ class TensorflowModelWrapper(ModelWrapper):
 
         # Convert `intervention` to a list of inputs if it isn't already.
         if intervention is not None:
+
             if isinstance(intervention, dict):
                 for key_tensor in intervention:
                     assert tf.is_tensor(
@@ -251,8 +251,13 @@ class TensorflowModelWrapper(ModelWrapper):
 
         else:
             with tf.Session(graph=self._graph) as session:
-                session.run(tf.global_variables_initializer())
-                return session.run(outs, feed_dict=feed_dict)
+                try:
+                    return session.run(outs, feed_dict=feed_dict)
+                except tf.errors.FailedPreconditionError:
+                    tb = sys.exc_info()[2]
+                    raise RuntimeError(
+                        'Encountered uninitialized session variables. This could be caused by not saving all variables, or from other tensorflow default session implementation issues. Try passing in the session to the ModelWrapper __init__ function.'
+                    ).with_traceback(tb)
 
     def qoi_bprop(
             self,
@@ -316,7 +321,6 @@ class TensorflowModelWrapper(ModelWrapper):
 
         feed_dict, _ = self._prepare_feed_dict_with_intervention(
             model_args, model_kwargs, intervention, doi_tensors)
-
         z_grads = []
         with self._graph.as_default():
             for z in attribution_tensors:
@@ -334,14 +338,13 @@ class TensorflowModelWrapper(ModelWrapper):
                         DATA_CONTAINER_TYPE) and len(grads) == 1 else grads
                     grads = [
                         attribution_cut.access_layer(g) for g in grads
-                    ] if isinstance(
-                        grads, 
-                        DATA_CONTAINER_TYPE) else attribution_cut.access_layer(
-                            grads)
+                    ] if isinstance(grads, DATA_CONTAINER_TYPE
+                                   ) else attribution_cut.access_layer(grads)
                     self._cached_gradient_tensors[gradient_tensor_key] = grads
                 z_grads.append(grads)
 
         grad_flat = ModelWrapper._flatten(z_grads)
+
         gradients = [self._run_session(g, feed_dict) for g in grad_flat]
 
         gradients = ModelWrapper._unflatten(gradients, z_grads)

@@ -579,10 +579,7 @@ class IntegratedGradients(InputAttribution):
     """
 
     def __init__(
-            self,
-            model: ModelWrapper,
-            baseline=None,
-            resolution: int = 50):
+            self, model: ModelWrapper, baseline=None, resolution: int = 50):
         """
         Parameters:
             model:
