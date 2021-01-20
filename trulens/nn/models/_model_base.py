@@ -10,7 +10,6 @@ it should be wrapped as a `ModelWrapper` instance.
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
 
-
 DATA_CONTAINER_TYPE = (list, tuple)
 
 
