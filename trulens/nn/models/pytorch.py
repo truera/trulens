@@ -294,7 +294,7 @@ class PytorchModelWrapper(ModelWrapper):
                 nonlocal counter, input_timestep, doi_cut, intervention
 
                 if input_timestep is None or input_timestep == counter:
-                    # FIXME: generalize to multi-input layers. Currently can 
+                    # FIXME: generalize to multi-input layers. Currently can
                     #   only intervene on one layer.
                     inpt = inpt[0] if len(inpt) == 1 else inpt
                     if doi_cut.anchor == 'in':
@@ -458,9 +458,9 @@ class PytorchModelWrapper(ModelWrapper):
 
             grads = [
                 ModelWrapper._unflatten(g, z, count=[0]) for g in grads_flat
-            ] if isinstance(
-                qoi_out, DATA_CONTAINER_TYPE) else ModelWrapper._unflatten(
-                    grads_flat, z, count=[0])
+            ] if isinstance(qoi_out,
+                            DATA_CONTAINER_TYPE) else ModelWrapper._unflatten(
+                                grads_flat, z, count=[0])
 
             grads = [
                 attribution_cut.access_layer(g) for g in grads
@@ -470,7 +470,7 @@ class PytorchModelWrapper(ModelWrapper):
 
             grads = [B.as_array(g) for g in grads] if isinstance(
                 qoi_out, DATA_CONTAINER_TYPE) else B.as_array(grads)
-            
+
             grads_list.append(grads)
 
         del y  # TODO: garbage collection

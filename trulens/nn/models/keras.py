@@ -400,7 +400,7 @@ class KerasModelWrapper(ModelWrapper):
 
         gradients = [
             keras.backend.function(
-                doi_tensors, B.gradient(q, attribution_tensors))(intervention) 
+                doi_tensors, B.gradient(q, attribution_tensors))(intervention)
             for q in Q
         ] if isinstance(Q, DATA_CONTAINER_TYPE) else keras.backend.function(
             doi_tensors, B.gradient(Q, attribution_tensors))(intervention)

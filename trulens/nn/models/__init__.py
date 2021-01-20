@@ -1,4 +1,3 @@
-
 from trulens.nn import backend as B
 
 if B.backend == 'keras' or B.backend == 'tf.keras':
