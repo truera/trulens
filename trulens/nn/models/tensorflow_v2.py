@@ -149,11 +149,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
         """
         if not self._eager:
             return super().fprop(
-                model_args, 
-                model_kwargs, 
-                doi_cut, 
-                to_cut, 
-                attribution_cut,
+                model_args, model_kwargs, doi_cut, to_cut, attribution_cut,
                 intervention)
 
         if doi_cut is None:
@@ -198,9 +194,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                 if not isinstance(doi_cut, InputCut):
                     from_layers = (
                         self._get_logit_layer() if isinstance(
-                            doi_cut, LogitCut) else 
-                        self._get_output_layer() if isinstance(
-                            doi_cut, OutputCut) else
+                            doi_cut, LogitCut) else self._get_output_layer()
+                        if isinstance(doi_cut, OutputCut) else
                         self._get_layers_by_name(doi_cut.name))
 
                     for layer, x_i in zip(from_layers, intervention):
@@ -210,12 +205,12 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                             layer.output_intervention = lambda _: x_i
                 else:
                     arg_wrapped_list = False
-                    # Take care of the Keras Module case where args is a tuple 
+                    # Take care of the Keras Module case where args is a tuple
                     # of list of inputs corresponding to `model._inputs`. This
                     # would have gotten unwrapped as the logic operates on the
                     # list of inputs. so needs to be re-wrapped in tuple for the
                     # model arg execution.
-                    if (isinstance(model_args, DATA_CONTAINER_TYPE) and 
+                    if (isinstance(model_args, DATA_CONTAINER_TYPE) and
                             isinstance(model_args[0], DATA_CONTAINER_TYPE)):
 
                         arg_wrapped_list = True
@@ -261,7 +256,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
 
             if attribution_cut:
                 if isinstance(attribution_cut, InputCut):
-                    # The attribution must be the watched tensor given from 
+                    # The attribution must be the watched tensor given from
                     # `qoi_bprop`.
                     attribution_results = intervention
 
@@ -402,10 +397,9 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
             if isinstance(Q, DATA_CONTAINER_TYPE) and len(Q) == 1:
                 Q = B.sum(Q)
 
-        grads = [
-            tape.gradient(q, attribution_features) for q in Q
-        ] if isinstance(Q, DATA_CONTAINER_TYPE) else tape.gradient(
-            Q, attribution_features)
+        grads = [tape.gradient(q, attribution_features) for q in Q
+                ] if isinstance(Q, DATA_CONTAINER_TYPE) else tape.gradient(
+                    Q, attribution_features)
 
         grads = grads[0] if isinstance(
             grads, DATA_CONTAINER_TYPE) and len(grads) == 1 else grads
