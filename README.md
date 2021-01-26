@@ -2,6 +2,8 @@
 
 Library containing attribution and interpretation methods for deep nets.
 
+[Documentation](https://truera.github.io/trulens/)
+
 # Quick Usage
 To quickly play around with the TruLens library, check out the following CoLab notebooks:
 * PyTorch: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1n77IGrPDO2XpeIVo_LQW0gY78enV-tY9?usp=sharing)
