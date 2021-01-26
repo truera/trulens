@@ -73,6 +73,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
 
         self._B = B
 
+
     @property
     def B(self):
         return self._B
@@ -85,10 +86,18 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
 
     def _get_output_layer(self):
         output_layers = []
+        if self._model.outputs is None:
+            raise Exception("Unable to determine output layers. Please set the outputs using set_output_layers.")
         for output in self._model.outputs:
             for layer in self._layers:
-                if layer.output is output:
-                    output_layers.append(layer)
+                try:
+                    if layer is output or layer.output is output:
+                        output_layers.append(layer)
+                except:
+                    # layer.output may not be instantiated when using model subclassing, 
+                    # but it is not a problem because _model.outputs is only autoselected as output_layer.output 
+                    # when not subclassing.
+                    continue
 
         return output_layers
 
@@ -105,6 +114,11 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
 
         return None
 
+    def set_output_layers(self, output_layers: list):
+        if not isinstance(output_layers, list):
+            raise Exception("Output Layers must be a list of layers")
+        self._model.outputs = output_layers
+        
     def fprop(
             self,
             model_args,
@@ -351,7 +365,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
             intervention = model_args
 
         if not self._eager:
-            return super().qoi_bprop(
+            return super().qoi_bprop(qoi, 
                 model_args, model_kwargs, doi_cut, to_cut, attribution_cut,
                 intervention)
 
