@@ -95,7 +95,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                         output_layers.append(layer)
                 except:
                     # layer.output may not be instantiated when using model subclassing, 
-                    # but it is not a problem because _model.outputs is only autoselected as output_layer.output 
+                    # but it is not a problem because self._model.outputs is only autoselected as output_layer.output 
                     # when not subclassing.
                     continue
 
