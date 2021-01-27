@@ -20,7 +20,7 @@ class TFFunctionModel(Model):
         self.dense_1 = Dense(2, activation='relu', input_shape=(2,))
         self.dense_2 = Dense(2, activation='relu')
         self.dense_3 = Dense(1, name='logits')
-    #@tf.function
+    @tf.function
     def call(self, x):
         z = self.dense_1(x)
         z = self.dense_2(z)

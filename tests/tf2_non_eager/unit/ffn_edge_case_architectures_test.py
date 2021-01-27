@@ -5,6 +5,7 @@ from unittest import TestCase, main
 
 import numpy as np
 
+import tensorflow as tf
 from tensorflow.keras.layers import Activation, Dense, Input, Concatenate
 from tensorflow.keras.models import Model
 
@@ -15,9 +16,7 @@ from trulens.nn.models import ModelWrapper
 from trulens.nn.quantities import ClassQoI
 from trulens.nn.slices import InputCut, Cut
 
-
-
-
+assert (not tf.executing_eagerly())
 class FfnEdgeCaseArchitecturesTest(TestCase):
 
     def test_multiple_inputs(self):
