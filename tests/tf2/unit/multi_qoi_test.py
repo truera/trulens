@@ -15,7 +15,9 @@ from tensorflow.keras.models import Model
 
 from tests.unit.multi_qoi_test_base import MultiQoiTestBase
 
+
 class MultiQoiTest(MultiQoiTestBase, TestCase):
+
     def test_per_timestep(self):
         num_classes = 5
         num_features = 3
@@ -26,19 +28,14 @@ class MultiQoiTest(MultiQoiTestBase, TestCase):
         base_model = Sequential(
             [
                 Input(shape=(num_timesteps, num_features)),
-                GRU(num_hidden_state,  name="rnn", return_sequences=True),
+                GRU(num_hidden_state, name="rnn", return_sequences=True),
                 Dense(num_classes, name="dense"),
-            ]
-        )
+            ])
 
         model = ModelWrapper(base_model)
         super(MultiQoiTest, self).per_timestep_qoi(
-            model, 
-            num_classes,
-            num_features, 
-            num_timesteps,
-            batch_size
-        )
+            model, num_classes, num_features, num_timesteps, batch_size)
+
 
 if __name__ == '__main__':
     main()

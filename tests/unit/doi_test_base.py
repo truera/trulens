@@ -8,9 +8,7 @@ class DoiTestBase(object):
 
     def setUp(self):
         # Create an example tensor to use for the tests.
-        self.z = B.as_tensor(np.array([
-            [1., 2., 3.],
-            [0., -1., -2.]]))
+        self.z = B.as_tensor(np.array([[1., 2., 3.], [0., -1., -2.]]))
 
     # Tests for PointDoI.
 
@@ -30,24 +28,19 @@ class DoiTestBase(object):
         res = doi(self.z)
 
         self.assertEqual(
-            len(res),
-            21,
-            'LinearDoi should return `resolution` points')
+            len(res), 21, 'LinearDoi should return `resolution` points')
 
         self.assertTrue(
             np.array_equal(B.as_array(res[0]), B.as_array(self.z)),
             'First point should be the original point')
 
         self.assertTrue(
-            np.all(B.as_array(res[-1]) == 1.),
-            'Last point should be baseline')
+            np.all(B.as_array(res[-1]) == 1.), 'Last point should be baseline')
 
         self.assertTrue(
             np.allclose(
                 B.as_array(res[-2]),
-                np.array([
-                    [1., 1.05, 1.1],
-                    [0.95, 0.9, 0.85]])),
+                np.array([[1., 1.05, 1.1], [0.95, 0.9, 0.85]])),
             'Intermediate points should interpolate from baseline')
 
     def test_linear_point(self):
@@ -55,9 +48,7 @@ class DoiTestBase(object):
         res = doi(self.z)
 
         self.assertEqual(
-            len(res),
-            1,
-            'LinearDoi should return `resolution` points')
+            len(res), 1, 'LinearDoi should return `resolution` points')
 
         self.assertTrue(
             np.array_equal(B.as_array(res[0]), B.as_array(self.z)),
@@ -78,9 +69,7 @@ class DoiTestBase(object):
         res = doi(self.z)
 
         self.assertEqual(
-            len(res),
-            10,
-            'GaussianDoi should return `resolution` points')
+            len(res), 10, 'GaussianDoi should return `resolution` points')
 
         self.assertEqual(B.int_shape(res[0]), B.int_shape(self.z))
 
@@ -89,8 +78,6 @@ class DoiTestBase(object):
         res = doi(B.as_array(self.z))
 
         self.assertEqual(
-            len(res),
-            10,
-            'GaussianDoi should return `resolution` points')
+            len(res), 10, 'GaussianDoi should return `resolution` points')
 
         self.assertEqual(res[0].shape, B.int_shape(self.z))
