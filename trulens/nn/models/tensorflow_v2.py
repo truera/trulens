@@ -8,6 +8,9 @@ from trulens.nn.models.keras import KerasModelWrapper
 from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 from trulens.nn.slices import InputCut, OutputCut, LogitCut
 
+if tf.executing_eagerly():
+    tf.config.run_functions_eagerly(True)
+
 
 class Tensorflow2ModelWrapper(KerasModelWrapper):
     """
@@ -85,10 +88,20 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
 
     def _get_output_layer(self):
         output_layers = []
+        if self._model.outputs is None:
+            raise Exception(
+                "Unable to determine output layers. Please set the outputs using set_output_layers."
+            )
         for output in self._model.outputs:
             for layer in self._layers:
-                if layer.output is output:
-                    output_layers.append(layer)
+                try:
+                    if layer is output or layer.output is output:
+                        output_layers.append(layer)
+                except:
+                    # layer.output may not be instantiated when using model subclassing,
+                    # but it is not a problem because self._model.outputs is only autoselected as output_layer.output
+                    # when not subclassing.
+                    continue
 
         return output_layers
 
@@ -104,6 +117,11 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                 return i
 
         return None
+
+    def set_output_layers(self, output_layers: list):
+        if not isinstance(output_layers, list):
+            raise Exception("Output Layers must be a list of layers")
+        self._model.outputs = output_layers
 
     def fprop(
             self,
@@ -352,7 +370,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
 
         if not self._eager:
             return super().qoi_bprop(
-                model_args, model_kwargs, doi_cut, to_cut, attribution_cut,
+                qoi, model_args, model_kwargs, doi_cut, to_cut, attribution_cut,
                 intervention)
 
         if attribution_cut is None:

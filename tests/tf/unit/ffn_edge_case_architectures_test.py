@@ -29,25 +29,20 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             z1 = x1 @ tf.random.normal((5, 6))
             x2 = tf.placeholder('float32', (None, 1))
             z2 = tf.concat([z1, x2], axis=1)
-            z3 = z2 @ tf.random.normal((7,7))
-            y = z3 @ tf.random.normal((7,3))
+            z3 = z2 @ tf.random.normal((7, 7))
+            y = z3 @ tf.random.normal((7, 3))
 
         model = ModelWrapper(graph, [x1, x2], y)
 
-        infl = InternalInfluence(
-            model, 
-            InputCut(), 
-            ClassQoI(1), 
-            PointDoi())
+        infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
 
-        res = infl.attributions([
-            np.array([[1.,2.,3.,4.,5.]]),
-            np.array([[1.]])])
+        res = infl.attributions(
+            [np.array([[1., 2., 3., 4., 5.]]),
+             np.array([[1.]])])
 
         self.assertEqual(len(res), 2)
-        self.assertEqual(res[0].shape, (1,5))
-        self.assertEqual(res[1].shape, (1,1))
-
+        self.assertEqual(res[0].shape, (1, 5))
+        self.assertEqual(res[1].shape, (1, 1))
 
     def test_internal_slice_multiple_layers(self):
         graph = Graph()
@@ -66,19 +61,15 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             graph, [x1, x2], y, dict(cut_layer1=z1, cut_layer2=z2))
 
         infl = InternalInfluence(
-            model, 
-            Cut(['cut_layer1', 'cut_layer2']), 
-            ClassQoI(1), 
-            PointDoi())
+            model, Cut(['cut_layer1', 'cut_layer2']), ClassQoI(1), PointDoi())
 
-        res = infl.attributions([
-            np.array([[1.,2.,3.,4.,5.]]),
-            np.array([[1.]])])
+        res = infl.attributions(
+            [np.array([[1., 2., 3., 4., 5.]]),
+             np.array([[1.]])])
 
         self.assertEqual(len(res), 2)
-        self.assertEqual(res[0].shape, (1,6))
-        self.assertEqual(res[1].shape, (1,2))
-
+        self.assertEqual(res[0].shape, (1, 6))
+        self.assertEqual(res[1].shape, (1, 2))
 
     def test_catch_cut_name_error(self):
         graph = Graph()
@@ -93,10 +84,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
 
         with self.assertRaises(ValueError):
             infl = InternalInfluence(
-                model, 
-                Cut('not_a_real_layer'), 
-                ClassQoI(0), 
-                PointDoi())
+                model, Cut('not_a_real_layer'), ClassQoI(0), PointDoi())
 
             infl.attributions(np.array([[1., 1.]]))
 

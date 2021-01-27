@@ -9,6 +9,7 @@ from trulens.nn import backend as B
 from trulens.nn.models import ModelWrapper
 from tests.unit.batch_test_base import BatchTestBase
 
+
 class BatchTest(BatchTestBase, TestCase):
 
     def setUp(self):
@@ -16,6 +17,7 @@ class BatchTest(BatchTestBase, TestCase):
 
         # Make a linear model for testing.
         class M_lin(Module):
+
             def __init__(this):
                 super(M_lin, this).__init__()
                 this.layer = Linear(self.input_size, self.output_size)
@@ -30,6 +32,7 @@ class BatchTest(BatchTestBase, TestCase):
 
         # Make a deeper model for testing.
         class M_deep(Module):
+
             def __init__(this):
                 super(M_deep, this).__init__()
                 this.l1 = Linear(self.input_size, self.internal1_size)
@@ -44,7 +47,7 @@ class BatchTest(BatchTestBase, TestCase):
                 this.l2.bias.data = B.as_tensor(self.model_deep_bias_2)
                 this.l3.weight.data = B.as_tensor(self.model_deep_weights_3.T)
                 this.l3.bias.data = B.as_tensor(self.model_deep_bias_3)
-                
+
             def forward(this, x):
                 x = this.l1(x)
                 x = this.l1_relu(x)

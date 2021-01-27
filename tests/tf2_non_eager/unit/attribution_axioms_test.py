@@ -1,6 +1,7 @@
 import os
 os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
+import tensorflow as tf
 from tensorflow.keras.layers import Activation, Dense, Input
 from tensorflow.keras.models import Model
 from unittest import TestCase, main
@@ -13,6 +14,8 @@ from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.quantities import ClassQoI
 from trulens.nn.slices import InputCut
+
+assert (not tf.executing_eagerly())
 
 
 class AxiomsTest(AxiomsTestBase, TestCase):

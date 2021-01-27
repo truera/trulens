@@ -59,6 +59,9 @@ def as_array(t, dtype=floatX):
     if tf1:
         with tf.Session().as_default():
             return t.eval().astype(dtype)
+    elif not tf.executing_eagerly():
+        with tf.compat.v1.Session() as sess:
+            return t.eval()
     else:
         return t.numpy()
 
