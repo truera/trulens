@@ -7,7 +7,9 @@ import tensorflow as tf
 
 from tests.unit.doi_test_base import DoiTestBase
 
-assert(not tf.executing_eagerly())
+assert (not tf.executing_eagerly())
+
+
 class DoiTest(DoiTestBase, TestCase):
     pass
 

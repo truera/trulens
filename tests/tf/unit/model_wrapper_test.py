@@ -13,6 +13,7 @@ from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 
 
 class ModelWrapperTest(ModelWrapperTestBase, TestCase):
+
     def setUp(self):
         super(ModelWrapperTest, self).setUp()
 

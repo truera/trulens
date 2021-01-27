@@ -47,13 +47,9 @@ class BatchTestBase(object):
         # Make a test data point.
         self.batch_x = np.random.uniform(size=(5, self.input_size))
 
-
     def test_batch_processing_lin(self):
         infl = InternalInfluence(
-            self.model_lin, 
-            InputCut(), 
-            MaxClassQoI(), 
-            LinearDoi())
+            self.model_lin, InputCut(), MaxClassQoI(), LinearDoi())
 
         r1 = np.concatenate([infl.attributions(x[None]) for x in self.batch_x])
         r2 = infl.attributions(self.batch_x)
@@ -62,10 +58,7 @@ class BatchTestBase(object):
 
     def test_batch_processing_deep(self):
         infl = InternalInfluence(
-            self.model_deep, 
-            InputCut(), 
-            MaxClassQoI(), 
-            LinearDoi())
+            self.model_deep, InputCut(), MaxClassQoI(), LinearDoi())
 
         r1 = np.concatenate([infl.attributions(x[None]) for x in self.batch_x])
         r2 = infl.attributions(self.batch_x)

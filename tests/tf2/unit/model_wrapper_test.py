@@ -14,6 +14,7 @@ from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 
 
 class ModelWrapperTest(ModelWrapperTestBase, TestCase):
+
     def setUp(self):
         super(ModelWrapperTest, self).setUp()
 
@@ -24,10 +25,11 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
 
         self.model = ModelWrapper(Model(x, y))
 
-        self.model._model.set_weights([
-            self.layer1_weights, self.internal_bias,
-            self.layer2_weights, self.internal_bias,
-            self.layer3_weights, self.bias])
+        self.model._model.set_weights(
+            [
+                self.layer1_weights, self.internal_bias, self.layer2_weights,
+                self.internal_bias, self.layer3_weights, self.bias
+            ])
 
         self.layer0 = 0
         self.layer1 = 1

@@ -10,7 +10,9 @@ from tensorflow.keras.models import Model
 from trulens.nn.models import ModelWrapper
 from tests.unit.batch_test_base import BatchTestBase
 
-assert(not tf.executing_eagerly())
+assert (not tf.executing_eagerly())
+
+
 class BatchTest(BatchTestBase, TestCase):
 
     def setUp(self):
@@ -22,8 +24,8 @@ class BatchTest(BatchTestBase, TestCase):
 
         self.model_lin = ModelWrapper(Model(x_lin, y_lin))
 
-        self.model_lin._model.set_weights([
-            self.model_lin_weights, self.model_lin_bias])
+        self.model_lin._model.set_weights(
+            [self.model_lin_weights, self.model_lin_bias])
 
         # Make a deeper model for testing.
         x_deep = Input((self.input_size,))
@@ -35,10 +37,12 @@ class BatchTest(BatchTestBase, TestCase):
 
         self.model_deep = ModelWrapper(Model(x_deep, y_deep))
 
-        self.model_deep._model.set_weights([
-            self.model_deep_weights_1, self.model_deep_bias_1,
-            self.model_deep_weights_2, self.model_deep_bias_2,
-            self.model_deep_weights_3, self.model_deep_bias_3])
+        self.model_deep._model.set_weights(
+            [
+                self.model_deep_weights_1, self.model_deep_bias_1,
+                self.model_deep_weights_2, self.model_deep_bias_2,
+                self.model_deep_weights_3, self.model_deep_bias_3
+            ])
 
 
 if __name__ == '__main__':
