@@ -57,17 +57,13 @@ class AxiomsTestBase(object):
         self.model_deep_bias_3 = np.random.uniform(
             -0.5, 0.5, (self.output_size,))
 
-        # NOTE: subclass should add `self.model_deep`, `self.layer2`, and 
+        # NOTE: subclass should add `self.model_deep`, `self.layer2`, and
         #   `self.layer3`.
 
         # Make a test data point.
-        self.x = np.array([
-            [1., 2., 3., 4., 5.],
-            [0., -1., -2., 2., 1.]])
+        self.x = np.array([[1., 2., 3., 4., 5.], [0., -1., -2., 2., 1.]])
 
-        self.baseline = np.array([
-            [1., 2., 3., -2., 5.]])
-
+        self.baseline = np.array([[1., 2., 3., -2., 5.]])
 
     def test_idempotence(self):
         infl = InternalInfluence(
@@ -76,7 +72,7 @@ class AxiomsTestBase(object):
             MaxClassQoI(),
             PointDoi(),
             multiply_activation=False)
-        
+
         res1 = infl.attributions(self.x)
         res2 = infl.attributions(self.x)
 
@@ -88,86 +84,69 @@ class AxiomsTestBase(object):
             MaxClassQoI(),
             PointDoi(),
             multiply_activation=True)
-        
+
         res1 = infl_act.attributions(self.x)
         res2 = infl_act.attributions(self.x)
 
         self.assertTrue(np.allclose(res1, res2))
 
-    # Tests for linear agreement [1]. 
+    # Tests for linear agreement [1].
     #
-    # This axiom states that if the model is linear, the attribution should 
+    # This axiom states that if the model is linear, the attribution should
     # simply be the weights of the model.
 
     def test_linear_agreement(self):
         c = 1
         infl = InternalInfluence(
-            self.model_lin, 
-            InputCut(), 
-            ClassQoI(c), 
-            PointDoi(), 
+            self.model_lin,
+            InputCut(),
+            ClassQoI(c),
+            PointDoi(),
             multiply_activation=False)
 
         res = infl.attributions(self.x)
 
         self.assertEqual(res.shape, (2, self.input_size))
 
-        self.assertTrue(
-            np.allclose(
-                res[0],
-                self.model_lin_weights[:,c]))
-        self.assertTrue(
-            np.allclose(
-                res[1],
-                self.model_lin_weights[:,c]))
+        self.assertTrue(np.allclose(res[0], self.model_lin_weights[:, c]))
+        self.assertTrue(np.allclose(res[1], self.model_lin_weights[:, c]))
 
     def test_linear_agreement_multiply_activation(self):
         c = 1
         infl = InternalInfluence(
-            self.model_lin, 
-            InputCut(), 
-            ClassQoI(c), 
-            PointDoi(), 
+            self.model_lin,
+            InputCut(),
+            ClassQoI(c),
+            PointDoi(),
             multiply_activation=True)
 
         res = infl.attributions(self.x)
 
         self.assertEqual(res.shape, (2, self.input_size))
 
-        self.assertTrue(
-            np.allclose(
-                res,
-                self.model_lin_weights[:,c] * self.x))
+        self.assertTrue(np.allclose(res, self.model_lin_weights[:, c] * self.x))
 
     def test_linear_agreement_linear_slice(self):
         c = 4
         infl = InternalInfluence(
-            self.model_deep, 
-            (Cut(self.layer2), Cut(self.layer3)), 
-            InternalChannelQoI(c), 
-            PointDoi(), 
+            self.model_deep, (Cut(self.layer2), Cut(self.layer3)),
+            InternalChannelQoI(c),
+            PointDoi(),
             multiply_activation=False)
 
         res = infl.attributions(self.x)
 
         self.assertEqual(res.shape, (2, self.internal1_size))
 
-        self.assertTrue(
-            np.allclose(
-                res[0],
-                self.model_deep_weights_2[:,c]))
-        self.assertTrue(
-            np.allclose(
-                res[1],
-                self.model_deep_weights_2[:,c]))
+        self.assertTrue(np.allclose(res[0], self.model_deep_weights_2[:, c]))
+        self.assertTrue(np.allclose(res[1], self.model_deep_weights_2[:, c]))
 
     def test_linear_agreement_linear_slice_multiply_activation(self):
         c = 4
         infl = InternalInfluence(
-            self.model_deep, 
-            (Cut(self.layer2), Cut(self.layer3)), 
-            InternalChannelQoI(c), 
-            PointDoi(), 
+            self.model_deep, (Cut(self.layer2), Cut(self.layer3)),
+            InternalChannelQoI(c),
+            PointDoi(),
             multiply_activation=True)
 
         res = infl.attributions(self.x)
@@ -176,41 +155,38 @@ class AxiomsTestBase(object):
 
         z = self.model_deep.fprop((self.x,), to_cut=Cut(self.layer2))[0]
 
-        self.assertTrue(
-            np.allclose(
-                res,
-                self.model_deep_weights_2[:,c] * z))
+        self.assertTrue(np.allclose(res, self.model_deep_weights_2[:, c] * z))
 
     # Tests for sensitivity [2].
     #
-    # This axiom states that if the baseline and the input differ in value for 
-    # exactly one variable, and the output of the model on the baseline is 
+    # This axiom states that if the baseline and the input differ in value for
+    # exactly one variable, and the output of the model on the baseline is
     # different from on the input, then the differing variable must be given
     # non-zero attribution.
 
     def test_sensitivity(self):
         c = 2
         infl = InternalInfluence(
-            self.model_deep, 
-            InputCut(), 
-            ClassQoI(c), 
-            LinearDoi(self.baseline), 
+            self.model_deep,
+            InputCut(),
+            ClassQoI(c),
+            LinearDoi(self.baseline),
             multiply_activation=False)
 
-        out_x = self.model_deep.fprop((self.x[0:1],))[0][:,c]
-        out_baseline = self.model_deep.fprop((self.baseline,))[0][:,c]
+        out_x = self.model_deep.fprop((self.x[0:1],))[0][:, c]
+        out_baseline = self.model_deep.fprop((self.baseline,))[0][:, c]
 
         if not np.allclose(out_x, out_baseline):
             res = infl.attributions(self.x)
 
             self.assertEqual(res.shape, (2, self.input_size))
 
-            self.assertNotEqual(res[0,3], 0.)
+            self.assertNotEqual(res[0, 3], 0.)
 
     # Tests for distributional linearity [1].
     #
     # This axiom states that the attribution should be linear over the
-    # distribution of interest, i.e., the total attribution is the sum of the 
+    # distribution of interest, i.e., the total attribution is the sum of the
     # point-wise attribution weighted by the probability of each point.
 
     def test_distributional_linearity(self):
@@ -222,27 +198,29 @@ class AxiomsTestBase(object):
             Represents the distribution of interest that weights `z` with
             probability 1/4 and `z + diff` with probability 3/4.
             '''
+
             def __init__(self, diff):
                 super(DistLinDoI, self).__init__()
                 self.diff = diff
+
             def __call__(self, z):
                 return [z, z + self.diff, z + self.diff, z + self.diff]
-                
+
         infl_pt = InternalInfluence(
-            self.model_deep, 
-            InputCut(), 
-            ClassQoI(0), 
-            PointDoi(), 
+            self.model_deep,
+            InputCut(),
+            ClassQoI(0),
+            PointDoi(),
             multiply_activation=False)
 
         attr1 = infl_pt.attributions(x1)
         attr2 = infl_pt.attributions(x2)
 
         infl_dl = InternalInfluence(
-            self.model_deep, 
-            InputCut(), 
-            ClassQoI(0), 
-            DistLinDoI(x2 - x1), 
+            self.model_deep,
+            InputCut(),
+            ClassQoI(0),
+            DistLinDoI(x2 - x1),
             multiply_activation=False)
 
         attr12 = infl_dl.attributions(x1)
@@ -258,27 +236,29 @@ class AxiomsTestBase(object):
             Represents the distribution of interest that weights `z` with
             probability 1/4 and `z + diff` with probability 3/4.
             '''
+
             def __init__(self, diff):
                 super(DistLinDoI, self).__init__()
                 self.diff = diff
+
             def __call__(self, z):
                 return [z, z + self.diff, z + self.diff, z + self.diff]
-                
+
         infl_pt = InternalInfluence(
-            self.model_deep, 
-            Cut(self.layer2), 
-            ClassQoI(0), 
-            PointDoi(), 
+            self.model_deep,
+            Cut(self.layer2),
+            ClassQoI(0),
+            PointDoi(),
             multiply_activation=False)
 
         attr1 = infl_pt.attributions(x1)
         attr2 = infl_pt.attributions(x2)
 
         infl_dl = InternalInfluence(
-            self.model_deep, 
-            Cut(self.layer2), 
-            ClassQoI(0), 
-            DistLinDoI(x2 - x1), 
+            self.model_deep,
+            Cut(self.layer2),
+            ClassQoI(0),
+            DistLinDoI(x2 - x1),
             multiply_activation=False)
 
         attr12 = infl_dl.attributions(x1)
@@ -287,89 +267,87 @@ class AxiomsTestBase(object):
 
     # Tests for completeness [2].
     #
-    # This axiom states that (when the distribution is `LinearDoI` and 
-    # `multiply_activation` is True) the sum of the attributions must equal the 
+    # This axiom states that (when the distribution is `LinearDoI` and
+    # `multiply_activation` is True) the sum of the attributions must equal the
     # difference in ouput between the point and the baseline.
 
     def test_completeness(self):
         c = 2
         infl = InternalInfluence(
-            self.model_deep, 
-            InputCut(), 
-            ClassQoI(c), 
-            LinearDoi(self.baseline, resolution=100), 
+            self.model_deep,
+            InputCut(),
+            ClassQoI(c),
+            LinearDoi(self.baseline, resolution=100),
             multiply_activation=True)
 
-        out_x = self.model_deep.fprop((self.x,))[0][:,c]
-        out_baseline = self.model_deep.fprop((self.baseline,))[0][:,c]
- 
+        out_x = self.model_deep.fprop((self.x,))[0][:, c]
+        out_baseline = self.model_deep.fprop((self.baseline,))[0][:, c]
+
         res = infl.attributions(self.x)
 
-        self.assertTrue(np.allclose(
-            res.sum(axis=1), 
-            out_x - out_baseline, 
-            atol=5e-2))
+        self.assertTrue(
+            np.allclose(res.sum(axis=1), out_x - out_baseline, atol=5e-2))
 
     def test_completeness_zero_baseline(self):
         c = 2
         infl = InternalInfluence(
-            self.model_deep, 
-            InputCut(), 
-            ClassQoI(c), 
-            LinearDoi(resolution=100), 
+            self.model_deep,
+            InputCut(),
+            ClassQoI(c),
+            LinearDoi(resolution=100),
             multiply_activation=True)
 
-        out_x = self.model_deep.fprop((self.x,))[0][:,c]
-        out_baseline = self.model_deep.fprop((self.baseline * 0,))[0][:,c]
- 
+        out_x = self.model_deep.fprop((self.x,))[0][:, c]
+        out_baseline = self.model_deep.fprop((self.baseline * 0,))[0][:, c]
+
         res = infl.attributions(self.x)
 
-        self.assertTrue(np.allclose(
-            res.sum(axis=1), 
-            out_x - out_baseline, 
-            atol=5e-2))
+        self.assertTrue(
+            np.allclose(res.sum(axis=1), out_x - out_baseline, atol=5e-2))
 
     def test_completeness_internal(self):
         c = 2
 
-        baseline = np.array([[0.,1.,2.,3.,4.,3.,2.,1.,0.,-1.]])
+        baseline = np.array([[0., 1., 2., 3., 4., 3., 2., 1., 0., -1.]])
 
         infl = InternalInfluence(
-            self.model_deep, 
-            Cut(self.layer2), 
-            ClassQoI(c), 
-            LinearDoi(baseline, resolution=100, cut=Cut(self.layer2)), 
+            self.model_deep,
+            Cut(self.layer2),
+            ClassQoI(c),
+            LinearDoi(baseline, resolution=100, cut=Cut(self.layer2)),
             multiply_activation=True)
 
-        g = partial(self.model_deep.fprop, doi_cut=Cut(self.layer2), intervention=np.tile(baseline,(2,1)))
+        g = partial(
+            self.model_deep.fprop,
+            doi_cut=Cut(self.layer2),
+            intervention=np.tile(baseline, (2, 1)))
 
-        out_x = self.model_deep.fprop((self.x,))[0][:,c]
-        out_baseline = g((self.x,))[0][:,c]
+        out_x = self.model_deep.fprop((self.x,))[0][:, c]
+        out_baseline = g((self.x,))[0][:, c]
 
         res = infl.attributions(self.x)
 
-        self.assertTrue(np.allclose(
-            res.sum(axis=1), 
-            out_x - out_baseline, 
-            atol=5e-2))
+        self.assertTrue(
+            np.allclose(res.sum(axis=1), out_x - out_baseline, atol=5e-2))
 
     def test_completeness_internal_zero_baseline(self):
         c = 2
 
         infl = InternalInfluence(
-            self.model_deep, 
-            Cut(self.layer2), 
-            ClassQoI(c), 
-            LinearDoi(resolution=100, cut=Cut(self.layer2)), 
+            self.model_deep,
+            Cut(self.layer2),
+            ClassQoI(c),
+            LinearDoi(resolution=100, cut=Cut(self.layer2)),
             multiply_activation=True)
 
-        g = partial(self.model_deep.fprop, doi_cut=Cut(self.layer2), intervention=np.zeros((2,10)))
-        out_x = self.model_deep.fprop((self.x,))[0][:,c]
-        out_baseline = g((self.x,))[0][:,c]
+        g = partial(
+            self.model_deep.fprop,
+            doi_cut=Cut(self.layer2),
+            intervention=np.zeros((2, 10)))
+        out_x = self.model_deep.fprop((self.x,))[0][:, c]
+        out_baseline = g((self.x,))[0][:, c]
 
         res = infl.attributions(self.x)
 
-        self.assertTrue(np.allclose(
-            res.sum(axis=1), 
-            out_x - out_baseline, 
-            atol=5e-2))
+        self.assertTrue(
+            np.allclose(res.sum(axis=1), out_x - out_baseline, atol=5e-2))

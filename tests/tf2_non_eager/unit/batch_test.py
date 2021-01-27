@@ -1,24 +1,22 @@
 import os
 os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
-from tensorflow.keras.layers import Activation, Dense, Input
-from tensorflow.keras.models import Model
 from unittest import TestCase, main
 
+import tensorflow as tf
+from tensorflow.keras.layers import Activation, Dense, Input
+from tensorflow.keras.models import Model
+
 from trulens.nn.models import ModelWrapper
-from tests.unit.attribution_axioms_test_base import AxiomsTestBase
+from tests.unit.batch_test_base import BatchTestBase
 
-from trulens.nn import backend as B
-from trulens.nn.attribution import InternalInfluence
-from trulens.nn.distributions import LinearDoi
-from trulens.nn.quantities import ClassQoI
-from trulens.nn.slices import InputCut
+assert (not tf.executing_eagerly())
 
 
-class AxiomsTest(AxiomsTestBase, TestCase):
+class BatchTest(BatchTestBase, TestCase):
 
     def setUp(self):
-        super(AxiomsTest, self).setUp()
+        super(BatchTest, self).setUp()
 
         # Make a linear model for testing.
         x_lin = Input((self.input_size,))
@@ -45,9 +43,6 @@ class AxiomsTest(AxiomsTestBase, TestCase):
                 self.model_deep_weights_2, self.model_deep_bias_2,
                 self.model_deep_weights_3, self.model_deep_bias_3
             ])
-
-        self.layer2 = 2
-        self.layer3 = 3
 
 
 if __name__ == '__main__':

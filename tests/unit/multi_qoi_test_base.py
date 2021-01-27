@@ -8,10 +8,12 @@ from trulens.nn.distributions import DoI
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import InputCut, Cut
 
+
 class PerTimestepQoI(QoI):
+
     def __call__(self, x):
         if isinstance(x, tuple):
-            x = x[0] # torch RNN layer outputs tuple of (vals, hidden_states)
+            x = x[0]  # torch RNN layer outputs tuple of (vals, hidden_states)
         num_classes = x.shape[-1]
         num_timesteps = x.shape[1]
         out = []
@@ -20,7 +22,9 @@ class PerTimestepQoI(QoI):
                 out.append(x[:, i, j])
         return out
 
+
 class RNNLinearDoi(DoI):
+
     def __init__(self, baseline=None, resolution=10):
         """
         __init__ Constructor
@@ -35,7 +39,7 @@ class RNNLinearDoi(DoI):
         """
         self._baseline = baseline
         self._resolution = resolution
-    
+
     def calc_doi(self, x_input, tf_cell=False):
         x = x_input[0] if tf_cell else x_input
         batch_size = len(x)
@@ -58,7 +62,7 @@ class RNNLinearDoi(DoI):
             baseline = B.as_array(baseline)
 
         r = self._resolution - 1.
-        doi_out =  [
+        doi_out = [
             (1. - i / r) * x + i / r * baseline
             for i in range(self._resolution)
         ]
@@ -89,24 +93,29 @@ class RNNLinearDoi(DoI):
         batch_size = len(activation)
         return activation - baseline
 
+
 class MultiQoiTestBase(TestCase):
+
     def per_timestep_qoi(
-        self,
-        model_wrapper,
-        num_classes,
-        num_features,
-        num_timesteps,
-        batch_size
-    ):
+            self, model_wrapper, num_classes, num_features, num_timesteps,
+            batch_size):
         cuts = (Cut('rnn', 'in', None), Cut('dense', 'out', None))
-        infl = InternalInfluence(model_wrapper, cuts, PerTimestepQoI(), RNNLinearDoi())
-        input_attrs = infl.attributions(np.ones((batch_size, num_timesteps, num_features)).astype('float32'))
-        original_output_shape = (num_classes * num_timesteps, batch_size, num_timesteps, num_features)
+        infl = InternalInfluence(
+            model_wrapper, cuts, PerTimestepQoI(), RNNLinearDoi())
+        input_attrs = infl.attributions(
+            np.ones(
+                (batch_size, num_timesteps, num_features)).astype('float32'))
+        original_output_shape = (
+            num_classes * num_timesteps, batch_size, num_timesteps,
+            num_features)
         self.assertEqual(np.stack(input_attrs).shape, original_output_shape)
         rotated = np.stack(input_attrs, axis=-1)
         attr_shape = list(rotated.shape)[:-1]
         attr_shape.append(int(rotated.shape[-1] / num_classes))
         attr_shape.append(num_classes)
         attr_shape = tuple(attr_shape)
-        self.assertEqual(attr_shape, (batch_size, num_timesteps, num_features, num_timesteps, num_classes))
+        self.assertEqual(
+            attr_shape, (
+                batch_size, num_timesteps, num_features, num_timesteps,
+                num_classes))
         input_attrs = np.reshape(rotated, attr_shape)
