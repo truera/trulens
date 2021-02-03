@@ -94,3 +94,9 @@ While the interface of each visualizer varies slightly, in general, the visualiz
 
 # Contact Us
 To communicate with other trulens developers, join our [Slack](https://join.slack.com/t/trulens/shared_invite/zt-kbaz6odu-kBWfqewcHMFLm_GNN8eqDA)!
+
+# Citation
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4495856.svg)](https://doi.org/10.5281/zenodo.4495856)
+
+To cite this repository:
+curl -LH "Accept: application/x-bibtex" https://doi.org/10.5281/zenodo.4495856
