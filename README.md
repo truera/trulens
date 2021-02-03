@@ -92,5 +92,5 @@ See the *parameterization demo* for further explanations of the purpose of these
 In order to interpret the attributions produced by an `AttributionMethod`, a few useful visualizers are provided in the `trulens.visualizations` module.
 While the interface of each visualizer varies slightly, in general, the visualizers are a function taking an `np.Array` representing the attributions returned from an `AttributionMethod` and producing an image that can be used to interpret the attributions.
 
-# Contributing to Trulens
+# Contact Us
 To communicate with other trulens developers, join our [Slack](https://join.slack.com/t/trulens/shared_invite/zt-kbaz6odu-kBWfqewcHMFLm_GNN8eqDA)!
