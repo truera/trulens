@@ -99,4 +99,4 @@ To communicate with other trulens developers, join our [Slack](https://join.slac
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4495856.svg)](https://doi.org/10.5281/zenodo.4495856)
 
 To cite this repository:
-curl -LH "Accept: application/x-bibtex" https://doi.org/10.5281/zenodo.4495856
+`curl -LH "Accept: application/x-bibtex" https://doi.org/10.5281/zenodo.4495856`
