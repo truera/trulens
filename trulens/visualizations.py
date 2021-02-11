@@ -624,7 +624,7 @@ class HeatmapVisualizer(Visualizer):
             cmap = self.default_cmap
 
         if overlay_opacity is None:
-            overlay_opacity = self.overlay_opacity
+            overlay_opacity = self.default_overlay_opacity
 
         # Display the figure:
         _fig = plt.figure() if fig is None else fig
