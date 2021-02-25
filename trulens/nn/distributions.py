@@ -37,6 +37,16 @@ class DoI(AbstractBaseClass):
     aggregated.
     """
 
+    def __init__(self, cut: Cut = None):
+        """"Initializae DoI
+
+        Parameters:
+            cut (Cut, optional): The Cut in which the DoI will be applied. If `None`, the DoI will be
+            applied to the input. otherwise, the distribution should be applied
+            to the latent space defined by the cut. 
+        """
+        self._cut = cut
+
     @abstractmethod
     def __call__(self, z: ArrayLike) -> List[ArrayLike]:
         """
@@ -59,11 +69,9 @@ class DoI(AbstractBaseClass):
         Returns:
             The Cut in which the DoI will be applied. If `None`, the DoI will be
             applied to the input. otherwise, the distribution should be applied
-            to the latent space defined by the cut. The default implementation 
-            of this method always returns `None`; unless this method is 
-            overridden, the DoI can only be applied to the input.
+            to the latent space defined by the cut. 
         """
-        return None
+        return self._cut
 
     def get_activation_multiplier(self, activation: ArrayLike) -> ArrayLike:
         """
@@ -111,6 +119,9 @@ class PointDoi(DoI):
     Distribution that puts all probability mass on a single point.
     """
 
+    def __init__(self, cut: Cut = None):
+        super(PointDoi, self).__init__(cut)
+
     def __call__(self, z):
         return [z]
 
@@ -151,9 +162,9 @@ class LinearDoi(DoI):
                 DoI will be applied to the Cut. This allows a DoI to be applied
                 in the latent space.
         """
+        super(LinearDoi, self).__init__(cut)
         self._baseline = baseline
         self._resolution = resolution
-        self._cut = cut
 
     def __call__(self, z: ArrayLike) -> List[ArrayLike]:
         if isinstance(z, (list, tuple)) and len(z) == 1:
@@ -178,14 +189,6 @@ class LinearDoi(DoI):
             (1. - i / r) * z + i / r * baseline
             for i in range(self._resolution)
         ]
-
-    def cut(self) -> Cut:
-        """
-        Returns:
-            A cut to apply the distribution supplied in the constructor.
-            if None, the DoI will apply to the input.
-        """
-        return self._cut
 
     def get_activation_multiplier(self, activation: ArrayLike) -> ArrayLike:
         """
@@ -214,7 +217,7 @@ class GaussianDoi(DoI):
     Gradients.
     """
 
-    def __init__(self, var: float, resolution: int):
+    def __init__(self, var: float, resolution: int, cut: Cut = None):
         """
         Parameters:
             var:
@@ -223,6 +226,7 @@ class GaussianDoi(DoI):
             resolution:
                 Number of samples returned by each call to this DoI.
         """
+        super(GaussianDoi, self).__init__(cut)
         self._var = var
         self._resolution = resolution
 
