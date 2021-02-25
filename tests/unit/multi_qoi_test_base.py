@@ -25,7 +25,7 @@ class PerTimestepQoI(QoI):
 
 class RNNLinearDoi(DoI):
 
-    def __init__(self, baseline=None, resolution=10):
+    def __init__(self, baseline=None, resolution=10, cut: Cut = None):
         """
         __init__ Constructor
 
@@ -37,6 +37,7 @@ class RNNLinearDoi(DoI):
         resolution : int
             Number of points returned by each call to this DoI
         """
+        super(RNNLinearDoi, self).__init__(cut)
         self._baseline = baseline
         self._resolution = resolution
 
