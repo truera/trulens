@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import tempfile
+import importlib
 
 from warnings import warn
 
@@ -8,12 +9,14 @@ from trulens.nn.backend import get_backend
 from trulens.nn.slices import InputCut, OutputCut, LogitCut
 from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 
-B = get_backend()
-
-if B.backend == 'keras':
-    import keras
-elif B.backend == 'tf.keras' or B.backend == 'tensorflow':
-    import tensorflow.keras as keras
+def import_keras_backend():
+    '''
+    Dynamically import keras in case backend changes dynamically
+    '''
+    if get_backend().backend == 'keras':
+        return importlib.import_module(name='keras')
+    elif get_backend().backend == 'tf.keras' or get_backend().backend == 'tensorflow':
+        return importlib.import_module(name='tensorflow.keras')
 
 
 class KerasModelWrapper(ModelWrapper):
@@ -46,12 +49,13 @@ class KerasModelWrapper(ModelWrapper):
             replace_softmax is `True`, then the passed-in model will be
             modified. By default `False`.
         """
-        if not isinstance(model, keras.models.Model):
+        self.keras = import_keras_backend()
+        if not isinstance(model, self.keras.models.Model):
             raise ValueError(
                 'Model must be an instance of `{}.models.Model`.\n\n'
                 '(you may be seeing this error if you passed a '
                 '`tensorflow.keras` model while using the \'keras\' backend or '
-                'vice-versa)'.format(B.backend))
+                'vice-versa)'.format(get_backend().backend))
 
         if replace_softmax:
             self._model = KerasModelWrapper._replace_probits_with_logits(
@@ -109,8 +113,8 @@ class KerasModelWrapper(ModelWrapper):
 
         # Warn if the specified layer's activation is not a softmax or a
         # sigmoid.
-        if not (activation == keras.activations.softmax or
-                activation == keras.activations.sigmoid):
+        if not (activation == self.keras.activations.softmax or
+                activation == self.keras.activations.sigmoid):
             warn(
                 'The activation of the specified layer to '
                 '`_replace_probits_with_logits` is not a softmax or a sigmoid; '
@@ -118,7 +122,7 @@ class KerasModelWrapper(ModelWrapper):
 
         try:
             # Temporarily replace the softmax activation.
-            probits_layer.activation = keras.activations.linear
+            probits_layer.activation = self.keras.activations.linear
 
             # Save and reload the model; this ensures we get a clone of the
             # model, but with the activation updated.
@@ -128,7 +132,7 @@ class KerasModelWrapper(ModelWrapper):
 
             model.save(tmp_path)
 
-            return keras.models.load_model(
+            return self.keras.models.load_model(
                 tmp_path, custom_objects=custom_objects)
 
         finally:
@@ -316,7 +320,7 @@ class KerasModelWrapper(ModelWrapper):
         # Compute the output values of `to_tensors` unless all `to_tensor`s were
         # also `doi_tensors`.
         if non_identity_to_tensors:
-            fprop_fn = keras.backend.function(
+            fprop_fn = self.keras.backend.function(
                 doi_tensors, non_identity_to_tensors)
             out_vals = fprop_fn(intervention)
             del fprop_fn
@@ -401,10 +405,10 @@ class KerasModelWrapper(ModelWrapper):
         Q = qoi(to_tensors[0]) if len(to_tensors) == 1 else qoi(to_tensors)
 
         gradients = [
-            keras.backend.function(
-                doi_tensors, B.gradient(q, attribution_tensors))(intervention)
+            self.keras.backend.function(
+                doi_tensors, get_backend().gradient(q, attribution_tensors))(intervention)
             for q in Q
-        ] if isinstance(Q, DATA_CONTAINER_TYPE) else keras.backend.function(
-            doi_tensors, B.gradient(Q, attribution_tensors))(intervention)
+        ] if isinstance(Q, DATA_CONTAINER_TYPE) else self.keras.backend.function(
+            doi_tensors, get_backend().gradient(Q, attribution_tensors))(intervention)
 
         return gradients[0] if len(gradients) == 1 else gradients

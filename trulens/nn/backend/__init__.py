@@ -14,7 +14,12 @@ def get_backend():
     if _TRULENS_BACKEND == 'pytorch':
         _TRULENS_BACKEND_IMPL = importlib.import_module(name='trulens.nn.backend.pytorch_backend.pytorch')
     elif _TRULENS_BACKEND == 'keras' or _TRULENS_BACKEND == 'tf.keras':
+        
         _TRULENS_BACKEND_IMPL = importlib.import_module(name='trulens.nn.backend.keras_backend.keras')
+        # KerasBackend has multiple backend implementations of the keras library, 
+        # so reload should be called to refresh if backend changes between keras vs tf.keras
+        if _TRULENS_BACKEND != _TRULENS_BACKEND_IMPL.backend:
+            importlib.reload(_TRULENS_BACKEND_IMPL)
     elif _TRULENS_BACKEND == 'tensorflow' or _TRULENS_BACKEND == 'tf':
         _TRULENS_BACKEND_IMPL = importlib.import_module(name='trulens.nn.backend.tf_backend.tf')
     return _TRULENS_BACKEND_IMPL
