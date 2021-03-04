@@ -29,12 +29,13 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
                 this.l2_relu = ReLU()
                 this.logits = Linear(2, 1)
 
-                this.l1.weight.data = get_backend().as_tensor(self.layer1_weights.T)
-                this.l1.bias.data = get_backend().as_tensor(self.internal_bias)
-                this.l2.weight.data = get_backend().as_tensor(self.layer2_weights.T)
-                this.l2.bias.data = get_backend().as_tensor(self.internal_bias)
-                this.logits.weight.data = get_backend().as_tensor(self.layer3_weights.T)
-                this.logits.bias.data = get_backend().as_tensor(self.bias)
+                B = get_backend()
+                this.l1.weight.data = B.as_tensor(self.layer1_weights.T)
+                this.l1.bias.data = B.as_tensor(self.internal_bias)
+                this.l2.weight.data = B.as_tensor(self.layer2_weights.T)
+                this.l2.bias.data = B.as_tensor(self.internal_bias)
+                this.logits.weight.data = B.as_tensor(self.layer3_weights.T)
+                this.logits.bias.data = B.as_tensor(self.bias)
 
             def forward(this, x):
                 x = this.l1(x)

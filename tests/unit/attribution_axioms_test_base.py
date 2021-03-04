@@ -15,7 +15,6 @@ import numpy as np
 
 from functools import partial
 
-from trulens.nn.backend import get_backend
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import DoI, LinearDoi, PointDoi
 from trulens.nn.quantities import ClassQoI, InternalChannelQoI, MaxClassQoI

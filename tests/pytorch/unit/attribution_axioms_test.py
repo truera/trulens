@@ -21,9 +21,9 @@ class AxiomsTest(AxiomsTestBase, TestCase):
             def __init__(this):
                 super(M_lin, this).__init__()
                 this.layer = Linear(self.input_size, self.output_size)
-
-                this.layer.weight.data = get_backend().as_tensor(self.model_lin_weights.T)
-                this.layer.bias.data = get_backend().as_tensor(self.model_lin_bias)
+                B = get_backend()
+                this.layer.weight.data = B.as_tensor(self.model_lin_weights.T)
+                this.layer.bias.data = B.as_tensor(self.model_lin_bias)
 
             def forward(this, x):
                 return this.layer(x)
@@ -41,12 +41,13 @@ class AxiomsTest(AxiomsTestBase, TestCase):
                 this.l2_relu = ReLU()
                 this.l3 = Linear(self.internal2_size, self.output_size)
 
-                this.l1.weight.data = get_backend().as_tensor(self.model_deep_weights_1.T)
-                this.l1.bias.data = get_backend().as_tensor(self.model_deep_bias_1)
-                this.l2.weight.data = get_backend().as_tensor(self.model_deep_weights_2.T)
-                this.l2.bias.data = get_backend().as_tensor(self.model_deep_bias_2)
-                this.l3.weight.data = get_backend().as_tensor(self.model_deep_weights_3.T)
-                this.l3.bias.data = get_backend().as_tensor(self.model_deep_bias_3)
+                B = get_backend()
+                this.l1.weight.data = B.as_tensor(self.model_deep_weights_1.T)
+                this.l1.bias.data = B.as_tensor(self.model_deep_bias_1)
+                this.l2.weight.data = B.as_tensor(self.model_deep_weights_2.T)
+                this.l2.bias.data = B.as_tensor(self.model_deep_bias_2)
+                this.l3.weight.data = B.as_tensor(self.model_deep_weights_3.T)
+                this.l3.bias.data = B.as_tensor(self.model_deep_bias_3)
 
             def forward(this, x):
                 x = this.l1(x)

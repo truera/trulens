@@ -26,11 +26,11 @@ class TensorflowModelWrapper(ModelWrapper):
         ----------
         graph : tf.Graph
             The computation graph representing the model.
-        input_tensors : get_backend().Tensor | list of get_backend().Tensor
+        input_tensors : Tensor | list of Tensor
             A list of the tensors that are the inputs to the graph. If there is
             only one input, it can be given without wrapping it in a list.
             This is needed as the input tensors of a graph cannot be inferred.
-        output_tensors : get_backend().Tensor | list of get_backend().Tensor
+        output_tensors : Tensor | list of Tensor
             A list of the tensors that are the outputs to the graph. If there is
             only one output, it can be given without wrapping it in a list.
             This is needed as the output tensors of a graph cannot be inferred.

@@ -109,7 +109,7 @@ class DoI(AbstractBaseClass):
 
         elif not (isinstance(x, np.ndarray) or isinstance(x, get_backend().Tensor)):
             raise ValueError(
-                '`{}` expected to receive an instance of `get_backend().Tensor` or '
+                '`{}` expected to receive an instance of `Tensor` or '
                 '`np.ndarray`, but received an instance of {}'.format(
                     self.__class__.__name__, type(x)))
 
@@ -167,21 +167,22 @@ class LinearDoi(DoI):
         self._resolution = resolution
 
     def __call__(self, z: ArrayLike) -> List[ArrayLike]:
+        B = get_backend()
         if isinstance(z, (list, tuple)) and len(z) == 1:
             z = z[0]
 
         self._assert_cut_contains_only_one_tensor(z)
 
         if self._baseline is None:
-            baseline = get_backend().zeros_like(z)
+            baseline = B.zeros_like(z)
         else:
             baseline = self._baseline
 
-        if (get_backend().is_tensor(z) and not get_backend().is_tensor(baseline)):
-            baseline = get_backend().as_tensor(baseline)
+        if (B.is_tensor(z) and not B.is_tensor(baseline)):
+            baseline = B.as_tensor(baseline)
 
-        if (not get_backend().is_tensor(z) and get_backend().is_tensor(baseline)):
-            baseline = get_backend().as_array(baseline)
+        if (not B.is_tensor(z) and B.is_tensor(baseline)):
+            baseline = B.as_array(baseline)
 
         r = 1. if self._resolution is 1 else self._resolution - 1.
 
@@ -231,13 +232,13 @@ class GaussianDoi(DoI):
         self._resolution = resolution
 
     def __call__(self, z: ArrayLike) -> List[ArrayLike]:
-
+        B = get_backend()
         self._assert_cut_contains_only_one_tensor(z)
 
-        if get_backend().is_tensor(z):
+        if B.is_tensor(z):
             # Tensor implementation.
             return [
-                z + get_backend().random_normal_like(z, var=self._var)
+                z + B.random_normal_like(z, var=self._var)
                 for _ in range(self._resolution)
             ]
 

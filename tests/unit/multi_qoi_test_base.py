@@ -40,13 +40,15 @@ class RNNLinearDoi(DoI):
         super(RNNLinearDoi, self).__init__(cut)
         self._baseline = baseline
         self._resolution = resolution
+        self.B = get_backend()
 
     def calc_doi(self, x_input, tf_cell=False):
+        
         x = x_input[0] if tf_cell else x_input
         batch_size = len(x)
         if (self._baseline is None):
-            if get_backend().is_tensor(x):
-                x = get_backend().as_array(x)
+            if self.B.is_tensor(x):
+                x = self.B.as_array(x)
             baseline = np.zeros_like(x)
         else:
             baseline = self._baseline
@@ -56,11 +58,11 @@ class RNNLinearDoi(DoI):
         baseline = baseline[0, ...]
         baseline = np.tile(baseline, tuple(tile_dims))
 
-        if (get_backend().is_tensor(x) and not get_backend().is_tensor(baseline)):
-            baseline = get_backend().as_tensor(baseline)
+        if (self.B.is_tensor(x) and not self.B.is_tensor(baseline)):
+            baseline = self.B.as_tensor(baseline)
 
-        if (not get_backend().is_tensor(x) and get_backend().is_tensor(baseline)):
-            baseline = get_backend().as_array(baseline)
+        if (not self.B.is_tensor(x) and self.B.is_tensor(baseline)):
+            baseline = self.B.as_array(baseline)
 
         r = self._resolution - 1.
         doi_out = [
@@ -75,6 +77,7 @@ class RNNLinearDoi(DoI):
         return self.calc_doi(x, tf_cell=False)
 
     def get_activation_multiplier(self, activation):
+        
         batch_size = len(activation)
         if (self._baseline is None):
             baseline = np.zeros_like(activation)
@@ -85,11 +88,11 @@ class RNNLinearDoi(DoI):
         tile_dims[0] = batch_size
         baseline = baseline[0, ...]
         baseline = np.tile(baseline, tuple(tile_dims))
-        if (get_backend().is_tensor(activation) and not get_backend().is_tensor(baseline)):
-            baseline = get_backend().as_tensor(baseline)
+        if (self.B.is_tensor(activation) and not self.B.is_tensor(baseline)):
+            baseline = self.B.as_tensor(baseline)
 
-        if (not get_backend().is_tensor(activation) and get_backend().is_tensor(baseline)):
-            baseline = get_backend().as_array(baseline)
+        if (not self.B.is_tensor(activation) and self.B.is_tensor(baseline)):
+            baseline = self.B.as_array(baseline)
 
         batch_size = len(activation)
         return activation - baseline

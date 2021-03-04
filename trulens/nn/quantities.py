@@ -73,7 +73,7 @@ class QoI(AbstractBaseClass):
 
         elif not isinstance(x, get_backend().Tensor):
             raise ValueError(
-                '`{}` expected to receive an instance of `get_backend().Tensor`, but '
+                '`{}` expected to receive an instance of `Tensor`, but '
                 'received an instance of {}'.format(
                     self.__class__.__name__, type(x)))
 
@@ -177,16 +177,16 @@ class InternalChannelQoI(QoI):
         self._channels = channel if isinstance(channel, list) else [channel]
 
     def __call__(self, y: TensorLike) -> TensorLike:
-
+        B = get_backend()
         self._assert_cut_contains_only_one_tensor(y)
 
-        if len(get_backend().int_shape(y)) == 2:
+        if len(B.int_shape(y)) == 2:
             return sum([y[:, ch] for ch in self._channels])
 
-        elif len(get_backend().int_shape(y)) == 3:
+        elif len(B.int_shape(y)) == 3:
             return sum([self._agg_fn(y[:, :, ch]) for ch in self._channel])
 
-        elif len(get_backend().int_shape(y)) == 4:
+        elif len(B.int_shape(y)) == 4:
             if self._channel_ax == 1:
                 return sum([self._agg_fn(y[:, ch]) for ch in self._channels])
 
@@ -202,7 +202,7 @@ class InternalChannelQoI(QoI):
         else:
             raise QoiCutSupportError(
                 'Unsupported tensor rank for `InternalChannelQoI`: {}'.format(
-                    len(get_backend().int_shape(y))))
+                    len(B.int_shape(y))))
 
 
 class ClassQoI(QoI):
@@ -320,14 +320,14 @@ class ThresholdQoI(QoI):
         self.activation = activation
 
     def __call__(self, x: TensorLike) -> TensorLike:
-
+        B = get_backend()
         self._assert_cut_contains_only_one_tensor(x)
 
         if self.activation is not None:
             if isinstance(self.activation, str):
                 self.activation = self.activation.lower()
                 if self.activation in ['sigmoid', 'softmax']:
-                    x = getattr(get_backend(), self.activation)(x)
+                    x = getattr(B, self.activation)(x)
                 else:
                     raise NotImplementedError(
                         'This activation function is not currently supported '
@@ -337,13 +337,13 @@ class ThresholdQoI(QoI):
 
         # TODO(klas): is the `clone` necessary here? Not sure why it was
         #   included.
-        mask = get_backend().sign(get_backend().clone(x) - self.threshold)
+        mask = B.sign(B.clone(x) - self.threshold)
         if self.low_minus_high:
             mask = -mask
 
-        non_batch_dimensions = tuple(range(len(get_backend().int_shape(x)))[1:])
+        non_batch_dimensions = tuple(range(len(B.int_shape(x)))[1:])
 
-        return get_backend().sum(mask * x, axis=non_batch_dimensions)
+        return B.sum(mask * x, axis=non_batch_dimensions)
 
 
 class ClassSeqQoI(QoI):
