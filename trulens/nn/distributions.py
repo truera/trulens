@@ -16,7 +16,7 @@ from typing import Optional
 from typing import Union
 
 from trulens.nn.slices import Cut
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 
 # Define some type aliases.
 ArrayLike = Union[np.ndarray, Any, List[Union[np.ndarray, Any]]]
@@ -107,9 +107,9 @@ class DoI(AbstractBaseClass):
                 '`__call__` is expected/allowed to be a list of {} tensors.'.
                 format(self.__class__.__name__, len(x), len(x)))
 
-        elif not (isinstance(x, np.ndarray) or isinstance(x, B.Tensor)):
+        elif not (isinstance(x, np.ndarray) or isinstance(x, get_backend().Tensor)):
             raise ValueError(
-                '`{}` expected to receive an instance of `B.Tensor` or '
+                '`{}` expected to receive an instance of `get_backend().Tensor` or '
                 '`np.ndarray`, but received an instance of {}'.format(
                     self.__class__.__name__, type(x)))
 
@@ -173,15 +173,15 @@ class LinearDoi(DoI):
         self._assert_cut_contains_only_one_tensor(z)
 
         if self._baseline is None:
-            baseline = B.zeros_like(z)
+            baseline = get_backend().zeros_like(z)
         else:
             baseline = self._baseline
 
-        if (B.is_tensor(z) and not B.is_tensor(baseline)):
-            baseline = B.as_tensor(baseline)
+        if (get_backend().is_tensor(z) and not get_backend().is_tensor(baseline)):
+            baseline = get_backend().as_tensor(baseline)
 
-        if (not B.is_tensor(z) and B.is_tensor(baseline)):
-            baseline = B.as_array(baseline)
+        if (not get_backend().is_tensor(z) and get_backend().is_tensor(baseline)):
+            baseline = get_backend().as_array(baseline)
 
         r = 1. if self._resolution is 1 else self._resolution - 1.
 
@@ -234,10 +234,10 @@ class GaussianDoi(DoI):
 
         self._assert_cut_contains_only_one_tensor(z)
 
-        if B.is_tensor(z):
+        if get_backend().is_tensor(z):
             # Tensor implementation.
             return [
-                z + B.random_normal_like(z, var=self._var)
+                z + get_backend().random_normal_like(z, var=self._var)
                 for _ in range(self._resolution)
             ]
 

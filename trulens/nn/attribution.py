@@ -24,8 +24,7 @@ from typing import Union
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
-from trulens.nn.models import ModelWrapper
-from trulens.nn.models._model_base import DATA_CONTAINER_TYPE
+from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 from trulens.nn.quantities import ComparativeQoI
 from trulens.nn.quantities import InternalChannelQoI
 from trulens.nn.quantities import QoI
@@ -35,7 +34,7 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 
 # Define some type aliases.
 CutLike = Union[Cut, int, str, None]
@@ -262,13 +261,13 @@ class InternalInfluence(AttributionMethod):
         # Take the mean across the samples in the DoI.
         if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
             attributions = [
-                B.mean(
-                    B.reshape(qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
+                get_backend().mean(
+                    get_backend().reshape(qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
                     axis=0) for qoi_grad in qoi_grads
             ]
         else:
-            attributions = B.mean(
-                B.reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]), axis=0)
+            attributions = get_backend().mean(
+                get_backend().reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]), axis=0)
 
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
@@ -440,7 +439,7 @@ class InternalInfluence(AttributionMethod):
 
         else:
             if not isinstance(D[0], np.ndarray):
-                D = [B.as_array(d) for d in D]
+                D = [get_backend().as_array(d) for d in D]
             return np.concatenate(D)
 
 

@@ -1,8 +1,50 @@
-from trulens.nn.backend.load_backend import _BACKEND
+import os
+import importlib
 
-if _BACKEND == 'pytorch':
-    from trulens.nn.backend.pytorch_backend.pytorch import *
-elif _BACKEND == 'keras' or _BACKEND == 'tf.keras':
-    from trulens.nn.backend.keras_backend.keras import *
-elif _BACKEND == 'tensorflow' or _BACKEND == 'tf':
-    from trulens.nn.backend.tf_backend.tf import *
+# Do not use directly, use get_backend
+_TRULENS_BACKEND_IMPL = None
+def get_backend():
+    global _TRULENS_BACKEND_IMPL
+    if 'TRULENS_BACKEND' in os.environ.keys():
+        _TRULENS_BACKEND = os.environ['TRULENS_BACKEND']
+    else:
+        _TRULENS_BACKEND = 'pytorch'
+    
+
+    if _TRULENS_BACKEND == 'pytorch':
+        _TRULENS_BACKEND_IMPL = importlib.import_module(name='trulens.nn.backend.pytorch_backend.pytorch')
+    elif _TRULENS_BACKEND == 'keras' or _TRULENS_BACKEND == 'tf.keras':
+        _TRULENS_BACKEND_IMPL = importlib.import_module(name='trulens.nn.backend.keras_backend.keras')
+    elif _TRULENS_BACKEND == 'tensorflow' or _TRULENS_BACKEND == 'tf':
+        _TRULENS_BACKEND_IMPL = importlib.import_module(name='trulens.nn.backend.tf_backend.tf')
+    return _TRULENS_BACKEND_IMPL
+    
+_ALL_BACKEND_API_FUNCTIONS = [
+    'dim_order',
+    'channel_axis',
+    'Tensor',
+    'floatX',
+    'backend',
+    'gradient',
+    'as_array',
+    'as_tensor',
+    'is_tensor',
+    'int_shape',
+    'shape',
+    'expand_dims',
+    'reshape',
+    'mean',
+    'sum',
+    'abs',
+    'max',
+    'ones_like',
+    'zeros_like',
+    'random_normal_like',
+    'clone',
+    'stack',
+    'sign',
+    'sigmoid',
+    'softmax',
+    'maximum',
+    'minimum',
+]

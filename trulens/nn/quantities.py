@@ -22,7 +22,7 @@ from typing import List
 from typing import Optional
 from typing import Union
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 
 # Define some type aliases.
 TensorLike = Union[Any, List[Union[Any]]]
@@ -71,9 +71,9 @@ class QoI(AbstractBaseClass):
                 '`__call__` is expected/allowed to be a list of {} tensors.'.
                 format(self.__class__.__name__, len(x), len(x)))
 
-        elif not isinstance(x, B.Tensor):
+        elif not isinstance(x, get_backend().Tensor):
             raise ValueError(
-                '`{}` expected to receive an instance of `B.Tensor`, but '
+                '`{}` expected to receive an instance of `get_backend().Tensor`, but '
                 'received an instance of {}'.format(
                     self.__class__.__name__, type(x)))
 
@@ -114,7 +114,7 @@ class MaxClassQoI(QoI):
             if isinstance(self.activation, str):
                 self.activation = self.activation.lower()
                 if self.activation in ['sigmoid', 'softmax']:
-                    y = getattr(B, self.activation)(y)
+                    y = getattr(get_backend(), self.activation)(y)
 
                 else:
                     raise NotImplementedError(
@@ -123,7 +123,7 @@ class MaxClassQoI(QoI):
             else:
                 y = self.activation(y)
 
-        return B.max(y, axis=self._axis)
+        return get_backend().max(y, axis=self._axis)
 
 
 class InternalChannelQoI(QoI):
@@ -141,7 +141,7 @@ class InternalChannelQoI(QoI):
         """
         Sums batched 2D channels, leaving the batch dimension unchanged.
         """
-        return B.sum(x, axis=(1, 2))
+        return get_backend().sum(x, axis=(1, 2))
 
     def __init__(
             self,
@@ -168,7 +168,7 @@ class InternalChannelQoI(QoI):
                 used when the channels are scalars, e.g., for dense layers.
         """
         if channel_axis is None:
-            channel_axis = B.channel_axis
+            channel_axis = get_backend().channel_axis
         if agg_fn is None:
             agg_fn = InternalChannelQoI._batch_sum
 
@@ -180,13 +180,13 @@ class InternalChannelQoI(QoI):
 
         self._assert_cut_contains_only_one_tensor(y)
 
-        if len(B.int_shape(y)) == 2:
+        if len(get_backend().int_shape(y)) == 2:
             return sum([y[:, ch] for ch in self._channels])
 
-        elif len(B.int_shape(y)) == 3:
+        elif len(get_backend().int_shape(y)) == 3:
             return sum([self._agg_fn(y[:, :, ch]) for ch in self._channel])
 
-        elif len(B.int_shape(y)) == 4:
+        elif len(get_backend().int_shape(y)) == 4:
             if self._channel_ax == 1:
                 return sum([self._agg_fn(y[:, ch]) for ch in self._channels])
 
@@ -202,7 +202,7 @@ class InternalChannelQoI(QoI):
         else:
             raise QoiCutSupportError(
                 'Unsupported tensor rank for `InternalChannelQoI`: {}'.format(
-                    len(B.int_shape(y))))
+                    len(get_backend().int_shape(y))))
 
 
 class ClassQoI(QoI):
@@ -327,7 +327,7 @@ class ThresholdQoI(QoI):
             if isinstance(self.activation, str):
                 self.activation = self.activation.lower()
                 if self.activation in ['sigmoid', 'softmax']:
-                    x = getattr(B, self.activation)(x)
+                    x = getattr(get_backend(), self.activation)(x)
                 else:
                     raise NotImplementedError(
                         'This activation function is not currently supported '
@@ -337,13 +337,13 @@ class ThresholdQoI(QoI):
 
         # TODO(klas): is the `clone` necessary here? Not sure why it was
         #   included.
-        mask = B.sign(B.clone(x) - self.threshold)
+        mask = get_backend().sign(get_backend().clone(x) - self.threshold)
         if self.low_minus_high:
             mask = -mask
 
-        non_batch_dimensions = tuple(range(len(B.int_shape(x)))[1:])
+        non_batch_dimensions = tuple(range(len(get_backend().int_shape(x)))[1:])
 
-        return B.sum(mask * x, axis=non_batch_dimensions)
+        return get_backend().sum(mask * x, axis=non_batch_dimensions)
 
 
 class ClassSeqQoI(QoI):
@@ -363,6 +363,6 @@ class ClassSeqQoI(QoI):
     def __call__(self, y):
 
         self._assert_cut_contains_only_one_tensor(y)
-        assert B.shape(y)[0] == len(self.seq_labels)
+        assert get_backend().shape(y)[0] == len(self.seq_labels)
 
         return y[:, seq_labels]

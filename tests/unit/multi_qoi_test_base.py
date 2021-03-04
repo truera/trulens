@@ -2,7 +2,7 @@ from unittest import TestCase, main
 
 import numpy as np
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import DoI
 from trulens.nn.quantities import QoI
@@ -45,8 +45,8 @@ class RNNLinearDoi(DoI):
         x = x_input[0] if tf_cell else x_input
         batch_size = len(x)
         if (self._baseline is None):
-            if B.is_tensor(x):
-                x = B.as_array(x)
+            if get_backend().is_tensor(x):
+                x = get_backend().as_array(x)
             baseline = np.zeros_like(x)
         else:
             baseline = self._baseline
@@ -56,11 +56,11 @@ class RNNLinearDoi(DoI):
         baseline = baseline[0, ...]
         baseline = np.tile(baseline, tuple(tile_dims))
 
-        if (B.is_tensor(x) and not B.is_tensor(baseline)):
-            baseline = B.as_tensor(baseline)
+        if (get_backend().is_tensor(x) and not get_backend().is_tensor(baseline)):
+            baseline = get_backend().as_tensor(baseline)
 
-        if (not B.is_tensor(x) and B.is_tensor(baseline)):
-            baseline = B.as_array(baseline)
+        if (not get_backend().is_tensor(x) and get_backend().is_tensor(baseline)):
+            baseline = get_backend().as_array(baseline)
 
         r = self._resolution - 1.
         doi_out = [
@@ -85,11 +85,11 @@ class RNNLinearDoi(DoI):
         tile_dims[0] = batch_size
         baseline = baseline[0, ...]
         baseline = np.tile(baseline, tuple(tile_dims))
-        if (B.is_tensor(activation) and not B.is_tensor(baseline)):
-            baseline = B.as_tensor(baseline)
+        if (get_backend().is_tensor(activation) and not get_backend().is_tensor(baseline)):
+            baseline = get_backend().as_tensor(baseline)
 
-        if (not B.is_tensor(activation) and B.is_tensor(baseline)):
-            baseline = B.as_array(baseline)
+        if (not get_backend().is_tensor(activation) and get_backend().is_tensor(baseline)):
+            baseline = get_backend().as_array(baseline)
 
         batch_size = len(activation)
         return activation - baseline

@@ -4,23 +4,27 @@
 # pylint: disable=not-callable
 
 import numpy as np
+import os
 
-from trulens.nn.backend.load_backend import _BACKEND, _ALL_BACKEND_API_FUNCTIONS
+from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS
 
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
-if _BACKEND == 'keras':
-    import keras.backend as K
-elif _BACKEND == 'tf.keras':
+if 'TRULENS_BACKEND' in os.environ.keys():
+    _TRULENS_BACKEND = os.environ['TRULENS_BACKEND']
+
+if _TRULENS_BACKEND == 'tf.keras':
     import tensorflow.keras.backend as K
     import tensorflow as tf
+else:
+    import keras.backend as K
 
 floatX = K.floatx()
 Tensor = type(K.constant((1, 1), dtype=floatX))
 TensorVar = type(K.zeros((1, 1), dtype=floatX))
 dim_order = K.image_data_format()
 channel_axis = 1 if dim_order == 'channels_first' else 3
-backend = _BACKEND
+backend = _TRULENS_BACKEND
 
 
 def gradient(scalar, wrt):

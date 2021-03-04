@@ -1,6 +1,6 @@
 import numpy as np
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 from trulens.nn.quantities import *
 
 
@@ -8,8 +8,8 @@ class QoiTestBase(object):
 
     def setUp(self):
         # Create an example tensor to use for the tests.
-        self.y = B.as_tensor(np.array([[1., 2., 3.], [0., -1., -2.]]))
-        self.z = B.as_tensor(
+        self.y = get_backend().as_tensor(np.array([[1., 2., 3.], [0., -1., -2.]]))
+        self.z = get_backend().as_tensor(
             np.array(
                 [
                     [
@@ -28,27 +28,27 @@ class QoiTestBase(object):
         qoi = MaxClassQoI()
         res = qoi(self.y)
 
-        self.assertTrue(np.allclose(B.as_array(res), np.array([3., 0.])))
+        self.assertTrue(np.allclose(get_backend().as_array(res), np.array([3., 0.])))
 
     def test_max_class_axis(self):
         qoi = MaxClassQoI(axis=0)
         res = qoi(self.y)
 
-        self.assertTrue(np.allclose(B.as_array(res), np.array([1., 2., 3.])))
+        self.assertTrue(np.allclose(get_backend().as_array(res), np.array([1., 2., 3.])))
 
     def test_max_class_activation_string(self):
         qoi = MaxClassQoI(activation='softmax')
         res = qoi(self.y)
 
         self.assertTrue(
-            np.allclose(B.as_array(res), np.array([0.66524096, 0.66524096])))
+            np.allclose(get_backend().as_array(res), np.array([0.66524096, 0.66524096])))
 
     def test_max_class_activation_function(self):
-        qoi = MaxClassQoI(activation=B.softmax)
+        qoi = MaxClassQoI(activation=get_backend().softmax)
         res = qoi(self.y)
 
         self.assertTrue(
-            np.allclose(B.as_array(res), np.array([0.66524096, 0.66524096])))
+            np.allclose(get_backend().as_array(res), np.array([0.66524096, 0.66524096])))
 
     # Tests for InternalChannelQoI.
 
@@ -57,30 +57,30 @@ class QoiTestBase(object):
         res = qoi(self.y)
 
         self.assertEqual(
-            B.int_shape(res), (2,),
+            get_backend().int_shape(res), (2,),
             'Should return one scalar per row in the batch')
 
-        self.assertTrue(np.allclose(B.as_array(res), np.array([3., -2.])))
+        self.assertTrue(np.allclose(get_backend().as_array(res), np.array([3., -2.])))
 
     def test_internal_channel_axis1(self):
         qoi = InternalChannelQoI(1, channel_axis=1)
         res = qoi(self.z)
 
         self.assertEqual(
-            B.int_shape(res), (2,),
+            get_backend().int_shape(res), (2,),
             'Should return one scalar per row in the batch')
 
-        self.assertTrue(np.allclose(B.as_array(res), np.array([24., 36.])))
+        self.assertTrue(np.allclose(get_backend().as_array(res), np.array([24., 36.])))
 
     def test_internal_channel_axis3(self):
         qoi = InternalChannelQoI(1, channel_axis=3)
         res = qoi(self.z)
 
         self.assertEqual(
-            B.int_shape(res), (2,),
+            get_backend().int_shape(res), (2,),
             'Should return one scalar per row in the batch')
 
-        self.assertTrue(np.allclose(B.as_array(res), np.array([21., 14.])))
+        self.assertTrue(np.allclose(get_backend().as_array(res), np.array([21., 14.])))
 
     def test_internal_channel_invalid_channel(self):
         qoi = InternalChannelQoI(0, channel_axis=0)
@@ -94,10 +94,10 @@ class QoiTestBase(object):
         res = qoi(self.y)
 
         self.assertEqual(
-            B.int_shape(res), (2,),
+            get_backend().int_shape(res), (2,),
             'Should return one scalar per row in the batch')
 
-        self.assertTrue(np.allclose(B.as_array(res), np.array([2., -1.])))
+        self.assertTrue(np.allclose(get_backend().as_array(res), np.array([2., -1.])))
 
     # Tests for ComparativeQoI.
 
@@ -106,10 +106,10 @@ class QoiTestBase(object):
         res = qoi(self.y)
 
         self.assertEqual(
-            B.int_shape(res), (2,),
+            get_backend().int_shape(res), (2,),
             'Should return one scalar per row in the batch')
 
-        self.assertTrue(np.allclose(B.as_array(res), np.array([1., -1.])))
+        self.assertTrue(np.allclose(get_backend().as_array(res), np.array([1., -1.])))
 
     # Tests for LambdaQoI.
 
@@ -118,10 +118,10 @@ class QoiTestBase(object):
         res = qoi(self.y)
 
         self.assertEqual(
-            B.int_shape(res), (2,),
+            get_backend().int_shape(res), (2,),
             'Should return one scalar per row in the batch')
 
-        self.assertTrue(np.allclose(B.as_array(res), np.array([3., -1.])))
+        self.assertTrue(np.allclose(get_backend().as_array(res), np.array([3., -1.])))
 
     def test_lambda_error(self):
         with self.assertRaises(ValueError):
@@ -135,28 +135,28 @@ class QoiTestBase(object):
         res = qoi(self.y)
 
         self.assertEqual(
-            B.int_shape(res), (2,),
+            get_backend().int_shape(res), (2,),
             'Should return one scalar per row in the batch')
 
-        self.assertTrue(np.allclose(B.as_array(res), np.array([4., 3.])))
+        self.assertTrue(np.allclose(get_backend().as_array(res), np.array([4., 3.])))
 
     def test_threshold_low_minus_high(self):
         qoi = ThresholdQoI(1.5, low_minus_high=True)
         res = qoi(self.y)
 
         self.assertEqual(
-            B.int_shape(res), (2,),
+            get_backend().int_shape(res), (2,),
             'Should return one scalar per row in the batch')
 
-        self.assertTrue(np.allclose(B.as_array(res), np.array([-4., -3.])))
+        self.assertTrue(np.allclose(get_backend().as_array(res), np.array([-4., -3.])))
 
     def test_threshold_activation(self):
         qoi = ThresholdQoI(0.75, activation='sigmoid')
         res = qoi(self.y)
 
         self.assertEqual(
-            B.int_shape(res), (2,),
+            get_backend().int_shape(res), (2,),
             'Should return one scalar per row in the batch')
 
         self.assertTrue(
-            np.allclose(B.as_array(res), np.array([1.1023126, -0.8881443])))
+            np.allclose(get_backend().as_array(res), np.array([1.1023126, -0.8881443])))

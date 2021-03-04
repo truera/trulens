@@ -4,9 +4,11 @@ import tempfile
 
 from warnings import warn
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 from trulens.nn.slices import InputCut, OutputCut, LogitCut
 from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
+
+B = get_backend()
 
 if B.backend == 'keras':
     import keras
