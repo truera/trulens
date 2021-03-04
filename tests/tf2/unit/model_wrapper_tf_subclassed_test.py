@@ -10,8 +10,6 @@ import unittest
 from unittest import TestCase, main
 
 from trulens.nn.models import ModelWrapper
-from trulens.nn.quantities import MaxClassQoI
-from trulens.nn.slices import Cut
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 
 
