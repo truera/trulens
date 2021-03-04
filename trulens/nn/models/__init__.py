@@ -5,7 +5,7 @@ from trulens.utils import tru_logger
 from trulens.nn.backend import get_backend
 
 def discern_backend(model):
-    type_str = str(type(model))
+    type_str = str(type(model)).lower()
     
     if 'torch' in type_str:
         return 'pytorch'
@@ -140,10 +140,10 @@ def get_model_wrapper(
         else:
             from trulens.nn.models.tensorflow_v1 import TensorflowModelWrapper
             if input_tensors is None:
-                tru_logger.error('pytorch model must pass parameter: input_tensors')
+                tru_logger.error('tensorflow1 model must pass parameter: input_tensors')
             if output_tensors is None:
-                tru_logger.error('pytorch model must pass parameter: output_tensors')
-            return TensorflowModelWrapper(graph,
+                tru_logger.error('tensorflow1 model must pass parameter: output_tensors') 
+            return TensorflowModelWrapper(model,
                 input_tensors,
                 output_tensors,
                 internal_tensor_dict=internal_tensor_dict,

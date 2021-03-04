@@ -39,16 +39,14 @@ class EnvironmentTestBase(object):
                 self.assertIsInstance(model_wrapper, self.model_wrapper_type)
     
     def test_model_wrapper_params(self):
-         for incorrect_backend in EnvironmentTestBase._environment_backends:
-            if self.correct_backend == incorrect_backend:
-                continue
-            for i in range(len(self.models)):
-                model = self.models[i]
-                kwargs = self.models_wrapper_kwargs[i]
-                for kwarg_key in kwargs:
-                    missing_kwarg_list = kwargs.copy()
-                    del missing_kwarg_list[kwarg_key]
-                    self.assertRaises(None, get_model_wrapper(model, **kwargs))
+        for i in range(len(self.models)):
+            model = self.models[i]
+            kwargs = self.models_wrapper_kwargs[i]
+            for kwarg_key in kwargs:
+                missing_kwarg_list = kwargs.copy()
+                del missing_kwarg_list[kwarg_key]
+                with self.assertRaises(ValueError):
+                    get_model_wrapper(model, **missing_kwarg_list)
 
 
     def test_backend(self):

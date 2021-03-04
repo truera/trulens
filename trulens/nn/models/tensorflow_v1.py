@@ -41,9 +41,12 @@ class TensorflowModelWrapper(ModelWrapper):
             `internal_tensor_dict` can be accessed via the name given to them by
             tensorflow.
         """
+        if input_tensors is None:
+            raise ValueError('Tensorflow1 model wrapper must pass the input_tensors parameter')
+        if output_tensors is None:
+            raise ValueError('Tensorflow1 model wrapper must pass the output_tensors parameter')
 
         self._graph = graph
-
         self._inputs = (
             input_tensors if isinstance(input_tensors, DATA_CONTAINER_TYPE) else
             [input_tensors])

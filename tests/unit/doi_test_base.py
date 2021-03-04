@@ -64,7 +64,7 @@ class DoiTestBase(object):
         res = doi(self.z)
 
         self.assertTrue(
-            np.all(self.self.B.as_array(res[-1]) == 0.),
+            np.all(self.B.as_array(res[-1]) == 0.),
             'Default baseline should be zeros')
 
     # Tests for GaussianDoI.
