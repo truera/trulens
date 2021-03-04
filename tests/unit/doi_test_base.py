@@ -9,7 +9,7 @@ class DoiTestBase(object):
     def setUp(self):
         # Create an example tensor to use for the tests.
         self.B = get_backend()
-        self.z = self.self.B.as_tensor(np.array([[1., 2., 3.], [0., - 1., - 2.]]))
+        self.z = self.B.as_tensor(np.array([[1., 2., 3.], [0., - 1., - 2.]]))
         
 
     # Tests for PointDoI.

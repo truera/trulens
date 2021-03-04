@@ -41,7 +41,7 @@ class BatchTest(BatchTestBase, TestCase):
                 this.l2_relu = ReLU()
                 this.l3 = Linear(self.internal2_size, self.output_size)
 
-                b = get_backend()
+                B = get_backend()
                 this.l1.weight.data = B.as_tensor(self.model_deep_weights_1.T)
                 this.l1.bias.data = B.as_tensor(self.model_deep_bias_1)
                 this.l2.weight.data = B.as_tensor(self.model_deep_weights_2.T)
