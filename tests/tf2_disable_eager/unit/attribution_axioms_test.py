@@ -10,10 +10,6 @@ from trulens.nn.models import ModelWrapper
 from tests.unit.attribution_axioms_test_base import AxiomsTestBase
 
 from trulens.nn import backend as B
-from trulens.nn.attribution import InternalInfluence
-from trulens.nn.distributions import LinearDoi
-from trulens.nn.quantities import ClassQoI
-from trulens.nn.slices import InputCut
 
 assert (not tf.executing_eagerly())
 
