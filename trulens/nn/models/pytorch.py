@@ -4,7 +4,7 @@ from functools import partial
 import numpy as np
 import torch
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 from trulens.nn.slices import InputCut, OutputCut, LogitCut
 from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 
@@ -147,13 +147,13 @@ class PytorchModelWrapper(ModelWrapper):
             return (
                 ModelWrapper._flatten(output)
                 if return_tensor else ModelWrapper._nested_apply(
-                    ModelWrapper._flatten(output), B.as_array))
+                    ModelWrapper._flatten(output), get_backend().as_array))
 
         elif isinstance(cut, InputCut):
             return (
                 ModelWrapper._flatten(model_input)
                 if return_tensor else ModelWrapper._nested_apply(
-                    ModelWrapper._flatten(model_input), B.as_array))
+                    ModelWrapper._flatten(model_input), get_backend().as_array))
 
         elif isinstance(cut, LogitCut):
             y = hooks['logits' if self._logit_layer is None else self.
@@ -161,28 +161,28 @@ class PytorchModelWrapper(ModelWrapper):
             return (
                 ModelWrapper._flatten(y)
                 if return_tensor else ModelWrapper._nested_apply(
-                    ModelWrapper._flatten(y), B.as_array))
+                    ModelWrapper._flatten(y), get_backend().as_array))
 
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
             zs = [hooks[name] for name in cut.name]
             return (
                 ModelWrapper._flatten(zs)
                 if return_tensor else ModelWrapper._nested_apply(
-                    ModelWrapper._flatten(zs), B.as_array))
+                    ModelWrapper._flatten(zs), get_backend().as_array))
 
         else:
             z = hooks[cut.name]
             return (
                 ModelWrapper._flatten(z)
                 if return_tensor else ModelWrapper._nested_apply(
-                    ModelWrapper._flatten(z), B.as_array))
+                    ModelWrapper._flatten(z), get_backend().as_array))
 
     def _to_tensor(self, x):
         # Convert `x` to a tensor on `self.device`. Note that layer input can be
         # a nested DATA_CONTAINER_TYPE.
         if isinstance(x, np.ndarray) or isinstance(x[0], np.ndarray):
             x = ModelWrapper._nested_apply(
-                x, partial(B.as_tensor, device=self.device))
+                x, partial(get_backend().as_tensor, device=self.device))
 
         elif isinstance(x, DATA_CONTAINER_TYPE):
             x = [self._to_tensor(x_i) for x_i in x]
@@ -344,11 +344,11 @@ class PytorchModelWrapper(ModelWrapper):
                 else:
                     if anchor == 'in':
                         hooks[layer_name] = ModelWrapper._nested_apply(
-                            inpt, B.as_array)
+                            inpt, get_backend().as_array)
                     else:
                         outpt = outpt[0] if isinstance(outpt, tuple) else outpt
                         hooks[layer_name] = ModelWrapper._nested_apply(
-                            outpt, B.as_array)
+                            outpt, get_backend().as_array)
 
             return hookfn
 
@@ -452,9 +452,9 @@ class PytorchModelWrapper(ModelWrapper):
             qoi_out = qoi(y)
 
             grads_flat = [
-                B.gradient(B.sum(q), z_flat) for q in qoi_out
-            ] if isinstance(qoi_out, DATA_CONTAINER_TYPE) else B.gradient(
-                B.sum(qoi_out), z_flat)
+                get_backend().gradient(get_backend().sum(q), z_flat) for q in qoi_out
+            ] if isinstance(qoi_out, DATA_CONTAINER_TYPE) else get_backend().gradient(
+                get_backend().sum(qoi_out), z_flat)
 
             grads = [
                 ModelWrapper._unflatten(g, z, count=[0]) for g in grads_flat
@@ -468,8 +468,8 @@ class PytorchModelWrapper(ModelWrapper):
                 qoi_out,
                 DATA_CONTAINER_TYPE) else attribution_cut.access_layer(grads)
 
-            grads = [B.as_array(g) for g in grads] if isinstance(
-                qoi_out, DATA_CONTAINER_TYPE) else B.as_array(grads)
+            grads = [get_backend().as_array(g) for g in grads] if isinstance(
+                qoi_out, DATA_CONTAINER_TYPE) else get_backend().as_array(grads)
 
             grads_list.append(grads)
 
@@ -500,9 +500,9 @@ class PytorchModelWrapper(ModelWrapper):
         output = self.fprop(x)
         if self._gives_logits:
             if len(output.shape) > 2:
-                return B.softmax(output, axis=-1)
+                return get_backend().softmax(output, axis=-1)
             else:
-                return B.sigmoid(output)
+                return get_backend().sigmoid(output)
         else:
             return output
 

@@ -423,7 +423,7 @@ def softmax(t, axis=-1):
 
 def is_tensor(x):
     """
-    is_tensor returns if x is a B.Tensor
+    is_tensor returns if x is a get_backend().Tensor
     
     Parameters
     ----------

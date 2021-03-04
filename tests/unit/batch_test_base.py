@@ -1,7 +1,7 @@
 import numpy as np
 
 
-from trulens.nn.models import ModelWrapper
+from trulens.nn.models import get_model_wrapper
 
 class BatchTestBase(object):
 

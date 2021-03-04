@@ -7,9 +7,7 @@ from tensorflow.keras.layers import Input, Dense
 from tensorflow.keras.models import Model
 from unittest import TestCase, main
 
-from trulens.nn.models import ModelWrapper
-from trulens.nn.quantities import MaxClassQoI
-from trulens.nn.slices import Cut
+from trulens.nn.models import get_model_wrapper
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 
 

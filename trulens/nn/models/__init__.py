@@ -104,12 +104,12 @@ def get_model_wrapper(
         backend = discern_backend(model)
         tru_logger.info("Detected {} backend for {}".format(backend, type(model)))
     B = get_backend()
-    if B.backend != backend:
-        tru_logger.info("Changing backend from {} to {}".format(B.backend, backend))
+    if get_backend().backend != backend:
+        tru_logger.info("Changing backend from {} to {}".format(get_backend().backend, backend))
         os.environ['TRULENS_BACKEND'] = backend
         B = get_backend()
     
-    if B.backend == 'keras' or B.backend == 'tf.keras':
+    if get_backend().backend == 'keras' or get_backend().backend == 'tf.keras':
         from trulens.nn.models.keras import KerasModelWrapper
         return KerasModelWrapper(model,
             logit_layer=logit_layer,
@@ -117,7 +117,7 @@ def get_model_wrapper(
             softmax_layer=softmax_layer,
             custom_objects=custom_objects)
 
-    elif B.backend == 'pytorch':
+    elif get_backend().backend == 'pytorch':
         from trulens.nn.models.pytorch import PytorchModelWrapper
         if input_shape is None:
             tru_logger.error('pytorch model must pass parameter: input_shape')
@@ -127,7 +127,7 @@ def get_model_wrapper(
             logit_layer=logit_layer,
             device=device)
 
-    elif B.backend == 'tensorflow':
+    elif get_backend().backend == 'tensorflow':
         import tensorflow as tf
 
         if tf.__version__.startswith('2'):

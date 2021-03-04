@@ -8,7 +8,7 @@ from tensorflow import Graph, placeholder
 from tensorflow.nn import relu
 from unittest import TestCase, main
 
-from trulens.nn.models import ModelWrapper
+from trulens.nn.models import get_model_wrapper
 from tests.unit.batch_test_base import BatchTestBase
 
 

@@ -5,14 +5,10 @@ from tensorflow.keras.layers import Activation, Dense, Input
 from tensorflow.keras.models import Model
 from unittest import TestCase, main
 
-from trulens.nn.models import ModelWrapper
+from trulens.nn.models import get_model_wrapper
 from tests.unit.attribution_axioms_test_base import AxiomsTestBase
 
-from trulens.nn import backend as B
-from trulens.nn.attribution import InternalInfluence
-from trulens.nn.distributions import LinearDoi
-from trulens.nn.quantities import ClassQoI
-from trulens.nn.slices import InputCut
+from trulens.nn.backend import get_backend
 
 
 class AxiomsTest(AxiomsTestBase, TestCase):

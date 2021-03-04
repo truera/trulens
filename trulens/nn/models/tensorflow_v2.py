@@ -3,7 +3,7 @@ import tensorflow as tf
 import tensorflow.keras as keras
 import tensorflow.keras.backend as K
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 from trulens.nn.models.keras import KerasModelWrapper
 from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 from trulens.nn.slices import InputCut, OutputCut, LogitCut
@@ -413,7 +413,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
 
             Q = qoi(outputs[0]) if len(outputs) == 1 else qoi(outputs)
             if isinstance(Q, DATA_CONTAINER_TYPE) and len(Q) == 1:
-                Q = B.sum(Q)
+                Q = get_backend().sum(Q)
 
         grads = [tape.gradient(q, attribution_features) for q in Q
                 ] if isinstance(Q, DATA_CONTAINER_TYPE) else tape.gradient(
@@ -430,10 +430,10 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
 
         if return_numpy:
             grads = [
-                ModelWrapper._nested_apply(g, B.as_array) for g in grads
+                ModelWrapper._nested_apply(g, get_backend().as_array) for g in grads
             ] if isinstance(
                 grads, DATA_CONTAINER_TYPE) else ModelWrapper._nested_apply(
-                    grads, B.as_array)
+                    grads, get_backend().as_array)
 
         return grads[0] if isinstance(
             grads, DATA_CONTAINER_TYPE) and len(grads) == 1 else grads

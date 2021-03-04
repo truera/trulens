@@ -5,10 +5,10 @@ from unittest import TestCase, main
 
 import numpy as np
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import PointDoi
-from trulens.nn.models import ModelWrapper
+from trulens.nn.models import get_model_wrapper
 from trulens.nn.quantities import ClassQoI
 from trulens.nn.slices import InputCut, Cut
 
@@ -124,11 +124,11 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 this.z2 = ReLU()
                 this.y = Linear(2, 1)
 
-                this.z1.weight.data = B.as_tensor(
+                this.z1.weight.data = get_backend().as_tensor(
                     np.array([[1., 0.], [0., -1.]]).T)
-                this.z1.bias.data = B.as_tensor(np.array([0., 0.]))
-                this.y.weight.data = B.as_tensor(np.array([[1.], [1.]]).T)
-                this.y.bias.data = B.as_tensor(np.array([0.]))
+                this.z1.bias.data = get_backend().as_tensor(np.array([0., 0.]))
+                this.y.weight.data = get_backend().as_tensor(np.array([[1.], [1.]]).T)
+                this.y.bias.data = get_backend().as_tensor(np.array([0.]))
 
             def forward(this, x):
                 z1 = this.z1(x)

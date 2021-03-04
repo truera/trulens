@@ -5,7 +5,7 @@ from unittest import TestCase, main
 from keras.layers import Activation, Dense, Input
 from keras.models import Model
 
-from trulens.nn.models import ModelWrapper
+from trulens.nn.models import get_model_wrapper
 from tests.unit.batch_test_base import BatchTestBase
 
 

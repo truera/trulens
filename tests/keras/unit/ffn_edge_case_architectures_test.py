@@ -8,7 +8,7 @@ import numpy as np
 from tensorflow.python.util import deprecation
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import PointDoi
 from trulens.nn.models import get_model_wrapper

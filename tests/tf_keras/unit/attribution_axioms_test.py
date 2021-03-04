@@ -8,7 +8,7 @@ from tensorflow.keras.layers import Activation, Dense, Input
 from tensorflow.keras.models import Model
 from unittest import TestCase, main
 
-from trulens.nn.models import ModelWrapper
+from trulens.nn.models import get_model_wrapper
 from tests.unit.attribution_axioms_test_base import AxiomsTestBase
 
 

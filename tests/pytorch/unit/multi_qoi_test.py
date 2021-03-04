@@ -5,8 +5,8 @@ from unittest import TestCase, main
 
 import numpy as np
 
-from trulens.nn import backend as B
-from trulens.nn.models import ModelWrapper
+from trulens.nn.backend import get_backend
+from trulens.nn.models import get_model_wrapper
 
 from torch import cat
 from torch.nn import GRU, Linear, Module

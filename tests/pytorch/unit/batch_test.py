@@ -5,8 +5,8 @@ from torch import Tensor
 from torch.nn import Linear, Module, ReLU
 from unittest import TestCase, main
 
-from trulens.nn import backend as B
-from trulens.nn.models import ModelWrapper
+from trulens.nn.backend import get_backend
+from trulens.nn.models import get_model_wrapper
 from tests.unit.batch_test_base import BatchTestBase
 
 
@@ -22,8 +22,8 @@ class BatchTest(BatchTestBase, TestCase):
                 super(M_lin, this).__init__()
                 this.layer = Linear(self.input_size, self.output_size)
 
-                this.layer.weight.data = B.as_tensor(self.model_lin_weights.T)
-                this.layer.bias.data = B.as_tensor(self.model_lin_bias)
+                this.layer.weight.data = get_backend().as_tensor(self.model_lin_weights.T)
+                this.layer.bias.data = get_backend().as_tensor(self.model_lin_bias)
 
             def forward(this, x):
                 return this.layer(x)
@@ -41,12 +41,12 @@ class BatchTest(BatchTestBase, TestCase):
                 this.l2_relu = ReLU()
                 this.l3 = Linear(self.internal2_size, self.output_size)
 
-                this.l1.weight.data = B.as_tensor(self.model_deep_weights_1.T)
-                this.l1.bias.data = B.as_tensor(self.model_deep_bias_1)
-                this.l2.weight.data = B.as_tensor(self.model_deep_weights_2.T)
-                this.l2.bias.data = B.as_tensor(self.model_deep_bias_2)
-                this.l3.weight.data = B.as_tensor(self.model_deep_weights_3.T)
-                this.l3.bias.data = B.as_tensor(self.model_deep_bias_3)
+                this.l1.weight.data = get_backend().as_tensor(self.model_deep_weights_1.T)
+                this.l1.bias.data = get_backend().as_tensor(self.model_deep_bias_1)
+                this.l2.weight.data = get_backend().as_tensor(self.model_deep_weights_2.T)
+                this.l2.bias.data = get_backend().as_tensor(self.model_deep_bias_2)
+                this.l3.weight.data = get_backend().as_tensor(self.model_deep_weights_3.T)
+                this.l3.bias.data = get_backend().as_tensor(self.model_deep_bias_3)
 
             def forward(this, x):
                 x = this.l1(x)
