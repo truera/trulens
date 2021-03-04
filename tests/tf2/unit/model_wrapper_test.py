@@ -21,7 +21,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         z = Dense(2, activation='relu')(z)
         y = Dense(1, name='logits')(z)
 
-        self.model = ModelWrapper(Model(x, y))
+        self.model = get_model_wrapper(Model(x, y))
 
         self.model._model.set_weights(
             [

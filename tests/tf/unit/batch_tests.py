@@ -24,7 +24,7 @@ class BatchTest(BatchTestBase, TestCase):
             x_lin = placeholder('float32', (None, self.input_size))
             y_lin = x_lin @ self.model_lin_weights + self.model_lin_bias
 
-        self.model_lin = ModelWrapper(graph_lin, x_lin, y_lin)
+        self.model_lin = get_model_wrapper(graph_lin, x_lin, y_lin)
 
         # Make a deeper model for testing.
         graph_deep = Graph()
@@ -40,7 +40,7 @@ class BatchTest(BatchTestBase, TestCase):
             y_deep = (
                 z4_deep @ self.model_deep_weights_3 + self.model_deep_bias_3)
 
-        self.model_deep = ModelWrapper(graph_deep, x_deep, y_deep)
+        self.model_deep = get_model_wrapper(graph_deep, x_deep, y_deep)
 
 
 if __name__ == '__main__':

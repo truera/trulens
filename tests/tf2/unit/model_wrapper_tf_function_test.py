@@ -41,7 +41,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
                 self.layer1_weights, self.internal_bias, self.layer2_weights,
                 self.internal_bias, self.layer3_weights, self.bias
             ])
-        self.model = ModelWrapper(subclassed)
+        self.model = get_model_wrapper(subclassed)
         self.model.set_output_layers([subclassed.dense_3])
 
         self.layer0 = None
