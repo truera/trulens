@@ -28,7 +28,7 @@ class BatchTest(BatchTestBase, TestCase):
             def forward(this, x):
                 return this.layer(x)
 
-        self.model_lin = get_model_wrapper(M_lin(), (self.input_size,))
+        self.model_lin = get_model_wrapper(M_lin(), input_shape=(self.input_size,))
 
         # Make a deeper model for testing.
         class M_deep(Module):
@@ -56,7 +56,7 @@ class BatchTest(BatchTestBase, TestCase):
                 x = this.l2_relu(x)
                 return this.l3(x)
 
-        self.model_deep = get_model_wrapper(M_deep(), (self.input_size,))
+        self.model_deep = get_model_wrapper(M_deep(), input_shape=(self.input_size,))
 
 
 if __name__ == '__main__':

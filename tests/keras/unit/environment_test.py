@@ -1,6 +1,4 @@
 import os
-# Purposely incorrect environment
-os.environ['TRULENS_BACKEND'] = 'pytorch'
 
 from unittest import TestCase, main
 from keras.layers import Activation, Dense, Input

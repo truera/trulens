@@ -39,6 +39,8 @@ class PytorchModelWrapper(ModelWrapper):
         device : string, optional
             device on which to run model, by default None
         """
+        if input_dtype is None:
+            input_dtype = torch.float32
         if input_shape is None:
             raise ValueError('pytorch model wrapper must pass the input_shape parameter')
         model.eval()
