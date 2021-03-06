@@ -262,12 +262,15 @@ class InternalInfluence(AttributionMethod):
         if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
             attributions = [
                 get_backend().mean(
-                    get_backend().reshape(qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
+                    get_backend().reshape(
+                        qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
                     axis=0) for qoi_grad in qoi_grads
             ]
         else:
             attributions = get_backend().mean(
-                get_backend().reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]), axis=0)
+                get_backend().reshape(
+                    qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]),
+                axis=0)
 
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:

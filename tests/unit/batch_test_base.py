@@ -6,6 +6,7 @@ from trulens.nn.quantities import ClassQoI, MaxClassQoI
 from trulens.nn.slices import InputCut
 from trulens.nn.models import get_model_wrapper
 
+
 class BatchTestBase(object):
 
     def setUp(self):

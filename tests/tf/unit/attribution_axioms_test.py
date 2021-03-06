@@ -24,7 +24,8 @@ class AxiomsTest(AxiomsTestBase, TestCase):
             x_lin = placeholder('float32', (None, self.input_size))
             y_lin = x_lin @ self.model_lin_weights + self.model_lin_bias
 
-        self.model_lin = get_model_wrapper(graph_lin, input_tensors=x_lin, output_tensors=y_lin)
+        self.model_lin = get_model_wrapper(
+            graph_lin, input_tensors=x_lin, output_tensors=y_lin)
 
         # Make a deeper model for testing.
         graph_deep = Graph()
@@ -41,7 +42,10 @@ class AxiomsTest(AxiomsTestBase, TestCase):
                 z4_deep @ self.model_deep_weights_3 + self.model_deep_bias_3)
 
         self.model_deep = get_model_wrapper(
-            graph_deep, input_tensors=x_deep, output_tensors=y_deep, internal_tensor_dict=dict(layer2=z2_deep, layer3=z3_deep))
+            graph_deep,
+            input_tensors=x_deep,
+            output_tensors=y_deep,
+            internal_tensor_dict=dict(layer2=z2_deep, layer3=z3_deep))
 
         self.layer2 = 'layer2'
         self.layer3 = 'layer3'

@@ -430,10 +430,13 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
 
         if return_numpy:
             grads = [
-                ModelWrapper._nested_apply(g, get_backend().as_array) for g in grads
+                ModelWrapper._nested_apply(g,
+                                           get_backend().as_array)
+                for g in grads
             ] if isinstance(
                 grads, DATA_CONTAINER_TYPE) else ModelWrapper._nested_apply(
-                    grads, get_backend().as_array)
+                    grads,
+                    get_backend().as_array)
 
         return grads[0] if isinstance(
             grads, DATA_CONTAINER_TYPE) and len(grads) == 1 else grads

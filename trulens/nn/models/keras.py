@@ -9,13 +9,15 @@ from trulens.nn.backend import get_backend
 from trulens.nn.slices import InputCut, OutputCut, LogitCut
 from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 
+
 def import_keras_backend():
     '''
     Dynamically import keras in case backend changes dynamically
     '''
     if get_backend().backend == 'keras':
         return importlib.import_module(name='keras')
-    elif get_backend().backend == 'tf.keras' or get_backend().backend == 'tensorflow':
+    elif get_backend().backend == 'tf.keras' or get_backend(
+    ).backend == 'tensorflow':
         return importlib.import_module(name='tensorflow.keras')
 
 
@@ -406,9 +408,12 @@ class KerasModelWrapper(ModelWrapper):
 
         gradients = [
             self.keras.backend.function(
-                doi_tensors, get_backend().gradient(q, attribution_tensors))(intervention)
+                doi_tensors,
+                get_backend().gradient(q, attribution_tensors))(intervention)
             for q in Q
-        ] if isinstance(Q, DATA_CONTAINER_TYPE) else self.keras.backend.function(
-            doi_tensors, get_backend().gradient(Q, attribution_tensors))(intervention)
+        ] if isinstance(
+            Q, DATA_CONTAINER_TYPE) else self.keras.backend.function(
+                doi_tensors,
+                get_backend().gradient(Q, attribution_tensors))(intervention)
 
         return gradients[0] if len(gradients) == 1 else gradients

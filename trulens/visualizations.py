@@ -243,7 +243,8 @@ class Visualizer(object):
 
         # Combine the channels if specified.
         if combine_channels:
-            attributions = attributions.mean(axis=get_backend().channel_axis, keepdims=True)
+            attributions = attributions.mean(
+                axis=get_backend().channel_axis, keepdims=True)
 
         # Blur the attributions so the explanation is smoother.
         if blur:
@@ -343,9 +344,7 @@ class Visualizer(object):
         split_by_channel = normalization_type.endswith('sum')
 
         channel_split = [attributions] if split_by_channel else np.split(
-            attributions,
-            attributions.shape[channel_axis],
-            axis=channel_axis)
+            attributions, attributions.shape[channel_axis], axis=channel_axis)
 
         normalized_attributions = []
         for c_map in channel_split:
@@ -607,7 +606,8 @@ class HeatmapVisualizer(Visualizer):
             attributions, None, normalization_type, blur, cmap)
 
         # Combine the channels.
-        attributions = attributions.mean(axis=get_backend().channel_axis, keepdims=True)
+        attributions = attributions.mean(
+            axis=get_backend().channel_axis, keepdims=True)
 
         # Blur the attributions so the explanation is smoother.
         if blur:

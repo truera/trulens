@@ -6,8 +6,10 @@ import trulens
 from trulens.nn.backend import get_backend
 from trulens.nn.models import get_model_wrapper
 
+
 class EnvironmentTestBase(object):
     _environment_backends = ['pytorch', 'tensorflow', 'keras', 'tf.keras']
+
     def setUp(self):
         self.input_size = 5
         self.output_size = 3
@@ -28,20 +30,22 @@ class EnvironmentTestBase(object):
                 try:
                     forced_backend_kwargs = kwargs.copy()
                     forced_backend_kwargs['backend'] = incorrect_backend
-                    incorrect_model_wrapper = get_model_wrapper(model, **forced_backend_kwargs)
+                    incorrect_model_wrapper = get_model_wrapper(
+                        model, **forced_backend_kwargs)
                 except:
                     raised_error = True
-                
+
                 # A None backend is a valid outcome for incorrect backend if imports fail
                 if get_backend() is not None:
                     self.assertEqual(get_backend().backend, incorrect_backend)
-                
+
                 model_wrapper = get_model_wrapper(model, **kwargs)
                 self.assertEqual(get_backend().backend, self.correct_backend)
                 if not raised_error:
-                    self.assertNotEqual(type(model_wrapper), type(incorrect_model_wrapper))
+                    self.assertNotEqual(
+                        type(model_wrapper), type(incorrect_model_wrapper))
                 self.assertIsInstance(model_wrapper, self.model_wrapper_type)
-    
+
     def test_model_wrapper_params(self):
         for i in range(len(self.models)):
             model = self.models[i]
@@ -52,9 +56,8 @@ class EnvironmentTestBase(object):
                 with self.assertRaises(ValueError):
                     get_model_wrapper(model, **missing_kwarg_list)
 
-
     def test_backend(self):
-         for incorrect_backend in EnvironmentTestBase._environment_backends:
+        for incorrect_backend in EnvironmentTestBase._environment_backends:
             if self.correct_backend == incorrect_backend:
                 continue
             os.environ['TRULENS_BACKEND'] = incorrect_backend
@@ -63,7 +66,3 @@ class EnvironmentTestBase(object):
                 self.assertEqual(get_backend().backend, incorrect_backend)
             os.environ['TRULENS_BACKEND'] = self.correct_backend
             self.assertEqual(get_backend().backend, self.correct_backend)
-
-
-
-

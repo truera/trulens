@@ -28,7 +28,8 @@ class AxiomsTest(AxiomsTestBase, TestCase):
             def forward(this, x):
                 return this.layer(x)
 
-        self.model_lin = get_model_wrapper(M_lin(), input_shape=(self.input_size,))
+        self.model_lin = get_model_wrapper(
+            M_lin(), input_shape=(self.input_size,))
 
         # Make a deeper model for testing.
         class M_deep(Module):
@@ -56,7 +57,8 @@ class AxiomsTest(AxiomsTestBase, TestCase):
                 x = this.l2_relu(x)
                 return this.l3(x)
 
-        self.model_deep = get_model_wrapper(M_deep(), input_shape=(self.input_size,))
+        self.model_deep = get_model_wrapper(
+            M_deep(), input_shape=(self.input_size,))
 
         self.layer2 = 'l1_relu'
         self.layer3 = 'l2'

@@ -43,7 +43,7 @@ class RNNLinearDoi(DoI):
         self.B = get_backend()
 
     def calc_doi(self, x_input, tf_cell=False):
-        
+
         x = x_input[0] if tf_cell else x_input
         batch_size = len(x)
         if (self._baseline is None):
@@ -77,7 +77,7 @@ class RNNLinearDoi(DoI):
         return self.calc_doi(x, tf_cell=False)
 
     def get_activation_multiplier(self, activation):
-        
+
         batch_size = len(activation)
         if (self._baseline is None):
             baseline = np.zeros_like(activation)

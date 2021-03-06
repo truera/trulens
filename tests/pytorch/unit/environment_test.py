@@ -7,6 +7,7 @@ from tests.unit.environment_test_base import EnvironmentTestBase
 from trulens.nn.models.pytorch import PytorchModelWrapper
 from trulens.nn.backend import get_backend
 
+
 class EnvironmentTest(EnvironmentTestBase, TestCase):
 
     def setUp(self):
@@ -25,8 +26,7 @@ class EnvironmentTest(EnvironmentTestBase, TestCase):
             def forward(this, x):
                 return this.layer(x)
 
-
         self.models = [M()]
-        self.models_wrapper_kwargs = [{'input_shape':(self.input_size,)}]
+        self.models_wrapper_kwargs = [{'input_shape': (self.input_size,)}]
         self.correct_backend = 'pytorch'
         self.model_wrapper_type = PytorchModelWrapper

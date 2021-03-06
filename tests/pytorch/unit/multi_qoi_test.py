@@ -35,7 +35,8 @@ class MultiQoiTest(MultiQoiTestBase, TestCase):
                 z2 = self.dense(z1[0])
                 return z2
 
-        model = get_model_wrapper(M(), input_shape=(num_timesteps, num_features))
+        model = get_model_wrapper(
+            M(), input_shape=(num_timesteps, num_features))
         super(MultiQoiTest, self).per_timestep_qoi(
             model, num_classes, num_features, num_timesteps, batch_size)
 

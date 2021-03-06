@@ -32,7 +32,8 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             z3 = z2 @ tf.random.normal((7, 7))
             y = z3 @ tf.random.normal((7, 3))
 
-        model = get_model_wrapper(graph, input_tensors=[x1, x2], output_tensors=y)
+        model = get_model_wrapper(
+            graph, input_tensors=[x1, x2], output_tensors=y)
 
         infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
 
@@ -58,7 +59,10 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             y = z5 @ tf.random.normal((7, 3))
 
         model = get_model_wrapper(
-            graph, input_tensors=[x1, x2], output_tensors=y, internal_tensor_dict=dict(cut_layer1=z1, cut_layer2=z2))
+            graph,
+            input_tensors=[x1, x2],
+            output_tensors=y,
+            internal_tensor_dict=dict(cut_layer1=z1, cut_layer2=z2))
 
         infl = InternalInfluence(
             model, Cut(['cut_layer1', 'cut_layer2']), ClassQoI(1), PointDoi())

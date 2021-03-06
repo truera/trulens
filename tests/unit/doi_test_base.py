@@ -9,13 +9,12 @@ class DoiTestBase(object):
     def setUp(self):
         # Create an example tensor to use for the tests.
         self.B = get_backend()
-        self.z = self.B.as_tensor(np.array([[1., 2., 3.], [0., - 1., - 2.]]))
-        
+        self.z = self.B.as_tensor(np.array([[1., 2., 3.], [0., -1., -2.]]))
 
     # Tests for PointDoI.
 
     def test_point(self):
-        
+
         res = PointDoi()(self.z)
 
         self.assertEqual(len(res), 1, 'PointDoi should return a single point')
@@ -27,8 +26,9 @@ class DoiTestBase(object):
     # Tests for LinearDoI.
 
     def test_linear(self):
-        
-        doi = LinearDoi(baseline=np.ones(self.B.int_shape(self.z)), resolution=21)
+
+        doi = LinearDoi(
+            baseline=np.ones(self.B.int_shape(self.z)), resolution=21)
         res = doi(self.z)
 
         self.assertEqual(
@@ -39,7 +39,8 @@ class DoiTestBase(object):
             'First point should be the original point')
 
         self.assertTrue(
-            np.all(self.B.as_array(res[-1]) == 1.), 'Last point should be baseline')
+            np.all(self.B.as_array(res[-1]) == 1.),
+            'Last point should be baseline')
 
         self.assertTrue(
             np.allclose(
@@ -48,7 +49,7 @@ class DoiTestBase(object):
             'Intermediate points should interpolate from baseline')
 
     def test_linear_point(self):
-        
+
         doi = LinearDoi(resolution=1)
         res = doi(self.z)
 
@@ -70,7 +71,7 @@ class DoiTestBase(object):
     # Tests for GaussianDoI.
 
     def test_gaussian(self):
-        
+
         doi = GaussianDoi(var=1., resolution=10)
         res = doi(self.z)
 
@@ -80,7 +81,7 @@ class DoiTestBase(object):
         self.assertEqual(self.B.int_shape(res[0]), self.B.int_shape(self.z))
 
     def test_gaussian_non_tensor(self):
-        
+
         doi = GaussianDoi(var=1., resolution=10)
         res = doi(self.B.as_array(self.z))
 

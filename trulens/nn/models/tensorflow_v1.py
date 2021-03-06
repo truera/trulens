@@ -42,9 +42,13 @@ class TensorflowModelWrapper(ModelWrapper):
             tensorflow.
         """
         if input_tensors is None:
-            raise ValueError('Tensorflow1 model wrapper must pass the input_tensors parameter')
+            raise ValueError(
+                'Tensorflow1 model wrapper must pass the input_tensors parameter'
+            )
         if output_tensors is None:
-            raise ValueError('Tensorflow1 model wrapper must pass the output_tensors parameter')
+            raise ValueError(
+                'Tensorflow1 model wrapper must pass the output_tensors parameter'
+            )
 
         self._graph = graph
         self._inputs = (
@@ -334,8 +338,11 @@ class TensorflowModelWrapper(ModelWrapper):
                     Q = qoi(to_tensors[0]) if len(to_tensors) == 1 else qoi(
                         to_tensors)
 
-                    grads = [get_backend().gradient(q, z)[0] for q in Q] if isinstance(
-                        Q, DATA_CONTAINER_TYPE) else get_backend().gradient(Q, z)[0]
+                    grads = [
+                        get_backend().gradient(q, z)[0] for q in Q
+                    ] if isinstance(
+                        Q, DATA_CONTAINER_TYPE) else get_backend().gradient(
+                            Q, z)[0]
                     grads = grads[0] if isinstance(
                         grads,
                         DATA_CONTAINER_TYPE) and len(grads) == 1 else grads

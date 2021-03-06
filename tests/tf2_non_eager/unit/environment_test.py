@@ -8,6 +8,7 @@ from tensorflow.keras.models import Model
 from tests.unit.environment_test_base import EnvironmentTestBase
 from trulens.nn.models.tensorflow_v2 import Tensorflow2ModelWrapper
 
+
 class TFSubclassModel(Model):
 
     def __init__(self):
@@ -19,6 +20,7 @@ class TFSubclassModel(Model):
         z = self.dense_1(x)
         y = self.dense_2(z)
         return y
+
 
 class TFFunctionModel(Model):
 
@@ -32,6 +34,7 @@ class TFFunctionModel(Model):
         z = self.dense_1(x)
         y = self.dense_2(z)
         return y
+
 
 class EnvironmentTest(EnvironmentTestBase, TestCase):
 

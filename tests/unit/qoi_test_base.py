@@ -35,21 +35,24 @@ class QoiTestBase(object):
         qoi = MaxClassQoI(axis=0)
         res = qoi(self.y)
 
-        self.assertTrue(np.allclose(self.B.as_array(res), np.array([1., 2., 3.])))
+        self.assertTrue(
+            np.allclose(self.B.as_array(res), np.array([1., 2., 3.])))
 
     def test_max_class_activation_string(self):
         qoi = MaxClassQoI(activation='softmax')
         res = qoi(self.y)
 
         self.assertTrue(
-            np.allclose(self.B.as_array(res), np.array([0.66524096, 0.66524096])))
+            np.allclose(
+                self.B.as_array(res), np.array([0.66524096, 0.66524096])))
 
     def test_max_class_activation_function(self):
         qoi = MaxClassQoI(activation=self.B.softmax)
         res = qoi(self.y)
 
         self.assertTrue(
-            np.allclose(self.B.as_array(res), np.array([0.66524096, 0.66524096])))
+            np.allclose(
+                self.B.as_array(res), np.array([0.66524096, 0.66524096])))
 
     # Tests for InternalChannelQoI.
 
@@ -160,4 +163,5 @@ class QoiTestBase(object):
             'Should return one scalar per row in the batch')
 
         self.assertTrue(
-            np.allclose(self.B.as_array(res), np.array([1.1023126, -0.8881443])))
+            np.allclose(
+                self.B.as_array(res), np.array([1.1023126, -0.8881443])))
