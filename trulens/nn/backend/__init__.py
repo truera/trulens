@@ -1,27 +1,30 @@
 import os
+import traceback
 import importlib
-
+from trulens.utils import tru_logger
 # Do not use directly, use get_backend
 _TRULENS_BACKEND_IMPL = None
 def get_backend():
     global _TRULENS_BACKEND_IMPL
     if 'TRULENS_BACKEND' in os.environ.keys():
         _TRULENS_BACKEND = os.environ['TRULENS_BACKEND']
-    else:
-        _TRULENS_BACKEND = 'pytorch'
-    
+    try:
+        if _TRULENS_BACKEND == 'pytorch':
+            _TRULENS_BACKEND_IMPL = importlib.import_module(name='trulens.nn.backend.pytorch_backend.pytorch')
+        elif _TRULENS_BACKEND == 'keras' or _TRULENS_BACKEND == 'tf.keras':    
+            _TRULENS_BACKEND_IMPL = importlib.import_module(name='trulens.nn.backend.keras_backend.keras')
+            # KerasBackend has multiple backend implementations of the keras library, 
+            # so reload should be called to refresh if backend changes between keras vs tf.keras
+            if _TRULENS_BACKEND != _TRULENS_BACKEND_IMPL.backend:
+                importlib.reload(_TRULENS_BACKEND_IMPL)
+        elif _TRULENS_BACKEND == 'tensorflow' or _TRULENS_BACKEND == 'tf':
+            _TRULENS_BACKEND_IMPL = importlib.import_module(name='trulens.nn.backend.tf_backend.tf')
+    except (ImportError, ModuleNotFoundError):
+        _TRULENS_BACKEND_IMPL = None
+        tru_logger.error('Error processing backend {}. Backend is reset to None'.format(_TRULENS_BACKEND))
+        tru_logger.error(traceback.format_exc())
+       
 
-    if _TRULENS_BACKEND == 'pytorch':
-        _TRULENS_BACKEND_IMPL = importlib.import_module(name='trulens.nn.backend.pytorch_backend.pytorch')
-    elif _TRULENS_BACKEND == 'keras' or _TRULENS_BACKEND == 'tf.keras':
-        
-        _TRULENS_BACKEND_IMPL = importlib.import_module(name='trulens.nn.backend.keras_backend.keras')
-        # KerasBackend has multiple backend implementations of the keras library, 
-        # so reload should be called to refresh if backend changes between keras vs tf.keras
-        if _TRULENS_BACKEND != _TRULENS_BACKEND_IMPL.backend:
-            importlib.reload(_TRULENS_BACKEND_IMPL)
-    elif _TRULENS_BACKEND == 'tensorflow' or _TRULENS_BACKEND == 'tf':
-        _TRULENS_BACKEND_IMPL = importlib.import_module(name='trulens.nn.backend.tf_backend.tf')
     return _TRULENS_BACKEND_IMPL
     
 _ALL_BACKEND_API_FUNCTIONS = [

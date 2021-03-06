@@ -74,7 +74,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
 
             self._cached_input = []
 
-        self._B = B
+        self._B = get_backend()
 
     @property
     def B(self):

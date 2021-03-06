@@ -111,8 +111,9 @@ def get_model_wrapper(
         tru_logger.info("Detected {} backend for {}.".format(backend, type(model)))
     # get existing backend
     B = get_backend()
-    if backend is not 'unknown' and B.backend != backend:
-        tru_logger.info("Changing backend from {} to {}.".format(B.backend, backend))
+    
+    if B is None or (backend is not 'unknown' and B.backend != backend):
+        tru_logger.info("Changing backend from {} to {}.".format(None if B is None else B.backend, backend))
         os.environ['TRULENS_BACKEND'] = backend
         B = get_backend()
     else:

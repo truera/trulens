@@ -1,18 +1,17 @@
 import os
 
 from unittest import TestCase, main
-from keras.layers import Activation, Dense, Input
-from keras.models import Model
+from torch.nn import Linear, Module
 
 from tests.unit.environment_test_base import EnvironmentTestBase
-
-from trulens.nn.models.keras import PytorchModelWrapper
+from trulens.nn.models.pytorch import PytorchModelWrapper
+from trulens.nn.backend import get_backend
 
 class EnvironmentTest(EnvironmentTestBase, TestCase):
 
     def setUp(self):
         super(EnvironmentTest, self).setUp()
-        
+
         # Make a linear model for testing.
         class M(Module):
 
