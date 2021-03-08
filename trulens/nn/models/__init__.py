@@ -12,17 +12,21 @@ def discern_backend(model):
         if 'torch' in type_str:
             return 'pytorch'
         else:
-            import tensorflow as tf
-            # graph objects are currently limited to TF1 and Keras backend implies keras backed with TF1 or Theano.
-            # TF2 Keras objects are handled by the TF2 backend
-            if 'graph' in type_str or ('tensorflow' in type_str and
-                                       tf.__version__.startswith('2')):
-                return 'tensorflow'
-            elif 'tensorflow' in type_str and 'keras' in type_str and (
-                    type_str.index('tensorflow') < type_str.index('keras')):
-                return 'tf.keras'
-            elif 'keras' in type_str:
-                return 'keras'
+            try:
+                import tensorflow as tf
+                # graph objects are currently limited to TF1 and Keras backend implies keras backed with TF1 or Theano.
+                # TF2 Keras objects are handled by the TF2 backend
+                if 'graph' in type_str or ('tensorflow' in type_str and
+                                           tf.__version__.startswith('2')):
+                    return 'tensorflow'
+                elif 'tensorflow' in type_str and 'keras' in type_str and (
+                        type_str.index('tensorflow') < type_str.index('keras')):
+                    return 'tf.keras'
+                elif 'keras' in type_str:
+                    return 'keras'
+            except (ModuleNotFoundError, ImportError):
+                tru_logger.debug('Error importing tensorflow.')
+                tru_logger.debug(traceback.format_exc())
     return 'unknown'
 
 
