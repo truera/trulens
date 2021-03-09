@@ -22,7 +22,7 @@ from typing import List
 from typing import Optional
 from typing import Union
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 
 # Define some type aliases.
 TensorLike = Union[Any, List[Union[Any]]]
@@ -71,9 +71,9 @@ class QoI(AbstractBaseClass):
                 '`__call__` is expected/allowed to be a list of {} tensors.'.
                 format(self.__class__.__name__, len(x), len(x)))
 
-        elif not isinstance(x, B.Tensor):
+        elif not isinstance(x, get_backend().Tensor):
             raise ValueError(
-                '`{}` expected to receive an instance of `B.Tensor`, but '
+                '`{}` expected to receive an instance of `Tensor`, but '
                 'received an instance of {}'.format(
                     self.__class__.__name__, type(x)))
 
@@ -114,7 +114,7 @@ class MaxClassQoI(QoI):
             if isinstance(self.activation, str):
                 self.activation = self.activation.lower()
                 if self.activation in ['sigmoid', 'softmax']:
-                    y = getattr(B, self.activation)(y)
+                    y = getattr(get_backend(), self.activation)(y)
 
                 else:
                     raise NotImplementedError(
@@ -123,7 +123,7 @@ class MaxClassQoI(QoI):
             else:
                 y = self.activation(y)
 
-        return B.max(y, axis=self._axis)
+        return get_backend().max(y, axis=self._axis)
 
 
 class InternalChannelQoI(QoI):
@@ -141,7 +141,7 @@ class InternalChannelQoI(QoI):
         """
         Sums batched 2D channels, leaving the batch dimension unchanged.
         """
-        return B.sum(x, axis=(1, 2))
+        return get_backend().sum(x, axis=(1, 2))
 
     def __init__(
             self,
@@ -168,7 +168,7 @@ class InternalChannelQoI(QoI):
                 used when the channels are scalars, e.g., for dense layers.
         """
         if channel_axis is None:
-            channel_axis = B.channel_axis
+            channel_axis = get_backend().channel_axis
         if agg_fn is None:
             agg_fn = InternalChannelQoI._batch_sum
 
@@ -177,7 +177,7 @@ class InternalChannelQoI(QoI):
         self._channels = channel if isinstance(channel, list) else [channel]
 
     def __call__(self, y: TensorLike) -> TensorLike:
-
+        B = get_backend()
         self._assert_cut_contains_only_one_tensor(y)
 
         if len(B.int_shape(y)) == 2:
@@ -320,7 +320,7 @@ class ThresholdQoI(QoI):
         self.activation = activation
 
     def __call__(self, x: TensorLike) -> TensorLike:
-
+        B = get_backend()
         self._assert_cut_contains_only_one_tensor(x)
 
         if self.activation is not None:
@@ -363,6 +363,6 @@ class ClassSeqQoI(QoI):
     def __call__(self, y):
 
         self._assert_cut_contains_only_one_tensor(y)
-        assert B.shape(y)[0] == len(self.seq_labels)
+        assert get_backend().shape(y)[0] == len(self.seq_labels)
 
         return y[:, seq_labels]

@@ -11,10 +11,10 @@ from tensorflow import Graph
 from tensorflow.nn import relu
 from unittest import TestCase, main
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import PointDoi
-from trulens.nn.models import ModelWrapper
+from trulens.nn.models import get_model_wrapper
 from trulens.nn.quantities import ClassQoI
 from trulens.nn.slices import InputCut, Cut
 
@@ -32,7 +32,8 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             z3 = z2 @ tf.random.normal((7, 7))
             y = z3 @ tf.random.normal((7, 3))
 
-        model = ModelWrapper(graph, [x1, x2], y)
+        model = get_model_wrapper(
+            graph, input_tensors=[x1, x2], output_tensors=y)
 
         infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
 
@@ -57,8 +58,11 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             z5 = z4 @ tf.random.normal((10, 7))
             y = z5 @ tf.random.normal((7, 3))
 
-        model = ModelWrapper(
-            graph, [x1, x2], y, dict(cut_layer1=z1, cut_layer2=z2))
+        model = get_model_wrapper(
+            graph,
+            input_tensors=[x1, x2],
+            output_tensors=y,
+            internal_tensor_dict=dict(cut_layer1=z1, cut_layer2=z2))
 
         infl = InternalInfluence(
             model, Cut(['cut_layer1', 'cut_layer2']), ClassQoI(1), PointDoi())
@@ -80,7 +84,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             z2 = relu(z1)
             y = z2 @ tf.random.normal((2, 1))
 
-        model = ModelWrapper(graph, x, y)
+        model = get_model_wrapper(graph, input_tensors=x, output_tensors=y)
 
         with self.assertRaises(ValueError):
             infl = InternalInfluence(

@@ -9,10 +9,10 @@ import tensorflow as tf
 from tensorflow.keras.layers import Activation, Dense, Input, Concatenate
 from tensorflow.keras.models import Model
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import PointDoi
-from trulens.nn.models import ModelWrapper
+from trulens.nn.models import get_model_wrapper
 from trulens.nn.quantities import ClassQoI
 from trulens.nn.slices import InputCut, Cut
 
@@ -29,7 +29,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         z3 = Dense(7)(z2)
         y = Dense(3)(z3)
 
-        model = ModelWrapper(Model([x1, x2], y))
+        model = get_model_wrapper(Model([x1, x2], y))
 
         infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
 
@@ -49,7 +49,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         z3 = Dense(8)(z2)
         y2 = Dense(3)(z3)
 
-        model = ModelWrapper(Model(x, [y1, y2]))
+        model = get_model_wrapper(Model(x, [y1, y2]))
 
         # TODO(klas): how should we handle these types of models?
 
@@ -61,7 +61,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         z3 = Dense(7)(z2)
         y = Dense(3)(z3)
 
-        model = ModelWrapper(Model([x1, x2], y))
+        model = get_model_wrapper(Model([x1, x2], y))
 
         infl = InternalInfluence(
             model, Cut('concat', anchor='in'), ClassQoI(1), PointDoi())
@@ -84,7 +84,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         z5 = Dense(7)(z4)
         y = Dense(3)(z5)
 
-        model = ModelWrapper(Model([x1, x2], y))
+        model = get_model_wrapper(Model([x1, x2], y))
 
         infl = InternalInfluence(
             model, Cut(['cut_layer1', 'cut_layer2']), ClassQoI(1), PointDoi())
@@ -112,7 +112,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 np.array([0.])
             ])
 
-        model = ModelWrapper(k_model)
+        model = get_model_wrapper(k_model)
 
         infl_out = InternalInfluence(
             model,
@@ -142,7 +142,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         z2 = Activation('relu')(z1)
         y = Dense(1)(z2)
 
-        model = ModelWrapper(Model(x, y))
+        model = get_model_wrapper(Model(x, y))
 
         with self.assertRaises(ValueError):
             infl = InternalInfluence(model, Cut(4), ClassQoI(0), PointDoi())
@@ -155,7 +155,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         z2 = Activation('relu')(z1)
         y = Dense(1, name='logits')(z2)
 
-        model = ModelWrapper(Model(x, y))
+        model = get_model_wrapper(Model(x, y))
 
         with self.assertRaises(ValueError):
             infl = InternalInfluence(

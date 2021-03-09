@@ -4,9 +4,10 @@ from functools import partial
 import numpy as np
 import torch
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 from trulens.nn.slices import InputCut, OutputCut, LogitCut
 from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
+from trulens.utils import tru_logger
 
 
 class PytorchModelWrapper(ModelWrapper):
@@ -39,6 +40,13 @@ class PytorchModelWrapper(ModelWrapper):
         device : string, optional
             device on which to run model, by default None
         """
+        if input_dtype is None:
+            tru_logger.debug(
+                "Input dtype was not passed in. Defaulting to `torch.float32`.")
+            input_dtype = torch.float32
+        if input_shape is None:
+            raise ValueError(
+                'pytorch model wrapper must pass the input_shape parameter')
         model.eval()
         if device is None:
             self.device = torch.device(
@@ -143,6 +151,7 @@ class PytorchModelWrapper(ModelWrapper):
 
     def _extract_outputs_from_hooks(
             self, cut, hooks, output, model_input, return_tensor):
+        B = get_backend()
         if isinstance(cut, OutputCut):
             return (
                 ModelWrapper._flatten(output)
@@ -180,6 +189,7 @@ class PytorchModelWrapper(ModelWrapper):
     def _to_tensor(self, x):
         # Convert `x` to a tensor on `self.device`. Note that layer input can be
         # a nested DATA_CONTAINER_TYPE.
+        B = get_backend()
         if isinstance(x, np.ndarray) or isinstance(x[0], np.ndarray):
             x = ModelWrapper._nested_apply(
                 x, partial(B.as_tensor, device=self.device))
@@ -238,7 +248,7 @@ class PytorchModelWrapper(ModelWrapper):
             the input. If `attribution_cut` is supplied, also return the cut 
             activations.
         """
-
+        B = get_backend()
         if doi_cut is None:
             doi_cut = InputCut()
         if to_cut is None:
@@ -431,6 +441,7 @@ class PytorchModelWrapper(ModelWrapper):
             the gradients of `qoi` w.r.t. `attribution_cut`, keeping same type 
             as the input.
         """
+        B = get_backend()
         if attribution_cut is None:
             attribution_cut = InputCut()
         if to_cut is None:
@@ -497,6 +508,7 @@ class PytorchModelWrapper(ModelWrapper):
             then the result is obtained by applying torch.nn.Softmax.
             Otherwise, the model's output is simply returned.
         """
+        B = get_backend()
         output = self.fprop(x)
         if self._gives_logits:
             if len(output.shape) > 2:

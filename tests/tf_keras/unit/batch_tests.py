@@ -5,7 +5,7 @@ from unittest import TestCase, main
 from tensorflow.keras.layers import Activation, Dense, Input
 from tensorflow.keras.models import Model
 
-from trulens.nn.models import ModelWrapper
+from trulens.nn.models import get_model_wrapper
 from tests.unit.batch_test_base import BatchTestBase
 
 
@@ -18,7 +18,7 @@ class BatchTest(BatchTestBase, TestCase):
         x_lin = Input((self.input_size,))
         y_lin = Dense(self.output_size)(x_lin)
 
-        self.model_lin = ModelWrapper(Model(x_lin, y_lin))
+        self.model_lin = get_model_wrapper(Model(x_lin, y_lin))
 
         self.model_lin._model.set_weights(
             [self.model_lin_weights, self.model_lin_bias])
@@ -31,7 +31,7 @@ class BatchTest(BatchTestBase, TestCase):
         y_deep = Activation('relu')(y_deep)
         y_deep = Dense(self.output_size)(y_deep)
 
-        self.model_deep = ModelWrapper(Model(x_deep, y_deep))
+        self.model_deep = get_model_wrapper(Model(x_deep, y_deep))
 
         self.model_deep._model.set_weights(
             [

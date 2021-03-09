@@ -8,7 +8,7 @@ from tensorflow import Graph, placeholder
 from tensorflow.nn import relu
 from unittest import TestCase, main
 
-from trulens.nn.models import ModelWrapper
+from trulens.nn.models import get_model_wrapper
 from tests.unit.attribution_axioms_test_base import AxiomsTestBase
 
 
@@ -24,7 +24,8 @@ class AxiomsTest(AxiomsTestBase, TestCase):
             x_lin = placeholder('float32', (None, self.input_size))
             y_lin = x_lin @ self.model_lin_weights + self.model_lin_bias
 
-        self.model_lin = ModelWrapper(graph_lin, x_lin, y_lin)
+        self.model_lin = get_model_wrapper(
+            graph_lin, input_tensors=x_lin, output_tensors=y_lin)
 
         # Make a deeper model for testing.
         graph_deep = Graph()
@@ -40,8 +41,11 @@ class AxiomsTest(AxiomsTestBase, TestCase):
             y_deep = (
                 z4_deep @ self.model_deep_weights_3 + self.model_deep_bias_3)
 
-        self.model_deep = ModelWrapper(
-            graph_deep, x_deep, y_deep, dict(layer2=z2_deep, layer3=z3_deep))
+        self.model_deep = get_model_wrapper(
+            graph_deep,
+            input_tensors=x_deep,
+            output_tensors=y_deep,
+            internal_tensor_dict=dict(layer2=z2_deep, layer3=z3_deep))
 
         self.layer2 = 'layer2'
         self.layer3 = 'layer3'

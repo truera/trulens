@@ -7,7 +7,7 @@ from tensorflow.keras.layers import Input, Dense
 from tensorflow.keras.models import Model
 from unittest import TestCase, main
 
-from trulens.nn.models import ModelWrapper
+from trulens.nn.models import get_model_wrapper
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 
 
@@ -21,7 +21,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         z = Dense(2, activation='relu')(z)
         y = Dense(1, name='logits')(z)
 
-        self.model = ModelWrapper(Model(x, y))
+        self.model = get_model_wrapper(Model(x, y))
 
         self.model._model.set_weights(
             [

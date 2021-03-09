@@ -5,8 +5,8 @@ from unittest import TestCase, main
 
 import numpy as np
 
-from trulens.nn import backend as B
-from trulens.nn.models import ModelWrapper
+from trulens.nn.backend import get_backend
+from trulens.nn.models import get_model_wrapper
 
 from torch import cat
 from torch.nn import GRU, Linear, Module
@@ -35,7 +35,8 @@ class MultiQoiTest(MultiQoiTestBase, TestCase):
                 z2 = self.dense(z1[0])
                 return z2
 
-        model = ModelWrapper(M(), (num_timesteps, num_features))
+        model = get_model_wrapper(
+            M(), input_shape=(num_timesteps, num_features))
         super(MultiQoiTest, self).per_timestep_qoi(
             model, num_classes, num_features, num_timesteps, batch_size)
 

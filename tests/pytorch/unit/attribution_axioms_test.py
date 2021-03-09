@@ -5,8 +5,8 @@ from torch import Tensor
 from torch.nn import Linear, Module, ReLU
 from unittest import TestCase, main
 
-from trulens.nn import backend as B
-from trulens.nn.models import ModelWrapper
+from trulens.nn.backend import get_backend
+from trulens.nn.models import get_model_wrapper
 from tests.unit.attribution_axioms_test_base import AxiomsTestBase
 
 
@@ -21,14 +21,15 @@ class AxiomsTest(AxiomsTestBase, TestCase):
             def __init__(this):
                 super(M_lin, this).__init__()
                 this.layer = Linear(self.input_size, self.output_size)
-
+                B = get_backend()
                 this.layer.weight.data = B.as_tensor(self.model_lin_weights.T)
                 this.layer.bias.data = B.as_tensor(self.model_lin_bias)
 
             def forward(this, x):
                 return this.layer(x)
 
-        self.model_lin = ModelWrapper(M_lin(), (self.input_size,))
+        self.model_lin = get_model_wrapper(
+            M_lin(), input_shape=(self.input_size,))
 
         # Make a deeper model for testing.
         class M_deep(Module):
@@ -41,6 +42,7 @@ class AxiomsTest(AxiomsTestBase, TestCase):
                 this.l2_relu = ReLU()
                 this.l3 = Linear(self.internal2_size, self.output_size)
 
+                B = get_backend()
                 this.l1.weight.data = B.as_tensor(self.model_deep_weights_1.T)
                 this.l1.bias.data = B.as_tensor(self.model_deep_bias_1)
                 this.l2.weight.data = B.as_tensor(self.model_deep_weights_2.T)
@@ -55,7 +57,8 @@ class AxiomsTest(AxiomsTestBase, TestCase):
                 x = this.l2_relu(x)
                 return this.l3(x)
 
-        self.model_deep = ModelWrapper(M_deep(), (self.input_size,))
+        self.model_deep = get_model_wrapper(
+            M_deep(), input_shape=(self.input_size,))
 
         self.layer2 = 'l1_relu'
         self.layer3 = 'l2'
