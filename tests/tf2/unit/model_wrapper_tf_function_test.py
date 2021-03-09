@@ -9,7 +9,7 @@ from tensorflow.keras.models import Model
 import unittest
 from unittest import TestCase, main
 
-from trulens.nn.models import ModelWrapper
+from trulens.nn.models import get_model_wrapper
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 
 
@@ -41,7 +41,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
                 self.layer1_weights, self.internal_bias, self.layer2_weights,
                 self.internal_bias, self.layer3_weights, self.bias
             ])
-        self.model = ModelWrapper(subclassed)
+        self.model = get_model_wrapper(subclassed)
         self.model.set_output_layers([subclassed.dense_3])
 
         self.layer0 = None

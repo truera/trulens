@@ -5,10 +5,10 @@ from unittest import TestCase, main
 
 import numpy as np
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import PointDoi
-from trulens.nn.models import ModelWrapper
+from trulens.nn.models import get_model_wrapper
 from trulens.nn.quantities import ClassQoI
 from trulens.nn.slices import InputCut, Cut
 
@@ -34,7 +34,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 z = this.z3(z)
                 return this.y(z)
 
-        model = ModelWrapper(M(), [(5,), (1,)])
+        model = get_model_wrapper(M(), input_shape=[(5,), (1,)])
 
         infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
 
@@ -68,7 +68,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 z = this.z3(z)
                 return this.y(z)
 
-        model = ModelWrapper(M(), [(5,), (1,)])
+        model = get_model_wrapper(M(), input_shape=[(5,), (1,)])
 
         infl = InternalInfluence(
             model, Cut('concat', anchor='in'), ClassQoI(1), PointDoi())
@@ -101,7 +101,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 z5 = this.z5(z4)
                 return this.y(z5)
 
-        model = ModelWrapper(M(), [(5,), (1,)])
+        model = get_model_wrapper(M(), input_shape=[(5,), (1,)])
 
         infl = InternalInfluence(
             model, Cut(['cut_layer1', 'cut_layer2']), ClassQoI(1), PointDoi())
@@ -124,6 +124,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 this.z2 = ReLU()
                 this.y = Linear(2, 1)
 
+                B = get_backend()
                 this.z1.weight.data = B.as_tensor(
                     np.array([[1., 0.], [0., -1.]]).T)
                 this.z1.bias.data = B.as_tensor(np.array([0., 0.]))
@@ -135,7 +136,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 z2 = this.z2(z1)
                 return this.y(z2)
 
-        model = ModelWrapper(M(), (2,))
+        model = get_model_wrapper(M(), input_shape=(2,))
 
         infl_out = InternalInfluence(
             model,
@@ -174,7 +175,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 z2 = this.z2(z1)
                 return this.y(z2)
 
-        model = ModelWrapper(M(), (2,))
+        model = get_model_wrapper(M(), input_shape=(2,))
 
         with self.assertRaises(ValueError):
             infl = InternalInfluence(

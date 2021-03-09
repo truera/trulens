@@ -43,11 +43,6 @@ jobs:
           requirementsFile: "tests/tf2/requirements.txt"
           testSubdirectory: "tests/tf2_non_eager"
 
-        py37_tf2_disable_eager:
-          condaEnvFileSuffix: "python37"
-          requirementsFile: "tests/tf2/requirements.txt"
-          testSubdirectory: "tests/tf2_disable_eager"
-
         py37_notebooks:
           condaEnvFileSuffix: "python37"
           requirementsFile: "tests/notebooks/requirements.txt"

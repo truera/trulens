@@ -7,7 +7,7 @@ from torch import Tensor
 from torch.nn import Linear, Module, ReLU
 from unittest import TestCase, main
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 from trulens.nn.models.pytorch import PytorchModelWrapper
 from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut
@@ -29,6 +29,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
                 this.l2_relu = ReLU()
                 this.logits = Linear(2, 1)
 
+                B = get_backend()
                 this.l1.weight.data = B.as_tensor(self.layer1_weights.T)
                 this.l1.bias.data = B.as_tensor(self.internal_bias)
                 this.l2.weight.data = B.as_tensor(self.layer2_weights.T)

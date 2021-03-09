@@ -16,7 +16,7 @@ from typing import Optional
 from typing import Union
 
 from trulens.nn.slices import Cut
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 
 # Define some type aliases.
 ArrayLike = Union[np.ndarray, Any, List[Union[np.ndarray, Any]]]
@@ -107,9 +107,10 @@ class DoI(AbstractBaseClass):
                 '`__call__` is expected/allowed to be a list of {} tensors.'.
                 format(self.__class__.__name__, len(x), len(x)))
 
-        elif not (isinstance(x, np.ndarray) or isinstance(x, B.Tensor)):
+        elif not (isinstance(x, np.ndarray) or
+                  isinstance(x, get_backend().Tensor)):
             raise ValueError(
-                '`{}` expected to receive an instance of `B.Tensor` or '
+                '`{}` expected to receive an instance of `Tensor` or '
                 '`np.ndarray`, but received an instance of {}'.format(
                     self.__class__.__name__, type(x)))
 
@@ -167,6 +168,7 @@ class LinearDoi(DoI):
         self._resolution = resolution
 
     def __call__(self, z: ArrayLike) -> List[ArrayLike]:
+        B = get_backend()
         if isinstance(z, (list, tuple)) and len(z) == 1:
             z = z[0]
 
@@ -231,7 +233,7 @@ class GaussianDoi(DoI):
         self._resolution = resolution
 
     def __call__(self, z: ArrayLike) -> List[ArrayLike]:
-
+        B = get_backend()
         self._assert_cut_contains_only_one_tensor(z)
 
         if B.is_tensor(z):
