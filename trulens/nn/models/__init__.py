@@ -1,5 +1,6 @@
 import os
 import inspect
+import traceback
 
 import trulens
 from trulens.utils import tru_logger
