@@ -4,14 +4,14 @@ import traceback
 
 import trulens
 from trulens.utils import tru_logger
-from trulens.nn.backend import get_backend
+from trulens.nn.backend import get_backend, Backend
 
 
 def discern_backend(model):
     for base_class in inspect.getmro(model.__class__):
         type_str = str(base_class).lower()
         if 'torch' in type_str:
-            return 'pytorch'
+            return Backend.PYTORCH
         else:
             try:
                 import tensorflow as tf
@@ -19,16 +19,16 @@ def discern_backend(model):
                 # TF2 Keras objects are handled by the TF2 backend
                 if 'graph' in type_str or ('tensorflow' in type_str and
                                            tf.__version__.startswith('2')):
-                    return 'tensorflow'
+                    return Backend.TENSORFLOW
                 elif 'tensorflow' in type_str and 'keras' in type_str and (
                         type_str.index('tensorflow') < type_str.index('keras')):
-                    return 'tf.keras'
+                    return Backend.TF_KERAS
                 elif 'keras' in type_str:
-                    return 'keras'
+                    return Backend.KERAS
             except (ModuleNotFoundError, ImportError):
                 tru_logger.debug('Error importing tensorflow.')
                 tru_logger.debug(traceback.format_exc())
-    return 'unknown'
+    return Backend.UNKNOWN
 
 
 def get_model_wrapper(
@@ -117,23 +117,26 @@ def get_model_wrapper(
     if backend is None:
         backend = discern_backend(model)
         tru_logger.info(
-            "Detected {} backend for {}.".format(backend, type(model)))
+            "Detected {} backend for {}.".format(
+                backend.name.lower(), type(model)))
+    else:
+        backend = Backend.from_name(backend)
     # get existing backend
     B = get_backend()
 
-    if B is None or (backend is not 'unknown' and B.backend != backend):
+    if B is None or (backend is not Backend.UNKNOWN and B.backend != backend):
         tru_logger.info(
             "Changing backend from {} to {}.".format(
                 None if B is None else B.backend, backend))
-        os.environ['TRULENS_BACKEND'] = backend
+        os.environ['TRULENS_BACKEND'] = backend.name.lower()
         B = get_backend()
     else:
         tru_logger.info("Using backend {}.".format(B.backend))
     tru_logger.info(
-        "If this seems incorrect, you can force the correct backend by passing the `backend` parameter."
+        "If this seems incorrect, you can force the correct backend by passing the `backend` parameter directly into your get_model_wrapper call."
     )
 
-    if B.backend == 'keras' or B.backend == 'tf.keras':
+    if B.backend.is_keras_derivative():
         from trulens.nn.models.keras import KerasModelWrapper
         return KerasModelWrapper(
             model,
@@ -142,7 +145,7 @@ def get_model_wrapper(
             softmax_layer=softmax_layer,
             custom_objects=custom_objects)
 
-    elif B.backend == 'pytorch':
+    elif B.backend == Backend.PYTORCH:
         from trulens.nn.models.pytorch import PytorchModelWrapper
         if input_shape is None:
             tru_logger.error('pytorch model must pass parameter: input_shape')
@@ -153,7 +156,7 @@ def get_model_wrapper(
             logit_layer=logit_layer,
             device=device)
 
-    elif B.backend == 'tensorflow':
+    elif B.backend == Backend.TENSORFLOW:
         import tensorflow as tf
 
         if tf.__version__.startswith('2'):

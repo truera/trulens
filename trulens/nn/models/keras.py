@@ -3,9 +3,9 @@ import os
 import tempfile
 import importlib
 
-from warnings import warn
+from trulens.utils import tru_logger
 
-from trulens.nn.backend import get_backend
+from trulens.nn.backend import get_backend, Backend
 from trulens.nn.slices import InputCut, OutputCut, LogitCut
 from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 
@@ -14,10 +14,10 @@ def import_keras_backend():
     '''
     Dynamically import keras in case backend changes dynamically
     '''
-    if get_backend().backend == 'keras':
+    if get_backend().backend == Backend.KERAS:
         return importlib.import_module(name='keras')
-    elif get_backend().backend == 'tf.keras' or get_backend(
-    ).backend == 'tensorflow':
+    elif get_backend().backend == Backend.TF_KERAS or get_backend(
+    ).backend == Backend.TENSORFLOW:
         return importlib.import_module(name='tensorflow.keras')
 
 
@@ -117,7 +117,7 @@ class KerasModelWrapper(ModelWrapper):
         # sigmoid.
         if not (activation == self.keras.activations.softmax or
                 activation == self.keras.activations.sigmoid):
-            warn(
+            tru_logger.warn(
                 'The activation of the specified layer to '
                 '`_replace_probits_with_logits` is not a softmax or a sigmoid; '
                 'it may not currently convert its input to probits.')

@@ -6,14 +6,14 @@
 import numpy as np
 import torch
 
-from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS
+from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS, Backend
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
 floatX = np.float32
 Tensor = torch.Tensor
 dim_order = 'channels_first'
 channel_axis = 1
-backend = 'pytorch'
+backend = Backend.PYTORCH
 
 
 def gradient(scalar, wrt):

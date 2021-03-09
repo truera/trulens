@@ -6,14 +6,16 @@
 import numpy as np
 import os
 
-from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS
+from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS, Backend
 
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
 if 'TRULENS_BACKEND' in os.environ.keys():
     _TRULENS_BACKEND = os.environ['TRULENS_BACKEND']
 
-if _TRULENS_BACKEND == 'tf.keras':
+backend = Backend.from_name(_TRULENS_BACKEND)
+
+if backend == Backend.TF_KERAS:
     import tensorflow.keras.backend as K
     import tensorflow as tf
 else:
@@ -24,7 +26,6 @@ Tensor = type(K.constant((1, 1), dtype=floatX))
 TensorVar = type(K.zeros((1, 1), dtype=floatX))
 dim_order = K.image_data_format()
 channel_axis = 1 if dim_order == 'channels_first' else 3
-backend = _TRULENS_BACKEND
 
 
 def gradient(scalar, wrt):
@@ -357,9 +358,9 @@ def identity(t, name=None):
     backend.Tensor
         A tensor of zeros has the same shape of input tensor
     """
-    if backend == 'keras':
+    if backend == Backend.KERAS:
         return K.identity(t, name=name)
-    elif backend == 'tf.keras':
+    elif backend == Backend.TF_KERAS:
         return tf.identity(t, name=name)
 
 

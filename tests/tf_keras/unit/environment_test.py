@@ -7,6 +7,7 @@ from tensorflow.keras.models import Model
 from tests.unit.environment_test_base import EnvironmentTestBase
 
 from trulens.nn.models.keras import KerasModelWrapper
+from trulens.nn.backend import Backend
 
 
 class EnvironmentTest(EnvironmentTestBase, TestCase):
@@ -19,5 +20,5 @@ class EnvironmentTest(EnvironmentTestBase, TestCase):
 
         self.models = [Model(x_lin, y_lin)]
         self.models_wrapper_kwargs = [{}]
-        self.correct_backend = 'tf.keras'
+        self.correct_backend = Backend.TF_KERAS
         self.model_wrapper_type = KerasModelWrapper

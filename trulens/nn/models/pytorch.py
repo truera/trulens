@@ -7,6 +7,7 @@ import torch
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import InputCut, OutputCut, LogitCut
 from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
+from trulens.utils import tru_logger
 
 
 class PytorchModelWrapper(ModelWrapper):
@@ -40,6 +41,8 @@ class PytorchModelWrapper(ModelWrapper):
             device on which to run model, by default None
         """
         if input_dtype is None:
+            tru_logger.debug(
+                "Input dtype was not passed in. Defaulting to `torch.float32`.")
             input_dtype = torch.float32
         if input_shape is None:
             raise ValueError(

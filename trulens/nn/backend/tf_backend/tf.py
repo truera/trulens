@@ -6,14 +6,14 @@
 import numpy as np
 import tensorflow as tf
 
-from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS
+from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS, Backend
 __all__ = _ALL_BACKEND_API_FUNCTIONS + ['tf1']
 
 floatX = np.float32
 Tensor = tf.Tensor
 dim_order = 'channels_last'
 channel_axis = 1 if dim_order == 'channels_first' else 3
-backend = 'tensorflow'
+backend = Backend.TENSORFLOW
 
 tf1 = tf.__version__.startswith('1.')
 

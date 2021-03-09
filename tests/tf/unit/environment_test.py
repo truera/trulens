@@ -6,6 +6,7 @@ from tensorflow import Graph, placeholder
 from tests.unit.environment_test_base import EnvironmentTestBase
 
 from trulens.nn.models.tensorflow_v1 import TensorflowModelWrapper
+from trulens.nn.backend import Backend
 
 
 class EnvironmentTest(EnvironmentTestBase, TestCase):
@@ -27,5 +28,5 @@ class EnvironmentTest(EnvironmentTestBase, TestCase):
             }
         ]
 
-        self.correct_backend = 'tensorflow'
+        self.correct_backend = Backend.TENSORFLOW
         self.model_wrapper_type = TensorflowModelWrapper
