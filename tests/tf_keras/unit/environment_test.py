@@ -1,7 +1,5 @@
-import os
-
 from unittest import TestCase, main
-from tensorflow.keras.layers import Activation, Dense, Input
+from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.models import Model
 
 from tests.unit.environment_test_base import EnvironmentTestBase
