@@ -19,7 +19,7 @@ import numpy as np
 
 from scipy.ndimage.filters import gaussian_filter
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import PointDoi
@@ -49,7 +49,7 @@ class Tiler(object):
         """
 
         # `pyplot` expects the channels to come last.
-        if B.dim_order == 'channels_first':
+        if get_backend().dim_order == 'channels_first':
             a = a.transpose((0, 2, 3, 1))
 
         n, h, w, c = a.shape
@@ -243,7 +243,8 @@ class Visualizer(object):
 
         # Combine the channels if specified.
         if combine_channels:
-            attributions = attributions.mean(axis=B.channel_axis, keepdims=True)
+            attributions = attributions.mean(
+                axis=get_backend().channel_axis, keepdims=True)
 
         # Blur the attributions so the explanation is smoother.
         if blur:
@@ -286,7 +287,8 @@ class Visualizer(object):
         if combine_channels is None:
             combine_channels = self.default_combine_channels
 
-        if not (attributions.shape[B.channel_axis] in (1, 3, 4) or
+        channel_axis = get_backend().channel_axis
+        if not (attributions.shape[channel_axis] in (1, 3, 4) or
                 combine_channels):
 
             raise ValueError(
@@ -294,13 +296,13 @@ class Visualizer(object):
                 'channels, but `Visualizer` got {} channels.\n'
                 'If you are visualizing an internal layer, consider setting '
                 '`combine_channels` to True'.format(
-                    attributions.shape[B.channel_axis]))
+                    attributions.shape[channel_axis]))
 
         if normalization_type is None:
             normalization_type = self.default_normalization_type
 
             if normalization_type is None:
-                if combine_channels or attributions.shape[B.channel_axis] == 1:
+                if combine_channels or attributions.shape[channel_axis] == 1:
                     normalization_type = 'unsigned_max'
 
                 else:
@@ -335,15 +337,14 @@ class Visualizer(object):
         return combine_channels, normalization_type, blur, cmap
 
     def _normalize(self, attributions, normalization_type, eps=1e-20):
+        channel_axis = get_backend().channel_axis
         if normalization_type == 'unnormalized':
             return attributions
 
         split_by_channel = normalization_type.endswith('sum')
 
         channel_split = [attributions] if split_by_channel else np.split(
-            attributions,
-            attributions.shape[B.channel_axis],
-            axis=B.channel_axis)
+            attributions, attributions.shape[channel_axis], axis=channel_axis)
 
         normalized_attributions = []
         for c_map in channel_split:
@@ -399,7 +400,7 @@ class Visualizer(object):
 
             normalized_attributions.append(c_map)
 
-        return np.concatenate(normalized_attributions, axis=B.channel_axis)
+        return np.concatenate(normalized_attributions, axis=channel_axis)
 
     def _blur(self, attributions, blur):
         for i in range(attributions.shape[0]):
@@ -605,7 +606,8 @@ class HeatmapVisualizer(Visualizer):
             attributions, None, normalization_type, blur, cmap)
 
         # Combine the channels.
-        attributions = attributions.mean(axis=B.channel_axis, keepdims=True)
+        attributions = attributions.mean(
+            axis=get_backend().channel_axis, keepdims=True)
 
         # Blur the attributions so the explanation is smoother.
         if blur:
@@ -717,7 +719,7 @@ class MaskVisualizer(object):
             combine_channels=None,
             use_attr_as_opacity=None,
             positive_only=None):
-
+        channel_axis = get_backend().channel_axis
         if attributions.shape != x.shape:
             raise ValueError(
                 'Shape of `attributions` {} must match shape of `x` {}'.format(
@@ -744,15 +746,15 @@ class MaskVisualizer(object):
             combine_channels = self.default_combine_channels
 
         if combine_channels:
-            attributions = attributions.mean(axis=B.channel_axis, keepdims=True)
+            attributions = attributions.mean(axis=channel_axis, keepdims=True)
 
-        if x.shape[B.channel_axis] not in (1, 3, 4):
+        if x.shape[channel_axis] not in (1, 3, 4):
             raise ValueError(
                 'To visualize, attributions must have either 1, 3, or 4 color '
                 'channels, but Visualizer got {} channels.\n'
                 'If you are visualizing an internal layer, consider setting '
                 '`combine_channels` to True'.format(
-                    attributions.shape[B.channel_axis]))
+                    attributions.shape[channel_axis]))
 
         # Blur the attributions so the explanation is smoother.
         if blur is not None:
@@ -811,7 +813,7 @@ class ChannelMaskVisualizer(object):
             model,
             layer,
             channel,
-            channel_axis=B.channel_axis,
+            channel_axis=get_backend().channel_axis,
             agg_fn=None,
             doi=None,
             blur=None,

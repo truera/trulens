@@ -5,8 +5,8 @@ from unittest import TestCase, main
 
 import numpy as np
 
-from trulens.nn import backend as B
-from trulens.nn.models import ModelWrapper
+from trulens.nn.backend import get_backend
+from trulens.nn.models import get_model_wrapper
 
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, GRU, Input
@@ -32,7 +32,7 @@ class MultiQoiTest(MultiQoiTestBase, TestCase):
                 Dense(num_classes, name="dense"),
             ])
 
-        model = ModelWrapper(base_model)
+        model = get_model_wrapper(base_model)
         super(MultiQoiTest, self).per_timestep_qoi(
             model, num_classes, num_features, num_timesteps, batch_size)
 

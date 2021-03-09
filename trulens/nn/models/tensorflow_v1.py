@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import tensorflow as tf
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 from trulens.nn.slices import InputCut, OutputCut, LogitCut
 from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 
@@ -26,11 +26,11 @@ class TensorflowModelWrapper(ModelWrapper):
         ----------
         graph : tf.Graph
             The computation graph representing the model.
-        input_tensors : B.Tensor | list of B.Tensor
+        input_tensors : Tensor | list of Tensor
             A list of the tensors that are the inputs to the graph. If there is
             only one input, it can be given without wrapping it in a list.
             This is needed as the input tensors of a graph cannot be inferred.
-        output_tensors : B.Tensor | list of B.Tensor
+        output_tensors : Tensor | list of Tensor
             A list of the tensors that are the outputs to the graph. If there is
             only one output, it can be given without wrapping it in a list.
             This is needed as the output tensors of a graph cannot be inferred.
@@ -41,9 +41,16 @@ class TensorflowModelWrapper(ModelWrapper):
             `internal_tensor_dict` can be accessed via the name given to them by
             tensorflow.
         """
+        if input_tensors is None:
+            raise ValueError(
+                'Tensorflow1 model wrapper must pass the input_tensors parameter'
+            )
+        if output_tensors is None:
+            raise ValueError(
+                'Tensorflow1 model wrapper must pass the output_tensors parameter'
+            )
 
         self._graph = graph
-
         self._inputs = (
             input_tensors if isinstance(input_tensors, DATA_CONTAINER_TYPE) else
             [input_tensors])
@@ -331,8 +338,11 @@ class TensorflowModelWrapper(ModelWrapper):
                     Q = qoi(to_tensors[0]) if len(to_tensors) == 1 else qoi(
                         to_tensors)
 
-                    grads = [B.gradient(q, z)[0] for q in Q] if isinstance(
-                        Q, DATA_CONTAINER_TYPE) else B.gradient(Q, z)[0]
+                    grads = [
+                        get_backend().gradient(q, z)[0] for q in Q
+                    ] if isinstance(
+                        Q, DATA_CONTAINER_TYPE) else get_backend().gradient(
+                            Q, z)[0]
                     grads = grads[0] if isinstance(
                         grads,
                         DATA_CONTAINER_TYPE) and len(grads) == 1 else grads

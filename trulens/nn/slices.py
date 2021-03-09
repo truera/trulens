@@ -19,7 +19,7 @@ from typing import Optional
 from typing import Union
 from warnings import warn
 
-from trulens.nn import backend as B
+from trulens.nn.backend import get_backend
 
 # Define some type aliases.
 LayerIdentifier = Union[int, str, List[Union[int, str]]]
@@ -58,7 +58,7 @@ class Cut(object):
                 lambda t: t[-1] if isinstance(t, list) else t
                 ```
         """
-        if B.backend == 'pytorch':
+        if get_backend().backend == 'pytorch':
             if (isinstance(name, int) or
                 (isinstance(name, list) and isinstance(name[0], int))):
 
