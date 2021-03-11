@@ -36,6 +36,8 @@ def get_backend():
     global _TRULENS_BACKEND_IMPL
     if 'TRULENS_BACKEND' in os.environ.keys():
         _TRULENS_BACKEND = Backend.from_name(os.environ['TRULENS_BACKEND'])
+    else:
+        _TRULENS_BACKEND = Backend.UNKNOWN
     try:
         if _TRULENS_BACKEND == Backend.PYTORCH:
             _TRULENS_BACKEND_IMPL = importlib.import_module(
@@ -52,11 +54,14 @@ def get_backend():
                 name='trulens.nn.backend.tf_backend.tf')
         elif _TRULENS_BACKEND == Backend.UNKNOWN:
             tru_logger.warn(
-                'The backend set for environment variable `TRULENS_BACKEND` is unknown.\
-                 Trulens will attempt to use any previously set backends, but may cause problems. \
-                     Valid backends are `pytorch`, `tensorflow`, `keras`, and `tf.keras`. \
-                         You can set this with `os.environ[\'TRULENS_BACKEND\']=backend_str`.\
-                     Current loaded backend is {}.'.format(
+                'The backend set for environment variable `TRULENS_BACKEND` is unknown. '
+                +
+                'Trulens will attempt to use any previously set backends, but may cause problems. '
+                +
+                'Valid backends are `pytorch`, `tensorflow`, `keras`, and `tf.keras`. '
+                +
+                'You can set this with `os.environ[\'TRULENS_BACKEND\']=backend_str`. '
+                + 'Current loaded backend is {}.'.format(
                     str(_TRULENS_BACKEND_IMPL)))
 
     except (ImportError, ModuleNotFoundError):
