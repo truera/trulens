@@ -35,6 +35,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         self.layer0 = 0
         self.layer1 = 1
         self.layer2 = 2
+        self.out = 'logits'
 
 
 if __name__ == '__main__':

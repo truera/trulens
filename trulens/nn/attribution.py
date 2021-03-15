@@ -389,9 +389,13 @@ class InternalInfluence(AttributionMethod):
             # If we receive a DATA_CONTAINER_TYPE, we take it to be the start
             # and end layer of the slice.
             if len(slice_arg) is 2:
-                return Slice(
-                    InternalInfluence.__get_cut(slice_arg[0]),
-                    InternalInfluence.__get_cut(slice_arg[1]))
+                if slice_arg[1] is None:
+                    return Slice(
+                        InternalInfluence.__get_cut(slice_arg[0]), OutputCut())
+                else:
+                    return Slice(
+                        InternalInfluence.__get_cut(slice_arg[0]),
+                        InternalInfluence.__get_cut(slice_arg[1]))
 
             else:
                 raise ValueError(

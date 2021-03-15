@@ -35,6 +35,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         self.layer0 = 0
         self.layer1 = 1
         self.layer2 = 2
+        self.out = 'logits'
 
     def test_wrong_keras_version(self):
         import tensorflow as tf
