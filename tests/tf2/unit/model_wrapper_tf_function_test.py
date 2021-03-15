@@ -47,6 +47,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         self.layer0 = None
         self.layer1 = 0
         self.layer2 = 1
+        self.out = 'logits'
 
     @unittest.skip(
         "Base class uses layer 0 as multi-input but does not exist in subclass")

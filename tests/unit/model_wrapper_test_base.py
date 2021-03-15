@@ -1,5 +1,6 @@
 import numpy as np
 
+from trulens.nn.attribution import InternalInfluence, InputAttribution
 from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut, InputCut, LogitCut
 
@@ -161,3 +162,23 @@ class ModelWrapperTestBase(object):
         self.assertEqual(len(r), 2)
         self.assertTrue(np.allclose(r[0], np.array([[3., -1.], [0., 2.]])))
         self.assertTrue(np.allclose(r[1], np.array([[3., 2.], [2., 2.]])))
+
+    def test_out_cut(self):
+        input_array = np.array(
+            [[2., 1.], [1., 2.], [1., 1.], [1., 0.], [0., -1.]])
+
+        input_infl = InputAttribution(self.model,
+                                      self.out).attributions(input_array)
+        input_infl_none_out = InputAttribution(
+            self.model).attributions(input_array)
+        np.testing.assert_array_equal(input_infl, input_infl_none_out)
+
+        internal_infl = InternalInfluence(
+            self.model, cuts=(None, self.out), qoi='max',
+            doi='point').attributions(input_array)
+        internal_infl_none_out = InternalInfluence(
+            self.model, cuts=None, qoi='max',
+            doi='point').attributions(input_array)
+        np.testing.assert_array_equal(internal_infl, internal_infl_none_out)
+
+        np.testing.assert_array_equal(internal_infl, input_infl)

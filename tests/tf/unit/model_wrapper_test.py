@@ -31,6 +31,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         self.layer0 = 'x'
         self.layer1 = 'z1'
         self.layer2 = z2.name
+        self.out = y.name
 
 
 if __name__ == '__main__':
