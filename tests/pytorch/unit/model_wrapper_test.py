@@ -49,6 +49,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         self.layer0 = None
         self.layer1 = 'l1_relu'
         self.layer2 = 'l2_relu'
+        self.out = 'logits'
 
     # Overriden tests.
 
