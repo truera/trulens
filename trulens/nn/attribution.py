@@ -76,10 +76,9 @@ class AttributionMethod(AbstractBaseClass):
         Returns attributions for the given input. Attributions are in the same shape
         as the layer that attributions are being generated for. 
         
-        The numeric scale of the 
-        of attributions will depend on the specific implementations of 
-        the Distribution of Interest and Quantity of Interest,
-        but is generally related to the scale of gradients on the Quantity of Interest. 
+        The numeric scale of the attributions will depend on the specific implementations 
+        of the Distribution of Interest and Quantity of Interest. However it is generally 
+        related to the scale of gradients on the Quantity of Interest. 
 
         For example, Integrated Gradients uses the linear interpolation Distribution of Interest
         which subsumes the completeness axiom which ensures the sum of all attributions of a record
