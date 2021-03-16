@@ -1,3 +1,16 @@
+""" 
+The TruLens library is designed to support models implemented via a variety of
+different popular python neural network frameworks: Keras (with TensorFlow or 
+Theano backend), TensorFlow, and Pytorch. In order provide the same 
+functionality to models made with frameworks that implement things (e.g., 
+gradient computations) a number of different ways, we define framework specific
+`ModelWrapper` instances to provide a unified model API. In order to compute 
+attributions for a model, we provide a `trulens.nn.models.get_model_wrapper` function
+that will return an appropriate `ModelWrapper` instance.
+
+Some parameters are exclusively utilized for specific frameworks and are outlined 
+in the parameter descriptions.
+"""
 import os
 import inspect
 import traceback
@@ -51,12 +64,13 @@ def get_model_wrapper(
 
     Parameters:
         model:
-            The model to wrap. For the TensorFlow 1 backend, this is 
+            The model to wrap. If using the TensorFlow 1 backend, this is 
             expected to be a graph object.
 
         logit_layer:
+            _Supported for Keras and Pytorch models._ 
             Specifies the name or index of the layer that produces the
-            logit predictions. Supported for Keras and Pytorch models.
+            logit predictions. 
 
         replace_softmax:
             _Supported for Keras models only._ If true, the activation
@@ -112,7 +126,7 @@ def get_model_wrapper(
 
         backend:
             _Optional, for forcing a specific backend._ String values recognized
-            are pytorch, tensorflow/tf, keras, or tf.keras.
+            are pytorch, tensorflow, keras, or tf.keras.
     """
     if backend is None:
         backend = discern_backend(model)

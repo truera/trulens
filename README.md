@@ -63,7 +63,7 @@ In many cases, for example, this may simply measure the effect each input variab
 
 Attribution methods extend the `AttributionMethod` class, and many concrete instances are found in the `trulens.nn.attribution` module.
 
-Once an attribution method has been instantiated, its main function is its `attributions` method, which takes an `np.Array` of batched instances, where each instance matches the shape of the *input* to the model the attribution method was instantiated with.
+Once an attribution method has been instantiated, its main function is its `attributions` method, which returns an `np.Array` of batched items, where each item matches the shape of the *input* to the model the attribution method was instantiated with.
 
 See the *method comparison* demo for further information on the different types of attribution methods, their uses, and their relationships with one another.
 
@@ -81,8 +81,8 @@ For example, it may select the confidence score for a particular class.
 In its most general form, the QoI can be pecified by an implementation of the `QoI` class in the `trulens.nn.quantities` module.
 Several common default implementations are provided in this module as well.
 
-The *distribution of interest* (DoI) essentially specifies for which points surrounding each instance the calculated attribution should be valid.
-The distribution can be specified via an implementation of the `DoI` class in the `trulens.nn.distributions` module, which is a function taking an input instance and producing a list of input points to aggregate attribution over.
+The *distribution of interest* (DoI) essentially specifies for which points surrounding each record the calculated attribution should be valid.
+The distribution can be specified via an implementation of the `DoI` class in the `trulens.nn.distributions` module, which is a function taking an input record and producing a list of sample input points to aggregate attribution over.
 A few common default distributions implementing the `DoI` class can be found in the `trulens.nn.distributions` module. 
 
 See the *parameterization demo* for further explanations of the purpose of these parameters and examples of their usage.
