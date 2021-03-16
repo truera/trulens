@@ -79,7 +79,7 @@ class ModelWrapper(AbstractBaseClass):
 
             output_tensors:
                 _Required for use with TensorFlow 1 graph models only._ A list
-                of tensors representing he output to the model graph.
+                of tensors representing the output to the model graph.
 
             internal_tensor_dict:
                 _Optional, for use with TensorFlow 1 graph models only._ A
