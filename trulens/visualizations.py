@@ -813,7 +813,7 @@ class ChannelMaskVisualizer(object):
             model,
             layer,
             channel,
-            channel_axis=get_backend().channel_axis,
+            channel_axis=-1,
             agg_fn=None,
             doi=None,
             blur=None,
@@ -883,6 +883,11 @@ class ChannelMaskVisualizer(object):
                 unmasked (or given nonzero opacity when `use_attr_as_opacity` is
                 true).
         """
+        B = get_backend()
+        if (B is not None and channel_axis < 0):
+            channel_axis = B.channel_axis
+        elif (channel_axis < 0):
+            channel_axis = 1
 
         self.mask_visualizer = MaskVisualizer(
             blur, threshold, masked_opacity, combine_channels,

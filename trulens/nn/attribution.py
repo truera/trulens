@@ -78,7 +78,7 @@ class AttributionMethod(AbstractBaseClass):
         Parameters:
             model_args, model_kwargs: 
                 The args and kwargs given to the call method of a model.
-                This should represent the instances to obtain attributions for, 
+                This should represent the records to obtain attributions for, 
                 assumed to be a *batched* input. if `self.model` supports
                 evaluation on *data tensors*, the  appropriate tensor type may
                 be used (e.g., Pytorch models may accept Pytorch tensors in 
@@ -104,7 +104,7 @@ class InternalInfluence(AttributionMethod):
     interest is derived. The *Quantity of Interest* (QoI) is a function of the
     output specified by the slice that determines the network output behavior
     that the attributions are to describe. The *Distribution of Interest* (DoI)
-    specifies the instances over which the attributions are aggregated.
+    specifies the records over which the attributions are aggregated.
     
     More information can be found in the following paper:
     
