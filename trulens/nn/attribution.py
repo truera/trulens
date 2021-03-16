@@ -73,7 +73,20 @@ class AttributionMethod(AbstractBaseClass):
     @abstractmethod
     def attributions(self, *model_args, **model_kwargs):
         """
-        Returns attributions for the given input.
+        Returns attributions for the given input. Attributions are in the same shape
+        as the layer that attributions are being generated for. 
+        
+        The numeric scale of the 
+        of attributions will depend on the specific implementations of 
+        the Distribution of Interest and Quantity of Interest,
+        but is generally related to the scale of gradients on the Quantity of Interest. 
+
+        For example, Integrated Gradients uses the linear interpolation Distribution of Interest
+        which subsumes the completeness axiom which ensures the sum of all attributions of a record
+        equals the output determined by the Quantity of Interest on the same record. 
+
+        The Point Distribution of Interest will be determiend by the gradient at a single point,
+        thus being a good measure of model sensitivity. 
 
         Parameters:
             model_args, model_kwargs: 
