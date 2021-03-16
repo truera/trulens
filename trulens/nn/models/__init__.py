@@ -128,6 +128,9 @@ def get_model_wrapper(
             _Optional, for forcing a specific backend._ String values recognized
             are pytorch, tensorflow, keras, or tf.keras.
     """
+    # get existing backend
+    B = get_backend(suppress_warnings=True)
+
     if backend is None:
         backend = discern_backend(model)
         tru_logger.info(
@@ -135,8 +138,6 @@ def get_model_wrapper(
                 backend.name.lower(), type(model)))
     else:
         backend = Backend.from_name(backend)
-    # get existing backend
-    B = get_backend()
 
     if B is None or (backend is not Backend.UNKNOWN and B.backend != backend):
         tru_logger.info(
