@@ -31,29 +31,18 @@ pip install trulens
 
 # Overview
 
-## Backends
-
-The `trulens` library supports several common machine learning libraries, including Keras, Pytorch, and TensorFlow.
-
-In order to set the backend to the backend of your choice, use the `TRULENS_BACKEND` flag, e.g., to use the Keras backend, the following code could be used before TruLens imports:
-
-```python
-import os
-os.environ['TRULENS_BACKEND'] = 'keras'
-```
-
 ## Attributions
 
 ### Model Wrappers
 
 In order to support a wide variety of backends with different interfaces for their respective models, TruLens uses its own `ModelWrapper` class which provides a general model interface to simplify the implementation of the API functions.
-A model wrapper class exists for backend's model that converts a model in the respective backend's format to the general TruLens `ModelWrapper` interface.
-The wrappers are found in the `trulens.nn.models` module, and any model defined using Keras, Pytorch, or Tensorflow should be wrapped with the appropriate wrapper before being used with the other API functions that require a model -- *all other TruLens functionalities expect models to be an instance of `trulens.nn.models.Model`.*
+To get the model wrapper, use the `get_model_wrapper` method in `trulens.nn.models`. A model wrapper class exists for each backend that converts a model in the respective backend's format to the general TruLens `ModelWrapper` interface. The wrappers are found in the `models` module, and any model defined using Keras, Pytorch, or Tensorflow should be wrapped before being used with the other API functions that require a model -- all other TruLens functionalities expect models to be an instance of `trulens.nn.models.ModelWrapper`.
 
 For example,
 
 ```python
-wrapped_model = KerasModel(model_defined_via_keras)
+from trulens.nn.models import get_model_wrapper
+wrapped_model = get_model_wrapper(model_defined_via_keras)
 ```
 
 ### Attribution Methods
