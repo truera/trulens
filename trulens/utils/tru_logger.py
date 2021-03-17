@@ -41,10 +41,7 @@ def get_logger():
 def configure(lib_level=1, root_level=logging.WARNING):
     global _logger
     _logger = logging.getLogger(name="trulens")
-    logging.basicConfig(
-        format=
-        '%(levelname)s:%(name)s:%(filename)s:%(lineno)s(%(funcName)s): %(message)s',
-        level=root_level)
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=root_level)
     _logger.setLevel(lib_level)
 
     _logger.info("lib level={lib_level}".format(lib_level=lib_level))
