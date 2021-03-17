@@ -1,10 +1,10 @@
 """ 
 The TruLens library is designed to support models implemented via a variety of
 different popular python neural network frameworks: Keras (with TensorFlow or 
-Theano backend), TensorFlow, and Pytorch. In order provide the same 
-functionality to models made with frameworks that implement things (e.g., 
-gradient computations) a number of different ways, we define framework specific
-`ModelWrapper` instances to provide a unified model API. In order to compute 
+Theano backend), TensorFlow, and Pytorch. Models developed with different frameworks 
+implement things (e.g., gradient computations) a number of different ways. We define 
+framework specific `ModelWrapper` instances to create a unified model API, providing the same 
+functionality to models that are implemented in disparate frameworks. In order to compute 
 attributions for a model, we provide a `trulens.nn.models.get_model_wrapper` function
 that will return an appropriate `ModelWrapper` instance.
 

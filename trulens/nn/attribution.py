@@ -84,7 +84,7 @@ class AttributionMethod(AbstractBaseClass):
         which subsumes the completeness axiom which ensures the sum of all attributions of a record
         equals the output determined by the Quantity of Interest on the same record. 
 
-        The Point Distribution of Interest will be determiend by the gradient at a single point,
+        The Point Distribution of Interest will be determined by the gradient at a single point,
         thus being a good measure of model sensitivity. 
 
         Parameters:
