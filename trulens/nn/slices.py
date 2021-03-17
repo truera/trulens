@@ -4,7 +4,7 @@ abstraction for the explanation. In a low layer, an explanation may highlight
 the edges that were most important in identifying an object like a face, while 
 in a higher layer, the explanation might highlight high-level features such as a
 nose or mouth. By raising the level of abstraction, explanations that generalize
-over larger sets of instances are possible.
+over larger sets of samples are possible.
 
 Formally, A network, $f$, can be broken into a slice, $f = g \\circ h$, where 
 $h$ can be thought of as a pre-processor that computes features, and $g$ can be

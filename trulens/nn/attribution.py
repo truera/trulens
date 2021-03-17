@@ -73,12 +73,24 @@ class AttributionMethod(AbstractBaseClass):
     @abstractmethod
     def attributions(self, *model_args, **model_kwargs):
         """
-        Returns attributions for the given input.
+        Returns attributions for the given input. Attributions are in the same shape
+        as the layer that attributions are being generated for. 
+        
+        The numeric scale of the attributions will depend on the specific implementations 
+        of the Distribution of Interest and Quantity of Interest. However it is generally 
+        related to the scale of gradients on the Quantity of Interest. 
+
+        For example, Integrated Gradients uses the linear interpolation Distribution of Interest
+        which subsumes the completeness axiom which ensures the sum of all attributions of a record
+        equals the output determined by the Quantity of Interest on the same record. 
+
+        The Point Distribution of Interest will be determined by the gradient at a single point,
+        thus being a good measure of model sensitivity. 
 
         Parameters:
             model_args, model_kwargs: 
                 The args and kwargs given to the call method of a model.
-                This should represent the instances to obtain attributions for, 
+                This should represent the records to obtain attributions for, 
                 assumed to be a *batched* input. if `self.model` supports
                 evaluation on *data tensors*, the  appropriate tensor type may
                 be used (e.g., Pytorch models may accept Pytorch tensors in 
@@ -104,7 +116,7 @@ class InternalInfluence(AttributionMethod):
     interest is derived. The *Quantity of Interest* (QoI) is a function of the
     output specified by the slice that determines the network output behavior
     that the attributions are to describe. The *Distribution of Interest* (DoI)
-    specifies the instances over which the attributions are aggregated.
+    specifies the records over which the attributions are aggregated.
     
     More information can be found in the following paper:
     
