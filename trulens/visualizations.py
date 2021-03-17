@@ -92,7 +92,7 @@ class Visualizer(object):
 
             normalization_type:
                 Specifies one of the following configurations for normalizing
-                the attributions (each instance is normalized separately):
+                the attributions (each item is normalized separately):
 
                 - `'unsigned_max'`: normalizes the attributions to the range 
                   [-1, 1] by dividing the attributions by the maximum absolute 
@@ -179,7 +179,7 @@ class Visualizer(object):
 
             return_tiled:
                 If true, the returned array will be in the same shape as the
-                visualization, with no batch dimension and the instances in the
+                visualization, with no batch dimension and the samples in the
                 batch tiled along the width and height dimensions. If false, the
                 returned array will be reshaped to match `attributions`.
 
@@ -190,7 +190,7 @@ class Visualizer(object):
 
             normalization_type:
                 Specifies one of the following configurations for normalizing
-                the attributions (each instance is normalized separately):
+                the attributions (each item is normalized separately):
 
                 - `'unsigned_max'`: normalizes the attributions to the range 
                   [-1, 1] by dividing the attributions by the maximum absolute 
@@ -443,7 +443,7 @@ class HeatmapVisualizer(Visualizer):
 
             normalization_type:
                 Specifies one of the following configurations for normalizing
-                the attributions (each instance is normalized separately):
+                the attributions (each item is normalized separately):
 
                 - `'unsigned_max'`: normalizes the attributions to the range 
                   [-1, 1] by dividing the attributions by the maximum absolute 
@@ -519,10 +519,10 @@ class HeatmapVisualizer(Visualizer):
                 A `np.ndarray` containing the attributions to be visualized.
 
             x:
-                A `np.ndarray` of instances in the same shape as `attributions`
-                corresponding to the instances explained by the given 
+                A `np.ndarray` of items in the same shape as `attributions`
+                corresponding to the records explained by the given 
                 attributions. The visualization will be superimposed onto the
-                corresponding set of instances.
+                corresponding set of records.
 
             output_file:
                 File name to save the visualization image to. If `None`, no
@@ -538,7 +538,7 @@ class HeatmapVisualizer(Visualizer):
 
             return_tiled:
                 If true, the returned array will be in the same shape as the
-                visualization, with no batch dimension and the instances in the
+                visualization, with no batch dimension and the samples in the
                 batch tiled along the width and height dimensions. If false, the
                 returned array will be reshaped to match `attributions`.
 
@@ -554,7 +554,7 @@ class HeatmapVisualizer(Visualizer):
 
             normalization_type:
                 Specifies one of the following configurations for normalizing
-                the attributions (each instance is normalized separately):
+                the attributions (each item is normalized separately):
 
                 - `'unsigned_max'`: normalizes the attributions to the range 
                   [-1, 1] by dividing the attributions by the maximum absolute 
@@ -813,7 +813,7 @@ class ChannelMaskVisualizer(object):
             model,
             layer,
             channel,
-            channel_axis=get_backend().channel_axis,
+            channel_axis=None,
             agg_fn=None,
             doi=None,
             blur=None,
@@ -883,6 +883,11 @@ class ChannelMaskVisualizer(object):
                 unmasked (or given nonzero opacity when `use_attr_as_opacity` is
                 true).
         """
+        B = get_backend()
+        if (B is not None and (channel_axis is None or channel_axis < 0)):
+            channel_axis = B.channel_axis
+        elif (channel_axis is None or channel_axis < 0):
+            channel_axis = 1
 
         self.mask_visualizer = MaskVisualizer(
             blur, threshold, masked_opacity, combine_channels,

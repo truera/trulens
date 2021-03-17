@@ -1,8 +1,8 @@
 """
-The distribution of interest lets us specify the set of instances over which we 
+The distribution of interest lets us specify the set of samples over which we 
 want our explanations to be faithful. In some cases, we may want to explain the 
-model’s behavior on a particular instance, whereas other times we may be 
-interested in a more general behavior over a distribution of instances.
+model’s behavior on a particular record, whereas other times we may be 
+interested in a more general behavior over a distribution of samples.
 """
 #from __future__ import annotations # Avoid expanding type aliases in mkdocs.
 
@@ -33,17 +33,18 @@ class DoiCutSupportError(ValueError):
 class DoI(AbstractBaseClass):
     """
     Interface for distributions of interest. The *Distribution of Interest* 
-    (DoI) specifies the instances over which an attribution method is 
+    (DoI) specifies the samples over which an attribution method is 
     aggregated.
     """
 
     def __init__(self, cut: Cut = None):
-        """"Initializae DoI
+        """"Initialize DoI
 
         Parameters:
-            cut (Cut, optional): The Cut in which the DoI will be applied. If `None`, the DoI will be
-            applied to the input. otherwise, the distribution should be applied
-            to the latent space defined by the cut. 
+            cut (Cut, optional): 
+                The Cut in which the DoI will be applied. If `None`, the DoI will be
+                applied to the input. otherwise, the distribution should be applied
+                to the latent space defined by the cut. 
         """
         self._cut = cut
 
@@ -121,6 +122,14 @@ class PointDoi(DoI):
     """
 
     def __init__(self, cut: Cut = None):
+        """"Initialize PointDoI
+
+        Parameters:
+            cut (Cut, optional): 
+                The Cut in which the DoI will be applied. If `None`, the DoI will be
+                applied to the input. otherwise, the distribution should be applied
+                to the latent space defined by the cut. 
+        """
         super(PointDoi, self).__init__(cut)
 
     def __call__(self, z):
@@ -158,10 +167,10 @@ class LinearDoi(DoI):
                 resolution is more computationally expensive, but gives a better
                 approximation of the DoI this object mathematically represents.
 
-            cut:
-                If None, the DoI will be applied to the input. Otherwise, the 
-                DoI will be applied to the Cut. This allows a DoI to be applied
-                in the latent space.
+            cut (Cut, optional): 
+                The Cut in which the DoI will be applied. If `None`, the DoI will be
+                applied to the input. otherwise, the distribution should be applied
+                to the latent space defined by the cut. 
         """
         super(LinearDoi, self).__init__(cut)
         self._baseline = baseline
@@ -227,6 +236,10 @@ class GaussianDoi(DoI):
 
             resolution:
                 Number of samples returned by each call to this DoI.
+            cut (Cut, optional): 
+                The Cut in which the DoI will be applied. If `None`, the DoI will be
+                applied to the input. otherwise, the distribution should be applied
+                to the latent space defined by the cut. 
         """
         super(GaussianDoi, self).__init__(cut)
         self._var = var

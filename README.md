@@ -31,29 +31,18 @@ pip install trulens
 
 # Overview
 
-## Backends
-
-The `trulens` library supports several common machine learning libraries, including Keras, Pytorch, and TensorFlow.
-
-In order to set the backend to the backend of your choice, use the `TRULENS_BACKEND` flag, e.g., to use the Keras backend, the following code could be used before TruLens imports:
-
-```python
-import os
-os.environ['TRULENS_BACKEND'] = 'keras'
-```
-
 ## Attributions
 
 ### Model Wrappers
 
 In order to support a wide variety of backends with different interfaces for their respective models, TruLens uses its own `ModelWrapper` class which provides a general model interface to simplify the implementation of the API functions.
-A model wrapper class exists for backend's model that converts a model in the respective backend's format to the general TruLens `ModelWrapper` interface.
-The wrappers are found in the `trulens.nn.models` module, and any model defined using Keras, Pytorch, or Tensorflow should be wrapped with the appropriate wrapper before being used with the other API functions that require a model -- *all other TruLens functionalities expect models to be an instance of `trulens.nn.models.Model`.*
+To get the model wrapper, use the `get_model_wrapper` method in `trulens.nn.models`. A model wrapper class exists for each backend that converts a model in the respective backend's format to the general TruLens `ModelWrapper` interface. The wrappers are found in the `models` module, and any model defined using Keras, Pytorch, or Tensorflow should be wrapped before being used with the other API functions that require a model -- all other TruLens functionalities expect models to be an instance of `trulens.nn.models.ModelWrapper`.
 
 For example,
 
 ```python
-wrapped_model = KerasModel(model_defined_via_keras)
+from trulens.nn.models import get_model_wrapper
+wrapped_model = get_model_wrapper(model_defined_via_keras)
 ```
 
 ### Attribution Methods
@@ -63,7 +52,7 @@ In many cases, for example, this may simply measure the effect each input variab
 
 Attribution methods extend the `AttributionMethod` class, and many concrete instances are found in the `trulens.nn.attribution` module.
 
-Once an attribution method has been instantiated, its main function is its `attributions` method, which takes an `np.Array` of batched instances, where each instance matches the shape of the *input* to the model the attribution method was instantiated with.
+Once an attribution method has been instantiated, its main function is its `attributions` method, which returns an `np.Array` of batched items, where each item matches the shape of the *input* to the model the attribution method was instantiated with.
 
 See the *method comparison* demo for further information on the different types of attribution methods, their uses, and their relationships with one another.
 
@@ -81,8 +70,8 @@ For example, it may select the confidence score for a particular class.
 In its most general form, the QoI can be pecified by an implementation of the `QoI` class in the `trulens.nn.quantities` module.
 Several common default implementations are provided in this module as well.
 
-The *distribution of interest* (DoI) essentially specifies for which points surrounding each instance the calculated attribution should be valid.
-The distribution can be specified via an implementation of the `DoI` class in the `trulens.nn.distributions` module, which is a function taking an input instance and producing a list of input points to aggregate attribution over.
+The *distribution of interest* (DoI) essentially specifies for which points surrounding each record the calculated attribution should be valid.
+The distribution can be specified via an implementation of the `DoI` class in the `trulens.nn.distributions` module, which is a function taking an input record and producing a list of sample input points to aggregate attribution over.
 A few common default distributions implementing the `DoI` class can be found in the `trulens.nn.distributions` module. 
 
 See the *parameterization demo* for further explanations of the purpose of these parameters and examples of their usage.
