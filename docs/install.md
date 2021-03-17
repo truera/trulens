@@ -15,12 +15,17 @@ conda install keras             # Or whatever backend you're using.
 conda install matplotlib        # For visualizations.
 ```
 
-2. Clone the trulens repo.
+2. [Pip installation] Install the trulens pip package.
+```
+pip install trulens
+```
+
+3. [Local installation] If you would like to develop or modify trulens, you can download the source code by cloning the trulens repo.
 ```
 git clone https://github.com/truera/trulens.git
 ```
 
-3. Install the trulens repo.
+4. [Locall installation] Install the trulens repo.
 ```
 cd trulens
 pip install -e .
