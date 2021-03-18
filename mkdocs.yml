@@ -58,7 +58,6 @@ nav:
   - Welcome to TruLens!: index.md
   - Installation: install.md
   - Quickstart: quickstart.md
-  - User Guide: userguide.md
   - API Reference: 
     - Attribution: api/attribution.md
     - Models: api/model_wrappers.md
