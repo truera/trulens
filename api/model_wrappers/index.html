@@ -1,529 +1,583 @@
 
-<!DOCTYPE html>
-
-<html class="no-js" lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta content="width=device-width,initial-scale=1" name="viewport"/>
-<link href="../../img/favicon.ico" rel="shortcut icon"/>
-<meta content="mkdocs-1.1.2, mkdocs-material-5.5.7" name="generator"/>
-<title>Models - TruLens</title>
-<link href="../../assets/stylesheets/main.b8ac9624.min.css" rel="stylesheet"/>
-<link href="../../assets/stylesheets/palette.28f3ef9a.min.css" rel="stylesheet"/>
-<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css?family=Inter:300,400,400i,700%7C&amp;display=fallback" rel="stylesheet"/>
-<style>body,input{font-family:"Inter",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"",SFMono-Regular,Consolas,Menlo,monospace}</style>
-<link href="../../stylesheets/extra.css" rel="stylesheet"/>
-</head>
-<body data-md-color-accent="" data-md-color-primary="" data-md-color-scheme="truera" dir="ltr">
-<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
-<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
-<label class="md-overlay" for="__drawer"></label>
-<div data-md-component="skip">
-<a class="md-skip" href="#model-wrappers">
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      <link rel="icon" href="../../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.0.6">
+    
+    
+      
+        <title>Models - TruLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.2c0c5eaf.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.7fa14f5b.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,400i,700%7C&display=fallback">
+        <style>:root{--md-text-font-family:"Inter";--md-code-font-family:""}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="truera" data-md-color-primary="" data-md-color-accent="">
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#model-wrappers" class="md-skip">
           Skip to content
         </a>
-</div>
-<div data-md-component="announce">
-</div>
-<header class="md-header" data-md-component="header">
-<nav aria-label="Header" class="md-header-nav md-grid">
-<a aria-label="TruLens" class="md-header-nav__button md-logo" href="../.." title="TruLens">
-<img alt="logo" src="../../img/logo.png"/>
-</a>
-<label class="md-header-nav__button md-icon" for="__drawer">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"></path></svg>
-</label>
-<div class="md-header-nav__title" data-md-component="header-title">
-<div class="md-header-nav__ellipsis">
-<span class="md-header-nav__topic md-ellipsis">
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="TruLens" class="md-header__button md-logo" aria-label="TruLens" data-md-component="logo">
+      
+  <img src="../../img/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
             TruLens
           </span>
-<span class="md-header-nav__topic md-ellipsis">
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
             
               Models
             
           </span>
-</div>
-</div>
-</nav>
+        </div>
+      </div>
+    </div>
+    <div class="md-header__options">
+      
+    </div>
+    
+    
+  </nav>
 </header>
-<div class="md-container" data-md-component="container">
-<main class="md-main" data-md-component="main">
-<div class="md-main__inner md-grid">
-<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
-<div class="md-sidebar__scrollwrap">
-<div class="md-sidebar__inner">
-<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
-<label class="md-nav__title" for="__drawer">
-<a aria-label="TruLens" class="md-nav__button md-logo" href="../.." title="TruLens">
-<img alt="logo" src="../../img/logo.png"/>
-</a>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="TruLens" class="md-nav__button md-logo" aria-label="TruLens" data-md-component="logo">
+      
+  <img src="../../img/logo.png" alt="logo">
+
+    </a>
     TruLens
   </label>
-<ul class="md-nav__list" data-md-scrollfix="">
-<li class="md-nav__item">
-<a class="md-nav__link" href="../.." title="Welcome to TruLens!">
-      Welcome to TruLens!
-    </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../install/" title="Installation">
-      Installation
-    </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../quickstart/" title="Quickstart">
-      Quickstart
-    </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../userguide/" title="User Guide">
-      User Guide
-    </a>
-</li>
-<li class="md-nav__item md-nav__item--active md-nav__item--nested">
-<input checked="" class="md-nav__toggle md-toggle" data-md-toggle="nav-5" id="nav-5" type="checkbox"/>
-<label class="md-nav__link" for="nav-5">
-      API Reference
-      <span class="md-nav__icon md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"></path></svg>
-</span>
-</label>
-<nav aria-label="API Reference" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="nav-5">
-<span class="md-nav__icon md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
-</span>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Welcome to TruLens!
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        Quickstart
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+      
+      <label class="md-nav__link" for="__nav_4">
         API Reference
+        <span class="md-nav__icon md-icon"></span>
       </label>
-<ul class="md-nav__list" data-md-scrollfix="">
-<li class="md-nav__item">
-<a class="md-nav__link" href="../attribution/" title="Attribution">
-      Attribution
-    </a>
-</li>
-<li class="md-nav__item md-nav__item--active">
-<input class="md-nav__toggle md-toggle" data-md-toggle="toc" id="__toc" type="checkbox"/>
-<label class="md-nav__link md-nav__link--active" for="__toc">
+      <nav class="md-nav" aria-label="API Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          API Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../attribution/" class="md-nav__link">
+        Attribution
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Models
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Models
-        <span class="md-nav__icon md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"></path></svg>
-</span>
-</label>
-<a class="md-nav__link md-nav__link--active" href="./" title="Models">
-      Models
-    </a>
-<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">
-<span class="md-nav__icon md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
-</span>
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
-<ul class="md-nav__list" data-md-scrollfix="">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base">
-    trulens.nn.models._model_base
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.models.__init__" class="md-nav__link">
+    trulens.nn.models.__init__
   </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base.ModelWrapper">
-    ModelWrapper
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.models.__init__.get_model_wrapper" class="md-nav__link">
+    get_model_wrapper()
   </a>
-<nav aria-label="ModelWrapper" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base.ModelWrapper.model">
-    model
-  </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base.ModelWrapper.__call__">
-    __call__()
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base.ModelWrapper.__init__">
-    __init__()
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base.ModelWrapper.fprop">
-    fprop()
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base.ModelWrapper.qoi_bprop">
-    qoi_bprop()
-  </a>
-</li>
-</ul>
+      
+    </ul>
+  
 </nav>
-</li>
-</ul>
+      
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../slices/" class="md-nav__link">
+        Slices
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quantities/" class="md-nav__link">
+        Quantities
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../distributions/" class="md-nav__link">
+        Distributions
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualizations/" class="md-nav__link">
+        Visualizations
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
 </nav>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../slices/" title="Slices">
-      Slices
-    </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../quantities/" title="Quantities">
-      Quantities
-    </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../distributions/" title="Distributions">
-      Distributions
-    </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../visualizations/" title="Visualizations">
-      Visualizations
-    </a>
-</li>
-</ul>
-</nav>
-</li>
-</ul>
-</nav>
-</div>
-</div>
-</div>
-<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-<div class="md-sidebar__scrollwrap">
-<div class="md-sidebar__inner">
-<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">
-<span class="md-nav__icon md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
-</span>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
-<ul class="md-nav__list" data-md-scrollfix="">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base">
-    trulens.nn.models._model_base
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.models.__init__" class="md-nav__link">
+    trulens.nn.models.__init__
   </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base.ModelWrapper">
-    ModelWrapper
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.models.__init__.get_model_wrapper" class="md-nav__link">
+    get_model_wrapper()
   </a>
-<nav aria-label="ModelWrapper" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base.ModelWrapper.model">
-    model
-  </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base.ModelWrapper.__call__">
-    __call__()
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base.ModelWrapper.__init__">
-    __init__()
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base.ModelWrapper.fprop">
-    fprop()
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.models._model_base.ModelWrapper.qoi_bprop">
-    qoi_bprop()
-  </a>
-</li>
-</ul>
+      
+    </ul>
+  
 </nav>
-</li>
-</ul>
-</nav>
-</div>
-</div>
-</div>
-<div class="md-content">
-<article class="md-content__inner md-typeset">
-<h1 id="model-wrappers">Model Wrappers<a class="headerlink" href="#model-wrappers" title="Permanent link">¶</a></h1>
-<div class="doc doc-object doc-module">
-<h2 class="hidden-toc" href="#trulens.nn.models._model_base" id="trulens.nn.models._model_base" style="visibility: hidden; width: 0; height: 0;">
-<a class="headerlink" href="#trulens.nn.models._model_base" title="Permanent link">¶</a></h2>
-<div class="doc doc-contents first">
-<p>The TruLens library is designed to support models implemented via a variety of
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                <h1 id="model-wrappers">Model Wrappers<a class="headerlink" href="#model-wrappers" title="Permanent link">&para;</a></h1>
+
+
+  <div class="doc doc-object doc-module">
+
+<a id="trulens.nn.models.__init__"></a>
+    <div class="doc doc-contents first">
+
+      <p>The TruLens library is designed to support models implemented via a variety of
 different popular python neural network frameworks: Keras (with TensorFlow or 
-Theano backend), TensorFlow, and Pytorch. In order provide the same 
-functionality to models made with frameworks that implement things (e.g., 
-gradient computations) a number of different ways, we provide an adapter class 
-to provide a unified model API. In order to compute attributions for a model, 
-it should be wrapped as a <code>ModelWrapper</code> instance.</p>
-<div class="doc doc-children">
-<div class="doc doc-object doc-class">
-<h2 class="doc doc-heading" id="trulens.nn.models._model_base.ModelWrapper">
-<code>ModelWrapper</code>
-<a class="headerlink" href="#trulens.nn.models._model_base.ModelWrapper" title="Permanent link">¶</a></h2>
-<div class="doc doc-contents">
-<p>A wrapper interface for models that exposes the components needed for 
-computing attributions. This is intended to produce a consistent 
-functionality for all models regardless of the backend/library the model is 
-implemented with.</p>
-<div class="doc doc-children">
-<div class="doc doc-object doc-attribute">
-<h3 class="doc doc-heading" id="trulens.nn.models._model_base.ModelWrapper.model">
-<code class="highlight">
-model        </code>
-<span class="doc doc-properties">
-<small class="doc doc-property doc-property-property"><code>property</code></small>
-<small class="doc doc-property doc-property-readonly"><code>readonly</code></small>
-</span>
-<a class="headerlink" href="#trulens.nn.models._model_base.ModelWrapper.model" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
-<p>The model this object wraps.</p>
-</div>
-</div>
-<div class="doc doc-object doc-method">
-<h3 class="doc doc-heading" id="trulens.nn.models._model_base.ModelWrapper.__call__">
-<code class="highlight language-python">
-__call__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> </code>
-<span class="doc doc-properties">
-<small class="doc doc-property doc-property-special"><code>special</code></small>
-</span>
-<a class="headerlink" href="#trulens.nn.models._model_base.ModelWrapper.__call__" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
-<p>Shorthand for obtaining the model's output on the given input.</p>
+Theano backend), TensorFlow, and Pytorch. Models developed with different frameworks 
+implement things (e.g., gradient computations) a number of different ways. We define 
+framework specific <code>ModelWrapper</code> instances to create a unified model API, providing the same 
+functionality to models that are implemented in disparate frameworks. In order to compute 
+attributions for a model, we provide a <code>trulens.nn.models.get_model_wrapper</code> function
+that will return an appropriate <code>ModelWrapper</code> instance.</p>
+<p>Some parameters are exclusively utilized for specific frameworks and are outlined 
+in the parameter descriptions.</p>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h2 class="doc doc-heading" id="trulens.nn.models.__init__.get_model_wrapper">
+<code class="codehilite language-python"><span class="n">get_model_wrapper</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">logit_layer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">replace_softmax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">softmax_layer</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">custom_objects</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">internal_tensor_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_feed_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+<a class="headerlink" href="#trulens.nn.models.__init__.get_model_wrapper" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents ">
+
+      <p>Returns a ModelWrapper implementation that exposes the components needed for computing attributions.</p>
+
 <p><strong>Parameters:</strong></p>
 <table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>x</code></td>
-<td><code></code></td>
-<td>
-<p>Input point.</p>
-</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code></code></td>
-<td>
-<p>Model's output on the input point.</p>
-</td>
-</tr>
-</tbody>
-</table>
-<details class="quote">
-<summary>Source code in <code>trulens/nn/models/_model_base.py</code></summary>
-<div class="highlight">
-<pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-    <span class="sd">"""</span>
-<span class="sd">    Shorthand for obtaining the model's output on the given input.</span>
-
-<span class="sd">    Parameters:</span>
-<span class="sd">        x:</span>
-<span class="sd">            Input point.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Model's output on the input point.</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fprop</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-</code></pre>
-</div>
-</details>
-</div>
-</div>
-<div class="doc doc-object doc-method">
-<h3 class="doc doc-heading" id="trulens.nn.models._model_base.ModelWrapper.__init__">
-<code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">logit_layer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">replace_softmax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">softmax_layer</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">custom_objects</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">internal_tensor_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_feed_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
-<span class="doc doc-properties">
-<small class="doc doc-property doc-property-special"><code>special</code></small>
-</span>
-<a class="headerlink" href="#trulens.nn.models._model_base.ModelWrapper.__init__" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
-<p><strong>Parameters:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>model</code></td>
-<td><code></code></td>
-<td>
-<p>The model to wrap. For the TensorFlow 1 backend, this is 
-expected to be a graph object.</p>
-</td>
-<td><em>required</em></td>
-</tr>
-<tr>
-<td><code>logit_layer</code></td>
-<td><code></code></td>
-<td>
-<p>Specifies the name or index of the layer that produces the
-logit predictions. Supported for Keras and Pytorch models.</p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>replace_softmax</code></td>
-<td><code></code></td>
-<td>
-<p><em>Supported for Keras models only.</em> If true, the activation
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>model</code></td>
+        <td><code></code></td>
+        <td><p>The model to wrap. If using the TensorFlow 1 backend, this is 
+expected to be a graph object.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>logit_layer</code></td>
+        <td><code></code></td>
+        <td><p><em>Supported for Keras and Pytorch models.</em> 
+Specifies the name or index of the layer that produces the
+logit predictions. </p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>replace_softmax</code></td>
+        <td><code></code></td>
+        <td><p><em>Supported for Keras models only.</em> If true, the activation
 function in the softmax layer (specified by <code>softmax_layer</code>) 
-will be changed to a <code>'linear'</code> activation. </p>
-</td>
-<td><code>False</code></td>
-</tr>
-<tr>
-<td><code>softmax_layer</code></td>
-<td><code></code></td>
-<td>
-<p><em>Supported for Keras models only.</em> Specifies the layer that
+will be changed to a <code>'linear'</code> activation. </p></td>
+        <td><code>False</code></td>
+      </tr>
+      <tr>
+        <td><code>softmax_layer</code></td>
+        <td><code></code></td>
+        <td><p><em>Supported for Keras models only.</em> Specifies the layer that
 performs the softmax. This layer should have an <code>activation</code>
-attribute. Only used when <code>replace_softmax</code> is true.</p>
-</td>
-<td><code>-1</code></td>
-</tr>
-<tr>
-<td><code>custom_objects</code></td>
-<td><code></code></td>
-<td>
-<p><em>Optional, for use with Keras models only.</em> A dictionary of
-custom objects used by the Keras model.</p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>input_shape</code></td>
-<td><code></code></td>
-<td>
-<p><em>Required for use with Pytorch models only.</em> Tuple specifying
+attribute. Only used when <code>replace_softmax</code> is true.</p></td>
+        <td><code>-1</code></td>
+      </tr>
+      <tr>
+        <td><code>custom_objects</code></td>
+        <td><code></code></td>
+        <td><p><em>Optional, for use with Keras models only.</em> A dictionary of
+custom objects used by the Keras model.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>input_shape</code></td>
+        <td><code></code></td>
+        <td><p><em>Required for use with Pytorch models only.</em> Tuple specifying
 the input shape (excluding the batch dimension) expected by the
-model.</p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>device</code></td>
-<td><code></code></td>
-<td>
-<p><em>Optional, for use with Pytorch models only.</em> A string
-specifying the device to run the model on.</p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>input_tensors</code></td>
-<td><code></code></td>
-<td>
-<p><em>Required for use with TensorFlow 1 graph models only.</em> A list
-of tensors representing the input to the model graph.</p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>output_tensors</code></td>
-<td><code></code></td>
-<td>
-<p><em>Required for use with TensorFlow 1 graph models only.</em> A list
-of tensors representing he output to the model graph.</p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>internal_tensor_dict</code></td>
-<td><code></code></td>
-<td>
-<p><em>Optional, for use with TensorFlow 1 graph models only.</em> A
+model.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>input_dtype</code></td>
+        <td><code></code></td>
+        <td><p>torch.dtype
+<em>Optional, for use with Pytorch models only.</em>, The dtype of the input.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>device</code></td>
+        <td><code></code></td>
+        <td><p><em>Optional, for use with Pytorch models only.</em> A string
+specifying the device to run the model on.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>input_tensors</code></td>
+        <td><code></code></td>
+        <td><p><em>Required for use with TensorFlow 1 graph models only.</em> A list
+of tensors representing the input to the model graph.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>output_tensors</code></td>
+        <td><code></code></td>
+        <td><p><em>Required for use with TensorFlow 1 graph models only.</em> A list
+of tensors representing the output to the model graph.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>internal_tensor_dict</code></td>
+        <td><code></code></td>
+        <td><p><em>Optional, for use with TensorFlow 1 graph models only.</em> A
 dictionary mapping user-selected layer names to the internal
 tensors in the model graph that the user would like to expose.
 This is provided to give more human-readable names to the layers
 if desired. Internal tensors can also be accessed via the name
-given to them by tensorflow.</p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>default_feed_dict</code></td>
-<td><code></code></td>
-<td>
-<p><em>Optional, for use with TensorFlow 1 graph models only.</em> A
+given to them by tensorflow.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>default_feed_dict</code></td>
+        <td><code></code></td>
+        <td><p><em>Optional, for use with TensorFlow 1 graph models only.</em> A
 dictionary of default values to give to tensors in the model
-graph.</p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>session</code></td>
-<td><code></code></td>
-<td>
-<p><em>Optional, for use with TensorFlow 1 graph models only.</em> A 
+graph.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>session</code></td>
+        <td><code></code></td>
+        <td><p><em>Optional, for use with TensorFlow 1 graph models only.</em> A 
 <code>tf.Session</code> object to run the model graph in. If <code>None</code>, a new
-temporary session will be generated every time the model is run.</p>
-</td>
-<td><code>None</code></td>
-</tr>
-</tbody>
+temporary session will be generated every time the model is run.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>backend</code></td>
+        <td><code></code></td>
+        <td><p><em>Optional, for forcing a specific backend.</em> String values recognized
+are pytorch, tensorflow, keras, or tf.keras.</p></td>
+        <td><code>None</code></td>
+      </tr>
+  </tbody>
 </table>
-<details class="quote">
-<summary>Source code in <code>trulens/nn/models/_model_base.py</code></summary>
-<div class="highlight">
-<pre><span></span><code><span class="nd">@abstractmethod</span>
-<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
+        <details class="quote">
+          <summary>Source code in <code>trulens/nn/models/__init__.py</code></summary>
+          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">get_model_wrapper</span><span class="p">(</span>
         <span class="n">model</span><span class="p">,</span>
         <span class="n">logit_layer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">replace_softmax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">softmax_layer</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">custom_objects</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">input_shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">input_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">output_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">internal_tensor_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">default_feed_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">"""</span>
+        <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">backend</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a ModelWrapper implementation that exposes the components needed for computing attributions.</span>
+
 <span class="sd">    Parameters:</span>
 <span class="sd">        model:</span>
-<span class="sd">            The model to wrap. For the TensorFlow 1 backend, this is </span>
+<span class="sd">            The model to wrap. If using the TensorFlow 1 backend, this is </span>
 <span class="sd">            expected to be a graph object.</span>
 
 <span class="sd">        logit_layer:</span>
+<span class="sd">            _Supported for Keras and Pytorch models._ </span>
 <span class="sd">            Specifies the name or index of the layer that produces the</span>
-<span class="sd">            logit predictions. Supported for Keras and Pytorch models.</span>
+<span class="sd">            logit predictions. </span>
 
 <span class="sd">        replace_softmax:</span>
 <span class="sd">            _Supported for Keras models only._ If true, the activation</span>
 <span class="sd">            function in the softmax layer (specified by `softmax_layer`) </span>
-<span class="sd">            will be changed to a `'linear'` activation. </span>
+<span class="sd">            will be changed to a `&#39;linear&#39;` activation. </span>
 
 <span class="sd">        softmax_layer:</span>
 <span class="sd">            _Supported for Keras models only._ Specifies the layer that</span>
@@ -539,6 +593,9 @@ temporary session will be generated every time the model is run.</p>
 <span class="sd">            the input shape (excluding the batch dimension) expected by the</span>
 <span class="sd">            model.</span>
 
+<span class="sd">        input_dtype: torch.dtype</span>
+<span class="sd">            _Optional, for use with Pytorch models only._, The dtype of the input.</span>
+
 <span class="sd">        device:</span>
 <span class="sd">            _Optional, for use with Pytorch models only._ A string</span>
 <span class="sd">            specifying the device to run the model on.</span>
@@ -549,7 +606,7 @@ temporary session will be generated every time the model is run.</p>
 
 <span class="sd">        output_tensors:</span>
 <span class="sd">            _Required for use with TensorFlow 1 graph models only._ A list</span>
-<span class="sd">            of tensors representing he output to the model graph.</span>
+<span class="sd">            of tensors representing the output to the model graph.</span>
 
 <span class="sd">        internal_tensor_dict:</span>
 <span class="sd">            _Optional, for use with TensorFlow 1 graph models only._ A</span>
@@ -568,401 +625,175 @@ temporary session will be generated every time the model is run.</p>
 <span class="sd">            _Optional, for use with TensorFlow 1 graph models only._ A </span>
 <span class="sd">            `tf.Session` object to run the model graph in. If `None`, a new</span>
 <span class="sd">            temporary session will be generated every time the model is run.</span>
-<span class="sd">    """</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
-</code></pre>
-</div>
-</details>
-</div>
-</div>
-<div class="doc doc-object doc-method">
-<h3 class="doc doc-heading" id="trulens.nn.models._model_base.ModelWrapper.fprop">
-<code class="highlight language-python">
-fprop<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_args</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="n">doi_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">to_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attribution_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">intervention</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> </code>
-<a class="headerlink" href="#trulens.nn.models._model_base.ModelWrapper.fprop" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
-<p><strong><em>Used internally by <code>AttributionMethod</code>.</em></strong></p>
-<p>Forward propagate the model beginning at <code>doi_cut</code>, with input 
-<code>intervention</code>, and ending at <code>to_cut</code>.</p>
-<p><strong>Parameters:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>model_args,</code></td>
-<td><code>model_kwargs</code></td>
-<td>
-<p>The args and kwargs given to the call method of a model.
-This should represent the instances to obtain attributions for,
-assumed to be a <em>batched</em> input. if <code>self.model</code> supports
-evaluation on <em>data tensors</em>, the  appropriate tensor type may
-be used (e.g., Pytorch models may accept Pytorch tensors in 
-addition to <code>np.ndarray</code>s). The shape of the inputs must match
-the input shape of <code>self.model</code>. </p>
-</td>
-<td><em>required</em></td>
-</tr>
-<tr>
-<td><code>doi_cut</code></td>
-<td><code></code></td>
-<td>
-<p>Cut defining where the Distribution of Interest is applied. The
-shape of <code>intervention</code> must match the input shape of the 
-layer(s) specified by the cut. If <code>doi_cut</code> is <code>None</code>, the input
-to the model will be used (i.e., <code>InputCut()</code>).</p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>to_cut</code></td>
-<td><code></code></td>
-<td>
-<p>Cut defining the layer(s) at which the propagation will end. The
-If <code>to_cut</code> is <code>None</code>, the output of the model will be used
-(i.e., <code>OutputCut()</code>).</p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>attribution_cut</code></td>
-<td><code></code></td>
-<td>
-<p>Cut defining where the attributions are collected. If 
-<code>attribution_cut</code> is <code>None</code>, it will be assumed to be the
-<code>doi_cut</code></p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>intervention</code></td>
-<td><code></code></td>
-<td>
-<p>The intervention created from the Distribution of Interest. If 
-<code>intervention</code> is <code>None</code>, then it is equivalent to the point
-DoI.</p>
-</td>
-<td><code>None</code></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code></code></td>
-<td>
-<p>(list of backend.Tensor or np.ndarray)
-    A list of output activations are returned, keeping the same type
-    as the input. If <code>attribution_cut</code> is supplied, also return the
-    cut activations.</p>
-</td>
-</tr>
-</tbody>
-</table>
-<details class="quote">
-<summary>Source code in <code>trulens/nn/models/_model_base.py</code></summary>
-<div class="highlight">
-<pre><span></span><code><span class="nd">@abstractmethod</span>
-<span class="k">def</span> <span class="nf">fprop</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model_args</span><span class="p">,</span>
-        <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{},</span>
-        <span class="n">doi_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">to_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">attribution_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">intervention</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">"""</span>
-<span class="sd">    **_Used internally by `AttributionMethod`._**</span>
 
-<span class="sd">    Forward propagate the model beginning at `doi_cut`, with input </span>
-<span class="sd">    `intervention`, and ending at `to_cut`.</span>
+<span class="sd">        backend:</span>
+<span class="sd">            _Optional, for forcing a specific backend._ String values recognized</span>
+<span class="sd">            are pytorch, tensorflow, keras, or tf.keras.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># get existing backend</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">get_backend</span><span class="p">(</span><span class="n">suppress_warnings</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="sd">    Parameters:</span>
-<span class="sd">        model_args, model_kwargs: </span>
-<span class="sd">            The args and kwargs given to the call method of a model.</span>
-<span class="sd">            This should represent the instances to obtain attributions for,</span>
-<span class="sd">            assumed to be a *batched* input. if `self.model` supports</span>
-<span class="sd">            evaluation on *data tensors*, the  appropriate tensor type may</span>
-<span class="sd">            be used (e.g., Pytorch models may accept Pytorch tensors in </span>
-<span class="sd">            addition to `np.ndarray`s). The shape of the inputs must match</span>
-<span class="sd">            the input shape of `self.model`. </span>
+    <span class="k">if</span> <span class="n">backend</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">backend</span> <span class="o">=</span> <span class="n">discern_backend</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">tru_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Detected </span><span class="si">{}</span><span class="s2"> backend for </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">backend</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">backend</span> <span class="o">=</span> <span class="n">Backend</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
 
-<span class="sd">        doi_cut:</span>
-<span class="sd">            Cut defining where the Distribution of Interest is applied. The</span>
-<span class="sd">            shape of `intervention` must match the input shape of the </span>
-<span class="sd">            layer(s) specified by the cut. If `doi_cut` is `None`, the input</span>
-<span class="sd">            to the model will be used (i.e., `InputCut()`).</span>
+    <span class="k">if</span> <span class="n">B</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">backend</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Backend</span><span class="o">.</span><span class="n">UNKNOWN</span> <span class="ow">and</span> <span class="n">B</span><span class="o">.</span><span class="n">backend</span> <span class="o">!=</span> <span class="n">backend</span><span class="p">):</span>
+        <span class="n">tru_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Changing backend from </span><span class="si">{}</span><span class="s2"> to </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="kc">None</span> <span class="k">if</span> <span class="n">B</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">B</span><span class="o">.</span><span class="n">backend</span><span class="p">,</span> <span class="n">backend</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;TRULENS_BACKEND&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">get_backend</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">tru_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using backend </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">backend</span><span class="p">))</span>
+    <span class="n">tru_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;If this seems incorrect, you can force the correct backend by passing the `backend` parameter directly into your get_model_wrapper call.&quot;</span>
+    <span class="p">)</span>
 
-<span class="sd">        to_cut:</span>
-<span class="sd">            Cut defining the layer(s) at which the propagation will end. The</span>
-<span class="sd">            If `to_cut` is `None`, the output of the model will be used</span>
-<span class="sd">            (i.e., `OutputCut()`).</span>
+    <span class="k">if</span> <span class="n">B</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">is_keras_derivative</span><span class="p">():</span>
+        <span class="kn">from</span> <span class="nn">trulens.nn.models.keras</span> <span class="kn">import</span> <span class="n">KerasModelWrapper</span>
+        <span class="k">return</span> <span class="n">KerasModelWrapper</span><span class="p">(</span>
+            <span class="n">model</span><span class="p">,</span>
+            <span class="n">logit_layer</span><span class="o">=</span><span class="n">logit_layer</span><span class="p">,</span>
+            <span class="n">replace_softmax</span><span class="o">=</span><span class="n">replace_softmax</span><span class="p">,</span>
+            <span class="n">softmax_layer</span><span class="o">=</span><span class="n">softmax_layer</span><span class="p">,</span>
+            <span class="n">custom_objects</span><span class="o">=</span><span class="n">custom_objects</span><span class="p">)</span>
 
-<span class="sd">        attribution_cut:</span>
-<span class="sd">            Cut defining where the attributions are collected. If </span>
-<span class="sd">            `attribution_cut` is `None`, it will be assumed to be the</span>
-<span class="sd">            `doi_cut`</span>
+    <span class="k">elif</span> <span class="n">B</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="n">Backend</span><span class="o">.</span><span class="n">PYTORCH</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">trulens.nn.models.pytorch</span> <span class="kn">import</span> <span class="n">PytorchModelWrapper</span>
+        <span class="k">if</span> <span class="n">input_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tru_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;pytorch model must pass parameter: input_shape&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">PytorchModelWrapper</span><span class="p">(</span>
+            <span class="n">model</span><span class="p">,</span>
+            <span class="n">input_shape</span><span class="p">,</span>
+            <span class="n">input_dtype</span><span class="o">=</span><span class="n">input_dtype</span><span class="p">,</span>
+            <span class="n">logit_layer</span><span class="o">=</span><span class="n">logit_layer</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 
-<span class="sd">        intervention:</span>
-<span class="sd">            The intervention created from the Distribution of Interest. If </span>
-<span class="sd">            `intervention` is `None`, then it is equivalent to the point</span>
-<span class="sd">            DoI.</span>
+    <span class="k">elif</span> <span class="n">B</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="n">Backend</span><span class="o">.</span><span class="n">TENSORFLOW</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
 
-<span class="sd">    Returns:</span>
-<span class="sd">        (list of backend.Tensor or np.ndarray)</span>
-<span class="sd">            A list of output activations are returned, keeping the same type</span>
-<span class="sd">            as the input. If `attribution_cut` is supplied, also return the</span>
-<span class="sd">            cut activations.</span>
-<span class="sd">    """</span>
-    <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-</code></pre>
-</div>
-</details>
-</div>
-</div>
-<div class="doc doc-object doc-method">
-<h3 class="doc doc-heading" id="trulens.nn.models._model_base.ModelWrapper.qoi_bprop">
-<code class="highlight language-python">
-qoi_bprop<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qoi</span><span class="p">,</span> <span class="n">model_args</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="n">doi_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">to_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attribution_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">intervention</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> </code>
-<a class="headerlink" href="#trulens.nn.models._model_base.ModelWrapper.qoi_bprop" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
-<p><strong><em>Used internally by <code>AttributionMethod</code>.</em></strong></p>
-<p>Runs the model beginning at <code>doi_cut</code> on input <code>intervention</code>, and 
-returns the gradients calculated from <code>to_cut</code> with respect to 
-<code>attribution_cut</code> of the quantity of interest.</p>
-<p><strong>Parameters:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>model_args,</code></td>
-<td><code>model_kwargs</code></td>
-<td>
-<p>The args and kwargs given to the call method of a model.
-This should represent the instances to obtain attributions for, 
-assumed to be a <em>batched</em> input. if <code>self.model</code> supports
-evaluation on <em>data tensors</em>, the  appropriate tensor type may
-be used (e.g., Pytorch models may accept Pytorch tensors in 
-addition to <code>np.ndarray</code>s). The shape of the inputs must match
-the input shape of <code>self.model</code>. </p>
-</td>
-<td><em>required</em></td>
-</tr>
-<tr>
-<td><code>doi_cut</code></td>
-<td><code></code></td>
-<td>
-<p>Cut defining where the Distribution of Interest is applied. The
-shape of <code>intervention</code> must match the input shape of the 
-layer(s) specified by the cut. If <code>doi_cut</code> is <code>None</code>, the input
-to the model will be used (i.e., <code>InputCut()</code>).</p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>to_cut</code></td>
-<td><code></code></td>
-<td>
-<p>Cut defining the layer(s) at which the propagation will end. The
-If <code>to_cut</code> is <code>None</code>, the output of the model will be used
-(i.e., <code>OutputCut()</code>).</p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>attribution_cut</code></td>
-<td><code></code></td>
-<td>
-<p>Cut defining where the attributions are collected. If 
-<code>attribution_cut</code> is <code>None</code>, it will be assumed to be the
-<code>doi_cut</code></p>
-</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>intervention</code></td>
-<td><code></code></td>
-<td>
-<p>The intervention created from the Distribution of Interest. If 
-<code>intervention</code> is <code>None</code>, then it is equivalent to the point 
-DoI.</p>
-</td>
-<td><code>None</code></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code></code></td>
-<td>
-<p>(backend.Tensor or np.ndarray)
-    the gradients of <code>qoi</code> w.r.t. <code>attribution_cut</code>, keeping same
-    type as the input.</p>
-</td>
-</tr>
-</tbody>
-</table>
-<details class="quote">
-<summary>Source code in <code>trulens/nn/models/_model_base.py</code></summary>
-<div class="highlight">
-<pre><span></span><code><span class="nd">@abstractmethod</span>
-<span class="k">def</span> <span class="nf">qoi_bprop</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">qoi</span><span class="p">,</span>
-        <span class="n">model_args</span><span class="p">,</span>
-        <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{},</span>
-        <span class="n">doi_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">to_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">attribution_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">intervention</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">"""</span>
-<span class="sd">    **_Used internally by `AttributionMethod`._**</span>
+        <span class="k">if</span> <span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">trulens.nn.models.tensorflow_v2</span> <span class="kn">import</span> <span class="n">Tensorflow2ModelWrapper</span>
+            <span class="k">return</span> <span class="n">Tensorflow2ModelWrapper</span><span class="p">(</span>
+                <span class="n">model</span><span class="p">,</span>
+                <span class="n">logit_layer</span><span class="o">=</span><span class="n">logit_layer</span><span class="p">,</span>
+                <span class="n">replace_softmax</span><span class="o">=</span><span class="n">replace_softmax</span><span class="p">,</span>
+                <span class="n">softmax_layer</span><span class="o">=</span><span class="n">softmax_layer</span><span class="p">,</span>
+                <span class="n">custom_objects</span><span class="o">=</span><span class="n">custom_objects</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">trulens.nn.models.tensorflow_v1</span> <span class="kn">import</span> <span class="n">TensorflowModelWrapper</span>
+            <span class="k">if</span> <span class="n">input_tensors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">tru_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s1">&#39;tensorflow1 model must pass parameter: input_tensors&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">output_tensors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">tru_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s1">&#39;tensorflow1 model must pass parameter: output_tensors&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">TensorflowModelWrapper</span><span class="p">(</span>
+                <span class="n">model</span><span class="p">,</span>
+                <span class="n">input_tensors</span><span class="p">,</span>
+                <span class="n">output_tensors</span><span class="p">,</span>
+                <span class="n">internal_tensor_dict</span><span class="o">=</span><span class="n">internal_tensor_dict</span><span class="p">,</span>
+                <span class="n">session</span><span class="o">=</span><span class="n">session</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
 
-<span class="sd">    Runs the model beginning at `doi_cut` on input `intervention`, and </span>
-<span class="sd">    returns the gradients calculated from `to_cut` with respect to </span>
-<span class="sd">    `attribution_cut` of the quantity of interest.</span>
-
-<span class="sd">    Parameters:</span>
-<span class="sd">        model_args, model_kwargs: </span>
-<span class="sd">            The args and kwargs given to the call method of a model.</span>
-<span class="sd">            This should represent the instances to obtain attributions for, </span>
-<span class="sd">            assumed to be a *batched* input. if `self.model` supports</span>
-<span class="sd">            evaluation on *data tensors*, the  appropriate tensor type may</span>
-<span class="sd">            be used (e.g., Pytorch models may accept Pytorch tensors in </span>
-<span class="sd">            addition to `np.ndarray`s). The shape of the inputs must match</span>
-<span class="sd">            the input shape of `self.model`. </span>
-
-<span class="sd">        doi_cut:</span>
-<span class="sd">            Cut defining where the Distribution of Interest is applied. The</span>
-<span class="sd">            shape of `intervention` must match the input shape of the </span>
-<span class="sd">            layer(s) specified by the cut. If `doi_cut` is `None`, the input</span>
-<span class="sd">            to the model will be used (i.e., `InputCut()`).</span>
-
-<span class="sd">        to_cut:</span>
-<span class="sd">            Cut defining the layer(s) at which the propagation will end. The</span>
-<span class="sd">            If `to_cut` is `None`, the output of the model will be used</span>
-<span class="sd">            (i.e., `OutputCut()`).</span>
-
-<span class="sd">        attribution_cut:</span>
-<span class="sd">            Cut defining where the attributions are collected. If </span>
-<span class="sd">            `attribution_cut` is `None`, it will be assumed to be the</span>
-<span class="sd">            `doi_cut`</span>
-
-<span class="sd">        intervention:</span>
-<span class="sd">            The intervention created from the Distribution of Interest. If </span>
-<span class="sd">            `intervention` is `None`, then it is equivalent to the point </span>
-<span class="sd">            DoI.</span>
+  </div>
 
 
-<span class="sd">    Returns:</span>
-<span class="sd">        (backend.Tensor or np.ndarray)</span>
-<span class="sd">            the gradients of `qoi` w.r.t. `attribution_cut`, keeping same</span>
-<span class="sd">            type as the input.</span>
-<span class="sd">    """</span>
-    <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-</code></pre>
-</div>
-</details>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</article>
-</div>
-</div>
-</main>
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
 <footer class="md-footer">
-<div class="md-footer-nav">
-<nav aria-label="Footer" class="md-footer-nav__inner md-grid">
-<a class="md-footer-nav__link md-footer-nav__link--prev" href="../attribution/" rel="prev" title="Attribution">
-<div class="md-footer-nav__button md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
-</div>
-<div class="md-footer-nav__title">
-<div class="md-ellipsis">
-<span class="md-footer-nav__direction">
-                  Previous
-                </span>
-                Attribution
-              </div>
-</div>
-</a>
-<a class="md-footer-nav__link md-footer-nav__link--next" href="../slices/" rel="next" title="Slices">
-<div class="md-footer-nav__title">
-<div class="md-ellipsis">
-<span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Slices
-              </div>
-</div>
-<div class="md-footer-nav__button md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"></path></svg>
-</div>
-</a>
-</nav>
-</div>
-<div class="md-footer-meta md-typeset">
-<div class="md-footer-meta__inner md-grid">
-<div class="md-footer-copyright">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        <a href="../attribution/" class="md-footer__link md-footer__link--prev" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Attribution
+            </div>
+          </div>
+        </a>
+      
+      
+        <a href="../slices/" class="md-footer__link md-footer__link--next" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Slices
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
         
         Made with
-        <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
           Material for MkDocs
         </a>
-</div>
-</div>
-</div>
+        
+      </div>
+      
+    </div>
+  </div>
 </footer>
-</div>
-<script src="../../assets/javascripts/vendor.d1f5a259.min.js"></script>
-<script src="../../assets/javascripts/bundle.d5fec882.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
-<script>
-        app = initialize({
-          base: "../..",
-          features: [],
-          search: Object.assign({
-            worker: "../../assets/javascripts/worker/search.fae956e7.min.js"
-          }, typeof search !== "undefined" && search)
-        })
-      </script>
-<script src="../../javascript/config.js"></script>
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script src="../../javascript/tex-mml-chtml-3.0.0.js"></script>
-<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
-</body>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../../assets/javascripts/workers/search.fb4a9340.min.js", "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a1c7c35e.min.js"></script>
+      
+        <script src="../../javascript/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="../../javascript/tex-mml-chtml-3.0.0.js"></script>
+      
+        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+      
+    
+  </body>
 </html>

@@ -1,478 +1,786 @@
 
-<!DOCTYPE html>
-
-<html class="no-js" lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta content="width=device-width,initial-scale=1" name="viewport"/>
-<link href="../../img/favicon.ico" rel="shortcut icon"/>
-<meta content="mkdocs-1.1.2, mkdocs-material-5.5.7" name="generator"/>
-<title>Slices - TruLens</title>
-<link href="../../assets/stylesheets/main.b8ac9624.min.css" rel="stylesheet"/>
-<link href="../../assets/stylesheets/palette.28f3ef9a.min.css" rel="stylesheet"/>
-<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css?family=Inter:300,400,400i,700%7C&amp;display=fallback" rel="stylesheet"/>
-<style>body,input{font-family:"Inter",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"",SFMono-Regular,Consolas,Menlo,monospace}</style>
-<link href="../../stylesheets/extra.css" rel="stylesheet"/>
-</head>
-<body data-md-color-accent="" data-md-color-primary="" data-md-color-scheme="truera" dir="ltr">
-<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
-<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
-<label class="md-overlay" for="__drawer"></label>
-<div data-md-component="skip">
-<a class="md-skip" href="#slices">
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      <link rel="icon" href="../../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.0.6">
+    
+    
+      
+        <title>Slices - TruLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.2c0c5eaf.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.7fa14f5b.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,400i,700%7C&display=fallback">
+        <style>:root{--md-text-font-family:"Inter";--md-code-font-family:""}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="truera" data-md-color-primary="" data-md-color-accent="">
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#slices" class="md-skip">
           Skip to content
         </a>
-</div>
-<div data-md-component="announce">
-</div>
-<header class="md-header" data-md-component="header">
-<nav aria-label="Header" class="md-header-nav md-grid">
-<a aria-label="TruLens" class="md-header-nav__button md-logo" href="../.." title="TruLens">
-<img alt="logo" src="../../img/logo.png"/>
-</a>
-<label class="md-header-nav__button md-icon" for="__drawer">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"></path></svg>
-</label>
-<div class="md-header-nav__title" data-md-component="header-title">
-<div class="md-header-nav__ellipsis">
-<span class="md-header-nav__topic md-ellipsis">
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="TruLens" class="md-header__button md-logo" aria-label="TruLens" data-md-component="logo">
+      
+  <img src="../../img/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
             TruLens
           </span>
-<span class="md-header-nav__topic md-ellipsis">
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
             
               Slices
             
           </span>
-</div>
-</div>
-</nav>
+        </div>
+      </div>
+    </div>
+    <div class="md-header__options">
+      
+    </div>
+    
+    
+  </nav>
 </header>
-<div class="md-container" data-md-component="container">
-<main class="md-main" data-md-component="main">
-<div class="md-main__inner md-grid">
-<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
-<div class="md-sidebar__scrollwrap">
-<div class="md-sidebar__inner">
-<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
-<label class="md-nav__title" for="__drawer">
-<a aria-label="TruLens" class="md-nav__button md-logo" href="../.." title="TruLens">
-<img alt="logo" src="../../img/logo.png"/>
-</a>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="TruLens" class="md-nav__button md-logo" aria-label="TruLens" data-md-component="logo">
+      
+  <img src="../../img/logo.png" alt="logo">
+
+    </a>
     TruLens
   </label>
-<ul class="md-nav__list" data-md-scrollfix="">
-<li class="md-nav__item">
-<a class="md-nav__link" href="../.." title="Welcome to TruLens!">
-      Welcome to TruLens!
-    </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../install/" title="Installation">
-      Installation
-    </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../quickstart/" title="Quickstart">
-      Quickstart
-    </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../userguide/" title="User Guide">
-      User Guide
-    </a>
-</li>
-<li class="md-nav__item md-nav__item--active md-nav__item--nested">
-<input checked="" class="md-nav__toggle md-toggle" data-md-toggle="nav-5" id="nav-5" type="checkbox"/>
-<label class="md-nav__link" for="nav-5">
-      API Reference
-      <span class="md-nav__icon md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"></path></svg>
-</span>
-</label>
-<nav aria-label="API Reference" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="nav-5">
-<span class="md-nav__icon md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
-</span>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Welcome to TruLens!
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        Quickstart
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+      
+      <label class="md-nav__link" for="__nav_4">
         API Reference
+        <span class="md-nav__icon md-icon"></span>
       </label>
-<ul class="md-nav__list" data-md-scrollfix="">
-<li class="md-nav__item">
-<a class="md-nav__link" href="../attribution/" title="Attribution">
-      Attribution
-    </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../model_wrappers/" title="Models">
-      Models
-    </a>
-</li>
-<li class="md-nav__item md-nav__item--active">
-<input class="md-nav__toggle md-toggle" data-md-toggle="toc" id="__toc" type="checkbox"/>
-<label class="md-nav__link md-nav__link--active" for="__toc">
+      <nav class="md-nav" aria-label="API Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          API Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../attribution/" class="md-nav__link">
+        Attribution
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model_wrappers/" class="md-nav__link">
+        Models
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Slices
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Slices
-        <span class="md-nav__icon md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"></path></svg>
-</span>
-</label>
-<a class="md-nav__link md-nav__link--active" href="./" title="Slices">
-      Slices
-    </a>
-<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">
-<span class="md-nav__icon md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
-</span>
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
-<ul class="md-nav__list" data-md-scrollfix="">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices">
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.slices" class="md-nav__link">
     trulens.nn.slices
   </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Cut">
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Cut" class="md-nav__link">
     Cut
   </a>
-<nav aria-label="Cut" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Cut.__init__">
+  
+    <nav class="md-nav" aria-label="Cut">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Cut.__init__" class="md-nav__link">
     __init__()
   </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Cut.access_layer">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Cut.access_layer" class="md-nav__link">
     access_layer()
   </a>
+  
 </li>
-</ul>
-</nav>
+        
+      </ul>
+    </nav>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.InputCut">
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.slices.InputCut" class="md-nav__link">
     InputCut
   </a>
-<nav aria-label="InputCut" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.InputCut.__init__">
+  
+    <nav class="md-nav" aria-label="InputCut">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.InputCut.__init__" class="md-nav__link">
     __init__()
   </a>
+  
 </li>
-</ul>
-</nav>
+        
+      </ul>
+    </nav>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.LogitCut">
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.slices.LogitCut" class="md-nav__link">
     LogitCut
   </a>
-<nav aria-label="LogitCut" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.LogitCut.__init__">
+  
+    <nav class="md-nav" aria-label="LogitCut">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.LogitCut.__init__" class="md-nav__link">
     __init__()
   </a>
+  
 </li>
-</ul>
-</nav>
+        
+      </ul>
+    </nav>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.OutputCut">
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.slices.OutputCut" class="md-nav__link">
     OutputCut
   </a>
-<nav aria-label="OutputCut" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.OutputCut.__init__">
+  
+    <nav class="md-nav" aria-label="OutputCut">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.OutputCut.__init__" class="md-nav__link">
     __init__()
   </a>
+  
 </li>
-</ul>
-</nav>
+        
+      </ul>
+    </nav>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Slice">
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Slice" class="md-nav__link">
     Slice
   </a>
-<nav aria-label="Slice" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Slice.from_cut">
+  
+    <nav class="md-nav" aria-label="Slice">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Slice.from_cut" class="md-nav__link">
     from_cut
   </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Slice.to_cut">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Slice.to_cut" class="md-nav__link">
     to_cut
   </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Slice.__init__">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Slice.__init__" class="md-nav__link">
     __init__()
   </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Slice.full_network">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Slice.full_network" class="md-nav__link">
     full_network()
   </a>
-</li>
-</ul>
-</nav>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#returns">
+  
+    <nav class="md-nav" aria-label="full_network()">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Slice.full_network--returns" class="md-nav__link">
     Returns
   </a>
+  
 </li>
-</ul>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
 </nav>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../quantities/" title="Quantities">
-      Quantities
-    </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../distributions/" title="Distributions">
-      Distributions
-    </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../visualizations/" title="Visualizations">
-      Visualizations
-    </a>
-</li>
-</ul>
+      
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quantities/" class="md-nav__link">
+        Quantities
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../distributions/" class="md-nav__link">
+        Distributions
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualizations/" class="md-nav__link">
+        Visualizations
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
 </nav>
-</li>
-</ul>
-</nav>
-</div>
-</div>
-</div>
-<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-<div class="md-sidebar__scrollwrap">
-<div class="md-sidebar__inner">
-<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">
-<span class="md-nav__icon md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
-</span>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
-<ul class="md-nav__list" data-md-scrollfix="">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices">
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.slices" class="md-nav__link">
     trulens.nn.slices
   </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Cut">
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Cut" class="md-nav__link">
     Cut
   </a>
-<nav aria-label="Cut" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Cut.__init__">
+  
+    <nav class="md-nav" aria-label="Cut">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Cut.__init__" class="md-nav__link">
     __init__()
   </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Cut.access_layer">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Cut.access_layer" class="md-nav__link">
     access_layer()
   </a>
+  
 </li>
-</ul>
-</nav>
+        
+      </ul>
+    </nav>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.InputCut">
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.slices.InputCut" class="md-nav__link">
     InputCut
   </a>
-<nav aria-label="InputCut" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.InputCut.__init__">
+  
+    <nav class="md-nav" aria-label="InputCut">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.InputCut.__init__" class="md-nav__link">
     __init__()
   </a>
+  
 </li>
-</ul>
-</nav>
+        
+      </ul>
+    </nav>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.LogitCut">
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.slices.LogitCut" class="md-nav__link">
     LogitCut
   </a>
-<nav aria-label="LogitCut" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.LogitCut.__init__">
+  
+    <nav class="md-nav" aria-label="LogitCut">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.LogitCut.__init__" class="md-nav__link">
     __init__()
   </a>
+  
 </li>
-</ul>
-</nav>
+        
+      </ul>
+    </nav>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.OutputCut">
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.slices.OutputCut" class="md-nav__link">
     OutputCut
   </a>
-<nav aria-label="OutputCut" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.OutputCut.__init__">
+  
+    <nav class="md-nav" aria-label="OutputCut">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.OutputCut.__init__" class="md-nav__link">
     __init__()
   </a>
+  
 </li>
-</ul>
-</nav>
+        
+      </ul>
+    </nav>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Slice">
+      
+        <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Slice" class="md-nav__link">
     Slice
   </a>
-<nav aria-label="Slice" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Slice.from_cut">
+  
+    <nav class="md-nav" aria-label="Slice">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Slice.from_cut" class="md-nav__link">
     from_cut
   </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Slice.to_cut">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Slice.to_cut" class="md-nav__link">
     to_cut
   </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Slice.__init__">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Slice.__init__" class="md-nav__link">
     __init__()
   </a>
+  
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#trulens.nn.slices.Slice.full_network">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Slice.full_network" class="md-nav__link">
     full_network()
   </a>
-</li>
-</ul>
-</nav>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#returns">
+  
+    <nav class="md-nav" aria-label="full_network()">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.nn.slices.Slice.full_network--returns" class="md-nav__link">
     Returns
   </a>
+  
 </li>
-</ul>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
 </nav>
-</div>
-</div>
-</div>
-<div class="md-content">
-<article class="md-content__inner md-typeset">
-<h1 id="slices">Slices<a class="headerlink" href="#slices" title="Permanent link">¶</a></h1>
-<div class="doc doc-object doc-module">
-<h2 class="hidden-toc" href="#trulens.nn.slices" id="trulens.nn.slices" style="visibility: hidden; width: 0; height: 0;">
-<a class="headerlink" href="#trulens.nn.slices" title="Permanent link">¶</a></h2>
-<div class="doc doc-contents first">
-<p>The <em>slice</em>, or layer, of the network provides flexibility over the level of 
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                <h1 id="slices">Slices<a class="headerlink" href="#slices" title="Permanent link">&para;</a></h1>
+
+
+  <div class="doc doc-object doc-module">
+
+<a id="trulens.nn.slices"></a>
+    <div class="doc doc-contents first">
+
+      <p>The <em>slice</em>, or layer, of the network provides flexibility over the level of 
 abstraction for the explanation. In a low layer, an explanation may highlight 
 the edges that were most important in identifying an object like a face, while 
 in a higher layer, the explanation might highlight high-level features such as a
 nose or mouth. By raising the level of abstraction, explanations that generalize
-over larger sets of instances are possible.</p>
-<p>Formally, A network, <span><span class="MathJax_Preview">f</span><script type="math/tex">f</script></span>, can be broken into a slice, <span><span class="MathJax_Preview">f = g \circ h</span><script type="math/tex">f = g \circ h</script></span>, where 
-<span><span class="MathJax_Preview">h</span><script type="math/tex">h</script></span> can be thought of as a pre-processor that computes features, and <span><span class="MathJax_Preview">g</span><script type="math/tex">g</script></span> can be
-thought of as a sub-model that uses the features computed by <span><span class="MathJax_Preview">h</span><script type="math/tex">h</script></span>.</p>
-<div class="doc doc-children">
-<div class="doc doc-object doc-class">
+over larger sets of samples are possible.</p>
+<p>Formally, A network, <span class="arithmatex">\(f\)</span>, can be broken into a slice, <span class="arithmatex">\(f = g \circ h\)</span>, where 
+<span class="arithmatex">\(h\)</span> can be thought of as a pre-processor that computes features, and <span class="arithmatex">\(g\)</span> can be
+thought of as a sub-model that uses the features computed by <span class="arithmatex">\(h\)</span>.</p>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
 <h2 class="doc doc-heading" id="trulens.nn.slices.Cut">
-<code>Cut</code>
-<a class="headerlink" href="#trulens.nn.slices.Cut" title="Permanent link">¶</a></h2>
-<div class="doc doc-contents">
-<p>A cut is the primary building block for a slice. It determines an internal
+        <code>Cut</code>
+
+
+
+<a class="headerlink" href="#trulens.nn.slices.Cut" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents ">
+
+      <p>A cut is the primary building block for a slice. It determines an internal
 component of a network to expose. A slice if formed by two cuts.</p>
-<div class="doc doc-children">
-<div class="doc doc-object doc-method">
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
 <h3 class="doc doc-heading" id="trulens.nn.slices.Cut.__init__">
-<code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">anchor</span><span class="o">=</span><span class="s1">'out'</span><span class="p">,</span> <span class="n">accessor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
-<span class="doc doc-properties">
-<small class="doc doc-property doc-property-special"><code>special</code></small>
-</span>
-<a class="headerlink" href="#trulens.nn.slices.Cut.__init__" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
+<code class="codehilite language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">anchor</span><span class="o">=</span><span class="s1">&#39;out&#39;</span><span class="p">,</span> <span class="n">accessor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+<a class="headerlink" href="#trulens.nn.slices.Cut.__init__" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+
 <p><strong>Parameters:</strong></p>
 <table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>name</code></td>
-<td><code>Union[int, str, List[Union[int, str]]]</code></td>
-<td>
-<p>The name or index of a layer in the model, or a list containing
-the names/indices of mutliple layers.</p>
-</td>
-<td><em>required</em></td>
-</tr>
-<tr>
-<td><code>anchor</code></td>
-<td><code>str</code></td>
-<td>
-<p>Determines whether input (<code>'in'</code>) or the output (<code>'out'</code>) tensor
-of the spcified layer should be used.</p>
-</td>
-<td><code>'out'</code></td>
-</tr>
-<tr>
-<td><code>accessor</code></td>
-<td><code>Optional[Callable]</code></td>
-<td>
-<p>An accessor function that operates on the layer, mapping the 
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>name</code></td>
+        <td><code>LayerIdentifier</code></td>
+        <td><p>The name or index of a layer in the model, or a list containing
+the names/indices of mutliple layers.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>anchor</code></td>
+        <td><code>str</code></td>
+        <td><p>Determines whether input (<code>'in'</code>) or the output (<code>'out'</code>) tensor
+of the spcified layer should be used.</p></td>
+        <td><code>&#39;out&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>accessor</code></td>
+        <td><code>Optional[Callable]</code></td>
+        <td><p>An accessor function that operates on the layer, mapping the 
 tensor (or list thereof) corresponding to the layer's 
 input/output to another tensor (or list thereof). This can be 
 used to, e.g., extract a particular output from a layer that 
 produces a sequence of outputs. If <code>accessor</code> is <code>None</code>, the 
 following accessor function will be used: 
-<div class="highlight">
-<pre><span></span><code><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span>
-</code></pre>
-</div>
-</p>
-</td>
-<td><code>None</code></td>
-</tr>
-</tbody>
+<div class="highlight"><pre><span></span><code><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span>
+</code></pre></div></p></td>
+        <td><code>None</code></td>
+      </tr>
+  </tbody>
 </table>
-<details class="quote">
-<summary>Source code in <code>trulens/nn/slices.py</code></summary>
-<div class="highlight">
-<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <details class="quote">
+          <summary>Source code in <code>trulens/nn/slices.py</code></summary>
+          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="n">LayerIdentifier</span><span class="p">,</span>
-        <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'out'</span><span class="p">,</span>
+        <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;out&#39;</span><span class="p">,</span>
         <span class="n">accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="sd">"""</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parameters:</span>
 <span class="sd">        name:</span>
 <span class="sd">            The name or index of a layer in the model, or a list containing</span>
 <span class="sd">            the names/indices of mutliple layers.</span>
 
 <span class="sd">        anchor: </span>
-<span class="sd">            Determines whether input (`'in'`) or the output (`'out'`) tensor</span>
+<span class="sd">            Determines whether input (`&#39;in&#39;`) or the output (`&#39;out&#39;`) tensor</span>
 <span class="sd">            of the spcified layer should be used.</span>
 
 <span class="sd">        accessor:</span>
 <span class="sd">            An accessor function that operates on the layer, mapping the </span>
-<span class="sd">            tensor (or list thereof) corresponding to the layer's </span>
+<span class="sd">            tensor (or list thereof) corresponding to the layer&#39;s </span>
 <span class="sd">            input/output to another tensor (or list thereof). This can be </span>
 <span class="sd">            used to, e.g., extract a particular output from a layer that </span>
 <span class="sd">            produces a sequence of outputs. If `accessor` is `None`, the </span>
@@ -480,77 +788,82 @@ following accessor function will be used:
 <span class="sd">            ```python</span>
 <span class="sd">            lambda t: t[-1] if isinstance(t, list) else t</span>
 <span class="sd">            ```</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="n">B</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s1">'pytorch'</span><span class="p">:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">get_backend</span><span class="p">()</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;pytorch&#39;</span><span class="p">:</span>
         <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span>
             <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">))):</span>
 
             <span class="n">warn</span><span class="p">(</span>
-                <span class="s1">'</span><span class="se">\n\n</span><span class="s1">Pytorch does not have native support for indexed '</span>
-                <span class="s1">'layers. Using layer indices is not recommended.</span><span class="se">\n</span><span class="s1">'</span><span class="p">)</span>
+                <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">Pytorch does not have native support for indexed &#39;</span>
+                <span class="s1">&#39;layers. Using layer indices is not recommended.</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">accessor</span> <span class="o">=</span> <span class="n">accessor</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">anchor</span> <span class="o">=</span> <span class="n">anchor</span>
-</code></pre>
-</div>
-</details>
-</div>
-</div>
-<div class="doc doc-object doc-method">
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
 <h3 class="doc doc-heading" id="trulens.nn.slices.Cut.access_layer">
-<code class="highlight language-python">
-access_layer<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">)</span> </code>
-<a class="headerlink" href="#trulens.nn.slices.Cut.access_layer" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
-<p>Applies <code>self.accessor</code> to the result of collecting the relevant 
+<code class="codehilite language-python"><span class="n">access_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">)</span></code>
+
+
+<a class="headerlink" href="#trulens.nn.slices.Cut.access_layer" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Applies <code>self.accessor</code> to the result of collecting the relevant 
 tensor(s) associated with a layer's output.</p>
+
 <p><strong>Parameters:</strong></p>
 <table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>layer</code></td>
-<td><code>Union[Any, List[Any]]</code></td>
-<td>
-<p>The tensor output (or input, if so specified by the anchor) of 
-the layer(s) specified by this cut.</p>
-</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>layer</code></td>
+        <td><code>TensorLike</code></td>
+        <td><p>The tensor output (or input, if so specified by the anchor) of 
+the layer(s) specified by this cut.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
 </table>
 <p><strong>Returns:</strong></p>
 <table>
-<thead>
-<tr>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>Union[Any, List[Any]]</code></td>
-<td>
-<p>The result of applying <code>self.accessor</code> to the given layer.</p>
-</td>
-</tr>
-</tbody>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>TensorLike</code></td>
+      <td><p>The result of applying <code>self.accessor</code> to the given layer.</p></td>
+    </tr>
+  </tbody>
 </table>
-<details class="quote">
-<summary>Source code in <code>trulens/nn/slices.py</code></summary>
-<div class="highlight">
-<pre><span></span><code><span class="k">def</span> <span class="nf">access_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">TensorLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TensorLike</span><span class="p">:</span>
-    <span class="sd">"""</span>
+        <details class="quote">
+          <summary>Source code in <code>trulens/nn/slices.py</code></summary>
+          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">access_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">TensorLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TensorLike</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Applies `self.accessor` to the result of collecting the relevant </span>
-<span class="sd">    tensor(s) associated with a layer's output.</span>
+<span class="sd">    tensor(s) associated with a layer&#39;s output.</span>
 
 <span class="sd">    Parameters:</span>
 <span class="sd">        layer:</span>
@@ -559,7 +872,7 @@ the layer(s) specified by this cut.</p>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The result of applying `self.accessor` to the given layer.</span>
-<span class="sd">    """</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">accessor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">layer</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">layer</span>
 
@@ -568,83 +881,113 @@ the layer(s) specified by this cut.</p>
             <span class="n">layer</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">layer</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">accessor</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
-</code></pre>
-</div>
-</details>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="doc doc-object doc-class">
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
 <h2 class="doc doc-heading" id="trulens.nn.slices.InputCut">
-<code>InputCut</code>
-<a class="headerlink" href="#trulens.nn.slices.InputCut" title="Permanent link">¶</a></h2>
-<div class="doc doc-contents">
-<p>Special cut that selects the input(s) of a model.</p>
-<div class="doc doc-children">
-<div class="doc doc-object doc-method">
+        <code>InputCut</code>
+
+
+
+<a class="headerlink" href="#trulens.nn.slices.InputCut" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents ">
+
+      <p>Special cut that selects the input(s) of a model.</p>
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
 <h3 class="doc doc-heading" id="trulens.nn.slices.InputCut.__init__">
-<code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="o">=</span><span class="s1">'in'</span><span class="p">,</span> <span class="n">accessor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
-<span class="doc doc-properties">
-<small class="doc doc-property doc-property-special"><code>special</code></small>
-</span>
-<a class="headerlink" href="#trulens.nn.slices.InputCut.__init__" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
+<code class="codehilite language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="o">=</span><span class="s1">&#39;in&#39;</span><span class="p">,</span> <span class="n">accessor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+<a class="headerlink" href="#trulens.nn.slices.InputCut.__init__" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+
 <p><strong>Parameters:</strong></p>
 <table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>anchor</code></td>
-<td><code>str</code></td>
-<td>
-<p>Determines whether input (<code>'in'</code>) or the output (<code>'out'</code>) tensor
-of the spcified layer should be used.</p>
-</td>
-<td><code>'in'</code></td>
-</tr>
-<tr>
-<td><code>accessor</code></td>
-<td><code>Optional[Callable]</code></td>
-<td>
-<p>An accessor function that operates on the layer, mapping the 
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>anchor</code></td>
+        <td><code>str</code></td>
+        <td><p>Determines whether input (<code>'in'</code>) or the output (<code>'out'</code>) tensor
+of the spcified layer should be used.</p></td>
+        <td><code>&#39;in&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>accessor</code></td>
+        <td><code>Optional[Callable]</code></td>
+        <td><p>An accessor function that operates on the layer, mapping the 
 tensor (or list thereof) corresponding to the layer's 
 input/output to another tensor (or list thereof). This can be 
 used to, e.g., extract a particular output from a layer that 
 produces a sequence of outputs. If <code>accessor</code> is <code>None</code>, the 
 following accessor function will be used: 
-<div class="highlight">
-<pre><span></span><code><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span>
-</code></pre>
-</div>
-</p>
-</td>
-<td><code>None</code></td>
-</tr>
-</tbody>
+<div class="highlight"><pre><span></span><code><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span>
+</code></pre></div></p></td>
+        <td><code>None</code></td>
+      </tr>
+  </tbody>
 </table>
-<details class="quote">
-<summary>Source code in <code>trulens/nn/slices.py</code></summary>
-<div class="highlight">
-<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'in'</span><span class="p">,</span> <span class="n">accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="sd">"""</span>
+        <details class="quote">
+          <summary>Source code in <code>trulens/nn/slices.py</code></summary>
+          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;in&#39;</span><span class="p">,</span> <span class="n">accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parameters:</span>
 <span class="sd">        anchor: </span>
-<span class="sd">            Determines whether input (`'in'`) or the output (`'out'`) tensor</span>
+<span class="sd">            Determines whether input (`&#39;in&#39;`) or the output (`&#39;out&#39;`) tensor</span>
 <span class="sd">            of the spcified layer should be used.</span>
 
 <span class="sd">        accessor:</span>
 <span class="sd">            An accessor function that operates on the layer, mapping the </span>
-<span class="sd">            tensor (or list thereof) corresponding to the layer's </span>
+<span class="sd">            tensor (or list thereof) corresponding to the layer&#39;s </span>
 <span class="sd">            input/output to another tensor (or list thereof). This can be </span>
 <span class="sd">            used to, e.g., extract a particular output from a layer that </span>
 <span class="sd">            produces a sequence of outputs. If `accessor` is `None`, the </span>
@@ -652,87 +995,117 @@ following accessor function will be used:
 <span class="sd">            ```python</span>
 <span class="sd">            lambda t: t[-1] if isinstance(t, list) else t</span>
 <span class="sd">            ```</span>
-<span class="sd">    """</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">accessor</span><span class="p">)</span>
-</code></pre>
-</div>
-</details>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="doc doc-object doc-class">
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
 <h2 class="doc doc-heading" id="trulens.nn.slices.LogitCut">
-<code>LogitCut</code>
-<a class="headerlink" href="#trulens.nn.slices.LogitCut" title="Permanent link">¶</a></h2>
-<div class="doc doc-contents">
-<p>Special cut that selects the logit layer of a model. The logit layer must be
+        <code>LogitCut</code>
+
+
+
+<a class="headerlink" href="#trulens.nn.slices.LogitCut" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents ">
+
+      <p>Special cut that selects the logit layer of a model. The logit layer must be
 named <code>'logits'</code> or otherwise specified by the user to the model wrapper.</p>
-<div class="doc doc-children">
-<div class="doc doc-object doc-method">
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
 <h3 class="doc doc-heading" id="trulens.nn.slices.LogitCut.__init__">
-<code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="o">=</span><span class="s1">'out'</span><span class="p">,</span> <span class="n">accessor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
-<span class="doc doc-properties">
-<small class="doc doc-property doc-property-special"><code>special</code></small>
-</span>
-<a class="headerlink" href="#trulens.nn.slices.LogitCut.__init__" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
+<code class="codehilite language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="o">=</span><span class="s1">&#39;out&#39;</span><span class="p">,</span> <span class="n">accessor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+<a class="headerlink" href="#trulens.nn.slices.LogitCut.__init__" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+
 <p><strong>Parameters:</strong></p>
 <table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>anchor</code></td>
-<td><code>str</code></td>
-<td>
-<p>Determines whether input (<code>'in'</code>) or the output (<code>'out'</code>) tensor
-of the spcified layer should be used.</p>
-</td>
-<td><code>'out'</code></td>
-</tr>
-<tr>
-<td><code>accessor</code></td>
-<td><code>Optional[Callable]</code></td>
-<td>
-<p>An accessor function that operates on the layer, mapping the 
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>anchor</code></td>
+        <td><code>str</code></td>
+        <td><p>Determines whether input (<code>'in'</code>) or the output (<code>'out'</code>) tensor
+of the spcified layer should be used.</p></td>
+        <td><code>&#39;out&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>accessor</code></td>
+        <td><code>Optional[Callable]</code></td>
+        <td><p>An accessor function that operates on the layer, mapping the 
 tensor (or list thereof) corresponding to the layer's 
 input/output to another tensor (or list thereof). This can be 
 used to, e.g., extract a particular output from a layer that 
 produces a sequence of outputs. If <code>accessor</code> is <code>None</code>, the 
 following accessor function will be used: 
-<div class="highlight">
-<pre><span></span><code><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span>
-</code></pre>
-</div>
-</p>
-</td>
-<td><code>None</code></td>
-</tr>
-</tbody>
+<div class="highlight"><pre><span></span><code><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span>
+</code></pre></div></p></td>
+        <td><code>None</code></td>
+      </tr>
+  </tbody>
 </table>
-<details class="quote">
-<summary>Source code in <code>trulens/nn/slices.py</code></summary>
-<div class="highlight">
-<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'out'</span><span class="p">,</span> <span class="n">accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="sd">"""</span>
+        <details class="quote">
+          <summary>Source code in <code>trulens/nn/slices.py</code></summary>
+          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;out&#39;</span><span class="p">,</span> <span class="n">accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parameters:</span>
 <span class="sd">        anchor: </span>
-<span class="sd">            Determines whether input (`'in'`) or the output (`'out'`) tensor</span>
+<span class="sd">            Determines whether input (`&#39;in&#39;`) or the output (`&#39;out&#39;`) tensor</span>
 <span class="sd">            of the spcified layer should be used.</span>
 
 <span class="sd">        accessor:</span>
 <span class="sd">            An accessor function that operates on the layer, mapping the </span>
-<span class="sd">            tensor (or list thereof) corresponding to the layer's </span>
+<span class="sd">            tensor (or list thereof) corresponding to the layer&#39;s </span>
 <span class="sd">            input/output to another tensor (or list thereof). This can be </span>
 <span class="sd">            used to, e.g., extract a particular output from a layer that </span>
 <span class="sd">            produces a sequence of outputs. If `accessor` is `None`, the </span>
@@ -740,86 +1113,116 @@ following accessor function will be used:
 <span class="sd">            ```python</span>
 <span class="sd">            lambda t: t[-1] if isinstance(t, list) else t</span>
 <span class="sd">            ```</span>
-<span class="sd">    """</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">(</span><span class="n">LogitCut</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">accessor</span><span class="p">)</span>
-</code></pre>
-</div>
-</details>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="doc doc-object doc-class">
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
 <h2 class="doc doc-heading" id="trulens.nn.slices.OutputCut">
-<code>OutputCut</code>
-<a class="headerlink" href="#trulens.nn.slices.OutputCut" title="Permanent link">¶</a></h2>
-<div class="doc doc-contents">
-<p>Special cut that selects the output(s) of a model.</p>
-<div class="doc doc-children">
-<div class="doc doc-object doc-method">
+        <code>OutputCut</code>
+
+
+
+<a class="headerlink" href="#trulens.nn.slices.OutputCut" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents ">
+
+      <p>Special cut that selects the output(s) of a model.</p>
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
 <h3 class="doc doc-heading" id="trulens.nn.slices.OutputCut.__init__">
-<code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="o">=</span><span class="s1">'out'</span><span class="p">,</span> <span class="n">accessor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
-<span class="doc doc-properties">
-<small class="doc doc-property doc-property-special"><code>special</code></small>
-</span>
-<a class="headerlink" href="#trulens.nn.slices.OutputCut.__init__" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
+<code class="codehilite language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="o">=</span><span class="s1">&#39;out&#39;</span><span class="p">,</span> <span class="n">accessor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+<a class="headerlink" href="#trulens.nn.slices.OutputCut.__init__" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+
 <p><strong>Parameters:</strong></p>
 <table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>anchor</code></td>
-<td><code>str</code></td>
-<td>
-<p>Determines whether input (<code>'in'</code>) or the output (<code>'out'</code>) tensor
-of the spcified layer should be used.</p>
-</td>
-<td><code>'out'</code></td>
-</tr>
-<tr>
-<td><code>accessor</code></td>
-<td><code>Optional[Callable]</code></td>
-<td>
-<p>An accessor function that operates on the layer, mapping the 
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>anchor</code></td>
+        <td><code>str</code></td>
+        <td><p>Determines whether input (<code>'in'</code>) or the output (<code>'out'</code>) tensor
+of the spcified layer should be used.</p></td>
+        <td><code>&#39;out&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>accessor</code></td>
+        <td><code>Optional[Callable]</code></td>
+        <td><p>An accessor function that operates on the layer, mapping the 
 tensor (or list thereof) corresponding to the layer's 
 input/output to another tensor (or list thereof). This can be 
 used to, e.g., extract a particular output from a layer that 
 produces a sequence of outputs. If <code>accessor</code> is <code>None</code>, the 
 following accessor function will be used: 
-<div class="highlight">
-<pre><span></span><code><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span>
-</code></pre>
-</div>
-</p>
-</td>
-<td><code>None</code></td>
-</tr>
-</tbody>
+<div class="highlight"><pre><span></span><code><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">t</span>
+</code></pre></div></p></td>
+        <td><code>None</code></td>
+      </tr>
+  </tbody>
 </table>
-<details class="quote">
-<summary>Source code in <code>trulens/nn/slices.py</code></summary>
-<div class="highlight">
-<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'out'</span><span class="p">,</span> <span class="n">accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="sd">"""</span>
+        <details class="quote">
+          <summary>Source code in <code>trulens/nn/slices.py</code></summary>
+          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;out&#39;</span><span class="p">,</span> <span class="n">accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parameters:</span>
 <span class="sd">        anchor: </span>
-<span class="sd">            Determines whether input (`'in'`) or the output (`'out'`) tensor</span>
+<span class="sd">            Determines whether input (`&#39;in&#39;`) or the output (`&#39;out&#39;`) tensor</span>
 <span class="sd">            of the spcified layer should be used.</span>
 
 <span class="sd">        accessor:</span>
 <span class="sd">            An accessor function that operates on the layer, mapping the </span>
-<span class="sd">            tensor (or list thereof) corresponding to the layer's </span>
+<span class="sd">            tensor (or list thereof) corresponding to the layer&#39;s </span>
 <span class="sd">            input/output to another tensor (or list thereof). This can be </span>
 <span class="sd">            used to, e.g., extract a particular output from a layer that </span>
 <span class="sd">            produces a sequence of outputs. If `accessor` is `None`, the </span>
@@ -827,102 +1230,155 @@ following accessor function will be used:
 <span class="sd">            ```python</span>
 <span class="sd">            lambda t: t[-1] if isinstance(t, list) else t</span>
 <span class="sd">            ```</span>
-<span class="sd">    """</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">(</span><span class="n">OutputCut</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">accessor</span><span class="p">)</span>
-</code></pre>
-</div>
-</details>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="doc doc-object doc-class">
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
 <h2 class="doc doc-heading" id="trulens.nn.slices.Slice">
-<code>Slice</code>
-<a class="headerlink" href="#trulens.nn.slices.Slice" title="Permanent link">¶</a></h2>
-<div class="doc doc-contents">
-<p>Class representing a slice of a network. A network, <span><span class="MathJax_Preview">f</span><script type="math/tex">f</script></span>, can be broken
-into a slice, <span><span class="MathJax_Preview">f = g \circ h</span><script type="math/tex">f = g \circ h</script></span>, where <span><span class="MathJax_Preview">h</span><script type="math/tex">h</script></span> can be thought of as a 
-pre-processor that computes features, and <span><span class="MathJax_Preview">g</span><script type="math/tex">g</script></span> can be thought of as a 
-sub-model that uses the features computed by <span><span class="MathJax_Preview">h</span><script type="math/tex">h</script></span>.</p>
+        <code>Slice</code>
+
+
+
+<a class="headerlink" href="#trulens.nn.slices.Slice" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents ">
+
+      <p>Class representing a slice of a network. A network, <span class="arithmatex">\(f\)</span>, can be broken
+into a slice, <span class="arithmatex">\(f = g \circ h\)</span>, where <span class="arithmatex">\(h\)</span> can be thought of as a 
+pre-processor that computes features, and <span class="arithmatex">\(g\)</span> can be thought of as a 
+sub-model that uses the features computed by <span class="arithmatex">\(h\)</span>.</p>
 <p>A <code>Slice</code> object represents a slice as two <code>Cut</code>s, <code>from_cut</code> and <code>to_cut</code>,
-which are the layers corresponding to the output of <span><span class="MathJax_Preview">h</span><script type="math/tex">h</script></span> and <span><span class="MathJax_Preview">g</span><script type="math/tex">g</script></span>, 
+which are the layers corresponding to the output of <span class="arithmatex">\(h\)</span> and <span class="arithmatex">\(g\)</span>, 
 respectively.</p>
-<div class="doc doc-children">
-<div class="doc doc-object doc-attribute">
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
 <h3 class="doc doc-heading" id="trulens.nn.slices.Slice.from_cut">
-<code class="highlight">
-from_cut: <span class="n">Cut</span> </code>
-<span class="doc doc-properties">
-<small class="doc doc-property doc-property-property"><code>property</code></small>
-<small class="doc doc-property doc-property-readonly"><code>readonly</code></small>
-</span>
-<a class="headerlink" href="#trulens.nn.slices.Slice.from_cut" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
-<p>Cut representing the output of the preprocessing function, <span><span class="MathJax_Preview">h</span><script type="math/tex">h</script></span>, in 
-slice, <span><span class="MathJax_Preview">f = g \circ h</span><script type="math/tex">f = g \circ h</script></span>.</p>
-</div>
-</div>
-<div class="doc doc-object doc-attribute">
+<code class="codehilite language-python"><span class="n">from_cut</span><span class="p">:</span> <span class="n">Cut</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-property"><code>property</code></small>
+      <small class="doc doc-property doc-property-readonly"><code>readonly</code></small>
+  </span>
+
+<a class="headerlink" href="#trulens.nn.slices.Slice.from_cut" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Cut representing the output of the preprocessing function, <span class="arithmatex">\(h\)</span>, in 
+slice, <span class="arithmatex">\(f = g \circ h\)</span>.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
 <h3 class="doc doc-heading" id="trulens.nn.slices.Slice.to_cut">
-<code class="highlight">
-to_cut: <span class="n">Cut</span> </code>
-<span class="doc doc-properties">
-<small class="doc doc-property doc-property-property"><code>property</code></small>
-<small class="doc doc-property doc-property-readonly"><code>readonly</code></small>
-</span>
-<a class="headerlink" href="#trulens.nn.slices.Slice.to_cut" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
-<p>Cut representing the output of the sub-model, <span><span class="MathJax_Preview">g</span><script type="math/tex">g</script></span>, in slice, 
-<span><span class="MathJax_Preview">f = g \circ h</span><script type="math/tex">f = g \circ h</script></span>.</p>
-</div>
-</div>
-<div class="doc doc-object doc-method">
+<code class="codehilite language-python"><span class="n">to_cut</span><span class="p">:</span> <span class="n">Cut</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-property"><code>property</code></small>
+      <small class="doc doc-property doc-property-readonly"><code>readonly</code></small>
+  </span>
+
+<a class="headerlink" href="#trulens.nn.slices.Slice.to_cut" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Cut representing the output of the sub-model, <span class="arithmatex">\(g\)</span>, in slice, 
+<span class="arithmatex">\(f = g \circ h\)</span>.</p>
+    </div>
+
+  </div>
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
 <h3 class="doc doc-heading" id="trulens.nn.slices.Slice.__init__">
-<code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_cut</span><span class="p">,</span> <span class="n">to_cut</span><span class="p">)</span> </code>
-<span class="doc doc-properties">
-<small class="doc doc-property doc-property-special"><code>special</code></small>
-</span>
-<a class="headerlink" href="#trulens.nn.slices.Slice.__init__" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
+<code class="codehilite language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_cut</span><span class="p">,</span> <span class="n">to_cut</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+<a class="headerlink" href="#trulens.nn.slices.Slice.__init__" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+
 <p><strong>Parameters:</strong></p>
 <table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>from_cut</code></td>
-<td><code>Cut</code></td>
-<td>
-<p>Cut representing the output of the preprocessing function, <span><span class="MathJax_Preview">h</span><script type="math/tex">h</script></span>,
-in slice, <span><span class="MathJax_Preview">f = g \circ h</span><script type="math/tex">f = g \circ h</script></span>.</p>
-</td>
-<td><em>required</em></td>
-</tr>
-<tr>
-<td><code>to_cut</code></td>
-<td><code>Cut</code></td>
-<td>
-<p>Cut representing the output of the sub-model, <span><span class="MathJax_Preview">g</span><script type="math/tex">g</script></span>, in slice, 
-<span><span class="MathJax_Preview">f = g \circ h</span><script type="math/tex">f = g \circ h</script></span>.</p>
-</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>from_cut</code></td>
+        <td><code>Cut</code></td>
+        <td><p>Cut representing the output of the preprocessing function, <span class="arithmatex">\(h\)</span>,
+in slice, <span class="arithmatex">\(f = g \circ h\)</span>.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>to_cut</code></td>
+        <td><code>Cut</code></td>
+        <td><p>Cut representing the output of the sub-model, <span class="arithmatex">\(g\)</span>, in slice, 
+<span class="arithmatex">\(f = g \circ h\)</span>.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
 </table>
-<details class="quote">
-<summary>Source code in <code>trulens/nn/slices.py</code></summary>
-<div class="highlight">
-<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_cut</span><span class="p">:</span> <span class="n">Cut</span><span class="p">,</span> <span class="n">to_cut</span><span class="p">:</span> <span class="n">Cut</span><span class="p">):</span>
-    <span class="sd">"""</span>
+        <details class="quote">
+          <summary>Source code in <code>trulens/nn/slices.py</code></summary>
+          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_cut</span><span class="p">:</span> <span class="n">Cut</span><span class="p">,</span> <span class="n">to_cut</span><span class="p">:</span> <span class="n">Cut</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parameters:</span>
 <span class="sd">        from_cut:</span>
 <span class="sd">            Cut representing the output of the preprocessing function, $h$,</span>
@@ -931,113 +1387,156 @@ in slice, <span><span class="MathJax_Preview">f = g \circ h</span><script type="
 <span class="sd">        to_cut:</span>
 <span class="sd">            Cut representing the output of the sub-model, $g$, in slice, </span>
 <span class="sd">            $f = g \\circ h$.</span>
-<span class="sd">    """</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_from_cut</span> <span class="o">=</span> <span class="n">from_cut</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_to_cut</span> <span class="o">=</span> <span class="n">to_cut</span>
-</code></pre>
-</div>
-</details>
-</div>
-</div>
-<div class="doc doc-object doc-method">
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
 <h3 class="doc doc-heading" id="trulens.nn.slices.Slice.full_network">
-<code class="highlight language-python">
-full_network<span class="p">()</span> </code>
-<span class="doc doc-properties">
-<small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
-</span>
-<a class="headerlink" href="#trulens.nn.slices.Slice.full_network" title="Permanent link">¶</a></h3>
-<div class="doc doc-contents">
-<h2 id="returns">Returns<a class="headerlink" href="#returns" title="Permanent link">¶</a></h2>
+<code class="codehilite language-python"><span class="n">full_network</span><span class="p">()</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+<a class="headerlink" href="#trulens.nn.slices.Slice.full_network" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+      <h5 id="trulens.nn.slices.Slice.full_network--returns">Returns<a class="headerlink" href="#trulens.nn.slices.Slice.full_network--returns" title="Permanent link">&para;</a></h5>
 <p>Slice
     A slice representing the entire model, i.e., :math:<code>f = g \circ h</code>,
     where :math:<code>h</code> is the identity function and :math:<code>g = f</code>.</p>
-<details class="quote">
-<summary>Source code in <code>trulens/nn/slices.py</code></summary>
-<div class="highlight">
-<pre><span></span><code><span class="nd">@staticmethod</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens/nn/slices.py</code></summary>
+          <div class="codehilite"><pre><span></span><code><span class="nd">@staticmethod</span>
 <span class="k">def</span> <span class="nf">full_network</span><span class="p">():</span>
-    <span class="sd">"""</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    Slice</span>
 <span class="sd">        A slice representing the entire model, i.e., :math:`f = g \\circ h`,</span>
 <span class="sd">        where :math:`h` is the identity function and :math:`g = f`.</span>
-<span class="sd">    """</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">Slice</span><span class="p">(</span><span class="n">InputCut</span><span class="p">(),</span> <span class="n">OutputCut</span><span class="p">())</span>
-</code></pre>
-</div>
-</details>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</article>
-</div>
-</div>
-</main>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
 <footer class="md-footer">
-<div class="md-footer-nav">
-<nav aria-label="Footer" class="md-footer-nav__inner md-grid">
-<a class="md-footer-nav__link md-footer-nav__link--prev" href="../model_wrappers/" rel="prev" title="Models">
-<div class="md-footer-nav__button md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
-</div>
-<div class="md-footer-nav__title">
-<div class="md-ellipsis">
-<span class="md-footer-nav__direction">
-                  Previous
-                </span>
-                Models
-              </div>
-</div>
-</a>
-<a class="md-footer-nav__link md-footer-nav__link--next" href="../quantities/" rel="next" title="Quantities">
-<div class="md-footer-nav__title">
-<div class="md-ellipsis">
-<span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Quantities
-              </div>
-</div>
-<div class="md-footer-nav__button md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"></path></svg>
-</div>
-</a>
-</nav>
-</div>
-<div class="md-footer-meta md-typeset">
-<div class="md-footer-meta__inner md-grid">
-<div class="md-footer-copyright">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        <a href="../model_wrappers/" class="md-footer__link md-footer__link--prev" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Models
+            </div>
+          </div>
+        </a>
+      
+      
+        <a href="../quantities/" class="md-footer__link md-footer__link--next" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Quantities
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
         
         Made with
-        <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
           Material for MkDocs
         </a>
-</div>
-</div>
-</div>
+        
+      </div>
+      
+    </div>
+  </div>
 </footer>
-</div>
-<script src="../../assets/javascripts/vendor.d1f5a259.min.js"></script>
-<script src="../../assets/javascripts/bundle.d5fec882.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
-<script>
-        app = initialize({
-          base: "../..",
-          features: [],
-          search: Object.assign({
-            worker: "../../assets/javascripts/worker/search.fae956e7.min.js"
-          }, typeof search !== "undefined" && search)
-        })
-      </script>
-<script src="../../javascript/config.js"></script>
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script src="../../javascript/tex-mml-chtml-3.0.0.js"></script>
-<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
-</body>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../../assets/javascripts/workers/search.fb4a9340.min.js", "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a1c7c35e.min.js"></script>
+      
+        <script src="../../javascript/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="../../javascript/tex-mml-chtml-3.0.0.js"></script>
+      
+        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+      
+    
+  </body>
 </html>
