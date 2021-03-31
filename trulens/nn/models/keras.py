@@ -312,7 +312,7 @@ class KerasModelWrapper(ModelWrapper):
         identity_map = {
             i: j for i, to_tensor in enumerate(to_tensors)
             for j, from_tensor in enumerate(doi_tensors)
-            if to_tensor == from_tensor
+            if to_tensor is from_tensor
         }
 
         non_identity_to_tensors = [

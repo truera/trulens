@@ -30,9 +30,14 @@ def discern_backend(model):
                 import tensorflow as tf
                 # graph objects are currently limited to TF1 and Keras backend implies keras backed with TF1 or Theano.
                 # TF2 Keras objects are handled by the TF2 backend
-                if 'graph' in type_str or ('tensorflow' in type_str and
-                                           tf.__version__.startswith('2')):
+                if 'graph' in type_str:
                     return Backend.TENSORFLOW
+                elif ('tensorflow' in type_str and
+                                           tf.__version__.startswith('2')):
+                    if 'keras' in type_str and 'functional' in type_str:
+                        return Backend.TF_KERAS
+                    else:
+                        return Backend.TENSORFLOW
                 elif 'tensorflow' in type_str and 'keras' in type_str and (
                         type_str.index('tensorflow') < type_str.index('keras')):
                     return Backend.TF_KERAS

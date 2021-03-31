@@ -332,7 +332,7 @@ class InternalInfluence(AttributionMethod):
         elif isinstance(qoi_arg, DATA_CONTAINER_TYPE):
             # If we receive a DATA_CONTAINER_TYPE, we take it to be two classes
             # for which we are performing a comparative quantity of interest.
-            if len(qoi_arg) is 2:
+            if len(qoi_arg) == 2:
                 return ComparativeQoI(*qoi_arg)
 
             else:
@@ -400,7 +400,7 @@ class InternalInfluence(AttributionMethod):
         elif isinstance(slice_arg, DATA_CONTAINER_TYPE):
             # If we receive a DATA_CONTAINER_TYPE, we take it to be the start
             # and end layer of the slice.
-            if len(slice_arg) is 2:
+            if len(slice_arg) == 2:
                 if slice_arg[1] is None:
                     return Slice(
                         InternalInfluence.__get_cut(slice_arg[0]), OutputCut())
