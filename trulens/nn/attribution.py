@@ -243,7 +243,6 @@ class InternalInfluence(AttributionMethod):
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
         doi_val = self.model.fprop(model_args, model_kwargs, to_cut=doi_cut)
-
         # DoI supports tensor or list of tensor. unwrap args to perform DoI on
         # top level list
 

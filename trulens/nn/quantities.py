@@ -71,7 +71,9 @@ class QoI(AbstractBaseClass):
                 '`__call__` is expected/allowed to be a list of {} tensors.'.
                 format(self.__class__.__name__, len(x), len(x)))
 
-        elif not isinstance(x, get_backend().Tensor):
+        elif not isinstance(x, get_backend().Tensor) and (
+                get_backend().FunctionalTensor is None or
+                not isinstance(x, get_backend().FunctionalTensor)):
             raise ValueError(
                 '`{}` expected to receive an instance of `Tensor`, but '
                 'received an instance of {}'.format(

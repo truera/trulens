@@ -242,6 +242,13 @@ class KerasModelWrapper(ModelWrapper):
             (items if isinstance(items, DATA_CONTAINER_TYPE) else [items])
         ]
 
+        if cut.anchor not in ['in', 'out']:
+            return flat(
+                [
+                    layer.output[cut.anchor][0]
+                    if cut.anchor in layer.output else layer.output
+                    for layer in layers
+                ])
         return (
             flat([layer.input for layer in layers])
             if cut.anchor == 'in' else flat([layer.output for layer in layers]))

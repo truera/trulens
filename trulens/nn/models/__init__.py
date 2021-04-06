@@ -33,7 +33,7 @@ def discern_backend(model):
                 if 'graph' in type_str:
                     return Backend.TENSORFLOW
                 elif ('tensorflow' in type_str and
-                                           tf.__version__.startswith('2')):
+                      tf.__version__.startswith('2')):
                     if 'keras' in type_str and 'functional' in type_str:
                         return Backend.TF_KERAS
                     else:
