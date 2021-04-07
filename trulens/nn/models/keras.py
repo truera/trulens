@@ -253,6 +253,23 @@ class KerasModelWrapper(ModelWrapper):
             flat([layer.input for layer in layers])
             if cut.anchor == 'in' else flat([layer.output for layer in layers]))
 
+    def _prepare_intervention_with_input(
+            self, model_args, intervention, doi_tensors):
+        input_tensors = self._get_layers(InputCut())
+
+        if not all(elem in doi_tensors for elem in input_tensors):
+            doi_tensors.extend(input_tensors)
+            if len(intervention[0]) != len(model_args[0]):
+                doi_factor = len(intervention[0]) / len(model_args[0])
+                model_args_expanded = [
+                    get_backend().stack([arg] * int(doi_factor))
+                    for arg in model_args
+                ]
+                intervention.extend(model_args_expanded)
+            else:
+                intervention.extend(model_args)
+        return doi_tensors, intervention
+
     def fprop(
             self,
             model_args,
@@ -412,6 +429,9 @@ class KerasModelWrapper(ModelWrapper):
             intervention, DATA_CONTAINER_TYPE) else [intervention]
 
         Q = qoi(to_tensors[0]) if len(to_tensors) == 1 else qoi(to_tensors)
+
+        doi_tensors, intervention = self._prepare_intervention_with_input(
+            model_args, intervention, doi_tensors)
 
         gradients = [
             self.keras.backend.function(
