@@ -257,10 +257,11 @@ class KerasModelWrapper(ModelWrapper):
             self, model_args, intervention, doi_tensors):
         input_tensors = self._get_layers(InputCut())
         if not all(elem in doi_tensors for elem in input_tensors):
-
+            intervention_batch_doi_len = len(intervention[0])
+            model_args_batch_len = len(model_args[0])
             doi_tensors.extend(input_tensors)
-            if len(intervention[0]) != len(model_args[0]):
-                doi_factor = len(intervention[0]) / len(model_args[0])
+            if intervention_batch_doi_len != model_args_batch_len:
+                doi_factor = intervention_batch_doi_len / model_args_batch_len
                 model_args_expanded = [
                     get_backend().stack([arg] * int(doi_factor))
                     for arg in model_args
