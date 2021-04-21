@@ -30,14 +30,9 @@ def discern_backend(model):
                 import tensorflow as tf
                 # graph objects are currently limited to TF1 and Keras backend implies keras backed with TF1 or Theano.
                 # TF2 Keras objects are handled by the TF2 backend
-                if 'graph' in type_str:
+                if 'graph' in type_str or ('tensorflow' in type_str and
+                                           tf.__version__.startswith('2')):
                     return Backend.TENSORFLOW
-                elif ('tensorflow' in type_str and
-                      tf.__version__.startswith('2')):
-                    if 'keras' in type_str and 'functional' in type_str:
-                        return Backend.TF_KERAS
-                    else:
-                        return Backend.TENSORFLOW
                 elif 'tensorflow' in type_str and 'keras' in type_str and (
                         type_str.index('tensorflow') < type_str.index('keras')):
                     return Backend.TF_KERAS
@@ -143,7 +138,6 @@ def get_model_wrapper(
                 backend.name.lower(), type(model)))
     else:
         backend = Backend.from_name(backend)
-
     if B is None or (backend is not Backend.UNKNOWN and B.backend != backend):
         tru_logger.info(
             "Changing backend from {} to {}.".format(
@@ -155,7 +149,6 @@ def get_model_wrapper(
     tru_logger.info(
         "If this seems incorrect, you can force the correct backend by passing the `backend` parameter directly into your get_model_wrapper call."
     )
-
     if B.backend.is_keras_derivative():
         from trulens.nn.models.keras import KerasModelWrapper
         return KerasModelWrapper(
@@ -175,10 +168,8 @@ def get_model_wrapper(
             input_dtype=input_dtype,
             logit_layer=logit_layer,
             device=device)
-
     elif B.backend == Backend.TENSORFLOW:
         import tensorflow as tf
-
         if tf.__version__.startswith('2'):
             from trulens.nn.models.tensorflow_v2 import Tensorflow2ModelWrapper
             return Tensorflow2ModelWrapper(
