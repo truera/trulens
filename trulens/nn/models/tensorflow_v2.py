@@ -7,6 +7,7 @@ from trulens.nn.backend import get_backend
 from trulens.nn.models.keras import KerasModelWrapper
 from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 from trulens.nn.slices import InputCut, OutputCut, LogitCut
+from trulens.utils import tru_logger
 
 if tf.executing_eagerly():
     tf.config.run_functions_eagerly(True)
@@ -47,6 +48,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
         # outputs and internal gradients.
         # See: https://github.com/tensorflow/tensorflow/issues/33478
         if self._eager:
+            self._warn_keras_layers(self._layers)
 
             def get_call_fn(layer):
                 old_call_fn = layer.call
@@ -79,6 +81,14 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
     @property
     def B(self):
         return self._B
+
+    def _warn_keras_layers(self, layers):
+        keras_layers = [l for l in layers if 'KerasLayer' in str(type(l))]
+        if (keras_layers):
+            tru_logger.warn('Detected a KerasLayer in the model. This can sometimes create issues during attribution runs or subsequent model calls.\
+            If failures occur: try saving the model, de - activate eager mode with tf.compat.v1.disable_eager_execution(), \
+                set tf.config.run_functions_eagerly(False), then reload the model. '\
+                    'Detected KerasLayers from model.layers: %s' % str(keras_layers))
 
     def _clear_hooks(self):
         for layer in self._layers:
