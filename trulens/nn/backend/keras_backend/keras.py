@@ -18,15 +18,12 @@ backend = Backend.from_name(_TRULENS_BACKEND)
 if backend == Backend.TF_KERAS:
     import tensorflow.keras.backend as K
     import tensorflow as tf
-    import tensorflow.keras as K_TOP
 else:
     import keras.backend as K
-    import keras as K_TOP
 
 floatX = K.floatx()
 Tensor = type(K.constant((1, 1), dtype=floatX))
 TensorVar = type(K.zeros((1, 1), dtype=floatX))
-FunctionalTensor = type(K_TOP.Input(shape=(1,)))
 dim_order = K.image_data_format()
 channel_axis = 1 if dim_order == 'channels_first' else 3
 

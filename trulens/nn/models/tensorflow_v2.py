@@ -8,8 +8,8 @@ from trulens.nn.models.keras import KerasModelWrapper
 from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 from trulens.nn.slices import InputCut, OutputCut, LogitCut
 
-#if tf.executing_eagerly():
-#    tf.config.run_functions_eagerly(True)
+if tf.executing_eagerly():
+    tf.config.run_functions_eagerly(True)
 
 
 class Tensorflow2ModelWrapper(KerasModelWrapper):
