@@ -242,9 +242,34 @@ class KerasModelWrapper(ModelWrapper):
             (items if isinstance(items, DATA_CONTAINER_TYPE) else [items])
         ]
 
+        if cut.anchor not in ['in', 'out']:
+            return flat(
+                [
+                    layer.output[cut.anchor][0]
+                    if cut.anchor in layer.output else layer.output
+                    for layer in layers
+                ])
         return (
             flat([layer.input for layer in layers])
             if cut.anchor == 'in' else flat([layer.output for layer in layers]))
+
+    def _prepare_intervention_with_input(
+            self, model_args, intervention, doi_tensors):
+        input_tensors = self._get_layers(InputCut())
+        if not all(elem in doi_tensors for elem in input_tensors):
+            intervention_batch_doi_len = len(intervention[0])
+            model_args_batch_len = len(model_args[0])
+            doi_tensors.extend(input_tensors)
+            if intervention_batch_doi_len != model_args_batch_len:
+                doi_factor = intervention_batch_doi_len / model_args_batch_len
+                model_args_expanded = [
+                    get_backend().stack([arg] * int(doi_factor))
+                    for arg in model_args
+                ]
+                intervention.extend(model_args_expanded)
+            else:
+                intervention.extend(model_args)
+        return doi_tensors, intervention
 
     def fprop(
             self,
@@ -312,7 +337,7 @@ class KerasModelWrapper(ModelWrapper):
         identity_map = {
             i: j for i, to_tensor in enumerate(to_tensors)
             for j, from_tensor in enumerate(doi_tensors)
-            if to_tensor == from_tensor
+            if to_tensor is from_tensor
         }
 
         non_identity_to_tensors = [
@@ -405,6 +430,9 @@ class KerasModelWrapper(ModelWrapper):
             intervention, DATA_CONTAINER_TYPE) else [intervention]
 
         Q = qoi(to_tensors[0]) if len(to_tensors) == 1 else qoi(to_tensors)
+
+        doi_tensors, intervention = self._prepare_intervention_with_input(
+            model_args, intervention, doi_tensors)
 
         gradients = [
             self.keras.backend.function(

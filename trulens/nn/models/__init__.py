@@ -138,7 +138,6 @@ def get_model_wrapper(
                 backend.name.lower(), type(model)))
     else:
         backend = Backend.from_name(backend)
-
     if B is None or (backend is not Backend.UNKNOWN and B.backend != backend):
         tru_logger.info(
             "Changing backend from {} to {}.".format(
@@ -150,7 +149,6 @@ def get_model_wrapper(
     tru_logger.info(
         "If this seems incorrect, you can force the correct backend by passing the `backend` parameter directly into your get_model_wrapper call."
     )
-
     if B.backend.is_keras_derivative():
         from trulens.nn.models.keras import KerasModelWrapper
         return KerasModelWrapper(
@@ -170,10 +168,8 @@ def get_model_wrapper(
             input_dtype=input_dtype,
             logit_layer=logit_layer,
             device=device)
-
     elif B.backend == Backend.TENSORFLOW:
         import tensorflow as tf
-
         if tf.__version__.startswith('2'):
             from trulens.nn.models.tensorflow_v2 import Tensorflow2ModelWrapper
             return Tensorflow2ModelWrapper(
