@@ -369,7 +369,7 @@ class PytorchModelWrapper(ModelWrapper):
             if name is not None
         ]
         # Run the network.
-        output = self._model(*model_args, *model_kwargs)
+        output = self._model(*model_args, **model_kwargs)
         if isinstance(output, tuple):
             output = output[0]
 
