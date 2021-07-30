@@ -1,712 +1,420 @@
 
-<!doctype html>
-<html lang="en" class="no-js">
-  <head>
-    
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      
-      
-      
-      
-      <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.0.6">
-    
-    
-      
-        <title>Distributions - TruLens</title>
-      
-    
-    
-      <link rel="stylesheet" href="../../assets/stylesheets/main.2c0c5eaf.min.css">
-      
-        
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.7fa14f5b.min.css">
-        
-      
-    
-    
-    
-      
-        
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,400i,700%7C&display=fallback">
-        <style>:root{--md-text-font-family:"Inter";--md-code-font-family:""}</style>
-      
-    
-    
-    
-      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
-    
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
-    
-    
-      
-    
-    
-  </head>
-  
-  
-    
-    
-    
-    
-    
-    <body dir="ltr" data-md-color-scheme="truera" data-md-color-primary="" data-md-color-accent="">
-      
-  
-    
-    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
-    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer"></label>
-    <div data-md-component="skip">
-      
-        
-        <a href="#distributions-of-interest" class="md-skip">
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<link href="../../img/favicon.ico" rel="shortcut icon"/>
+<meta content="mkdocs-1.1.2, mkdocs-material-5.5.7" name="generator"/>
+<title>Distributions - TruLens</title>
+<link href="../../assets/stylesheets/main.b8ac9624.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/palette.28f3ef9a.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Inter:300,400,400i,700%7C&amp;display=fallback" rel="stylesheet"/>
+<style>body,input{font-family:"Inter",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"",SFMono-Regular,Consolas,Menlo,monospace}</style>
+<link href="../../stylesheets/extra.css" rel="stylesheet"/>
+<link href="../../stylesheets/cover.css" rel="stylesheet"/>
+</head>
+<body data-md-color-accent="" data-md-color-primary="" data-md-color-scheme="truera" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#distributions-of-interest">
           Skip to content
         </a>
-      
-    </div>
-    <div data-md-component="announce">
-      
-    </div>
-    
-      <header class="md-header" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="TruLens" class="md-header__button md-logo" aria-label="TruLens" data-md-component="logo">
-      
-  <img src="../../img/logo.png" alt="logo">
-
-    </a>
-    <label class="md-header__button md-icon" for="__drawer">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
-    </label>
-    <div class="md-header__title" data-md-component="header-title">
-      <div class="md-header__ellipsis">
-        <div class="md-header__topic">
-          <span class="md-ellipsis">
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header" data-md-component="header">
+<nav aria-label="Header" class="md-header-nav md-grid">
+<a aria-label="TruLens" class="md-header-nav__button md-logo" href="../.." title="TruLens">
+<img alt="logo" src="../../img/logo.png"/>
+</a>
+<label class="md-header-nav__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"></path></svg>
+</label>
+<div class="md-header-nav__title" data-md-component="header-title">
+<div class="md-header-nav__ellipsis">
+<span class="md-header-nav__topic md-ellipsis">
             TruLens
           </span>
-        </div>
-        <div class="md-header__topic" data-md-component="header-topic">
-          <span class="md-ellipsis">
+<span class="md-header-nav__topic md-ellipsis">
             
               Distributions
             
           </span>
-        </div>
-      </div>
-    </div>
-    <div class="md-header__options">
-      
-    </div>
-    
-    
-  </nav>
+</div>
+</div>
+</nav>
 </header>
-    
-    <div class="md-container" data-md-component="container">
-      
-      
-        
-      
-      <main class="md-main" data-md-component="main">
-        <div class="md-main__inner md-grid">
-          
-            
-              
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
-  <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="TruLens" class="md-nav__button md-logo" aria-label="TruLens" data-md-component="logo">
-      
-  <img src="../../img/logo.png" alt="logo">
-
-    </a>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="TruLens" class="md-nav__button md-logo" href="../.." title="TruLens">
+<img alt="logo" src="../../img/logo.png"/>
+</a>
     TruLens
   </label>
-  
-  <ul class="md-nav__list" data-md-scrollfix>
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
-        Welcome to TruLens!
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../install/" class="md-nav__link">
-        Installation
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../quickstart/" class="md-nav__link">
-        Quickstart
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-    
-  
-  
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-      
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
-      
-      <label class="md-nav__link" for="__nav_4">
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../.." title="Welcome to TruLens!">
+      Welcome to TruLens!
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../install/" title="Installation">
+      Installation
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../quickstart/" title="Quickstart">
+      Quickstart
+    </a>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" data-md-toggle="nav-4" id="nav-4" type="checkbox"/>
+<label class="md-nav__link" for="nav-4">
+      API Reference
+      <span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"></path></svg>
+</span>
+</label>
+<nav aria-label="API Reference" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="nav-4">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
         API Reference
-        <span class="md-nav__icon md-icon"></span>
       </label>
-      <nav class="md-nav" aria-label="API Reference" data-md-level="1">
-        <label class="md-nav__title" for="__nav_4">
-          <span class="md-nav__icon md-icon"></span>
-          API Reference
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../attribution/" class="md-nav__link">
-        Attribution
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../model_wrappers/" class="md-nav__link">
-        Models
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../slices/" class="md-nav__link">
-        Slices
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../quantities/" class="md-nav__link">
-        Quantities
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-    
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Distributions
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../attribution/" title="Attribution">
+      Attribution
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../model_wrappers/" title="Models">
+      Models
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../slices/" title="Slices">
+      Slices
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../quantities/" title="Quantities">
+      Quantities
+    </a>
+</li>
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" data-md-toggle="toc" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
         Distributions
-      </a>
-      
-        
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
+        <span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"></path></svg>
+</span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./" title="Distributions">
+      Distributions
+    </a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.distributions" class="md-nav__link">
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions">
     trulens.nn.distributions
   </a>
-  
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.DoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.DoI">
     DoI
   </a>
-  
-    <nav class="md-nav" aria-label="DoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.DoI.__call__" class="md-nav__link">
+<nav aria-label="DoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.DoI.__call__">
     __call__()
   </a>
-  
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.DoI.__init__" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.DoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.DoI.cut" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.DoI.cut">
     cut()
   </a>
-  
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.DoI.get_activation_multiplier" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.DoI.get_activation_multiplier">
     get_activation_multiplier()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.DoiCutSupportError" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.DoiCutSupportError">
     DoiCutSupportError
   </a>
-  
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.GaussianDoi" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.GaussianDoi">
     GaussianDoi
   </a>
-  
-    <nav class="md-nav" aria-label="GaussianDoi">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.GaussianDoi.__init__" class="md-nav__link">
+<nav aria-label="GaussianDoi" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.GaussianDoi.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.LinearDoi" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.LinearDoi">
     LinearDoi
   </a>
-  
-    <nav class="md-nav" aria-label="LinearDoi">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.LinearDoi.__init__" class="md-nav__link">
+<nav aria-label="LinearDoi" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.LinearDoi.__init__">
     __init__()
   </a>
-  
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.LinearDoi.get_activation_multiplier" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.LinearDoi.get_activation_multiplier">
     get_activation_multiplier()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.PointDoi" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.PointDoi">
     PointDoi
   </a>
-  
-    <nav class="md-nav" aria-label="PointDoi">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.PointDoi.__init__" class="md-nav__link">
+<nav aria-label="PointDoi" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.PointDoi.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-    </ul>
-  
+</ul>
 </nav>
-      
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../visualizations/" class="md-nav__link">
-        Visualizations
-      </a>
-    </li>
-  
-
-          
-        </ul>
-      </nav>
-    </li>
-  
-
-    
-  </ul>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../visualizations/" title="Visualizations">
+      Visualizations
+    </a>
+</li>
+</ul>
 </nav>
-                  </div>
-                </div>
-              </div>
-            
-            
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.distributions" class="md-nav__link">
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions">
     trulens.nn.distributions
   </a>
-  
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.DoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.DoI">
     DoI
   </a>
-  
-    <nav class="md-nav" aria-label="DoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.DoI.__call__" class="md-nav__link">
+<nav aria-label="DoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.DoI.__call__">
     __call__()
   </a>
-  
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.DoI.__init__" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.DoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.DoI.cut" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.DoI.cut">
     cut()
   </a>
-  
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.DoI.get_activation_multiplier" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.DoI.get_activation_multiplier">
     get_activation_multiplier()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.DoiCutSupportError" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.DoiCutSupportError">
     DoiCutSupportError
   </a>
-  
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.GaussianDoi" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.GaussianDoi">
     GaussianDoi
   </a>
-  
-    <nav class="md-nav" aria-label="GaussianDoi">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.GaussianDoi.__init__" class="md-nav__link">
+<nav aria-label="GaussianDoi" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.GaussianDoi.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.LinearDoi" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.LinearDoi">
     LinearDoi
   </a>
-  
-    <nav class="md-nav" aria-label="LinearDoi">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.LinearDoi.__init__" class="md-nav__link">
+<nav aria-label="LinearDoi" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.LinearDoi.__init__">
     __init__()
   </a>
-  
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.LinearDoi.get_activation_multiplier" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.LinearDoi.get_activation_multiplier">
     get_activation_multiplier()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.PointDoi" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.PointDoi">
     PointDoi
   </a>
-  
-    <nav class="md-nav" aria-label="PointDoi">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.distributions.PointDoi.__init__" class="md-nav__link">
+<nav aria-label="PointDoi" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.distributions.PointDoi.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
+</ul>
 </nav>
-                  </div>
-                </div>
-              </div>
-            
-          
-          <div class="md-content" data-md-component="content">
-            <article class="md-content__inner md-typeset">
-              
-                
-                
-                <h1 id="distributions-of-interest">Distributions of Interest<a class="headerlink" href="#distributions-of-interest" title="Permanent link">&para;</a></h1>
-
-
-  <div class="doc doc-object doc-module">
-
-<a id="trulens.nn.distributions"></a>
-    <div class="doc doc-contents first">
-
-      <p>The distribution of interest lets us specify the set of samples over which we 
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<h1 id="distributions-of-interest">Distributions of Interest<a class="headerlink" href="#distributions-of-interest" title="Permanent link">¶</a></h1>
+<div class="doc doc-object doc-module">
+<h2 class="hidden-toc" href="#trulens.nn.distributions" id="trulens.nn.distributions" style="visibility: hidden; width: 0; height: 0;">
+<a class="headerlink" href="#trulens.nn.distributions" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents first">
+<p>The distribution of interest lets us specify the set of samples over which we 
 want our explanations to be faithful. In some cases, we may want to explain the 
 model’s behavior on a particular record, whereas other times we may be 
 interested in a more general behavior over a distribution of samples.</p>
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-  <div class="doc doc-object doc-class">
-
-
-
+<div class="doc doc-children">
+<div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.distributions.DoI">
-        <code>DoI</code>
-
-
-
-<a class="headerlink" href="#trulens.nn.distributions.DoI" title="Permanent link">&para;</a></h2>
-
-    <div class="doc doc-contents ">
-
-      <p>Interface for distributions of interest. The <em>Distribution of Interest</em> 
+<code>DoI</code>
+<a class="headerlink" href="#trulens.nn.distributions.DoI" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
+<p>Interface for distributions of interest. The <em>Distribution of Interest</em> 
 (DoI) specifies the samples over which an attribution method is 
 aggregated.</p>
-
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
+<div class="doc doc-children">
+<div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.distributions.DoI.__call__">
-<code class="codehilite language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-<a class="headerlink" href="#trulens.nn.distributions.DoI.__call__" title="Permanent link">&para;</a></h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Computes the distribution of interest from an initial point.</p>
-
+<code class="highlight language-python">
+__call__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.nn.distributions.DoI.__call__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>Computes the distribution of interest from an initial point.</p>
 <p><strong>Parameters:</strong></p>
 <table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>z</code></td>
-        <td><code>ArrayLike</code></td>
-        <td><p>Input point from which the distribution is derived.</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>z</code></td>
+<td><code>Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]</code></td>
+<td>
+<p>Input point from which the distribution is derived.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
 </table>
 <p><strong>Returns:</strong></p>
 <table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>List[ArrayLike]</code></td>
-      <td><p>List of points which are all assigned equal probability mass in the
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>List[Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]]</code></td>
+<td>
+<p>List of points which are all assigned equal probability mass in the
 distribution of interest, i.e., the distribution of interest is
 a discrete, uniform distribution over the list of returned points.
-Each point in the list shares the same type and shape as <code>z</code>.</p></td>
-    </tr>
-  </tbody>
+Each point in the list shares the same type and shape as <code>z</code>.</p>
+</td>
+</tr>
+</tbody>
 </table>
-        <details class="quote">
-          <summary>Source code in <code>trulens/nn/distributions.py</code></summary>
-          <div class="codehilite"><pre><span></span><code><span class="nd">@abstractmethod</span>
+<details class="quote">
+<summary>Source code in <code>trulens/nn/distributions.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="nd">@abstractmethod</span>
 <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">"""</span>
 <span class="sd">    Computes the distribution of interest from an initial point.</span>
 
 <span class="sd">    Parameters:</span>
@@ -718,185 +426,166 @@ Each point in the list shares the same type and shape as <code>z</code>.</p></td
 <span class="sd">        distribution of interest, i.e., the distribution of interest is</span>
 <span class="sd">        a discrete, uniform distribution over the list of returned points.</span>
 <span class="sd">        Each point in the list shares the same type and shape as `z`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.distributions.DoI.__init__">
-<code class="codehilite language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-<a class="headerlink" href="#trulens.nn.distributions.DoI.__init__" title="Permanent link">&para;</a></h3>
-
-    <div class="doc doc-contents ">
-
-      <p>"Initialize DoI</p>
-
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.nn.distributions.DoI.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>"Initialize DoI</p>
 <p><strong>Parameters:</strong></p>
 <table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>cut</code></td>
-        <td><code>Cut</code></td>
-        <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cut</code></td>
+<td><code>Cut</code></td>
+<td>
+<p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
 applied to the input. otherwise, the distribution should be applied
-to the latent space defined by the cut. </p></td>
-        <td><code>None</code></td>
-      </tr>
-  </tbody>
+to the latent space defined by the cut. </p>
+</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
 </table>
-        <details class="quote">
-          <summary>Source code in <code>trulens/nn/distributions.py</code></summary>
-          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut</span><span class="p">:</span> <span class="n">Cut</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;&quot;Initialize DoI</span>
+<details class="quote">
+<summary>Source code in <code>trulens/nn/distributions.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut</span><span class="p">:</span> <span class="n">Cut</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">""""Initialize DoI</span>
 
 <span class="sd">    Parameters:</span>
 <span class="sd">        cut (Cut, optional): </span>
 <span class="sd">            The Cut in which the DoI will be applied. If `None`, the DoI will be</span>
 <span class="sd">            applied to the input. otherwise, the distribution should be applied</span>
 <span class="sd">            to the latent space defined by the cut. </span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_cut</span> <span class="o">=</span> <span class="n">cut</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.distributions.DoI.cut">
-<code class="codehilite language-python"><span class="n">cut</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
-
-
-<a class="headerlink" href="#trulens.nn.distributions.DoI.cut" title="Permanent link">&para;</a></h3>
-
-    <div class="doc doc-contents ">
-
-
+<code class="highlight language-python">
+cut<span class="p">(</span><span class="bp">self</span><span class="p">)</span> </code>
+<a class="headerlink" href="#trulens.nn.distributions.DoI.cut" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
 <p><strong>Returns:</strong></p>
 <table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>Cut</code></td>
-      <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Cut</code></td>
+<td>
+<p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
 applied to the input. otherwise, the distribution should be applied
-to the latent space defined by the cut. </p></td>
-    </tr>
-  </tbody>
+to the latent space defined by the cut. </p>
+</td>
+</tr>
+</tbody>
 </table>
-        <details class="quote">
-          <summary>Source code in <code>trulens/nn/distributions.py</code></summary>
-          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">cut</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cut</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<details class="quote">
+<summary>Source code in <code>trulens/nn/distributions.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="nf">cut</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cut</span><span class="p">:</span>
+    <span class="sd">"""</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        The Cut in which the DoI will be applied. If `None`, the DoI will be</span>
 <span class="sd">        applied to the input. otherwise, the distribution should be applied</span>
 <span class="sd">        to the latent space defined by the cut. </span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cut</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.distributions.DoI.get_activation_multiplier">
-<code class="codehilite language-python"><span class="n">get_activation_multiplier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">)</span></code>
-
-
-<a class="headerlink" href="#trulens.nn.distributions.DoI.get_activation_multiplier" title="Permanent link">&para;</a></h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Returns a term to multiply the gradient by to convert from "<em>influence 
+<code class="highlight language-python">
+get_activation_multiplier<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">)</span> </code>
+<a class="headerlink" href="#trulens.nn.distributions.DoI.get_activation_multiplier" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>Returns a term to multiply the gradient by to convert from "<em>influence 
 space</em>" to "<em>attribution space</em>". Conceptually, "influence space"
 corresponds to the potential effect of a slight increase in each 
 feature, while "attribution space" corresponds to an approximation of
 the net marginal contribution to the quantity of interest of each 
 feature.</p>
-
 <p><strong>Parameters:</strong></p>
 <table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>activation</code></td>
-        <td><code>ArrayLike</code></td>
-        <td><p>The activation of the layer the DoI is applied to.</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>activation</code></td>
+<td><code>Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]</code></td>
+<td>
+<p>The activation of the layer the DoI is applied to.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
 </table>
 <p><strong>Returns:</strong></p>
 <table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>ArrayLike</code></td>
-      <td><p>An array with the same shape as <code>activation</code> that will be 
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]</code></td>
+<td>
+<p>An array with the same shape as <code>activation</code> that will be 
 multiplied by the gradient to obtain the attribution. The default 
-implementation of this method simply returns <code>activation</code>.</p></td>
-    </tr>
-  </tbody>
+implementation of this method simply returns <code>activation</code>.</p>
+</td>
+</tr>
+</tbody>
 </table>
-        <details class="quote">
-          <summary>Source code in <code>trulens/nn/distributions.py</code></summary>
-          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">get_activation_multiplier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLike</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Returns a term to multiply the gradient by to convert from &quot;*influence </span>
-<span class="sd">    space*&quot; to &quot;*attribution space*&quot;. Conceptually, &quot;influence space&quot;</span>
+<details class="quote">
+<summary>Source code in <code>trulens/nn/distributions.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="nf">get_activation_multiplier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLike</span><span class="p">:</span>
+    <span class="sd">"""</span>
+<span class="sd">    Returns a term to multiply the gradient by to convert from "*influence </span>
+<span class="sd">    space*" to "*attribution space*". Conceptually, "influence space"</span>
 <span class="sd">    corresponds to the potential effect of a slight increase in each </span>
-<span class="sd">    feature, while &quot;attribution space&quot; corresponds to an approximation of</span>
+<span class="sd">    feature, while "attribution space" corresponds to an approximation of</span>
 <span class="sd">    the net marginal contribution to the quantity of interest of each </span>
 <span class="sd">    feature.</span>
 
@@ -908,133 +597,86 @@ implementation of this method simply returns <code>activation</code>.</p></td>
 <span class="sd">        An array with the same shape as ``activation`` that will be </span>
 <span class="sd">        multiplied by the gradient to obtain the attribution. The default </span>
 <span class="sd">        implementation of this method simply returns ``activation``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">activation</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-
-
-  </div>
-
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-class">
-
-
-
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.distributions.DoiCutSupportError">
-        <code>DoiCutSupportError</code>
-
-
-
-<a class="headerlink" href="#trulens.nn.distributions.DoiCutSupportError" title="Permanent link">&para;</a></h2>
-
-    <div class="doc doc-contents ">
-
-      <p>Exception raised if the distribution of interest is called on a cut whose
+<code>DoiCutSupportError</code>
+<a class="headerlink" href="#trulens.nn.distributions.DoiCutSupportError" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
+<p>Exception raised if the distribution of interest is called on a cut whose
 output is not supported by the distribution of interest.</p>
-
-
-
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-class">
-
-
-
+</div>
+</div>
+<div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.distributions.GaussianDoi">
-        <code>GaussianDoi</code>
-
-
-
-<a class="headerlink" href="#trulens.nn.distributions.GaussianDoi" title="Permanent link">&para;</a></h2>
-
-    <div class="doc doc-contents ">
-
-      <p>Distribution representing a Gaussian ball around the point. Used by Smooth
+<code>GaussianDoi</code>
+<a class="headerlink" href="#trulens.nn.distributions.GaussianDoi" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
+<p>Distribution representing a Gaussian ball around the point. Used by Smooth
 Gradients.</p>
-
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
+<div class="doc doc-children">
+<div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.distributions.GaussianDoi.__init__">
-<code class="codehilite language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-<a class="headerlink" href="#trulens.nn.distributions.GaussianDoi.__init__" title="Permanent link">&para;</a></h3>
-
-    <div class="doc doc-contents ">
-
-
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.nn.distributions.GaussianDoi.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
 <p><strong>Parameters:</strong></p>
 <table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>var</code></td>
-        <td><code>float</code></td>
-        <td><p>The variance of the Gaussian noise to be added around the point.</p></td>
-        <td><em>required</em></td>
-      </tr>
-      <tr>
-        <td><code>resolution</code></td>
-        <td><code>int</code></td>
-        <td><p>Number of samples returned by each call to this DoI.</p></td>
-        <td><em>required</em></td>
-      </tr>
-      <tr>
-        <td><code>cut</code></td>
-        <td><code>Cut</code></td>
-        <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>var</code></td>
+<td><code>float</code></td>
+<td>
+<p>The variance of the Gaussian noise to be added around the point.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>resolution</code></td>
+<td><code>int</code></td>
+<td>
+<p>Number of samples returned by each call to this DoI.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>cut</code></td>
+<td><code>Cut</code></td>
+<td>
+<p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
 applied to the input. otherwise, the distribution should be applied
-to the latent space defined by the cut. </p></td>
-        <td><code>None</code></td>
-      </tr>
-  </tbody>
+to the latent space defined by the cut. </p>
+</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
 </table>
-        <details class="quote">
-          <summary>Source code in <code>trulens/nn/distributions.py</code></summary>
-          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">resolution</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cut</span><span class="p">:</span> <span class="n">Cut</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<details class="quote">
+<summary>Source code in <code>trulens/nn/distributions.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">resolution</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cut</span><span class="p">:</span> <span class="n">Cut</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">"""</span>
 <span class="sd">    Parameters:</span>
 <span class="sd">        var:</span>
 <span class="sd">            The variance of the Gaussian noise to be added around the point.</span>
@@ -1045,126 +687,94 @@ to the latent space defined by the cut. </p></td>
 <span class="sd">            The Cut in which the DoI will be applied. If `None`, the DoI will be</span>
 <span class="sd">            applied to the input. otherwise, the distribution should be applied</span>
 <span class="sd">            to the latent space defined by the cut. </span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="nb">super</span><span class="p">(</span><span class="n">GaussianDoi</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_var</span> <span class="o">=</span> <span class="n">var</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_resolution</span> <span class="o">=</span> <span class="n">resolution</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-
-
-  </div>
-
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-class">
-
-
-
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.distributions.LinearDoi">
-        <code>LinearDoi</code>
-
-
-
-<a class="headerlink" href="#trulens.nn.distributions.LinearDoi" title="Permanent link">&para;</a></h2>
-
-    <div class="doc doc-contents ">
-
-      <p>Distribution representing the linear interpolation between a baseline and 
+<code>LinearDoi</code>
+<a class="headerlink" href="#trulens.nn.distributions.LinearDoi" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
+<p>Distribution representing the linear interpolation between a baseline and 
 the given point. Used by Integrated Gradients.</p>
-
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
+<div class="doc doc-children">
+<div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.distributions.LinearDoi.__init__">
-<code class="codehilite language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-<a class="headerlink" href="#trulens.nn.distributions.LinearDoi.__init__" title="Permanent link">&para;</a></h3>
-
-    <div class="doc doc-contents ">
-
-      <p>The DoI for point, <code>z</code>, will be a uniform distribution over the points
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.nn.distributions.LinearDoi.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>The DoI for point, <code>z</code>, will be a uniform distribution over the points
 on the line segment connecting <code>z</code> to <code>baseline</code>, approximated by a
 sample of <code>resolution</code> points equally spaced along this segment.</p>
-
 <p><strong>Parameters:</strong></p>
 <table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>baseline</code></td>
-        <td><code>Optional[ArrayLike]</code></td>
-        <td><p>The baseline to interpolate from. Must be same shape as the 
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>baseline</code></td>
+<td><code>Optional[Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]]</code></td>
+<td>
+<p>The baseline to interpolate from. Must be same shape as the 
 space the distribution acts over, i.e., the shape of the points, 
 <code>z</code>, eventually passed to <code>__call__</code>. If <code>cut</code> is <code>None</code>, this
 must be the same shape as the input, otherwise this must be the
 same shape as the latent space defined by the cut. If <code>None</code> is
 given, <code>baseline</code> will be the zero vector in the appropriate 
-shape.</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>resolution</code></td>
-        <td><code>int</code></td>
-        <td><p>Number of points returned by each call to this DoI. A higher 
+shape.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>resolution</code></td>
+<td><code>int</code></td>
+<td>
+<p>Number of points returned by each call to this DoI. A higher 
 resolution is more computationally expensive, but gives a better
-approximation of the DoI this object mathematically represents.</p></td>
-        <td><code>10</code></td>
-      </tr>
-      <tr>
-        <td><code>cut</code></td>
-        <td><code>Cut</code></td>
-        <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
+approximation of the DoI this object mathematically represents.</p>
+</td>
+<td><code>10</code></td>
+</tr>
+<tr>
+<td><code>cut</code></td>
+<td><code>Cut</code></td>
+<td>
+<p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
 applied to the input. otherwise, the distribution should be applied
-to the latent space defined by the cut. </p></td>
-        <td><code>None</code></td>
-      </tr>
-  </tbody>
+to the latent space defined by the cut. </p>
+</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
 </table>
-        <details class="quote">
-          <summary>Source code in <code>trulens/nn/distributions.py</code></summary>
-          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<details class="quote">
+<summary>Source code in <code>trulens/nn/distributions.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">baseline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">resolution</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
         <span class="n">cut</span><span class="p">:</span> <span class="n">Cut</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">"""</span>
 <span class="sd">    The DoI for point, `z`, will be a uniform distribution over the points</span>
 <span class="sd">    on the line segment connecting `z` to `baseline`, approximated by a</span>
 <span class="sd">    sample of `resolution` points equally spaced along this segment.</span>
@@ -1188,79 +798,74 @@ to the latent space defined by the cut. </p></td>
 <span class="sd">            The Cut in which the DoI will be applied. If `None`, the DoI will be</span>
 <span class="sd">            applied to the input. otherwise, the distribution should be applied</span>
 <span class="sd">            to the latent space defined by the cut. </span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="nb">super</span><span class="p">(</span><span class="n">LinearDoi</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_baseline</span> <span class="o">=</span> <span class="n">baseline</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_resolution</span> <span class="o">=</span> <span class="n">resolution</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.distributions.LinearDoi.get_activation_multiplier">
-<code class="codehilite language-python"><span class="n">get_activation_multiplier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">)</span></code>
-
-
-<a class="headerlink" href="#trulens.nn.distributions.LinearDoi.get_activation_multiplier" title="Permanent link">&para;</a></h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Returns a term to multiply the gradient by to convert from "<em>influence 
+<code class="highlight language-python">
+get_activation_multiplier<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">)</span> </code>
+<a class="headerlink" href="#trulens.nn.distributions.LinearDoi.get_activation_multiplier" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>Returns a term to multiply the gradient by to convert from "<em>influence 
 space</em>" to "<em>attribution space</em>". Conceptually, "influence space"
 corresponds to the potential effect of a slight increase in each 
 feature, while "attribution space" corresponds to an approximation of
 the net marginal contribution to the quantity of interest of each 
 feature.</p>
-
 <p><strong>Parameters:</strong></p>
 <table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>activation</code></td>
-        <td><code>ArrayLike</code></td>
-        <td><p>The activation of the layer the DoI is applied to.</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>activation</code></td>
+<td><code>Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]</code></td>
+<td>
+<p>The activation of the layer the DoI is applied to.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
 </table>
 <p><strong>Returns:</strong></p>
 <table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>ArrayLike</code></td>
-      <td><p>The activation adjusted by the baseline passed to the constructor.</p></td>
-    </tr>
-  </tbody>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]</code></td>
+<td>
+<p>The activation adjusted by the baseline passed to the constructor.</p>
+</td>
+</tr>
+</tbody>
 </table>
-        <details class="quote">
-          <summary>Source code in <code>trulens/nn/distributions.py</code></summary>
-          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">get_activation_multiplier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLike</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Returns a term to multiply the gradient by to convert from &quot;*influence </span>
-<span class="sd">    space*&quot; to &quot;*attribution space*&quot;. Conceptually, &quot;influence space&quot;</span>
+<details class="quote">
+<summary>Source code in <code>trulens/nn/distributions.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="nf">get_activation_multiplier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLike</span><span class="p">:</span>
+    <span class="sd">"""</span>
+<span class="sd">    Returns a term to multiply the gradient by to convert from "*influence </span>
+<span class="sd">    space*" to "*attribution space*". Conceptually, "influence space"</span>
 <span class="sd">    corresponds to the potential effect of a slight increase in each </span>
-<span class="sd">    feature, while &quot;attribution space&quot; corresponds to an approximation of</span>
+<span class="sd">    feature, while "attribution space" corresponds to an approximation of</span>
 <span class="sd">    the net marginal contribution to the quantity of interest of each </span>
 <span class="sd">    feature.</span>
 
@@ -1270,214 +875,145 @@ feature.</p>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The activation adjusted by the baseline passed to the constructor.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">activation</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseline</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">activation</span> <span class="o">-</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_baseline</span><span class="p">)</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-
-
-  </div>
-
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-class">
-
-
-
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.distributions.PointDoi">
-        <code>PointDoi</code>
-
-
-
-<a class="headerlink" href="#trulens.nn.distributions.PointDoi" title="Permanent link">&para;</a></h2>
-
-    <div class="doc doc-contents ">
-
-      <p>Distribution that puts all probability mass on a single point.</p>
-
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
+<code>PointDoi</code>
+<a class="headerlink" href="#trulens.nn.distributions.PointDoi" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
+<p>Distribution that puts all probability mass on a single point.</p>
+<div class="doc doc-children">
+<div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.distributions.PointDoi.__init__">
-<code class="codehilite language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-<a class="headerlink" href="#trulens.nn.distributions.PointDoi.__init__" title="Permanent link">&para;</a></h3>
-
-    <div class="doc doc-contents ">
-
-      <p>"Initialize PointDoI</p>
-
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.nn.distributions.PointDoi.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
+<p>"Initialize PointDoI</p>
 <p><strong>Parameters:</strong></p>
 <table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>cut</code></td>
-        <td><code>Cut</code></td>
-        <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cut</code></td>
+<td><code>Cut</code></td>
+<td>
+<p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
 applied to the input. otherwise, the distribution should be applied
-to the latent space defined by the cut. </p></td>
-        <td><code>None</code></td>
-      </tr>
-  </tbody>
+to the latent space defined by the cut. </p>
+</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
 </table>
-        <details class="quote">
-          <summary>Source code in <code>trulens/nn/distributions.py</code></summary>
-          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut</span><span class="p">:</span> <span class="n">Cut</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;&quot;Initialize PointDoI</span>
+<details class="quote">
+<summary>Source code in <code>trulens/nn/distributions.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut</span><span class="p">:</span> <span class="n">Cut</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">""""Initialize PointDoI</span>
 
 <span class="sd">    Parameters:</span>
 <span class="sd">        cut (Cut, optional): </span>
 <span class="sd">            The Cut in which the DoI will be applied. If `None`, the DoI will be</span>
 <span class="sd">            applied to the input. otherwise, the distribution should be applied</span>
 <span class="sd">            to the latent space defined by the cut. </span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="nb">super</span><span class="p">(</span><span class="n">PointDoi</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-
-
-  </div>
-
-    </div>
-
-  </div>
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-  </div>
-                
-              
-              
-                
-
-
-              
-            </article>
-          </div>
-        </div>
-      </main>
-      
-        
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</article>
+</div>
+</div>
+</main>
 <footer class="md-footer">
-  
-    <nav class="md-footer__inner md-grid" aria-label="Footer">
-      
-        <a href="../quantities/" class="md-footer__link md-footer__link--prev" rel="prev">
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-          </div>
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              Quantities
-            </div>
-          </div>
-        </a>
-      
-      
-        <a href="../visualizations/" class="md-footer__link md-footer__link--next" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              Visualizations
-            </div>
-          </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-          </div>
-        </a>
-      
-    </nav>
-  
-  <div class="md-footer-meta md-typeset">
-    <div class="md-footer-meta__inner md-grid">
-      <div class="md-footer-copyright">
+<div class="md-footer-nav">
+<nav aria-label="Footer" class="md-footer-nav__inner md-grid">
+<a class="md-footer-nav__link md-footer-nav__link--prev" href="../quantities/" rel="prev" title="Quantities">
+<div class="md-footer-nav__button md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</div>
+<div class="md-footer-nav__title">
+<div class="md-ellipsis">
+<span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Quantities
+              </div>
+</div>
+</a>
+<a class="md-footer-nav__link md-footer-nav__link--next" href="../visualizations/" rel="next" title="Visualizations">
+<div class="md-footer-nav__title">
+<div class="md-ellipsis">
+<span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Visualizations
+              </div>
+</div>
+<div class="md-footer-nav__button md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"></path></svg>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
         
         Made with
-        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+        <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
           Material for MkDocs
         </a>
-        
-      </div>
-      
-    </div>
-  </div>
+</div>
+</div>
+</div>
 </footer>
-      
-    </div>
-    <div class="md-dialog" data-md-component="dialog">
-      <div class="md-dialog__inner md-typeset"></div>
-    </div>
-    <script id="__config" type="application/json">{"base": "../..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../../assets/javascripts/workers/search.fb4a9340.min.js", "version": null}</script>
-    
-    
-      <script src="../../assets/javascripts/bundle.a1c7c35e.min.js"></script>
-      
-        <script src="../../javascript/config.js"></script>
-      
-        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-      
-        <script src="../../javascript/tex-mml-chtml-3.0.0.js"></script>
-      
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
-      
-    
-  </body>
+</div>
+<script src="../../assets/javascripts/vendor.d1f5a259.min.js"></script>
+<script src="../../assets/javascripts/bundle.d5fec882.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+<script>
+        app = initialize({
+          base: "../..",
+          features: [],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.fae956e7.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+<script src="../../javascript/config.js"></script>
+<script src="../../javascript/app.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src="../../javascript/tex-mml-chtml-3.0.0.js"></script>
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</body>
 </html>

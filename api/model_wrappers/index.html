@@ -1,392 +1,198 @@
 
-<!doctype html>
-<html lang="en" class="no-js">
-  <head>
-    
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      
-      
-      
-      
-      <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.0.6">
-    
-    
-      
-        <title>Models - TruLens</title>
-      
-    
-    
-      <link rel="stylesheet" href="../../assets/stylesheets/main.2c0c5eaf.min.css">
-      
-        
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.7fa14f5b.min.css">
-        
-      
-    
-    
-    
-      
-        
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,400i,700%7C&display=fallback">
-        <style>:root{--md-text-font-family:"Inter";--md-code-font-family:""}</style>
-      
-    
-    
-    
-      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
-    
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
-    
-    
-      
-    
-    
-  </head>
-  
-  
-    
-    
-    
-    
-    
-    <body dir="ltr" data-md-color-scheme="truera" data-md-color-primary="" data-md-color-accent="">
-      
-  
-    
-    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
-    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer"></label>
-    <div data-md-component="skip">
-      
-        
-        <a href="#model-wrappers" class="md-skip">
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<link href="../../img/favicon.ico" rel="shortcut icon"/>
+<meta content="mkdocs-1.1.2, mkdocs-material-5.5.7" name="generator"/>
+<title>Models - TruLens</title>
+<link href="../../assets/stylesheets/main.b8ac9624.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/palette.28f3ef9a.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Inter:300,400,400i,700%7C&amp;display=fallback" rel="stylesheet"/>
+<style>body,input{font-family:"Inter",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"",SFMono-Regular,Consolas,Menlo,monospace}</style>
+<link href="../../stylesheets/extra.css" rel="stylesheet"/>
+<link href="../../stylesheets/cover.css" rel="stylesheet"/>
+</head>
+<body data-md-color-accent="" data-md-color-primary="" data-md-color-scheme="truera" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#model-wrappers">
           Skip to content
         </a>
-      
-    </div>
-    <div data-md-component="announce">
-      
-    </div>
-    
-      <header class="md-header" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="TruLens" class="md-header__button md-logo" aria-label="TruLens" data-md-component="logo">
-      
-  <img src="../../img/logo.png" alt="logo">
-
-    </a>
-    <label class="md-header__button md-icon" for="__drawer">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
-    </label>
-    <div class="md-header__title" data-md-component="header-title">
-      <div class="md-header__ellipsis">
-        <div class="md-header__topic">
-          <span class="md-ellipsis">
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header" data-md-component="header">
+<nav aria-label="Header" class="md-header-nav md-grid">
+<a aria-label="TruLens" class="md-header-nav__button md-logo" href="../.." title="TruLens">
+<img alt="logo" src="../../img/logo.png"/>
+</a>
+<label class="md-header-nav__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"></path></svg>
+</label>
+<div class="md-header-nav__title" data-md-component="header-title">
+<div class="md-header-nav__ellipsis">
+<span class="md-header-nav__topic md-ellipsis">
             TruLens
           </span>
-        </div>
-        <div class="md-header__topic" data-md-component="header-topic">
-          <span class="md-ellipsis">
+<span class="md-header-nav__topic md-ellipsis">
             
               Models
             
           </span>
-        </div>
-      </div>
-    </div>
-    <div class="md-header__options">
-      
-    </div>
-    
-    
-  </nav>
+</div>
+</div>
+</nav>
 </header>
-    
-    <div class="md-container" data-md-component="container">
-      
-      
-        
-      
-      <main class="md-main" data-md-component="main">
-        <div class="md-main__inner md-grid">
-          
-            
-              
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
-  <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="TruLens" class="md-nav__button md-logo" aria-label="TruLens" data-md-component="logo">
-      
-  <img src="../../img/logo.png" alt="logo">
-
-    </a>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="TruLens" class="md-nav__button md-logo" href="../.." title="TruLens">
+<img alt="logo" src="../../img/logo.png"/>
+</a>
     TruLens
   </label>
-  
-  <ul class="md-nav__list" data-md-scrollfix>
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
-        Welcome to TruLens!
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../install/" class="md-nav__link">
-        Installation
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../quickstart/" class="md-nav__link">
-        Quickstart
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-    
-  
-  
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-      
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
-      
-      <label class="md-nav__link" for="__nav_4">
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../.." title="Welcome to TruLens!">
+      Welcome to TruLens!
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../install/" title="Installation">
+      Installation
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../quickstart/" title="Quickstart">
+      Quickstart
+    </a>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" data-md-toggle="nav-4" id="nav-4" type="checkbox"/>
+<label class="md-nav__link" for="nav-4">
+      API Reference
+      <span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"></path></svg>
+</span>
+</label>
+<nav aria-label="API Reference" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="nav-4">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
         API Reference
-        <span class="md-nav__icon md-icon"></span>
       </label>
-      <nav class="md-nav" aria-label="API Reference" data-md-level="1">
-        <label class="md-nav__title" for="__nav_4">
-          <span class="md-nav__icon md-icon"></span>
-          API Reference
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../attribution/" class="md-nav__link">
-        Attribution
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-    
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Models
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../attribution/" title="Attribution">
+      Attribution
+    </a>
+</li>
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" data-md-toggle="toc" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
         Models
-      </a>
-      
-        
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
+        <span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"></path></svg>
+</span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./" title="Models">
+      Models
+    </a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.models.__init__" class="md-nav__link">
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.models.__init__">
     trulens.nn.models.__init__
   </a>
-  
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.models.__init__.get_model_wrapper" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.models.__init__.get_model_wrapper">
     get_model_wrapper()
   </a>
-  
 </li>
-      
-    </ul>
-  
+</ul>
 </nav>
-      
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../slices/" class="md-nav__link">
-        Slices
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../quantities/" class="md-nav__link">
-        Quantities
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../distributions/" class="md-nav__link">
-        Distributions
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../visualizations/" class="md-nav__link">
-        Visualizations
-      </a>
-    </li>
-  
-
-          
-        </ul>
-      </nav>
-    </li>
-  
-
-    
-  </ul>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../slices/" title="Slices">
+      Slices
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../quantities/" title="Quantities">
+      Quantities
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../distributions/" title="Distributions">
+      Distributions
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../visualizations/" title="Visualizations">
+      Visualizations
+    </a>
+</li>
+</ul>
 </nav>
-                  </div>
-                </div>
-              </div>
-            
-            
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.models.__init__" class="md-nav__link">
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.models.__init__">
     trulens.nn.models.__init__
   </a>
-  
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.models.__init__.get_model_wrapper" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.models.__init__.get_model_wrapper">
     get_model_wrapper()
   </a>
-  
 </li>
-      
-    </ul>
-  
+</ul>
 </nav>
-                  </div>
-                </div>
-              </div>
-            
-          
-          <div class="md-content" data-md-component="content">
-            <article class="md-content__inner md-typeset">
-              
-                
-                
-                <h1 id="model-wrappers">Model Wrappers<a class="headerlink" href="#model-wrappers" title="Permanent link">&para;</a></h1>
-
-
-  <div class="doc doc-object doc-module">
-
-<a id="trulens.nn.models.__init__"></a>
-    <div class="doc doc-contents first">
-
-      <p>The TruLens library is designed to support models implemented via a variety of
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<h1 id="model-wrappers">Model Wrappers<a class="headerlink" href="#model-wrappers" title="Permanent link">¶</a></h1>
+<div class="doc doc-object doc-module">
+<h2 class="hidden-toc" href="#trulens.nn.models.__init__" id="trulens.nn.models.__init__" style="visibility: hidden; width: 0; height: 0;">
+<a class="headerlink" href="#trulens.nn.models.__init__" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents first">
+<p>The TruLens library is designed to support models implemented via a variety of
 different popular python neural network frameworks: Keras (with TensorFlow or 
 Theano backend), TensorFlow, and Pytorch. Models developed with different frameworks 
 implement things (e.g., gradient computations) a number of different ways. We define 
@@ -396,157 +202,167 @@ attributions for a model, we provide a <code>trulens.nn.models.get_model_wrapper
 that will return an appropriate <code>ModelWrapper</code> instance.</p>
 <p>Some parameters are exclusively utilized for specific frameworks and are outlined 
 in the parameter descriptions.</p>
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-  <div class="doc doc-object doc-function">
-
-
-
+<div class="doc doc-children">
+<div class="doc doc-object doc-function">
 <h2 class="doc doc-heading" id="trulens.nn.models.__init__.get_model_wrapper">
-<code class="codehilite language-python"><span class="n">get_model_wrapper</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">logit_layer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">replace_softmax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">softmax_layer</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">custom_objects</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">internal_tensor_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_feed_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
-
-
-<a class="headerlink" href="#trulens.nn.models.__init__.get_model_wrapper" title="Permanent link">&para;</a></h2>
-
-    <div class="doc doc-contents ">
-
-      <p>Returns a ModelWrapper implementation that exposes the components needed for computing attributions.</p>
-
+<code class="highlight language-python">
+get_model_wrapper<span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">logit_layer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">replace_softmax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">softmax_layer</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">custom_objects</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">internal_tensor_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_feed_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
+<a class="headerlink" href="#trulens.nn.models.__init__.get_model_wrapper" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
+<p>Returns a ModelWrapper implementation that exposes the components needed for computing attributions.</p>
 <p><strong>Parameters:</strong></p>
 <table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>model</code></td>
-        <td><code></code></td>
-        <td><p>The model to wrap. If using the TensorFlow 1 backend, this is 
-expected to be a graph object.</p></td>
-        <td><em>required</em></td>
-      </tr>
-      <tr>
-        <td><code>logit_layer</code></td>
-        <td><code></code></td>
-        <td><p><em>Supported for Keras and Pytorch models.</em> 
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model</code></td>
+<td><code></code></td>
+<td>
+<p>The model to wrap. If using the TensorFlow 1 backend, this is 
+expected to be a graph object.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>logit_layer</code></td>
+<td><code></code></td>
+<td>
+<p><em>Supported for Keras and Pytorch models.</em> 
 Specifies the name or index of the layer that produces the
-logit predictions. </p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>replace_softmax</code></td>
-        <td><code></code></td>
-        <td><p><em>Supported for Keras models only.</em> If true, the activation
+logit predictions. </p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>replace_softmax</code></td>
+<td><code></code></td>
+<td>
+<p><em>Supported for Keras models only.</em> If true, the activation
 function in the softmax layer (specified by <code>softmax_layer</code>) 
-will be changed to a <code>'linear'</code> activation. </p></td>
-        <td><code>False</code></td>
-      </tr>
-      <tr>
-        <td><code>softmax_layer</code></td>
-        <td><code></code></td>
-        <td><p><em>Supported for Keras models only.</em> Specifies the layer that
+will be changed to a <code>'linear'</code> activation. </p>
+</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>softmax_layer</code></td>
+<td><code></code></td>
+<td>
+<p><em>Supported for Keras models only.</em> Specifies the layer that
 performs the softmax. This layer should have an <code>activation</code>
-attribute. Only used when <code>replace_softmax</code> is true.</p></td>
-        <td><code>-1</code></td>
-      </tr>
-      <tr>
-        <td><code>custom_objects</code></td>
-        <td><code></code></td>
-        <td><p><em>Optional, for use with Keras models only.</em> A dictionary of
-custom objects used by the Keras model.</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>input_shape</code></td>
-        <td><code></code></td>
-        <td><p><em>Required for use with Pytorch models only.</em> Tuple specifying
+attribute. Only used when <code>replace_softmax</code> is true.</p>
+</td>
+<td><code>-1</code></td>
+</tr>
+<tr>
+<td><code>custom_objects</code></td>
+<td><code></code></td>
+<td>
+<p><em>Optional, for use with Keras models only.</em> A dictionary of
+custom objects used by the Keras model.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>input_shape</code></td>
+<td><code></code></td>
+<td>
+<p><em>Required for use with Pytorch models only.</em> Tuple specifying
 the input shape (excluding the batch dimension) expected by the
-model.</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>input_dtype</code></td>
-        <td><code></code></td>
-        <td><p>torch.dtype
-<em>Optional, for use with Pytorch models only.</em>, The dtype of the input.</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>device</code></td>
-        <td><code></code></td>
-        <td><p><em>Optional, for use with Pytorch models only.</em> A string
-specifying the device to run the model on.</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>input_tensors</code></td>
-        <td><code></code></td>
-        <td><p><em>Required for use with TensorFlow 1 graph models only.</em> A list
-of tensors representing the input to the model graph.</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>output_tensors</code></td>
-        <td><code></code></td>
-        <td><p><em>Required for use with TensorFlow 1 graph models only.</em> A list
-of tensors representing the output to the model graph.</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>internal_tensor_dict</code></td>
-        <td><code></code></td>
-        <td><p><em>Optional, for use with TensorFlow 1 graph models only.</em> A
+model.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>input_dtype</code></td>
+<td><code></code></td>
+<td>
+<p>torch.dtype
+<em>Optional, for use with Pytorch models only.</em>, The dtype of the input.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>device</code></td>
+<td><code></code></td>
+<td>
+<p><em>Optional, for use with Pytorch models only.</em> A string
+specifying the device to run the model on.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>input_tensors</code></td>
+<td><code></code></td>
+<td>
+<p><em>Required for use with TensorFlow 1 graph models only.</em> A list
+of tensors representing the input to the model graph.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>output_tensors</code></td>
+<td><code></code></td>
+<td>
+<p><em>Required for use with TensorFlow 1 graph models only.</em> A list
+of tensors representing the output to the model graph.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>internal_tensor_dict</code></td>
+<td><code></code></td>
+<td>
+<p><em>Optional, for use with TensorFlow 1 graph models only.</em> A
 dictionary mapping user-selected layer names to the internal
 tensors in the model graph that the user would like to expose.
 This is provided to give more human-readable names to the layers
 if desired. Internal tensors can also be accessed via the name
-given to them by tensorflow.</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>default_feed_dict</code></td>
-        <td><code></code></td>
-        <td><p><em>Optional, for use with TensorFlow 1 graph models only.</em> A
+given to them by tensorflow.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>default_feed_dict</code></td>
+<td><code></code></td>
+<td>
+<p><em>Optional, for use with TensorFlow 1 graph models only.</em> A
 dictionary of default values to give to tensors in the model
-graph.</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>session</code></td>
-        <td><code></code></td>
-        <td><p><em>Optional, for use with TensorFlow 1 graph models only.</em> A 
+graph.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>session</code></td>
+<td><code></code></td>
+<td>
+<p><em>Optional, for use with TensorFlow 1 graph models only.</em> A 
 <code>tf.Session</code> object to run the model graph in. If <code>None</code>, a new
-temporary session will be generated every time the model is run.</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>backend</code></td>
-        <td><code></code></td>
-        <td><p><em>Optional, for forcing a specific backend.</em> String values recognized
-are pytorch, tensorflow, keras, or tf.keras.</p></td>
-        <td><code>None</code></td>
-      </tr>
-  </tbody>
+temporary session will be generated every time the model is run.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>backend</code></td>
+<td><code></code></td>
+<td>
+<p><em>Optional, for forcing a specific backend.</em> String values recognized
+are pytorch, tensorflow, keras, or tf.keras.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
 </table>
-        <details class="quote">
-          <summary>Source code in <code>trulens/nn/models/__init__.py</code></summary>
-          <div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">get_model_wrapper</span><span class="p">(</span>
+<details class="quote">
+<summary>Source code in <code>trulens/nn/models/__init__.py</code></summary>
+<div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="nf">get_model_wrapper</span><span class="p">(</span>
         <span class="n">model</span><span class="p">,</span>
         <span class="n">logit_layer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">replace_softmax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -561,7 +377,7 @@ are pytorch, tensorflow, keras, or tf.keras.</p></td>
         <span class="n">default_feed_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">backend</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">"""</span>
 <span class="sd">    Returns a ModelWrapper implementation that exposes the components needed for computing attributions.</span>
 
 <span class="sd">    Parameters:</span>
@@ -577,7 +393,7 @@ are pytorch, tensorflow, keras, or tf.keras.</p></td>
 <span class="sd">        replace_softmax:</span>
 <span class="sd">            _Supported for Keras models only._ If true, the activation</span>
 <span class="sd">            function in the softmax layer (specified by `softmax_layer`) </span>
-<span class="sd">            will be changed to a `&#39;linear&#39;` activation. </span>
+<span class="sd">            will be changed to a `'linear'` activation. </span>
 
 <span class="sd">        softmax_layer:</span>
 <span class="sd">            _Supported for Keras models only._ Specifies the layer that</span>
@@ -629,30 +445,28 @@ are pytorch, tensorflow, keras, or tf.keras.</p></td>
 <span class="sd">        backend:</span>
 <span class="sd">            _Optional, for forcing a specific backend._ String values recognized</span>
 <span class="sd">            are pytorch, tensorflow, keras, or tf.keras.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># get existing backend</span>
     <span class="n">B</span> <span class="o">=</span> <span class="n">get_backend</span><span class="p">(</span><span class="n">suppress_warnings</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">backend</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">backend</span> <span class="o">=</span> <span class="n">discern_backend</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
         <span class="n">tru_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Detected </span><span class="si">{}</span><span class="s2"> backend for </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="s2">"Detected </span><span class="si">{}</span><span class="s2"> backend for </span><span class="si">{}</span><span class="s2">."</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                 <span class="n">backend</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">backend</span> <span class="o">=</span> <span class="n">Backend</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
-
     <span class="k">if</span> <span class="n">B</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">backend</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Backend</span><span class="o">.</span><span class="n">UNKNOWN</span> <span class="ow">and</span> <span class="n">B</span><span class="o">.</span><span class="n">backend</span> <span class="o">!=</span> <span class="n">backend</span><span class="p">):</span>
         <span class="n">tru_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Changing backend from </span><span class="si">{}</span><span class="s2"> to </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="s2">"Changing backend from </span><span class="si">{}</span><span class="s2"> to </span><span class="si">{}</span><span class="s2">."</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                 <span class="kc">None</span> <span class="k">if</span> <span class="n">B</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">B</span><span class="o">.</span><span class="n">backend</span><span class="p">,</span> <span class="n">backend</span><span class="p">))</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;TRULENS_BACKEND&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'TRULENS_BACKEND'</span><span class="p">]</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="n">B</span> <span class="o">=</span> <span class="n">get_backend</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">tru_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using backend </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">backend</span><span class="p">))</span>
+        <span class="n">tru_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Using backend </span><span class="si">{}</span><span class="s2">."</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">backend</span><span class="p">))</span>
     <span class="n">tru_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="s2">&quot;If this seems incorrect, you can force the correct backend by passing the `backend` parameter directly into your get_model_wrapper call.&quot;</span>
+        <span class="s2">"If this seems incorrect, you can force the correct backend by passing the `backend` parameter directly into your get_model_wrapper call."</span>
     <span class="p">)</span>
-
     <span class="k">if</span> <span class="n">B</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">is_keras_derivative</span><span class="p">():</span>
         <span class="kn">from</span> <span class="nn">trulens.nn.models.keras</span> <span class="kn">import</span> <span class="n">KerasModelWrapper</span>
         <span class="k">return</span> <span class="n">KerasModelWrapper</span><span class="p">(</span>
@@ -665,18 +479,16 @@ are pytorch, tensorflow, keras, or tf.keras.</p></td>
     <span class="k">elif</span> <span class="n">B</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="n">Backend</span><span class="o">.</span><span class="n">PYTORCH</span><span class="p">:</span>
         <span class="kn">from</span> <span class="nn">trulens.nn.models.pytorch</span> <span class="kn">import</span> <span class="n">PytorchModelWrapper</span>
         <span class="k">if</span> <span class="n">input_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">tru_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;pytorch model must pass parameter: input_shape&#39;</span><span class="p">)</span>
+            <span class="n">tru_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">'pytorch model must pass parameter: input_shape'</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">PytorchModelWrapper</span><span class="p">(</span>
             <span class="n">model</span><span class="p">,</span>
             <span class="n">input_shape</span><span class="p">,</span>
             <span class="n">input_dtype</span><span class="o">=</span><span class="n">input_dtype</span><span class="p">,</span>
             <span class="n">logit_layer</span><span class="o">=</span><span class="n">logit_layer</span><span class="p">,</span>
             <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
-
     <span class="k">elif</span> <span class="n">B</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="n">Backend</span><span class="o">.</span><span class="n">TENSORFLOW</span><span class="p">:</span>
         <span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
-
-        <span class="k">if</span> <span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'2'</span><span class="p">):</span>
             <span class="kn">from</span> <span class="nn">trulens.nn.models.tensorflow_v2</span> <span class="kn">import</span> <span class="n">Tensorflow2ModelWrapper</span>
             <span class="k">return</span> <span class="n">Tensorflow2ModelWrapper</span><span class="p">(</span>
                 <span class="n">model</span><span class="p">,</span>
@@ -688,112 +500,87 @@ are pytorch, tensorflow, keras, or tf.keras.</p></td>
             <span class="kn">from</span> <span class="nn">trulens.nn.models.tensorflow_v1</span> <span class="kn">import</span> <span class="n">TensorflowModelWrapper</span>
             <span class="k">if</span> <span class="n">input_tensors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">tru_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                    <span class="s1">&#39;tensorflow1 model must pass parameter: input_tensors&#39;</span><span class="p">)</span>
+                    <span class="s1">'tensorflow1 model must pass parameter: input_tensors'</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">output_tensors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">tru_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                    <span class="s1">&#39;tensorflow1 model must pass parameter: output_tensors&#39;</span><span class="p">)</span>
+                    <span class="s1">'tensorflow1 model must pass parameter: output_tensors'</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">TensorflowModelWrapper</span><span class="p">(</span>
                 <span class="n">model</span><span class="p">,</span>
                 <span class="n">input_tensors</span><span class="p">,</span>
                 <span class="n">output_tensors</span><span class="p">,</span>
                 <span class="n">internal_tensor_dict</span><span class="o">=</span><span class="n">internal_tensor_dict</span><span class="p">,</span>
                 <span class="n">session</span><span class="o">=</span><span class="n">session</span><span class="p">)</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-  </div>
-                
-              
-              
-                
-
-
-              
-            </article>
-          </div>
-        </div>
-      </main>
-      
-        
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div>
+</article>
+</div>
+</div>
+</main>
 <footer class="md-footer">
-  
-    <nav class="md-footer__inner md-grid" aria-label="Footer">
-      
-        <a href="../attribution/" class="md-footer__link md-footer__link--prev" rel="prev">
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-          </div>
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              Attribution
-            </div>
-          </div>
-        </a>
-      
-      
-        <a href="../slices/" class="md-footer__link md-footer__link--next" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              Slices
-            </div>
-          </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-          </div>
-        </a>
-      
-    </nav>
-  
-  <div class="md-footer-meta md-typeset">
-    <div class="md-footer-meta__inner md-grid">
-      <div class="md-footer-copyright">
+<div class="md-footer-nav">
+<nav aria-label="Footer" class="md-footer-nav__inner md-grid">
+<a class="md-footer-nav__link md-footer-nav__link--prev" href="../attribution/" rel="prev" title="Attribution">
+<div class="md-footer-nav__button md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</div>
+<div class="md-footer-nav__title">
+<div class="md-ellipsis">
+<span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Attribution
+              </div>
+</div>
+</a>
+<a class="md-footer-nav__link md-footer-nav__link--next" href="../slices/" rel="next" title="Slices">
+<div class="md-footer-nav__title">
+<div class="md-ellipsis">
+<span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Slices
+              </div>
+</div>
+<div class="md-footer-nav__button md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"></path></svg>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
         
         Made with
-        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+        <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
           Material for MkDocs
         </a>
-        
-      </div>
-      
-    </div>
-  </div>
+</div>
+</div>
+</div>
 </footer>
-      
-    </div>
-    <div class="md-dialog" data-md-component="dialog">
-      <div class="md-dialog__inner md-typeset"></div>
-    </div>
-    <script id="__config" type="application/json">{"base": "../..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../../assets/javascripts/workers/search.fb4a9340.min.js", "version": null}</script>
-    
-    
-      <script src="../../assets/javascripts/bundle.a1c7c35e.min.js"></script>
-      
-        <script src="../../javascript/config.js"></script>
-      
-        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-      
-        <script src="../../javascript/tex-mml-chtml-3.0.0.js"></script>
-      
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
-      
-    
-  </body>
+</div>
+<script src="../../assets/javascripts/vendor.d1f5a259.min.js"></script>
+<script src="../../assets/javascripts/bundle.d5fec882.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+<script>
+        app = initialize({
+          base: "../..",
+          features: [],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.fae956e7.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+<script src="../../javascript/config.js"></script>
+<script src="../../javascript/app.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src="../../javascript/tex-mml-chtml-3.0.0.js"></script>
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</body>
 </html>
