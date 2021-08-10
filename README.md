@@ -1,8 +1,14 @@
 # Welcome to TruLens!
 
-Library containing attribution and interpretation methods for deep nets.
+![TruLens](https://www.trulens.org/Assets/image/Neural_Network_Explainability.png)
 
-[Documentation](https://truera.github.io/trulens/)
+
+TruLens is a cross-framework library for deep learning explainability. It provides a uniform abstraction over a number of different frameworks. It provides a uniform abstraction layer over TensorFlow, Pytorch, and Keras and allows input and internal explanations.
+
+[This paper](https://arxiv.org/abs/1802.03788) is an introduction to the theoretical foundations of the library. We’ve been using TruLens at TruEra across a wide range of real-world use cases to explain deep learning models ranging from time-series RNNs to image and NLP models, and wanted to share the awesomeness with the world.
+
+
+[Documentation](https://www.trulens.org/)
 
 # Quick Usage
 To quickly play around with the TruLens library, check out the following CoLab notebooks:

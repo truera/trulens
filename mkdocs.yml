@@ -43,19 +43,22 @@ plugins:
               - "^__call__$"  # and __call__ methods
       watch:
         - trulens
+  - search
 
 
 theme:
   name: material
+  custom_dir: docs/overrides/
   palette:
-    scheme: truera
-  font:
-    text: Inter
+    scheme: trulens
+  #font:
+  #  text: Source Sans Pro
   favicon: img/favicon.ico
-  logo: img/logo.png
+  logo: img/squid.png
 
 nav:
-  - Welcome to TruLens!: index.md
+  - Home: index.md
+  - Welcome to TruLens!: welcome.md
   - Installation: install.md
   - Quickstart: quickstart.md
   - API Reference: 
@@ -68,12 +71,14 @@ nav:
 
 extra_css:
   - stylesheets/extra.css
+  - stylesheets/cover.css
 
 # https://squidfunk.github.io/mkdocs-material/reference/mathjax/
 # Polyfill provides backcompat for JS. We need to import it before
 # importing MathJax.
 extra_javascript:
   - javascript/config.js
+  - javascript/app.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - javascript/tex-mml-chtml-3.0.0.js
   - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
