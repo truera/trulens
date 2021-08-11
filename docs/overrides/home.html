@@ -167,8 +167,8 @@
                     <p>
                         TruLens is a cross-framework library for deep learning explainability.
                         It provides a uniform abstraction over a number of different neural network frameworks,
-                        including TensorFlow (versions 1.14+ and 2.4.1+), Pytorch (1.2+), and Keras (2.3+), and supports
-                        explanations of both model inputs and internals.
+                        including TensorFlow (versions 1.14+ and 2.4.1+), Pytorch (1.2+), and Keras (2.3+). TruLens also
+                        supports explanations of both model inputs and internals.
                     </p>
                     <p>
                         <a href="https://arxiv.org/abs/1802.03788" target="_blank">This paper</a>
@@ -201,13 +201,11 @@
                     <div class="box">
                         <h3>Faithful to actual model behavior</h3>
                         <p>
-                            A central tenet of our approach is that a good explanation is one that faithfully captures
-                            what the model actually does-- not one that lines up with preconceived ideas of how the
-                            mode ought to behave. Put differently, a beautiful visualization that makes intuitive sense
-                            to a user, but does not reflect the model’s true behavior, is almost never a useful
-                            resource. The foundations of TruLens are rooted in this principle, and backed by
-                            mathematical axioms to
-                            ensure that its attributions portray the model’s behavior faithfully. For more on this, have
+                            We believe that a good explanation must faithfully capture
+                            what the model actually does, instead of reinforcing preconceived ideas or intuition of how
+                            the model ought to behave. The foundations of TruLens are rooted in this principle, and
+                            backed by mathematical axioms to ensure that its attributions portray the model’s behavior
+                            faithfully. For more on this, have
                             a look at the <a href="https://arxiv.org/pdf/1802.03788.pdf" target="_blank"> conference
                                 paper</a> that introduced our approach to internal attribution.
                         </p>
@@ -233,11 +231,13 @@
                 </p>
                 <ul class="grid-columns-2 custom-list">
                     <div>
+                        <p class="strong mt-xl text-xl color-primary">A variety of models.</p>
                         <li>Image classification and recognition models, such as object detection and recognition</li>
                         <li>Natural language processing models, such as machine translation or text summarization</li>
                         <li>Time-series models, such as recurrent neural networks</li>
                     </div>
                     <div>
+                        <p class="strong mt-xl text-xl color-primary">A variety of analyses.</p>
                         <li>Identify the difference in reasoning the model is using for class A over class B
                         </li>
                         <li>Examine how explanations change with different baselines or segments of the population
@@ -272,8 +272,7 @@
                             </svg>
                         </a>
                         <p class="strong font-primary">Download</p>
-                        <span>Get started with <code>pip install trulens</code>, and check out these <a
-                                href="/welcome/#quick-usage" target="_blank">intro notebooks</a>.</span>
+                        <span>Get started with <code>pip install trulens</code>.</span>
                     </div>
                     <div class="box__shadow">
                         <a href="https://truera.github.io/trulens/" target="_blank" class="btn__shadow">
@@ -285,7 +284,8 @@
                             </svg>
                         </a>
                         <p class="strong font-primary">Documentation</p>
-                        <span>Read about the library <a href="/welcome/" target="_blank">here</a>.</span>
+                        <span>Read about the library <a href="/welcome/" target="_blank">here</a>, and play around with
+                            our <a href="/welcome/#quick-usage" target="_blank">intro notebooks</a>.</span>
                     </div>
                     <div class="box__shadow">
                         <a href="https://join.slack.com/t/trulens/signup" target="_blank" class="btn__shadow">
@@ -306,10 +306,9 @@
                             </svg>
                         </a>
                         <p class="strong font-primary">Community</p>
-                        <span>Come <a href="https://join.slack.com/t/trulens/signup" target="_blank">join the TruLens
+                        <span><a href="https://join.slack.com/t/trulens/signup" target="_blank">Join the TruLens
                                 community</a> on Slack, and check out our blog posts on <a
                                 href="https://medium.com/trulens" target="_blank">Medium</a>.</span>
-                        <span>Check </span>
                     </div>
                 </div>
                 <div>
@@ -368,9 +367,9 @@
                 <div class="container__wrapper mt-xxl">
                     <p class="strong color-primary text-xl">Why a colossal squid?</p>
                     <p class="mt-xl">
-                        The colossal squid’s eyeball is about the size of a soccer ball, making it the largest one of
-                        any living creature. In addition, did you know that the colossal squid has light organs in its
-                        eyeballs? That means that they have automatic headlights when they look around. We're hoping to
+                        The colossal squid’s eyeball is about the size of a soccer ball, making it the largest eyeball
+                        of any living creature. In addition, did you know that its eyeball contains light organs? That
+                        means that colossal squids have automatic headlights when looking around. We're hoping to
                         bring similar guidance to model developers when creating, introspecting, and debugging neural
                         networks.
                         Read more about the <a
