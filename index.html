@@ -30,11 +30,11 @@
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-VE9D0QFFKD"></script>
 <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-VE9D0QFFKD');
-        </script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-VE9D0QFFKD');
+    </script>
 </head>
 <body>
 <div class="page">
@@ -64,10 +64,18 @@
 </svg>
 </a>
 <ul class="nav__items">
-<a href="https://blog.trulens.org/"><li>Blog</li></a>
-<a href="https://pypi.org/project/trulens/" target="_blank"><li>Install</li></a>
-<a href="https://github.com/truera/trulens" target="_blank"><li>GitHub</li></a>
-<a href="/welcome/"><li>Documentation</li></a>
+<a href="https://blog.trulens.org/">
+<li>Blog</li>
+</a>
+<a href="https://pypi.org/project/trulens/" target="_blank">
+<li>Install</li>
+</a>
+<a href="https://github.com/truera/trulens" target="_blank">
+<li>GitHub</li>
+</a>
+<a href="/welcome/">
+<li>Documentation</li>
+</a>
 <a class="header__btn d-if fd-r ai-c hide-desktop mt-xxl" href="https://pypi.org/project/trulens/" target="_blank">
 <svg fill="none" height="24" viewbox="0 0 20 24" width="20" xmlns="http://www.w3.org/2000/svg">
 <path d="M14.2857 8.47059H20L10 18.3529L0 8.47059H5.71429V0H14.2857V8.47059Z" fill="#0A2C37"></path>
@@ -88,10 +96,10 @@
 </nav>
 <header class="header container">
 <h1>
-                        TruLens:<br/>
-                        Explainability for<br/>
-                        Neural Networks
-                    </h1>
+                    TruLens:<br/>
+                    Explainability for<br/>
+                    Neural Networks
+                </h1>
 <a class="header__btn d-if fd-r ai-c" href="https://pypi.org/project/trulens/" target="_blank">
 <svg fill="none" height="24" viewbox="0 0 20 24" width="20" xmlns="http://www.w3.org/2000/svg">
 <path d="M14.2857 8.47059H20L10 18.3529L0 8.47059H5.71429V0H14.2857V8.47059Z" fill="#0A2C37"></path>
@@ -114,18 +122,18 @@
 <h2>Introduction to TruLens</h2>
 <div class="grid-columns-2">
 <p>
-                            TruLens is a cross-framework library for deep learning explainability. 
-                            It provides a uniform abstraction over a number of different frameworks. 
-                            It provides a uniform abstraction layer over TensorFlow (versions 1.14+ and 2.4.1+), 
-                            Pytorch (1.2+), and Keras (2.3+) and allows input and internal explanations. 
-                        </p>
+                        TruLens is a cross-framework library for deep learning explainability.
+                        It provides a uniform abstraction over a number of different neural network frameworks,
+                        including TensorFlow (versions 1.14+ and 2.4.1+), Pytorch (1.2+), and Keras (2.3+). TruLens also
+                        supports explanations of both model inputs and internals.
+                    </p>
 <p>
-<a href="https://arxiv.org/abs/1802.03788" target="_blank">This paper</a> 
-                            is an introduction to the theoretical foundations of the library. 
-                            We’ve been using TruLens at TruEra across a wide range of real-world use cases 
-                            to explain deep learning models ranging from time-series RNNs to image and NLP models, 
-                            and wanted to share the awesomeness with the world.
-                        </p>
+<a href="https://arxiv.org/abs/1802.03788" target="_blank">This paper</a>
+                        is an introduction to the theoretical foundations of the library.
+                        At TruEra, We’ve been using TruLens to explain deep learning models across a wide range of
+                        real-world use cases, from time-series RNNs to image and NLP models. We released TruLens to
+                        share its awesomeness with the world!
+                    </p>
 </div>
 </section>
 </div>
@@ -133,26 +141,38 @@
 <section class="section container">
 <h2>Why use TruLens?</h2>
 <p class="subtitle mb-xxl">Universal, gradient-based explainability, <br/>
-                        built on a solid foundation</p>
+                    built on a solid foundation</p>
 <div class="grid-columns-3">
 <div class="box">
-<h3>Usable with Pytorch or TensorFlow</h3>
+<h3>Compatible with Pytorch and TensorFlow</h3>
 <p>
-                                Every framework does gradients differently. We built TruLens with the goal of providing a consistent, well-documented, and flexible set of primitives across popular backends for deep learning. At present, TruLens is compatible with models built in TensorFlow (versions 1.14+ and 2.4.1+versions) and Pytorch (1.2+) and Keras (2.3+). We also welcome contributions from the community, and hope to incorporate new features and capabilities from users!                       
-                            </p>
+                            Every framework handles gradients differently. We built TruLens with the goal of providing a
+                            consistent, well-documented, and flexible set of primitives across popular backends for deep
+                            learning. At present, TruLens is compatible with models built in TensorFlow (versions 1.14+
+                            and 2.4.1+), Pytorch (1.2+) and Keras (2.3+). We welcome contributions from the community,
+                            and hope to incorporate new features and capabilities from users!
+                        </p>
 </div>
 <div class="box">
 <h3>Faithful to actual model behavior</h3>
 <p>
-                                A central tenet of our approach is that a good explanation is one that faithfully captures what the model actually does--not one that lines up with preconceived ideas of how the model ought to behave. Put differently, a beautiful visualization that makes intuitive sense to a user, but does not reflect the model’s true behavior, is almost never a useful resource. The foundations of TruLens are rooted in this principle, and backed by mathematical axioms to ensure that its attributions portray the model’s behavior faithfully. For more on this, have a look at the 
-                                <a href="https://arxiv.org/pdf/1802.03788.pdf" target="_blank"> conference paper</a> that introduced our approach to internal attribution.
-                            </p>
+                            We believe that a good explanation must faithfully capture
+                            what the model actually does, instead of reinforcing preconceived ideas or intuition of how
+                            the model ought to behave. The foundations of TruLens are rooted in this principle, and
+                            backed by mathematical axioms to ensure that its attributions portray the model’s behavior
+                            faithfully. For more on this, have
+                            a look at the <a href="https://arxiv.org/pdf/1802.03788.pdf" target="_blank"> conference
+                                paper</a> that introduced our approach to internal attribution.
+                        </p>
 </div>
 <div class="box">
-<h3>Leverages a broad range of explainability approaches - easily</h3>
+<h3>Support and unify a broad range of explainability approaches</h3>
 <p>
-                                Using the TruLens interface, it is easy to build a variety of different explainability approaches with a few lines of code including: IntegratedGradients, GradCAM, etc. Beyond explainability, TruLens has been used to support approaches to detect ML adversarial attacks, ensure robustness, and validate model behavior. 
-                            </p>
+                            Using the TruLens interface, it is easy to apply a variety of different explainability
+                            techniques (e.g. IntegratedGradients, GradCAM, and more) with only a few lines of code.
+                            Beyond explainability, TruLens has been used in both academia and industry to help detect
+                            adversarial attacks on models, ensure model robustness, and validate model behavior.
+                        </p>
 </div>
 </div>
 </section>
@@ -161,17 +181,23 @@
 <section class="section container" id="UseCases">
 <h2>How would you use TruLens?</h2>
 <p class="subtitle mb-xxl">
-                        TruLens was developed for the following types of situations
-                    </p>
+                    TruLens was developed with the following use cases in mind:
+                </p>
 <ul class="grid-columns-2 custom-list">
 <div>
-<li>Image recognition models, such as facial recognition or object detection</li>
-<li>Image classification models</li>
-<li>Machine translation or text summarization</li>
+<p class="strong mt-xl text-xl color-primary">A variety of models.</p>
+<li>Image classification and recognition models, such as object detection and recognition</li>
+<li>Natural language processing models, such as machine translation or text summarization</li>
+<li>Time-series models, such as recurrent neural networks</li>
 </div>
 <div>
-<li>You need to identify the difference in reasoning the model is using for class A over class B</li>
-<li>You are conducting academic research on constructing gradient based explanations such as baseline sampling research or explanations over specific segments</li>
+<p class="strong mt-xl text-xl color-primary">A variety of analyses.</p>
+<li>Identify the difference in reasoning the model is using for class A over class B
+                        </li>
+<li>Examine how explanations change with different baselines or segments of the population
+                        </li>
+<li>Compare and contrast results from varying explanation techniques
+                        </li>
 </div>
 </ul>
 </section>
@@ -181,8 +207,9 @@
 <div class="get-started">
 <h2>Get started using TruLens today</h2>
 <p class="subtitle">
-                            You are critical to the ongoing success of TruLens. We encourage you to get started and provide ample feedback, so that TruLens improves over time.
-                        </p>
+                        You are critical to the ongoing success of TruLens. We encourage you to get started and provide
+                        ample feedback, so that TruLens improves over time.
+                    </p>
 </div>
 <div class="grid-columns-3 mt-xxl mb-xxl ai-fs">
 <div class="box__shadow">
@@ -193,7 +220,7 @@
 </svg>
 </a>
 <p class="strong font-primary">Download</p>
-<span>Get started with pip install trulens. Check out these <a href="/welcome/#quick-usage" target="_blank">intro notebooks</a>.</span>
+<span>Get started with <code>pip install trulens</code>.</span>
 </div>
 <div class="box__shadow">
 <a class="btn__shadow" href="https://truera.github.io/trulens/" target="_blank">
@@ -204,7 +231,8 @@
 </svg>
 </a>
 <p class="strong font-primary">Documentation</p>
-<span>Read about the library <a href="/welcome/" target="_blank">here</a>.</span>
+<span>Read about the library <a href="/welcome/" target="_blank">here</a>, and play around with
+                            our <a href="/welcome/#quick-usage" target="_blank">intro notebooks</a>.</span>
 </div>
 <div class="box__shadow">
 <a class="btn__shadow" href="https://join.slack.com/t/trulens/signup" target="_blank">
@@ -216,8 +244,8 @@
 </svg>
 </a>
 <p class="strong font-primary">Community</p>
-<span>Come <a href="https://join.slack.com/t/trulens/signup" target="_blank">join the trulens community</a> on slack.</span>
-<span>Check out TruLens blog posts on <a href="https://medium.com/trulens" target="_blank">Medium</a>.</span>
+<span><a href="https://join.slack.com/t/trulens/signup" target="_blank">Join the TruLens
+                                community</a> on Slack, and check out our blog posts on <a href="https://medium.com/trulens" target="_blank">Medium</a>.</span>
 </div>
 </div>
 <div>
@@ -225,15 +253,17 @@
 <div class="grid-columns-2">
 <div>
 <p>
-                                    TruLens is a free, open source solution that helps to explain neural network based machine learning models. 
-                                    It relies upon an active community of developers to thrive and improve. The core conceptual ideas behind 
-                                    TruLens were first developed from academic research at Carnegie Mellon University. 
-                                </p>
+                                TruLens is a free, open source solution that helps explain neural networks.
+                                The core conceptual ideas behind TruLens were first developed from academic research at
+                                Carnegie Mellon University, but TruLens relies upon an active community of developers to
+                                thrive and improve.
+                            </p>
 <p class="mt-lg">
-                                    TruEra is an AI Quality solutions company that helps organizations better explain, analyse, and improve their 
-                                    machine learning models. TruEra actively oversees the distribution of TruLens and helps to organize the 
-                                    community that actively shapes the development of the software. TruLens is an open source community project, not a TruEra product.
-                                </p>
+                                TruEra is an AI Quality solutions company that helps organizations better explain,
+                                analyze, and improve their machine learning models. Although TruEra both actively
+                                oversees the distribution of TruLens and helps organize the community around it, TruLens
+                                remains an open-source community project, not a TruEra product.
+                            </p>
 </div>
 <div>
 <svg fill="none" height="43" viewbox="0 0 165 43" width="165" xmlns="http://www.w3.org/2000/svg">
@@ -248,22 +278,27 @@
 </svg>
 <p class="strong mt-xl text-xl color-primary">About the TruEra Research Team</p>
 <p class="mt-lg">
-                                    Members of the TruEra Research Team originally developed TruLens while they were conducting research at Carnegie Mellon University. 
-                                    They are passionate about the importance of explainability in machine learning and are involved in the development of the TruLens community.
-                                </p>
+                                Members of the TruEra Research Team originally developed TruLens while they were
+                                conducting research at Carnegie Mellon University.
+                                They are passionate about the importance of explainability in machine learning and are
+                                involved in the development of the TruLens community.
+                            </p>
 <p class="mt-lg">
-                                    You can <a href="" target="_blank">learn more about TruEra Research here</a>.
-                                </p>
+                                You can <a href="" target="_blank">learn more about TruEra Research here</a>.
+                            </p>
 </div>
 </div>
 </div>
 <div class="container__wrapper mt-xxl">
 <p class="strong color-primary text-xl">Why a colossal squid?</p>
 <p class="mt-xl">
-                            The colossal squid has the largest eyeball of any living creature, about the size of a soccer ball. 
-                            And did you know that the colossal squid has light organs in its eyeballs? That means they have their own headlights. 
-                            Read more about the <a href="https://www.tepapa.govt.nz/discover-collections/read-watch-play/science/anatomy-colossal-squid/eyes-colossal-squid" target="_blank">amazing eyes of the colossal squid</a>.
-                        </p>
+                        The colossal squid’s eyeball is about the size of a soccer ball, making it the largest eyeball
+                        of any living creature. In addition, did you know that its eyeball contains light organs? That
+                        means that colossal squids have automatic headlights when looking around. We're hoping to
+                        bring similar guidance to model developers when creating, introspecting, and debugging neural
+                        networks.
+                        Read more about the <a href="https://www.tepapa.govt.nz/discover-collections/read-watch-play/science/anatomy-colossal-squid/eyes-colossal-squid" target="_blank">amazing eyes of the colossal squid</a>.
+                    </p>
 </div>
 </section>
 <div class="bottom-img">
