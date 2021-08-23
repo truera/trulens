@@ -440,6 +440,9 @@ def is_tensor(x):
     ----------
     x : backend.Tensor or other
     """
-    if isinstance(x, Tensor) or isinstance(x, TensorVar):
-        return True
-    return False
+    try:
+        is_keras_tensor = K.is_keras_tensor(x)
+    except:
+        is_keras_tensor = False
+
+    return isinstance(x, Tensor) or isinstance(x, TensorVar) or is_keras_tensor
