@@ -429,4 +429,4 @@ def is_tensor(x):
     ----------
     x : backend.Tensor or other
     """
-    return isinstance(x, Tensor):
+    return isinstance(x, Tensor)
