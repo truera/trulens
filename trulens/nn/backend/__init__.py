@@ -3,6 +3,7 @@ from enum import Enum
 import traceback
 import importlib
 from trulens.utils import tru_logger
+
 # Do not use directly, use get_backend
 _TRULENS_BACKEND_IMPL = None
 
@@ -29,7 +30,9 @@ class Backend(Enum):
             return Backend.UNKNOWN
 
     def is_keras_derivative(self):
-        return self.value == Backend.KERAS.value or self.value == Backend.TF_KERAS.value
+        return (
+        	self.value == Backend.KERAS.value or 
+        	self.value == Backend.TF_KERAS.value)
 
 
 def get_backend(suppress_warnings=False):
@@ -42,26 +45,30 @@ def get_backend(suppress_warnings=False):
         if _TRULENS_BACKEND == Backend.PYTORCH:
             _TRULENS_BACKEND_IMPL = importlib.import_module(
                 name='trulens.nn.backend.pytorch_backend.pytorch')
+
         elif _TRULENS_BACKEND.is_keras_derivative():
             _TRULENS_BACKEND_IMPL = importlib.import_module(
                 name='trulens.nn.backend.keras_backend.keras')
-            # KerasBackend has multiple backend implementations of the keras library,
-            # so reload should be called to refresh if backend changes between keras vs tf.keras
+            # KerasBackend has multiple backend implementations of the keras 
+            # library, so reload should be called to refresh if backend changes
+            # between keras vs tf.keras.
             if _TRULENS_BACKEND != _TRULENS_BACKEND_IMPL.backend:
                 importlib.reload(_TRULENS_BACKEND_IMPL)
+
         elif _TRULENS_BACKEND == Backend.TENSORFLOW:
             _TRULENS_BACKEND_IMPL = importlib.import_module(
                 name='trulens.nn.backend.tf_backend.tf')
+
         elif _TRULENS_BACKEND == Backend.UNKNOWN:
             if not suppress_warnings:
                 tru_logger.warn(
-                    'The current backend is unset or unknown. ' +
-                    'Trulens will attempt to use any previously loaded backends, but may cause problems. '
-                    +
-                    'Valid backends are `pytorch`, `tensorflow`, `keras`, and `tf.keras`. '
-                    +
-                    'You can manually set this with `os.environ[\'TRULENS_BACKEND\']=backend_str`. '
-                    + 'Current loaded backend is {}.'.format(
+                    'The current backend is unset or unknown. Trulens will '
+                    'attempt to use any previously loaded backends, but may '
+                    'cause problems. Valid backends are `pytorch`, '
+                    '`tensorflow`, `keras`, and `tf.keras`. You can manually '
+                    'set this with '
+                    '`os.environ[\'TRULENS_BACKEND\']=backend_str`. Current '
+                    'loaded backend is {}.'.format(
                         str(_TRULENS_BACKEND_IMPL)))
 
     except (ImportError, ModuleNotFoundError):
