@@ -84,7 +84,6 @@ def get_backend(suppress_warnings=False):
 _ALL_BACKEND_API_FUNCTIONS = [
     'dim_order',
     'channel_axis',
-    'Tensor',
     'floatX',
     'backend',
     'gradient',
