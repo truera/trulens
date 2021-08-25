@@ -9,7 +9,7 @@ import torch
 from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS, Backend
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
-floatX = np.float32
+floatX = torch.get_default_dtype()
 Tensor = torch.Tensor
 dim_order = 'channels_first'
 channel_axis = 1
@@ -75,8 +75,12 @@ def as_tensor(x, dtype=None, device=None):
     backend.Tensor
         Same contents as x
     """
+    if dtype is None and x.dtype.kind == 'f':
+        dtype = floatX
+
     if device is None:
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     return torch.tensor(x, dtype=dtype).to(device)
 
 
