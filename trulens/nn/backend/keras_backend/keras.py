@@ -74,7 +74,7 @@ def as_array(t, dtype=floatX):
     return K.get_value(t)
 
 
-def as_tensor(x, device=None):
+def as_tensor(x, dtype=None, device=None):
     """
     as_tensor Convert numpy array to tensor
 
@@ -89,7 +89,7 @@ def as_tensor(x, device=None):
     backend.Tensor
         Same contents as x
     """
-    return K.constant(x)
+    return K.constant(x, dtype=dtype)
 
 
 def int_shape(t):
