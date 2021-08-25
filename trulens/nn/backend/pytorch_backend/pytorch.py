@@ -10,7 +10,6 @@ from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS, Backend
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
 floatX = torch.get_default_dtype()
-np_floatX = 
 Tensor = torch.Tensor
 dim_order = 'channels_first'
 channel_axis = 1
