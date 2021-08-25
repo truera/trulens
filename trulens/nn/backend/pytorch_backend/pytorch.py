@@ -58,7 +58,7 @@ def as_array(t, dtype=floatX):
     return t.cpu().detach().numpy().astype(dtype)
 
 
-def as_tensor(x, dtype=torch.float32, device=None):
+def as_tensor(x, dtype=None, device=None):
     """
     as_tensor Convert numpy array to tensor
 
