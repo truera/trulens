@@ -9,7 +9,7 @@ import tensorflow as tf
 from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS, Backend
 __all__ = _ALL_BACKEND_API_FUNCTIONS + ['tf1']
 
-floatX = np.float32
+floatX = tf.keras.backend.floatx()
 Tensor = tf.Tensor
 dim_order = 'channels_last'
 channel_axis = 1 if dim_order == 'channels_first' else 3
@@ -81,6 +81,9 @@ def as_tensor(x, dtype=None, device=None):
     backend.Tensor
         Same contents as x
     """
+    if dtype is None and x.dtype.kind == 'f':
+        dtype = floatX
+
     return tf.constant(x, dtype=dtype)
 
 
