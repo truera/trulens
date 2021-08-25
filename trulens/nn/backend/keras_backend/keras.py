@@ -89,6 +89,9 @@ def as_tensor(x, dtype=None, device=None):
     backend.Tensor
         Same contents as x
     """
+    if dtype is None and x.dtype.kind == 'f':
+        dtype = floatX
+
     return K.constant(x, dtype=dtype)
 
 
