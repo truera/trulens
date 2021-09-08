@@ -31,8 +31,8 @@ class Backend(Enum):
 
     def is_keras_derivative(self):
         return (
-        	self.value == Backend.KERAS.value or 
-        	self.value == Backend.TF_KERAS.value)
+            self.value == Backend.KERAS.value or
+            self.value == Backend.TF_KERAS.value)
 
 
 def get_backend(suppress_warnings=False):
@@ -49,7 +49,7 @@ def get_backend(suppress_warnings=False):
         elif _TRULENS_BACKEND.is_keras_derivative():
             _TRULENS_BACKEND_IMPL = importlib.import_module(
                 name='trulens.nn.backend.keras_backend.keras')
-            # KerasBackend has multiple backend implementations of the keras 
+            # KerasBackend has multiple backend implementations of the keras
             # library, so reload should be called to refresh if backend changes
             # between keras vs tf.keras.
             if _TRULENS_BACKEND != _TRULENS_BACKEND_IMPL.backend:
@@ -68,8 +68,7 @@ def get_backend(suppress_warnings=False):
                     '`tensorflow`, `keras`, and `tf.keras`. You can manually '
                     'set this with '
                     '`os.environ[\'TRULENS_BACKEND\']=backend_str`. Current '
-                    'loaded backend is {}.'.format(
-                        str(_TRULENS_BACKEND_IMPL)))
+                    'loaded backend is {}.'.format(str(_TRULENS_BACKEND_IMPL)))
 
     except (ImportError, ModuleNotFoundError):
         _TRULENS_BACKEND_IMPL = None
