@@ -29,14 +29,14 @@ def discern_backend(model):
         else:
             try:
                 import tensorflow as tf
-                # Graph objects are currently limited to TF1 and Keras backend 
+                # Graph objects are currently limited to TF1 and Keras backend
                 # implies keras backed with TF1 or Theano. TF2 Keras objects are
                 # handled by the TF2 backend.
                 if 'graph' in type_str:
                     return Backend.TENSORFLOW
 
-                if tf.__version__.startswith('2') and (
-                        'tensorflow' in type_str or 'keras' in type_str):
+                if tf.__version__.startswith('2') and ('tensorflow' in type_str
+                                                       or 'keras' in type_str):
                     return Backend.TENSORFLOW
 
                 # Note that in these cases, the TensorFlow version is 1.x.
@@ -48,11 +48,9 @@ def discern_backend(model):
                     return Backend.KERAS
 
             except (ModuleNotFoundError, ImportError):
+                # If tensorflow is not installed, the passed model should not be able to be tensorflow.
                 # Note: we can still use Keras without TensorFlow, if the
                 #   backend is Theano.
-                tru_logger.debug('Error importing tensorflow.')
-                tru_logger.debug(traceback.format_exc())
-
                 if 'keras' in type_str:
                     return Backend.KERAS
 
