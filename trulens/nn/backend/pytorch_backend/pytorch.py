@@ -57,8 +57,8 @@ def as_array(t, dtype=None):
         return t if dtype is None else t.astype(dtype)
 
     return (
-        t.cpu().detach().numpy() if dtype is None else 
-        t.cpu().detach().numpy().astype(dtype))
+        t.cpu().detach().numpy()
+        if dtype is None else t.cpu().detach().numpy().astype(dtype))
 
 
 def as_tensor(x, dtype=None, device=None):

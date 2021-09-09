@@ -14,8 +14,7 @@ def get_unit_test_for_filename(filename):
         with open(f'notebooks/{filename}') as f:
             nb = read(f, as_version=4)
             ExecutePreprocessor(
-                timeout=600,
-                kernel_name='python37').preprocess(nb, {})
+                timeout=600, kernel_name='python37').preprocess(nb, {})
 
     return test
 
