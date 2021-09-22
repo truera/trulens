@@ -1,0 +1,33 @@
+.box {
+    position: relative;
+    padding: var(--gap-xl) 0;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 50px;
+        height: 5px;
+        background-color: var(--color-primary);
+    }
+
+    &__shadow {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        max-width: 22.5rem;
+        text-align: center;
+
+        .strong {
+            color: var(--color-primary);
+            font-size: 1.375rem;
+            margin: 1rem 0;
+        }
+    }
+
+    &:last-of-type {
+        padding-bottom: 0;
+    }
+}
