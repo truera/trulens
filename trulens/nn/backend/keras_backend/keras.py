@@ -56,7 +56,7 @@ def gradient(scalar, wrt):
         return grads
 
 
-def as_array(t, dtype=floatX):
+def as_array(t, dtype=None):
     """
     as_array Convert tensor to numpy array
 
@@ -64,17 +64,17 @@ def as_array(t, dtype=floatX):
     ----------
     t : backend.Tensor
     dtype : string, optional
-        numpy datatype to return, by default floatX
+        numpy datatype to return, derived from `t` by default
 
     Returns
     -------
     np.array
         Same contents as t
     """
-    return K.get_value(t)
+    return K.get_value(t) if dtype is None else K.get_value(t).astype(dtype)
 
 
-def as_tensor(x, device=None):
+def as_tensor(x, dtype=None, device=None):
     """
     as_tensor Convert numpy array to tensor
 
@@ -89,7 +89,10 @@ def as_tensor(x, device=None):
     backend.Tensor
         Same contents as x
     """
-    return K.constant(x)
+    if dtype is None and x.dtype.kind == 'f':
+        dtype = floatX
+
+    return K.constant(x, dtype=dtype)
 
 
 def int_shape(t):
@@ -440,6 +443,9 @@ def is_tensor(x):
     ----------
     x : backend.Tensor or other
     """
-    if isinstance(x, Tensor) or isinstance(x, TensorVar):
-        return True
-    return False
+    try:
+        is_keras_tensor = K.is_keras_tensor(x)
+    except:
+        is_keras_tensor = False
+
+    return isinstance(x, Tensor) or isinstance(x, TensorVar) or is_keras_tensor

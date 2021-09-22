@@ -9,7 +9,7 @@ import tensorflow as tf
 from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS, Backend
 __all__ = _ALL_BACKEND_API_FUNCTIONS + ['tf1']
 
-floatX = np.float32
+floatX = tf.keras.backend.floatx()
 Tensor = tf.Tensor
 dim_order = 'channels_last'
 channel_axis = 1 if dim_order == 'channels_first' else 3
@@ -38,7 +38,7 @@ def gradient(scalar, wrt):
     return tf.gradients(scalar, wrt)
 
 
-def as_array(t, dtype=floatX):
+def as_array(t, dtype=None):
     """
     as_array Convert tensor to numpy array
 
@@ -46,7 +46,7 @@ def as_array(t, dtype=floatX):
     ----------
     t : backend.Tensor (tf.Constant)
     dtype : string, optional
-        numpy datatype to return, by default floatX
+        numpy datatype to return, derived from `t` by default
 
     Returns
     -------
@@ -54,19 +54,21 @@ def as_array(t, dtype=floatX):
         Same contents as t
     """
     if isinstance(t, np.ndarray):
-        return t
+        return t if dtype is None else t.astype(dtype)
 
     if tf1:
         with tf.Session().as_default():
-            return t.eval().astype(dtype)
+            return t.eval() if dtype is None else t.eval().astype(dtype)
+
     elif not tf.executing_eagerly():
         with tf.compat.v1.Session() as sess:
-            return t.eval()
+            return t.eval() if dtype is None else t.eval().astype(dtype)
+
     else:
-        return t.numpy()
+        return t.numpy() if dtype is None else t.numpy().astype(dtype)
 
 
-def as_tensor(x, device=None):
+def as_tensor(x, dtype=None, device=None):
     """
     as_tensor Convert numpy array to tensor
 
@@ -81,7 +83,10 @@ def as_tensor(x, device=None):
     backend.Tensor
         Same contents as x
     """
-    return tf.constant(x, dtype=floatX)
+    if dtype is None and x.dtype.kind == 'f':
+        dtype = floatX
+
+    return tf.constant(x, dtype=dtype)
 
 
 def int_shape(t):
@@ -429,6 +434,4 @@ def is_tensor(x):
     ----------
     x : backend.Tensor or other
     """
-    if isinstance(x, Tensor):
-        return True
-    return False
+    return isinstance(x, Tensor)
