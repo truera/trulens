@@ -250,7 +250,14 @@ class ModelWrapper(AbstractBaseClass):
             for i in range(len(y)):
                 ModelWrapper._nested_assign(x[i], y[i])
         else:
-            x[:] = y[:]
+            try:
+                x[:] = y[:]
+            except RuntimeError:
+                # torch > 1.7.1 does not allow view assignment.
+                # We want to keep grads. Using solution from https://discuss.pytorch.org/t/leaf-variable-was-used-in-an-inplace-operation/308/2
+                # Assign directly to Tensor with below.
+                x.data = x.data.clone()
+                x.data[:] = y[:]
 
     @staticmethod
     def _nested_apply(y, fn):

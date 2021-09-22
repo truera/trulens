@@ -9,7 +9,7 @@ import torch
 from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS, Backend
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
-floatX = np.float32
+floatX = torch.get_default_dtype()
 Tensor = torch.Tensor
 dim_order = 'channels_first'
 channel_axis = 1
@@ -38,7 +38,7 @@ def gradient(scalar, wrt):
     return list(grads)
 
 
-def as_array(t, dtype=floatX):
+def as_array(t, dtype=None):
     """
     as_array Convert tensor to numpy array
 
@@ -46,7 +46,7 @@ def as_array(t, dtype=floatX):
     ----------
     t : backend.Tensor
     dtype : string, optional
-        numpy datatype to return, by default floatX
+        numpy datatype to return, derived from `t` by default
 
     Returns
     -------
@@ -54,11 +54,14 @@ def as_array(t, dtype=floatX):
         Same contents as t
     """
     if isinstance(t, np.ndarray):
-        return t
-    return t.cpu().detach().numpy().astype(dtype)
+        return t if dtype is None else t.astype(dtype)
+
+    return (
+        t.cpu().detach().numpy()
+        if dtype is None else t.cpu().detach().numpy().astype(dtype))
 
 
-def as_tensor(x, dtype=torch.float32, device=None):
+def as_tensor(x, dtype=None, device=None):
     """
     as_tensor Convert numpy array to tensor
 
@@ -75,8 +78,12 @@ def as_tensor(x, dtype=torch.float32, device=None):
     backend.Tensor
         Same contents as x
     """
+    if dtype is None and x.dtype.kind == 'f':
+        dtype = floatX
+
     if device is None:
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     return torch.tensor(x, dtype=dtype).to(device)
 
 
