@@ -1,0 +1,43 @@
+@import "../Base/Mixins/responsive";
+
+.header__btn {
+    display: inline-block;
+    width: auto;
+    background-color: var(--color-accent);
+    border: none;
+    border-radius: 2px;
+    padding: 0.75rem 1.25rem;
+    font-weight: 700;
+    margin-bottom: 4.8rem;
+    line-height: 1.25rem;
+    
+    &--text {
+        border-left: 1px solid #5fa7a7;
+        margin-left: 1rem;
+        padding-left: 1rem;
+        text-align: left;
+        font-size: 0.938rem;
+        color: var(--color-primary);
+
+        .strong {
+            font-size: 1.125rem;
+        }
+    }
+
+    @include res-max-mobile {
+        margin: 0 auto 5rem auto;
+    }
+}
+
+.btn {
+    &__shadow {
+        display: grid;
+        place-items: center;
+        width: 6.25rem;
+        height: 6.25rem;
+        box-shadow: 0px 0px 30px 10px rgba(10, 44, 55, 0.15);
+        border-radius: 4px;
+        margin: 1rem;
+        transition: transform 0.25s ease;
+    }
+}
