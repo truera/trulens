@@ -3,6 +3,6 @@ nbconvert==6.0.7
 matplotlib
 scipy
 tensorflow
-torch==1.6.0
+torch
 torchvision
 ipywidgets
