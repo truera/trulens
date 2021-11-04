@@ -1,755 +1,477 @@
 
-<!doctype html>
-<html lang="en" class="no-js">
-  <head>
-    
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      
-      
-      
-      
-      <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.1.4">
-    
-    
-      
-        <title>Quantities - TruLens</title>
-      
-    
-    
-      <link rel="stylesheet" href="../../assets/stylesheets/main.bde7dde4.min.css">
-      
-        
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ef6f36e2.min.css">
-        
-      
-    
-    
-    
-      
-        
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
-        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
-      
-    
-    
-    
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
-    
-      <link rel="stylesheet" href="../../stylesheets/cover.css">
-    
-    
-      
-    
-    
-  </head>
-  
-  
-    
-    
-    
-    
-    
-    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="" data-md-color-accent="">
-  
-    
-    <script>function __prefix(e){return new URL("../..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
-    
-    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
-    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer"></label>
-    <div data-md-component="skip">
-      
-        
-        <a href="#quantities-of-interest" class="md-skip">
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<link href="../../img/favicon.ico" rel="shortcut icon"/>
+<meta content="mkdocs-1.1.2, mkdocs-material-5.5.7" name="generator"/>
+<title>Quantities - TruLens</title>
+<link href="../../assets/stylesheets/main.b8ac9624.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/palette.28f3ef9a.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&amp;display=fallback" rel="stylesheet"/>
+<style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+<link href="../../stylesheets/extra.css" rel="stylesheet"/>
+<link href="../../stylesheets/cover.css" rel="stylesheet"/>
+</head>
+<body data-md-color-accent="" data-md-color-primary="" data-md-color-scheme="trulens" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#quantities-of-interest">
           Skip to content
         </a>
-      
-    </div>
-    <div data-md-component="announce">
-      
-    </div>
-    
-      <header class="md-header" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="TruLens" class="md-header__button md-logo" aria-label="TruLens" data-md-component="logo">
-      
-  <img src="../../img/squid.png" alt="logo">
-
-    </a>
-    <label class="md-header__button md-icon" for="__drawer">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
-    </label>
-    <div class="md-header__title" data-md-component="header-title">
-      <div class="md-header__ellipsis">
-        <div class="md-header__topic">
-          <span class="md-ellipsis">
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header" data-md-component="header">
+<nav aria-label="Header" class="md-header-nav md-grid">
+<a aria-label="TruLens" class="md-header-nav__button md-logo" href="../.." title="TruLens">
+<img alt="logo" src="../../img/squid.png"/>
+</a>
+<label class="md-header-nav__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"></path></svg>
+</label>
+<div class="md-header-nav__title" data-md-component="header-title">
+<div class="md-header-nav__ellipsis">
+<span class="md-header-nav__topic md-ellipsis">
             TruLens
           </span>
-        </div>
-        <div class="md-header__topic" data-md-component="header-topic">
-          <span class="md-ellipsis">
+<span class="md-header-nav__topic md-ellipsis">
             
               Quantities
             
           </span>
-        </div>
-      </div>
-    </div>
-    
-    
-    
-      <label class="md-header__button md-icon" for="__search">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
-      </label>
-      
+</div>
+</div>
+<label class="md-header-nav__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"></path></svg>
+</label>
 <div class="md-search" data-md-component="search" role="dialog">
-  <label class="md-search__overlay" for="__search"></label>
-  <div class="md-search__inner" role="search">
-    <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
-      <label class="md-search__icon md-icon" for="__search">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-      </label>
-      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
-      </button>
-    </form>
-    <div class="md-search__output">
-      <div class="md-search__scrollwrap" data-md-scrollfix>
-        <div class="md-search-result" data-md-component="search-result">
-          <div class="md-search-result__meta">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" data-md-state="active" name="query" placeholder="Search" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</label>
+<button aria-label="Clear" class="md-search__icon md-icon" data-md-component="search-reset" tabindex="-1" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"></path></svg>
+</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
             Initializing search
           </div>
-          <ol class="md-search-result__list"></ol>
-        </div>
-      </div>
-    </div>
-  </div>
+<ol class="md-search-result__list"></ol>
 </div>
-    
-    
-  </nav>
+</div>
+</div>
+</div>
+</div>
+</nav>
 </header>
-    
-    <div class="md-container" data-md-component="container">
-      
-      
-        
-      
-      <main class="md-main" data-md-component="main">
-        <div class="md-main__inner md-grid">
-          
-            
-              
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
-  <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="TruLens" class="md-nav__button md-logo" aria-label="TruLens" data-md-component="logo">
-      
-  <img src="../../img/squid.png" alt="logo">
-
-    </a>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="TruLens" class="md-nav__button md-logo" href="../.." title="TruLens">
+<img alt="logo" src="../../img/squid.png"/>
+</a>
     TruLens
   </label>
-  
-  <ul class="md-nav__list" data-md-scrollfix>
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
-        Home
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../welcome/" class="md-nav__link">
-        Welcome to TruLens!
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../install/" class="md-nav__link">
-        Installation
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../quickstart/" class="md-nav__link">
-        Quickstart
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-    
-  
-  
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-      
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" checked>
-      
-      <label class="md-nav__link" for="__nav_5">
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../.." title="Home">
+      Home
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../welcome/" title="Welcome to TruLens!">
+      Welcome to TruLens!
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../install/" title="Installation">
+      Installation
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../quickstart/" title="Quickstart">
+      Quickstart
+    </a>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" data-md-toggle="nav-5" id="nav-5" type="checkbox"/>
+<label class="md-nav__link" for="nav-5">
+      API Reference
+      <span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"></path></svg>
+</span>
+</label>
+<nav aria-label="API Reference" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="nav-5">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
         API Reference
-        <span class="md-nav__icon md-icon"></span>
       </label>
-      <nav class="md-nav" aria-label="API Reference" data-md-level="1">
-        <label class="md-nav__title" for="__nav_5">
-          <span class="md-nav__icon md-icon"></span>
-          API Reference
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../attribution/" class="md-nav__link">
-        Attribution
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../model_wrappers/" class="md-nav__link">
-        Models
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../slices/" class="md-nav__link">
-        Slices
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-    
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Quantities
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../attribution/" title="Attribution">
+      Attribution
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../model_wrappers/" title="Models">
+      Models
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../slices/" title="Slices">
+      Slices
+    </a>
+</li>
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" data-md-toggle="toc" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
         Quantities
-      </a>
-      
-        
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
+        <span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"></path></svg>
+</span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./" title="Quantities">
+      Quantities
+    </a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities" class="md-nav__link">
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities">
     trulens.nn.quantities
   </a>
-  
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ClassQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ClassQoI">
     ClassQoI
   </a>
-  
-    <nav class="md-nav" aria-label="ClassQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ClassQoI.__init__" class="md-nav__link">
+<nav aria-label="ClassQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ClassQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ClassSeqQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ClassSeqQoI">
     ClassSeqQoI
   </a>
-  
-    <nav class="md-nav" aria-label="ClassSeqQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ClassSeqQoI.__init__" class="md-nav__link">
+<nav aria-label="ClassSeqQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ClassSeqQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ComparativeQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ComparativeQoI">
     ComparativeQoI
   </a>
-  
-    <nav class="md-nav" aria-label="ComparativeQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ComparativeQoI.__init__" class="md-nav__link">
+<nav aria-label="ComparativeQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ComparativeQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.InternalChannelQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.InternalChannelQoI">
     InternalChannelQoI
   </a>
-  
-    <nav class="md-nav" aria-label="InternalChannelQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.InternalChannelQoI.__init__" class="md-nav__link">
+<nav aria-label="InternalChannelQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.InternalChannelQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.LambdaQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.LambdaQoI">
     LambdaQoI
   </a>
-  
-    <nav class="md-nav" aria-label="LambdaQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.LambdaQoI.__init__" class="md-nav__link">
+<nav aria-label="LambdaQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.LambdaQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.MaxClassQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.MaxClassQoI">
     MaxClassQoI
   </a>
-  
-    <nav class="md-nav" aria-label="MaxClassQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.MaxClassQoI.__init__" class="md-nav__link">
+<nav aria-label="MaxClassQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.MaxClassQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.QoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.QoI">
     QoI
   </a>
-  
-    <nav class="md-nav" aria-label="QoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.QoI.__call__" class="md-nav__link">
+<nav aria-label="QoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.QoI.__call__">
     __call__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.QoiCutSupportError" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.QoiCutSupportError">
     QoiCutSupportError
   </a>
-  
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ThresholdQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ThresholdQoI">
     ThresholdQoI
   </a>
-  
-    <nav class="md-nav" aria-label="ThresholdQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ThresholdQoI.__init__" class="md-nav__link">
+<nav aria-label="ThresholdQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ThresholdQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-    </ul>
-  
+</ul>
 </nav>
-      
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../distributions/" class="md-nav__link">
-        Distributions
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../visualizations/" class="md-nav__link">
-        Visualizations
-      </a>
-    </li>
-  
-
-          
-        </ul>
-      </nav>
-    </li>
-  
-
-    
-  </ul>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../distributions/" title="Distributions">
+      Distributions
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../visualizations/" title="Visualizations">
+      Visualizations
+    </a>
+</li>
+</ul>
 </nav>
-                  </div>
-                </div>
-              </div>
-            
-            
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" id="nav-6" type="checkbox"/>
+<label class="md-nav__link" for="nav-6">
+      Resources
+      <span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"></path></svg>
+</span>
+</label>
+<nav aria-label="Resources" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="nav-6">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
+        Resources
+      </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="https://truera.github.io/neurips-tutorial-2021/" title="NeurIPS Tutorial">
+      NeurIPS Tutorial
+    </a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities" class="md-nav__link">
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities">
     trulens.nn.quantities
   </a>
-  
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ClassQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ClassQoI">
     ClassQoI
   </a>
-  
-    <nav class="md-nav" aria-label="ClassQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ClassQoI.__init__" class="md-nav__link">
+<nav aria-label="ClassQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ClassQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ClassSeqQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ClassSeqQoI">
     ClassSeqQoI
   </a>
-  
-    <nav class="md-nav" aria-label="ClassSeqQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ClassSeqQoI.__init__" class="md-nav__link">
+<nav aria-label="ClassSeqQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ClassSeqQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ComparativeQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ComparativeQoI">
     ComparativeQoI
   </a>
-  
-    <nav class="md-nav" aria-label="ComparativeQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ComparativeQoI.__init__" class="md-nav__link">
+<nav aria-label="ComparativeQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ComparativeQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.InternalChannelQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.InternalChannelQoI">
     InternalChannelQoI
   </a>
-  
-    <nav class="md-nav" aria-label="InternalChannelQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.InternalChannelQoI.__init__" class="md-nav__link">
+<nav aria-label="InternalChannelQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.InternalChannelQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.LambdaQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.LambdaQoI">
     LambdaQoI
   </a>
-  
-    <nav class="md-nav" aria-label="LambdaQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.LambdaQoI.__init__" class="md-nav__link">
+<nav aria-label="LambdaQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.LambdaQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.MaxClassQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.MaxClassQoI">
     MaxClassQoI
   </a>
-  
-    <nav class="md-nav" aria-label="MaxClassQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.MaxClassQoI.__init__" class="md-nav__link">
+<nav aria-label="MaxClassQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.MaxClassQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.QoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.QoI">
     QoI
   </a>
-  
-    <nav class="md-nav" aria-label="QoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.QoI.__call__" class="md-nav__link">
+<nav aria-label="QoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.QoI.__call__">
     __call__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.QoiCutSupportError" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.QoiCutSupportError">
     QoiCutSupportError
   </a>
-  
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ThresholdQoI" class="md-nav__link">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ThresholdQoI">
     ThresholdQoI
   </a>
-  
-    <nav class="md-nav" aria-label="ThresholdQoI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens.nn.quantities.ThresholdQoI.__init__" class="md-nav__link">
+<nav aria-label="ThresholdQoI" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trulens.nn.quantities.ThresholdQoI.__init__">
     __init__()
   </a>
-  
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
+</ul>
 </nav>
-                  </div>
-                </div>
-              </div>
-            
-          
-          <div class="md-content" data-md-component="content">
-            <article class="md-content__inner md-typeset">
-              
-                
-                
-                <h1 id="quantities-of-interest">Quantities of Interest<a class="headerlink" href="#quantities-of-interest" title="Permanent link">&para;</a></h1>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<h1 id="quantities-of-interest">Quantities of Interest<a class="headerlink" href="#quantities-of-interest" title="Permanent link">¶</a></h1>
 <div class="doc doc-object doc-module">
-<h2 class="hidden-toc" href="#trulens.nn.quantities" id="trulens.nn.quantities" style="visibility: hidden; position: absolute;">
-        <a class="headerlink" href="#trulens.nn.quantities" title="Permanent link">&para;</a></h2>
+<h2 class="hidden-toc" href="#trulens.nn.quantities" id="trulens.nn.quantities" style="visibility: hidden; width: 0; height: 0;">
+<a class="headerlink" href="#trulens.nn.quantities" title="Permanent link">¶</a></h2>
 <div class="doc doc-contents first">
 <p>A <em>Quantity of Interest</em> (QoI) is a function of the output that determines the 
 network output behavior that the attributions describe.</p>
@@ -764,26 +486,20 @@ roof of the car, a “car feature” not shared by convertibles.</p>
 <div class="doc doc-children">
 <div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.quantities.ClassQoI">
-
-        <code>ClassQoI</code>
-
-
-      <a class="headerlink" href="#trulens.nn.quantities.ClassQoI" title="Permanent link">&para;</a></h2>
-<div class="doc doc-contents ">
+<code>ClassQoI</code>
+<a class="headerlink" href="#trulens.nn.quantities.ClassQoI" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
 <p>Quantity of interest for attributing output towards a specified class.</p>
 <div class="doc doc-children">
 <div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.quantities.ClassQoI.__init__">
-
-        <code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cl</span><span class="p">)</span>        </code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-      <a class="headerlink" href="#trulens.nn.quantities.ClassQoI.__init__" title="Permanent link">&para;</a></h3>
-<div class="doc doc-contents ">
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cl</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.nn.quantities.ClassQoI.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
 <p><strong>Parameters:</strong></p>
 <table>
 <thead>
@@ -806,8 +522,8 @@ __init__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 </tbody>
 </table>
 <details class="quote">
-          <summary>Source code in <code>trulens/nn/quantities.py</code></summary>
-          <div class="highlight">
+<summary>Source code in <code>trulens/nn/quantities.py</code></summary>
+<div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cl</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Parameters:</span>
@@ -825,27 +541,21 @@ __init__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 </div>
 <div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.quantities.ClassSeqQoI">
-
-        <code>ClassSeqQoI</code>
-
-
-      <a class="headerlink" href="#trulens.nn.quantities.ClassSeqQoI" title="Permanent link">&para;</a></h2>
-<div class="doc doc-contents ">
+<code>ClassSeqQoI</code>
+<a class="headerlink" href="#trulens.nn.quantities.ClassSeqQoI" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
 <p>Quantity of interest for attributing output towards a sequence of classes 
 for each input.</p>
 <div class="doc doc-children">
 <div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.quantities.ClassSeqQoI.__init__">
-
-        <code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq_labels</span><span class="p">)</span>        </code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-      <a class="headerlink" href="#trulens.nn.quantities.ClassSeqQoI.__init__" title="Permanent link">&para;</a></h3>
-<div class="doc doc-contents ">
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq_labels</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.nn.quantities.ClassSeqQoI.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
 <p><strong>Parameters:</strong></p>
 <table>
 <thead>
@@ -868,8 +578,8 @@ __init__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 </tbody>
 </table>
 <details class="quote">
-          <summary>Source code in <code>trulens/nn/quantities.py</code></summary>
-          <div class="highlight">
+<summary>Source code in <code>trulens/nn/quantities.py</code></summary>
+<div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq_labels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
     <span class="sd">"""</span>
 <span class="sd">    Parameters:</span>
@@ -887,27 +597,21 @@ __init__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 </div>
 <div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.quantities.ComparativeQoI">
-
-        <code>ComparativeQoI</code>
-
-
-      <a class="headerlink" href="#trulens.nn.quantities.ComparativeQoI" title="Permanent link">&para;</a></h2>
-<div class="doc doc-contents ">
+<code>ComparativeQoI</code>
+<a class="headerlink" href="#trulens.nn.quantities.ComparativeQoI" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
 <p>Quantity of interest for attributing network output towards a given class, 
 relative to another.</p>
 <div class="doc doc-children">
 <div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.quantities.ComparativeQoI.__init__">
-
-        <code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cl1</span><span class="p">,</span> <span class="n">cl2</span><span class="p">)</span>        </code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-      <a class="headerlink" href="#trulens.nn.quantities.ComparativeQoI.__init__" title="Permanent link">&para;</a></h3>
-<div class="doc doc-contents ">
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cl1</span><span class="p">,</span> <span class="n">cl2</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.nn.quantities.ComparativeQoI.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
 <p><strong>Parameters:</strong></p>
 <table>
 <thead>
@@ -938,8 +642,8 @@ __init__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 </tbody>
 </table>
 <details class="quote">
-          <summary>Source code in <code>trulens/nn/quantities.py</code></summary>
-          <div class="highlight">
+<summary>Source code in <code>trulens/nn/quantities.py</code></summary>
+<div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cl1</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cl2</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Parameters:</span>
@@ -960,12 +664,9 @@ __init__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 </div>
 <div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.quantities.InternalChannelQoI">
-
-        <code>InternalChannelQoI</code>
-
-
-      <a class="headerlink" href="#trulens.nn.quantities.InternalChannelQoI" title="Permanent link">&para;</a></h2>
-<div class="doc doc-contents ">
+<code>InternalChannelQoI</code>
+<a class="headerlink" href="#trulens.nn.quantities.InternalChannelQoI" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
 <p>Quantity of interest for attributing output towards the output of an 
 internal convolutional layer channel, aggregating using a specified 
 operation.</p>
@@ -974,16 +675,13 @@ activation is returned.</p>
 <div class="doc doc-children">
 <div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.quantities.InternalChannelQoI.__init__">
-
-        <code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">channel_axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">agg_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>        </code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-      <a class="headerlink" href="#trulens.nn.quantities.InternalChannelQoI.__init__" title="Permanent link">&para;</a></h3>
-<div class="doc doc-contents ">
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">channel_axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">agg_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.nn.quantities.InternalChannelQoI.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
 <p><strong>Parameters:</strong></p>
 <table>
 <thead>
@@ -1030,8 +728,8 @@ used when the channels are scalars, e.g., for dense layers.</p>
 </tbody>
 </table>
 <details class="quote">
-          <summary>Source code in <code>trulens/nn/quantities.py</code></summary>
-          <div class="highlight">
+<summary>Source code in <code>trulens/nn/quantities.py</code></summary>
+<div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">channel</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
@@ -1074,27 +772,21 @@ used when the channels are scalars, e.g., for dense layers.</p>
 </div>
 <div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.quantities.LambdaQoI">
-
-        <code>LambdaQoI</code>
-
-
-      <a class="headerlink" href="#trulens.nn.quantities.LambdaQoI" title="Permanent link">&para;</a></h2>
-<div class="doc doc-contents ">
+<code>LambdaQoI</code>
+<a class="headerlink" href="#trulens.nn.quantities.LambdaQoI" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
 <p>Generic quantity of interest allowing the user to specify a function of the
 model's output as the QoI.</p>
 <div class="doc doc-children">
 <div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.quantities.LambdaQoI.__init__">
-
-        <code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">)</span>        </code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-      <a class="headerlink" href="#trulens.nn.quantities.LambdaQoI.__init__" title="Permanent link">&para;</a></h3>
-<div class="doc doc-contents ">
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.nn.quantities.LambdaQoI.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
 <p><strong>Parameters:</strong></p>
 <table>
 <thead>
@@ -1119,8 +811,8 @@ representing the QoI.</p>
 </tbody>
 </table>
 <details class="quote">
-          <summary>Source code in <code>trulens/nn/quantities.py</code></summary>
-          <div class="highlight">
+<summary>Source code in <code>trulens/nn/quantities.py</code></summary>
+<div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Parameters:</span>
@@ -1146,27 +838,21 @@ representing the QoI.</p>
 </div>
 <div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.quantities.MaxClassQoI">
-
-        <code>MaxClassQoI</code>
-
-
-      <a class="headerlink" href="#trulens.nn.quantities.MaxClassQoI" title="Permanent link">&para;</a></h2>
-<div class="doc doc-contents ">
+<code>MaxClassQoI</code>
+<a class="headerlink" href="#trulens.nn.quantities.MaxClassQoI" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
 <p>Quantity of interest for attributing output towards the maximum-predicted 
 class.</p>
 <div class="doc doc-children">
 <div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.quantities.MaxClassQoI.__init__">
-
-        <code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>        </code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-      <a class="headerlink" href="#trulens.nn.quantities.MaxClassQoI.__init__" title="Permanent link">&para;</a></h3>
-<div class="doc doc-contents ">
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.nn.quantities.MaxClassQoI.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
 <p><strong>Parameters:</strong></p>
 <table>
 <thead>
@@ -1188,7 +874,7 @@ __init__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 </tr>
 <tr>
 <td><code>activation</code></td>
-<td><code>Optional[Union[Callable, str]]</code></td>
+<td><code>Union[Callable, str, None]</code></td>
 <td>
 <p>Activation function to be applied to the output before taking 
 the max. If <code>activation</code> is a string, use the corresponding 
@@ -1207,8 +893,8 @@ the input.</p>
 </tbody>
 </table>
 <details class="quote">
-          <summary>Source code in <code>trulens/nn/quantities.py</code></summary>
-          <div class="highlight">
+<summary>Source code in <code>trulens/nn/quantities.py</code></summary>
+<div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">"""</span>
@@ -1241,28 +927,22 @@ the input.</p>
 </div>
 <div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.quantities.QoI">
-
-        <code>QoI</code>
-
-
-      <a class="headerlink" href="#trulens.nn.quantities.QoI" title="Permanent link">&para;</a></h2>
-<div class="doc doc-contents ">
+<code>QoI</code>
+<a class="headerlink" href="#trulens.nn.quantities.QoI" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
 <p>Interface for quantities of interest. The <em>Quantity of Interest</em> (QoI) is a
 function of the output specified by the slice that determines the network 
 output behavior that the attributions describe.</p>
 <div class="doc doc-children">
 <div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.quantities.QoI.__call__">
-
-        <code class="highlight language-python">
-__call__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>        </code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-      <a class="headerlink" href="#trulens.nn.quantities.QoI.__call__" title="Permanent link">&para;</a></h3>
-<div class="doc doc-contents ">
+<code class="highlight language-python">
+__call__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.nn.quantities.QoI.__call__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
 <p>Computes the distribution of interest from an initial point.</p>
 <p><strong>Parameters:</strong></p>
 <table>
@@ -1277,7 +957,7 @@ __call__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 <tbody>
 <tr>
 <td><code>y</code></td>
-<td><code>Union[Any, List[Any]]</code></td>
+<td><code>TensorLike</code></td>
 <td>
 <p>Output point from which the quantity is derived. Must be a
 differentiable tensor.</p>
@@ -1296,7 +976,7 @@ differentiable tensor.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>Union[Any, List[Any]]</code></td>
+<td><code>TensorLike</code></td>
 <td>
 <p>A differentiable batched scalar tensor representing the QoI.</p>
 </td>
@@ -1304,8 +984,8 @@ differentiable tensor.</p>
 </tbody>
 </table>
 <details class="quote">
-          <summary>Source code in <code>trulens/nn/quantities.py</code></summary>
-          <div class="highlight">
+<summary>Source code in <code>trulens/nn/quantities.py</code></summary>
+<div class="highlight">
 <pre><span></span><code><span class="nd">@abstractmethod</span>
 <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">TensorLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TensorLike</span><span class="p">:</span>
     <span class="sd">"""</span>
@@ -1330,24 +1010,18 @@ differentiable tensor.</p>
 </div>
 <div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.quantities.QoiCutSupportError">
-
-        <code>QoiCutSupportError</code>
-
-
-      <a class="headerlink" href="#trulens.nn.quantities.QoiCutSupportError" title="Permanent link">&para;</a></h2>
-<div class="doc doc-contents ">
+<code>QoiCutSupportError</code>
+<a class="headerlink" href="#trulens.nn.quantities.QoiCutSupportError" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
 <p>Exception raised if the quantity of interest is called on a cut whose output
 is not supported by the quantity of interest.</p>
 </div>
 </div>
 <div class="doc doc-object doc-class">
 <h2 class="doc doc-heading" id="trulens.nn.quantities.ThresholdQoI">
-
-        <code>ThresholdQoI</code>
-
-
-      <a class="headerlink" href="#trulens.nn.quantities.ThresholdQoI" title="Permanent link">&para;</a></h2>
-<div class="doc doc-contents ">
+<code>ThresholdQoI</code>
+<a class="headerlink" href="#trulens.nn.quantities.ThresholdQoI" title="Permanent link">¶</a></h2>
+<div class="doc doc-contents">
 <p>Quantity of interest for attributing network output toward the difference 
 between two regions seperated by a given threshold. I.e., the quantity of
 interest is the "high" elements minus the "low" elements, where the high
@@ -1357,16 +1031,13 @@ activations below the threshold.</p>
 <div class="doc doc-children">
 <div class="doc doc-object doc-method">
 <h3 class="doc doc-heading" id="trulens.nn.quantities.ThresholdQoI.__init__">
-
-        <code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">low_minus_high</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>        </code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
-
-      <a class="headerlink" href="#trulens.nn.quantities.ThresholdQoI.__init__" title="Permanent link">&para;</a></h3>
-<div class="doc doc-contents ">
+<code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">low_minus_high</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> </code>
+<span class="doc doc-properties">
+<small class="doc doc-property doc-property-special"><code>special</code></small>
+</span>
+<a class="headerlink" href="#trulens.nn.quantities.ThresholdQoI.__init__" title="Permanent link">¶</a></h3>
+<div class="doc doc-contents">
 <p><strong>Parameters:</strong></p>
 <table>
 <thead>
@@ -1403,7 +1074,7 @@ threshold from the output with activations above the threshold.</p>
 </tr>
 <tr>
 <td><code>activation</code></td>
-<td><code>Optional[Union[Callable, str]]</code></td>
+<td><code>Union[Callable, str, None]</code></td>
 <td>
 <p>str or function, optional
 Activation function to be applied to the quantity before taking
@@ -1419,8 +1090,8 @@ to the quantity.</p>
 </tbody>
 </table>
 <details class="quote">
-          <summary>Source code in <code>trulens/nn/quantities.py</code></summary>
-          <div class="highlight">
+<summary>Source code in <code>trulens/nn/quantities.py</code></summary>
+<div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -1465,89 +1136,69 @@ to the quantity.</p>
 </div>
 </div>
 </div>
-                
-              
-              
-                
-
-
-              
-            </article>
-          </div>
-        </div>
-        
-      </main>
-      
-        
+</article>
+</div>
+</div>
+</main>
 <footer class="md-footer">
-  
-    <nav class="md-footer__inner md-grid" aria-label="Footer">
-      
-        <a href="../slices/" class="md-footer__link md-footer__link--prev" rel="prev">
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-          </div>
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              Slices
-            </div>
-          </div>
-        </a>
-      
-      
-        <a href="../distributions/" class="md-footer__link md-footer__link--next" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              Distributions
-            </div>
-          </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-          </div>
-        </a>
-      
-    </nav>
-  
-  <div class="md-footer-meta md-typeset">
-    <div class="md-footer-meta__inner md-grid">
-      <div class="md-footer-copyright">
+<div class="md-footer-nav">
+<nav aria-label="Footer" class="md-footer-nav__inner md-grid">
+<a class="md-footer-nav__link md-footer-nav__link--prev" href="../slices/" rel="prev" title="Slices">
+<div class="md-footer-nav__button md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</div>
+<div class="md-footer-nav__title">
+<div class="md-ellipsis">
+<span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Slices
+              </div>
+</div>
+</a>
+<a class="md-footer-nav__link md-footer-nav__link--next" href="../distributions/" rel="next" title="Distributions">
+<div class="md-footer-nav__title">
+<div class="md-ellipsis">
+<span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Distributions
+              </div>
+</div>
+<div class="md-footer-nav__button md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"></path></svg>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
         
         Made with
-        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+        <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
           Material for MkDocs
         </a>
-        
-      </div>
-      
-    </div>
-  </div>
+</div>
+</div>
+</div>
 </footer>
-      
-    </div>
-    <div class="md-dialog" data-md-component="dialog">
-      <div class="md-dialog__inner md-typeset"></div>
-    </div>
-    <script id="__config" type="application/json">{"base": "../..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../../assets/javascripts/workers/search.4fa0e4ee.min.js", "version": null}</script>
-    
-    
-      <script src="../../assets/javascripts/bundle.1d3bfcf1.min.js"></script>
-      
-        <script src="../../javascript/config.js"></script>
-      
-        <script src="../../javascript/app.js"></script>
-      
-        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-      
-        <script src="../../javascript/tex-mml-chtml-3.0.0.js"></script>
-      
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
-      
-    
-  </body>
+</div>
+<script src="../../assets/javascripts/vendor.d1f5a259.min.js"></script>
+<script src="../../assets/javascripts/bundle.d5fec882.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+<script>
+        app = initialize({
+          base: "../..",
+          features: [],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.fae956e7.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+<script src="../../javascript/config.js"></script>
+<script src="../../javascript/app.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src="../../javascript/tex-mml-chtml-3.0.0.js"></script>
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</body>
 </html>
