@@ -69,7 +69,7 @@ nav:
     - Distributions: api/distributions.md
     - Visualizations: api/visualizations.md
   - Resources: 
-    - NeurIPS Tutorial: https://truera.github.io/neurips-tutorial-2021/
+    - NeurIPS Demo: https://truera.github.io/neurips-demo-2021/
 
 extra_css:
   - stylesheets/extra.css
