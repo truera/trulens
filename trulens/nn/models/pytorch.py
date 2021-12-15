@@ -269,7 +269,9 @@ class PytorchModelWrapper(ModelWrapper):
         else:
             doi_repeated_batch_size = intervention[0].shape[0]
             batched_model_args = []
+            batched_model_kwargs = {}
 
+            # tile batches for interpolation
             for val in model_args:
                 doi_resolution = int(doi_repeated_batch_size / val.shape[0])
                 tile_shape = [1 for _ in range(len(val.shape))]
@@ -284,7 +286,23 @@ class PytorchModelWrapper(ModelWrapper):
 
                 batched_model_args.append(val)
 
+            # tile batches for interpolation
+            for k, val in model_kwargs.items():
+                doi_resolution = int(doi_repeated_batch_size / val.shape[0])
+                tile_shape = [1 for _ in range(len(val.shape))]
+                tile_shape[0] = doi_resolution
+                repeat_shape = tuple(tile_shape)
+
+                if isinstance(val, np.ndarray):
+                    val = np.tile(val, repeat_shape)
+
+                elif torch.is_tensor(val):
+                    val = val.repeat(repeat_shape)
+
+                batched_model_kwargs[k] = val
+
             model_args = batched_model_args
+            model_kwargs = batched_model_kwargs
 
         if (attribution_cut is not None):
             # Specify that we want to preserve gradient information.
