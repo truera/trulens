@@ -263,17 +263,33 @@ class PytorchModelWrapper(ModelWrapper):
             intervention, DATA_CONTAINER_TYPE) else [intervention]
         intervention = self._to_tensor(intervention)
 
-        if (isinstance(doi_cut, InputCut)):
+        if isinstance(doi_cut, InputCut):
             model_args = intervention
 
         else:
             doi_repeated_batch_size = intervention[0].shape[0]
-            batched_model_args = []
-            batched_model_kwargs = {}
+            expected_dim=None
 
-            # tile batches for interpolation
-            for val in model_args:
+            def tile_val(val):
+                """Tile the given value if expected_dim matches val's first dimension. Otherwise return
+                original val unchanged."""
+                
+                nonlocal expected_dim
+                
+                if expected_dim is None:
+                    """Get the number of tiles from the first value that gets tiled. All subsequent ones
+                    are expected to have the same shape or otherwise they do not get tiled."""
+                    expected_dim = val.shape[0]
+
+                if val.shape[0] != expected_dim:
+                    tru_logger.warn(
+                        f"Value {val} of shape {val.shape} is assumed to not be batchable due to its shape."
+                        " If this is incorrect, make sure its first dimension matches prior batchable inputs."
+                    )
+                    return val
+
                 doi_resolution = int(doi_repeated_batch_size / val.shape[0])
+                
                 tile_shape = [1 for _ in range(len(val.shape))]
                 tile_shape[0] = doi_resolution
                 repeat_shape = tuple(tile_shape)
@@ -284,26 +300,12 @@ class PytorchModelWrapper(ModelWrapper):
                 elif torch.is_tensor(val):
                     val = val.repeat(repeat_shape)
 
-                batched_model_args.append(val)
+                return val
 
             # tile batches for interpolation
-            for k, val in model_kwargs.items():
-                doi_resolution = int(doi_repeated_batch_size / val.shape[0])
-                tile_shape = [1 for _ in range(len(val.shape))]
-                tile_shape[0] = doi_resolution
-                repeat_shape = tuple(tile_shape)
-
-                if isinstance(val, np.ndarray):
-                    val = np.tile(val, repeat_shape)
-
-                elif torch.is_tensor(val):
-                    val = val.repeat(repeat_shape)
-
-                batched_model_kwargs[k] = val
-
-            model_args = batched_model_args
-            model_kwargs = batched_model_kwargs
-
+            model_args = [tile_val(val) for val in model_args]
+            model_kwargs = {k: tile_val(val) for k, val in model_kwargs.items()}
+            
         if (attribution_cut is not None):
             # Specify that we want to preserve gradient information.
             intervention = ModelWrapper._nested_apply(
