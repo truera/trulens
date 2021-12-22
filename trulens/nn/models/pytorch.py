@@ -294,11 +294,15 @@ class PytorchModelWrapper(ModelWrapper):
                 tile_shape[0] = doi_resolution
                 repeat_shape = tuple(tile_shape)
 
+                # TODO: These operations should be abstracted out. Perhaps a "concrete"/"immediate" backend?
                 if isinstance(val, np.ndarray):
                     val = np.tile(val, repeat_shape)
-
                 elif torch.is_tensor(val):
                     val = val.repeat(repeat_shape)
+                else:
+                    tru_logger.warn(
+                        f"Value {val} could not be reshaped for batching due to unknown type {val.__class__.__name__}."
+                    )
 
                 return val
 
