@@ -30,6 +30,13 @@ class DoiCutSupportError(ValueError):
     pass
 
 
+class AcceptingModelArgs(object):
+    """
+    Mix-in for DoI's that expect to receive model_args and model_kwargs for 
+    their __call__ method instead of just values at cut.
+    """
+    ...
+
 class DoI(AbstractBaseClass):
     """
     Interface for distributions of interest. The *Distribution of Interest* 
