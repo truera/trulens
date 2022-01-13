@@ -446,7 +446,7 @@ class PytorchModelWrapper(ModelWrapper):
             attribution_cut = InputCut()
         if to_cut is None:
             to_cut = OutputCut()
-
+        self._model.train()
         y, zs = self.fprop(
             model_args,
             model_kwargs,
