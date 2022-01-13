@@ -446,7 +446,7 @@ class PytorchModelWrapper(ModelWrapper):
             attribution_cut = InputCut()
         if to_cut is None:
             to_cut = OutputCut()
-
+        self._model.train()
         y, zs = self.fprop(
             model_args,
             model_kwargs,
@@ -483,9 +483,9 @@ class PytorchModelWrapper(ModelWrapper):
                 qoi_out, DATA_CONTAINER_TYPE) else B.as_array(grads)
 
             grads_list.append(grads)
-
+        
         del y  # TODO: garbage collection
-
+        self._model.eval()
         return grads_list[0] if len(grads_list) == 1 else grads_list
 
     def probits(self, x):
