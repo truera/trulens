@@ -483,9 +483,9 @@ class PytorchModelWrapper(ModelWrapper):
                 qoi_out, DATA_CONTAINER_TYPE) else B.as_array(grads)
 
             grads_list.append(grads)
-
+        
         del y  # TODO: garbage collection
-
+        self._model.eval()
         return grads_list[0] if len(grads_list) == 1 else grads_list
 
     def probits(self, x):
