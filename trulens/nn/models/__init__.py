@@ -11,13 +11,14 @@ that will return an appropriate `ModelWrapper` instance.
 Some parameters are exclusively utilized for specific frameworks and are outlined 
 in the parameter descriptions.
 """
-import os
 import inspect
+import os
 import traceback
 
 import trulens
+from trulens.nn.backend import Backend
+from trulens.nn.backend import get_backend
 from trulens.utils import tru_logger
-from trulens.nn.backend import get_backend, Backend
 
 
 def discern_backend(model):
@@ -29,6 +30,7 @@ def discern_backend(model):
         else:
             try:
                 import tensorflow as tf
+
                 # Graph objects are currently limited to TF1 and Keras backend
                 # implies keras backed with TF1 or Theano. TF2 Keras objects are
                 # handled by the TF2 backend.

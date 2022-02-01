@@ -1,7 +1,8 @@
-import os
 from enum import Enum
-import traceback
 import importlib
+import os
+import traceback
+
 from trulens.utils import tru_logger
 
 # Do not use directly, use get_backend

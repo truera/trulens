@@ -10,31 +10,28 @@ package.
 """
 #from __future__ import annotations # Avoid expanding type aliases in mkdocs.
 
-import numpy as np
-
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Any
-from typing import Callable
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
-from trulens.nn.distributions import AcceptingModelArgs, DoI
+import numpy as np
+
+from trulens.nn.backend import get_backend
+from trulens.nn.distributions import AcceptingModelArgs
+from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
-from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
+from trulens.nn.models._model_base import DATA_CONTAINER_TYPE
+from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import ComparativeQoI
 from trulens.nn.quantities import InternalChannelQoI
-from trulens.nn.quantities import QoI
 from trulens.nn.quantities import LambdaQoI
 from trulens.nn.quantities import MaxClassQoI
+from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
-from trulens.nn.backend import get_backend
 
 # Define some type aliases.
 CutLike = Union[Cut, int, str, None]
