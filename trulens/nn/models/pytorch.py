@@ -5,8 +5,11 @@ import numpy as np
 import torch
 
 from trulens.nn.backend import get_backend
-from trulens.nn.slices import InputCut, OutputCut, LogitCut
-from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
+from trulens.nn.models._model_base import DATA_CONTAINER_TYPE
+from trulens.nn.models._model_base import ModelWrapper
+from trulens.nn.slices import InputCut
+from trulens.nn.slices import LogitCut
+from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 
 

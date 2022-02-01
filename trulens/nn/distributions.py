@@ -6,17 +6,14 @@ interested in a more general behavior over a distribution of samples.
 """
 #from __future__ import annotations # Avoid expanding type aliases in mkdocs.
 
-import numpy as np
-
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Any
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import Any, List, Optional, Union
 
-from trulens.nn.slices import Cut
+import numpy as np
+
 from trulens.nn.backend import get_backend
+from trulens.nn.slices import Cut
 
 # Define some type aliases.
 ArrayLike = Union[np.ndarray, Any, List[Union[np.ndarray, Any]]]
