@@ -8,7 +8,8 @@ interested in a more general behavior over a distribution of samples.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Any, List, Optional, Union
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 
@@ -19,6 +20,13 @@ from trulens.nn.slices import Cut
 ArrayLike = Union[np.ndarray, Any, List[Union[np.ndarray, Any]]]
 
 
+@dataclass
+class ModelArgs:
+    args: ArrayLike
+    kwargs: Dict[str, ArrayLike]
+    ...
+
+
 class DoiCutSupportError(ValueError):
     """
     Exception raised if the distribution of interest is called on a cut whose
@@ -26,13 +34,6 @@ class DoiCutSupportError(ValueError):
     """
     pass
 
-
-class AcceptingModelArgs(object):
-    """
-    Mix-in for DoI's that expect to receive model_args and model_kwargs for 
-    their __call__ method instead of just values at cut.
-    """
-    ...
 
 class DoI(AbstractBaseClass):
     """
@@ -53,7 +54,9 @@ class DoI(AbstractBaseClass):
         self._cut = cut
 
     @abstractmethod
-    def __call__(self, z: ArrayLike) -> List[ArrayLike]:
+    def __call__(self,
+                 z: ArrayLike,
+                 model_args: Optional[ModelArgs] = None) -> List[ArrayLike]:
         """
         Computes the distribution of interest from an initial point.
 
@@ -69,6 +72,7 @@ class DoI(AbstractBaseClass):
         """
         raise NotImplementedError
 
+    @property
     def cut(self) -> Cut:
         """
         Returns:
@@ -135,28 +139,100 @@ class PointDoi(DoI):
         """
         super(PointDoi, self).__init__(cut)
 
-    def __call__(self, z):
+    def __call__(self, z, model_args: Optional[ModelArgs] = None):
         return [z]
 
 
-class LinearDoi(DoI):
+class BaselineDoi(DoI):
+    """A DoI that has a baseline."""
+
+    def __init__(self, baseline: Optional[ArrayLike] = None, *args, **kwargs):
+        """
+        Parameters:
+            baseline:
+                The baseline used for interpolation-type DoIs.
+        """
+
+        super(BaselineDoi, self).__init__(*args, **kwargs)
+        self._baseline = baseline
+
+    @property
+    def baseline(self) -> ArrayLike:
+        if isinstance(self._baseline, Callable):
+            ...
+
+        return self._baseline
+
+
+class ComputedBaselineDoi(BaselineDoi):
+    """A DoI that has a baseline that depends on instance."""
+
+    def __init__(
+            self,
+            fbaseline: Optional[Callable[..., ArrayLike]] = None,
+            *args,
+            **kwargs):
+        """
+        Parameters:
+            fbaseline:
+                A function to compute a baseline given an input instance.
+        """
+
+        super(ComputedBaselineDoi, self).__init__(*args, **kwargs)
+
+        self._fbaseline = fbaseline
+
+    @property
+    def fbaseline(self) -> Callable[..., ArrayLike]:
+        return self._fbaseline
+
+    def compute_baseline(
+            self,
+            z: ArrayLike,
+            model_args: Optional[ModelArgs] = None) -> ArrayLike:
+        B = get_backend()
+
+        _baseline = self.baseline
+        _fbaseline = self.fbaseline
+
+        if _baseline is not None and _fbaseline is not None:
+            raise DoiCutSupportError(
+                "Ambiguity: baseline and baseline-computing function both provided. Only provide one of the two."
+            )
+
+        if _fbaseline is not None:
+            _baseline = _fbaseline(z, model_args)
+
+        if _baseline is None:
+            _baseline = B.zeros_like(z)
+
+        if B.is_tensor(z) and not B.is_tensor(_baseline):
+            _baseline = B.as_tensor(_baseline)
+
+        if not B.is_tensor(z) and B.is_tensor(_baseline):
+            _baseline = B.as_array(_baseline)
+
+        return _baseline
+
+
+class LinearDoi(ComputedBaselineDoi):
     """
     Distribution representing the linear interpolation between a baseline and 
     the given point. Used by Integrated Gradients.
     """
 
-    def __init__(
-            self,
-            baseline: Optional[ArrayLike] = None,
-            resolution: int = 10,
-            cut: Cut = None):
+    def __init__(self, resolution: int = 10, *args, **kwargs):
         """
         The DoI for point, `z`, will be a uniform distribution over the points
         on the line segment connecting `z` to `baseline`, approximated by a
         sample of `resolution` points equally spaced along this segment.
 
         Parameters:
-            baseline:
+            cut (Cut, optional, from DoI): 
+                The Cut in which the DoI will be applied. If `None`, the DoI will be
+                applied to the input. otherwise, the distribution should be applied
+                to the latent space defined by the cut. 
+            baseline (optional, from BaselineDoi)
                 The baseline to interpolate from. Must be same shape as the 
                 space the distribution acts over, i.e., the shape of the points, 
                 `z`, eventually passed to `__call__`. If `cut` is `None`, this
@@ -164,38 +240,30 @@ class LinearDoi(DoI):
                 same shape as the latent space defined by the cut. If `None` is
                 given, `baseline` will be the zero vector in the appropriate 
                 shape.
-
-            resolution:
+            fbaseline (optional, from ComputedBaselineDoi):
+                A function to compute a baseline given an input instance.
+            resolution (int):
                 Number of points returned by each call to this DoI. A higher 
                 resolution is more computationally expensive, but gives a better
                 approximation of the DoI this object mathematically represents.
-
-            cut (Cut, optional): 
-                The Cut in which the DoI will be applied. If `None`, the DoI will be
-                applied to the input. otherwise, the distribution should be applied
-                to the latent space defined by the cut. 
         """
-        super(LinearDoi, self).__init__(cut)
-        self._baseline = baseline
+        super(LinearDoi, self).__init__(*args, **kwargs)
+
         self._resolution = resolution
 
-    def __call__(self, z: ArrayLike) -> List[ArrayLike]:
-        B = get_backend()
+    @property
+    def resolution(self) -> int:
+        return self._resolution
+
+    def __call__(self,
+                 z: ArrayLike,
+                 model_args: Optional[ModelArgs] = None) -> List[ArrayLike]:
         if isinstance(z, (list, tuple)) and len(z) == 1:
             z = z[0]
 
         self._assert_cut_contains_only_one_tensor(z)
 
-        if self._baseline is None:
-            baseline = B.zeros_like(z)
-        else:
-            baseline = self._baseline
-
-        if (B.is_tensor(z) and not B.is_tensor(baseline)):
-            baseline = B.as_tensor(baseline)
-
-        if (not B.is_tensor(z) and B.is_tensor(baseline)):
-            baseline = B.as_array(baseline)
+        baseline = self.compute_baseline(z, model_args)
 
         r = 1. if self._resolution is 1 else self._resolution - 1.
 
