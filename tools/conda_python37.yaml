@@ -29,4 +29,3 @@ dependencies:
       - mkdocstrings==0.13.2
       - python-markdown-math==0.7
       - yapf==0.30.0
-      

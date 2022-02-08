@@ -46,7 +46,8 @@ class RNNLinearDoi(DoI):
 
         x = x_input[0] if tf_cell else x_input
         batch_size = len(x)
-        if (self._baseline is None):
+
+        if self._baseline is None:
             if self.B.is_tensor(x):
                 x = self.B.as_array(x)
             baseline = np.zeros_like(x)
@@ -58,10 +59,10 @@ class RNNLinearDoi(DoI):
         baseline = baseline[0, ...]
         baseline = np.tile(baseline, tuple(tile_dims))
 
-        if (self.B.is_tensor(x) and not self.B.is_tensor(baseline)):
+        if self.B.is_tensor(x) and not self.B.is_tensor(baseline):
             baseline = self.B.as_tensor(baseline)
 
-        if (not self.B.is_tensor(x) and self.B.is_tensor(baseline)):
+        if not self.B.is_tensor(x) and self.B.is_tensor(baseline):
             baseline = self.B.as_array(baseline)
 
         r = self._resolution - 1.
@@ -73,7 +74,7 @@ class RNNLinearDoi(DoI):
             doi_out = [[d, x_input[1]] for d in doi_out]
         return doi_out
 
-    def __call__(self, x):
+    def __call__(self, x, model_args=None, model_kwargs=None):
         return self.calc_doi(x, tf_cell=False)
 
     def get_activation_multiplier(self, activation):

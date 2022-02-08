@@ -266,7 +266,7 @@ class PytorchModelWrapper(ModelWrapper):
             intervention, DATA_CONTAINER_TYPE) else [intervention]
         intervention = self._to_tensor(intervention)
 
-        if (isinstance(doi_cut, InputCut)):
+        if isinstance(doi_cut, InputCut):
             model_args = intervention
 
         else:
@@ -289,7 +289,7 @@ class PytorchModelWrapper(ModelWrapper):
 
             model_args = batched_model_args
 
-        if (attribution_cut is not None):
+        if attribution_cut is not None:
             # Specify that we want to preserve gradient information.
             intervention = ModelWrapper._nested_apply(
                 intervention,

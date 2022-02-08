@@ -9,8 +9,18 @@ it should be wrapped as a `ModelWrapper` instance.
 """
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
+from dataclasses import dataclass
+from typing import Dict, List
+
+from trulens.nn.distributions import ArrayLike
 
 DATA_CONTAINER_TYPE = (list, tuple)
+
+
+@dataclass
+class ModelInputs:
+    args: List[ArrayLike] = []
+    kwargs: Dict[str, ArrayLike] = {}
 
 
 class ModelWrapper(AbstractBaseClass):

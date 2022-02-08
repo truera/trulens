@@ -19,7 +19,7 @@ from trulens.nn.backend import get_backend
 
 # Define some type aliases.
 LayerIdentifier = Union[int, str, List[Union[int, str]]]
-TensorLike = Union[Any, List[Union[Any]]]
+TensorLike = Union[Any, List[Any]]
 
 
 class Cut(object):
