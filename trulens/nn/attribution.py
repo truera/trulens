@@ -12,15 +12,15 @@ package.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
 from trulens.nn.backend import get_backend
-from trulens.nn.distributions import AcceptingModelArgs
-from trulens.nn.distributions import DoI
+from trulens.nn.distributions import ArrayLike, DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
+from trulens.nn.models import ModelInputs
 from trulens.nn.models._model_base import DATA_CONTAINER_TYPE
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import ComparativeQoI
@@ -39,6 +39,13 @@ SliceLike = Union[Slice, Tuple[CutLike], CutLike]
 QoiLike = Union[QoI, int, Tuple[int], Callable, str]
 DoiLike = Union[DoI, str]
 
+"""
+@dataclass
+class ModelInputs:
+    args: ArrayLike
+    kwargs: Dict[str, ArrayLike]
+    ...
+"""
 
 class AttributionMethod(AbstractBaseClass):
     """
@@ -252,14 +259,9 @@ class InternalInfluence(AttributionMethod):
 
         if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
             doi_val = doi_val[0]
-
-        # If DoI mixed in AcceptingModelArgs, also provide model args to
-        # doi's __call__.
-        if isinstance(self.doi, AcceptingModelArgs):
-            D = self.doi(doi_val, *model_args, **model_kwargs)
-        else:
-            D = self.doi(doi_val)
-
+       
+        D = self.doi(doi_val, model_inputs=ModelInputs(model_args, model_kwargs))
+        
         n_doi = len(D)
         D = InternalInfluence.__concatenate_doi(D)
 
@@ -595,7 +597,7 @@ class IntegratedGradients(InputAttribution):
         model,
         (trulens.nn.slices.InputCut(), trulens.nn.slices.OutputCut()),
         'max',
-        trulens.nn.distributions.LinearDoi(baseline, resolution),
+        trulens.nn.distributions.LinearDoi(baseline, resolution=resolution),
         multiply_activation=True)
     ```
     """
@@ -622,5 +624,5 @@ class IntegratedGradients(InputAttribution):
             model,
             OutputCut(),
             'max',
-            LinearDoi(baseline, resolution),
+            LinearDoi(baseline, resolution=resolution),
             multiply_activation=True)

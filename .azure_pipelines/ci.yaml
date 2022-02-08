@@ -15,12 +15,12 @@ jobs:
       matrix:
         py37_tf1_keras:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "tests/keras/requirements_tfv1.txt"
+          requirementsFile: "tests/keras/requirements.txt"
           testSubdirectory: "tests/keras"
 
         py37_tf1_tf_keras:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "tests/tf_keras/requirements_tfv1.txt"
+          requirementsFile: "tests/tf_keras/requirements.txt"
           testSubdirectory: "tests/tf_keras"
 
         py37_pytorch:
@@ -40,7 +40,7 @@ jobs:
 
         py37_tf2_non_eager:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "tests/tf2/requirements.txt"
+          requirementsFile: "tests/tf2_non_eager/requirements.txt"
           testSubdirectory: "tests/tf2_non_eager"
 
         py37_notebooks:

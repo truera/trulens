@@ -49,7 +49,6 @@ class DoiTestBase(object):
             'Intermediate points should interpolate from baseline')
 
     def test_linear_point(self):
-
         doi = LinearDoi(resolution=1)
         res = doi(self.z)
 
@@ -67,6 +66,21 @@ class DoiTestBase(object):
         self.assertTrue(
             np.all(self.B.as_array(res[-1]) == 0.),
             'Default baseline should be zeros')
+
+    def test_linear_from_computed_nearby_baseline(self):
+        # Baseline for cut value is a function of value at that cut.
+
+        doi = LinearDoi(baseline=lambda z: z + 42)
+
+        res = doi(self.z)
+
+        self.assertTrue(
+            np.all(self.B.as_array(res[0]) == self.B.as_array(self.z)),
+            'Starting point of linear baseline should be base cut value.')
+
+        self.assertTrue(
+            np.all(self.B.as_array(res[-1]) == self.B.as_array(self.z + 42)),
+            'End point of linear baseline should be computed cut value.')
 
     # Tests for GaussianDoI.
 
