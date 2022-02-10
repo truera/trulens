@@ -3,14 +3,11 @@ from functools import partial
 
 import numpy as np
 import torch
-
 from trulens.nn.backend import get_backend
-from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.slices import InputCut
-from trulens.nn.slices import LogitCut
-from trulens.nn.slices import OutputCut
+from trulens.nn.slices import InputCut, LogitCut, OutputCut
 from trulens.utils import tru_logger
+from trulens.utils.typing import DATA_CONTAINER_TYPE
 
 
 class PytorchModelWrapper(ModelWrapper):

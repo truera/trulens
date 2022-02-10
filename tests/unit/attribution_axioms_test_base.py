@@ -11,10 +11,9 @@ satisfy several axioms from the following two papers:
 These axioms should hold on arbitrary networks.
 '''
 
-import numpy as np
-
 from functools import partial
 
+import numpy as np
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import DoI, LinearDoi, PointDoi
 from trulens.nn.quantities import ClassQoI, InternalChannelQoI, MaxClassQoI

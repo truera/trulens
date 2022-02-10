@@ -8,14 +8,14 @@ interested in a more general behavior over a distribution of samples.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from inspect import signature
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Callable, List, Optional
 
 import numpy as np
-
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
-from trulens.utils.typing import DATA_CONTAINER_TYPE, ArrayLike, BaselineLike, ModelInputs, accepts_model_inputs
+from trulens.utils.typing import (
+    DATA_CONTAINER_TYPE, ArrayLike, BaselineLike, ModelInputs,
+    accepts_model_inputs)
 
 
 class DoiCutSupportError(ValueError):

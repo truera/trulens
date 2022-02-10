@@ -1,7 +1,6 @@
 import numpy as np
-
 from trulens.nn.backend import get_backend
-from trulens.nn.distributions import PointDoi, LinearDoi, GaussianDoi
+from trulens.nn.distributions import GaussianDoi, LinearDoi, PointDoi
 
 
 class DoiTestBase(object):

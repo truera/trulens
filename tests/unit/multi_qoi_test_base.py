@@ -1,12 +1,11 @@
 from unittest import TestCase, main
 
 import numpy as np
-
-from trulens.nn.backend import get_backend
 from trulens.nn.attribution import InternalInfluence
+from trulens.nn.backend import get_backend
 from trulens.nn.distributions import DoI
 from trulens.nn.quantities import QoI
-from trulens.nn.slices import InputCut, Cut
+from trulens.nn.slices import Cut
 
 
 class PerTimestepQoI(QoI):
