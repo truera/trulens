@@ -135,11 +135,10 @@ class PointDoi(DoI):
         """
         super(PointDoi, self).__init__(cut)
 
-    def __call__(
-            self,
-            z,
-            *,
-            model_inputs: Optional[ModelInputs] = None) -> List[ArrayLike]:
+    def __call__(self,
+                 z,
+                 *,
+                 model_inputs: Optional[ModelInputs] = None) -> List[ArrayLike]:
 
         return [z]
 
@@ -208,8 +207,10 @@ class LinearDoi(DoI):
 
         r = 1. if self._resolution is 1 else self._resolution - 1.
 
-        return [(1. - i / r) * z + i / r * baseline
-                for i in range(self._resolution)]
+        return [
+            (1. - i / r) * z + i / r * baseline
+            for i in range(self._resolution)
+        ]
 
     def get_activation_multiplier(self, activation: ArrayLike) -> ArrayLike:
         """
@@ -227,8 +228,9 @@ class LinearDoi(DoI):
         Returns:
             The activation adjusted by the baseline passed to the constructor.
         """
-        return (activation if self._baseline is None else activation -
-                self._baseline)
+        return (
+            activation if self._baseline is None else activation -
+            self._baseline)
 
     def _compute_baseline(
             self,
