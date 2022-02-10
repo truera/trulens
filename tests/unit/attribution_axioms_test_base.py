@@ -183,7 +183,7 @@ class AxiomsTestBase(object):
             self.model_deep,
             InputCut(),
             ClassQoI(c),
-            LinearDoi(baseline=self.baseline),
+            LinearDoi(self.baseline),
             multiply_activation=False)
 
         out_x = self.model_deep.fprop((self.x[0:1],))[0][:, c]
@@ -290,7 +290,7 @@ class AxiomsTestBase(object):
             self.model_deep,
             InputCut(),
             ClassQoI(c),
-            LinearDoi(baseline=self.baseline, resolution=100),
+            LinearDoi(self.baseline, 100),
             multiply_activation=True)
 
         out_x = self.model_deep.fprop((self.x,))[0][:, c]
@@ -327,7 +327,7 @@ class AxiomsTestBase(object):
             self.model_deep,
             Cut(self.layer2),
             ClassQoI(c),
-            LinearDoi(baseline=baseline, resolution=100, cut=Cut(self.layer2)),
+            LinearDoi(baseline, 100, cut=Cut(self.layer2)),
             multiply_activation=True)
 
         g = partial(
