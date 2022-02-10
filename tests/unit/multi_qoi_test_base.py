@@ -74,7 +74,7 @@ class RNNLinearDoi(DoI):
             doi_out = [[d, x_input[1]] for d in doi_out]
         return doi_out
 
-    def __call__(self, x, model_args=None, model_kwargs=None):
+    def __call__(self, x, model_inputs=None):
         return self.calc_doi(x, tf_cell=False)
 
     def get_activation_multiplier(self, activation):

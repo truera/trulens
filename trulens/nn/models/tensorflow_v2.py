@@ -4,7 +4,7 @@ import tensorflow.keras as keras
 import tensorflow.keras.backend as K
 
 from trulens.nn.backend import get_backend
-from trulens.nn.models._model_base import DATA_CONTAINER_TYPE
+from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.models.keras import KerasModelWrapper
 from trulens.nn.slices import InputCut

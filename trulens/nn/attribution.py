@@ -17,11 +17,11 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 from trulens.nn.backend import get_backend
-from trulens.nn.distributions import ArrayLike, DoI
+from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
-from trulens.nn.models import ModelInputs
-from trulens.nn.models._model_base import DATA_CONTAINER_TYPE
+from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import ComparativeQoI
 from trulens.nn.quantities import InternalChannelQoI
@@ -33,19 +33,12 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
 
-# Define some type aliases.
+# Attribution-related type aliases.
 CutLike = Union[Cut, int, str, None]
 SliceLike = Union[Slice, Tuple[CutLike], CutLike]
 QoiLike = Union[QoI, int, Tuple[int], Callable, str]
 DoiLike = Union[DoI, str]
 
-"""
-@dataclass
-class ModelInputs:
-    args: ArrayLike
-    kwargs: Dict[str, ArrayLike]
-    ...
-"""
 
 class AttributionMethod(AbstractBaseClass):
     """
@@ -147,13 +140,12 @@ class InternalInfluence(AttributionMethod):
     ```
     """
 
-    def __init__(
-            self,
-            model: ModelWrapper,
-            cuts: SliceLike,
-            qoi: QoiLike,
-            doi: DoiLike,
-            multiply_activation: bool = True):
+    def __init__(self,
+                 model: ModelWrapper,
+                 cuts: SliceLike,
+                 qoi: QoiLike,
+                 doi: DoiLike,
+                 multiply_activation: bool = True):
         """
         Parameters:
             model:
@@ -259,41 +251,41 @@ class InternalInfluence(AttributionMethod):
 
         if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
             doi_val = doi_val[0]
-       
-        D = self.doi(doi_val, model_inputs=ModelInputs(model_args, model_kwargs))
-        
+
+        print("calling doi")
+        D = self.doi(doi_val,
+                     model_inputs=ModelInputs(model_args, model_kwargs))
+        print("got doi")
+
         n_doi = len(D)
         D = InternalInfluence.__concatenate_doi(D)
 
         B = get_backend()
 
         # Calculate the gradient of each of the points in the DoI.
-        qoi_grads = self.model.qoi_bprop(
-            self.qoi,
-            model_args,
-            model_kwargs,
-            attribution_cut=self.slice.from_cut,
-            to_cut=self.slice.to_cut,
-            intervention=D,
-            doi_cut=doi_cut)
+        qoi_grads = self.model.qoi_bprop(self.qoi,
+                                         model_args,
+                                         model_kwargs,
+                                         attribution_cut=self.slice.from_cut,
+                                         to_cut=self.slice.to_cut,
+                                         intervention=D,
+                                         doi_cut=doi_cut)
         # Take the mean across the samples in the DoI.
         if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
             attributions = [
-                B.mean(
-                    B.reshape(
-                        qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
-                    axis=0) for qoi_grad in qoi_grads
+                B.mean(B.reshape(qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
+                       axis=0) for qoi_grad in qoi_grads
             ]
         else:
-            attributions = B.mean(
-                B.reshape(
-                    qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]),
-                axis=0)
+            attributions = B.mean(B.reshape(qoi_grads,
+                                            (n_doi, -1) + qoi_grads.shape[1:]),
+                                  axis=0)
 
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
-            z_val = self.model.fprop(
-                model_args, model_kwargs, to_cut=self.slice.from_cut)
+            z_val = self.model.fprop(model_args,
+                                     model_kwargs,
+                                     to_cut=self.slice.from_cut)
             if isinstance(z_val, DATA_CONTAINER_TYPE) and len(z_val) == 1:
                 z_val = z_val[0]
 
@@ -396,9 +388,9 @@ class InternalInfluence(AttributionMethod):
             # We are already given a Slice, so return it.
             return slice_arg
 
-        elif (isinstance(slice_arg, Cut) or isinstance(slice_arg, int) or
-              isinstance(slice_arg, str) or slice_arg is None or
-              slice_arg == 0):
+        elif (isinstance(slice_arg, Cut) or isinstance(slice_arg, int)
+              or isinstance(slice_arg, str) or slice_arg is None
+              or slice_arg == 0):
 
             # If we receive a Cut, we take it to be the Cut of the start layer.
             return Slice(InternalInfluence.__get_cut(slice_arg), OutputCut())
@@ -408,12 +400,11 @@ class InternalInfluence(AttributionMethod):
             # and end layer of the slice.
             if len(slice_arg) == 2:
                 if slice_arg[1] is None:
-                    return Slice(
-                        InternalInfluence.__get_cut(slice_arg[0]), OutputCut())
+                    return Slice(InternalInfluence.__get_cut(slice_arg[0]),
+                                 OutputCut())
                 else:
-                    return Slice(
-                        InternalInfluence.__get_cut(slice_arg[0]),
-                        InternalInfluence.__get_cut(slice_arg[1]))
+                    return Slice(InternalInfluence.__get_cut(slice_arg[0]),
+                                 InternalInfluence.__get_cut(slice_arg[1]))
 
             else:
                 raise ValueError(
@@ -483,13 +474,12 @@ class InputAttribution(InternalInfluence):
     ```
     """
 
-    def __init__(
-            self,
-            model: ModelWrapper,
-            cut: CutLike = None,
-            qoi: QoiLike = 'max',
-            doi: DoiLike = 'point',
-            multiply_activation: bool = True):
+    def __init__(self,
+                 model: ModelWrapper,
+                 cut: CutLike = None,
+                 qoi: QoiLike = 'max',
+                 doi: DoiLike = 'point',
+                 multiply_activation: bool = True):
         """
         Parameters:
             model :
@@ -564,11 +554,10 @@ class InputAttribution(InternalInfluence):
                 activation, thus converting from "*influence space*" to 
                 "*attribution space*."
         """
-        super().__init__(
-            model, (InputCut(), cut),
-            qoi,
-            doi,
-            multiply_activation=multiply_activation)
+        super().__init__(model, (InputCut(), cut),
+                         qoi,
+                         doi,
+                         multiply_activation=multiply_activation)
 
 
 class IntegratedGradients(InputAttribution):
@@ -602,8 +591,10 @@ class IntegratedGradients(InputAttribution):
     ```
     """
 
-    def __init__(
-            self, model: ModelWrapper, baseline=None, resolution: int = 50):
+    def __init__(self,
+                 model: ModelWrapper,
+                 baseline=None,
+                 resolution: int = 50):
         """
         Parameters:
             model:
@@ -620,9 +611,8 @@ class IntegratedGradients(InputAttribution):
                 approximation of the mathematical formula this attribution 
                 method represents.
         """
-        super().__init__(
-            model,
-            OutputCut(),
-            'max',
-            LinearDoi(baseline, resolution=resolution),
-            multiply_activation=True)
+        super().__init__(model,
+                         OutputCut(),
+                         'max',
+                         LinearDoi(baseline, resolution=resolution),
+                         multiply_activation=True)

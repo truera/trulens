@@ -11,7 +11,6 @@ that will return an appropriate `ModelWrapper` instance.
 Some parameters are exclusively utilized for specific frameworks and are outlined 
 in the parameter descriptions.
 """
-from dataclasses import dataclass
 import inspect
 import os
 import traceback
@@ -20,7 +19,7 @@ from typing import Dict, List
 import trulens
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
-from trulens.nn.distributions import ArrayLike
+from trulens.utils.typing import ArrayLike
 from trulens.utils import tru_logger
 
 
