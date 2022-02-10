@@ -240,10 +240,7 @@ class LinearDoi(DoI):
 
         _baseline = self.baseline
 
-        # print(_baseline, type(_baseline), isinstance(_baseline, Callable))
-
         if isinstance(_baseline, Callable):
-            raise RuntimeError("hello")
             num_arguments = len(signature(_baseline).parameters)
             if num_arguments == 1:
                 _baseline = _baseline(z)
