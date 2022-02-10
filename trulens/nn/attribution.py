@@ -252,10 +252,8 @@ class InternalInfluence(AttributionMethod):
         if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
             doi_val = doi_val[0]
 
-        print("calling doi")
         D = self.doi(doi_val,
                      model_inputs=ModelInputs(model_args, model_kwargs))
-        print("got doi")
 
         n_doi = len(D)
         D = InternalInfluence.__concatenate_doi(D)
