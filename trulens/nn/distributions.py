@@ -15,7 +15,7 @@ import numpy as np
 
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
-from trulens.utils.typing import DATA_CONTAINER_TYPE, ArrayLike, BaselineLike, ModelInputs
+from trulens.utils.typing import DATA_CONTAINER_TYPE, ArrayLike, BaselineLike, ModelInputs, accepts_model_inputs
 
 
 class DoiCutSupportError(ValueError):
@@ -243,15 +243,10 @@ class LinearDoi(DoI):
         _baseline = self.baseline
 
         if isinstance(_baseline, Callable):
-            num_arguments = len(signature(_baseline).parameters)
-            if num_arguments == 1:
-                _baseline = _baseline(z)
-            elif num_arguments == 2:
-                _baseline = _baseline(z, model_inputs)
+            if accepts_model_inputs(_baseline):
+                _baseline = _baseline(z, model_inputs=model_inputs)
             else:
-                raise RuntimeError(
-                    f"Baseline function has an unexected signature: {signature(_baseline)}."
-                )
+                _baseline = _baseline(z)
 
         if _baseline is None:
             _baseline = B.zeros_like(z)

@@ -20,7 +20,7 @@ from trulens.nn.backend import get_backend
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
-from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import ModelInputs, accepts_model_inputs
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import ComparativeQoI
@@ -253,8 +253,11 @@ class InternalInfluence(AttributionMethod):
         if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
             doi_val = doi_val[0]
 
-        D = self.doi(
-            doi_val, model_inputs=ModelInputs(model_args, model_kwargs))
+        if accepts_model_inputs(self.doi):
+            D = self.doi(
+                doi_val, model_inputs=ModelInputs(model_args, model_kwargs))
+        else:
+            D = self.doi(doi_val)
 
         n_doi = len(D)
         D = InternalInfluence.__concatenate_doi(D)
@@ -615,5 +618,5 @@ class IntegratedGradients(InputAttribution):
             model,
             OutputCut(),
             'max',
-            LinearDoi(baseline, resolution=resolution),
+            LinearDoi(baseline, resolution),
             multiply_activation=True)
