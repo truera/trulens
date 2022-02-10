@@ -20,8 +20,8 @@ from trulens.nn.distributions import DoI, LinearDoi, PointDoi
 from trulens.nn.quantities import ClassQoI, InternalChannelQoI, MaxClassQoI
 from trulens.nn.slices import Cut, InputCut
 
-ALLCLOSE_ATOL = 1e-03
-
+ALLCLOSE_ATOL = 1e-08
+# NOTE(piotrm): if testing using CUDA, this needs to be more tolerant
 
 class AxiomsTestBase(object):
 
