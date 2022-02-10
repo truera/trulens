@@ -12,26 +12,17 @@ package.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Tuple, Union
 
 import numpy as np
-
 from trulens.nn.backend import get_backend
-from trulens.nn.distributions import DoI
-from trulens.nn.distributions import LinearDoi
-from trulens.nn.distributions import PointDoi
-from trulens.utils.typing import ModelInputs, accepts_model_inputs
-from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.nn.distributions import DoI, LinearDoi, PointDoi
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.quantities import ComparativeQoI
-from trulens.nn.quantities import InternalChannelQoI
-from trulens.nn.quantities import LambdaQoI
-from trulens.nn.quantities import MaxClassQoI
-from trulens.nn.quantities import QoI
-from trulens.nn.slices import Cut
-from trulens.nn.slices import InputCut
-from trulens.nn.slices import OutputCut
-from trulens.nn.slices import Slice
+from trulens.nn.quantities import (
+    ComparativeQoI, InternalChannelQoI, LambdaQoI, MaxClassQoI, QoI)
+from trulens.nn.slices import Cut, InputCut, OutputCut, Slice
+from trulens.utils.typing import (
+    DATA_CONTAINER_TYPE, ModelInputs, accepts_model_inputs)
 
 # Attribution-related type aliases.
 CutLike = Union[Cut, int, str, None]
@@ -591,7 +582,7 @@ class IntegratedGradients(InputAttribution):
         model,
         (trulens.nn.slices.InputCut(), trulens.nn.slices.OutputCut()),
         'max',
-        trulens.nn.distributions.LinearDoi(baseline, resolution=resolution),
+        trulens.nn.distributions.LinearDoi(baseline, resolution),
         multiply_activation=True)
     ```
     """

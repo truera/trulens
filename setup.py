@@ -1,7 +1,7 @@
-import datetime
-from os import path
 import sys
-from setuptools import setup, find_namespace_packages
+from os import path
+
+from setuptools import find_namespace_packages, setup
 
 version = "0.0.11"
 versionArgument = "--customVersion"
