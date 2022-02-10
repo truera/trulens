@@ -28,7 +28,7 @@ class DoiTestBase(object):
     def test_linear(self):
 
         doi = LinearDoi(
-            np.ones(self.B.int_shape(self.z)), resolution=21)
+            baseline=np.ones(self.B.int_shape(self.z)), resolution=21)
         res = doi(self.z)
 
         self.assertEqual(
@@ -60,7 +60,7 @@ class DoiTestBase(object):
             'When `resolution` is 1, should be the same as PointDoi')
 
     def test_linear_default_baseline(self):
-        doi = LinearDoi(None, 10)
+        doi = LinearDoi(baseline=None, resolution=10)
         res = doi(self.z)
 
         self.assertTrue(

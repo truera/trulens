@@ -4,6 +4,7 @@
 # dependencies between the files that originally contained those things.
 
 from dataclasses import dataclass, field
+from inspect import signature
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
@@ -17,6 +18,13 @@ DATA_CONTAINER_TYPE = (list, tuple)
 class ModelInputs:
     args: List[ArrayLike] = field(default_factory=list)
     kwargs: Dict[str, ArrayLike] = field(default_factory=dict)
+
+
+def accepts_model_inputs(func: Callable) -> bool:
+    """Determine whether the given callable takes in model inputs or just
+    activations."""
+
+    return "model_inputs" in signature(func).parameters
 
 
 # Baselines are either explicit or computable from the same data as sent to DoI

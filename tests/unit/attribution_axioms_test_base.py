@@ -23,6 +23,7 @@ from trulens.nn.slices import Cut, InputCut
 ALLCLOSE_ATOL = 1e-08
 # NOTE(piotrm): if testing using CUDA, this needs to be more tolerant
 
+
 class AxiomsTestBase(object):
 
     def setUp(self):
@@ -216,7 +217,7 @@ class AxiomsTestBase(object):
                 super(DistLinDoI, self).__init__()
                 self.diff = diff
 
-            def __call__(self, z, *, model_inputs=None):
+            def __call__(self, z):
                 return [z, z + self.diff, z + self.diff, z + self.diff]
 
         infl_pt = InternalInfluence(
@@ -254,7 +255,7 @@ class AxiomsTestBase(object):
                 super(DistLinDoI, self).__init__()
                 self.diff = diff
 
-            def __call__(self, z, *, model_inputs=None):
+            def __call__(self, z):
                 return [z, z + self.diff, z + self.diff, z + self.diff]
 
         infl_pt = InternalInfluence(
@@ -290,7 +291,7 @@ class AxiomsTestBase(object):
             self.model_deep,
             InputCut(),
             ClassQoI(c),
-            LinearDoi(self.baseline, 100),
+            LinearDoi(self.baseline, resolution=100),
             multiply_activation=True)
 
         out_x = self.model_deep.fprop((self.x,))[0][:, c]
@@ -327,7 +328,7 @@ class AxiomsTestBase(object):
             self.model_deep,
             Cut(self.layer2),
             ClassQoI(c),
-            LinearDoi(baseline, 100, cut=Cut(self.layer2)),
+            LinearDoi(baseline, resolution=100, cut=Cut(self.layer2)),
             multiply_activation=True)
 
         g = partial(
