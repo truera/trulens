@@ -70,7 +70,7 @@ class DoiTestBase(object):
     def test_linear_from_computed_nearby_baseline(self):
         # Baseline for cut value is a function of value at that cut.
 
-        doi = LinearDoi(baseline=lambda z: z + 42)
+        doi = LinearDoi(baseline=lambda z, model_inputs: z + 42)
 
         res = doi(self.z)
 

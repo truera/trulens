@@ -6,7 +6,7 @@ import numpy as np
 
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
-from trulens.nn.models._model_base import DATA_CONTAINER_TYPE
+from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut

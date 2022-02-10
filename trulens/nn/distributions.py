@@ -8,19 +8,14 @@ interested in a more general behavior over a distribution of samples.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
+from inspect import signature
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
-from trulens.nn.models._model_base import ModelInputs
-
-# Define some type aliases.
-ArrayLike = Union[np.ndarray, Any, List[Union[np.ndarray, Any]]]
-
-# Baselines are either explicit or computable from the same data as sent to DoI __call__ .
-BaselineLike = Union[ArrayLike, Callable[[ArrayLike, Optional[ModelInputs]], ArrayLike]]
+from trulens.utils.typing import DATA_CONTAINER_TYPE, ArrayLike, BaselineLike, ModelInputs
 
 
 class DoiCutSupportError(ValueError):
@@ -50,11 +45,11 @@ class DoI(AbstractBaseClass):
         self._cut = cut
 
     @abstractmethod
-    def __call__(self,
-                 z: ArrayLike,
-                 *,
-                 model_inputs: Optional[ModelInputs] = None
-        ) -> List[ArrayLike]:
+    def __call__(
+            self,
+            z: ArrayLike,
+            *,
+            model_inputs: Optional[ModelInputs] = None) -> List[ArrayLike]:
         """
         Computes the distribution of interest from an initial point.
 
@@ -141,11 +136,11 @@ class PointDoi(DoI):
         super(PointDoi, self).__init__(cut)
 
     def __call__(
-        self, 
-        z, 
-        *,
-        model_inputs: Optional[ModelInputs] = None
-    ) -> List[ArrayLike]:
+            self,
+            z,
+            *,
+            model_inputs: Optional[ModelInputs] = None) -> List[ArrayLike]:
+
         return [z]
 
 
@@ -156,7 +151,7 @@ class LinearDoi(DoI):
     """
 
     def __init__(
-        self, 
+        self,
         baseline: BaselineLike = None,
         resolution: int = 10,
         *,
@@ -199,13 +194,12 @@ class LinearDoi(DoI):
         return self._resolution
 
     def __call__(
-        self,
-        z: ArrayLike,
-        *,
-        model_inputs: Optional[ModelInputs] = None
-    ) -> List[ArrayLike]:
+            self,
+            z: ArrayLike,
+            *,
+            model_inputs: Optional[ModelInputs] = None) -> List[ArrayLike]:
 
-        if isinstance(z, (list, tuple)) and len(z) == 1:
+        if isinstance(z, DATA_CONTAINER_TYPE) and len(z) == 1:
             z = z[0]
 
         self._assert_cut_contains_only_one_tensor(z)
@@ -214,10 +208,8 @@ class LinearDoi(DoI):
 
         r = 1. if self._resolution is 1 else self._resolution - 1.
 
-        return [
-            (1. - i / r) * z + i / r * baseline
-            for i in range(self._resolution)
-        ]
+        return [(1. - i / r) * z + i / r * baseline
+                for i in range(self._resolution)]
 
     def get_activation_multiplier(self, activation: ArrayLike) -> ArrayLike:
         """
@@ -235,23 +227,32 @@ class LinearDoi(DoI):
         Returns:
             The activation adjusted by the baseline passed to the constructor.
         """
-        return (
-            activation if self._baseline is None else activation -
-            self._baseline)
+        return (activation if self._baseline is None else activation -
+                self._baseline)
 
     def _compute_baseline(
             self,
             z: ArrayLike,
             *,
-            model_inputs: Optional[ModelInputs] = None
-    ) -> ArrayLike:
+            model_inputs: Optional[ModelInputs] = None) -> ArrayLike:
 
         B = get_backend()
 
         _baseline = self.baseline
 
+        # print(_baseline, type(_baseline), isinstance(_baseline, Callable))
+
         if isinstance(_baseline, Callable):
-            _baseline = _baseline(z, model_inputs)
+            raise RuntimeError("hello")
+            num_arguments = len(signature(_baseline).parameters)
+            if num_arguments == 1:
+                _baseline = _baseline(z)
+            elif num_arguments == 2:
+                _baseline = _baseline(z, model_inputs)
+            else:
+                raise RuntimeError(
+                    f"Baseline function has an unexected signature: {signature(_baseline)}."
+                )
 
         if _baseline is None:
             _baseline = B.zeros_like(z)

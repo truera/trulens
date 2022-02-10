@@ -21,7 +21,6 @@ from trulens.nn.backend import get_backend
 LayerIdentifier = Union[int, str, List[Union[int, str]]]
 TensorLike = Union[Any, List[Any]]
 
-
 class Cut(object):
     """
     A cut is the primary building block for a slice. It determines an internal
