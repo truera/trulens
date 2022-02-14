@@ -76,7 +76,7 @@ class DoI(AbstractBaseClass):
             applied to the input. otherwise, the distribution should be applied
             to the latent space defined by the cut. 
         """
-        return self._cut
+        return self._cut 
 
     def get_activation_multiplier(self, activation: ArrayLike, *, model_inputs: Optional[ModelInputs] = None) -> ArrayLike:
         """
@@ -195,11 +195,7 @@ class LinearDoi(DoI):
     def resolution(self) -> int:
         return self._resolution
 
-    def __call__(
-            self,
-            z: ArrayLike,
-            *,
-            model_inputs: Optional[ModelInputs] = None) -> List[ArrayLike]:
+    def __call__(self, z: ArrayLike, *, model_inputs: Optional[ModelInputs] = None) -> List[ArrayLike]:
 
         if isinstance(z, DATA_CONTAINER_TYPE) and len(z) == 1:
             z = z[0]

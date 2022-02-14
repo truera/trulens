@@ -277,6 +277,10 @@ class InternalInfluence(AttributionMethod):
             attributions = B.mean(
                 B.reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]), axis=0)
 
+        extra_args = dict()
+        if accepts_model_inputs(self.doi.get_activation_multiplier):
+            extra_args['model_inputs'] = model_inputs
+
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
             z_val = self.model.fprop(
@@ -289,13 +293,13 @@ class InternalInfluence(AttributionMethod):
                     if isinstance(z_val, DATA_CONTAINER_TYPE) and len(
                             z_val) == len(attributions):
                         attributions[i] *= self.doi.get_activation_multiplier(
-                            z_val[i], model_inputs=model_inputs)
+                            z_val[i], **extra_args)
                     else:
                         attributions[i] *= (
-                            self.doi.get_activation_multiplier(z_val, model_inputs=model_inputs))
+                            self.doi.get_activation_multiplier(z_val, **extra_args))
 
             else:
-                attributions *= self.doi.get_activation_multiplier(z_val, model_inputs=model_inputs)
+                attributions *= self.doi.get_activation_multiplier(z_val, **extra_args)
 
         return attributions
 
