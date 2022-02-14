@@ -22,7 +22,7 @@ class DoiTestBase(object):
         self.l2_exp = 4
         # output = l2_coeff * (l1_coeff * (input ^ l1_exp)) ^ l2_exp
 
-        self.consts = np.array([1.0, 2.0, 5.0])
+        self.consts = np.array([[1.0], [2.0], [5.0]])
 
     # Tests for PointDoI.
 
@@ -96,8 +96,36 @@ class DoiTestBase(object):
             'End point of linear baseline should be computed cut value.')
 
     def test_model_inputs_for_baseline(self):
-        # Test the model_inptus optional argument for callable baseline.
-        pass
+        # Test the model_inputs optional argument for callable baseline.
+
+        doi1 = LinearDoi(resolution=10, baseline=lambda z: z, cut=Cut(self.layer1))
+        # baseline is identical to value at cut (should produce 0 attribution if multiply_activation=True)
+
+        doi2 = LinearDoi(resolution=10, baseline=lambda z, model_inputs: model_inputs.args[0], cut=Cut(self.layer1))
+        # baseline is actually model input (should produce non-zero attribution even if multiply_activation=True)
+
+        infl1 = InternalInfluence(
+            self.model,
+            (Cut(self.layer1), OutputCut()),
+            LambdaQoI(lambda out: out),
+            doi1,
+            multiply_activation=True)
+
+        res1 = infl1.attributions(self.consts)
+        expect1 = np.zeros_like(self.consts)
+
+        self.assertTrue(np.allclose(res1, expect1))
+        
+        infl2 = InternalInfluence(
+            self.model,
+            (Cut(self.layer1), OutputCut()),
+            LambdaQoI(lambda out: out),
+            doi2,
+            multiply_activation=True)
+
+        res2 = infl2.attributions(self.consts)
+
+        self.assertTrue(np.any(np.abs(res2) > 0))
 
     def test_model_inputs_for_doi(self):
         # Test the model_inputs optional argument for doi's.
@@ -111,14 +139,14 @@ class DoiTestBase(object):
             def __call__(self, z, *, model_inputs: ModelInputs):
                 return [z]
 
-        doi1 = DoiOnCut(cut=Cut(1))   
+        doi1 = DoiOnCut(cut=Cut(self.layer1))   
 
-        doi2 = DoiOnInput(cut=Cut(1))
-        # will return values at Cut(0) despite defining values for Cut(1)
+        doi2 = DoiOnInput(cut=Cut(self.layer1))
+        # will return values at input=Cut(0) despite defining values for Cut(1)
 
         infl1 = InternalInfluence(
             self.model,
-            (Cut(1), OutputCut()),
+            (Cut(self.layer1), OutputCut()),
             LambdaQoI(lambda out: out),
             doi1,
             multiply_activation=False)
@@ -136,7 +164,7 @@ class DoiTestBase(object):
         
         infl2 = InternalInfluence(
             self.model,
-            (Cut(1), OutputCut()),
+            (Cut(self.layer1), OutputCut()),
             LambdaQoI(lambda out: out),
             doi2,
             multiply_activation=False)
