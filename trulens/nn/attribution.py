@@ -228,6 +228,8 @@ class InternalInfluence(AttributionMethod):
         self._do_multiply = multiply_activation
 
     def attributions(self, *model_args, **model_kwargs):
+        model_inputs = ModelInputs(model_args, model_kwargs)
+
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
         doi_val = self.model.fprop(model_args, model_kwargs, to_cut=doi_cut)
@@ -246,7 +248,7 @@ class InternalInfluence(AttributionMethod):
 
         if accepts_model_inputs(self.doi):
             D = self.doi(
-                doi_val, model_inputs=ModelInputs(model_args, model_kwargs))
+                doi_val, model_inputs=model_inputs)
         else:
             D = self.doi(doi_val)
 
@@ -287,13 +289,13 @@ class InternalInfluence(AttributionMethod):
                     if isinstance(z_val, DATA_CONTAINER_TYPE) and len(
                             z_val) == len(attributions):
                         attributions[i] *= self.doi.get_activation_multiplier(
-                            z_val[i])
+                            z_val[i], model_inputs=model_inputs)
                     else:
                         attributions[i] *= (
-                            self.doi.get_activation_multiplier(z_val))
+                            self.doi.get_activation_multiplier(z_val, model_inputs=model_inputs))
 
             else:
-                attributions *= self.doi.get_activation_multiplier(z_val)
+                attributions *= self.doi.get_activation_multiplier(z_val, model_inputs=model_inputs)
 
         return attributions
 

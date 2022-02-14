@@ -24,6 +24,10 @@ class DoiTest(DoiTestBase, TestCase):
 
         self.model = KerasModelWrapper(Model(l0, l2))
 
+        self.layer0 = 0
+        self.layer1 = 1
+        self.layer2 = 2
+
 
 if __name__ == '__main__':
     main()
