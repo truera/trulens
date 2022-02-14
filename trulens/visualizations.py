@@ -11,20 +11,20 @@ via visualization. This module provides several visualization methods for
 interpreting attributions as images.
 """
 
+import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.colors import Colormap
-from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.colors import ListedColormap
-import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 import numpy as np
+
 from scipy.ndimage.filters import gaussian_filter
 
-from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
+
+from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import PointDoi
 from trulens.nn.quantities import InternalChannelQoI
-from trulens.nn.slices import Cut
-from trulens.nn.slices import InputCut
+from trulens.nn.slices import Cut, InputCut
 
 
 class Tiler(object):
