@@ -16,10 +16,10 @@ class DoiTestBase(object):
 
 
         # Weights of a simple neural network for testing optional model_input args.
-        self.l1_coeff = 1
-        self.l1_exp = 2
-        self.l2_coeff = 3
-        self.l2_exp = 4
+        self.l1_coeff = 2
+        self.l1_exp = 5
+        self.l2_coeff = 7
+        self.l2_exp = 3
         # output = l2_coeff * (l1_coeff * (input ^ l1_exp)) ^ l2_exp
 
         self.consts = np.array([[1.0], [2.0], [5.0]])
