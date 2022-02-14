@@ -6,9 +6,7 @@
 import numpy as np
 import torch
 
-from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS
-from trulens.nn.backend import Backend
-
+from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS, Backend
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
 floatX = torch.get_default_dtype()
