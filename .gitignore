@@ -26,7 +26,3 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
-# Notebook tests generate this files:
-imagenet_class_index.json
-imagenet_class_index.json.*
