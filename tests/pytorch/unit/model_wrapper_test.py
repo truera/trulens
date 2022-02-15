@@ -51,6 +51,13 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         self.layer2 = 'l2_relu'
         self.out = 'logits'
 
+        class MKeyArg(Module):
+            def forward(this, x, y, deg):
+                # x, y will be batched, y will be provided by name, deg is not to be batched
+                return (x+y) ** deg
+
+        self.keymodel = PytorchModelWrapper(MKeyArg(), (3, ))
+
     # Overriden tests.
 
     def test_qoibprop_multiple_inputs(self):

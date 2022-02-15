@@ -64,8 +64,11 @@ class PytorchModelWrapper(ModelWrapper):
         self._layernames = list(layers.keys())
         self._tensors = list(layers.values())
 
+        if 0 == len(self._tensors):
+            tru_logger.warn("model has no visible components, you will not be able to specify cuts")
+
         # Check to see if this model outputs probits or logits.
-        if isinstance(self._tensors[-1], torch.nn.Softmax):
+        if len(self._tensors) > 0 and isinstance(self._tensors[-1], torch.nn.Softmax):
             self._gives_logits = False
         else:
             self._gives_logits = True
