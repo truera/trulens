@@ -10,33 +10,21 @@ package.
 """
 #from __future__ import annotations # Avoid expanding type aliases in mkdocs.
 
-import numpy as np
-
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Any
-from typing import Callable
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Callable, Tuple, Union
 
-from trulens.nn.distributions import DoI
-from trulens.nn.distributions import LinearDoi
-from trulens.nn.distributions import PointDoi
-from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
-from trulens.nn.quantities import ComparativeQoI
-from trulens.nn.quantities import InternalChannelQoI
-from trulens.nn.quantities import QoI
-from trulens.nn.quantities import LambdaQoI
-from trulens.nn.quantities import MaxClassQoI
-from trulens.nn.slices import Cut
-from trulens.nn.slices import InputCut
-from trulens.nn.slices import OutputCut
-from trulens.nn.slices import Slice
+import numpy as np
 from trulens.nn.backend import get_backend
+from trulens.nn.distributions import DoI, LinearDoi, PointDoi
+from trulens.nn.models._model_base import ModelWrapper
+from trulens.nn.quantities import (
+    ComparativeQoI, InternalChannelQoI, LambdaQoI, MaxClassQoI, QoI)
+from trulens.nn.slices import Cut, InputCut, OutputCut, Slice
+from trulens.utils.typing import (
+    DATA_CONTAINER_TYPE, ModelInputs, accepts_model_inputs)
 
-# Define some type aliases.
+# Attribution-related type aliases.
 CutLike = Union[Cut, int, str, None]
 SliceLike = Union[Slice, Tuple[CutLike], CutLike]
 QoiLike = Union[QoI, int, Tuple[int], Callable, str]
@@ -240,6 +228,8 @@ class InternalInfluence(AttributionMethod):
         self._do_multiply = multiply_activation
 
     def attributions(self, *model_args, **model_kwargs):
+        model_inputs = ModelInputs(model_args, model_kwargs)
+
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
         doi_val = self.model.fprop(model_args, model_kwargs, to_cut=doi_cut)
@@ -256,9 +246,16 @@ class InternalInfluence(AttributionMethod):
         if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
             doi_val = doi_val[0]
 
-        D = self.doi(doi_val)
+        if accepts_model_inputs(self.doi):
+            D = self.doi(
+                doi_val, model_inputs=model_inputs)
+        else:
+            D = self.doi(doi_val)
+
         n_doi = len(D)
         D = InternalInfluence.__concatenate_doi(D)
+
+        B = get_backend()
 
         # Calculate the gradient of each of the points in the DoI.
         qoi_grads = self.model.qoi_bprop(
@@ -272,16 +269,17 @@ class InternalInfluence(AttributionMethod):
         # Take the mean across the samples in the DoI.
         if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
             attributions = [
-                get_backend().mean(
-                    get_backend().reshape(
-                        qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
+                B.mean(
+                    B.reshape(qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
                     axis=0) for qoi_grad in qoi_grads
             ]
         else:
-            attributions = get_backend().mean(
-                get_backend().reshape(
-                    qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]),
-                axis=0)
+            attributions = B.mean(
+                B.reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]), axis=0)
+
+        extra_args = dict()
+        if accepts_model_inputs(self.doi.get_activation_multiplier):
+            extra_args['model_inputs'] = model_inputs
 
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
@@ -295,13 +293,13 @@ class InternalInfluence(AttributionMethod):
                     if isinstance(z_val, DATA_CONTAINER_TYPE) and len(
                             z_val) == len(attributions):
                         attributions[i] *= self.doi.get_activation_multiplier(
-                            z_val[i])
+                            z_val[i], **extra_args)
                     else:
                         attributions[i] *= (
-                            self.doi.get_activation_multiplier(z_val))
+                            self.doi.get_activation_multiplier(z_val, **extra_args))
 
             else:
-                attributions *= self.doi.get_activation_multiplier(z_val)
+                attributions *= self.doi.get_activation_multiplier(z_val, **extra_args)
 
         return attributions
 
