@@ -6,20 +6,16 @@ interested in a more general behavior over a distribution of samples.
 """
 #from __future__ import annotations # Avoid expanding type aliases in mkdocs.
 
-import numpy as np
-
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Any
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import Callable, List, Optional
 
-from trulens.nn.slices import Cut
+import numpy as np
 from trulens.nn.backend import get_backend
-
-# Define some type aliases.
-ArrayLike = Union[np.ndarray, Any, List[Union[np.ndarray, Any]]]
+from trulens.nn.slices import Cut
+from trulens.utils.typing import (
+    DATA_CONTAINER_TYPE, ArrayLike, BaselineLike, ModelInputs,
+    accepts_model_inputs)
 
 
 class DoiCutSupportError(ValueError):
@@ -49,22 +45,30 @@ class DoI(AbstractBaseClass):
         self._cut = cut
 
     @abstractmethod
-    def __call__(self, z: ArrayLike) -> List[ArrayLike]:
+    def __call__(
+            self,
+            z: ArrayLike,
+            *,
+            model_inputs: Optional[ModelInputs] = None) -> List[ArrayLike]:
         """
         Computes the distribution of interest from an initial point.
 
         Parameters:
             z:
                 Input point from which the distribution is derived.
+            model_inputs:
+                Optional wrapped model input arguments that produce value z at
+                cut.
 
         Returns:
             List of points which are all assigned equal probability mass in the
-            distribution of interest, i.e., the distribution of interest is
-            a discrete, uniform distribution over the list of returned points.
+            distribution of interest, i.e., the distribution of interest is a
+            discrete, uniform distribution over the list of returned points.
             Each point in the list shares the same type and shape as `z`.
         """
         raise NotImplementedError
 
+    # @property
     def cut(self) -> Cut:
         """
         Returns:
@@ -72,9 +76,9 @@ class DoI(AbstractBaseClass):
             applied to the input. otherwise, the distribution should be applied
             to the latent space defined by the cut. 
         """
-        return self._cut
+        return self._cut 
 
-    def get_activation_multiplier(self, activation: ArrayLike) -> ArrayLike:
+    def get_activation_multiplier(self, activation: ArrayLike, *, model_inputs: Optional[ModelInputs] = None) -> ArrayLike:
         """
         Returns a term to multiply the gradient by to convert from "*influence 
         space*" to "*attribution space*". Conceptually, "influence space"
@@ -86,6 +90,9 @@ class DoI(AbstractBaseClass):
         Parameters:
             activation:
                 The activation of the layer the DoI is applied to.
+            model_inputs:
+                Optional wrapped model input arguments that produce activation at
+                cut.
 
         Returns:
             An array with the same shape as ``activation`` that will be 
@@ -131,7 +138,11 @@ class PointDoi(DoI):
         """
         super(PointDoi, self).__init__(cut)
 
-    def __call__(self, z):
+    def __call__(self,
+                 z,
+                 *,
+                 model_inputs: Optional[ModelInputs] = None) -> List[ArrayLike]:
+
         return [z]
 
 
@@ -142,56 +153,56 @@ class LinearDoi(DoI):
     """
 
     def __init__(
-            self,
-            baseline: Optional[ArrayLike] = None,
-            resolution: int = 10,
-            cut: Cut = None):
+        self,
+        baseline: BaselineLike = None,
+        resolution: int = 10,
+        *,
+        cut: Cut = None,
+    ):
         """
         The DoI for point, `z`, will be a uniform distribution over the points
         on the line segment connecting `z` to `baseline`, approximated by a
         sample of `resolution` points equally spaced along this segment.
 
         Parameters:
-            baseline:
-                The baseline to interpolate from. Must be same shape as the 
-                space the distribution acts over, i.e., the shape of the points, 
+            cut (Cut, optional, from DoI): 
+                The Cut in which the DoI will be applied. If `None`, the DoI
+                will be applied to the input. otherwise, the distribution should
+                be applied to the latent space defined by the cut. 
+            baseline (optional)
+                The baseline to interpolate from. Must be same shape as the
+                space the distribution acts over, i.e., the shape of the points,
                 `z`, eventually passed to `__call__`. If `cut` is `None`, this
                 must be the same shape as the input, otherwise this must be the
                 same shape as the latent space defined by the cut. If `None` is
-                given, `baseline` will be the zero vector in the appropriate 
-                shape.
-
-            resolution:
-                Number of points returned by each call to this DoI. A higher 
+                given, `baseline` will be the zero vector in the appropriate
+                shape. If the baseline is callable, it is expected to return the
+                `baseline`, given `z` and optional model arguments.
+            resolution (int):
+                Number of points returned by each call to this DoI. A higher
                 resolution is more computationally expensive, but gives a better
                 approximation of the DoI this object mathematically represents.
-
-            cut (Cut, optional): 
-                The Cut in which the DoI will be applied. If `None`, the DoI will be
-                applied to the input. otherwise, the distribution should be applied
-                to the latent space defined by the cut. 
         """
         super(LinearDoi, self).__init__(cut)
         self._baseline = baseline
         self._resolution = resolution
 
-    def __call__(self, z: ArrayLike) -> List[ArrayLike]:
-        B = get_backend()
-        if isinstance(z, (list, tuple)) and len(z) == 1:
+    @property
+    def baseline(self) -> ArrayLike:
+        return self._baseline
+
+    @property
+    def resolution(self) -> int:
+        return self._resolution
+
+    def __call__(self, z: ArrayLike, *, model_inputs: Optional[ModelInputs] = None) -> List[ArrayLike]:
+
+        if isinstance(z, DATA_CONTAINER_TYPE) and len(z) == 1:
             z = z[0]
 
         self._assert_cut_contains_only_one_tensor(z)
 
-        if self._baseline is None:
-            baseline = B.zeros_like(z)
-        else:
-            baseline = self._baseline
-
-        if (B.is_tensor(z) and not B.is_tensor(baseline)):
-            baseline = B.as_tensor(baseline)
-
-        if (not B.is_tensor(z) and B.is_tensor(baseline)):
-            baseline = B.as_array(baseline)
+        baseline = self._compute_baseline(z, model_inputs=model_inputs)
 
         r = 1. if self._resolution is 1 else self._resolution - 1.
 
@@ -200,7 +211,7 @@ class LinearDoi(DoI):
             for i in range(self._resolution)
         ]
 
-    def get_activation_multiplier(self, activation: ArrayLike) -> ArrayLike:
+    def get_activation_multiplier(self, activation: ArrayLike, *, model_inputs: Optional[ModelInputs] = None) -> ArrayLike:
         """
         Returns a term to multiply the gradient by to convert from "*influence 
         space*" to "*attribution space*". Conceptually, "influence space"
@@ -216,9 +227,37 @@ class LinearDoi(DoI):
         Returns:
             The activation adjusted by the baseline passed to the constructor.
         """
-        return (
-            activation if self._baseline is None else activation -
-            self._baseline)
+
+        baseline = self._compute_baseline(activation, model_inputs=model_inputs)
+
+        return (activation if baseline is None else activation - baseline)
+
+    def _compute_baseline(
+            self,
+            z: ArrayLike,
+            *,
+            model_inputs: Optional[ModelInputs] = None) -> ArrayLike:
+
+        B = get_backend()
+
+        _baseline = self.baseline
+
+        if isinstance(_baseline, Callable):
+            if accepts_model_inputs(_baseline):
+                _baseline = _baseline(z, model_inputs=model_inputs)
+            else:
+                _baseline = _baseline(z)
+
+        if _baseline is None:
+            _baseline = B.zeros_like(z)
+
+        if B.is_tensor(z) and not B.is_tensor(_baseline):
+            _baseline = B.as_tensor(_baseline)
+
+        if not B.is_tensor(z) and B.is_tensor(_baseline):
+            _baseline = B.as_array(_baseline)
+
+        return _baseline
 
 
 class GaussianDoi(DoI):

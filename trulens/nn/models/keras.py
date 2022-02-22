@@ -1,13 +1,17 @@
-import numpy as np
+import importlib
 import os
 import tempfile
-import importlib
 
+import numpy as np
+
+from trulens.nn.backend import Backend
+from trulens.nn.backend import get_backend
+from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.nn.models._model_base import ModelWrapper
+from trulens.nn.slices import InputCut
+from trulens.nn.slices import LogitCut
+from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-
-from trulens.nn.backend import get_backend, Backend
-from trulens.nn.slices import InputCut, OutputCut, LogitCut
-from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
 
 
 def import_keras_backend():
