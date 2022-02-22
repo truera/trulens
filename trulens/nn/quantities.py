@@ -16,11 +16,7 @@ roof of the car, a “car feature” not shared by convertibles.
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
 from inspect import signature
-from typing import Any
-from typing import Callable
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import Any, Callable, List, Optional, Union
 
 from trulens.nn.backend import get_backend
 

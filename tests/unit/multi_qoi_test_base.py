@@ -1,12 +1,11 @@
 from unittest import TestCase, main
 
 import numpy as np
-
-from trulens.nn.backend import get_backend
 from trulens.nn.attribution import InternalInfluence
+from trulens.nn.backend import get_backend
 from trulens.nn.distributions import DoI
 from trulens.nn.quantities import QoI
-from trulens.nn.slices import InputCut, Cut
+from trulens.nn.slices import Cut
 
 
 class PerTimestepQoI(QoI):
@@ -46,7 +45,8 @@ class RNNLinearDoi(DoI):
 
         x = x_input[0] if tf_cell else x_input
         batch_size = len(x)
-        if (self._baseline is None):
+
+        if self._baseline is None:
             if self.B.is_tensor(x):
                 x = self.B.as_array(x)
             baseline = np.zeros_like(x)
@@ -58,10 +58,10 @@ class RNNLinearDoi(DoI):
         baseline = baseline[0, ...]
         baseline = np.tile(baseline, tuple(tile_dims))
 
-        if (self.B.is_tensor(x) and not self.B.is_tensor(baseline)):
+        if self.B.is_tensor(x) and not self.B.is_tensor(baseline):
             baseline = self.B.as_tensor(baseline)
 
-        if (not self.B.is_tensor(x) and self.B.is_tensor(baseline)):
+        if not self.B.is_tensor(x) and self.B.is_tensor(baseline):
             baseline = self.B.as_array(baseline)
 
         r = self._resolution - 1.

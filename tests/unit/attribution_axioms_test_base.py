@@ -11,14 +11,16 @@ satisfy several axioms from the following two papers:
 These axioms should hold on arbitrary networks.
 '''
 
-import numpy as np
-
 from functools import partial
 
+import numpy as np
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import DoI, LinearDoi, PointDoi
 from trulens.nn.quantities import ClassQoI, InternalChannelQoI, MaxClassQoI
 from trulens.nn.slices import Cut, InputCut
+
+ALLCLOSE_ATOL = 1e-08
+# NOTE(piotrm): if testing using CUDA, this needs to be more tolerant
 
 
 class AxiomsTestBase(object):
@@ -107,8 +109,12 @@ class AxiomsTestBase(object):
 
         self.assertEqual(res.shape, (2, self.input_size))
 
-        self.assertTrue(np.allclose(res[0], self.model_lin_weights[:, c]))
-        self.assertTrue(np.allclose(res[1], self.model_lin_weights[:, c]))
+        self.assertTrue(
+            np.allclose(
+                res[0], self.model_lin_weights[:, c], atol=ALLCLOSE_ATOL))
+        self.assertTrue(
+            np.allclose(
+                res[1], self.model_lin_weights[:, c], atol=ALLCLOSE_ATOL))
 
     def test_linear_agreement_multiply_activation(self):
         c = 1
@@ -123,7 +129,9 @@ class AxiomsTestBase(object):
 
         self.assertEqual(res.shape, (2, self.input_size))
 
-        self.assertTrue(np.allclose(res, self.model_lin_weights[:, c] * self.x))
+        self.assertTrue(
+            np.allclose(
+                res, self.model_lin_weights[:, c] * self.x, atol=ALLCLOSE_ATOL))
 
     def test_linear_agreement_linear_slice(self):
         c = 4
@@ -137,8 +145,12 @@ class AxiomsTestBase(object):
 
         self.assertEqual(res.shape, (2, self.internal1_size))
 
-        self.assertTrue(np.allclose(res[0], self.model_deep_weights_2[:, c]))
-        self.assertTrue(np.allclose(res[1], self.model_deep_weights_2[:, c]))
+        self.assertTrue(
+            np.allclose(
+                res[0], self.model_deep_weights_2[:, c], atol=ALLCLOSE_ATOL))
+        self.assertTrue(
+            np.allclose(
+                res[1], self.model_deep_weights_2[:, c], atol=ALLCLOSE_ATOL))
 
     def test_linear_agreement_linear_slice_multiply_activation(self):
         c = 4
@@ -154,7 +166,9 @@ class AxiomsTestBase(object):
 
         z = self.model_deep.fprop((self.x,), to_cut=Cut(self.layer2))[0]
 
-        self.assertTrue(np.allclose(res, self.model_deep_weights_2[:, c] * z))
+        self.assertTrue(
+            np.allclose(
+                res, self.model_deep_weights_2[:, c] * z, atol=ALLCLOSE_ATOL))
 
     # Tests for sensitivity [2].
     #

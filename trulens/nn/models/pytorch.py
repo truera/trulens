@@ -3,11 +3,11 @@ from functools import partial
 
 import numpy as np
 import torch
-
 from trulens.nn.backend import get_backend
-from trulens.nn.slices import InputCut, OutputCut, LogitCut
-from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
+from trulens.nn.models._model_base import ModelWrapper
+from trulens.nn.slices import InputCut, LogitCut, OutputCut
 from trulens.utils import tru_logger
+from trulens.utils.typing import DATA_CONTAINER_TYPE
 
 
 class PytorchModelWrapper(ModelWrapper):
@@ -263,7 +263,7 @@ class PytorchModelWrapper(ModelWrapper):
             intervention, DATA_CONTAINER_TYPE) else [intervention]
         intervention = self._to_tensor(intervention)
 
-        if (isinstance(doi_cut, InputCut)):
+        if isinstance(doi_cut, InputCut):
             model_args = intervention
 
         else:
@@ -286,7 +286,7 @@ class PytorchModelWrapper(ModelWrapper):
 
             model_args = batched_model_args
 
-        if (attribution_cut is not None):
+        if attribution_cut is not None:
             # Specify that we want to preserve gradient information.
             intervention = ModelWrapper._nested_apply(
                 intervention,
@@ -483,7 +483,7 @@ class PytorchModelWrapper(ModelWrapper):
                 qoi_out, DATA_CONTAINER_TYPE) else B.as_array(grads)
 
             grads_list.append(grads)
-        
+
         del y  # TODO: garbage collection
         self._model.eval()
         return grads_list[0] if len(grads_list) == 1 else grads_list
