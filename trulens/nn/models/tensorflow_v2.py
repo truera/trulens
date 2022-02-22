@@ -4,9 +4,12 @@ import tensorflow.keras as keras
 import tensorflow.keras.backend as K
 
 from trulens.nn.backend import get_backend
+from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.models.keras import KerasModelWrapper
-from trulens.nn.models._model_base import ModelWrapper, DATA_CONTAINER_TYPE
-from trulens.nn.slices import InputCut, OutputCut, LogitCut
+from trulens.nn.slices import InputCut
+from trulens.nn.slices import LogitCut
+from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 
 if tf.executing_eagerly():
