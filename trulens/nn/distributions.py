@@ -76,9 +76,9 @@ class DoI(AbstractBaseClass):
             applied to the input. otherwise, the distribution should be applied
             to the latent space defined by the cut. 
         """
-        return self._cut
+        return self._cut 
 
-    def get_activation_multiplier(self, activation: ArrayLike) -> ArrayLike:
+    def get_activation_multiplier(self, activation: ArrayLike, *, model_inputs: Optional[ModelInputs] = None) -> ArrayLike:
         """
         Returns a term to multiply the gradient by to convert from "*influence 
         space*" to "*attribution space*". Conceptually, "influence space"
@@ -90,6 +90,9 @@ class DoI(AbstractBaseClass):
         Parameters:
             activation:
                 The activation of the layer the DoI is applied to.
+            model_inputs:
+                Optional wrapped model input arguments that produce activation at
+                cut.
 
         Returns:
             An array with the same shape as ``activation`` that will be 
@@ -192,11 +195,7 @@ class LinearDoi(DoI):
     def resolution(self) -> int:
         return self._resolution
 
-    def __call__(
-            self,
-            z: ArrayLike,
-            *,
-            model_inputs: Optional[ModelInputs] = None) -> List[ArrayLike]:
+    def __call__(self, z: ArrayLike, *, model_inputs: Optional[ModelInputs] = None) -> List[ArrayLike]:
 
         if isinstance(z, DATA_CONTAINER_TYPE) and len(z) == 1:
             z = z[0]
@@ -212,7 +211,7 @@ class LinearDoi(DoI):
             for i in range(self._resolution)
         ]
 
-    def get_activation_multiplier(self, activation: ArrayLike) -> ArrayLike:
+    def get_activation_multiplier(self, activation: ArrayLike, *, model_inputs: Optional[ModelInputs] = None) -> ArrayLike:
         """
         Returns a term to multiply the gradient by to convert from "*influence 
         space*" to "*attribution space*". Conceptually, "influence space"
@@ -228,9 +227,37 @@ class LinearDoi(DoI):
         Returns:
             The activation adjusted by the baseline passed to the constructor.
         """
-        return (
-            activation if self._baseline is None else activation -
-            self._baseline)
+
+        baseline = self._compute_baseline(activation, model_inputs=model_inputs)
+
+        return (activation if baseline is None else activation - baseline)
+
+    def _compute_baseline(
+            self,
+            z: ArrayLike,
+            *,
+            model_inputs: Optional[ModelInputs] = None) -> ArrayLike:
+
+        B = get_backend()
+
+        _baseline = self.baseline
+
+        if isinstance(_baseline, Callable):
+            if accepts_model_inputs(_baseline):
+                _baseline = _baseline(z, model_inputs=model_inputs)
+            else:
+                _baseline = _baseline(z)
+
+        if _baseline is None:
+            _baseline = B.zeros_like(z)
+
+        if B.is_tensor(z) and not B.is_tensor(_baseline):
+            _baseline = B.as_tensor(_baseline)
+
+        if not B.is_tensor(z) and B.is_tensor(_baseline):
+            _baseline = B.as_array(_baseline)
+
+        return _baseline
 
     def _compute_baseline(
             self,
