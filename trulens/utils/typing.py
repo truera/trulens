@@ -5,19 +5,39 @@
 
 from dataclasses import dataclass, field
 from inspect import signature
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-ArrayLike = Union[np.ndarray, Any, List[Union[np.ndarray, Any]]]
+from trulens.nn.backend import Tensor
 
+# Atomic model inputs (at least from our perspective)
+DataLike = Union[np.ndarray, Tensor]
+
+# Model input arguments. Either a single element or list or tuple of several.
+ArgsLike = Union[DataLike, List[DataLike], Tuple[DataLike]]
+
+# A type to check for the latter of the above.
 DATA_CONTAINER_TYPE = (list, tuple)
 
+# Convert a single element input to the multi-input one.
+def as_args(ele):
+    if isinstance(ele, DATA_CONTAINER_TYPE):
+        return ele
+    else:
+        return [ele]
 
+# For models that take in kwargs as well, a container:
 @dataclass
 class ModelInputs:
-    args: List[ArrayLike] = field(default_factory=list)
-    kwargs: Dict[str, ArrayLike] = field(default_factory=dict)
+    args: List[DataLike] = field(default_factory=list)
+    kwargs: Dict[str, DataLike] = field(default_factory=dict)
+
+    def map(self, f):
+        return ModelInputs(
+            args=f(self.args),
+            kwargs = {k: f(v) for k, v in self.kwargs.items()}
+        )
 
 
 def accepts_model_inputs(func: Callable) -> bool:
@@ -29,5 +49,9 @@ def accepts_model_inputs(func: Callable) -> bool:
 
 # Baselines are either explicit or computable from the same data as sent to DoI
 # __call__ .
-BaselineLike = Union[ArrayLike, Callable[[ArrayLike, Optional[ModelInputs]],
-                                         ArrayLike]]
+BaselineLike = Union[ArgsLike, Callable[[ArgsLike, Optional[ModelInputs]],
+                                         ArgsLike]]
+
+# Interventions for fprop specifiy either activations at some non-InputCut or
+# model inputs if DoI is InputCut (these include both args and kwargs).
+InterventionLike = Union[ArgsLike, ModelInputs]

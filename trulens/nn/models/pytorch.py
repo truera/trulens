@@ -1,13 +1,15 @@
 from collections import OrderedDict
 from functools import partial
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
 from trulens.nn.backend import get_backend
+from trulens.nn.backend.pytorch_backend.pytorch import Tensor
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.slices import InputCut, LogitCut, OutputCut
+from trulens.nn.slices import Cut, InputCut, LogitCut, OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, DataLike, InterventionLike, ModelInputs, as_args
 
 
 class PytorchModelWrapper(ModelWrapper):
@@ -207,69 +209,89 @@ class PytorchModelWrapper(ModelWrapper):
 
     def fprop(
             self,
-            model_args,
-            model_kwargs={},
-            doi_cut=None,
-            to_cut=None,
-            attribution_cut=None,
-            intervention=None,
-            return_tensor=False,
-            input_timestep=None):
+            model_args: ArgsLike,
+            model_kwargs: Dict[str, DataLike] = {},
+            doi_cut: Optional[Cut] = None,
+            to_cut: Optional[Cut] = None,
+            attribution_cut: Optional[Cut] = None,
+            intervention: InterventionLike = None,
+            return_tensor: bool = False,
+            input_timestep: Optional[int] = None
+        ) -> Union[List[Tensor], List[np.ndarray]]:
         """
         fprop Forward propagate the model
 
         Parameters
         ----------
         model_args, model_kwargs: 
-            The args and kwargs given to the call method of a model.
-            This should represent the instances to obtain attributions for, 
-            assumed to be a *batched* input. if `self.model` supports evaluation 
-            on *data tensors*, the  appropriate tensor type may be used (e.g.,
-            Pytorch models may accept Pytorch tensors in additon to
-            `np.ndarray`s). The shape of the inputs must match the input shape
-            of `self.model`. 
+            The args and kwargs given to the call method of a model. This should
+            represent the instances to obtain attributions for, assumed to be a
+            *batched* input. if `self.model` supports evaluation on *data
+            tensors*, the appropriate tensor type may be used (e.g., Pytorch
+            models may accept Pytorch tensors in additon to `np.ndarray`s). The
+            shape of the inputs must match the input shape of `self.model`. 
         doi_cut: Cut, optional
             The Cut from which to begin propagation. The shape of `intervention`
-            must match the input shape of this layer. This is usually used to 
+            must match the input shape of this layer. This is usually used to
             apply distributions of interest (DoI)
         to_cut : Cut, optional
-            The Cut to return output activation tensors for. If `None`,
-            assumed to be just the final layer. By default None
+            The Cut to return output activation tensors for. If `None`, assumed
+            to be just the final layer. By default None
         attribution_cut : Cut, optional
-            An Cut to return activation tensors for. If `None` 
-            attributions layer output is not returned.
-        intervention : backend.Tensor or np.array
-            Input tensor to propagate through the model. If an np.array, 
-            will be converted to a tensor on the same device as the model.
+            An Cut to return activation tensors for. If `None` attributions
+            layer output is not returned.
+        intervention : ArgsLike (for non-InputCut DoIs) or
+            ModelInputs (for InputCut DoIs) Tensor(s) to propagate through the
+            model. If an intervention is ArgsLike for InputCut, we assume there
+            are no kwargs.
         input_timestep: int, optional
-            Specifies a specific timestep to apply the DoI if using an RNN
+            Timestep to apply to the DoI if using an RNN
 
         Returns
         -------
-        (list of backend.Tensor or np.ndarray)
+        (list of backend.Tensor or list of np.ndarray)
             A list of output activations are returned, keeping the same type as
-            the input. If `attribution_cut` is supplied, also return the cut 
+            the input. If `attribution_cut` is supplied, also return the cut
             activations.
         """
+
+        # TODO(piotrm): some of the initialization and checking logic should be
+        # abstracted out to parent class.
+
         B = get_backend()
         if doi_cut is None:
             doi_cut = InputCut()
         if to_cut is None:
             to_cut = OutputCut()
 
-        model_args = self._to_tensor(model_args)
-
-        if intervention is None:
-            intervention = model_args
-
-        intervention = intervention if isinstance(
-            intervention, DATA_CONTAINER_TYPE) else [intervention]
-        intervention = self._to_tensor(intervention)
+        model_inputs = ModelInputs(as_args(model_args), model_kwargs).map(self._to_tensor)
 
         if isinstance(doi_cut, InputCut):
-            model_args = intervention
+            if intervention is not None:
+                tru_logger.warn("intervention for InputCut DoI specified; this is ambiguous with model_args, model_kwargs")
+            else:
+                intervention = model_inputs
+            
+            if isinstance(intervention, ModelInputs):
+                 model_args = intervention.args
+                 model_kwargs = intervention.kwargs
+                 intervention = model_args
+            else:
+                 intervention = as_args(intervention)
+                 intervention = self._to_tensor(intervention)
+                 model_args = intervention
 
-        else:
+        else: # doi_cut != InputCut
+            model_args = model_inputs.args
+            model_kwargs = model_inputs.kwargs
+
+            if intervention is None:
+                # Any situations where one wants to specify a non-InputCut intervention with input arguments?
+                raise ValueError("intervention needs to be given for DoI cuts that are not InputCut")
+
+            intervention = as_args(intervention)
+            intervention = self._to_tensor(intervention)
+
             doi_repeated_batch_size = intervention[0].shape[0]
             expected_dim=None
 
@@ -280,14 +302,14 @@ class PytorchModelWrapper(ModelWrapper):
                 nonlocal expected_dim
                 
                 if expected_dim is None:
-                    """Get the number of tiles from the first value that gets tiled. All subsequent ones
-                    are expected to have the same shape or otherwise they do not get tiled."""
+                    # Get the number of tiles from the first value that gets
+                    # tiled. All subsequent ones are expected to have the same
+                    # shape or otherwise they do not get tiled.
                     expected_dim = val.shape[0]
 
                 if val.shape[0] != expected_dim:
                     tru_logger.warn(
-                        f"Value {val} of shape {val.shape} is assumed to not be batchable due to its shape."
-                        " If this is incorrect, make sure its first dimension matches prior batchable inputs."
+                        f"Value {val} of shape {val.shape} is assumed to not be batchable due to its shape not matching prior batchable inputs of shape ({expected_dim},...). If this is incorrect, make sure its first dimension matches prior batchable inputs."
                     )
                     return val
 
@@ -318,8 +340,16 @@ class PytorchModelWrapper(ModelWrapper):
             intervention = ModelWrapper._nested_apply(
                 intervention,
                 lambda intervention: intervention.requires_grad_(True))
+
             model_args = ModelWrapper._nested_apply(
                 model_args, lambda model_args: model_args.requires_grad_(True))
+
+            # TODO (piotrm): Is this necessary? Are attribution cuts ever
+            # specified when DoI cuts are InputCut?
+            model_kwargs = {
+                k: ModelWrapper._nested_apply(v, lambda e: e.requires_grad_(True))
+                for k, v in model_kwargs.items()
+            }
 
         # Set up the intervention hookfn if we are starting from an intermediate
         # layer.
@@ -408,6 +438,7 @@ class PytorchModelWrapper(ModelWrapper):
         for handle in handles:
             handle.remove()
 
+        # TODO(piotrm): do these methods need model_kwargs?
         if attribution_cut:
             return [
                 self._extract_outputs_from_hooks(

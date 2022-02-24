@@ -2,11 +2,18 @@ import os
 from enum import Enum
 import traceback
 import importlib
+from typing import TypeVar
 from trulens.utils import tru_logger
 
 # Do not use directly, use get_backend
 _TRULENS_BACKEND_IMPL = None
 
+# Each backend module provides:
+Tensor = TypeVar("Tensor")
+# dim_order
+# channel_axis
+# backend
+# floatX
 
 class Backend(Enum):
     PYTORCH = 1
