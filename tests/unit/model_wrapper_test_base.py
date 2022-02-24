@@ -1,8 +1,10 @@
 import numpy as np
 
 from trulens.nn.attribution import InternalInfluence, InputAttribution
+from trulens.nn.backend import get_backend
 from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut, InputCut, LogitCut
+from trulens.utils.typing import ModelInputs
 
 
 class ModelWrapperTestBase(object):
@@ -33,6 +35,16 @@ class ModelWrapperTestBase(object):
         self.layer3_weights = np.array([[1.], [2.]])
         self.internal_bias = np.array([0., 0.])
         self.bias = np.array([0.])
+
+        # `self.model_tiling`` should implement exponential with five types of inputs:
+        #   args[0] - (batchable) X
+        #   args[1] - (batchable) Coefficients
+        #   args[2] - (NOT batchable) common divisor to divide all coefficients
+        #   kwargs['Degree'] - (batchable) power to raise x by
+        #   kwargs['offset'] - (NOT batchable) common offset to add to all terms
+        # output = X^(Degree) * Coefficients / divisor + offset
+        # The first arg's first dimension determines batch_size and other batchable inputs
+        #   must match this first dimension to get batched.
 
     # Tests for fprop.
 
@@ -111,6 +123,88 @@ class ModelWrapperTestBase(object):
                             ]),),
                     to_cut=LogitCut())[0],
                 np.array([5., 4., 2., 3., 3.])[:, None]))
+
+    def test_fprop_kwargs(self):
+        """Test fprop on InputCut DoI for a model with both args and kwargs."""
+
+        B = get_backend()
+
+        X = np.array([[1.,2.,3.], [4.,5.,6.]])
+        Coeffs = np.array([[0.5,1.0,1.5], [2.0, 2.5, 3.0]])
+        divisor = np.array([[3.0]])
+        Degree = np.array([[1.,2.,3.], [4.,5.,6.]])
+        offset = np.array([[4.0]])
+
+        actual = self.model_kwargs.fprop(
+            (X, Coeffs, divisor),
+            dict(Degree=Degree, offset=offset)
+        )[0]
+
+        # Expect handling as in numpy broadcasting of the non-batched divisor, offset:
+        expected = (X ** Degree) * Coeffs / divisor + offset
+
+        self.assertTrue(
+            np.allclose(
+                actual, expected
+            )
+        )
+
+    def test_fprop_kwargs_intervention_tiling(self):
+        """Test fprop with InputCut DoI with an intervention that needs to have
+        its kwargs tiled."""
+
+        B = get_backend()
+
+        # batch of 2
+        X = np.array([ 
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0]
+        ])
+        Coeffs = np.array([
+            [0.5, 1.0, 1.5],
+            [2.5, 3.0, 3.5]
+        ])
+        Degree = np.array([
+            [4.0, 5.0, 6.0],
+            [7.0, 8.0, 9.0]
+        ])
+
+        # non-batchable parameters
+        divisor = np.array([
+            [3.0]
+        ])
+        offset = np.array([
+            [4.0]
+        ])
+
+        # Will intervene at layer1 which is just a copy of the input X.
+
+        # batch of 4 at intervention, Coeffs, Degree, but not (divisor, offset) should get tiled 2 times.
+        X_intervention = np.array([ 
+            [1.0,  2.0,  3.0],
+            [4.0,  5.0,  6.0],
+            [7.0,  8.0,  9.0],
+            [10.0, 11.0, 12.0]
+        ])
+       
+        actual = self.model_kwargs.fprop(
+            (X, Coeffs, divisor),
+            dict(Degree=Degree, offset=offset),
+            doi_cut=Cut(self.model_kwargs_layer1),
+            intervention=X_intervention
+        )[0]
+
+        # Expect handling of the non-batched values (divisor, offset) as in
+        # numpy broadcasting while Degree and Coeffs should be tiled twice to
+        # match intervention.
+        expected = (X_intervention ** np.tile(Degree, (2, 1))) * np.tile(Coeffs, (2,1)) / divisor + offset
+
+        self.assertTrue(
+            np.allclose(
+                actual, expected
+            )
+        )
+
 
     # Tests for qoibprop.
 
