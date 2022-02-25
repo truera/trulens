@@ -7,7 +7,7 @@ import tensorflow as tf
 
 from trulens.nn.backend import get_backend
 from trulens.utils import tru_logger
-from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, DataLike, InterventionLike, ModelInputs, as_args
+from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, InterventionLike, KwargsLike, ModelInputs, as_args
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.slices import Cut, InputCut
 from trulens.nn.slices import LogitCut
@@ -180,6 +180,7 @@ class TensorflowModelWrapper(ModelWrapper):
             expected_dim = None
 
             # tile the feed tensors that came from model input arguments
+            # TODO(piotrm): figure out how to abstract this out from the backends
             for k, val in feed_dict.items():
                 if k in intervention_dict: continue
 
@@ -196,6 +197,8 @@ class TensorflowModelWrapper(ModelWrapper):
                         tru_logger.warn(
                             f"Value {val} of shape {val.shape} is assumed to not be batchable due to its shape not matching prior batchable inputs of shape ({expected_dim}, ...). If this is incorrect, make sure its first dimension matches prior batchable inputs."
                         )
+                else:
+
 
         elif intervention is None and doi_tensors == self._inputs:
             intervention = [feed_dict[key_tensor] for key_tensor in doi_tensors]
@@ -209,7 +212,7 @@ class TensorflowModelWrapper(ModelWrapper):
     def fprop(
             self,
             model_args: ArgsLike,
-            model_kwargs: Dict[str, DataLike]={},
+            model_kwargs: KwargsLike = {},
             doi_cut: Optional[Cut] = None,
             to_cut: Optional[Cut] = None,
             attribution_cut: Optional[Cut] = None, # Not used
@@ -238,10 +241,9 @@ class TensorflowModelWrapper(ModelWrapper):
         attribution_cut : Cut, optional
             An Cut to return activation tensors for. If `None` 
             attributions layer output is not returned.
-        intervention : backend.Tensor or np.array
-            Input tensor to propagate through the model. If an np.array, will be
-            converted to a tensor on the same device as the model. Intervention
-            can also be a `feed_dict`.
+        intervention : ArgsLike, KwargsLike, or ModelInputs (for InputCut doi_cut)
+            Input tensor(s) to propagate through the model. If an np.array, will be
+            converted to a tensor on the same device as the model.
 
         Returns
         -------
@@ -251,18 +253,7 @@ class TensorflowModelWrapper(ModelWrapper):
             activations.
         """
 
-        if doi_cut is None:
-            doi_cut = InputCut()
-        if to_cut is None:
-            to_cut = OutputCut()
-
-        if isinstance(doi_cut, InputCut):
-            if intervention is not None:
-                tru_logger.warn("intervention for InputCut DoI specified; this is ambiguous with model_args, model_kwargs")
-        else:
-            if intervention is None:
-                # Any situations where one wants to specify a non-InputCut intervention with input arguments?
-                raise ValueError("intervention needs to be given for DoI cuts that are not InputCut")
+        doi_cut, to_cut = ModelWrapper._fprop_get_defaults(self, doi_cut, to_cut, intervention)
 
         doi_tensors = self._get_layers(doi_cut)
         to_tensors = self._get_layers(to_cut)

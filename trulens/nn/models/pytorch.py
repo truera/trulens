@@ -259,18 +259,15 @@ class PytorchModelWrapper(ModelWrapper):
         # abstracted out to parent class.
 
         B = get_backend()
-        if doi_cut is None:
-            doi_cut = InputCut()
-        if to_cut is None:
-            to_cut = OutputCut()
+
+        doi_cut, to_cut = ModelWrapper._fprop_get_defaults(self, doi_cut, to_cut, intervention)
 
         model_inputs = ModelInputs(as_args(model_args), model_kwargs).map(self._to_tensor)
 
         if isinstance(doi_cut, InputCut):
-            if intervention is not None:
-                tru_logger.warn("intervention for InputCut DoI specified; this is ambiguous with model_args, model_kwargs")
-            else:
+            if intervention is None:
                 intervention = model_inputs
+            # else: # checked in _fprop_get_defaults
             
             if isinstance(intervention, ModelInputs):
                  model_args = intervention.args
@@ -285,9 +282,7 @@ class PytorchModelWrapper(ModelWrapper):
             model_args = model_inputs.args
             model_kwargs = model_inputs.kwargs
 
-            if intervention is None:
-                # Any situations where one wants to specify a non-InputCut intervention with input arguments?
-                raise ValueError("intervention needs to be given for DoI cuts that are not InputCut")
+            # if intervention is None: checked in _fprop_get_defaults                    
 
             intervention = as_args(intervention)
             intervention = self._to_tensor(intervention)

@@ -6,7 +6,7 @@ deprecation._PRINT_DEPRECATION_WARNINGS = False
 
 import numpy as np
 
-from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.layers import Input, Dense, Lambda
 from tensorflow.keras.models import Model
 from unittest import TestCase, main
 
@@ -36,6 +36,20 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         self.layer1 = 1
         self.layer2 = 2
         self.out = 'logits'
+
+        X = Input((3, ), name="X")
+        Coeffs = Input((3, ), name="Coeffs")
+        divisor = Input((1, ), name="divisor")
+        Degree = Input((3, ), name="Degree")
+        offset = Input((1, ), name="offset")
+
+        layer1 = Lambda(lambda X: X)(X)
+        layer2 = Lambda(lambda ins: (ins[0] ** ins[3]) * ins[1] / ins[2] - ins[4])([layer1, Coeffs, divisor, Degree, offset])
+
+        self.model_kwargs = KerasModelWrapper(Model([X, Coeffs, divisor, Degree, offset], layer2))
+        self.model_kwargs_layer1 = 1
+        self.model_kwargs_layer2 = 2
+
 
 
 if __name__ == '__main__':

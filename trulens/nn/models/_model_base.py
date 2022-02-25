@@ -9,6 +9,10 @@ it should be wrapped as a `ModelWrapper` instance.
 """
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
+from trulens.nn.slices import InputCut, OutputCut
+
+from trulens.utils import tru_logger
+from trulens.utils.typing import ModelInputs, as_args
 
 
 class ModelWrapper(AbstractBaseClass):
@@ -118,6 +122,28 @@ class ModelWrapper(AbstractBaseClass):
             Model's output on the input point.
         """
         return self.fprop(x)[0]
+
+    def _fprop_defaults(self, model_args, model_kwargs, doi_cut, to_cut, intervention):
+        """Defaults logic for fprop common across backends. Also some warnings and errors."""
+
+        if doi_cut is None:
+            doi_cut = InputCut()
+        if to_cut is None:
+            to_cut = OutputCut()
+
+        if isinstance(doi_cut, InputCut):
+            if intervention is not None:
+                tru_logger.warn("intervention for InputCut DoI specified; this is ambiguous with model_args, model_kwargs")
+            else:
+                intervention = ModelInputs(model_args, model_kwargs)
+        else:
+            if intervention is None:
+                # Any situations where one wants to specify a non-InputCut intervention with input arguments?
+                raise ValueError("intervention needs to be given for DoI cuts that are not InputCut")
+            else:
+                intervention = as_args(intervention)
+
+        return doi_cut, to_cut, intervention
 
     @abstractmethod
     def fprop(
