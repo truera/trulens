@@ -36,7 +36,7 @@ class ModelWrapperTestBase(object):
         self.internal_bias = np.array([0., 0.])
         self.bias = np.array([0.])
 
-        # `self.model_tiling`` should implement exponential with five types of inputs:
+        # `self.model_kwargs`` should implement exponential with five types of inputs:
         #   args[0] - (batchable) X
         #   args[1] - (batchable) Coefficients
         #   args[2] - (NOT batchable) common divisor to divide all coefficients
@@ -136,12 +136,59 @@ class ModelWrapperTestBase(object):
         offset = np.array([[4.0]])
 
         actual = self.model_kwargs.fprop(
-            (X, Coeffs, divisor),
-            dict(Degree=Degree, offset=offset)
+            model_args=(X, Coeffs, divisor),                # cannot swap contents
+            model_kwargs=dict(Degree=Degree, offset=offset) # between these
         )[0]
 
         # Expect handling as in numpy broadcasting of the non-batched divisor, offset:
         expected = (X ** Degree) * Coeffs / divisor + offset
+
+        self.assertTrue(
+            np.allclose(
+                actual, expected
+            )
+        )
+
+    def test_fprop_kwargs_intervention(self):
+        """Test fprop with InputCut and intervention/input with both args and kwargs."""
+
+        B = get_backend()
+
+        # batch of 2
+        X = np.array([ 
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0]
+        ])
+        Coeffs = np.array([
+            [0.5, 1.0, 1.5],
+            [2.5, 3.0, 3.5]
+        ])
+        Degree = np.array([
+            [4.0, 5.0, 6.0],
+            [7.0, 8.0, 9.0]
+        ])
+
+        # non-batchable parameters
+        divisor = np.array([
+            [3.0]
+        ])
+        offset = np.array([
+            [4.0]
+        ])
+ 
+        actual = self.model_kwargs.fprop(
+            (X, Coeffs, divisor),               # ignored but still need to be provided
+            dict(Degree=Degree, offset=offset), # ignored but still need to be provided
+            doi_cut=InputCut(),
+            intervention=ModelInputs(           # slightly modified model inputs
+                args=(X+1.0, Coeffs+2.0, divisor+3.0),
+                kwargs=dict(Degree=Degree+4.0, offset=offset+5.0)
+            )
+        )[0]
+
+        # Expect handling of the non-batched values (divisor, offset) as in
+        # numpy broadcasting.
+        expected = ((X+1.0) ** (Degree+4.0)) * (Coeffs+2.0) / (divisor+3.0) + (offset+5.0)
 
         self.assertTrue(
             np.allclose(
