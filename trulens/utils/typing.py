@@ -17,6 +17,12 @@ DataLike = Union[np.ndarray, Tensor]
 # Model input arguments. Either a single element or list or tuple of several.
 ArgsLike = Union[DataLike, List[DataLike], Tuple[DataLike]]
 
+# Model input kwargs.
+Kwargs = Dict[str, DataLike]
+
+# 
+FeedLike = Dict[Tensor, DataLike]
+
 # A type to check for the latter of the above.
 DATA_CONTAINER_TYPE = (list, tuple)
 
@@ -27,11 +33,11 @@ def as_args(ele):
     else:
         return [ele]
 
-# For models that take in kwargs as well, a container:
+# For models that take in both args and kwargs, a container:
 @dataclass
 class ModelInputs:
     args: List[DataLike] = field(default_factory=list)
-    kwargs: Dict[str, DataLike] = field(default_factory=dict)
+    kwargs: Kwargs = field(default_factory=dict)
 
     def map(self, f):
         return ModelInputs(
@@ -54,4 +60,5 @@ BaselineLike = Union[ArgsLike, Callable[[ArgsLike, Optional[ModelInputs]],
 
 # Interventions for fprop specifiy either activations at some non-InputCut or
 # model inputs if DoI is InputCut (these include both args and kwargs).
-InterventionLike = Union[ArgsLike, ModelInputs]
+# Additionally, some backends (tf1) provie interventions as kwargs instead.
+InterventionLike = Union[ArgsLike, Kwargs, ModelInputs]
