@@ -252,7 +252,6 @@ class ModelWrapperTestBase(object):
             )
         )
 
-
     # Tests for qoibprop.
 
     def test_qoibprop_full_model(self):

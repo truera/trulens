@@ -14,14 +14,17 @@ from trulens.nn.backend import Tensor
 # Atomic model inputs (at least from our perspective)
 DataLike = Union[np.ndarray, Tensor]
 
-# Model input arguments. Either a single element or list or tuple of several.
+# Model input arguments. Either a single element or list/tuple of several.
 ArgsLike = Union[DataLike, List[DataLike], Tuple[DataLike]]
 
 # Model input kwargs.
 Kwargs = Dict[str, DataLike]
 
-# 
-FeedLike = Dict[Tensor, DataLike]
+# Some backends allow inputs in terms of dicts with tensors as keys (i.e. feed_dict in tf1).
+# We keep track of internal names so that these feed dicts can use strings as names instead.
+Feed = Dict[Union[str, Tensor], DataLike]
+
+KwargsLike = Union[Kwargs, Feed]
 
 # A type to check for the latter of the above.
 DATA_CONTAINER_TYPE = (list, tuple)
@@ -37,7 +40,7 @@ def as_args(ele):
 @dataclass
 class ModelInputs:
     args: List[DataLike] = field(default_factory=list)
-    kwargs: Kwargs = field(default_factory=dict)
+    kwargs: KwargsLike = field(default_factory=dict)
 
     def map(self, f):
         return ModelInputs(
@@ -61,4 +64,4 @@ BaselineLike = Union[ArgsLike, Callable[[ArgsLike, Optional[ModelInputs]],
 # Interventions for fprop specifiy either activations at some non-InputCut or
 # model inputs if DoI is InputCut (these include both args and kwargs).
 # Additionally, some backends (tf1) provie interventions as kwargs instead.
-InterventionLike = Union[ArgsLike, Kwargs, ModelInputs]
+InterventionLike = Union[ArgsLike, KwargsLike, ModelInputs]
