@@ -291,8 +291,10 @@ class PytorchModelWrapper(ModelWrapper):
             intervention = ModelWrapper._nested_apply(
                 intervention,
                 lambda intervention: intervention.requires_grad_(True))
-            model_args = ModelWrapper._nested_apply(
-                model_args, lambda model_args: model_args.requires_grad_(True))
+            
+            # TODO(piotrm) Figure out why or if this is needed:
+            #model_args = ModelWrapper._nested_apply(
+            #    model_args, lambda model_args: model_args.requires_grad_(True))
 
         # Set up the intervention hookfn if we are starting from an intermediate
         # layer.
@@ -442,10 +444,13 @@ class PytorchModelWrapper(ModelWrapper):
             as the input.
         """
         B = get_backend()
+
         if attribution_cut is None:
             attribution_cut = InputCut()
+
         if to_cut is None:
             to_cut = OutputCut()
+
         self._model.train()
         y, zs = self.fprop(
             model_args,
@@ -458,6 +463,7 @@ class PytorchModelWrapper(ModelWrapper):
 
         y = to_cut.access_layer(y)
         grads_list = []
+        
         for z in zs:
             z_flat = ModelWrapper._flatten(z)
             qoi_out = qoi(y)
