@@ -241,9 +241,11 @@ class InternalInfluence(AttributionMethod):
         # level of data container.
         if isinstance(doi_val, DATA_CONTAINER_TYPE) and isinstance(
                 doi_val[0], DATA_CONTAINER_TYPE):
+
             doi_val = doi_val[0]
 
         if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
+            
             doi_val = doi_val[0]
 
         if accepts_model_inputs(self.doi):
