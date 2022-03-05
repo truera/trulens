@@ -12,7 +12,7 @@ format:
 test_%:
 	conda env create --name $(CONDA_ENV)_$* --file tools/conda_$(CONDA_ENV).yaml
 	$(ACTIVATE) $(CONDA_ENV)_$*
-	pip install -r tests/$*/requirements.txt
+	pip install -r tests/$*/requirements*.txt
 	pip install pytest
 	$(TEST_ENV) python -m pytest tests/$*
 

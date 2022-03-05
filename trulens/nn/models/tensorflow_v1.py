@@ -1,12 +1,15 @@
+from re import L
 import sys
+from typing import Dict, Optional
 
 import numpy as np
 import tensorflow as tf
 
 from trulens.nn.backend import get_backend
-from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils import tru_logger
+from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, InterventionLike, KwargsLike, ModelInputs, as_args
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.slices import InputCut
+from trulens.nn.slices import Cut, InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 
@@ -54,12 +57,14 @@ class TensorflowModelWrapper(ModelWrapper):
             )
 
         self._graph = graph
+
         self._inputs = (
             input_tensors if isinstance(input_tensors, DATA_CONTAINER_TYPE) else
             [input_tensors])
         self._outputs = (
             output_tensors if isinstance(output_tensors, DATA_CONTAINER_TYPE)
             else [output_tensors])
+
         self._internal_tensors = (
             internal_tensor_dict if internal_tensor_dict is not None else {})
 
@@ -108,75 +113,111 @@ class TensorflowModelWrapper(ModelWrapper):
 
         feed_dict = {}
         input_tensors = model_args
+        
         if isinstance(
                 input_tensors,
                 DATA_CONTAINER_TYPE) and len(input_tensors) > 0 and isinstance(
                     input_tensors[0], DATA_CONTAINER_TYPE):
             input_tensors = input_tensors[0]
 
-        # If inputs are supplied via args.
-        if (len(input_tensors) == len(self._inputs) and
-                len(input_tensors) > 0 and
-            (tf.is_tensor(input_tensors[0]) or isinstance(input_tensors[0],
-                                                          (np.ndarray)))):
-            feed_dict.update(
-                {
-                    input_tensor: xi
-                    for input_tensor, xi in zip(self._inputs, input_tensors)
-                })
+        num_args = len(input_tensors)
+        num_kwargs = len(model_kwargs)
+        num_expected = len(self._inputs)
 
-        # If inputs are supplied via feed dict
-        if ('feed_dict' in model_kwargs):
-            feed_dict.update(model_kwargs['feed_dict'])
+        if num_args + num_kwargs != num_expected:
+            raise ValueError("Expected to get {num_expected} inputs but got {num_args} from args and {num_kwargs} from kwargs.")
+
+        if num_args > 0 and num_kwargs > 0:
+            tru_logger.warn("Got both args and kwargs as inputs; we assume the args correspond to the first input tensors.")
+
+        # set the first few tensors from args
+        feed_dict.update(
+            {
+                input_tensor: xi
+                for input_tensor, xi in zip(self._inputs[0:num_args], input_tensors)
+            })
+
+        def _tensor(k):
+            if tf.is_tensor(k):
+                return k
+            elif k in self._internal_tensors:
+                return self._internal_tensors[k]
+            else:
+                raise ValueError(f"do not know how to map {k} to a tensor")
+
+        # and the reset from kwargs
+        if model_kwargs is not None:
+            feed_dict.update({_tensor(k): v for k, v in model_kwargs.items()})
+
+        # Keep track which feed tensors came from intervention (as opposed to model inputs) so that
+        # ones from model inputs that were not overriden by intervention can be tiled.
+        intervention_dict = dict()
 
         # Convert `intervention` to a list of inputs if it isn't already.
         if intervention is not None:
-
             if isinstance(intervention, dict):
-                for key_tensor in intervention:
-                    assert tf.is_tensor(
-                        key_tensor
-                    ), "Obtained a non tensor in feed dict: {}".format(
-                        str(key_tensor))
-                doi_tensors = intervention.keys()
-                intervention = [
-                    intervention[key_tensor] for key_tensor in doi_tensors
-                ]
+                args = []
+                kwargs = intervention
+                
+            elif isinstance(intervention, ModelInputs):
+                args = intervention.args
+                kwargs = intervention.kwargs
+            
+            else:
+                args = as_args(intervention)
+                kwargs = {}
 
-            if not isinstance(intervention, DATA_CONTAINER_TYPE):
-                intervention = [intervention]
+            if len(args) + len(kwargs) != len(doi_tensors):
+                raise ValueError(f"Expected to get {len(doi_tensors)} for intervention but got {len(args)} args and {len(kwargs)} kwargs.")
 
-            feed_dict.update(
-                {
-                    input_tensor: xi
-                    for input_tensor, xi in zip(doi_tensors, intervention)
-                })
+            intervention_dict.update({k: v for k, v in zip(doi_tensors[0:len(args)], args)})
+            intervention_dict.update({_tensor(k): v for k, v in kwargs.items()})
+            feed_dict.update(intervention_dict)    
+
+            intervention = list(args) + [feed_dict[_tensor(k)] for k in kwargs]
 
             doi_repeated_batch_size = intervention[0].shape[0]
-            for k in feed_dict:
-                val = feed_dict[k]
+            expected_dim = None
+
+            # tile the feed tensors that came from model input arguments
+            # TODO(piotrm): figure out how to abstract this out from the backends
+            for k, val in feed_dict.items():
+                if k in intervention_dict: continue
+
                 if isinstance(val, np.ndarray):
                     doi_resolution = int(doi_repeated_batch_size / val.shape[0])
-                    tile_shape = [1] * len(val.shape)
-                    tile_shape[0] = doi_resolution
-                    feed_dict[k] = np.tile(val, tuple(tile_shape))
+                    if expected_dim is None:
+                        expected_dim = val.shape[0]
+
+                    if expected_dim == val.shape[0]:
+                        tile_shape = [1] * len(val.shape)
+                        tile_shape[0] = doi_resolution
+                        feed_dict[k] = np.tile(val, tuple(tile_shape))
+                    else:
+                        tru_logger.warn(
+                            f"Value {val} of shape {val.shape} is assumed to not be batchable due to its shape not matching prior batchable inputs of shape ({expected_dim}, ...). If this is incorrect, make sure its first dimension matches prior batchable inputs."
+                        )
+                else:
+
 
         elif intervention is None and doi_tensors == self._inputs:
             intervention = [feed_dict[key_tensor] for key_tensor in doi_tensors]
 
         else:
+            # this might no longer be possible given the size checks earlier in the method
             intervention = []
 
         return feed_dict, intervention
 
     def fprop(
             self,
-            model_args,
-            model_kwargs={},
-            doi_cut=None,
-            to_cut=None,
-            attribution_cut=None,
-            intervention=None):
+            model_args: ArgsLike,
+            model_kwargs: KwargsLike = {},
+            doi_cut: Optional[Cut] = None,
+            to_cut: Optional[Cut] = None,
+            attribution_cut: Optional[Cut] = None, # Not used
+            intervention: InterventionLike = None
+        ):
         """
         fprop Forward propagate the model
 
@@ -200,10 +241,9 @@ class TensorflowModelWrapper(ModelWrapper):
         attribution_cut : Cut, optional
             An Cut to return activation tensors for. If `None` 
             attributions layer output is not returned.
-        intervention : backend.Tensor or np.array
-            Input tensor to propagate through the model. If an np.array, will be
-            converted to a tensor on the same device as the model. Intervention
-            can also be a `feed_dict`.
+        intervention : ArgsLike, KwargsLike, or ModelInputs (for InputCut doi_cut)
+            Input tensor(s) to propagate through the model. If an np.array, will be
+            converted to a tensor on the same device as the model.
 
         Returns
         -------
@@ -213,10 +253,7 @@ class TensorflowModelWrapper(ModelWrapper):
             activations.
         """
 
-        if doi_cut is None:
-            doi_cut = InputCut()
-        if to_cut is None:
-            to_cut = OutputCut()
+        doi_cut, to_cut = ModelWrapper._fprop_get_defaults(self, doi_cut, to_cut, intervention)
 
         doi_tensors = self._get_layers(doi_cut)
         to_tensors = self._get_layers(to_cut)

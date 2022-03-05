@@ -9,6 +9,10 @@ it should be wrapped as a `ModelWrapper` instance.
 """
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
+from trulens.nn.slices import InputCut, OutputCut
+
+from trulens.utils import tru_logger
+from trulens.utils.typing import ModelInputs, as_args
 
 
 class ModelWrapper(AbstractBaseClass):
@@ -118,6 +122,43 @@ class ModelWrapper(AbstractBaseClass):
             Model's output on the input point.
         """
         return self.fprop(x)[0]
+
+    def _fprop_defaults(self, model_args, model_kwargs, doi_cut, to_cut, intervention):
+        """Defaults logic for fprop common across backends. Also some warnings and errors."""
+
+        model_inputs = ModelInputs(model_args, model_kwargs)
+
+        if doi_cut is None:
+            doi_cut = InputCut()
+        if to_cut is None:
+            to_cut = OutputCut()
+
+        if isinstance(doi_cut, InputCut):
+            # For input cuts, produce a ModelInputs container for the intervention and model inputs.
+            if intervention is not None:
+                tru_logger.warn("intervention for InputCut DoI specified; this is ambiguous with model_args, model_kwargs")
+                if isinstance(intervention, ModelInputs):
+                    # Intervention overrides both args and kwargs
+                    model_inputs = intervention
+                else:
+                    # Intervention overrides only args.
+                    intervention = ModelInputs(intervention, model_inputs.kwargs)
+
+            else:
+                # If no intervention given, it is equal to model inputs.
+                intervention = model_inputs
+
+        else: # doi_cut is not InputCut
+            # For non-InputCut, interventions do not have kwargs but for simplifying the logics, we store it
+            # in a ModelInputs anyway.
+
+            if intervention is None:
+                # Any situations where one wants to specify a non-InputCut intervention with input arguments?
+                raise ValueError("intervention needs to be given for DoI cuts that are not InputCut")
+            else:
+                intervention = ModelInputs(intervention, {})
+
+        return doi_cut, to_cut, intervention, model_inputs
 
     @abstractmethod
     def fprop(
