@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from functools import partial
+from logging import LogRecord
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -7,6 +8,7 @@ import torch
 from trulens.nn.backend import get_backend
 from trulens.nn.backend.pytorch_backend.pytorch import Tensor
 from trulens.nn.models._model_base import ModelWrapper
+from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut, InputCut, LogitCut, OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, DataLike, InterventionLike, ModelInputs, as_args
@@ -155,41 +157,37 @@ class PytorchModelWrapper(ModelWrapper):
             names_and_anchors.append((cut.name, cut.anchor))
 
     def _extract_outputs_from_hooks(
-            self, cut, hooks, output, model_input, return_tensor):
+            self, cut, hooks, output, model_inputs, return_tensor
+        ):
+
         B = get_backend()
+
+        return_output = None
+
         if isinstance(cut, OutputCut):
-            return (
-                ModelWrapper._flatten(output)
-                if return_tensor else ModelWrapper._nested_apply(
-                    ModelWrapper._flatten(output), B.as_array))
+            return_output = ModelWrapper._flatten(output)
 
         elif isinstance(cut, InputCut):
-            return (
-                ModelWrapper._flatten(model_input)
-                if return_tensor else ModelWrapper._nested_apply(
-                    ModelWrapper._flatten(model_input), B.as_array))
+            # TODO(piotrm): Figure out whether kwarg order is consistent.
+            return_output = ModelWrapper._flatten(model_inputs.args + tuple(model_inputs.kwargs.values()))
 
         elif isinstance(cut, LogitCut):
             y = hooks['logits' if self._logit_layer is None else self.
                       _logit_layer]
-            return (
-                ModelWrapper._flatten(y)
-                if return_tensor else ModelWrapper._nested_apply(
-                    ModelWrapper._flatten(y), B.as_array))
-
+            return_output = ModelWrapper._flatten(y)
+            
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
             zs = [hooks[name] for name in cut.name]
-            return (
-                ModelWrapper._flatten(zs)
-                if return_tensor else ModelWrapper._nested_apply(
-                    ModelWrapper._flatten(zs), B.as_array))
+            return_output = ModelWrapper._flatten(zs)
 
         else:
             z = hooks[cut.name]
-            return (
-                ModelWrapper._flatten(z)
-                if return_tensor else ModelWrapper._nested_apply(
-                    ModelWrapper._flatten(z), B.as_array))
+            return_output = ModelWrapper._flatten(z)
+
+        if return_tensor:
+            return return_output
+        else:
+            return ModelWrapper._nested_apply(return_output, B.as_array)
 
     def _to_tensor(self, x):
         # Convert `x` to a tensor on `self.device`. Note that layer input can be
@@ -254,7 +252,6 @@ class PytorchModelWrapper(ModelWrapper):
             the input. If `attribution_cut` is supplied, also return the cut
             activations.
         """
-
         B = get_backend()
 
         doi_cut, to_cut, intervention, model_inputs = ModelWrapper._fprop_defaults(
@@ -265,6 +262,7 @@ class PytorchModelWrapper(ModelWrapper):
         )
 
         model_inputs = model_inputs.map(self._to_tensor)
+
         intervention = intervention.map(self._to_tensor)
 
         if isinstance(doi_cut, InputCut):
@@ -305,8 +303,8 @@ class PytorchModelWrapper(ModelWrapper):
             
         if attribution_cut is not None:
             # Specify that we want to preserve gradient information.
-            intervention = intervention.map(lambda v: v.requires_grad_(True))
-            model_inputs = model_inputs.map(lambda v: v.requires_grad_(True))
+            intervention.foreach(lambda v: v.requires_grad_(True))
+            # model_inputs.foreach(lambda v: v.requires_grad_(True))
 
         # Set up the intervention hookfn if we are starting from an intermediate
         # layer.
@@ -322,9 +320,9 @@ class PytorchModelWrapper(ModelWrapper):
                     #   only intervene on one layer.
                     inpt = inpt[0] if len(inpt) == 1 else inpt
                     if doi_cut.anchor == 'in':
-                        ModelWrapper._nested_assign(inpt, intervention[0])
+                        ModelWrapper._nested_assign(inpt, intervention.first())
                     else:
-                        ModelWrapper._nested_assign(outpt, intervention[0])
+                        ModelWrapper._nested_assign(outpt, intervention.first())
 
                 counter += 1
 
@@ -383,7 +381,10 @@ class PytorchModelWrapper(ModelWrapper):
             if name is not None
         ]
         # Run the network.
+
         output = self._model(*model_inputs.args, **model_inputs.kwargs)
+
+
         if isinstance(output, tuple):
             output = output[0]
 
@@ -399,23 +400,23 @@ class PytorchModelWrapper(ModelWrapper):
         if attribution_cut:
             return [
                 self._extract_outputs_from_hooks(
-                    to_cut, hooks, output, model_inputs.args, return_tensor),
+                    to_cut, hooks, output, model_inputs, return_tensor),
                 self._extract_outputs_from_hooks(
-                    attribution_cut, hooks, output, model_inputs.args, return_tensor)
+                    attribution_cut, hooks, output, model_inputs, return_tensor)
             ]
         else:
             return self._extract_outputs_from_hooks(
-                to_cut, hooks, output, model_inputs.args, return_tensor)
+                to_cut, hooks, output, model_inputs, return_tensor)
 
     def qoi_bprop(
             self,
-            qoi,
-            model_args,
-            model_kwargs={},
-            doi_cut=None,
-            to_cut=None,
-            attribution_cut=None,
-            intervention=None):
+            qoi: QoI,
+            model_args: ArgsLike,
+            model_kwargs: Dict[str, DataLike] = {},
+            doi_cut: Optional[Cut] = None,
+            to_cut: Optional[Cut] = None,
+            attribution_cut: Optional[Cut] = None,
+            intervention: InterventionLike = None):
         """
         qoi_bprop Run the model from the from_layer to the qoi layer
             and give the gradients w.r.t `attribution_cut`
@@ -461,18 +462,23 @@ class PytorchModelWrapper(ModelWrapper):
         if attribution_cut is None:
             attribution_cut = InputCut()
 
+        if doi_cut is None:
+            doi_cut = InputCut()
+
         if to_cut is None:
             to_cut = OutputCut()
 
         self._model.train()
+
         y, zs = self.fprop(
-            model_args,
-            model_kwargs,
-            doi_cut=doi_cut if doi_cut else InputCut(),
+            model_args=model_args,
+            model_kwargs=model_kwargs,
+            doi_cut=doi_cut,# if doi_cut else InputCut(),
             to_cut=to_cut,
             attribution_cut=attribution_cut,
             intervention=intervention,
-            return_tensor=True)
+            return_tensor=True
+        )
 
         y = to_cut.access_layer(y)
         grads_list = []
@@ -481,6 +487,10 @@ class PytorchModelWrapper(ModelWrapper):
             z_flat = ModelWrapper._flatten(z)
             qoi_out = qoi(y)
 
+            # TODO(piotrm): this sum is a source of much bugs for me when using
+            # attributions. If one wants a specific QoI, the sum hides the bugs
+            # in the definition of that QoI. It might be better to give an error
+            # when QoI is not a scalar.
             grads_flat = [
                 B.gradient(B.sum(q), z_flat) for q in qoi_out
             ] if isinstance(qoi_out, DATA_CONTAINER_TYPE) else B.gradient(
@@ -505,6 +515,7 @@ class PytorchModelWrapper(ModelWrapper):
 
         del y  # TODO: garbage collection
         self._model.eval()
+
         return grads_list[0] if len(grads_list) == 1 else grads_list
 
     def probits(self, x):
