@@ -26,7 +26,14 @@ Feed = Dict[Union[str, Tensor], DataLike]
 
 KwargsLike = Union[Kwargs, Feed]
 
-# A type to check for the latter of the above.
+C = TypeVar("C")
+C1 = TypeVar("C1")
+C2 = TypeVar("C2")
+K = TypeVar("K")
+V = TypeVar("V")
+
+Indexable = Union[List[V], Tuple[V]]
+# For type checking the above.
 DATA_CONTAINER_TYPE = (list, tuple)
 
 # Convert a single element input to the multi-input one.
@@ -36,16 +43,18 @@ def as_args(ele):
     else:
         return [ele]
 
-C = TypeVar("C")
-C1 = TypeVar("C1")
-C2 = TypeVar("C2")
-K = TypeVar("K")
-V = TypeVar("V")
+def replace(l: Indexable[V], i: int, v: V) -> Indexable[V]:
+    """Copy of the given list or tuple with the given index replaced by the given value."""
+    if isinstance(l, list):
+        l = l.copy()
+        l[i] = v
+    elif isinstance(l, tuple):
+        l = list(l)
+        l[i] = v
+        l = tuple(l)
+    else:
+        raise ValueError(f"list or tuple expected but got {l.__class__.__name__}")
 
-def replace(l: List[V], i: int, v: V) -> List[V]:
-    """Copy of the given list with the given index replaced by the given value."""
-    l = l.copy()
-    l[i] = v
     return l
 
 def replace_dict(d: Dict[K, V], k: K, v: V) -> Dict[K, V]:
@@ -98,10 +107,7 @@ class ModelInputs:
     lens_args: Lens['ModelInputs', DataLike] = Lens(lambda s: s.args, lambda s, a: ModelInputs(a, s.kwargs))
     lens_kwargs = Lens(lambda s: s.kwargs, lambda s, kw: ModelInputs(s.args, kw))
 
-    def __init__(self, args, kwargs):
-        """
-        
-        """
+    def __init__(self, args: ArgsLike, kwargs: KwargsLike):
         self.args = as_args(args)
         self.kwargs = kwargs
 
@@ -120,6 +126,10 @@ class ModelInputs:
         for l in self.lenses_values():
             ret = l.set(ret, f(l.get(ret)))
         return ret
+
+    def foreach(self, f):
+        for l in self.lenses_values():
+            f(l.get(self))
 
     def first(self):
         try:
