@@ -107,7 +107,7 @@ class ModelInputs:
     lens_args: Lens['ModelInputs', DataLike] = Lens(lambda s: s.args, lambda s, a: ModelInputs(a, s.kwargs))
     lens_kwargs = Lens(lambda s: s.kwargs, lambda s, kw: ModelInputs(s.args, kw))
 
-    def __init__(self, args: ArgsLike, kwargs: KwargsLike):
+    def __init__(self, args: ArgsLike = [], kwargs: KwargsLike = {}):
         self.args = as_args(args)
         self.kwargs = kwargs
 
@@ -136,6 +136,9 @@ class ModelInputs:
             return next(self.values())
         except StopIteration:
             raise ValueError("ModelInputs is without arguments nor keyword arguments")
+
+    def call_on(self, f):
+        return f(*self.args, **self.kwargs)
 
 
 def accepts_model_inputs(func: Callable) -> bool:
