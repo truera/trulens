@@ -14,7 +14,7 @@ import numpy as np
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
 from trulens.utils.typing import (
-    DATA_CONTAINER_TYPE, ArgsLike, BaselineLike, ModelInputs,
+    DATA_CONTAINER_TYPE, BaselineLike, DataLike, ModelInputs,
     accepts_model_inputs)
 
 
@@ -47,9 +47,9 @@ class DoI(AbstractBaseClass):
     @abstractmethod
     def __call__(
             self,
-            z: ArgsLike,
+            z: DataLike,
             *,
-            model_inputs: Optional[ModelInputs] = None) -> List[ArgsLike]:
+            model_inputs: Optional[ModelInputs] = None) -> List[DataLike]:
         """
         Computes the distribution of interest from an initial point.
 
@@ -80,9 +80,9 @@ class DoI(AbstractBaseClass):
 
     def get_activation_multiplier(
             self,
-            activation: ArgsLike,
+            activation: DataLike,
             *,
-            model_inputs: Optional[ModelInputs] = None) -> ArgsLike:
+            model_inputs: Optional[ModelInputs] = None) -> DataLike:
         """
         Returns a term to multiply the gradient by to convert from "*influence 
         space*" to "*attribution space*". Conceptually, "influence space"
@@ -143,9 +143,9 @@ class PointDoi(DoI):
         super(PointDoi, self).__init__(cut)
 
     def __call__(self,
-                 z,
+                 z: DataLike,
                  *,
-                 model_inputs: Optional[ModelInputs] = None) -> List[ArgsLike]:
+                 model_inputs: Optional[ModelInputs] = None) -> List[DataLike]:
 
         return [z]
 
@@ -192,7 +192,7 @@ class LinearDoi(DoI):
         self._resolution = resolution
 
     @property
-    def baseline(self) -> ArgsLike:
+    def baseline(self) -> BaselineLike:
         return self._baseline
 
     @property
@@ -201,9 +201,9 @@ class LinearDoi(DoI):
 
     def __call__(
             self,
-            z: ArgsLike,
+            z: DataLike,
             *,
-            model_inputs: Optional[ModelInputs] = None) -> List[ArgsLike]:
+            model_inputs: Optional[ModelInputs] = None) -> List[DataLike]:
 
         if isinstance(z, DATA_CONTAINER_TYPE) and len(z) == 1:
             z = z[0]
@@ -221,9 +221,9 @@ class LinearDoi(DoI):
 
     def get_activation_multiplier(
             self,
-            activation: ArgsLike,
+            activation: DataLike,
             *,
-            model_inputs: Optional[ModelInputs] = None) -> ArgsLike:
+            model_inputs: Optional[ModelInputs] = None) -> DataLike:
         """
         Returns a term to multiply the gradient by to convert from "*influence 
         space*" to "*attribution space*". Conceptually, "influence space"
@@ -246,9 +246,9 @@ class LinearDoi(DoI):
 
     def _compute_baseline(
             self,
-            z: ArgsLike,
+            z: DataLike,
             *,
-            model_inputs: Optional[ModelInputs] = None) -> ArgsLike:
+            model_inputs: Optional[ModelInputs] = None) -> DataLike:
 
         B = get_backend()
 
@@ -295,7 +295,7 @@ class GaussianDoi(DoI):
         self._var = var
         self._resolution = resolution
 
-    def __call__(self, z: ArgsLike) -> List[ArgsLike]:
+    def __call__(self, z: DataLike) -> List[DataLike]:
         B = get_backend()
         self._assert_cut_contains_only_one_tensor(z)
 

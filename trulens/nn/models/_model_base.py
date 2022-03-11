@@ -9,10 +9,11 @@ it should be wrapped as a `ModelWrapper` instance.
 """
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from trulens.nn.slices import InputCut, OutputCut
+from typing import Optional, Tuple
+from trulens.nn.slices import Cut, InputCut, OutputCut
 
 from trulens.utils import tru_logger
-from trulens.utils.typing import DATA_CONTAINER_TYPE, ModelInputs, as_args
+from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, InterventionLike, KwargsLike, ModelInputs, as_args
 
 
 class ModelWrapper(AbstractBaseClass):
@@ -124,8 +125,12 @@ class ModelWrapper(AbstractBaseClass):
         return self.fprop(x)[0]
 
     def _fprop_defaults(
-            self, model_args, model_kwargs, doi_cut, to_cut, intervention):
-        """Defaults logic for fprop common across backends. Also some warnings and errors."""
+            self, model_args: ArgsLike, model_kwargs: KwargsLike, doi_cut: Cut, to_cut: Cut, intervention: InterventionLike) -> Tuple[Cut, Cut, InterventionLike, ModelInputs]:
+        """
+        Creates default values for fprop that should be common across all
+        backends. Also initial checks of parameters with warning/error messages
+        when used incorrectly.
+        """
 
         # TODO: Apply to backends other than pytorch.
 
@@ -139,9 +144,6 @@ class ModelWrapper(AbstractBaseClass):
         if isinstance(doi_cut, InputCut):
             # For input cuts, produce a ModelInputs container for the intervention and model inputs.
             if intervention is not None:
-                tru_logger.warn(
-                    "intervention for InputCut DoI specified; this is ambiguous with model_args, model_kwargs"
-                )
                 if isinstance(intervention, ModelInputs):
                     # Intervention overrides both args and kwargs
                     model_inputs = intervention
@@ -151,6 +153,12 @@ class ModelWrapper(AbstractBaseClass):
                     intervention = ModelInputs(
                         as_args(intervention), model_inputs.kwargs)
                     model_inputs = intervention
+
+                    if len(model_inputs.kwargs) > 0:
+                        tru_logger.warn(
+                            "Intervention for InputCut DoI specified but contains only positional arguments. The rest will be taken from model_kwargs. If you need to intervene on keyword arguments, provide the intervention as ModelInputs container."
+                        )
+                
 
             else:
                 # If no intervention given, it is equal to model inputs.
@@ -174,12 +182,12 @@ class ModelWrapper(AbstractBaseClass):
     @abstractmethod
     def fprop(
             self,
-            model_args,
-            model_kwargs={},
-            doi_cut=None,
-            to_cut=None,
-            attribution_cut=None,
-            intervention=None,
+            model_args: ArgsLike,
+            model_kwargs: KwargsLike = {},
+            doi_cut: Optional[Cut] = None,
+            to_cut: Optional[Cut] = None,
+            attribution_cut: Optional[Cut] = None,
+            intervention: InterventionLike = None,
             **kwargs):
         """
         **_Used internally by `AttributionMethod`._**
@@ -191,8 +199,11 @@ class ModelWrapper(AbstractBaseClass):
             model_inputs -> doi_cut -> attribution_cut -> to_cut
 
         Tensors for attribution_cut and to_cut are returned. However, the
-        returned values are batched according to the batching structure hinted
-        to by intervention. That is, if we have dimensions:
+        returned values are batched according to the batching structure inferred
+        from the intervention parameter; interventions are constructed by a DoI
+        that product one or more instances per input (e.g.: linear interpolation
+        for integrated gradients which produces one instance for each unit of
+        resolution). If we have dimensions:
 
             intervention: (B1, ...) 
             
@@ -222,14 +233,16 @@ class ModelWrapper(AbstractBaseClass):
                 to the model will be used (i.e., `InputCut()`).
 
             to_cut:
-                Cut defining the layer(s) at which the propagation will end. The
-                If `to_cut` is `None`, the output of the model will be used
-                (i.e., `OutputCut()`).
+                Cut defining the layer(s) up to which forward propagation should
+                be done. This will be the layer over which a quantity of
+                interest can be defined. If `to_cut` is `None`, the output of
+                the model will be used (i.e., `OutputCut()`). 
             
             attribution_cut:
                 Cut defining where the attributions are collected. If
                 `attribution_cut` is `None`, it will be assumed to be the
-                `doi_cut`
+                `doi_cut`. `attribution_cut` should not preceed `doi_cut` in the
+                model architecture. 
             
             intervention:
                 The intervention created from the Distribution of Interest. If
@@ -243,18 +256,16 @@ class ModelWrapper(AbstractBaseClass):
                 cut activations.
         """
 
-        # TODO: Can attribution_cut preceed doi_cut or follow to_cut in the model?
-        # TODO: Use the defaults method for all backends.
-
         raise NotImplementedError
 
-    def _qoi_bprop_defaults(self, doi_cut, to_cut, attribution_cut):
-        """Defaults logic for qoi_bprop common across backends."""
+    def _qoi_bprop_defaults(self, doi_cut: Cut, to_cut: Cut, attribution_cut: Cut) -> Tuple[Cut, Cut, Cut]:
+        """Produces default values for qoi_bprop parameters that are in common across backends. Common checks and warnings will be placed here. """
 
         if doi_cut is None:
             doi_cut = InputCut()
         if to_cut is None:
             to_cut = OutputCut()
+
         if attribution_cut is None:
             attribution_cut = InputCut()
 
@@ -264,49 +275,55 @@ class ModelWrapper(AbstractBaseClass):
     def qoi_bprop(
             self,
             qoi,
-            model_args,
-            model_kwargs={},
-            doi_cut=None,
-            to_cut=None,
-            attribution_cut=None,
-            intervention=None,
+            model_args: ArgsLike,
+            model_kwargs: KwargsLike = {},
+            doi_cut: Optional[Cut] = None,
+            to_cut: Optional[Cut] = None,
+            attribution_cut: Optional[Cut] = None,
+            intervention: InterventionLike = None,
             **kwargs):
         """
         **_Used internally by `AttributionMethod`._**
         
-        Runs the model beginning at `doi_cut` on input `intervention`, and 
-        returns the gradients calculated from `to_cut` with respect to 
+        Runs the model beginning at `doi_cut` on input `intervention`, and
+        returns the gradients calculated from `to_cut` with respect to
         `attribution_cut` of the quantity of interest.
 
         Parameters:
+            qoi: a Quantity of Interest
+                This method will accumulate all gradients of the qoi w.r.t
+                `attribution_cut`. 
+
             model_args, model_kwargs: 
-                The args and kwargs given to the call method of a model.
-                This should represent the instances to obtain attributions for, 
+                The args and kwargs given to the call method of a model. This
+                should represent the instances to obtain attributions for,
                 assumed to be a *batched* input. if `self.model` supports
                 evaluation on *data tensors*, the  appropriate tensor type may
-                be used (e.g., Pytorch models may accept Pytorch tensors in 
+                be used (e.g., Pytorch models may accept Pytorch tensors in
                 addition to `np.ndarray`s). The shape of the inputs must match
                 the input shape of `self.model`. 
 
             doi_cut:
                 Cut defining where the Distribution of Interest is applied. The
-                shape of `intervention` must match the input shape of the 
+                shape of `intervention` must match the input shape of the
                 layer(s) specified by the cut. If `doi_cut` is `None`, the input
                 to the model will be used (i.e., `InputCut()`).
 
             to_cut:
                 Cut defining the layer(s) at which the propagation will end. The
                 If `to_cut` is `None`, the output of the model will be used
-                (i.e., `OutputCut()`).
+                (i.e., `OutputCut()`). `to_cut` cannot preceed `doi_cut` in the
+                model architecture, i.e. the gradient of `doi_cut` w.r.t.
+                `attribution_cut` must be defined.
             
             attribution_cut:
-                Cut defining where the attributions are collected. If 
+                Cut defining where the attributions are collected. If
                 `attribution_cut` is `None`, it will be assumed to be the
-                `doi_cut`
+                `doi_cut`.
             
             intervention:
-                The intervention created from the Distribution of Interest. If 
-                `intervention` is `None`, then it is equivalent to the point 
+                The intervention created from the Distribution of Interest. If
+                `intervention` is `None`, then it is equivalent to the point
                 DoI.
 
 

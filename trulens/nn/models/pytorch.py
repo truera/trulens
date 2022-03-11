@@ -68,7 +68,7 @@ class PytorchModelWrapper(ModelWrapper):
         self._layernames = list(layers.keys())
         self._tensors = list(layers.values())
 
-        if 0 == len(self._tensors):
+        if len(self._tensors) == 0:
             tru_logger.warn(
                 "model has no visible components, you will not be able to specify cuts"
             )
@@ -312,11 +312,18 @@ class PytorchModelWrapper(ModelWrapper):
         if attribution_cut is not None:
             # Specify that we want to preserve gradient information.
 
+            def enable_grad(t: torch.Tensor):
+                if torch.is_floating_point(t):
+                    t.requires_grad_(True)
+                else:
+                    if isinstance(attribution_cut, InputCut):
+                        raise ValueError(f"Requested tensors for attribution_cut=InputCut() but it contains a non-differentiable tensor of type {t.dtype}. You may need to provide an attribution_cut further down in the model where floating-point values first arise.")
+                    else:
+                        # Could be a warning here but then we'd see a lot of warnings in NLP models.
+                        pass
+
             intervention.foreach(lambda v: v.requires_grad_(True))
-            model_inputs.foreach(
-                lambda v: v.requires_grad_(True)
-                if torch.is_floating_point(v) else tru_logger.warn(
-                    f"Input tensor {v} is not differentiable."))
+            model_inputs.foreach(enable_grad)
 
         # Set up the intervention hookfn if we are starting from an intermediate
         # layer.
@@ -442,38 +449,36 @@ class PytorchModelWrapper(ModelWrapper):
 
         Parameters
         ----------
-        model_args, model_kwargs: 
-            The args and kwargs given to the call method of a model.
-            This should represent the instances to obtain attributions for, 
-            assumed to be a *batched* input. if `self.model` supports evaluation 
-            on *data tensors*, the  appropriate tensor type may be used (e.g.,
-            Pytorch models may accept Pytorch tensors in additon to 
-            `np.ndarray`s). The shape of the inputs must match the input shape
-            of `self.model`. 
-        
         qoi: a Quantity of Interest
             This method will accumulate all gradients of the qoi w.r.t
             `attribution_cut`.
+        model_args, model_kwargs: 
+            The args and kwargs given to the call method of a model. This should
+            represent the instances to obtain attributions for, assumed to be a
+            *batched* input. if `self.model` supports evaluation on *data
+            tensors*, the  appropriate tensor type may be used (e.g., Pytorch
+            models may accept Pytorch tensors in additon to `np.ndarray`s). The
+            shape of the inputs must match the input shape of `self.model`. 
         doi_cut: Cut, 
-            if `doi_cut` is None, this refers to the InputCut.
-            Cut from which to begin propagation. The shape of `intervention`
-            must match the output shape of this layer.
+            if `doi_cut` is None, this refers to the InputCut. Cut from which to
+            begin propagation. The shape of `intervention` must match the output
+            shape of this layer.
         attribution_cut: Cut, optional
-            if `attribution_cut` is None, this refers to the InputCut.
-            The Cut in which attribution will be calculated. This is generally
-            taken from the attribution slyce's attribution_cut.
+            if `attribution_cut` is None, this refers to the InputCut. The Cut
+            in which attribution will be calculated. This is generally taken
+            from the attribution slyce's attribution_cut.
         to_cut: Cut, optional
-            if `to_cut` is None, this refers to the OutputCut.
-            The Cut in which qoi will be calculated. This is generally
-            taken from the attribution slyce's to_cut.
+            if `to_cut` is None, this refers to the OutputCut. The Cut in which
+            qoi will be calculated. This is generally taken from the attribution
+            slyce's to_cut.
         intervention: InterventionLike
-            Input tensor to propagate through the model. If an np.array,
-            will be converted to a tensor on the same device as the model.
+            Input tensor to propagate through the model. If an np.array, will be
+            converted to a tensor on the same device as the model.
 
         Returns
         -------
         (backend.Tensor or np.ndarray)
-            the gradients of `qoi` w.r.t. `attribution_cut`, keeping same type 
+            the gradients of `qoi` w.r.t. `attribution_cut`, keeping same type
             as the input.
         """
         B = get_backend()
