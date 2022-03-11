@@ -1,22 +1,23 @@
 """ 
 The TruLens library is designed to support models implemented via a variety of
-different popular python neural network frameworks: Keras (with TensorFlow or
-Theano backend), TensorFlow, and Pytorch. Models developed with different
-frameworks implement things (e.g., gradient computations) a number of different
-ways. We define framework specific `ModelWrapper` instances to create a unified
-model API, providing the same functionality to models that are implemented in
-disparate frameworks. In order to compute attributions for a model, we provide a
-`trulens.nn.models.get_model_wrapper` function that will return an appropriate
-`ModelWrapper` instance.
+different popular python neural network frameworks: Keras (with TensorFlow or 
+Theano backend), TensorFlow, and Pytorch. Models developed with different frameworks 
+implement things (e.g., gradient computations) a number of different ways. We define 
+framework specific `ModelWrapper` instances to create a unified model API, providing the same 
+functionality to models that are implemented in disparate frameworks. In order to compute 
+attributions for a model, we provide a `trulens.nn.models.get_model_wrapper` function
+that will return an appropriate `ModelWrapper` instance.
 
-Some parameters are exclusively utilized for specific frameworks and are
-outlined in the parameter descriptions.
+Some parameters are exclusively utilized for specific frameworks and are outlined 
+in the parameter descriptions.
 """
-import inspect
 import os
+import inspect
+import traceback
 
-from trulens.nn.backend import Backend, get_backend
+import trulens
 from trulens.utils import tru_logger
+from trulens.nn.backend import get_backend, Backend
 
 
 def discern_backend(model):
@@ -28,7 +29,6 @@ def discern_backend(model):
         else:
             try:
                 import tensorflow as tf
-
                 # Graph objects are currently limited to TF1 and Keras backend
                 # implies keras backed with TF1 or Theano. TF2 Keras objects are
                 # handled by the TF2 backend.
@@ -48,11 +48,9 @@ def discern_backend(model):
                     return Backend.KERAS
 
             except (ModuleNotFoundError, ImportError):
-                # If tensorflow is not installed, the passed model should not be
-                # able to be tensorflow.
-
+                # If tensorflow is not installed, the passed model should not be able to be tensorflow.
                 # Note: we can still use Keras without TensorFlow, if the
-                # backend is Theano.
+                #   backend is Theano.
                 if 'keras' in type_str:
                     return Backend.KERAS
 
@@ -75,66 +73,67 @@ def get_model_wrapper(
         session=None,
         backend=None):
     """
-    Returns a ModelWrapper implementation that exposes the components needed for
-    computing attributions.
+    Returns a ModelWrapper implementation that exposes the components needed for computing attributions.
 
     Parameters:
         model:
-            The model to wrap. If using the TensorFlow 1 backend, this is
+            The model to wrap. If using the TensorFlow 1 backend, this is 
             expected to be a graph object.
 
         logit_layer:
-            _Supported for Keras and Pytorch models._ Specifies the name or
-            index of the layer that produces the logit predictions. 
+            _Supported for Keras and Pytorch models._ 
+            Specifies the name or index of the layer that produces the
+            logit predictions. 
 
         replace_softmax:
-            _Supported for Keras models only._ If true, the activation function
-            in the softmax layer (specified by `softmax_layer`) will be changed
-            to a `'linear'` activation. 
+            _Supported for Keras models only._ If true, the activation
+            function in the softmax layer (specified by `softmax_layer`) 
+            will be changed to a `'linear'` activation. 
 
         softmax_layer:
-            _Supported for Keras models only._ Specifies the layer that performs
-            the softmax. This layer should have an `activation` attribute. Only
-            used when `replace_softmax` is true.
+            _Supported for Keras models only._ Specifies the layer that
+            performs the softmax. This layer should have an `activation`
+            attribute. Only used when `replace_softmax` is true.
 
         custom_objects:
-            _Optional, for use with Keras models only._ A dictionary of custom
-            objects used by the Keras model.
+            _Optional, for use with Keras models only._ A dictionary of
+            custom objects used by the Keras model.
 
         input_shape:
-            _Required for use with Pytorch models only._ Tuple specifying the
-            input shape (excluding the batch dimension) expected by the model.
+            _Required for use with Pytorch models only._ Tuple specifying
+            the input shape (excluding the batch dimension) expected by the
+            model.
         
         input_dtype: torch.dtype
-            _Optional, for use with Pytorch models only._, The dtype of the
-            input.
+            _Optional, for use with Pytorch models only._, The dtype of the input.
 
         device:
-            _Optional, for use with Pytorch models only._ A string specifying
-            the device to run the model on.
+            _Optional, for use with Pytorch models only._ A string
+            specifying the device to run the model on.
 
         input_tensors:
-            _Required for use with TensorFlow 1 graph models only._ A list of
-            tensors representing the input to the model graph.
+            _Required for use with TensorFlow 1 graph models only._ A list
+            of tensors representing the input to the model graph.
 
         output_tensors:
-            _Required for use with TensorFlow 1 graph models only._ A list of
-            tensors representing the output to the model graph.
+            _Required for use with TensorFlow 1 graph models only._ A list
+            of tensors representing the output to the model graph.
 
         internal_tensor_dict:
             _Optional, for use with TensorFlow 1 graph models only._ A
-            dictionary mapping user-selected layer names to the internal tensors
-            in the model graph that the user would like to expose. This is
-            provided to give more human-readable names to the layers if desired.
-            Internal tensors can also be accessed via the name given to them by
-            tensorflow.
+            dictionary mapping user-selected layer names to the internal
+            tensors in the model graph that the user would like to expose.
+            This is provided to give more human-readable names to the layers
+            if desired. Internal tensors can also be accessed via the name
+            given to them by tensorflow.
 
         default_feed_dict:
             _Optional, for use with TensorFlow 1 graph models only._ A
-            dictionary of default values to give to tensors in the model graph.
+            dictionary of default values to give to tensors in the model
+            graph.
 
         session:
-            _Optional, for use with TensorFlow 1 graph models only._ A
+            _Optional, for use with TensorFlow 1 graph models only._ A 
             `tf.Session` object to run the model graph in. If `None`, a new
             temporary session will be generated every time the model is run.
 
