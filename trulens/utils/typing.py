@@ -205,7 +205,7 @@ class ModelInputs:
             return next(self.values())
         except StopIteration:
             raise ValueError(
-                "ModelInputs has neither arguments nor keyword arguments")
+                "ModelInputs had neither arguments nor keyword arguments.")
 
     def call_on(self, f):
         """Call the given method with the contained arguments."""
@@ -222,10 +222,10 @@ def accepts_model_inputs(func: Callable) -> bool:
 
 # Baselines are either explicit or computable from the same data as sent to DoI
 # __call__ .
-BaselineLike = Union[ArgsLike, Callable[[ArgsLike, Optional[ModelInputs]],
+BaselineLike = Union[DataLike, Callable[[ArgsLike, Optional[ModelInputs]],
                                         ArgsLike]]
 
 # Interventions for fprop specifiy either activations at some non-InputCut or
 # model inputs if DoI is InputCut (these include both args and kwargs).
-# Additionally, some backends (tf1) provie interventions as kwargs instead.
-InterventionLike = Union[ArgsLike, KwargsLike, ModelInputs]
+# Additionally, some backends (tf1) provide interventions as kwargs instead.
+InterventionLike = Union[DataLike, KwargsLike, ModelInputs]

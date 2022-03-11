@@ -357,13 +357,9 @@ class KerasModelWrapper(ModelWrapper):
         # Other placeholders come from kwargs.
         val_map.update({_tensor(k): v for k, v in model_kwargs.items()})
 
-        print("doi_tensors=", doi_tensors)
-
         # Finally, interventions override any previously set tensors.
         val_map.update({k: v for k, v in zip(doi_tensors, intervention)})
         # val_map.update({_tensor(k): v for k, v in intervention.kwargs.items()})
-
-        print(val_map)
 
         # TODO: tiling
 
