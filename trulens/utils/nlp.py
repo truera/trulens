@@ -7,11 +7,9 @@ from trulens.utils.typing import ArgsLike, BaselineLike, ModelInputs
 
 
 def token_baseline(
-    keep_tokens: Set[int],
-    replacement_token: int,
-    input_accessor: Callable[[ModelInputs], Tensor],
-    ids_to_embeddings: Optional[Callable[[int], Tensor]]
-):
+        keep_tokens: Set[int], replacement_token: int,
+        input_accessor: Callable[[ModelInputs], Tensor],
+        ids_to_embeddings: Optional[Callable[[int], Tensor]]):
     """
     Utility for constructing baselines for models with an embedding layer.
     Replace all tokens except those in the keep_tokens set with the specified
@@ -42,7 +40,8 @@ def token_baseline(
         input_ids[ids] = replacement_token
 
         return input_ids
-    base_ids: BaselineLike # expected type
+
+    base_ids: BaselineLike  # expected type
 
     if ids_to_embeddings is None:
         return base_ids
@@ -52,6 +51,7 @@ def token_baseline(
         input_ids = base_ids(z, model_inputs)
 
         return ids_to_embeddings(input_ids)
-    base_embeddings: BaselineLike # expected type
+
+    base_embeddings: BaselineLike  # expected type
 
     return base_ids, base_embeddings

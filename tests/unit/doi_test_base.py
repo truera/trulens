@@ -14,7 +14,6 @@ class DoiTestBase(object):
         self.B = get_backend()
         self.z = self.B.as_tensor(np.array([[1., 2., 3.], [0., -1., -2.]]))
 
-
         # Weights of a simple neural network for testing optional model_input args.
         self.l1_coeff = 2
         self.l1_exp = 5
@@ -98,15 +97,18 @@ class DoiTestBase(object):
     def test_model_inputs_for_baseline(self):
         # Test the model_inputs optional argument for callable baseline.
 
-        doi1 = LinearDoi(resolution=10, baseline=lambda z: z, cut=Cut(self.layer1))
+        doi1 = LinearDoi(
+            resolution=10, baseline=lambda z: z, cut=Cut(self.layer1))
         # baseline is identical to value at cut (should produce 0 attribution if multiply_activation=True)
 
-        doi2 = LinearDoi(resolution=10, baseline=lambda z, model_inputs: model_inputs.args[0], cut=Cut(self.layer1))
+        doi2 = LinearDoi(
+            resolution=10,
+            baseline=lambda z, model_inputs: model_inputs.args[0],
+            cut=Cut(self.layer1))
         # baseline is actually model input (should produce non-zero attribution even if multiply_activation=True)
 
         infl1 = InternalInfluence(
-            self.model,
-            (Cut(self.layer1), OutputCut()),
+            self.model, (Cut(self.layer1), OutputCut()),
             LambdaQoI(lambda out: out),
             doi1,
             multiply_activation=True)
@@ -115,10 +117,9 @@ class DoiTestBase(object):
         expect1 = np.zeros_like(self.consts)
 
         self.assertTrue(np.allclose(res1, expect1))
-        
+
         infl2 = InternalInfluence(
-            self.model,
-            (Cut(self.layer1), OutputCut()),
+            self.model, (Cut(self.layer1), OutputCut()),
             LambdaQoI(lambda out: out),
             doi2,
             multiply_activation=True)
@@ -131,22 +132,23 @@ class DoiTestBase(object):
         # Test the model_inputs optional argument for doi's.
 
         class DoiOnInput(PointDoi):
+
             def __call__(self, z, *, model_inputs: ModelInputs):
                 # ignore value at cut, return model input instead
                 return [model_inputs.args[0]]
 
         class DoiOnCut(PointDoi):
+
             def __call__(self, z, *, model_inputs: ModelInputs):
                 return [z]
 
-        doi1 = DoiOnCut(cut=Cut(self.layer1))   
+        doi1 = DoiOnCut(cut=Cut(self.layer1))
 
         doi2 = DoiOnInput(cut=Cut(self.layer1))
         # will return values at input=Cut(0) despite defining values for Cut(1)
 
         infl1 = InternalInfluence(
-            self.model,
-            (Cut(self.layer1), OutputCut()),
+            self.model, (Cut(self.layer1), OutputCut()),
             LambdaQoI(lambda out: out),
             doi1,
             multiply_activation=False)
@@ -154,17 +156,16 @@ class DoiTestBase(object):
         res1 = infl1.attributions(self.consts)
 
         l0 = self.consts
-        l1 = self.l1_coeff * (l0 ** self.l1_exp)
-        l2 = self.l2_coeff * (l1 ** self.l2_exp)
+        l1 = self.l1_coeff * (l0**self.l1_exp)
+        l2 = self.l2_coeff * (l1**self.l2_exp)
 
         # d l2 / d l1 evaluated at l1
-        expect1 = self.l2_coeff * self.l2_exp * (l1 ** (self.l2_exp-1.0))
+        expect1 = self.l2_coeff * self.l2_exp * (l1**(self.l2_exp - 1.0))
 
         self.assertTrue(np.allclose(res1, expect1))
-        
+
         infl2 = InternalInfluence(
-            self.model,
-            (Cut(self.layer1), OutputCut()),
+            self.model, (Cut(self.layer1), OutputCut()),
             LambdaQoI(lambda out: out),
             doi2,
             multiply_activation=False)
@@ -172,7 +173,7 @@ class DoiTestBase(object):
         res2 = infl2.attributions(self.consts)
 
         # d l2 / d l1 evaluated at l0 (due to doi2 returning model inputs = l0)
-        expect2 = self.l2_coeff * self.l2_exp * (l0 ** (self.l2_exp-1.0))
+        expect2 = self.l2_coeff * self.l2_exp * (l0**(self.l2_exp - 1.0))
 
         self.assertTrue(np.allclose(res2, expect2))
 

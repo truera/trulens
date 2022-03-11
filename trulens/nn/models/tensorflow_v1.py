@@ -113,7 +113,7 @@ class TensorflowModelWrapper(ModelWrapper):
 
         feed_dict = {}
         input_tensors = model_args
-        
+
         if isinstance(
                 input_tensors,
                 DATA_CONTAINER_TYPE) and len(input_tensors) > 0 and isinstance(
@@ -125,16 +125,20 @@ class TensorflowModelWrapper(ModelWrapper):
         num_expected = len(self._inputs)
 
         if num_args + num_kwargs != num_expected:
-            raise ValueError("Expected to get {num_expected} inputs but got {num_args} from args and {num_kwargs} from kwargs.")
+            raise ValueError(
+                "Expected to get {num_expected} inputs but got {num_args} from args and {num_kwargs} from kwargs."
+            )
 
         if num_args > 0 and num_kwargs > 0:
-            tru_logger.warn("Got both args and kwargs as inputs; we assume the args correspond to the first input tensors.")
+            tru_logger.warn(
+                "Got both args and kwargs as inputs; we assume the args correspond to the first input tensors."
+            )
 
         # set the first few tensors from args
         feed_dict.update(
             {
-                input_tensor: xi
-                for input_tensor, xi in zip(self._inputs[0:num_args], input_tensors)
+                input_tensor: xi for input_tensor, xi in zip(
+                    self._inputs[0:num_args], input_tensors)
             })
 
         def _tensor(k):
@@ -158,21 +162,24 @@ class TensorflowModelWrapper(ModelWrapper):
             if isinstance(intervention, dict):
                 args = []
                 kwargs = intervention
-                
+
             elif isinstance(intervention, ModelInputs):
                 args = intervention.args
                 kwargs = intervention.kwargs
-            
+
             else:
                 args = as_args(intervention)
                 kwargs = {}
 
-            if len(args) + len(kwargs) != len(doi_tensors):
-                raise ValueError(f"Expected to get {len(doi_tensors)} for intervention but got {len(args)} args and {len(kwargs)} kwargs.")
+            # TODO: Figure out a way to run the check below for InputCut. It currently
+            # does not work for those cuts.
+            #if len(args) + len(kwargs) != len(doi_tensors):
+            #    raise ValueError(f"Expected to get {len(doi_tensors)} inputs for intervention but got {len(args)} args and {len(kwargs)} kwargs.")
 
-            intervention_dict.update({k: v for k, v in zip(doi_tensors[0:len(args)], args)})
+            intervention_dict.update(
+                {k: v for k, v in zip(doi_tensors[0:len(args)], args)})
             intervention_dict.update({_tensor(k): v for k, v in kwargs.items()})
-            feed_dict.update(intervention_dict)    
+            feed_dict.update(intervention_dict)
 
             intervention = list(args) + [feed_dict[_tensor(k)] for k in kwargs]
 
@@ -182,7 +189,8 @@ class TensorflowModelWrapper(ModelWrapper):
             # tile the feed tensors that came from model input arguments
             # TODO(piotrm): figure out how to abstract this out from the backends
             for k, val in feed_dict.items():
-                if k in intervention_dict: continue
+                if k in intervention_dict:
+                    continue
 
                 if isinstance(val, np.ndarray):
                     doi_resolution = int(doi_repeated_batch_size / val.shape[0])
@@ -197,8 +205,6 @@ class TensorflowModelWrapper(ModelWrapper):
                         tru_logger.warn(
                             f"Value {val} of shape {val.shape} is assumed to not be batchable due to its shape not matching prior batchable inputs of shape ({expected_dim}, ...). If this is incorrect, make sure its first dimension matches prior batchable inputs."
                         )
-                else:
-
 
         elif intervention is None and doi_tensors == self._inputs:
             intervention = [feed_dict[key_tensor] for key_tensor in doi_tensors]
@@ -215,9 +221,8 @@ class TensorflowModelWrapper(ModelWrapper):
             model_kwargs: KwargsLike = {},
             doi_cut: Optional[Cut] = None,
             to_cut: Optional[Cut] = None,
-            attribution_cut: Optional[Cut] = None, # Not used
-            intervention: InterventionLike = None
-        ):
+            attribution_cut: Optional[Cut] = None,  # Not used
+            intervention: InterventionLike = None):
         """
         fprop Forward propagate the model
 
@@ -253,7 +258,17 @@ class TensorflowModelWrapper(ModelWrapper):
             activations.
         """
 
-        doi_cut, to_cut = ModelWrapper._fprop_get_defaults(self, doi_cut, to_cut, intervention)
+        doi_cut, to_cut, intervention, model_inputs = ModelWrapper._fprop_defaults(
+            self,
+            model_args=model_args,
+            model_kwargs=model_kwargs,
+            doi_cut=doi_cut,
+            to_cut=to_cut,
+            intervention=intervention)
+
+        model_args = model_inputs.args
+        model_kwargs = model_inputs.kwargs
+        intervention = intervention.args
 
         doi_tensors = self._get_layers(doi_cut)
         to_tensors = self._get_layers(to_cut)

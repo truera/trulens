@@ -69,10 +69,13 @@ class PytorchModelWrapper(ModelWrapper):
         self._tensors = list(layers.values())
 
         if 0 == len(self._tensors):
-            tru_logger.warn("model has no visible components, you will not be able to specify cuts")
+            tru_logger.warn(
+                "model has no visible components, you will not be able to specify cuts"
+            )
 
         # Check to see if this model outputs probits or logits.
-        if len(self._tensors) > 0 and isinstance(self._tensors[-1], torch.nn.Softmax):
+        if len(self._tensors) > 0 and isinstance(self._tensors[-1],
+                                                 torch.nn.Softmax):
             self._gives_logits = False
         else:
             self._gives_logits = True
@@ -157,32 +160,31 @@ class PytorchModelWrapper(ModelWrapper):
             names_and_anchors.append((cut.name, cut.anchor))
 
     def _extract_outputs_from_hooks(
-            self, cut, hooks, output, model_inputs, return_tensor
-        ):
+            self, cut, hooks, output, model_inputs, return_tensor):
 
         B = get_backend()
 
         return_output = None
 
         if isinstance(cut, OutputCut):
-            return_output = ModelWrapper._flatten(output)
+            return_output = output
 
         elif isinstance(cut, InputCut):
             # TODO(piotrm): Figure out whether kwarg order is consistent.
-            return_output = ModelWrapper._flatten(model_inputs.args + tuple(model_inputs.kwargs.values()))
+            return_output = tuple(model_inputs.args) + tuple(
+                model_inputs.kwargs.values())
 
         elif isinstance(cut, LogitCut):
-            y = hooks['logits' if self._logit_layer is None else self.
-                      _logit_layer]
-            return_output = ModelWrapper._flatten(y)
-            
+            return_output = hooks['logits' if self.
+                                  _logit_layer is None else self._logit_layer]
+
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
-            zs = [hooks[name] for name in cut.name]
-            return_output = ModelWrapper._flatten(zs)
+            return_output = [hooks[name] for name in cut.name]
 
         else:
-            z = hooks[cut.name]
-            return_output = ModelWrapper._flatten(z)
+            return_output = hooks[cut.name]
+
+        return_output = ModelWrapper._flatten(return_output)
 
         if return_tensor:
             return return_output
@@ -193,7 +195,8 @@ class PytorchModelWrapper(ModelWrapper):
         # Convert `x` to a tensor on `self.device`. Note that layer input can be
         # a nested DATA_CONTAINER_TYPE.
         B = get_backend()
-        if isinstance(x, np.ndarray) or (len(x) > 0 and isinstance(x[0], np.ndarray)):
+        if isinstance(x, np.ndarray) or (len(x) > 0 and
+                                         isinstance(x[0], np.ndarray)):
             x = ModelWrapper._nested_apply(
                 x, partial(B.as_tensor, device=self.device))
 
@@ -206,18 +209,18 @@ class PytorchModelWrapper(ModelWrapper):
         return x
 
     def fprop(
-            self,
-            model_args: ArgsLike,
-            model_kwargs: Dict[str, DataLike] = {},
-            doi_cut: Optional[Cut] = None,
-            to_cut: Optional[Cut] = None,
-            attribution_cut: Optional[Cut] = None,
-            intervention: InterventionLike = None,
-            return_tensor: bool = False,
-            input_timestep: Optional[int] = None
-        ) -> Union[List[Tensor], List[np.ndarray]]:
+        self,
+        model_args: ArgsLike,
+        model_kwargs: Dict[str, DataLike] = {},
+        doi_cut: Optional[Cut] = None,
+        to_cut: Optional[Cut] = None,
+        attribution_cut: Optional[Cut] = None,
+        intervention: InterventionLike = None,
+        return_tensor: bool = False,
+        input_timestep: Optional[int] = None
+    ) -> Union[List[Tensor], List[np.ndarray]]:
         """
-        fprop Forward propagate the model
+        fprop Forward propagate the model.
 
         Parameters
         ----------
@@ -252,39 +255,43 @@ class PytorchModelWrapper(ModelWrapper):
             the input. If `attribution_cut` is supplied, also return the cut
             activations.
         """
+
         B = get_backend()
 
         doi_cut, to_cut, intervention, model_inputs = ModelWrapper._fprop_defaults(
             self,
-            model_args, model_kwargs,
-            doi_cut, to_cut,
-            intervention
-        )
+            model_args=model_args,
+            model_kwargs=model_kwargs,
+            doi_cut=doi_cut,
+            to_cut=to_cut,
+            intervention=intervention)
 
         model_inputs = model_inputs.map(self._to_tensor)
-
         intervention = intervention.map(self._to_tensor)
 
         if isinstance(doi_cut, InputCut):
-            # all of the necessary logic here has been factored out into _fprop_defaults
+            # all of the necessary logic here has been factored out into
+            # _fprop_defaults
             pass
-            
-        else: # doi_cut != InputCut
-            # Tile model inputs so that batch dim at cut matches intervention batch dim.
+
+        else:  # doi_cut != InputCut
+            # Tile model inputs so that batch dim at cut matches intervention
+            # batch dim.
 
             expected_dim = model_inputs.first().shape[0]
             doi_resolution = int(intervention.first().shape[0] // expected_dim)
 
             def tile_val(val):
-                """Tile the given value if expected_dim matches val's first dimension. Otherwise return
-                original val unchanged."""
-                
-                nonlocal expected_dim, doi_resolution
-                
+                """Tile the given value if expected_dim matches val's first
+                dimension. Otherwise return original val unchanged."""
+
                 if val.shape[0] != expected_dim:
                     tru_logger.warn(
-                        f"Value {val} of shape {val.shape} is assumed to not be batchable due to its shape not matching prior batchable inputs of shape ({expected_dim},...). If this is incorrect, make sure its first dimension matches prior batchable inputs."
-                    )
+                        f"Value {val} of shape {val.shape} is assumed to not be "
+                        f"batchable due to its shape not matching prior batchable "
+                        f"inputs of shape ({expected_dim},...). If this is "
+                        f"incorrect, make sure its first dimension matches prior "
+                        f"batchable inputs.")
                     return val
 
                 tile_shape = [1 for _ in range(len(val.shape))]
@@ -296,24 +303,33 @@ class PytorchModelWrapper(ModelWrapper):
                 elif torch.is_tensor(val):
                     return val.repeat(repeat_shape)
                 else:
-                    raise ValueError(f"unhandled tensor type {val.__class__.__name__}")
-            
+                    raise ValueError(
+                        f"unhandled tensor type {val.__class__.__name__}")
+
             # tile args and kwargs if necessary
             model_inputs = model_inputs.map(tile_val)
-            
+
         if attribution_cut is not None:
             # Specify that we want to preserve gradient information.
+
             intervention.foreach(lambda v: v.requires_grad_(True))
-            # model_inputs.foreach(lambda v: v.requires_grad_(True))
+            model_inputs.foreach(
+                lambda v: v.requires_grad_(True)
+                if torch.is_floating_point(v) else tru_logger.warn(
+                    f"Input tensor {v} is not differentiable."))
 
         # Set up the intervention hookfn if we are starting from an intermediate
         # layer.
+
         if not isinstance(doi_cut, InputCut):
+            # Interventions only allowed onto one layer (see FIXME below.)
+            assert len(intervention) == 1
+
             # Define the hookfn.
             counter = 0
 
             def intervene_hookfn(self, inpt, outpt):
-                nonlocal counter, input_timestep, doi_cut, intervention
+                nonlocal counter
 
                 if input_timestep is None or input_timestep == counter:
                     # FIXME: generalize to multi-input layers. Currently can
@@ -351,6 +367,7 @@ class PytorchModelWrapper(ModelWrapper):
 
             def hookfn(self, inpt, outpt):
                 nonlocal hooks, layer_name, anchor
+
                 # FIXME: generalize to multi-input layers
                 inpt = inpt[0] if len(inpt) == 1 else inpt
 
@@ -380,10 +397,9 @@ class PytorchModelWrapper(ModelWrapper):
             for name, anchor in names_and_anchors
             if name is not None
         ]
+
         # Run the network.
-
-        output = self._model(*model_inputs.args, **model_inputs.kwargs)
-
+        output = model_inputs.call_on(self._model)
 
         if isinstance(output, tuple):
             output = output[0]
@@ -396,17 +412,20 @@ class PytorchModelWrapper(ModelWrapper):
         for handle in handles:
             handle.remove()
 
-        # TODO(piotrm): do these methods need model_kwargs?
+        extract_args = dict(
+            hooks=hooks,
+            output=output,
+            model_inputs=model_inputs,
+            return_tensor=return_tensor)
+
         if attribution_cut:
             return [
+                self._extract_outputs_from_hooks(cut=to_cut, **extract_args),
                 self._extract_outputs_from_hooks(
-                    to_cut, hooks, output, model_inputs, return_tensor),
-                self._extract_outputs_from_hooks(
-                    attribution_cut, hooks, output, model_inputs, return_tensor)
+                    cut=attribution_cut, **extract_args)
             ]
         else:
-            return self._extract_outputs_from_hooks(
-                to_cut, hooks, output, model_inputs, return_tensor)
+            return self._extract_outputs_from_hooks(cut=to_cut, **extract_args)
 
     def qoi_bprop(
             self,
@@ -447,7 +466,7 @@ class PytorchModelWrapper(ModelWrapper):
             if `to_cut` is None, this refers to the OutputCut.
             The Cut in which qoi will be calculated. This is generally
             taken from the attribution slyce's to_cut.
-        intervention : backend.Tensor or np.array
+        intervention: InterventionLike
             Input tensor to propagate through the model. If an np.array,
             will be converted to a tensor on the same device as the model.
 
@@ -459,30 +478,23 @@ class PytorchModelWrapper(ModelWrapper):
         """
         B = get_backend()
 
-        if attribution_cut is None:
-            attribution_cut = InputCut()
-
-        if doi_cut is None:
-            doi_cut = InputCut()
-
-        if to_cut is None:
-            to_cut = OutputCut()
+        doi_cut, to_cut, attribution_cut = self._qoi_bprop_defaults(
+            doi_cut=doi_cut, to_cut=to_cut, attribution_cut=attribution_cut)
 
         self._model.train()
 
         y, zs = self.fprop(
             model_args=model_args,
             model_kwargs=model_kwargs,
-            doi_cut=doi_cut,# if doi_cut else InputCut(),
+            doi_cut=doi_cut,
             to_cut=to_cut,
             attribution_cut=attribution_cut,
             intervention=intervention,
-            return_tensor=True
-        )
+            return_tensor=True)
 
         y = to_cut.access_layer(y)
         grads_list = []
-        
+
         for z in zs:
             z_flat = ModelWrapper._flatten(z)
             qoi_out = qoi(y)

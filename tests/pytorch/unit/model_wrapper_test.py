@@ -53,10 +53,12 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
 
         class MkwargsIdent(Module):
             """Does nothing but lets us build some inner layers."""
+
             def forward(this, X):
                 return X
 
         class Mkwargs(Module):
+
             def __init__(self):
                 super(Mkwargs, self).__init__()
                 self.layer1 = MkwargsIdent()
@@ -77,11 +79,12 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
                 print("offset=", offset)
 
                 # Capital-named vars should be batched, others should not be.
-                layer2 = this.layer2((layer1 ** Degree) * Coeffs / divisor + offset)
+                layer2 = this.layer2(
+                    (layer1**Degree) * Coeffs / divisor + offset)
 
                 return layer2
 
-        self.model_kwargs = PytorchModelWrapper(Mkwargs(), (3, ))
+        self.model_kwargs = PytorchModelWrapper(Mkwargs(), (3,))
         self.model_kwargs_layer1 = "layer1"
         self.model_kwargs_layer2 = "layer2"
 

@@ -5,8 +5,9 @@
 
 from dataclasses import dataclass, field
 from inspect import signature
-from typing import (Any, Callable, Dict, Generic, Iterable, List, Optional,
-                    Tuple, TypeVar, Union)
+from typing import (
+    Any, Callable, Dict, Generic, Iterable, List, Optional, Tuple, TypeVar,
+    Union)
 
 import numpy as np
 from trulens.nn.backend import Tensor
@@ -36,6 +37,7 @@ Indexable = Union[List[V], Tuple[V]]
 # For type checking the above.
 DATA_CONTAINER_TYPE = (list, tuple)
 
+
 # Convert a single element input to the multi-input one.
 def as_args(ele):
     if isinstance(ele, DATA_CONTAINER_TYPE):
@@ -43,59 +45,84 @@ def as_args(ele):
     else:
         return [ele]
 
-def replace(l: Indexable[V], i: int, v: V) -> Indexable[V]:
-    """Copy of the given list or tuple with the given index replaced by the given value."""
-    if isinstance(l, list):
-        l = l.copy()
-        l[i] = v
-    elif isinstance(l, tuple):
-        l = list(l)
-        l[i] = v
-        l = tuple(l)
-    else:
-        raise ValueError(f"list or tuple expected but got {l.__class__.__name__}")
 
-    return l
+class IndexableUtils:
 
-def replace_dict(d: Dict[K, V], k: K, v: V) -> Dict[K, V]:
-    """Copy of the given dictionary with the given key replaced by the given value."""
-    d = d.copy()
-    d[k] = v
-    return d
+    def with_(l: Indexable[V], i: int, v: V) -> Indexable[V]:
+        """Copy of the given list or tuple with the given index replaced by the given value."""
 
-def iter_then(iter1: Iterable[V], iter2: Iterable[V]) -> Iterable[V]:
-    """Iterate through the given iterators, one after the other."""
-    for x in iter1:
-        yield x
-    for x in iter2:
-        yield x
+        if isinstance(l, list):
+            l = l.copy()
+            l[i] = v
+        elif isinstance(l, tuple):
+            l = list(l)
+            l[i] = v
+            l = tuple(l)
+        else:
+            raise ValueError(
+                f"list or tuple expected but got {l.__class__.__name__}")
+
+        return l
+
+
+class IterableUtils:
+
+    def then_(iter1: Iterable[V], iter2: Iterable[V]) -> Iterable[V]:
+        """Iterate through the given iterators, one after the other."""
+
+        for x in iter1:
+            yield x
+        for x in iter2:
+            yield x
+
+
+class DictUtils:
+
+    def with_(d: Dict[K, V], k: K, v: V) -> Dict[K, V]:
+        """Copy of the given dictionary with the given key replaced by the given value."""
+
+        d = d.copy()
+        d[k] = v
+        return d
+
 
 @dataclass
 class Lens(Generic[C, V]):
     """Simple lenses implementation."""
 
     get: Callable[[C], V]
+    # Given a container, extract the focused value.
+
     set: Callable[[C, V], C]
+    # Given a container and a value, replace the focused value with the new one,
+    # returning a new container.
 
     @staticmethod
     def lenses_elements(c: List[V]) -> Iterable['Lens[List[V], V]']:
         """Lenses focusing on elements of a list."""
+
         for i in range(len(c)):
-            yield Lens(lambda l, i=i: l[i], lambda l, v,i=i: replace(l, i, v))
+            yield Lens(
+                lambda l, i=i: l[i],
+                lambda l, v, i=i: IndexableUtils.with_(l, i, v))
 
     @staticmethod
     def lenses_values(c: Dict[K, V]) -> Iterable['Lens[Dict[K, V], V]']:
         """Lenses focusing on values in a dictionary."""
+
         for k in c.keys():
-            yield Lens(get=lambda d, k=k: d[k], set=lambda d, v, k=k: replace_dict(d, k, v))
+            yield Lens(
+                get=lambda d, k=k: d[k],
+                set=lambda d, v, k=k: DictUtils.with_(d, k, v))
 
     @staticmethod
     def compose(l1: 'Lens[C1, C2]', l2: 'Lens[C2, V]') -> 'Lens[C1, V]':
         """Compose two lenses."""
+
         return Lens(
             lambda c: l2.get(l1.get(c)),
-            lambda c, e: l1.set(c, l2.set(l1.get(c), e))
-        )
+            lambda c, e: l1.set(c, l2.set(l1.get(c), e)))
+
 
 @dataclass
 class ModelInputs:
@@ -104,40 +131,85 @@ class ModelInputs:
     args: List[DataLike] = field(default_factory=list)
     kwargs: KwargsLike = field(default_factory=dict)
 
-    lens_args: Lens['ModelInputs', DataLike] = Lens(lambda s: s.args, lambda s, a: ModelInputs(a, s.kwargs))
-    lens_kwargs = Lens(lambda s: s.kwargs, lambda s, kw: ModelInputs(s.args, kw))
+    lens_args: Lens['ModelInputs', List[DataLike]] = Lens(
+        lambda s: s.args, lambda s, a: ModelInputs(a, s.kwargs))
+    # lens focusing on the args field of this container.
 
-    def __init__(self, args: ArgsLike = [], kwargs: KwargsLike = {}):
-        self.args = as_args(args)
+    lens_kwargs: Lens['ModelInputs', KwargsLike] = Lens(
+        lambda s: s.kwargs, lambda s, kw: ModelInputs(s.args, kw))
+
+    # lens focusing on the kwargs field of this container.
+
+    def __init__(self, args: List[DataLike] = [], kwargs: KwargsLike = {}):
+        """
+        Contain positional and keyword arguments. This should operate when given
+        args received from a method with this signature:
+
+        def method(*args, **kwargs):
+            something = ModelInputs(args, kwargs)
+
+        method([arg1, arg2]) method(arg1, arg2)
+        
+        In this first case, *args is a tuple with one element whereas in the
+        second, it is a tuple with two. In either case, we convert it to a list
+        with two.
+        """
+
+        if isinstance(args, tuple) and len(args) == 1 and isinstance(
+                args[0], DATA_CONTAINER_TYPE):
+            args = args[0]
+
+        self.args = args
         self.kwargs = kwargs
 
+        if not isinstance(args, DATA_CONTAINER_TYPE):
+            raise ValueError(f"container expected but is {args.__class__}")
+
+    def __len__(self):
+        return len(self.args) + len(self.kwargs)
+
     def lenses_values(self):
-        return iter_then(
-            (Lens.compose(ModelInputs.lens_args, l) for l in Lens.lenses_elements(self.args)),
-            (Lens.compose(ModelInputs.lens_kwargs, l) for l in Lens.lenses_values(self.kwargs))
-        )
+        """Get lenses focusing on each contained value."""
+
+        return IterableUtils.then_(
+            (
+                Lens.compose(ModelInputs.lens_args, l)
+                for l in Lens.lenses_elements(self.args)), (
+                    Lens.compose(ModelInputs.lens_kwargs, l)
+                    for l in Lens.lenses_values(self.kwargs)))
 
     def values(self):
+        """Get the contained values."""
+
         for l in self.lenses_values():
             yield l.get(self)
 
     def map(self, f):
+        """Produce a new set of inputs by transforming each value with the given function."""
+
         ret = self
         for l in self.lenses_values():
             ret = l.set(ret, f(l.get(ret)))
         return ret
 
     def foreach(self, f):
+        """Apply the given function to each value."""
+
         for l in self.lenses_values():
             f(l.get(self))
 
     def first(self):
+        """Get the first value, whether it is an arg or kwargs. args come first."""
+
         try:
             return next(self.values())
         except StopIteration:
-            raise ValueError("ModelInputs is without arguments nor keyword arguments")
+            raise ValueError(
+                "ModelInputs has neither arguments nor keyword arguments")
 
     def call_on(self, f):
+        """Call the given method with the contained arguments."""
+
         return f(*self.args, **self.kwargs)
 
 
@@ -151,7 +223,7 @@ def accepts_model_inputs(func: Callable) -> bool:
 # Baselines are either explicit or computable from the same data as sent to DoI
 # __call__ .
 BaselineLike = Union[ArgsLike, Callable[[ArgsLike, Optional[ModelInputs]],
-                                         ArgsLike]]
+                                        ArgsLike]]
 
 # Interventions for fprop specifiy either activations at some non-InputCut or
 # model inputs if DoI is InputCut (these include both args and kwargs).

@@ -127,55 +127,46 @@ class ModelWrapperTestBase(object):
     def test_fprop_kwargs(self):
         """Test fprop on InputCut DoI for a model with both args and kwargs."""
 
+        if not hasattr(self, 'model_kwargs'):
+            # TODO: implement these tests for keras
+            return
+
         B = get_backend()
 
-        X = np.array([[1.,2.,3.], [4.,5.,6.]])
-        Coeffs = np.array([[0.5,1.0,1.5], [2.0, 2.5, 3.0]])
+        X = np.array([[1., 2., 3.], [4., 5., 6.]])
+        Coeffs = np.array([[0.5, 1.0, 1.5], [2.0, 2.5, 3.0]])
         divisor = np.array([[3.0]])
-        Degree = np.array([[1.,2.,3.], [4.,5.,6.]])
+        Degree = np.array([[1., 2., 3.], [4., 5., 6.]])
         offset = np.array([[4.0]])
 
         actual = self.model_kwargs.fprop(
-            model_args=(X, Coeffs, divisor),                # cannot swap contents
-            model_kwargs=dict(Degree=Degree, offset=offset) # between these
-        )[0]
+            model_args=(X, Coeffs, divisor),  # cannot swap contents
+            model_kwargs=dict(Degree=Degree, offset=offset)  # between these
+        )
 
         # Expect handling as in numpy broadcasting of the non-batched divisor, offset:
-        expected = (X ** Degree) * Coeffs / divisor + offset
+        expected = (X**Degree) * Coeffs / divisor + offset
 
-        self.assertTrue(
-            np.allclose(
-                actual, expected
-            )
-        )
+        self.assertTrue(np.allclose(actual, expected))
 
     def test_fprop_kwargs_intervention(self):
         """Test fprop with InputCut and intervention/input with both args and kwargs."""
 
+        if not hasattr(self, 'model_kwargs'):
+            # TODO: implement these tests for keras
+            return
+
         B = get_backend()
 
         # batch of 2
-        X = np.array([ 
-            [1.0, 2.0, 3.0],
-            [4.0, 5.0, 6.0]
-        ])
-        Coeffs = np.array([
-            [0.5, 1.0, 1.5],
-            [2.5, 3.0, 3.5]
-        ])
-        Degree = np.array([
-            [4.0, 5.0, 6.0],
-            [7.0, 8.0, 9.0]
-        ])
+        X = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+        Coeffs = np.array([[0.5, 1.0, 1.5], [2.5, 3.0, 3.5]])
+        Degree = np.array([[4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
 
         # non-batchable parameters
-        divisor = np.array([
-            [3.0]
-        ])
-        offset = np.array([
-            [4.0]
-        ])
- 
+        divisor = np.array([[3.0]])
+        offset = np.array([[4.0]])
+
         actual = self.model_kwargs.fprop(
             (X, Coeffs, divisor),               # ignored but still need to be provided
             dict(Degree=Degree, offset=offset), # ignored but still need to be provided
@@ -188,69 +179,53 @@ class ModelWrapperTestBase(object):
 
         # Expect handling of the non-batched values (divisor, offset) as in
         # numpy broadcasting.
-        expected = ((X+1.0) ** (Degree+4.0)) * (Coeffs+2.0) / (divisor+3.0) + (offset+5.0)
+        expected = (
+            (X + 1.0)**
+            (Degree + 4.0)) * (Coeffs + 2.0) / (divisor + 3.0) + (offset + 5.0)
 
-        self.assertTrue(
-            np.allclose(
-                actual, expected
-            )
-        )
+        self.assertTrue(np.allclose(actual, expected))
 
     def test_fprop_kwargs_intervention_tiling(self):
         """Test fprop with InputCut DoI with an intervention that needs to have
         its kwargs tiled."""
 
+        if not hasattr(self, 'model_kwargs'):
+            # TODO: implement these tests for keras
+            return
+
         B = get_backend()
 
         # batch of 2
-        X = np.array([ 
-            [1.0, 2.0, 3.0],
-            [4.0, 5.0, 6.0]
-        ])
-        Coeffs = np.array([
-            [0.5, 1.0, 1.5],
-            [2.5, 3.0, 3.5]
-        ])
-        Degree = np.array([
-            [4.0, 5.0, 6.0],
-            [7.0, 8.0, 9.0]
-        ])
+        X = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+        Coeffs = np.array([[0.5, 1.0, 1.5], [2.5, 3.0, 3.5]])
+        Degree = np.array([[4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
 
         # non-batchable parameters
-        divisor = np.array([
-            [3.0]
-        ])
-        offset = np.array([
-            [4.0]
-        ])
+        divisor = np.array([[3.0]])
+        offset = np.array([[4.0]])
 
         # Will intervene at layer1 which is just a copy of the input X.
 
         # batch of 4 at intervention, Coeffs, Degree, but not (divisor, offset) should get tiled 2 times.
-        X_intervention = np.array([ 
-            [1.0,  2.0,  3.0],
-            [4.0,  5.0,  6.0],
-            [7.0,  8.0,  9.0],
-            [10.0, 11.0, 12.0]
-        ])
-       
+        X_intervention = np.array(
+            [
+                [1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0],
+                [10.0, 11.0, 12.0]
+            ])
+
         actual = self.model_kwargs.fprop(
             (X, Coeffs, divisor),
             dict(Degree=Degree, offset=offset),
             doi_cut=Cut(self.model_kwargs_layer1),
-            intervention=X_intervention
-        )[0]
+            intervention=X_intervention)[0]
 
         # Expect handling of the non-batched values (divisor, offset) as in
         # numpy broadcasting while Degree and Coeffs should be tiled twice to
         # match intervention.
-        expected = (X_intervention ** np.tile(Degree, (2, 1))) * np.tile(Coeffs, (2,1)) / divisor + offset
+        expected = (X_intervention**np.tile(Degree, (2, 1))) * np.tile(
+            Coeffs, (2, 1)) / divisor + offset
 
-        self.assertTrue(
-            np.allclose(
-                actual, expected
-            )
-        )
+        self.assertTrue(np.allclose(actual, expected))
 
     # Tests for qoibprop.
 

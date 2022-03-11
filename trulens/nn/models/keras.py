@@ -322,42 +322,53 @@ class KerasModelWrapper(ModelWrapper):
 
         B = get_backend()
 
-        doi_cut, to_cut, intervention = ModelWrapper._fprop_defaults(self, model_args, model_kwargs, doi_cut, to_cut, intervention)
+        doi_cut, to_cut, intervention, model_inputs = ModelWrapper._fprop_defaults(
+            self,
+            model_args=model_args,
+            model_kwargs=model_kwargs,
+            doi_cut=doi_cut,
+            to_cut=to_cut,
+            intervention=intervention)
+
+        # TODO: use the ModelInputs structure in this backend
+        intervention = intervention.args
+        model_args = model_inputs.args
+        model_kwargs = model_inputs.kwargs
 
         doi_tensors = self._get_layers(doi_cut)
         to_tensors = self._get_layers(to_cut)
 
-        # Convert `intervention` to a list of inputs if it isn't already.
-        if isinstance(intervention, ModelInputs):            
-            args = intervention.args
-            kwargs = intervention.kwargs
-        elif isinstance(intervention, dict):
-            args = []
-            kwargs = intervention
-        else:
-            args = intervention
-            kwargs = {}
-
-        intervention = args
-        
         def _tensor(k):
             if isinstance(k, B.Tensor):
                 return k
             # any named inputs must correspond to layer names
             return self._model.get_layer(k).output
-            
-        val_map = {k: v for k, v in zip(doi_tensors, intervention)}
-        val_map.update({k: v for k, v in zip(self._model.inputs[0:len(model_args)], model_args)})
+
+        val_map = dict()
+
+        # construct a feed_dict
+
+        # Model inputs come from model_args
+        val_map.update(
+            {
+                k: v for k, v in zip(
+                    self._model.inputs[0:len(model_args)], model_args)
+            })
+        # Other placeholders come from kwargs.
         val_map.update({_tensor(k): v for k, v in model_kwargs.items()})
-        all_vals = list(intervention) + list(model_args)
+
+        print("doi_tensors=", doi_tensors)
+
+        # Finally, interventions override any previously set tensors.
+        val_map.update({k: v for k, v in zip(doi_tensors, intervention)})
+        # val_map.update({_tensor(k): v for k, v in intervention.kwargs.items()})
+
+        print(val_map)
 
         # TODO: tiling
 
         all_inputs = list(val_map.keys())
         all_vals = list(val_map.values())
-
-        for i, v in zip(all_inputs, all_vals):
-            print(i, "=", v)
 
         # Tensorflow doesn't allow you to make a function that returns the same
         # tensor as it takes in. Thus, we have to have a special case for the
@@ -378,9 +389,7 @@ class KerasModelWrapper(ModelWrapper):
         # also `doi_tensors`.
         if non_identity_to_tensors:
             fprop_fn = self.keras.backend.function(
-                inputs=all_inputs,
-                outputs=non_identity_to_tensors
-            )
+                inputs=all_inputs, outputs=non_identity_to_tensors)
             out_vals = fprop_fn(all_vals)
             del fprop_fn
 
@@ -390,6 +399,7 @@ class KerasModelWrapper(ModelWrapper):
         # For any `to_tensor`s that were also `from_tensor`s, insert the
         # corresponding concrete input value from `intervention` in the output's
         # place.
+
         for i in sorted(identity_map):
             out_vals.insert(i, intervention[identity_map[i]])
 
