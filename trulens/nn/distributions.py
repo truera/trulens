@@ -76,9 +76,13 @@ class DoI(AbstractBaseClass):
             applied to the input. otherwise, the distribution should be applied
             to the latent space defined by the cut. 
         """
-        return self._cut 
+        return self._cut
 
-    def get_activation_multiplier(self, activation: ArgsLike, *, model_inputs: Optional[ModelInputs] = None) -> ArgsLike:
+    def get_activation_multiplier(
+            self,
+            activation: ArgsLike,
+            *,
+            model_inputs: Optional[ModelInputs] = None) -> ArgsLike:
         """
         Returns a term to multiply the gradient by to convert from "*influence 
         space*" to "*attribution space*". Conceptually, "influence space"
@@ -195,7 +199,11 @@ class LinearDoi(DoI):
     def resolution(self) -> int:
         return self._resolution
 
-    def __call__(self, z: ArgsLike, *, model_inputs: Optional[ModelInputs] = None) -> List[ArgsLike]:
+    def __call__(
+            self,
+            z: ArgsLike,
+            *,
+            model_inputs: Optional[ModelInputs] = None) -> List[ArgsLike]:
 
         if isinstance(z, DATA_CONTAINER_TYPE) and len(z) == 1:
             z = z[0]
@@ -211,7 +219,11 @@ class LinearDoi(DoI):
             for i in range(self._resolution)
         ]
 
-    def get_activation_multiplier(self, activation: ArgsLike, *, model_inputs: Optional[ModelInputs] = None) -> ArgsLike:
+    def get_activation_multiplier(
+            self,
+            activation: ArgsLike,
+            *,
+            model_inputs: Optional[ModelInputs] = None) -> ArgsLike:
         """
         Returns a term to multiply the gradient by to convert from "*influence 
         space*" to "*attribution space*". Conceptually, "influence space"

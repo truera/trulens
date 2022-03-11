@@ -41,8 +41,7 @@ def discern_backend(model):
 
                 # Note that in these cases, the TensorFlow version is 1.x.
                 elif 'tensorflow' in type_str and 'keras' in type_str and (
-                        type_str.index('tensorflow') <
-                        type_str.index('keras')):
+                        type_str.index('tensorflow') < type_str.index('keras')):
                     return Backend.TF_KERAS
 
                 elif 'keras' in type_str:
@@ -60,20 +59,21 @@ def discern_backend(model):
     return Backend.UNKNOWN
 
 
-def get_model_wrapper(model,
-                      logit_layer=None,
-                      replace_softmax=False,
-                      softmax_layer=-1,
-                      custom_objects=None,
-                      input_shape=None,
-                      input_dtype=None,
-                      device=None,
-                      input_tensors=None,
-                      output_tensors=None,
-                      internal_tensor_dict=None,
-                      default_feed_dict=None,
-                      session=None,
-                      backend=None):
+def get_model_wrapper(
+        model,
+        logit_layer=None,
+        replace_softmax=False,
+        softmax_layer=-1,
+        custom_objects=None,
+        input_shape=None,
+        input_dtype=None,
+        device=None,
+        input_tensors=None,
+        output_tensors=None,
+        internal_tensor_dict=None,
+        default_feed_dict=None,
+        session=None,
+        backend=None):
     """
     Returns a ModelWrapper implementation that exposes the components needed for
     computing attributions.
@@ -147,13 +147,15 @@ def get_model_wrapper(model,
 
     if backend is None:
         backend = discern_backend(model)
-        tru_logger.info("Detected {} backend for {}.".format(
-            backend.name.lower(), type(model)))
+        tru_logger.info(
+            "Detected {} backend for {}.".format(
+                backend.name.lower(), type(model)))
     else:
         backend = Backend.from_name(backend)
     if B is None or (backend is not Backend.UNKNOWN and B.backend != backend):
-        tru_logger.info("Changing backend from {} to {}.".format(
-            None if B is None else B.backend, backend))
+        tru_logger.info(
+            "Changing backend from {} to {}.".format(
+                None if B is None else B.backend, backend))
         os.environ['TRULENS_BACKEND'] = backend.name.lower()
         B = get_backend()
     else:
@@ -163,30 +165,33 @@ def get_model_wrapper(model,
     )
     if B.backend.is_keras_derivative():
         from trulens.nn.models.keras import KerasModelWrapper
-        return KerasModelWrapper(model,
-                                 logit_layer=logit_layer,
-                                 replace_softmax=replace_softmax,
-                                 softmax_layer=softmax_layer,
-                                 custom_objects=custom_objects)
+        return KerasModelWrapper(
+            model,
+            logit_layer=logit_layer,
+            replace_softmax=replace_softmax,
+            softmax_layer=softmax_layer,
+            custom_objects=custom_objects)
 
     elif B.backend == Backend.PYTORCH:
         from trulens.nn.models.pytorch import PytorchModelWrapper
         if input_shape is None:
             tru_logger.error('pytorch model must pass parameter: input_shape')
-        return PytorchModelWrapper(model,
-                                   input_shape,
-                                   input_dtype=input_dtype,
-                                   logit_layer=logit_layer,
-                                   device=device)
+        return PytorchModelWrapper(
+            model,
+            input_shape,
+            input_dtype=input_dtype,
+            logit_layer=logit_layer,
+            device=device)
     elif B.backend == Backend.TENSORFLOW:
         import tensorflow as tf
         if tf.__version__.startswith('2'):
             from trulens.nn.models.tensorflow_v2 import Tensorflow2ModelWrapper
-            return Tensorflow2ModelWrapper(model,
-                                           logit_layer=logit_layer,
-                                           replace_softmax=replace_softmax,
-                                           softmax_layer=softmax_layer,
-                                           custom_objects=custom_objects)
+            return Tensorflow2ModelWrapper(
+                model,
+                logit_layer=logit_layer,
+                replace_softmax=replace_softmax,
+                softmax_layer=softmax_layer,
+                custom_objects=custom_objects)
         else:
             from trulens.nn.models.tensorflow_v1 import TensorflowModelWrapper
             if input_tensors is None:

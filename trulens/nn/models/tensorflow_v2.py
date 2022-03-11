@@ -178,21 +178,32 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
             same format as the input. If `attribution_cut` is supplied, also 
             return the cut activations.
         """
+
+        # TODO: This backend has functionality that others do not including
+        # returning numpy if input is given as numpy.
+
         if not self._eager:
             return super().fprop(
                 model_args, model_kwargs, doi_cut, to_cut, attribution_cut,
                 intervention)
 
-        if doi_cut is None:
-            doi_cut = InputCut()
-        if to_cut is None:
-            to_cut = OutputCut()
+        doi_cut, to_cut, intervention, model_inputs = ModelWrapper._fprop_defaults(
+            self,
+            model_args=model_args,
+            model_kwargs=model_kwargs,
+            doi_cut=doi_cut,
+            to_cut=to_cut,
+            intervention=intervention)
+
+        model_args = model_inputs.args
+        model_kwargs = model_inputs.kwargs
+        intervention = intervention.args
 
         return_numpy = True
 
         if intervention is not None:
-            if not isinstance(intervention, DATA_CONTAINER_TYPE):
-                intervention = [intervention]
+            # if not isinstance(intervention, DATA_CONTAINER_TYPE):
+            #     intervention = [intervention]
 
             # We return a numpy array if we were given a numpy array; otherwise
             # we will let the returned values remain data tensors.
@@ -204,22 +215,28 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                     intervention, tf.constant)
 
         try:
-            if (intervention):
+            if intervention:
                 # Get Inputs and batch then the same as DoI resolution
                 doi_repeated_batch_size = intervention[0].shape[0]
+
                 batched_model_args = []
+
                 for val in model_args:
+
                     if isinstance(val, np.ndarray):
                         doi_resolution = int(
                             doi_repeated_batch_size / val.shape[0])
                         tile_shape = [1] * len(val.shape)
                         tile_shape[0] = doi_resolution
                         val = np.tile(val, tuple(tile_shape))
+
                     elif tf.is_tensor(val):
                         doi_resolution = int(
                             doi_repeated_batch_size / val.shape[0])
                         val = tf.repeat(val, doi_resolution, axis=0)
+
                     batched_model_args.append(val)
+
                 model_args = batched_model_args
 
                 if not isinstance(doi_cut, InputCut):
@@ -315,7 +332,11 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                                     attribution_cut.anchor))
 
             # Run a point.
-            self._model(*model_args, **model_kwargs)
+            # Some Models require inputs as single tensors while others require a list.
+            if len(model_args) == 1:
+                model_args = model_args[0]
+
+            self._model(model_args)
 
         finally:
             # Clear the hooks after running the model so that `fprop` doesn't

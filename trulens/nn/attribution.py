@@ -22,7 +22,7 @@ from trulens.nn.quantities import (
     ComparativeQoI, InternalChannelQoI, LambdaQoI, MaxClassQoI, QoI)
 from trulens.nn.slices import Cut, InputCut, OutputCut, Slice
 from trulens.utils.typing import (
-    DATA_CONTAINER_TYPE, ModelInputs, accepts_model_inputs)
+    DATA_CONTAINER_TYPE, ModelInputs, accepts_model_inputs, as_args)
 
 # Attribution-related type aliases.
 CutLike = Union[Cut, int, str, None]
@@ -232,7 +232,11 @@ class InternalInfluence(AttributionMethod):
 
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
-        doi_val = self.model.fprop(model_args, model_kwargs, to_cut=doi_cut)
+        doi_val = self.model.fprop(
+            model_args=model_inputs.args,
+            model_kwargs=model_inputs.kwargs,
+            to_cut=doi_cut)
+
         # DoI supports tensor or list of tensor. unwrap args to perform DoI on
         # top level list
 
@@ -241,6 +245,7 @@ class InternalInfluence(AttributionMethod):
         # level of data container.
         # TODO(piotrm): automatic handling of other common containers like the ones
         # used for huggingface models.
+        # TODO(piotrm): this unwrapping may not be necessary any more
         if isinstance(doi_val, DATA_CONTAINER_TYPE) and isinstance(
                 doi_val[0], DATA_CONTAINER_TYPE):
             doi_val = doi_val[0]
@@ -249,27 +254,25 @@ class InternalInfluence(AttributionMethod):
             doi_val = doi_val[0]
 
         if accepts_model_inputs(self.doi):
-            D = self.doi(
-                doi_val, model_inputs=model_inputs)
+            D = self.doi(doi_val, model_inputs=model_inputs)
         else:
             D = self.doi(doi_val)
 
         n_doi = len(D)
-        D = InternalInfluence.__concatenate_doi(D)
 
+        D = InternalInfluence.__concatenate_doi(D)
         B = get_backend()
 
         # Calculate the gradient of each of the points in the DoI.
         qoi_grads = self.model.qoi_bprop(
             qoi=self.qoi,
-            model_args=model_args,
-            model_kwargs=model_kwargs,
+            model_args=model_inputs.args,
+            model_kwargs=model_inputs.kwargs,
             attribution_cut=self.slice.from_cut,
             to_cut=self.slice.to_cut,
             intervention=D,
-            doi_cut=doi_cut
-        )
-            
+            doi_cut=doi_cut)
+
         # Take the mean across the samples in the DoI.
         if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
             attributions = [
@@ -288,7 +291,9 @@ class InternalInfluence(AttributionMethod):
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
             z_val = self.model.fprop(
-                model_args, model_kwargs, to_cut=self.slice.from_cut)
+                model_inputs.args,
+                model_inputs.kwargs,
+                to_cut=self.slice.from_cut)
             if isinstance(z_val, DATA_CONTAINER_TYPE) and len(z_val) == 1:
                 z_val = z_val[0]
 
@@ -300,10 +305,12 @@ class InternalInfluence(AttributionMethod):
                             z_val[i], **extra_args)
                     else:
                         attributions[i] *= (
-                            self.doi.get_activation_multiplier(z_val, **extra_args))
+                            self.doi.get_activation_multiplier(
+                                z_val, **extra_args))
 
             else:
-                attributions *= self.doi.get_activation_multiplier(z_val, **extra_args)
+                attributions *= self.doi.get_activation_multiplier(
+                    z_val, **extra_args)
 
         return attributions
 
@@ -593,7 +600,13 @@ class IntegratedGradients(InputAttribution):
     """
 
     def __init__(
-            self, model: ModelWrapper, baseline=None, resolution: int = 50, doi_cut=InputCut(), qoi='max', qoi_cut=OutputCut()):
+        self,
+        model: ModelWrapper,
+        baseline=None,
+        resolution: int = 50,
+        doi_cut=InputCut(),
+        qoi='max',
+        qoi_cut=OutputCut()):
         """
         Parameters:
             model:
@@ -616,5 +629,4 @@ class IntegratedGradients(InputAttribution):
             qoi=qoi,
             doi_cut=doi_cut,
             doi=LinearDoi(baseline, resolution, cut=doi_cut),
-            multiply_activation=True
-        )
+            multiply_activation=True)

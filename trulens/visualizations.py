@@ -968,14 +968,18 @@ class ChannelMaskVisualizer(object):
             attrs_input, x, output_file, blur, threshold, masked_opacity,
             combine_channels)
 
+
 class Output:
     """Base class for visualization output formats."""
     pass
 
+
 # TODO(piotrm): implement a latex output format
+
 
 class Text(Output):
     """Plain text visualization output format."""
+
     def blank(self):
         return ""
 
@@ -994,13 +998,17 @@ class Text(Output):
     def render(self, s):
         return s
 
+
 class HTML(Output):
     """HTML visualization output format."""
+
     def __init__(self):
         try:
             self.m_html = importlib.import_module("html")
         except:
-            raise ImportError("HTML output requires html python module. Try 'pip install html'.")
+            raise ImportError(
+                "HTML output requires html python module. Try 'pip install html'."
+            )
 
     def blank(self):
         return ""
@@ -1018,7 +1026,7 @@ class HTML(Output):
         red = 0.0
         green = 0.0
         if mag > 0:
-            green = 1.0 # 0.5 + mag * 0.5
+            green = 1.0  # 0.5 + mag * 0.5
             red = 1.0 - mag * 0.5
         else:
             red = 1.0
@@ -1028,7 +1036,7 @@ class HTML(Output):
         blue = min(red, green)
         # blue = 1.0 - max(red, green)
 
-        return f"<span style='color: rgb({red*255}, {green*255}, {blue*255});'>{s}</span>"
+        return f"<span title='{mag:0.3f}' style='color: rgb({red*255}, {green*255}, {blue*255});'>{s}</span>"
 
     def append(self, *pieces):
         return ''.join(pieces)
@@ -1036,14 +1044,18 @@ class HTML(Output):
     def render(self, s):
         return s
 
+
 class IPython(HTML):
     """Interactive python visualization output format."""
+
     def __init__(self):
         super(IPython, self).__init__()
         try:
             self.m_ipy = importlib.import_module("IPython")
         except:
-            raise ImportError("Jupyter output requires IPython python module. Try 'pip install ipykernel'.")
+            raise ImportError(
+                "Jupyter output requires IPython python module. Try 'pip install ipykernel'."
+            )
 
     def render(self, s):
         html = HTML.render(self, s)
@@ -1066,17 +1078,17 @@ class NLP(object):
 
     def __init__(
         self,
-        wrapper: ModelWrapper, 
-        output: Optional[Output] = None, 
-        labels: Optional[Iterable[str]] = None, 
-        tokenize: Optional[Callable[[TextBatch], ModelInputs]] = None, 
+        wrapper: ModelWrapper,
+        output: Optional[Output] = None,
+        labels: Optional[Iterable[str]] = None,
+        tokenize: Optional[Callable[[TextBatch], ModelInputs]] = None,
         decode: Optional[Callable[[Tensor], str]] = None,
-        input_accessor: Optional[Callable[[ModelInputs], Iterable[Tensor]]] = None, 
-        output_accessor: Optional[Callable[[ModelOutput], Iterable[Tensor]]] = None,
+        input_accessor: Optional[Callable[[ModelInputs],
+                                          Iterable[Tensor]]] = None,
+        output_accessor: Optional[Callable[[ModelOutput],
+                                           Iterable[Tensor]]] = None,
         attr_aggregate: Optional[Callable[[Tensor], Tensor]] = None,
-        hidden_tokens: Optional[Set[int]] = set()
-    ):
-
+        hidden_tokens: Optional[Set[int]] = set()):
         """Initializate NLP visualization tools for a given environment.
 
         Parameters:
@@ -1116,7 +1128,9 @@ class NLP(object):
 
             except NameError:
                 output = Text()
-                tru_logger("WARNING: could not guess preferred visualization output format, using Text")
+                tru_logger(
+                    "WARNING: could not guess preferred visualization output format, using Text"
+                )
 
         # TODO: automatic inference of various parameters for common repositories like huggingface, tfhub.
 
@@ -1126,8 +1140,8 @@ class NLP(object):
         self.decode = decode
         self.wrapper = wrapper
 
-        self.input_accessor = input_accessor   # could be inferred
-        self.output_accessor = output_accessor # could be inferred
+        self.input_accessor = input_accessor  # could be inferred
+        self.output_accessor = output_accessor  # could be inferred
 
         B = get_backend()
 
@@ -1148,7 +1162,7 @@ class NLP(object):
 
         inputs = self.tokenize(texts)
 
-        outputs = inputs.call_on(self.wrapper.model)
+        outputs = inputs.call_on(self.wrapper._model)
         attrs = inputs.call_on(attr.attributions)
 
         content = self.output.blank()
@@ -1158,16 +1172,22 @@ class NLP(object):
             input_ids = self.input_accessor(inputs)
 
         if (not isinstance(input_ids, Iterable)) or isinstance(input_ids, dict):
-            raise ValueError(f"Inputs ({input_ids.__class__.__name__}) need to be iterable over instances. You might need to set input_accessor.")
+            raise ValueError(
+                f"Inputs ({input_ids.__class__.__name__}) need to be iterable over instances. You might need to set input_accessor."
+            )
 
         output_logits = outputs
         if self.output_accessor is not None:
             output_logits = self.output_accessor(outputs)
 
-        if (not isinstance(output_logits, Iterable)) or isinstance(output_logits, dict):
-            raise ValueError(f"Outputs ({output_logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor.")
+        if (not isinstance(output_logits, Iterable)) or isinstance(
+                output_logits, dict):
+            raise ValueError(
+                f"Outputs ({output_logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor."
+            )
 
-        for i, (sentence_word_id, attr, logits) in enumerate(zip(input_ids, attrs, output_logits)):
+        for i, (sentence_word_id, attr,
+                logits) in enumerate(zip(input_ids, attrs, output_logits)):
 
             logits = logits.detach().numpy()
             pred = logits.argmax()
@@ -1176,8 +1196,9 @@ class NLP(object):
                 pred_name = self.labels[pred]
             else:
                 pred_name = str(pred)
-        
-            sent = self.output.append(self.output.escape(pred_name), ":", self.output.space())
+
+            sent = self.output.append(
+                self.output.escape(pred_name), ":", self.output.space())
 
             for word_id, attr in zip(sentence_word_id, attr):
                 word_id = int(B.as_array(word_id))
@@ -1189,14 +1210,13 @@ class NLP(object):
                     word = self.decode(word_id)
                 else:
                     word = str(word_id)
-                
+
                 mag = self.attr_aggregate(attr)
-                
+
                 sent = self.output.append(
                     sent,
-                    self.output.magnitude_colored(self.output.escape(word), mag),
-                    self.output.space()
-                )
+                    self.output.magnitude_colored(
+                        self.output.escape(word), mag), self.output.space())
 
             content = self.output.append(content, sent, self.output.linebreak())
 
