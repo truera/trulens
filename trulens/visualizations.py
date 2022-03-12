@@ -1189,7 +1189,7 @@ class NLP(object):
         for i, (sentence_word_id, attr,
                 logits) in enumerate(zip(input_ids, attrs, output_logits)):
 
-            logits = logits.detach().numpy()
+            logits = logits.to('cpu').detach().numpy()
             pred = logits.argmax()
 
             if self.labels is not None:

@@ -488,9 +488,9 @@ class InputAttribution(InternalInfluence):
     def __init__(
             self,
             model: ModelWrapper,
-            qoi_cut: CutLike = None,
+            qoi_cut: CutLike = None, # See WARNING-LOAD-INIT .
             qoi: QoiLike = 'max',
-            doi_cut: CutLike = InputCut(),
+            doi_cut: CutLike = None, # See WARNING-LOAD-INIT .
             doi: DoiLike = 'point',
             multiply_activation: bool = True):
         """
@@ -561,6 +561,14 @@ class InputAttribution(InternalInfluence):
                 activation, thus converting from "*influence space*" to
                 "*attribution space*."
         """
+        if doi_cut is None:
+            # WARNING-LOAD-INIT: Do not put this as a default arg in the def
+            # line. That would cause an instantiation of InputCut when this
+            # class is loaded and before it is being used. get_backend is used
+            # in Cut.__init__ but may fail if this class is loaded before
+            # trulens.nn.models.get_model_wrapper is called on some model.
+            doi_cut = InputCut()
+
         super().__init__(
             model, (doi_cut, qoi_cut),
             qoi,
@@ -604,9 +612,9 @@ class IntegratedGradients(InputAttribution):
         model: ModelWrapper,
         baseline=None,
         resolution: int = 50,
-        doi_cut=InputCut(),
+        doi_cut=None, # See WARNING-LOAD-INIT .
         qoi='max',
-        qoi_cut=OutputCut()):
+        qoi_cut=None): # See WARNING-LOAD-INIT .
         """
         Parameters:
             model:
@@ -623,6 +631,13 @@ class IntegratedGradients(InputAttribution):
                 approximation of the mathematical formula this attribution 
                 method represents.
         """
+
+        if doi_cut is None:
+            doi_cut = InputCut()
+
+        if qoi_cut is None:
+            qoi_cut = OutputCut()
+
         super().__init__(
             model=model,
             qoi_cut=qoi_cut,
