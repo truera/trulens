@@ -564,8 +564,8 @@ class InputAttribution(InternalInfluence):
         if doi_cut is None:
             # WARNING-LOAD-INIT: Do not put this as a default arg in the def
             # line. That would cause an instantiation of InputCut when this
-            # class is loaded and before it is being used. get_backend is used
-            # in Cut.__init__ but may fail if this class is loaded before
+            # class is loaded and before it is used. Because get_backend gets
+            # called in Cut.__init__, it may fail if this class is loaded before
             # trulens.nn.models.get_model_wrapper is called on some model.
             doi_cut = InputCut()
 
