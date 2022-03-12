@@ -15,6 +15,7 @@ interpreting attributions as images.
 # their initialization.
 
 import importlib
+from tkinter import S
 from typing import Callable, Iterable, Optional, Set, TypeVar
 
 import matplotlib.pyplot as plt
@@ -989,6 +990,9 @@ class Text(Output):
     def escape(self, s):
         return s
 
+    def line(self, s):
+        return s
+
     def magnitude_colored(self, s, mag):
         return f"{s}({mag:0.3f})"
 
@@ -1022,6 +1026,9 @@ class HTML(Output):
     def linebreak(self):
         return "<br/>"
 
+    def line(self, s):
+        return f"<span style='padding: 2px; margin: 2px; background: gray; border-radius: 4px;'>{s}</span>"
+
     def magnitude_colored(self, s, mag):
         red = 0.0
         green = 0.0
@@ -1036,7 +1043,7 @@ class HTML(Output):
         blue = min(red, green)
         # blue = 1.0 - max(red, green)
 
-        return f"<span title='{mag:0.3f}' style='color: rgb({red*255}, {green*255}, {blue*255});'>{s}</span>"
+        return f"<span title='{mag:0.3f}' style='margin: 1px; padding: 1px; border-radius: 4px; background: black; color: rgb({red*255}, {green*255}, {blue*255});'>{s}</span>"
 
     def append(self, *pieces):
         return ''.join(pieces)
@@ -1213,11 +1220,16 @@ class NLP(object):
 
                 mag = self.attr_aggregate(attr)
 
+                if word[0] == ' ':
+                    word = word[1:]
+                    sent = self.output.append(sent, self.output.space())
+
                 sent = self.output.append(
                     sent,
                     self.output.magnitude_colored(
-                        self.output.escape(word), mag), self.output.space())
+                        self.output.escape(word), mag)
+                    )
 
-            content = self.output.append(content, sent, self.output.linebreak())
+            content = self.output.append(content, self.output.line(sent), self.output.linebreak(), self.output.linebreak())
 
         return self.output.render(content)
