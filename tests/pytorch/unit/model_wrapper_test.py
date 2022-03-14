@@ -51,6 +51,38 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         self.layer2 = 'l2_relu'
         self.out = 'logits'
 
+        class MkwargsIdent(Module):
+            """Does nothing but lets us build some inner layers."""
+
+            def forward(this, X):
+                return X
+
+        class Mkwargs(Module):
+
+            def __init__(self):
+                super(Mkwargs, self).__init__()
+                self.layer1 = MkwargsIdent()
+                self.layer2 = MkwargsIdent()
+
+            def forward(this, X, Coeffs, divisor, **kwargs):
+                # Hoping kwargs forces the remaining arguments to be passed only by kwargs.
+
+                # Capital vars are batched, lower-case ones are not.
+                Degree = kwargs['Degree']
+                offset = kwargs['offset']
+
+                layer1 = this.layer1(X)
+
+                # Capital-named vars should be batched, others should not be.
+                layer2 = this.layer2(
+                    (layer1**Degree) * Coeffs / divisor + offset)
+
+                return layer2
+
+        self.model_kwargs = PytorchModelWrapper(Mkwargs(), (3,))
+        self.model_kwargs_layer1 = "layer1"
+        self.model_kwargs_layer2 = "layer2"
+
     # Overriden tests.
 
     def test_qoibprop_multiple_inputs(self):
