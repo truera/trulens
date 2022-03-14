@@ -31,11 +31,10 @@ class DoiTest(DoiTestBase, TestCase):
             def forward(this, x):
                 return this.coeff * (x**this.exp)
 
-    def __init__(this, l1_coeff, l1_exp, l2_coeff, l2_exp):
-        super(DoubleExponential, this).__init__()
+        class DoubleExponential(Module):
 
-        this.layer1 = Exponential(l1_coeff, l1_exp)
-        this.layer2 = Exponential(l2_coeff, l2_exp)
+            def __init__(this):
+                super(DoubleExponential, this).__init__()
 
                 this.layer1 = Exponential(self.l1_coeff, self.l1_exp)
                 this.layer2 = Exponential(self.l2_coeff, self.l2_exp)

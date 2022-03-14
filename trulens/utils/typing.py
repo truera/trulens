@@ -12,7 +12,6 @@ from typing import (
 )
 
 import numpy as np
-from trulens.nn.backend import Tensor
 
 from trulens.nn.backend import Tensor
 

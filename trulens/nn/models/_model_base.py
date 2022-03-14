@@ -278,6 +278,7 @@ class ModelWrapper(AbstractBaseClass):
             doi_cut = InputCut()
         if to_cut is None:
             to_cut = OutputCut()
+
         if attribution_cut is None:
             attribution_cut = InputCut()
 
