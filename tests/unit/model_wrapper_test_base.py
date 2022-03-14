@@ -1,9 +1,12 @@
 import numpy as np
 
-from trulens.nn.attribution import InternalInfluence, InputAttribution
+from trulens.nn.attribution import InputAttribution
+from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.nn.quantities import MaxClassQoI
-from trulens.nn.slices import Cut, InputCut, LogitCut
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
+from trulens.nn.slices import LogitCut
 from trulens.utils.typing import ModelInputs
 
 
@@ -315,9 +318,8 @@ class ModelWrapperTestBase(object):
 
         # Expect handling of the non-batched values (divisor, offset) as in
         # numpy broadcasting.
-        expected = (
-            (X + 1.0)**
-            (Degree + 4.0)) * (Coeffs + 2.0) / (divisor + 3.0) + (offset + 5.0)
+        expected = ((X + 1.0)**(Degree + 4.0)
+                   ) * (Coeffs + 2.0) / (divisor + 3.0) + (offset + 5.0)
 
         self.assertTrue(np.allclose(actual, expected))
 
@@ -349,19 +351,21 @@ class ModelWrapperTestBase(object):
             [
                 [1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0],
                 [10.0, 11.0, 12.0]
-            ])
+            ]
+        )
 
         actual = self.model_kwargs.fprop(
             (X, Coeffs, divisor),
             dict(Degree=Degree, offset=offset),
             doi_cut=Cut(self.model_kwargs_layer1),
-            intervention=X_intervention)[0]
+            intervention=X_intervention
+        )[0]
 
         # Expect handling of the non-batched values (divisor, offset) as in
         # numpy broadcasting while Degree and Coeffs should be tiled twice to
         # match intervention.
-        expected = (X_intervention**np.tile(Degree, (2, 1))) * np.tile(
-            Coeffs, (2, 1)) / divisor + offset
+        expected = (X_intervention**np.tile(Degree, (2, 1))
+                   ) * np.tile(Coeffs, (2, 1)) / divisor + offset
 
         self.assertTrue(np.allclose(actual, expected))
 

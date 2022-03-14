@@ -79,7 +79,8 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
 
                 # Capital-named vars should be batched, others should not be.
                 layer2 = this.layer2(
-                    (layer1**Degree) * Coeffs / divisor + offset)
+                    (layer1**Degree) * Coeffs / divisor + offset
+                )
 
                 return layer2
 

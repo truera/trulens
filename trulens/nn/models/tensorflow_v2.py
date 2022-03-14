@@ -197,7 +197,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
             model_kwargs=model_kwargs,
             doi_cut=doi_cut,
             to_cut=to_cut,
-            intervention=intervention)
+            intervention=intervention
+        )
 
         model_args = model_inputs.args
         model_kwargs = model_inputs.kwargs
