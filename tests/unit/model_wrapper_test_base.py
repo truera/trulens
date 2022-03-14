@@ -133,6 +133,7 @@ class ModelWrapperTestBase(object):
 
         B = get_backend()
 
+        # Capital vars are batched, lower-case ones are not.
         X = np.array([[1., 2., 3.], [4., 5., 6.]])
         Coeffs = np.array([[0.5, 1.0, 1.5], [2.0, 2.5, 3.0]])
         divisor = np.array([[3.0]])
@@ -157,6 +158,8 @@ class ModelWrapperTestBase(object):
             return
 
         B = get_backend()
+
+        # Capital vars are batched, lower-case ones are not.
 
         # batch of 2
         X = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
@@ -194,6 +197,8 @@ class ModelWrapperTestBase(object):
             return
 
         B = get_backend()
+
+        # Capital vars are batched, lower-case ones are not.
 
         # batch of 2
         X = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
