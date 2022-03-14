@@ -1,9 +1,11 @@
+import datetime
+from os import path
 import sys
 
 from setuptools import find_namespace_packages
 from setuptools import setup
 
-version = "0.0.11"
+version = "0.0.3"
 versionArgument = "--customVersion"
 if versionArgument in sys.argv:
     versionArgumentLoc = sys.argv.index(versionArgument)
