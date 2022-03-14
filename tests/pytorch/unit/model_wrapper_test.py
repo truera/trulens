@@ -1,17 +1,21 @@
 import os
+
 os.environ['TRULENS_BACKEND'] = 'pytorch'
 
+from unittest import main
+from unittest import TestCase
+
 import numpy as np
-
 from torch import Tensor
-from torch.nn import Linear, Module, ReLU
-from unittest import TestCase, main
+from torch.nn import Linear
+from torch.nn import Module
+from torch.nn import ReLU
 
+from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 from trulens.nn.backend import get_backend
 from trulens.nn.models.pytorch import PytorchModelWrapper
 from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut
-from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 
 
 class ModelWrapperTest(ModelWrapperTestBase, TestCase):
@@ -67,20 +71,16 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
             def forward(this, X, Coeffs, divisor, **kwargs):
                 # Hoping kwargs forces the remaining arguments to be passed only by kwargs.
 
+                # Capital vars are batched, lower-case ones are not.
                 Degree = kwargs['Degree']
                 offset = kwargs['offset']
 
                 layer1 = this.layer1(X)
 
-                print("X=", X)
-                print("Coeffs=", Coeffs)
-                print("divisor=", divisor)
-                print("Degree=", Degree)
-                print("offset=", offset)
-
                 # Capital-named vars should be batched, others should not be.
                 layer2 = this.layer2(
-                    (layer1**Degree) * Coeffs / divisor + offset)
+                    (layer1**Degree) * Coeffs / divisor + offset
+                )
 
                 return layer2
 
@@ -93,7 +93,8 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
     def test_qoibprop_multiple_inputs(self):
         r = self.model.qoi_bprop(
             MaxClassQoI(), (np.array([[2., 1.], [1., 2.]]),),
-            attribution_cut=Cut(['l1', 'l2'], anchor='in'))
+            attribution_cut=Cut(['l1', 'l2'], anchor='in')
+        )
 
         self.assertEqual(len(r), 2)
         self.assertTrue(np.allclose(r[0], np.array([[3., -1.], [0., 2.]])))

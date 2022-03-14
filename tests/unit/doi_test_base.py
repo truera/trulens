@@ -1,9 +1,14 @@
 import numpy as np
+
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
-from trulens.nn.distributions import GaussianDoi, LinearDoi, PointDoi
+from trulens.nn.distributions import GaussianDoi
+from trulens.nn.distributions import LinearDoi
+from trulens.nn.distributions import PointDoi
 from trulens.nn.quantities import LambdaQoI
-from trulens.nn.slices import Cut, InputCut, OutputCut
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
+from trulens.nn.slices import OutputCut
 from trulens.utils.typing import ModelInputs
 
 
@@ -33,43 +38,51 @@ class DoiTestBase(object):
 
         self.assertTrue(
             np.array_equal(self.B.as_array(res[0]), self.B.as_array(self.z)),
-            'Value of point should not change')
+            'Value of point should not change'
+        )
 
     # Tests for LinearDoI.
 
     def test_linear(self):
 
         doi = LinearDoi(
-            baseline=np.ones(self.B.int_shape(self.z)), resolution=21)
+            baseline=np.ones(self.B.int_shape(self.z)), resolution=21
+        )
         res = doi(self.z)
 
         self.assertEqual(
-            len(res), 21, 'LinearDoi should return `resolution` points')
+            len(res), 21, 'LinearDoi should return `resolution` points'
+        )
 
         self.assertTrue(
             np.array_equal(self.B.as_array(res[0]), self.B.as_array(self.z)),
-            'First point should be the original point')
+            'First point should be the original point'
+        )
 
         self.assertTrue(
             np.all(self.B.as_array(res[-1]) == 1.),
-            'Last point should be baseline')
+            'Last point should be baseline'
+        )
 
         self.assertTrue(
             np.allclose(
                 self.B.as_array(res[-2]),
-                np.array([[1., 1.05, 1.1], [0.95, 0.9, 0.85]])),
-            'Intermediate points should interpolate from baseline')
+                np.array([[1., 1.05, 1.1], [0.95, 0.9, 0.85]])
+            ), 'Intermediate points should interpolate from baseline'
+        )
 
     def test_linear_point(self):
         doi = LinearDoi(resolution=1)
         res = doi(self.z)
 
         self.assertEqual(
-            len(res), 1, 'LinearDoi should return `resolution` points')
+            len(res), 1, 'LinearDoi should return `resolution` points'
+        )
 
         self.assertTrue(
             np.array_equal(self.B.as_array(res[0]), self.B.as_array(self.z)),
-            'When `resolution` is 1, should be the same as PointDoi')
+            'When `resolution` is 1, should be the same as PointDoi'
+        )
 
     def test_linear_default_baseline(self):
         doi = LinearDoi(baseline=None, resolution=10)
@@ -77,7 +90,8 @@ class DoiTestBase(object):
 
         self.assertTrue(
             np.all(self.B.as_array(res[-1]) == 0.),
-            'Default baseline should be zeros')
+            'Default baseline should be zeros'
+        )
 
     def test_linear_from_computed_nearby_baseline(self):
         # Baseline for cut value is a function of value at that cut.
@@ -88,30 +102,35 @@ class DoiTestBase(object):
 
         self.assertTrue(
             np.all(self.B.as_array(res[0]) == self.B.as_array(self.z)),
-            'Starting point of linear baseline should be base cut value.')
+            'Starting point of linear baseline should be base cut value.'
+        )
 
         self.assertTrue(
             np.all(self.B.as_array(res[-1]) == self.B.as_array(self.z + 42)),
-            'End point of linear baseline should be computed cut value.')
+            'End point of linear baseline should be computed cut value.'
+        )
 
     def test_model_inputs_for_baseline(self):
         # Test the model_inputs optional argument for callable baseline.
 
         doi1 = LinearDoi(
-            resolution=10, baseline=lambda z: z, cut=Cut(self.layer1))
+            resolution=10, baseline=lambda z: z, cut=Cut(self.layer1)
+        )
         # baseline is identical to value at cut (should produce 0 attribution if multiply_activation=True)
 
         doi2 = LinearDoi(
             resolution=10,
             baseline=lambda z, model_inputs: model_inputs.args[0],
-            cut=Cut(self.layer1))
+            cut=Cut(self.layer1)
+        )
         # baseline is actually model input (should produce non-zero attribution even if multiply_activation=True)
 
         infl1 = InternalInfluence(
             self.model, (Cut(self.layer1), OutputCut()),
             LambdaQoI(lambda out: out),
             doi1,
-            multiply_activation=True)
+            multiply_activation=True
+        )
 
         res1 = infl1.attributions(self.consts)
         expect1 = np.zeros_like(self.consts)
@@ -122,7 +141,8 @@ class DoiTestBase(object):
             self.model, (Cut(self.layer1), OutputCut()),
             LambdaQoI(lambda out: out),
             doi2,
-            multiply_activation=True)
+            multiply_activation=True
+        )
 
         res2 = infl2.attributions(self.consts)
 
@@ -151,7 +171,8 @@ class DoiTestBase(object):
             self.model, (Cut(self.layer1), OutputCut()),
             LambdaQoI(lambda out: out),
             doi1,
-            multiply_activation=False)
+            multiply_activation=False
+        )
 
         res1 = infl1.attributions(self.consts)
 
@@ -168,7 +189,8 @@ class DoiTestBase(object):
             self.model, (Cut(self.layer1), OutputCut()),
             LambdaQoI(lambda out: out),
             doi2,
-            multiply_activation=False)
+            multiply_activation=False
+        )
 
         res2 = infl2.attributions(self.consts)
 
@@ -185,7 +207,8 @@ class DoiTestBase(object):
         res = doi(self.z)
 
         self.assertEqual(
-            len(res), 10, 'GaussianDoi should return `resolution` points')
+            len(res), 10, 'GaussianDoi should return `resolution` points'
+        )
 
         self.assertEqual(self.B.int_shape(res[0]), self.B.int_shape(self.z))
 
@@ -195,6 +218,7 @@ class DoiTestBase(object):
         res = doi(self.B.as_array(self.z))
 
         self.assertEqual(
-            len(res), 10, 'GaussianDoi should return `resolution` points')
+            len(res), 10, 'GaussianDoi should return `resolution` points'
+        )
 
         self.assertEqual(res[0].shape, self.B.int_shape(self.z))

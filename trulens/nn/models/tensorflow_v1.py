@@ -6,12 +6,18 @@ import numpy as np
 import tensorflow as tf
 
 from trulens.nn.backend import get_backend
-from trulens.utils import tru_logger
-from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, InterventionLike, KwargsLike, ModelInputs, as_args
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.slices import Cut, InputCut
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
+from trulens.utils import tru_logger
+from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import as_args
+from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import InterventionLike
+from trulens.utils.typing import KwargsLike
+from trulens.utils.typing import ModelInputs
 
 
 class TensorflowModelWrapper(ModelWrapper):
@@ -21,12 +27,13 @@ class TensorflowModelWrapper(ModelWrapper):
     """
 
     def __init__(
-            self,
-            graph,
-            input_tensors,
-            output_tensors,
-            internal_tensor_dict=None,
-            session=None):
+        self,
+        graph,
+        input_tensors,
+        output_tensors,
+        internal_tensor_dict=None,
+        session=None
+    ):
         """
         Parameters
         ----------
@@ -60,13 +67,16 @@ class TensorflowModelWrapper(ModelWrapper):
 
         self._inputs = (
             input_tensors if isinstance(input_tensors, DATA_CONTAINER_TYPE) else
-            [input_tensors])
+            [input_tensors]
+        )
         self._outputs = (
             output_tensors if isinstance(output_tensors, DATA_CONTAINER_TYPE)
-            else [output_tensors])
+            else [output_tensors]
+        )
 
         self._internal_tensors = (
-            internal_tensor_dict if internal_tensor_dict is not None else {})
+            internal_tensor_dict if internal_tensor_dict is not None else {}
+        )
 
         self._session = session
 
@@ -98,7 +108,8 @@ class TensorflowModelWrapper(ModelWrapper):
             else:
                 raise ValueError(
                     '`LogitCut` was used, but the model has not specified the '
-                    'tensors that correspond to the logit output.')
+                    'tensors that correspond to the logit output.'
+                )
 
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
             layers = [self._get_layer(name) for name in cut.name]
@@ -109,7 +120,8 @@ class TensorflowModelWrapper(ModelWrapper):
         return layers if isinstance(layers, DATA_CONTAINER_TYPE) else [layers]
 
     def _prepare_feed_dict_with_intervention(
-            self, model_args, model_kwargs, intervention, doi_tensors):
+        self, model_args, model_kwargs, intervention, doi_tensors
+    ):
 
         feed_dict = {}
         input_tensors = model_args
@@ -137,9 +149,10 @@ class TensorflowModelWrapper(ModelWrapper):
         # set the first few tensors from args
         feed_dict.update(
             {
-                input_tensor: xi for input_tensor, xi in zip(
-                    self._inputs[0:num_args], input_tensors)
-            })
+                input_tensor: xi for input_tensor, xi in
+                zip(self._inputs[0:num_args], input_tensors)
+            }
+        )
 
         def _tensor(k):
             if tf.is_tensor(k):
@@ -177,7 +190,8 @@ class TensorflowModelWrapper(ModelWrapper):
             #    raise ValueError(f"Expected to get {len(doi_tensors)} inputs for intervention but got {len(args)} args and {len(kwargs)} kwargs.")
 
             intervention_dict.update(
-                {k: v for k, v in zip(doi_tensors[0:len(args)], args)})
+                {k: v for k, v in zip(doi_tensors[0:len(args)], args)}
+            )
             intervention_dict.update({_tensor(k): v for k, v in kwargs.items()})
             feed_dict.update(intervention_dict)
 
@@ -216,13 +230,14 @@ class TensorflowModelWrapper(ModelWrapper):
         return feed_dict, intervention
 
     def fprop(
-            self,
-            model_args: ArgsLike,
-            model_kwargs: KwargsLike = {},
-            doi_cut: Optional[Cut] = None,
-            to_cut: Optional[Cut] = None,
-            attribution_cut: Optional[Cut] = None,  # Not used
-            intervention: InterventionLike = None):
+        self,
+        model_args: ArgsLike,
+        model_kwargs: KwargsLike = {},
+        doi_cut: Optional[Cut] = None,
+        to_cut: Optional[Cut] = None,
+        attribution_cut: Optional[Cut] = None,  # Not used
+        intervention: InterventionLike = None
+    ):
         """
         fprop Forward propagate the model
 
@@ -264,7 +279,8 @@ class TensorflowModelWrapper(ModelWrapper):
             model_kwargs=model_kwargs,
             doi_cut=doi_cut,
             to_cut=to_cut,
-            intervention=intervention)
+            intervention=intervention
+        )
 
         model_args = model_inputs.args
         model_kwargs = model_inputs.kwargs
@@ -274,7 +290,8 @@ class TensorflowModelWrapper(ModelWrapper):
         to_tensors = self._get_layers(to_cut)
 
         feed_dict, intervention = self._prepare_feed_dict_with_intervention(
-            model_args, model_kwargs, intervention, doi_tensors)
+            model_args, model_kwargs, intervention, doi_tensors
+        )
 
         # Tensorlow doesn't allow you to make a function that returns the same
         # tensor as it takes in. Thus, we have to have a special case for the
@@ -322,14 +339,15 @@ class TensorflowModelWrapper(ModelWrapper):
                     ).with_traceback(tb)
 
     def qoi_bprop(
-            self,
-            qoi,
-            model_args,
-            model_kwargs={},
-            doi_cut=None,
-            to_cut=None,
-            attribution_cut=None,
-            intervention=None):
+        self,
+        qoi,
+        model_args,
+        model_kwargs={},
+        doi_cut=None,
+        to_cut=None,
+        attribution_cut=None,
+        intervention=None
+    ):
         """
         qoi_bprop Run the model from the from_layer to the qoi layer
             and give the gradients w.r.t `attribution_cut`
@@ -382,7 +400,8 @@ class TensorflowModelWrapper(ModelWrapper):
         doi_tensors = self._get_layers(doi_cut)
 
         feed_dict, _ = self._prepare_feed_dict_with_intervention(
-            model_args, model_kwargs, intervention, doi_tensors)
+            model_args, model_kwargs, intervention, doi_tensors
+        )
         z_grads = []
         with self._graph.as_default():
             for z in attribution_tensors:
@@ -390,17 +409,16 @@ class TensorflowModelWrapper(ModelWrapper):
                 if gradient_tensor_key in self._cached_gradient_tensors:
                     grads = self._cached_gradient_tensors[gradient_tensor_key]
                 else:
-                    Q = qoi(to_tensors[0]) if len(to_tensors) == 1 else qoi(
-                        to_tensors)
+                    Q = qoi(to_tensors[0]
+                           ) if len(to_tensors) == 1 else qoi(to_tensors)
 
                     grads = [
                         get_backend().gradient(q, z)[0] for q in Q
-                    ] if isinstance(
-                        Q, DATA_CONTAINER_TYPE) else get_backend().gradient(
-                            Q, z)[0]
+                    ] if isinstance(Q, DATA_CONTAINER_TYPE
+                                   ) else get_backend().gradient(Q, z)[0]
                     grads = grads[0] if isinstance(
-                        grads,
-                        DATA_CONTAINER_TYPE) and len(grads) == 1 else grads
+                        grads, DATA_CONTAINER_TYPE
+                    ) and len(grads) == 1 else grads
                     grads = [
                         attribution_cut.access_layer(g) for g in grads
                     ] if isinstance(grads, DATA_CONTAINER_TYPE

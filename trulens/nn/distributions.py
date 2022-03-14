@@ -11,11 +11,14 @@ from abc import abstractmethod
 from typing import Callable, List, Optional
 
 import numpy as np
+
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
-from trulens.utils.typing import (
-    DATA_CONTAINER_TYPE, ArgsLike, BaselineLike, ModelInputs,
-    accepts_model_inputs)
+from trulens.utils.typing import accepts_model_inputs
+from trulens.utils.typing import BaselineLike
+from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import DataLike
+from trulens.utils.typing import ModelInputs
 
 
 class DoiCutSupportError(ValueError):
@@ -46,10 +49,11 @@ class DoI(AbstractBaseClass):
 
     @abstractmethod
     def __call__(
-            self,
-            z: ArgsLike,
-            *,
-            model_inputs: Optional[ModelInputs] = None) -> List[ArgsLike]:
+        self,
+        z: DataLike,
+        *,
+        model_inputs: Optional[ModelInputs] = None
+    ) -> List[DataLike]:
         """
         Computes the distribution of interest from an initial point.
 
@@ -79,10 +83,11 @@ class DoI(AbstractBaseClass):
         return self._cut
 
     def get_activation_multiplier(
-            self,
-            activation: ArgsLike,
-            *,
-            model_inputs: Optional[ModelInputs] = None) -> ArgsLike:
+        self,
+        activation: DataLike,
+        *,
+        model_inputs: Optional[ModelInputs] = None
+    ) -> DataLike:
         """
         Returns a term to multiply the gradient by to convert from "*influence 
         space*" to "*attribution space*". Conceptually, "influence space"
@@ -117,13 +122,16 @@ class DoI(AbstractBaseClass):
                 'single tensor, or (2) implement/use a `DoI` object that '
                 'supports lists of tensors, i.e., where the parameter, `z`, to '
                 '`__call__` is expected/allowed to be a list of {} tensors.'.
-                format(self.__class__.__name__, len(x), len(x)))
+                format(self.__class__.__name__, len(x), len(x))
+            )
 
         elif not (isinstance(x, np.ndarray) or get_backend().is_tensor(x)):
             raise ValueError(
                 '`{}` expected to receive an instance of `Tensor` or '
                 '`np.ndarray`, but received an instance of {}'.format(
-                    self.__class__.__name__, type(x)))
+                    self.__class__.__name__, type(x)
+                )
+            )
 
 
 class PointDoi(DoI):
@@ -142,10 +150,12 @@ class PointDoi(DoI):
         """
         super(PointDoi, self).__init__(cut)
 
-    def __call__(self,
-                 z,
-                 *,
-                 model_inputs: Optional[ModelInputs] = None) -> List[ArgsLike]:
+    def __call__(
+        self,
+        z: DataLike,
+        *,
+        model_inputs: Optional[ModelInputs] = None
+    ) -> List[DataLike]:
 
         return [z]
 
@@ -192,7 +202,7 @@ class LinearDoi(DoI):
         self._resolution = resolution
 
     @property
-    def baseline(self) -> ArgsLike:
+    def baseline(self) -> BaselineLike:
         return self._baseline
 
     @property
@@ -200,10 +210,11 @@ class LinearDoi(DoI):
         return self._resolution
 
     def __call__(
-            self,
-            z: ArgsLike,
-            *,
-            model_inputs: Optional[ModelInputs] = None) -> List[ArgsLike]:
+        self,
+        z: DataLike,
+        *,
+        model_inputs: Optional[ModelInputs] = None
+    ) -> List[DataLike]:
 
         if isinstance(z, DATA_CONTAINER_TYPE) and len(z) == 1:
             z = z[0]
@@ -220,10 +231,11 @@ class LinearDoi(DoI):
         ]
 
     def get_activation_multiplier(
-            self,
-            activation: ArgsLike,
-            *,
-            model_inputs: Optional[ModelInputs] = None) -> ArgsLike:
+        self,
+        activation: DataLike,
+        *,
+        model_inputs: Optional[ModelInputs] = None
+    ) -> DataLike:
         """
         Returns a term to multiply the gradient by to convert from "*influence 
         space*" to "*attribution space*". Conceptually, "influence space"
@@ -245,10 +257,11 @@ class LinearDoi(DoI):
         return (activation if baseline is None else activation - baseline)
 
     def _compute_baseline(
-            self,
-            z: ArgsLike,
-            *,
-            model_inputs: Optional[ModelInputs] = None) -> ArgsLike:
+        self,
+        z: DataLike,
+        *,
+        model_inputs: Optional[ModelInputs] = None
+    ) -> DataLike:
 
         B = get_backend()
 
@@ -295,7 +308,7 @@ class GaussianDoi(DoI):
         self._var = var
         self._resolution = resolution
 
-    def __call__(self, z: ArgsLike) -> List[ArgsLike]:
+    def __call__(self, z: DataLike) -> List[DataLike]:
         B = get_backend()
         self._assert_cut_contains_only_one_tensor(z)
 

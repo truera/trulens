@@ -1,15 +1,20 @@
 import os
+
 os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
 from tensorflow.python.util import deprecation
+
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
-from tensorflow import Graph, placeholder
-from tensorflow.nn import relu
-from unittest import TestCase, main
+from unittest import main
+from unittest import TestCase
 
-from trulens.nn.models.tensorflow_v1 import TensorflowModelWrapper
+from tensorflow import Graph
+from tensorflow import placeholder
+from tensorflow.nn import relu
+
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
+from trulens.nn.models.tensorflow_v1 import TensorflowModelWrapper
 
 
 class ModelWrapperTest(ModelWrapperTestBase, TestCase):
@@ -25,7 +30,8 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
             y = z2 @ self.layer3_weights + self.bias
 
         self.model = TensorflowModelWrapper(
-            graph, x, y, dict(x=x, z1=z1, z2=z2, logits=y))
+            graph, x, y, dict(x=x, z1=z1, z2=z2, logits=y)
+        )
 
         self.layer0 = 'x'
         self.layer1 = 'z1'

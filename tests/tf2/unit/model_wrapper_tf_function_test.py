@@ -1,16 +1,19 @@
 import os
+
 os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
-import numpy as np
-
-import tensorflow as tf
-from tensorflow.keras.layers import Input, Dense
-from tensorflow.keras.models import Model
 import unittest
-from unittest import TestCase, main
+from unittest import main
+from unittest import TestCase
 
-from trulens.nn.models import get_model_wrapper
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Input
+from tensorflow.keras.models import Model
+
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
+from trulens.nn.models import get_model_wrapper
 
 
 class TFFunctionModel(Model):
@@ -40,7 +43,8 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
             [
                 self.layer1_weights, self.internal_bias, self.layer2_weights,
                 self.internal_bias, self.layer3_weights, self.bias
-            ])
+            ]
+        )
         self.model = get_model_wrapper(subclassed)
         self.model.set_output_layers([subclassed.dense_3])
 
@@ -50,7 +54,8 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         self.out = 'logits'
 
     @unittest.skip(
-        "Base class uses layer 0 as multi-input but does not exist in subclass")
+        "Base class uses layer 0 as multi-input but does not exist in subclass"
+    )
     def test_qoibprop_multiple_inputs(self):
         return
 

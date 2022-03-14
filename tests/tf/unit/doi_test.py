@@ -2,10 +2,13 @@ import os
 
 os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
-from unittest import TestCase, main
+from unittest import main
+from unittest import TestCase
 
-from tensorflow import Graph, placeholder
+from tensorflow import Graph
+from tensorflow import placeholder
 from tensorflow.python.util import deprecation
+
 from trulens.nn.models import get_model_wrapper
 
 deprecation._PRINT_DEPRECATION_WARNINGS = False
@@ -29,7 +32,8 @@ class DoiTest(DoiTestBase, TestCase):
             graph,
             input_tensors=l0,
             output_tensors=l2,
-            internal_tensor_dict=dict(layer0=l0, layer1=l1, layer2=l2))
+            internal_tensor_dict=dict(layer0=l0, layer1=l1, layer2=l2)
+        )
 
         self.layer0 = "input"
         self.layer1 = "layer1"

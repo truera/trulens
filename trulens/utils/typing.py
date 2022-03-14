@@ -3,13 +3,17 @@
 # NOTE(piotrm) had to move some things to this file to avoid circular
 # dependencies between the files that originally contained those things.
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 from inspect import signature
 from typing import (
     Any, Callable, Dict, Generic, Iterable, List, Optional, Tuple, TypeVar,
-    Union)
+    Union
+)
 
 import numpy as np
+from trulens.nn.backend import Tensor
+
 from trulens.nn.backend import Tensor
 
 # Atomic model inputs (at least from our perspective)
@@ -27,10 +31,13 @@ Feed = Dict[Union[str, Tensor], DataLike]
 
 KwargsLike = Union[Kwargs, Feed]
 
+# C for "container"
 C = TypeVar("C")
 C1 = TypeVar("C1")
 C2 = TypeVar("C2")
+# K for "key"
 K = TypeVar("K")
+# V for "value"
 V = TypeVar("V")
 
 Indexable = Union[List[V], Tuple[V]]
@@ -60,7 +67,8 @@ class IndexableUtils:
             l = tuple(l)
         else:
             raise ValueError(
-                f"list or tuple expected but got {l.__class__.__name__}")
+                f"list or tuple expected but got {l.__class__.__name__}"
+            )
 
         return l
 
@@ -87,8 +95,14 @@ class DictUtils:
 
 
 @dataclass
-class Lens(Generic[C, V]):
-    """Simple lenses implementation."""
+class Lens(Generic[C, V]):  # Container C with values V
+    """
+    Simple lenses implementation. Lenses are a common paradigm for dealing with
+    data structures in a functional manner. More info here:
+    https://docs.racket-lang.org/lens/lens-intro.html#%28tech._lens%29 .
+    Presently we only use lenses to unify access/update to the positional and
+    keyword parameters in ModelView.
+    """
 
     get: Callable[[C], V]
     # Given a container, extract the focused value.
@@ -104,7 +118,8 @@ class Lens(Generic[C, V]):
         for i in range(len(c)):
             yield Lens(
                 lambda l, i=i: l[i],
-                lambda l, v, i=i: IndexableUtils.with_(l, i, v))
+                lambda l, v, i=i: IndexableUtils.with_(l, i, v)
+            )
 
     @staticmethod
     def lenses_values(c: Dict[K, V]) -> Iterable['Lens[Dict[K, V], V]']:
@@ -113,7 +128,8 @@ class Lens(Generic[C, V]):
         for k in c.keys():
             yield Lens(
                 get=lambda d, k=k: d[k],
-                set=lambda d, v, k=k: DictUtils.with_(d, k, v))
+                set=lambda d, v, k=k: DictUtils.with_(d, k, v)
+            )
 
     @staticmethod
     def compose(l1: 'Lens[C1, C2]', l2: 'Lens[C2, V]') -> 'Lens[C1, V]':
@@ -121,7 +137,8 @@ class Lens(Generic[C, V]):
 
         return Lens(
             lambda c: l2.get(l1.get(c)),
-            lambda c, e: l1.set(c, l2.set(l1.get(c), e)))
+            lambda c, e: l1.set(c, l2.set(l1.get(c), e))
+        )
 
 
 @dataclass
@@ -132,11 +149,13 @@ class ModelInputs:
     kwargs: KwargsLike = field(default_factory=dict)
 
     lens_args: Lens['ModelInputs', List[DataLike]] = Lens(
-        lambda s: s.args, lambda s, a: ModelInputs(a, s.kwargs))
+        lambda s: s.args, lambda s, a: ModelInputs(a, s.kwargs)
+    )
     # lens focusing on the args field of this container.
 
     lens_kwargs: Lens['ModelInputs', KwargsLike] = Lens(
-        lambda s: s.kwargs, lambda s, kw: ModelInputs(s.args, kw))
+        lambda s: s.kwargs, lambda s, kw: ModelInputs(s.args, kw)
+    )
 
     # lens focusing on the kwargs field of this container.
 
@@ -174,9 +193,12 @@ class ModelInputs:
         return IterableUtils.then_(
             (
                 Lens.compose(ModelInputs.lens_args, l)
-                for l in Lens.lenses_elements(self.args)), (
-                    Lens.compose(ModelInputs.lens_kwargs, l)
-                    for l in Lens.lenses_values(self.kwargs)))
+                for l in Lens.lenses_elements(self.args)
+            ), (
+                Lens.compose(ModelInputs.lens_kwargs, l)
+                for l in Lens.lenses_values(self.kwargs)
+            )
+        )
 
     def values(self):
         """Get the contained values."""
@@ -205,7 +227,8 @@ class ModelInputs:
             return next(self.values())
         except StopIteration:
             raise ValueError(
-                "ModelInputs has neither arguments nor keyword arguments")
+                "ModelInputs had neither arguments nor keyword arguments."
+            )
 
     def call_on(self, f):
         """Call the given method with the contained arguments."""
@@ -222,10 +245,10 @@ def accepts_model_inputs(func: Callable) -> bool:
 
 # Baselines are either explicit or computable from the same data as sent to DoI
 # __call__ .
-BaselineLike = Union[ArgsLike, Callable[[ArgsLike, Optional[ModelInputs]],
+BaselineLike = Union[DataLike, Callable[[ArgsLike, Optional[ModelInputs]],
                                         ArgsLike]]
 
 # Interventions for fprop specifiy either activations at some non-InputCut or
 # model inputs if DoI is InputCut (these include both args and kwargs).
-# Additionally, some backends (tf1) provie interventions as kwargs instead.
-InterventionLike = Union[ArgsLike, KwargsLike, ModelInputs]
+# Additionally, some backends (tf1) provide interventions as kwargs instead.
+InterventionLike = Union[DataLike, KwargsLike, ModelInputs]
