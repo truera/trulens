@@ -7,9 +7,9 @@ import numpy as np
 
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
+from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, InterventionLike, KwargsLike, ModelInputs, as_args
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.slices import Cut
-from trulens.nn.slices import InputCut
+from trulens.nn.slices import Cut, InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
@@ -297,14 +297,13 @@ class KerasModelWrapper(ModelWrapper):
         return doi_tensors, intervention
 
     def fprop(
-        self,
-        model_args: ArgsLike,
-        model_kwargs: KwargsLike = {},
-        doi_cut: Optional[Cut] = None,
-        to_cut: Optional[Cut] = None,
-        attribution_cut: Optional[Cut] = None,
-        intervention: InterventionLike = None
-    ):
+            self,
+            model_args: ArgsLike,
+            model_kwargs: KwargsLike = {},
+            doi_cut: Optional[Cut] = None,
+            to_cut: Optional[Cut] = None,
+            attribution_cut: Optional[Cut] = None,
+            intervention: InterventionLike = None):
         """
         fprop Forward propagate the model
 
@@ -349,8 +348,7 @@ class KerasModelWrapper(ModelWrapper):
             model_kwargs=model_kwargs,
             doi_cut=doi_cut,
             to_cut=to_cut,
-            intervention=intervention
-        )
+            intervention=intervention)
 
         # TODO: use the ModelInputs structure in this backend
         intervention = intervention.args
@@ -373,10 +371,9 @@ class KerasModelWrapper(ModelWrapper):
         # Model inputs come from model_args
         val_map.update(
             {
-                k: v for k, v in
-                zip(self._model.inputs[0:len(model_args)], model_args)
-            }
-        )
+                k: v for k, v in zip(
+                    self._model.inputs[0:len(model_args)], model_args)
+            })
         # Other placeholders come from kwargs.
         val_map.update({_tensor(k): v for k, v in model_kwargs.items()})
 
@@ -408,8 +405,7 @@ class KerasModelWrapper(ModelWrapper):
         # also `doi_tensors`.
         if non_identity_to_tensors:
             fprop_fn = self.keras.backend.function(
-                inputs=all_inputs, outputs=non_identity_to_tensors
-            )
+                inputs=all_inputs, outputs=non_identity_to_tensors)
             out_vals = fprop_fn(all_vals)
             del fprop_fn
 

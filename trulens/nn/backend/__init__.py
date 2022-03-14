@@ -1,7 +1,7 @@
-from enum import Enum
 import importlib
 import os
 import traceback
+from enum import Enum
 from typing import TypeVar
 
 from trulens.utils import tru_logger
