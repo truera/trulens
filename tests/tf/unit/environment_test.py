@@ -1,10 +1,12 @@
-from unittest import TestCase, main
-from tensorflow import Graph, placeholder
+from unittest import main
+from unittest import TestCase
+
+from tensorflow import Graph
+from tensorflow import placeholder
 
 from tests.unit.environment_test_base import EnvironmentTestBase
-
-from trulens.nn.models.tensorflow_v1 import TensorflowModelWrapper
 from trulens.nn.backend import Backend
+from trulens.nn.models.tensorflow_v1 import TensorflowModelWrapper
 
 
 class EnvironmentTest(EnvironmentTestBase, TestCase):

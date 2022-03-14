@@ -1,12 +1,17 @@
 import os
+
 os.environ['TRULENS_BACKEND'] = 'keras'
 
-from unittest import TestCase, main
-from keras.layers import Activation, Dense, Input
+from unittest import main
+from unittest import TestCase
+
+from keras.layers import Activation
+from keras.layers import Dense
+from keras.layers import Input
 from keras.models import Model
 
-from trulens.nn.models import get_model_wrapper
 from tests.unit.batch_test_base import BatchTestBase
+from trulens.nn.models import get_model_wrapper
 
 
 class BatchTest(BatchTestBase, TestCase):
@@ -21,7 +26,8 @@ class BatchTest(BatchTestBase, TestCase):
         self.model_lin = get_model_wrapper(Model(x_lin, y_lin))
 
         self.model_lin._model.set_weights(
-            [self.model_lin_weights, self.model_lin_bias])
+            [self.model_lin_weights, self.model_lin_bias]
+        )
 
         # Make a deeper model for testing.
         x_deep = Input((self.input_size,))
@@ -38,7 +44,8 @@ class BatchTest(BatchTestBase, TestCase):
                 self.model_deep_weights_1, self.model_deep_bias_1,
                 self.model_deep_weights_2, self.model_deep_bias_2,
                 self.model_deep_weights_3, self.model_deep_bias_3
-            ])
+            ]
+        )
 
 
 if __name__ == '__main__':
