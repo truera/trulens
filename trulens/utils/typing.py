@@ -27,10 +27,13 @@ Feed = Dict[Union[str, Tensor], DataLike]
 
 KwargsLike = Union[Kwargs, Feed]
 
+# C for "container"
 C = TypeVar("C")
 C1 = TypeVar("C1")
 C2 = TypeVar("C2")
+# K for "key"
 K = TypeVar("K")
+# V for "value"
 V = TypeVar("V")
 
 Indexable = Union[List[V], Tuple[V]]
@@ -87,8 +90,14 @@ class DictUtils:
 
 
 @dataclass
-class Lens(Generic[C, V]):
-    """Simple lenses implementation."""
+class Lens(Generic[C, V]): # Container C with values V
+    """
+    Simple lenses implementation. Lenses are a common paradigm for dealing with
+    data structures in a functional manner. More info here:
+    https://docs.racket-lang.org/lens/lens-intro.html#%28tech._lens%29 .
+    Presently we only use lenses to unify access/update to the positional and
+    keyword parameters in ModelView.
+    """
 
     get: Callable[[C], V]
     # Given a container, extract the focused value.

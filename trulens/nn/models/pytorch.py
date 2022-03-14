@@ -500,6 +500,15 @@ class PytorchModelWrapper(ModelWrapper):
         y = to_cut.access_layer(y)
         grads_list = []
 
+        def scalarize(t: torch.Tensor) -> torch.tensor:
+            if len(t.shape) > 1 and np.array(t.shape).prod() != 1:
+                # Adding warning here only if there is more than 1 dimension
+                # being summed. If there is only 1 dim, its likely the batching
+                # dimension so sum there is probably expected.
+                tru_logger.warn(f"Attribution tensor is not scalar (it is of shape {t.shape} and will be summed. This may not be your intention.")
+                
+            return B.sum(t)
+
         for z in zs:
             z_flat = ModelWrapper._flatten(z)
             qoi_out = qoi(y)
@@ -509,9 +518,9 @@ class PytorchModelWrapper(ModelWrapper):
             # in the definition of that QoI. It might be better to give an error
             # when QoI is not a scalar.
             grads_flat = [
-                B.gradient(B.sum(q), z_flat) for q in qoi_out
+                B.gradient(scalarize(q), z_flat) for q in qoi_out
             ] if isinstance(qoi_out, DATA_CONTAINER_TYPE) else B.gradient(
-                B.sum(qoi_out), z_flat)
+                scalarize(qoi_out), z_flat)
 
             grads = [
                 ModelWrapper._unflatten(g, z, count=[0]) for g in grads_flat

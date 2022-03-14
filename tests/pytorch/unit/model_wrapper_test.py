@@ -67,16 +67,11 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
             def forward(this, X, Coeffs, divisor, **kwargs):
                 # Hoping kwargs forces the remaining arguments to be passed only by kwargs.
 
+                # Capital vars are batched, lower-case ones are not.
                 Degree = kwargs['Degree']
                 offset = kwargs['offset']
 
                 layer1 = this.layer1(X)
-
-                print("X=", X)
-                print("Coeffs=", Coeffs)
-                print("divisor=", divisor)
-                print("Degree=", Degree)
-                print("offset=", offset)
 
                 # Capital-named vars should be batched, others should not be.
                 layer2 = this.layer2(
