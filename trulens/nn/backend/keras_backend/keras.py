@@ -3,10 +3,12 @@
 # pylint: disable=no-member
 # pylint: disable=not-callable
 
-import numpy as np
 import os
 
-from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS, Backend
+import numpy as np
+
+from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS
+from trulens.nn.backend import Backend
 
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
@@ -16,8 +18,8 @@ if 'TRULENS_BACKEND' in os.environ.keys():
 backend = Backend.from_name(_TRULENS_BACKEND)
 
 if backend == Backend.TF_KERAS:
-    import tensorflow.keras.backend as K
     import tensorflow as tf
+    import tensorflow.keras.backend as K
 else:
     import keras.backend as K
 

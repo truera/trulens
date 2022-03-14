@@ -11,13 +11,14 @@ that will return an appropriate `ModelWrapper` instance.
 Some parameters are exclusively utilized for specific frameworks and are outlined 
 in the parameter descriptions.
 """
-import os
 import inspect
+import os
 import traceback
 
 import trulens
+from trulens.nn.backend import Backend
+from trulens.nn.backend import get_backend
 from trulens.utils import tru_logger
-from trulens.nn.backend import get_backend, Backend
 
 
 def discern_backend(model):
@@ -29,6 +30,7 @@ def discern_backend(model):
         else:
             try:
                 import tensorflow as tf
+
                 # Graph objects are currently limited to TF1 and Keras backend
                 # implies keras backed with TF1 or Theano. TF2 Keras objects are
                 # handled by the TF2 backend.
@@ -58,20 +60,21 @@ def discern_backend(model):
 
 
 def get_model_wrapper(
-        model,
-        logit_layer=None,
-        replace_softmax=False,
-        softmax_layer=-1,
-        custom_objects=None,
-        input_shape=None,
-        input_dtype=None,
-        device=None,
-        input_tensors=None,
-        output_tensors=None,
-        internal_tensor_dict=None,
-        default_feed_dict=None,
-        session=None,
-        backend=None):
+    model,
+    logit_layer=None,
+    replace_softmax=False,
+    softmax_layer=-1,
+    custom_objects=None,
+    input_shape=None,
+    input_dtype=None,
+    device=None,
+    input_tensors=None,
+    output_tensors=None,
+    internal_tensor_dict=None,
+    default_feed_dict=None,
+    session=None,
+    backend=None
+):
     """
     Returns a ModelWrapper implementation that exposes the components needed for computing attributions.
 
@@ -148,13 +151,17 @@ def get_model_wrapper(
         backend = discern_backend(model)
         tru_logger.info(
             "Detected {} backend for {}.".format(
-                backend.name.lower(), type(model)))
+                backend.name.lower(), type(model)
+            )
+        )
     else:
         backend = Backend.from_name(backend)
     if B is None or (backend is not Backend.UNKNOWN and B.backend != backend):
         tru_logger.info(
             "Changing backend from {} to {}.".format(
-                None if B is None else B.backend, backend))
+                None if B is None else B.backend, backend
+            )
+        )
         os.environ['TRULENS_BACKEND'] = backend.name.lower()
         B = get_backend()
     else:
@@ -169,7 +176,8 @@ def get_model_wrapper(
             logit_layer=logit_layer,
             replace_softmax=replace_softmax,
             softmax_layer=softmax_layer,
-            custom_objects=custom_objects)
+            custom_objects=custom_objects
+        )
 
     elif B.backend == Backend.PYTORCH:
         from trulens.nn.models.pytorch import PytorchModelWrapper
@@ -180,7 +188,8 @@ def get_model_wrapper(
             input_shape,
             input_dtype=input_dtype,
             logit_layer=logit_layer,
-            device=device)
+            device=device
+        )
     elif B.backend == Backend.TENSORFLOW:
         import tensorflow as tf
         if tf.__version__.startswith('2'):
@@ -190,18 +199,22 @@ def get_model_wrapper(
                 logit_layer=logit_layer,
                 replace_softmax=replace_softmax,
                 softmax_layer=softmax_layer,
-                custom_objects=custom_objects)
+                custom_objects=custom_objects
+            )
         else:
             from trulens.nn.models.tensorflow_v1 import TensorflowModelWrapper
             if input_tensors is None:
                 tru_logger.error(
-                    'tensorflow1 model must pass parameter: input_tensors')
+                    'tensorflow1 model must pass parameter: input_tensors'
+                )
             if output_tensors is None:
                 tru_logger.error(
-                    'tensorflow1 model must pass parameter: output_tensors')
+                    'tensorflow1 model must pass parameter: output_tensors'
+                )
             return TensorflowModelWrapper(
                 model,
                 input_tensors,
                 output_tensors,
                 internal_tensor_dict=internal_tensor_dict,
-                session=session)
+                session=session
+            )

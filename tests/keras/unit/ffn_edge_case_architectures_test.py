@@ -1,22 +1,28 @@
 import os
+
 os.environ['TRULENS_BACKEND'] = 'keras'
 
-from unittest import TestCase, main
+from unittest import main
+from unittest import TestCase
 
 import numpy as np
-
 from tensorflow.python.util import deprecation
+
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
-from trulens.nn.backend import get_backend
+from keras.layers import Activation
+from keras.layers import Concatenate
+from keras.layers import Dense
+from keras.layers import Input
+from keras.models import Model
+
 from trulens.nn.attribution import InternalInfluence
+from trulens.nn.backend import get_backend
 from trulens.nn.distributions import PointDoi
 from trulens.nn.models import get_model_wrapper
 from trulens.nn.quantities import ClassQoI
-from trulens.nn.slices import InputCut, Cut
-
-from keras.layers import Activation, Dense, Input, Concatenate
-from keras.models import Model
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
 
 
 class FfnEdgeCaseArchitecturesTest(TestCase):
@@ -35,7 +41,8 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
 
         res = infl.attributions(
             [np.array([[1., 2., 3., 4., 5.]]),
-             np.array([[1.]])])
+             np.array([[1.]])]
+        )
 
         self.assertEqual(len(res), 2)
         self.assertEqual(res[0].shape, (1, 5))
@@ -54,7 +61,8 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
 
         res = infl.attributions(
-            np.array([[1., 2., 3., 4., 5.]]), np.array([[1.]]))
+            np.array([[1., 2., 3., 4., 5.]]), np.array([[1.]])
+        )
         # note above we are sending two args instead of one as in the prior test
 
         self.assertEqual(len(res), 2)
@@ -84,11 +92,13 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         model = get_model_wrapper(Model([x1, x2], y))
 
         infl = InternalInfluence(
-            model, Cut('concat', anchor='in'), ClassQoI(1), PointDoi())
+            model, Cut('concat', anchor='in'), ClassQoI(1), PointDoi()
+        )
 
         res = infl.attributions(
             [np.array([[1., 2., 3., 4., 5.]]),
-             np.array([[1.]])])
+             np.array([[1.]])]
+        )
 
         self.assertEqual(len(res), 2)
         self.assertEqual(res[0].shape, (1, 6))
@@ -107,11 +117,13 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         model = get_model_wrapper(Model([x1, x2], y))
 
         infl = InternalInfluence(
-            model, Cut(['cut_layer1', 'cut_layer2']), ClassQoI(1), PointDoi())
+            model, Cut(['cut_layer1', 'cut_layer2']), ClassQoI(1), PointDoi()
+        )
 
         res = infl.attributions(
             [np.array([[1., 2., 3., 4., 5.]]),
-             np.array([[1.]])])
+             np.array([[1.]])]
+        )
 
         self.assertEqual(len(res), 2)
         self.assertEqual(res[0].shape, (1, 6))
@@ -130,7 +142,8 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 np.array([0., 0.]),
                 np.array([[1.], [1.]]),
                 np.array([0.])
-            ])
+            ]
+        )
 
         model = get_model_wrapper(k_model)
 
@@ -139,14 +152,16 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             Cut(2, anchor='out'),
             ClassQoI(0),
             PointDoi(),
-            multiply_activation=False)
+            multiply_activation=False
+        )
 
         infl_in = InternalInfluence(
             model,
             Cut(2, anchor='in'),
             ClassQoI(0),
             PointDoi(),
-            multiply_activation=False)
+            multiply_activation=False
+        )
 
         res_out = infl_out.attributions(np.array([[1., 1.]]))
         res_in = infl_in.attributions(np.array([[1., 1.]]))
@@ -179,7 +194,8 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
 
         with self.assertRaises(ValueError):
             infl = InternalInfluence(
-                model, Cut('not_a_real_layer'), ClassQoI(0), PointDoi())
+                model, Cut('not_a_real_layer'), ClassQoI(0), PointDoi()
+            )
 
             infl.attributions(np.array([[1., 1.]]))
 

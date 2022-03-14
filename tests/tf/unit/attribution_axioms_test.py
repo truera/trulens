@@ -1,15 +1,20 @@
 import os
+
 os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
 from tensorflow.python.util import deprecation
+
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
-from tensorflow import Graph, placeholder
-from tensorflow.nn import relu
-from unittest import TestCase, main
+from unittest import main
+from unittest import TestCase
 
-from trulens.nn.models import get_model_wrapper
+from tensorflow import Graph
+from tensorflow import placeholder
+from tensorflow.nn import relu
+
 from tests.unit.attribution_axioms_test_base import AxiomsTestBase
+from trulens.nn.models import get_model_wrapper
 
 
 class AxiomsTest(AxiomsTestBase, TestCase):
@@ -25,7 +30,8 @@ class AxiomsTest(AxiomsTestBase, TestCase):
             y_lin = x_lin @ self.model_lin_weights + self.model_lin_bias
 
         self.model_lin = get_model_wrapper(
-            graph_lin, input_tensors=x_lin, output_tensors=y_lin)
+            graph_lin, input_tensors=x_lin, output_tensors=y_lin
+        )
 
         # Make a deeper model for testing.
         graph_deep = Graph()
@@ -33,19 +39,23 @@ class AxiomsTest(AxiomsTestBase, TestCase):
         with graph_deep.as_default():
             x_deep = placeholder('float32', (None, self.input_size))
             z1_deep = (
-                x_deep @ self.model_deep_weights_1 + self.model_deep_bias_1)
+                x_deep @ self.model_deep_weights_1 + self.model_deep_bias_1
+            )
             z2_deep = relu(z1_deep)
             z3_deep = (
-                z2_deep @ self.model_deep_weights_2 + self.model_deep_bias_2)
+                z2_deep @ self.model_deep_weights_2 + self.model_deep_bias_2
+            )
             z4_deep = relu(z3_deep)
             y_deep = (
-                z4_deep @ self.model_deep_weights_3 + self.model_deep_bias_3)
+                z4_deep @ self.model_deep_weights_3 + self.model_deep_bias_3
+            )
 
         self.model_deep = get_model_wrapper(
             graph_deep,
             input_tensors=x_deep,
             output_tensors=y_deep,
-            internal_tensor_dict=dict(layer2=z2_deep, layer3=z3_deep))
+            internal_tensor_dict=dict(layer2=z2_deep, layer3=z3_deep)
+        )
 
         self.layer2 = 'layer2'
         self.layer3 = 'layer3'
