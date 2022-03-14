@@ -1,14 +1,18 @@
 import os
+
 os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
-from tensorflow.keras.layers import Activation, Dense, Input
+from unittest import main
+from unittest import TestCase
+
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
-from unittest import TestCase, main
 
-from trulens.nn.models import get_model_wrapper
 from tests.unit.attribution_axioms_test_base import AxiomsTestBase
-
 from trulens.nn.backend import get_backend
+from trulens.nn.models import get_model_wrapper
 
 
 class AxiomsTest(AxiomsTestBase, TestCase):
@@ -23,7 +27,8 @@ class AxiomsTest(AxiomsTestBase, TestCase):
         self.model_lin = get_model_wrapper(Model(x_lin, y_lin))
 
         self.model_lin._model.set_weights(
-            [self.model_lin_weights, self.model_lin_bias])
+            [self.model_lin_weights, self.model_lin_bias]
+        )
 
         # Make a deeper model for testing.
         x_deep = Input((self.input_size,))
@@ -40,7 +45,8 @@ class AxiomsTest(AxiomsTestBase, TestCase):
                 self.model_deep_weights_1, self.model_deep_bias_1,
                 self.model_deep_weights_2, self.model_deep_bias_2,
                 self.model_deep_weights_3, self.model_deep_bias_3
-            ])
+            ]
+        )
 
         self.layer2 = 2
         self.layer3 = 3

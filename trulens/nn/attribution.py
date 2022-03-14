@@ -15,14 +15,25 @@ from abc import abstractmethod
 from typing import Callable, Tuple, Union
 
 import numpy as np
+
 from trulens.nn.backend import get_backend
-from trulens.nn.distributions import DoI, LinearDoi, PointDoi
+from trulens.nn.distributions import DoI
+from trulens.nn.distributions import LinearDoi
+from trulens.nn.distributions import PointDoi
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.quantities import (
-    ComparativeQoI, InternalChannelQoI, LambdaQoI, MaxClassQoI, QoI)
-from trulens.nn.slices import Cut, InputCut, OutputCut, Slice
-from trulens.utils.typing import (
-    DATA_CONTAINER_TYPE, ModelInputs, accepts_model_inputs, as_args)
+from trulens.nn.quantities import ComparativeQoI
+from trulens.nn.quantities import InternalChannelQoI
+from trulens.nn.quantities import LambdaQoI
+from trulens.nn.quantities import MaxClassQoI
+from trulens.nn.quantities import QoI
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
+from trulens.nn.slices import OutputCut
+from trulens.nn.slices import Slice
+from trulens.utils.typing import accepts_model_inputs
+from trulens.utils.typing import as_args
+from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import ModelInputs
 
 # Attribution-related type aliases.
 CutLike = Union[Cut, int, str, None]
@@ -132,12 +143,13 @@ class InternalInfluence(AttributionMethod):
     """
 
     def __init__(
-            self,
-            model: ModelWrapper,
-            cuts: SliceLike,
-            qoi: QoiLike,
-            doi: DoiLike,
-            multiply_activation: bool = True):
+        self,
+        model: ModelWrapper,
+        cuts: SliceLike,
+        qoi: QoiLike,
+        doi: DoiLike,
+        multiply_activation: bool = True
+    ):
         """
         Parameters:
             model:
@@ -235,7 +247,8 @@ class InternalInfluence(AttributionMethod):
         doi_val = self.model.fprop(
             model_args=model_inputs.args,
             model_kwargs=model_inputs.kwargs,
-            to_cut=doi_cut)
+            to_cut=doi_cut
+        )
 
         # DoI supports tensor or list of tensor. unwrap args to perform DoI on
         # top level list
@@ -271,18 +284,21 @@ class InternalInfluence(AttributionMethod):
             attribution_cut=self.slice.from_cut,
             to_cut=self.slice.to_cut,
             intervention=D,
-            doi_cut=doi_cut)
+            doi_cut=doi_cut
+        )
 
         # Take the mean across the samples in the DoI.
         if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
             attributions = [
                 B.mean(
                     B.reshape(qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
-                    axis=0) for qoi_grad in qoi_grads
+                    axis=0
+                ) for qoi_grad in qoi_grads
             ]
         else:
             attributions = B.mean(
-                B.reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]), axis=0)
+                B.reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]), axis=0
+            )
 
         extra_args = dict()
         if accepts_model_inputs(self.doi.get_activation_multiplier):
@@ -293,7 +309,8 @@ class InternalInfluence(AttributionMethod):
             z_val = self.model.fprop(
                 model_inputs.args,
                 model_inputs.kwargs,
-                to_cut=self.slice.from_cut)
+                to_cut=self.slice.from_cut
+            )
             if isinstance(z_val, DATA_CONTAINER_TYPE) and len(z_val) == 1:
                 z_val = z_val[0]
 
@@ -302,15 +319,19 @@ class InternalInfluence(AttributionMethod):
                     if isinstance(z_val, DATA_CONTAINER_TYPE) and len(
                             z_val) == len(attributions):
                         attributions[i] *= self.doi.get_activation_multiplier(
-                            z_val[i], **extra_args)
+                            z_val[i], **extra_args
+                        )
                     else:
                         attributions[i] *= (
                             self.doi.get_activation_multiplier(
-                                z_val, **extra_args))
+                                z_val, **extra_args
+                            )
+                        )
 
             else:
                 attributions *= self.doi.get_activation_multiplier(
-                    z_val, **extra_args)
+                    z_val, **extra_args
+                )
 
         return attributions
 
@@ -345,7 +366,8 @@ class InternalInfluence(AttributionMethod):
 
             else:
                 raise ValueError(
-                    'Tuple or list argument for `qoi` must have length 2')
+                    'Tuple or list argument for `qoi` must have length 2'
+                )
 
         elif isinstance(qoi_arg, str):
             # We can specify `MaxClassQoI` via the string 'max'.
@@ -355,7 +377,8 @@ class InternalInfluence(AttributionMethod):
             else:
                 raise ValueError(
                     'String argument for `qoi` must be one of the following:\n'
-                    '  - "max"')
+                    '  - "max"'
+                )
 
         else:
             raise ValueError('Unrecognized argument type for `qoi`')
@@ -383,7 +406,8 @@ class InternalInfluence(AttributionMethod):
                 raise ValueError(
                     'String argument for `doi` must be one of the following:\n'
                     '  - "point"\n'
-                    '  - "linear"')
+                    '  - "linear"'
+                )
 
         else:
             raise ValueError('Unrecognized argument type for `doi`')
@@ -411,15 +435,18 @@ class InternalInfluence(AttributionMethod):
             if len(slice_arg) == 2:
                 if slice_arg[1] is None:
                     return Slice(
-                        InternalInfluence.__get_cut(slice_arg[0]), OutputCut())
+                        InternalInfluence.__get_cut(slice_arg[0]), OutputCut()
+                    )
                 else:
                     return Slice(
                         InternalInfluence.__get_cut(slice_arg[0]),
-                        InternalInfluence.__get_cut(slice_arg[1]))
+                        InternalInfluence.__get_cut(slice_arg[1])
+                    )
 
             else:
                 raise ValueError(
-                    'Tuple or list argument for `cuts` must have length 2')
+                    'Tuple or list argument for `cuts` must have length 2'
+                )
 
         else:
             raise ValueError('Unrecognized argument type for `cuts`')
@@ -450,7 +477,8 @@ class InternalInfluence(AttributionMethod):
         if len(D) == 0:
             raise ValueError(
                 'Got empty distribution of interest. `DoI` must return at '
-                'least one point.')
+                'least one point.'
+            )
 
         if isinstance(D[0], DATA_CONTAINER_TYPE):
             transposed = [[] for _ in range(len(D[0]))]
@@ -486,13 +514,14 @@ class InputAttribution(InternalInfluence):
     """
 
     def __init__(
-            self,
-            model: ModelWrapper,
-            qoi_cut: CutLike = None, # See WARNING-LOAD-INIT .
-            qoi: QoiLike = 'max',
-            doi_cut: CutLike = None, # See WARNING-LOAD-INIT .
-            doi: DoiLike = 'point',
-            multiply_activation: bool = True):
+        self,
+        model: ModelWrapper,
+        qoi_cut: CutLike = None,
+        qoi: QoiLike = 'max',
+        doi_cut: CutLike = InputCut(),
+        doi: DoiLike = 'point',
+        multiply_activation: bool = True
+    ):
         """
         Parameters:
             model :
@@ -573,7 +602,8 @@ class InputAttribution(InternalInfluence):
             model, (doi_cut, qoi_cut),
             qoi,
             doi,
-            multiply_activation=multiply_activation)
+            multiply_activation=multiply_activation
+        )
 
 
 class IntegratedGradients(InputAttribution):
@@ -612,9 +642,10 @@ class IntegratedGradients(InputAttribution):
         model: ModelWrapper,
         baseline=None,
         resolution: int = 50,
-        doi_cut=None, # See WARNING-LOAD-INIT .
+        doi_cut=InputCut(),
         qoi='max',
-        qoi_cut=None): # See WARNING-LOAD-INIT .
+        qoi_cut=OutputCut()
+    ):
         """
         Parameters:
             model:
@@ -644,4 +675,5 @@ class IntegratedGradients(InputAttribution):
             qoi=qoi,
             doi_cut=doi_cut,
             doi=LinearDoi(baseline, resolution, cut=doi_cut),
-            multiply_activation=True)
+            multiply_activation=True
+        )

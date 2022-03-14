@@ -7,12 +7,18 @@ import numpy as np
 
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
-from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, InterventionLike, KwargsLike, ModelInputs, as_args
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.slices import Cut, InputCut
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
+from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import as_args
+from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import InterventionLike
+from trulens.utils.typing import KwargsLike
+from trulens.utils.typing import ModelInputs
 
 
 def import_keras_backend():
@@ -32,12 +38,13 @@ class KerasModelWrapper(ModelWrapper):
     """
 
     def __init__(
-            self,
-            model,
-            logit_layer=None,
-            replace_softmax=False,
-            softmax_layer=-1,
-            custom_objects=None):
+        self,
+        model,
+        logit_layer=None,
+        replace_softmax=False,
+        softmax_layer=-1,
+        custom_objects=None
+    ):
         """
         __init__ Constructor
 
@@ -62,13 +69,15 @@ class KerasModelWrapper(ModelWrapper):
                 'Model must be an instance of `{}.models.Model`.\n\n'
                 '(you may be seeing this error if you passed a '
                 '`tensorflow.keras` model while using the \'keras\' backend or '
-                'vice-versa)'.format(get_backend().backend))
+                'vice-versa)'.format(get_backend().backend)
+            )
 
         if replace_softmax:
             self._model = KerasModelWrapper._replace_probits_with_logits(
                 model,
                 probits_layer_name=softmax_layer,
-                custom_objects=custom_objects)
+                custom_objects=custom_objects
+            )
 
             self._logit_layer = softmax_layer
 
@@ -81,7 +90,8 @@ class KerasModelWrapper(ModelWrapper):
 
     @staticmethod
     def _replace_probits_with_logits(
-            model, probits_layer_name=-1, custom_objects=None):
+        model, probits_layer_name=-1, custom_objects=None
+    ):
         """
         _replace_softmax_with_logits Remove the final layer's activation 
         function
@@ -105,8 +115,10 @@ class KerasModelWrapper(ModelWrapper):
             Clone of original model with specified activation function removed.
         """
         probits_layer = (
-            model.get_layer(probits_layer_name) if isinstance(
-                probits_layer_name, str) else model.layers[probits_layer_name])
+            model.get_layer(probits_layer_name)
+            if isinstance(probits_layer_name, str) else
+            model.layers[probits_layer_name]
+        )
 
         # Make sure the specified layer has an activation.
         try:
@@ -116,7 +128,8 @@ class KerasModelWrapper(ModelWrapper):
                 'The specified layer to `_replace_probits_with_logits` has no '
                 '`activation` attribute. The specified layer should convert '
                 'its input to probits, i.e., it should have an `activation` '
-                'attribute that is either a softmax or a sigmoid.')
+                'attribute that is either a softmax or a sigmoid.'
+            )
 
         # Warn if the specified layer's activation is not a softmax or a
         # sigmoid.
@@ -125,7 +138,8 @@ class KerasModelWrapper(ModelWrapper):
             tru_logger.warn(
                 'The activation of the specified layer to '
                 '`_replace_probits_with_logits` is not a softmax or a sigmoid; '
-                'it may not currently convert its input to probits.')
+                'it may not currently convert its input to probits.'
+            )
 
         try:
             # Temporarily replace the softmax activation.
@@ -135,12 +149,14 @@ class KerasModelWrapper(ModelWrapper):
             # model, but with the activation updated.
             tmp_path = os.path.join(
                 tempfile.gettempdir(),
-                next(tempfile._get_candidate_names()) + '.h5')
+                next(tempfile._get_candidate_names()) + '.h5'
+            )
 
             model.save(tmp_path)
 
             return self.keras.models.load_model(
-                tmp_path, custom_objects=custom_objects)
+                tmp_path, custom_objects=custom_objects
+            )
 
         finally:
             # Revert the activation in the original model back to its original
@@ -164,7 +180,8 @@ class KerasModelWrapper(ModelWrapper):
                 'To use the `LogitCut`, either ensure that the model has a '
                 'layer named "logits", specify the `logit_layer` in the '
                 'model wrapper constructor, or use the `replace_softmax` '
-                'option in the model wrapper constructor.')
+                'option in the model wrapper constructor.'
+            )
 
     def _get_layers_by_name(self, name):
         '''
@@ -253,13 +270,16 @@ class KerasModelWrapper(ModelWrapper):
                     layer.output[cut.anchor][0]
                     if cut.anchor in layer.output else layer.output
                     for layer in layers
-                ])
+                ]
+            )
         return (
             flat([layer.input for layer in layers])
-            if cut.anchor == 'in' else flat([layer.output for layer in layers]))
+            if cut.anchor == 'in' else flat([layer.output for layer in layers])
+        )
 
     def _prepare_intervention_with_input(
-            self, model_args, intervention, doi_tensors):
+        self, model_args, intervention, doi_tensors
+    ):
         input_tensors = self._get_layers(InputCut())
         if not all(elem in doi_tensors for elem in input_tensors):
             intervention_batch_doi_len = len(intervention[0])
@@ -277,13 +297,14 @@ class KerasModelWrapper(ModelWrapper):
         return doi_tensors, intervention
 
     def fprop(
-            self,
-            model_args: ArgsLike,
-            model_kwargs: KwargsLike = {},
-            doi_cut: Optional[Cut] = None,
-            to_cut: Optional[Cut] = None,
-            attribution_cut: Optional[Cut] = None,
-            intervention: InterventionLike = None):
+        self,
+        model_args: ArgsLike,
+        model_kwargs: KwargsLike = {},
+        doi_cut: Optional[Cut] = None,
+        to_cut: Optional[Cut] = None,
+        attribution_cut: Optional[Cut] = None,
+        intervention: InterventionLike = None
+    ):
         """
         fprop Forward propagate the model
 
@@ -328,7 +349,8 @@ class KerasModelWrapper(ModelWrapper):
             model_kwargs=model_kwargs,
             doi_cut=doi_cut,
             to_cut=to_cut,
-            intervention=intervention)
+            intervention=intervention
+        )
 
         # TODO: use the ModelInputs structure in this backend
         intervention = intervention.args
@@ -351,19 +373,16 @@ class KerasModelWrapper(ModelWrapper):
         # Model inputs come from model_args
         val_map.update(
             {
-                k: v for k, v in zip(
-                    self._model.inputs[0:len(model_args)], model_args)
-            })
+                k: v for k, v in
+                zip(self._model.inputs[0:len(model_args)], model_args)
+            }
+        )
         # Other placeholders come from kwargs.
         val_map.update({_tensor(k): v for k, v in model_kwargs.items()})
-
-        print("doi_tensors=", doi_tensors)
 
         # Finally, interventions override any previously set tensors.
         val_map.update({k: v for k, v in zip(doi_tensors, intervention)})
         # val_map.update({_tensor(k): v for k, v in intervention.kwargs.items()})
-
-        print(val_map)
 
         # TODO: tiling
 
@@ -389,7 +408,8 @@ class KerasModelWrapper(ModelWrapper):
         # also `doi_tensors`.
         if non_identity_to_tensors:
             fprop_fn = self.keras.backend.function(
-                inputs=all_inputs, outputs=non_identity_to_tensors)
+                inputs=all_inputs, outputs=non_identity_to_tensors
+            )
             out_vals = fprop_fn(all_vals)
             del fprop_fn
 
@@ -406,14 +426,15 @@ class KerasModelWrapper(ModelWrapper):
         return out_vals
 
     def qoi_bprop(
-            self,
-            qoi,
-            model_args,
-            model_kwargs={},
-            doi_cut=None,
-            to_cut=None,
-            attribution_cut=None,
-            intervention=None):
+        self,
+        qoi,
+        model_args,
+        model_kwargs={},
+        doi_cut=None,
+        to_cut=None,
+        attribution_cut=None,
+        intervention=None
+    ):
         """
         qoi_bprop Run the model from the from_layer to the qoi layer
             and give the gradients w.r.t `attribution_cut`
@@ -469,21 +490,24 @@ class KerasModelWrapper(ModelWrapper):
             intervention = model_args
 
         intervention = intervention if isinstance(
-            intervention, DATA_CONTAINER_TYPE) else [intervention]
+            intervention, DATA_CONTAINER_TYPE
+        ) else [intervention]
 
         Q = qoi(to_tensors[0]) if len(to_tensors) == 1 else qoi(to_tensors)
 
         doi_tensors, intervention = self._prepare_intervention_with_input(
-            model_args, intervention, doi_tensors)
+            model_args, intervention, doi_tensors
+        )
 
         gradients = [
             self.keras.backend.function(
                 doi_tensors,
-                get_backend().gradient(q, attribution_tensors))(intervention)
-            for q in Q
-        ] if isinstance(
-            Q, DATA_CONTAINER_TYPE) else self.keras.backend.function(
-                doi_tensors,
-                get_backend().gradient(Q, attribution_tensors))(intervention)
+                get_backend().gradient(q, attribution_tensors)
+            )(intervention) for q in Q
+        ] if isinstance(Q,
+                        DATA_CONTAINER_TYPE) else self.keras.backend.function(
+                            doi_tensors,
+                            get_backend().gradient(Q, attribution_tensors)
+                        )(intervention)
 
         return gradients[0] if len(gradients) == 1 else gradients

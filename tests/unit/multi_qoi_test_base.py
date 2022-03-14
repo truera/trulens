@@ -1,6 +1,8 @@
-from unittest import TestCase, main
+from unittest import main
+from unittest import TestCase
 
 import numpy as np
+
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.nn.distributions import DoI
@@ -101,17 +103,20 @@ class RNNLinearDoi(DoI):
 class MultiQoiTestBase(TestCase):
 
     def per_timestep_qoi(
-            self, model_wrapper, num_classes, num_features, num_timesteps,
-            batch_size):
+        self, model_wrapper, num_classes, num_features, num_timesteps,
+        batch_size
+    ):
         cuts = (Cut('rnn', 'in', None), Cut('dense', 'out', None))
         infl = InternalInfluence(
-            model_wrapper, cuts, PerTimestepQoI(), RNNLinearDoi())
+            model_wrapper, cuts, PerTimestepQoI(), RNNLinearDoi()
+        )
         input_attrs = infl.attributions(
-            np.ones(
-                (batch_size, num_timesteps, num_features)).astype('float32'))
+            np.ones((batch_size, num_timesteps, num_features)
+                   ).astype('float32')
+        )
         original_output_shape = (
-            num_classes * num_timesteps, batch_size, num_timesteps,
-            num_features)
+            num_classes * num_timesteps, batch_size, num_timesteps, num_features
+        )
         self.assertEqual(np.stack(input_attrs).shape, original_output_shape)
         rotated = np.stack(input_attrs, axis=-1)
         attr_shape = list(rotated.shape)[:-1]
@@ -121,5 +126,7 @@ class MultiQoiTestBase(TestCase):
         self.assertEqual(
             attr_shape, (
                 batch_size, num_timesteps, num_features, num_timesteps,
-                num_classes))
+                num_classes
+            )
+        )
         input_attrs = np.reshape(rotated, attr_shape)

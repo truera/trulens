@@ -94,6 +94,6 @@ jobs:
         displayName: NoDiffCheck
       - bash: |
           source activate $(condaEnvFileSuffix)
-          pip install pytest pytest-azurepipelines
+          pip install pytest==7.0.1 pytest-azurepipelines
           python -m pytest $(testSubdirectory)
         displayName: Run unit tests

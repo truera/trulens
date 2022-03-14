@@ -2,13 +2,17 @@ import os
 
 os.environ['TRULENS_BACKEND'] = 'tf.keras'
 
-from unittest import TestCase, main
+from unittest import main
+from unittest import TestCase
 
 from tensorflow.python.util import deprecation
+
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
-from tensorflow.keras.layers import Input, Lambda
+from tensorflow.keras.layers import Input
+from tensorflow.keras.layers import Lambda
 from tensorflow.keras.models import Model
+
 from tests.unit.doi_test_base import DoiTestBase
 from trulens.nn.models.keras import KerasModelWrapper
 

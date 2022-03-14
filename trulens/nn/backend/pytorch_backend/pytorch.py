@@ -36,7 +36,8 @@ def gradient(scalar, wrt):
         A list of computed gradient; same shape as wrt
     """
     grads = torch.autograd.grad(
-        scalar, wrt, retain_graph=True, allow_unused=True, create_graph=True)
+        scalar, wrt, retain_graph=True, allow_unused=True, create_graph=True
+    )
     return list(grads)
 
 
@@ -60,7 +61,8 @@ def as_array(t, dtype=None):
 
     return (
         t.cpu().detach().numpy()
-        if dtype is None else t.cpu().detach().numpy().astype(dtype))
+        if dtype is None else t.cpu().detach().numpy().astype(dtype)
+    )
 
 
 def as_tensor(x, dtype=None, device=None):
