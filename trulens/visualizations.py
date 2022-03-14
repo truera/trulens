@@ -14,6 +14,7 @@ interpreting attributions as images.
 # TODO: remove pip requirements from visualizers and move them to imports upon
 # their initialization.
 
+from abc import ABC, abstractmethod
 import importlib
 from tkinter import S
 from typing import Callable, Iterable, Optional, Set, TypeVar
@@ -1013,9 +1014,36 @@ class ChannelMaskVisualizer(object):
         )
 
 
-class Output:
+class Output(ABC):
     """Base class for visualization output formats."""
-    pass
+    
+    @abstractmethod
+    def blank(self) -> str:
+        ...
+
+    @abstractmethod
+    def space(self) -> str:
+        ...
+
+    @abstractmethod
+    def escape(self, s: str) -> str:
+        ...
+
+    @abstractmethod
+    def line(self, s: str) -> str:
+        ...
+
+    @abstractmethod
+    def magnitude_colored(self, s: str, mag: float) -> str:
+        ...
+
+    @abstractmethod
+    def append(self, *parts: Iterable[str]) -> str:
+        ...
+
+    @abstractmethod
+    def render(self, s: str) -> str:
+        ...
 
 
 # TODO(piotrm): implement a latex output format
