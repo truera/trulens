@@ -69,7 +69,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
 
         self.model_kwargs_layer1 = "layer1"
         self.model_kwargs_layer2 = "layer2"
-        """"""
+        """
 
 
 if __name__ == '__main__':
