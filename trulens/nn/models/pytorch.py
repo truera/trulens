@@ -10,17 +10,9 @@ from trulens.nn.backend import get_backend
 from trulens.nn.backend.pytorch_backend.pytorch import Tensor
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import QoI
-from trulens.nn.slices import Cut
-from trulens.nn.slices import InputCut
-from trulens.nn.slices import LogitCut
-from trulens.nn.slices import OutputCut
+from trulens.nn.slices import Cut, InputCut, LogitCut, OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike
-from trulens.utils.typing import as_args
-from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import DataLike
-from trulens.utils.typing import InterventionLike
-from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, DataLike, InterventionLike, ModelInputs, as_args
 
 
 class PytorchModelWrapper(ModelWrapper):
@@ -176,8 +168,7 @@ class PytorchModelWrapper(ModelWrapper):
             names_and_anchors.append((cut.name, cut.anchor))
 
     def _extract_outputs_from_hooks(
-        self, cut, hooks, output, model_inputs, return_tensor
-    ):
+            self, cut, hooks, output, model_inputs, return_tensor):
 
         B = get_backend()
 
@@ -188,8 +179,8 @@ class PytorchModelWrapper(ModelWrapper):
 
         elif isinstance(cut, InputCut):
             # TODO(piotrm): Figure out whether kwarg order is consistent.
-            return_output = tuple(model_inputs.args
-                                 ) + tuple(model_inputs.kwargs.values())
+            return_output = tuple(model_inputs.args) + tuple(
+                model_inputs.kwargs.values())
 
         elif isinstance(cut, LogitCut):
             return_output = hooks['logits' if self.
@@ -282,8 +273,7 @@ class PytorchModelWrapper(ModelWrapper):
             model_kwargs=model_kwargs,
             doi_cut=doi_cut,
             to_cut=to_cut,
-            intervention=intervention
-        )
+            intervention=intervention)
 
         model_inputs = model_inputs.map(self._to_tensor)
         intervention = intervention.map(self._to_tensor)
@@ -310,8 +300,7 @@ class PytorchModelWrapper(ModelWrapper):
                         f"batchable due to its shape not matching prior batchable "
                         f"inputs of shape ({expected_dim},...). If this is "
                         f"incorrect, make sure its first dimension matches prior "
-                        f"batchable inputs."
-                    )
+                        f"batchable inputs.")
                     return val
 
                 tile_shape = [1 for _ in range(len(val.shape))]
@@ -324,8 +313,7 @@ class PytorchModelWrapper(ModelWrapper):
                     return val.repeat(repeat_shape)
                 else:
                     raise ValueError(
-                        f"unhandled tensor type {val.__class__.__name__}"
-                    )
+                        f"unhandled tensor type {val.__class__.__name__}")
 
             # tile args and kwargs if necessary
             model_inputs = model_inputs.map(tile_val)
@@ -338,9 +326,7 @@ class PytorchModelWrapper(ModelWrapper):
                     t.requires_grad_(True)
                 else:
                     if isinstance(attribution_cut, InputCut):
-                        raise ValueError(
-                            f"Requested tensors for attribution_cut=InputCut() but it contains a non-differentiable tensor of type {t.dtype}. You may need to provide an attribution_cut further down in the model where floating-point values first arise."
-                        )
+                        raise ValueError(f"Requested tensors for attribution_cut=InputCut() but it contains a non-differentiable tensor of type {t.dtype}. You may need to provide an attribution_cut further down in the model where floating-point values first arise.")
                     else:
                         # Could be a warning here but then we'd see a lot of warnings in NLP models.
                         pass
@@ -450,29 +436,26 @@ class PytorchModelWrapper(ModelWrapper):
             hooks=hooks,
             output=output,
             model_inputs=model_inputs,
-            return_tensor=return_tensor
-        )
+            return_tensor=return_tensor)
 
         if attribution_cut:
             return [
                 self._extract_outputs_from_hooks(cut=to_cut, **extract_args),
                 self._extract_outputs_from_hooks(
-                    cut=attribution_cut, **extract_args
-                )
+                    cut=attribution_cut, **extract_args)
             ]
         else:
             return self._extract_outputs_from_hooks(cut=to_cut, **extract_args)
 
     def qoi_bprop(
-        self,
-        qoi: QoI,
-        model_args: ArgsLike,
-        model_kwargs: Dict[str, DataLike] = {},
-        doi_cut: Optional[Cut] = None,
-        to_cut: Optional[Cut] = None,
-        attribution_cut: Optional[Cut] = None,
-        intervention: InterventionLike = None
-    ):
+            self,
+            qoi: QoI,
+            model_args: ArgsLike,
+            model_kwargs: Dict[str, DataLike] = {},
+            doi_cut: Optional[Cut] = None,
+            to_cut: Optional[Cut] = None,
+            attribution_cut: Optional[Cut] = None,
+            intervention: InterventionLike = None):
         """
         qoi_bprop Run the model from the from_layer to the qoi layer
             and give the gradients w.r.t `attribution_cut`
@@ -514,8 +497,7 @@ class PytorchModelWrapper(ModelWrapper):
         B = get_backend()
 
         doi_cut, to_cut, attribution_cut = self._qoi_bprop_defaults(
-            doi_cut=doi_cut, to_cut=to_cut, attribution_cut=attribution_cut
-        )
+            doi_cut=doi_cut, to_cut=to_cut, attribution_cut=attribution_cut)
 
         self._model.train()
 
@@ -537,10 +519,8 @@ class PytorchModelWrapper(ModelWrapper):
                 # Adding warning here only if there is more than 1 dimension
                 # being summed. If there is only 1 dim, its likely the batching
                 # dimension so sum there is probably expected.
-                tru_logger.warn(
-                    f"Attribution tensor is not scalar (it is of shape {t.shape} and will be summed. This may not be your intention."
-                )
-
+                tru_logger.warn(f"Attribution tensor is not scalar (it is of shape {t.shape} and will be summed. This may not be your intention.")
+                
             return B.sum(t)
 
         for z in zs:
@@ -553,8 +533,8 @@ class PytorchModelWrapper(ModelWrapper):
             # when QoI is not a scalar.
             grads_flat = [
                 B.gradient(scalarize(q), z_flat) for q in qoi_out
-            ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
-                           ) else B.gradient(scalarize(qoi_out), z_flat)
+            ] if isinstance(qoi_out, DATA_CONTAINER_TYPE) else B.gradient(
+                scalarize(qoi_out), z_flat)
 
             grads = [
                 ModelWrapper._unflatten(g, z, count=[0]) for g in grads_flat
