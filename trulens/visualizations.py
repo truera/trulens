@@ -18,20 +18,25 @@ import importlib
 from tkinter import S
 from typing import Callable, Iterable, Optional, Set, TypeVar
 
+from matplotlib import cm
+from matplotlib.colors import Colormap
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import cm
-from matplotlib.colors import Colormap, LinearSegmentedColormap, ListedColormap
 from scipy.ndimage.filters import gaussian_filter
 
 from trulens.nn.attribution import InternalInfluence
-from trulens.nn.backend import Tensor, get_backend
+from trulens.nn.backend import get_backend
+from trulens.nn.backend import Tensor
 from trulens.nn.distributions import PointDoi
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import InternalChannelQoI
-from trulens.nn.slices import Cut, InputCut
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import KwargsLike, ModelInputs
+from trulens.utils.typing import KwargsLike
+from trulens.utils.typing import ModelInputs
 
 
 class Tiler(object):
@@ -1004,7 +1009,8 @@ class ChannelMaskVisualizer(object):
 
         return self.mask_visualizer(
             attrs_input, x, output_file, blur, threshold, masked_opacity,
-            combine_channels)
+            combine_channels
+        )
 
 
 class Output:
@@ -1132,7 +1138,8 @@ class NLP(object):
         output_accessor: Optional[Callable[[ModelOutput],
                                            Iterable[Tensor]]] = None,
         attr_aggregate: Optional[Callable[[Tensor], Tensor]] = None,
-        hidden_tokens: Optional[Set[int]] = set()):
+        hidden_tokens: Optional[Set[int]] = set()
+    ):
         """Initializate NLP visualization tools for a given environment.
 
         Parameters:
@@ -1242,7 +1249,8 @@ class NLP(object):
                 pred_name = str(pred)
 
             sent = self.output.append(
-                self.output.escape(pred_name), ":", self.output.space())
+                self.output.escape(pred_name), ":", self.output.space()
+            )
 
             for word_id, attr in zip(sentence_word_id, attr):
                 word_id = int(B.as_array(word_id))
@@ -1264,9 +1272,13 @@ class NLP(object):
                 sent = self.output.append(
                     sent,
                     self.output.magnitude_colored(
-                        self.output.escape(word), mag)
+                        self.output.escape(word), mag
                     )
+                )
 
-            content = self.output.append(content, self.output.line(sent), self.output.linebreak(), self.output.linebreak())
+            content = self.output.append(
+                content, self.output.line(sent), self.output.linebreak(),
+                self.output.linebreak()
+            )
 
         return self.output.render(content)

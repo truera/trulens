@@ -82,7 +82,8 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
 
         res = infl.attributions(
-            np.array([[1., 2., 3., 4., 5.]]), np.array([[1.]]))
+            np.array([[1., 2., 3., 4., 5.]]), np.array([[1.]])
+        )
         # note above we are sending two args instead of one as in the prior test
 
         self.assertEqual(len(res), 2)

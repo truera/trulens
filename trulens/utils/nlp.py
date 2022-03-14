@@ -2,14 +2,18 @@
 
 from typing import Callable, Optional, Set
 
-from trulens.nn.backend import Tensor, get_backend
-from trulens.utils.typing import ArgsLike, BaselineLike, ModelInputs
+from trulens.nn.backend import get_backend
+from trulens.nn.backend import Tensor
+from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import BaselineLike
+from trulens.utils.typing import ModelInputs
 
 
 def token_baseline(
-        keep_tokens: Set[int], replacement_token: int,
-        input_accessor: Callable[[ModelInputs], Tensor],
-        ids_to_embeddings: Optional[Callable[[int], Tensor]]):
+    keep_tokens: Set[int], replacement_token: int,
+    input_accessor: Callable[[ModelInputs], Tensor],
+    ids_to_embeddings: Optional[Callable[[int], Tensor]]
+):
     """
     Utility for constructing baselines for models with an embedding layer.
     Replace all tokens except those in the keep_tokens set with the specified
