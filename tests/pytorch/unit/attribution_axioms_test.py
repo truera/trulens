@@ -1,13 +1,18 @@
 import os
+
 os.environ['TRULENS_BACKEND'] = 'pytorch'
 
-from torch import Tensor
-from torch.nn import Linear, Module, ReLU
-from unittest import TestCase, main
+from unittest import main
+from unittest import TestCase
 
+from torch import Tensor
+from torch.nn import Linear
+from torch.nn import Module
+from torch.nn import ReLU
+
+from tests.unit.attribution_axioms_test_base import AxiomsTestBase
 from trulens.nn.backend import get_backend
 from trulens.nn.models import get_model_wrapper
-from tests.unit.attribution_axioms_test_base import AxiomsTestBase
 
 
 class AxiomsTest(AxiomsTestBase, TestCase):
@@ -29,7 +34,8 @@ class AxiomsTest(AxiomsTestBase, TestCase):
                 return this.layer(x)
 
         self.model_lin = get_model_wrapper(
-            M_lin(), input_shape=(self.input_size,))
+            M_lin(), input_shape=(self.input_size,)
+        )
 
         # Make a deeper model for testing.
         class M_deep(Module):
@@ -58,7 +64,8 @@ class AxiomsTest(AxiomsTestBase, TestCase):
                 return this.l3(x)
 
         self.model_deep = get_model_wrapper(
-            M_deep(), input_shape=(self.input_size,))
+            M_deep(), input_shape=(self.input_size,)
+        )
 
         self.layer2 = 'l1_relu'
         self.layer3 = 'l2'

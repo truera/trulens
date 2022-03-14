@@ -5,13 +5,22 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
+
 from trulens.nn.backend import get_backend
 from trulens.nn.backend.pytorch_backend.pytorch import Tensor
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import QoI
-from trulens.nn.slices import Cut, InputCut, LogitCut, OutputCut
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
+from trulens.nn.slices import LogitCut
+from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, DataLike, InterventionLike, ModelInputs, as_args
+from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import as_args
+from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import DataLike
+from trulens.utils.typing import InterventionLike
+from trulens.utils.typing import ModelInputs
 
 
 class PytorchModelWrapper(ModelWrapper):
@@ -21,12 +30,13 @@ class PytorchModelWrapper(ModelWrapper):
     """
 
     def __init__(
-            self,
-            model,
-            input_shape,
-            input_dtype=torch.float32,
-            logit_layer=None,
-            device=None):
+        self,
+        model,
+        input_shape,
+        input_dtype=torch.float32,
+        logit_layer=None,
+        device=None
+    ):
         """
         __init__ Constructor
 
@@ -46,15 +56,18 @@ class PytorchModelWrapper(ModelWrapper):
         """
         if input_dtype is None:
             tru_logger.debug(
-                "Input dtype was not passed in. Defaulting to `torch.float32`.")
+                "Input dtype was not passed in. Defaulting to `torch.float32`."
+            )
             input_dtype = torch.float32
         if input_shape is None:
             raise ValueError(
-                'pytorch model wrapper must pass the input_shape parameter')
+                'pytorch model wrapper must pass the input_shape parameter'
+            )
         model.eval()
         if device is None:
             self.device = torch.device(
-                "cuda:0" if torch.cuda.is_available() else "cpu")
+                "cuda:0" if torch.cuda.is_available() else "cpu"
+            )
         else:
             self.device = device
         model.to(self.device)
@@ -107,7 +120,8 @@ class PytorchModelWrapper(ModelWrapper):
                 cr_layers = PytorchModelWrapper._get_model_layers(mod)
                 for cr_layer_name, cr_layer_mod in cr_layers:
                     r_layers.append(
-                        ('{}_{}'.format(name, cr_layer_name), cr_layer_mod))
+                        ('{}_{}'.format(name, cr_layer_name), cr_layer_mod)
+                    )
         return r_layers
 
     def _get_layer(self, name):
@@ -150,7 +164,9 @@ class PytorchModelWrapper(ModelWrapper):
             names_and_anchors.append(
                 (
                     'logits' if self._logit_layer is None else
-                    self._logit_layer, cut.anchor))
+                    self._logit_layer, cut.anchor
+                )
+            )
 
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
             for name in cut.name:
@@ -160,7 +176,8 @@ class PytorchModelWrapper(ModelWrapper):
             names_and_anchors.append((cut.name, cut.anchor))
 
     def _extract_outputs_from_hooks(
-            self, cut, hooks, output, model_inputs, return_tensor):
+        self, cut, hooks, output, model_inputs, return_tensor
+    ):
 
         B = get_backend()
 
@@ -171,8 +188,8 @@ class PytorchModelWrapper(ModelWrapper):
 
         elif isinstance(cut, InputCut):
             # TODO(piotrm): Figure out whether kwarg order is consistent.
-            return_output = tuple(model_inputs.args) + tuple(
-                model_inputs.kwargs.values())
+            return_output = tuple(model_inputs.args
+                                 ) + tuple(model_inputs.kwargs.values())
 
         elif isinstance(cut, LogitCut):
             return_output = hooks['logits' if self.
@@ -198,7 +215,8 @@ class PytorchModelWrapper(ModelWrapper):
         if isinstance(x, np.ndarray) or (len(x) > 0 and
                                          isinstance(x[0], np.ndarray)):
             x = ModelWrapper._nested_apply(
-                x, partial(B.as_tensor, device=self.device))
+                x, partial(B.as_tensor, device=self.device)
+            )
 
         elif isinstance(x, DATA_CONTAINER_TYPE):
             x = [self._to_tensor(x_i) for x_i in x]
@@ -264,7 +282,8 @@ class PytorchModelWrapper(ModelWrapper):
             model_kwargs=model_kwargs,
             doi_cut=doi_cut,
             to_cut=to_cut,
-            intervention=intervention)
+            intervention=intervention
+        )
 
         model_inputs = model_inputs.map(self._to_tensor)
         intervention = intervention.map(self._to_tensor)
@@ -291,7 +310,8 @@ class PytorchModelWrapper(ModelWrapper):
                         f"batchable due to its shape not matching prior batchable "
                         f"inputs of shape ({expected_dim},...). If this is "
                         f"incorrect, make sure its first dimension matches prior "
-                        f"batchable inputs.")
+                        f"batchable inputs."
+                    )
                     return val
 
                 tile_shape = [1 for _ in range(len(val.shape))]
@@ -304,7 +324,8 @@ class PytorchModelWrapper(ModelWrapper):
                     return val.repeat(repeat_shape)
                 else:
                     raise ValueError(
-                        f"unhandled tensor type {val.__class__.__name__}")
+                        f"unhandled tensor type {val.__class__.__name__}"
+                    )
 
             # tile args and kwargs if necessary
             model_inputs = model_inputs.map(tile_val)
@@ -317,7 +338,9 @@ class PytorchModelWrapper(ModelWrapper):
                     t.requires_grad_(True)
                 else:
                     if isinstance(attribution_cut, InputCut):
-                        raise ValueError(f"Requested tensors for attribution_cut=InputCut() but it contains a non-differentiable tensor of type {t.dtype}. You may need to provide an attribution_cut further down in the model where floating-point values first arise.")
+                        raise ValueError(
+                            f"Requested tensors for attribution_cut=InputCut() but it contains a non-differentiable tensor of type {t.dtype}. You may need to provide an attribution_cut further down in the model where floating-point values first arise."
+                        )
                     else:
                         # Could be a warning here but then we'd see a lot of warnings in NLP models.
                         pass
@@ -353,11 +376,14 @@ class PytorchModelWrapper(ModelWrapper):
             if doi_cut.anchor == 'in':
                 in_handle = (
                     self._get_layer(doi_cut.name).register_forward_pre_hook(
-                        partial(intervene_hookfn, outpt=None)))
+                        partial(intervene_hookfn, outpt=None)
+                    )
+                )
             else:
                 in_handle = (
-                    self._get_layer(
-                        doi_cut.name).register_forward_hook(intervene_hookfn))
+                    self._get_layer(doi_cut.name
+                                   ).register_forward_hook(intervene_hookfn)
+                )
 
         # Collect the names and anchors of the layers we want to return.
         names_and_anchors = []
@@ -390,19 +416,20 @@ class PytorchModelWrapper(ModelWrapper):
                 else:
                     if anchor == 'in':
                         hooks[layer_name] = ModelWrapper._nested_apply(
-                            inpt, B.as_array)
+                            inpt, B.as_array
+                        )
                     else:
                         outpt = outpt[0] if isinstance(outpt, tuple) else outpt
                         hooks[layer_name] = ModelWrapper._nested_apply(
-                            outpt, B.as_array)
+                            outpt, B.as_array
+                        )
 
             return hookfn
 
         handles = [
             self._get_layer(name).register_forward_hook(
-                get_hookfn(name, anchor))
-            for name, anchor in names_and_anchors
-            if name is not None
+                get_hookfn(name, anchor)
+            ) for name, anchor in names_and_anchors if name is not None
         ]
 
         # Run the network.
@@ -423,26 +450,29 @@ class PytorchModelWrapper(ModelWrapper):
             hooks=hooks,
             output=output,
             model_inputs=model_inputs,
-            return_tensor=return_tensor)
+            return_tensor=return_tensor
+        )
 
         if attribution_cut:
             return [
                 self._extract_outputs_from_hooks(cut=to_cut, **extract_args),
                 self._extract_outputs_from_hooks(
-                    cut=attribution_cut, **extract_args)
+                    cut=attribution_cut, **extract_args
+                )
             ]
         else:
             return self._extract_outputs_from_hooks(cut=to_cut, **extract_args)
 
     def qoi_bprop(
-            self,
-            qoi: QoI,
-            model_args: ArgsLike,
-            model_kwargs: Dict[str, DataLike] = {},
-            doi_cut: Optional[Cut] = None,
-            to_cut: Optional[Cut] = None,
-            attribution_cut: Optional[Cut] = None,
-            intervention: InterventionLike = None):
+        self,
+        qoi: QoI,
+        model_args: ArgsLike,
+        model_kwargs: Dict[str, DataLike] = {},
+        doi_cut: Optional[Cut] = None,
+        to_cut: Optional[Cut] = None,
+        attribution_cut: Optional[Cut] = None,
+        intervention: InterventionLike = None
+    ):
         """
         qoi_bprop Run the model from the from_layer to the qoi layer
             and give the gradients w.r.t `attribution_cut`
@@ -484,7 +514,8 @@ class PytorchModelWrapper(ModelWrapper):
         B = get_backend()
 
         doi_cut, to_cut, attribution_cut = self._qoi_bprop_defaults(
-            doi_cut=doi_cut, to_cut=to_cut, attribution_cut=attribution_cut)
+            doi_cut=doi_cut, to_cut=to_cut, attribution_cut=attribution_cut
+        )
 
         self._model.train()
 
@@ -495,7 +526,8 @@ class PytorchModelWrapper(ModelWrapper):
             to_cut=to_cut,
             attribution_cut=attribution_cut,
             intervention=intervention,
-            return_tensor=True)
+            return_tensor=True
+        )
 
         y = to_cut.access_layer(y)
         grads_list = []
@@ -505,8 +537,10 @@ class PytorchModelWrapper(ModelWrapper):
                 # Adding warning here only if there is more than 1 dimension
                 # being summed. If there is only 1 dim, its likely the batching
                 # dimension so sum there is probably expected.
-                tru_logger.warn(f"Attribution tensor is not scalar (it is of shape {t.shape} and will be summed. This may not be your intention.")
-                
+                tru_logger.warn(
+                    f"Attribution tensor is not scalar (it is of shape {t.shape} and will be summed. This may not be your intention."
+                )
+
             return B.sum(t)
 
         for z in zs:
@@ -519,23 +553,23 @@ class PytorchModelWrapper(ModelWrapper):
             # when QoI is not a scalar.
             grads_flat = [
                 B.gradient(scalarize(q), z_flat) for q in qoi_out
-            ] if isinstance(qoi_out, DATA_CONTAINER_TYPE) else B.gradient(
-                scalarize(qoi_out), z_flat)
+            ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
+                           ) else B.gradient(scalarize(qoi_out), z_flat)
 
             grads = [
                 ModelWrapper._unflatten(g, z, count=[0]) for g in grads_flat
             ] if isinstance(qoi_out,
                             DATA_CONTAINER_TYPE) else ModelWrapper._unflatten(
-                                grads_flat, z, count=[0])
+                                grads_flat, z, count=[0]
+                            )
 
-            grads = [
-                attribution_cut.access_layer(g) for g in grads
-            ] if isinstance(
-                qoi_out,
-                DATA_CONTAINER_TYPE) else attribution_cut.access_layer(grads)
+            grads = [attribution_cut.access_layer(g) for g in grads
+                    ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
+                                   ) else attribution_cut.access_layer(grads)
 
-            grads = [B.as_array(g) for g in grads] if isinstance(
-                qoi_out, DATA_CONTAINER_TYPE) else B.as_array(grads)
+            grads = [B.as_array(g) for g in grads
+                    ] if isinstance(qoi_out,
+                                    DATA_CONTAINER_TYPE) else B.as_array(grads)
 
             grads_list.append(grads)
 

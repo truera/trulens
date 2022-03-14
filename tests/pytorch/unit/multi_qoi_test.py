@@ -1,17 +1,19 @@
 import os
+
 os.environ['TRULENS_BACKEND'] = 'pytorch'
 
-from unittest import TestCase, main
+from unittest import main
+from unittest import TestCase
 
 import numpy as np
-
-from trulens.nn.backend import get_backend
-from trulens.nn.models import get_model_wrapper
-
 from torch import cat
-from torch.nn import GRU, Linear, Module
+from torch.nn import GRU
+from torch.nn import Linear
+from torch.nn import Module
 
 from tests.unit.multi_qoi_test_base import MultiQoiTestBase
+from trulens.nn.backend import get_backend
+from trulens.nn.models import get_model_wrapper
 
 
 class MultiQoiTest(MultiQoiTestBase, TestCase):
@@ -36,9 +38,11 @@ class MultiQoiTest(MultiQoiTestBase, TestCase):
                 return z2
 
         model = get_model_wrapper(
-            M(), input_shape=(num_timesteps, num_features))
+            M(), input_shape=(num_timesteps, num_features)
+        )
         super(MultiQoiTest, self).per_timestep_qoi(
-            model, num_classes, num_features, num_timesteps, batch_size)
+            model, num_classes, num_features, num_timesteps, batch_size
+        )
 
 
 if __name__ == '__main__':

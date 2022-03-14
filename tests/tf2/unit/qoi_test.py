@@ -1,7 +1,9 @@
 import os
+
 os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
-from unittest import TestCase, main
+from unittest import main
+from unittest import TestCase
 
 from tests.unit.qoi_test_base import QoiTestBase
 

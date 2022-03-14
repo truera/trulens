@@ -65,13 +65,16 @@ class QoI(AbstractBaseClass):
                 'single tensor, or (2) implement/use a `QoI` object that '
                 'supports lists of tensors, i.e., where the parameter, `x`, to '
                 '`__call__` is expected/allowed to be a list of {} tensors.'.
-                format(self.__class__.__name__, len(x), len(x)))
+                format(self.__class__.__name__, len(x), len(x))
+            )
 
         elif not get_backend().is_tensor(x):
             raise ValueError(
                 '`{}` expected to receive an instance of `Tensor`, but '
                 'received an instance of {}'.format(
-                    self.__class__.__name__, type(x)))
+                    self.__class__.__name__, type(x)
+                )
+            )
 
 
 class MaxClassQoI(QoI):
@@ -81,7 +84,8 @@ class MaxClassQoI(QoI):
     """
 
     def __init__(
-            self, axis: int = 1, activation: Union[Callable, str, None] = None):
+        self, axis: int = 1, activation: Union[Callable, str, None] = None
+    ):
         """
         Parameters:
             axis:
@@ -115,7 +119,8 @@ class MaxClassQoI(QoI):
                 else:
                     raise NotImplementedError(
                         'This activation function is not currently supported '
-                        'by the backend')
+                        'by the backend'
+                    )
             else:
                 y = self.activation(y)
 
@@ -140,10 +145,11 @@ class InternalChannelQoI(QoI):
         return get_backend().sum(x, axis=(1, 2))
 
     def __init__(
-            self,
-            channel: Union[int, List[int]],
-            channel_axis: Optional[int] = None,
-            agg_fn: Optional[Callable] = None):
+        self,
+        channel: Union[int, List[int]],
+        channel_axis: Optional[int] = None,
+        agg_fn: Optional[Callable] = None
+    ):
         """
         Parameters:
             channel:
@@ -188,17 +194,21 @@ class InternalChannelQoI(QoI):
 
             elif self._channel_ax == 3:
                 return sum(
-                    [self._agg_fn(y[:, :, :, ch]) for ch in self._channels])
+                    [self._agg_fn(y[:, :, :, ch]) for ch in self._channels]
+                )
 
             else:
                 raise ValueError(
                     'Unsupported channel axis for convolutional layer: {}'.
-                    format(self._channel_ax))
+                    format(self._channel_ax)
+                )
 
         else:
             raise QoiCutSupportError(
                 'Unsupported tensor rank for `InternalChannelQoI`: {}'.format(
-                    len(B.int_shape(y))))
+                    len(B.int_shape(y))
+                )
+            )
 
 
 class ClassQoI(QoI):
@@ -262,7 +272,9 @@ class LambdaQoI(QoI):
             raise ValueError(
                 'QoI function must take exactly 1 argument, but provided '
                 'function takes {} arguments'.format(
-                    len(signature(function).parameters)))
+                    len(signature(function).parameters)
+                )
+            )
 
         self.function = function
 
@@ -282,10 +294,11 @@ class ThresholdQoI(QoI):
     """
 
     def __init__(
-            self,
-            threshold: float,
-            low_minus_high: bool = False,
-            activation: Union[Callable, str, None] = None):
+        self,
+        threshold: float,
+        low_minus_high: bool = False,
+        activation: Union[Callable, str, None] = None
+    ):
         """
         Parameters:
             threshold:
@@ -327,7 +340,8 @@ class ThresholdQoI(QoI):
                 else:
                     raise NotImplementedError(
                         'This activation function is not currently supported '
-                        'by the backend')
+                        'by the backend'
+                    )
             else:
                 x = self.activation(x)
 

@@ -1,0 +1,4 @@
+[style]
+based_on_style = google
+DEDENT_CLOSING_BRACKETS=true
+SPLIT_BEFORE_FIRST_ARGUMENT=true
