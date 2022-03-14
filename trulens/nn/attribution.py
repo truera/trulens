@@ -22,7 +22,7 @@ from trulens.nn.quantities import (
     ComparativeQoI, InternalChannelQoI, LambdaQoI, MaxClassQoI, QoI)
 from trulens.nn.slices import Cut, InputCut, OutputCut, Slice
 from trulens.utils.typing import (
-    DATA_CONTAINER_TYPE, ModelInputs, accepts_model_inputs)
+    DATA_CONTAINER_TYPE, ModelInputs, accepts_model_inputs, as_args)
 
 # Attribution-related type aliases.
 CutLike = Union[Cut, int, str, None]
@@ -232,13 +232,20 @@ class InternalInfluence(AttributionMethod):
 
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
-        doi_val = self.model.fprop(model_args, model_kwargs, to_cut=doi_cut)
+        doi_val = self.model.fprop(
+            model_args=model_inputs.args,
+            model_kwargs=model_inputs.kwargs,
+            to_cut=doi_cut)
+
         # DoI supports tensor or list of tensor. unwrap args to perform DoI on
         # top level list
 
         # Depending on the model_arg input, the data may be nested in data
         # containers. We unwrap so that there operations are working on a single
         # level of data container.
+        # TODO(piotrm): automatic handling of other common containers like the ones
+        # used for huggingface models.
+        # TODO(piotrm): this unwrapping may not be necessary any more
         if isinstance(doi_val, DATA_CONTAINER_TYPE) and isinstance(
                 doi_val[0], DATA_CONTAINER_TYPE):
             doi_val = doi_val[0]
@@ -247,25 +254,25 @@ class InternalInfluence(AttributionMethod):
             doi_val = doi_val[0]
 
         if accepts_model_inputs(self.doi):
-            D = self.doi(
-                doi_val, model_inputs=model_inputs)
+            D = self.doi(doi_val, model_inputs=model_inputs)
         else:
             D = self.doi(doi_val)
 
         n_doi = len(D)
-        D = InternalInfluence.__concatenate_doi(D)
 
+        D = InternalInfluence.__concatenate_doi(D)
         B = get_backend()
 
         # Calculate the gradient of each of the points in the DoI.
         qoi_grads = self.model.qoi_bprop(
-            self.qoi,
-            model_args,
-            model_kwargs,
+            qoi=self.qoi,
+            model_args=model_inputs.args,
+            model_kwargs=model_inputs.kwargs,
             attribution_cut=self.slice.from_cut,
             to_cut=self.slice.to_cut,
             intervention=D,
             doi_cut=doi_cut)
+
         # Take the mean across the samples in the DoI.
         if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
             attributions = [
@@ -284,7 +291,9 @@ class InternalInfluence(AttributionMethod):
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
             z_val = self.model.fprop(
-                model_args, model_kwargs, to_cut=self.slice.from_cut)
+                model_inputs.args,
+                model_inputs.kwargs,
+                to_cut=self.slice.from_cut)
             if isinstance(z_val, DATA_CONTAINER_TYPE) and len(z_val) == 1:
                 z_val = z_val[0]
 
@@ -296,10 +305,12 @@ class InternalInfluence(AttributionMethod):
                             z_val[i], **extra_args)
                     else:
                         attributions[i] *= (
-                            self.doi.get_activation_multiplier(z_val, **extra_args))
+                            self.doi.get_activation_multiplier(
+                                z_val, **extra_args))
 
             else:
-                attributions *= self.doi.get_activation_multiplier(z_val, **extra_args)
+                attributions *= self.doi.get_activation_multiplier(
+                    z_val, **extra_args)
 
         return attributions
 
@@ -477,8 +488,9 @@ class InputAttribution(InternalInfluence):
     def __init__(
             self,
             model: ModelWrapper,
-            cut: CutLike = None,
+            qoi_cut: CutLike = None,
             qoi: QoiLike = 'max',
+            doi_cut: CutLike = InputCut(),
             doi: DoiLike = 'point',
             multiply_activation: bool = True):
         """
@@ -486,15 +498,15 @@ class InputAttribution(InternalInfluence):
             model :
                 Model for which attributions are calculated.
 
-            cut :
+            qoi_cut :
                 The cut determining the layer from which the QoI is derived.
-                Expects a `Cut` object, or a related type that can be 
+                Expects a `Cut` object, or a related type that can be
                 interpreted as a `Cut`, as documented below.
 
-                If an `int` is given, it represents the index of a layer in 
+                If an `int` is given, it represents the index of a layer in
                 `model`. 
 
-                If a `str` is given, it represents the name of a layer in 
+                If a `str` is given, it represents the name of a layer in
                 `model`. 
                 
                 `None` is an alternative for `slices.OutputCut()`.
@@ -504,33 +516,31 @@ class InputAttribution(InternalInfluence):
                 related type that can be interpreted as a `QoI`, as documented
                 below.
 
-                If an `int` is given, the quantity of interest is taken to be 
-                the slice output for the class/neuron/channel specified by the 
-                given integer, i.e., 
-                ```python
-                quantities.InternalChannelQoI(qoi)
-                ```
+                If an `int` is given, the quantity of interest is taken to be
+                the slice output for the class/neuron/channel specified by the
+                given integer, i.e., ```python
+                quantities.InternalChannelQoI(qoi) ```
 
-                If a tuple or list of two integers is given, then the quantity 
-                of interest is taken to be the comparative quantity for the 
-                class given by the first integer against the class given by the 
-                second integer, i.e., 
-                ```python
-                quantities.ComparativeQoI(*qoi)
+                If a tuple or list of two integers is given, then the quantity
+                of interest is taken to be the comparative quantity for the
+                class given by the first integer against the class given by the
+                second integer, i.e., ```python quantities.ComparativeQoI(*qoi)
                 ```
 
                 If a callable is given, it is interpreted as a function
-                representing the QoI, i.e.,
-                ```python
-                quantities.LambdaQoI(qoi)
+                representing the QoI, i.e., ```python quantities.LambdaQoI(qoi)
                 ```
 
-                If the string, `'max'`, is given, the quantity of interest is 
-                taken to be the output for the class with the maximum score, 
-                i.e., 
-                ```python
-                quantities.MaxClassQoI()
-                ```
+                If the string, `'max'`, is given, the quantity of interest is
+                taken to be the output for the class with the maximum score,
+                i.e., ```python quantities.MaxClassQoI() ```
+
+            doi_cut :
+                For models which have non-differentiable pre-processing at the
+                start of the model, specify the cut of the initial
+                differentiable input form. For NLP models, for example, this
+                could point to the embedding layer. If not provided, InputCut is
+                assumed.
 
             doi : distributions.DoI | str
                 Distribution of interest over inputs. Expects a `DoI` object, or
@@ -538,25 +548,21 @@ class InputAttribution(InternalInfluence):
                 below.
 
                 If the string, `'point'`, is given, the distribution is taken to
-                be the single point passed to `attributions`, i.e., 
-                ```python
-                distributions.PointDoi()
-                ```
+                be the single point passed to `attributions`, i.e., ```python
+                distributions.PointDoi() ```
 
-                If the string, `'linear'`, is given, the distribution is taken 
-                to be the linear interpolation from the zero input to the point 
-                passed to `attributions`, i.e., 
-                ```python
-                distributions.LinearDoi()
-                ```
+                If the string, `'linear'`, is given, the distribution is taken
+                to be the linear interpolation from the zero input to the point
+                passed to `attributions`, i.e., ```python
+                distributions.LinearDoi() ```
 
             multiply_activation : bool, optional
                 Whether to multiply the gradient result by its corresponding
-                activation, thus converting from "*influence space*" to 
+                activation, thus converting from "*influence space*" to
                 "*attribution space*."
         """
         super().__init__(
-            model, (InputCut(), cut),
+            model, (doi_cut, qoi_cut),
             qoi,
             doi,
             multiply_activation=multiply_activation)
@@ -594,7 +600,13 @@ class IntegratedGradients(InputAttribution):
     """
 
     def __init__(
-            self, model: ModelWrapper, baseline=None, resolution: int = 50):
+        self,
+        model: ModelWrapper,
+        baseline=None,
+        resolution: int = 50,
+        doi_cut=InputCut(),
+        qoi='max',
+        qoi_cut=OutputCut()):
         """
         Parameters:
             model:
@@ -612,8 +624,9 @@ class IntegratedGradients(InputAttribution):
                 method represents.
         """
         super().__init__(
-            model,
-            OutputCut(),
-            'max',
-            LinearDoi(baseline, resolution),
+            model=model,
+            qoi_cut=qoi_cut,
+            qoi=qoi,
+            doi_cut=doi_cut,
+            doi=LinearDoi(baseline, resolution, cut=doi_cut),
             multiply_activation=True)

@@ -1,14 +1,15 @@
 import importlib
 import os
 import tempfile
+from typing import Optional
 
 import numpy as np
 
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
-from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, InterventionLike, KwargsLike, ModelInputs, as_args
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.slices import InputCut
+from trulens.nn.slices import Cut, InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
@@ -277,12 +278,12 @@ class KerasModelWrapper(ModelWrapper):
 
     def fprop(
             self,
-            model_args,
-            model_kwargs={},
-            doi_cut=None,
-            to_cut=None,
-            attribution_cut=None,
-            intervention=None):
+            model_args: ArgsLike,
+            model_kwargs: KwargsLike = {},
+            doi_cut: Optional[Cut] = None,
+            to_cut: Optional[Cut] = None,
+            attribution_cut: Optional[Cut] = None,
+            intervention: InterventionLike = None):
         """
         fprop Forward propagate the model
 
@@ -318,20 +319,52 @@ class KerasModelWrapper(ModelWrapper):
             the input. If `attribution_cut` is supplied, also return the cut 
             activations.
         """
-        if doi_cut is None:
-            doi_cut = InputCut()
-        if to_cut is None:
-            to_cut = OutputCut()
+
+        B = get_backend()
+
+        doi_cut, to_cut, intervention, model_inputs = ModelWrapper._fprop_defaults(
+            self,
+            model_args=model_args,
+            model_kwargs=model_kwargs,
+            doi_cut=doi_cut,
+            to_cut=to_cut,
+            intervention=intervention)
+
+        # TODO: use the ModelInputs structure in this backend
+        intervention = intervention.args
+        model_args = model_inputs.args
+        model_kwargs = model_inputs.kwargs
 
         doi_tensors = self._get_layers(doi_cut)
         to_tensors = self._get_layers(to_cut)
 
-        if intervention is None:
-            intervention = model_args[0]
+        def _tensor(k):
+            if isinstance(k, B.Tensor):
+                return k
+            # any named inputs must correspond to layer names
+            return self._model.get_layer(k).output
 
-        # Convert `intervention` to a list of inputs if it isn't already.
-        if not isinstance(intervention, DATA_CONTAINER_TYPE):
-            intervention = [intervention]
+        val_map = dict()
+
+        # construct a feed_dict
+
+        # Model inputs come from model_args
+        val_map.update(
+            {
+                k: v for k, v in zip(
+                    self._model.inputs[0:len(model_args)], model_args)
+            })
+        # Other placeholders come from kwargs.
+        val_map.update({_tensor(k): v for k, v in model_kwargs.items()})
+
+        # Finally, interventions override any previously set tensors.
+        val_map.update({k: v for k, v in zip(doi_tensors, intervention)})
+        # val_map.update({_tensor(k): v for k, v in intervention.kwargs.items()})
+
+        # TODO: tiling
+
+        all_inputs = list(val_map.keys())
+        all_vals = list(val_map.values())
 
         # Tensorflow doesn't allow you to make a function that returns the same
         # tensor as it takes in. Thus, we have to have a special case for the
@@ -352,8 +385,8 @@ class KerasModelWrapper(ModelWrapper):
         # also `doi_tensors`.
         if non_identity_to_tensors:
             fprop_fn = self.keras.backend.function(
-                doi_tensors, non_identity_to_tensors)
-            out_vals = fprop_fn(intervention)
+                inputs=all_inputs, outputs=non_identity_to_tensors)
+            out_vals = fprop_fn(all_vals)
             del fprop_fn
 
         else:
@@ -362,6 +395,7 @@ class KerasModelWrapper(ModelWrapper):
         # For any `to_tensor`s that were also `from_tensor`s, insert the
         # corresponding concrete input value from `intervention` in the output's
         # place.
+
         for i in sorted(identity_map):
             out_vals.insert(i, intervention[identity_map[i]])
 
