@@ -29,6 +29,9 @@ def set_default_device(device: str):
 
     global default_device
 
+    if not isinstance(device, str):
+        device = device.type
+
     if "cuda" in device:
         default_device = torch.device(device)
     elif device == "cpu":
@@ -39,7 +42,7 @@ def set_default_device(device: str):
 def get_default_device(device=None):
     if device is not None:
         return device
-        
+
     if default_device is not None:
         return default_device
 
