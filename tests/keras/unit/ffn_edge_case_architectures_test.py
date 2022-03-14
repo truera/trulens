@@ -82,27 +82,6 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
 
         res = infl.attributions(
-            np.array([[1., 2., 3., 4., 5.]]), np.array([[1.]])
-        )
-        # note above we are sending two args instead of one as in the prior test
-
-        self.assertEqual(len(res), 2)
-        self.assertEqual(res[0].shape, (1, 5))
-        self.assertEqual(res[1].shape, (1, 1))
-
-    def test_multiple_inputs_as_multiple_args(self):
-        x1 = Input((5,))
-        z1 = Dense(6)(x1)
-        x2 = Input((1,))
-        z2 = Concatenate()([z1, x2])
-        z3 = Dense(7)(z2)
-        y = Dense(3)(z3)
-
-        model = get_model_wrapper(Model([x1, x2], y))
-
-        infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
-
-        res = infl.attributions(
             np.array([[1., 2., 3., 4., 5.]]), np.array([[1.]]))
         # note above we are sending two args instead of one as in the prior test
 
