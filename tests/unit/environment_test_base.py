@@ -1,9 +1,11 @@
-import numpy as np
-import os
 import importlib
-import trulens
+import os
 
-from trulens.nn.backend import get_backend, Backend
+import numpy as np
+
+import trulens
+from trulens.nn.backend import Backend
+from trulens.nn.backend import get_backend
 from trulens.nn.models import get_model_wrapper
 
 
@@ -14,7 +16,8 @@ class EnvironmentTestBase(object):
         self.output_size = 3
         self.model_lin_weights = np.random.normal(
             scale=2. / (self.input_size + self.output_size),
-            size=(self.input_size, self.output_size))
+            size=(self.input_size, self.output_size)
+        )
         self.model_lin_bias = np.random.uniform(-0.5, 0.5, (self.output_size,))
 
     def tearDown(self):
@@ -33,7 +36,8 @@ class EnvironmentTestBase(object):
                     forced_backend_kwargs = kwargs.copy()
                     forced_backend_kwargs['backend'] = incorrect_backend.name
                     incorrect_model_wrapper = get_model_wrapper(
-                        model, **forced_backend_kwargs)
+                        model, **forced_backend_kwargs
+                    )
                 except:
                     raised_error = True
 
@@ -47,10 +51,12 @@ class EnvironmentTestBase(object):
                 self.assertEqual(get_backend().backend, self.correct_backend)
                 if incorrect_backend == Backend.UNKNOWN:
                     self.assertEqual(
-                        type(model_wrapper), type(incorrect_model_wrapper))
+                        type(model_wrapper), type(incorrect_model_wrapper)
+                    )
                 elif not raised_error:
                     self.assertNotEqual(
-                        type(model_wrapper), type(incorrect_model_wrapper))
+                        type(model_wrapper), type(incorrect_model_wrapper)
+                    )
                 self.assertIsInstance(model_wrapper, self.model_wrapper_type)
 
     def test_model_wrapper_params(self):

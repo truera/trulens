@@ -1,17 +1,21 @@
 import os
+
 os.environ['TRULENS_BACKEND'] = 'tf.keras'
 
 from tensorflow.python.util import deprecation
+
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
+from unittest import main
+from unittest import TestCase
+
 import numpy as np
-
-from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
-from unittest import TestCase, main
 
-from trulens.nn.models.keras import KerasModelWrapper
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
+from trulens.nn.models.keras import KerasModelWrapper
 
 
 class ModelWrapperTest(ModelWrapperTestBase, TestCase):
@@ -30,7 +34,8 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
             [
                 self.layer1_weights, self.internal_bias, self.layer2_weights,
                 self.internal_bias, self.layer3_weights, self.bias
-            ])
+            ]
+        )
 
         self.layer0 = 0
         self.layer1 = 1

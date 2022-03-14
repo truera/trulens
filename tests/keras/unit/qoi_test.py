@@ -1,10 +1,13 @@
 import os
+
 os.environ['TRULENS_BACKEND'] = 'keras'
 
 from tensorflow.python.util import deprecation
+
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
-from unittest import TestCase, main
+from unittest import main
+from unittest import TestCase
 
 from tests.unit.qoi_test_base import QoiTestBase
 

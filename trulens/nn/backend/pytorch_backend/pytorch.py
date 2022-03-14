@@ -6,7 +6,9 @@
 import numpy as np
 import torch
 
-from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS, Backend
+from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS
+from trulens.nn.backend import Backend
+
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
 floatX = torch.get_default_dtype()
@@ -34,7 +36,8 @@ def gradient(scalar, wrt):
         A list of computed gradient; same shape as wrt
     """
     grads = torch.autograd.grad(
-        scalar, wrt, retain_graph=True, allow_unused=True, create_graph=True)
+        scalar, wrt, retain_graph=True, allow_unused=True, create_graph=True
+    )
     return list(grads)
 
 
@@ -58,7 +61,8 @@ def as_array(t, dtype=None):
 
     return (
         t.cpu().detach().numpy()
-        if dtype is None else t.cpu().detach().numpy().astype(dtype))
+        if dtype is None else t.cpu().detach().numpy().astype(dtype)
+    )
 
 
 def as_tensor(x, dtype=None, device=None):

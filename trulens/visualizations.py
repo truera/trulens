@@ -11,20 +11,20 @@ via visualization. This module provides several visualization methods for
 interpreting attributions as images.
 """
 
-import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.colors import Colormap
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import ListedColormap
+import matplotlib.pyplot as plt
 import numpy as np
-
 from scipy.ndimage.filters import gaussian_filter
 
-from trulens.nn.backend import get_backend
-
 from trulens.nn.attribution import InternalInfluence
+from trulens.nn.backend import get_backend
 from trulens.nn.distributions import PointDoi
 from trulens.nn.quantities import InternalChannelQoI
-from trulens.nn.slices import Cut, InputCut
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
 
 
 class Tiler(object):
@@ -76,11 +76,12 @@ class Visualizer(object):
     """
 
     def __init__(
-            self,
-            combine_channels: bool = False,
-            normalization_type: str = None,
-            blur: float = 0.,
-            cmap: Colormap = None):
+        self,
+        combine_channels: bool = False,
+        normalization_type: str = None,
+        blur: float = 0.,
+        cmap: Colormap = None
+    ):
         """
         Configures the default parameters for the `__call__` method (these can 
         be overridden by passing in values to `__call__`).
@@ -148,16 +149,17 @@ class Visualizer(object):
         self.tiler = Tiler()
 
     def __call__(
-            self,
-            attributions,
-            output_file=None,
-            imshow=True,
-            fig=None,
-            return_tiled=False,
-            combine_channels=None,
-            normalization_type=None,
-            blur=None,
-            cmap=None):
+        self,
+        attributions,
+        output_file=None,
+        imshow=True,
+        fig=None,
+        return_tiled=False,
+        combine_channels=None,
+        normalization_type=None,
+        blur=None,
+        cmap=None
+    ):
         """
         Visualizes the given attributions.
 
@@ -239,12 +241,14 @@ class Visualizer(object):
             normalization, blurring, etc.
         """
         combine_channels, normalization_type, blur, cmap = self._check_args(
-            attributions, combine_channels, normalization_type, blur, cmap)
+            attributions, combine_channels, normalization_type, blur, cmap
+        )
 
         # Combine the channels if specified.
         if combine_channels:
             attributions = attributions.mean(
-                axis=get_backend().channel_axis, keepdims=True)
+                axis=get_backend().channel_axis, keepdims=True
+            )
 
         # Blur the attributions so the explanation is smoother.
         if blur:
@@ -273,8 +277,8 @@ class Visualizer(object):
         return tiled_attributions if return_tiled else attributions
 
     def _check_args(
-            self, attributions, combine_channels, normalization_type, blur,
-            cmap):
+        self, attributions, combine_channels, normalization_type, blur, cmap
+    ):
         """
         Validates the arguments, and sets them to their default values if they
         are not specified.
@@ -282,7 +286,8 @@ class Visualizer(object):
         if attributions.ndim != 4:
             raise ValueError(
                 '`Visualizer` is inteded for 4-D image-format data. Given '
-                'input with dimension {}'.format(attributions.ndim))
+                'input with dimension {}'.format(attributions.ndim)
+            )
 
         if combine_channels is None:
             combine_channels = self.default_combine_channels
@@ -296,7 +301,9 @@ class Visualizer(object):
                 'channels, but `Visualizer` got {} channels.\n'
                 'If you are visualizing an internal layer, consider setting '
                 '`combine_channels` to True'.format(
-                    attributions.shape[channel_axis]))
+                    attributions.shape[channel_axis]
+                )
+            )
 
         if normalization_type is None:
             normalization_type = self.default_normalization_type
@@ -326,7 +333,9 @@ class Visualizer(object):
                     [
                         '\'{}\''.form(norm_type)
                         for norm_type in valid_normalization_types
-                    ]))
+                    ]
+                )
+            )
 
         if blur is None:
             blur = self.default_blur
@@ -344,17 +353,20 @@ class Visualizer(object):
         split_by_channel = normalization_type.endswith('sum')
 
         channel_split = [attributions] if split_by_channel else np.split(
-            attributions, attributions.shape[channel_axis], axis=channel_axis)
+            attributions, attributions.shape[channel_axis], axis=channel_axis
+        )
 
         normalized_attributions = []
         for c_map in channel_split:
             if normalization_type == 'magnitude_max':
                 c_map = np.abs(c_map) / (
-                    np.abs(c_map).max(axis=(1, 2, 3), keepdims=True) + eps)
+                    np.abs(c_map).max(axis=(1, 2, 3), keepdims=True) + eps
+                )
 
             elif normalization_type == 'magnitude_sum':
                 c_map = np.abs(c_map) / (
-                    np.abs(c_map).sum(axis=(1, 2, 3), keepdims=True) + eps)
+                    np.abs(c_map).sum(axis=(1, 2, 3), keepdims=True) + eps
+                )
 
             elif normalization_type.startswith('signed_max'):
                 postive_max = c_map.max(axis=(1, 2, 3), keepdims=True)
@@ -363,7 +375,8 @@ class Visualizer(object):
                 # Normalize the postive socres to [0, 1] and negative socresn to
                 # [-1, 0].
                 normalization_factor = np.where(
-                    c_map >= 0, postive_max, negative_max)
+                    c_map >= 0, postive_max, negative_max
+                )
                 c_map = c_map / (normalization_factor + eps)
 
                 # If positive-centered, normalize so that all scores are in the
@@ -374,19 +387,23 @@ class Visualizer(object):
 
             elif normalization_type == 'signed_sum':
                 postive_max = np.maximum(c_map, 0).sum(
-                    axis=(1, 2, 3), keepdims=True)
+                    axis=(1, 2, 3), keepdims=True
+                )
                 negative_max = np.maximum(-c_map, 0).sum(
-                    axis=(1, 2, 3), keepdims=True)
+                    axis=(1, 2, 3), keepdims=True
+                )
 
                 # Normalize the postive socres to ensure they sum to 1 and the
                 # negative scores to ensure they sum to -1.
                 normalization_factor = np.where(
-                    c_map >= 0, postive_max, negative_max)
+                    c_map >= 0, postive_max, negative_max
+                )
                 c_map = c_map / (normalization_factor + eps)
 
             elif normalization_type.startswith('unsigned_max'):
                 c_map = c_map / (
-                    np.abs(c_map).max(axis=(1, 2, 3), keepdims=True) + eps)
+                    np.abs(c_map).max(axis=(1, 2, 3), keepdims=True) + eps
+                )
 
                 # If positive-centered, normalize so that all scores are in the
                 # range [0, 1], with negative scores less than 0.5 and positive
@@ -415,7 +432,9 @@ class Visualizer(object):
         hotcold = np.vstack(
             (
                 binary(np.linspace(0, 1, 128)) * cool(np.linspace(0, 1, 128)),
-                hot(np.linspace(0, 1, 128))))
+                hot(np.linspace(0, 1, 128))
+            )
+        )
 
         return ListedColormap(hotcold, name='hotcold')
 
@@ -427,11 +446,12 @@ class HeatmapVisualizer(Visualizer):
     """
 
     def __init__(
-            self,
-            overlay_opacity=0.5,
-            normalization_type=None,
-            blur=10.,
-            cmap='jet'):
+        self,
+        overlay_opacity=0.5,
+        normalization_type=None,
+        blur=10.,
+        cmap='jet'
+    ):
         """
         Configures the default parameters for the `__call__` method (these can 
         be overridden by passing in values to `__call__`).
@@ -494,22 +514,24 @@ class HeatmapVisualizer(Visualizer):
             combine_channels=True,
             normalization_type=normalization_type,
             blur=blur,
-            cmap=cmap)
+            cmap=cmap
+        )
 
         self.default_overlay_opacity = overlay_opacity
 
     def __call__(
-            self,
-            attributions,
-            x,
-            output_file=None,
-            imshow=True,
-            fig=None,
-            return_tiled=False,
-            overlay_opacity=None,
-            normalization_type=None,
-            blur=None,
-            cmap=None):
+        self,
+        attributions,
+        x,
+        output_file=None,
+        imshow=True,
+        fig=None,
+        return_tiled=False,
+        overlay_opacity=None,
+        normalization_type=None,
+        blur=None,
+        cmap=None
+    ):
         """
         Visualizes the given attributions by overlaying an attribution heatmap 
         over the given image.
@@ -603,11 +625,13 @@ class HeatmapVisualizer(Visualizer):
             normalization, blurring, etc.
         """
         _, normalization_type, blur, cmap = self._check_args(
-            attributions, None, normalization_type, blur, cmap)
+            attributions, None, normalization_type, blur, cmap
+        )
 
         # Combine the channels.
         attributions = attributions.mean(
-            axis=get_backend().channel_axis, keepdims=True)
+            axis=get_backend().channel_axis, keepdims=True
+        )
 
         # Blur the attributions so the explanation is smoother.
         if blur:
@@ -655,13 +679,14 @@ class MaskVisualizer(object):
     """
 
     def __init__(
-            self,
-            blur=5.,
-            threshold=0.5,
-            masked_opacity=0.2,
-            combine_channels=True,
-            use_attr_as_opacity=False,
-            positive_only=True):
+        self,
+        blur=5.,
+        threshold=0.5,
+        masked_opacity=0.2,
+        combine_channels=True,
+        use_attr_as_opacity=False,
+        positive_only=True
+    ):
         """
         Configures the default parameters for the `__call__` method (these can 
         be overridden by passing in values to `__call__`).
@@ -706,24 +731,27 @@ class MaskVisualizer(object):
         self.tiler = Tiler()
 
     def __call__(
-            self,
-            attributions,
-            x,
-            output_file=None,
-            imshow=True,
-            fig=None,
-            return_tiled=True,
-            blur=None,
-            threshold=None,
-            masked_opacity=None,
-            combine_channels=None,
-            use_attr_as_opacity=None,
-            positive_only=None):
+        self,
+        attributions,
+        x,
+        output_file=None,
+        imshow=True,
+        fig=None,
+        return_tiled=True,
+        blur=None,
+        threshold=None,
+        masked_opacity=None,
+        combine_channels=None,
+        use_attr_as_opacity=None,
+        positive_only=None
+    ):
         channel_axis = get_backend().channel_axis
         if attributions.shape != x.shape:
             raise ValueError(
                 'Shape of `attributions` {} must match shape of `x` {}'.format(
-                    attributions.shape, x.shape))
+                    attributions.shape, x.shape
+                )
+            )
 
         if blur is None:
             blur = self.default_blur
@@ -740,7 +768,8 @@ class MaskVisualizer(object):
         if len(attributions.shape) != 4:
             raise ValueError(
                 '`MaskVisualizer` is inteded for 4-D image-format data. Given '
-                'input with dimension {}'.format(len(attributions.shape)))
+                'input with dimension {}'.format(len(attributions.shape))
+            )
 
         if combine_channels is None:
             combine_channels = self.default_combine_channels
@@ -754,7 +783,9 @@ class MaskVisualizer(object):
                 'channels, but Visualizer got {} channels.\n'
                 'If you are visualizing an internal layer, consider setting '
                 '`combine_channels` to True'.format(
-                    attributions.shape[channel_axis]))
+                    attributions.shape[channel_axis]
+                )
+            )
 
         # Blur the attributions so the explanation is smoother.
         if blur is not None:
@@ -783,7 +814,8 @@ class MaskVisualizer(object):
                 [
                     np.maximum(a > p, masked_opacity)
                     for a, p in zip(attributions, percentiles)
-                ])
+                ]
+            )
 
         else:
             masks = np.array(attributions)
@@ -809,19 +841,20 @@ class ChannelMaskVisualizer(object):
     """
 
     def __init__(
-            self,
-            model,
-            layer,
-            channel,
-            channel_axis=None,
-            agg_fn=None,
-            doi=None,
-            blur=None,
-            threshold=0.5,
-            masked_opacity=0.2,
-            combine_channels=True,
-            use_attr_as_opacity=None,
-            positive_only=None):
+        self,
+        model,
+        layer,
+        channel,
+        channel_axis=None,
+        agg_fn=None,
+        doi=None,
+        blur=None,
+        threshold=0.5,
+        masked_opacity=0.2,
+        combine_channels=True,
+        use_attr_as_opacity=None,
+        positive_only=None
+    ):
         """
         Configures the default parameters for the `__call__` method (these can 
         be overridden by passing in values to `__call__`).
@@ -891,22 +924,25 @@ class ChannelMaskVisualizer(object):
 
         self.mask_visualizer = MaskVisualizer(
             blur, threshold, masked_opacity, combine_channels,
-            use_attr_as_opacity, positive_only)
+            use_attr_as_opacity, positive_only
+        )
 
         self.infl_input = InternalInfluence(
             model, (InputCut(), Cut(layer)),
             InternalChannelQoI(channel, channel_axis, agg_fn),
-            PointDoi() if doi is None else doi)
+            PointDoi() if doi is None else doi
+        )
 
     def __call__(
-            self,
-            x,
-            x_preprocessed=None,
-            output_file=None,
-            blur=None,
-            threshold=None,
-            masked_opacity=None,
-            combine_channels=None):
+        self,
+        x,
+        x_preprocessed=None,
+        output_file=None,
+        blur=None,
+        threshold=None,
+        masked_opacity=None,
+        combine_channels=None
+    ):
         """
         Visualizes the given attributions by overlaying an attribution heatmap 
         over the given image.
@@ -956,8 +992,10 @@ class ChannelMaskVisualizer(object):
         """
 
         attrs_input = self.infl_input.attributions(
-            x if x_preprocessed is None else x_preprocessed)
+            x if x_preprocessed is None else x_preprocessed
+        )
 
         return self.mask_visualizer(
             attrs_input, x, output_file, blur, threshold, masked_opacity,
-            combine_channels)
+            combine_channels
+        )
