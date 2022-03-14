@@ -198,8 +198,6 @@ class PytorchModelWrapper(ModelWrapper):
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
             return_output = [hooks[name] for name in cut.name]
 
-        if return_tensor:
-            return return_output
         else:
             return_output = hooks[cut.name]
 
