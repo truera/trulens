@@ -21,11 +21,19 @@ from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.quantities import (
-    ComparativeQoI, InternalChannelQoI, LambdaQoI, MaxClassQoI, QoI)
-from trulens.nn.slices import Cut, InputCut, OutputCut, Slice
-from trulens.utils.typing import (
-    DATA_CONTAINER_TYPE, ModelInputs, accepts_model_inputs, as_args)
+from trulens.nn.quantities import ComparativeQoI
+from trulens.nn.quantities import InternalChannelQoI
+from trulens.nn.quantities import LambdaQoI
+from trulens.nn.quantities import MaxClassQoI
+from trulens.nn.quantities import QoI
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
+from trulens.nn.slices import OutputCut
+from trulens.nn.slices import Slice
+from trulens.utils.typing import accepts_model_inputs
+from trulens.utils.typing import as_args
+from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import ModelInputs
 
 # Attribution-related type aliases.
 CutLike = Union[Cut, int, str, None]
@@ -239,7 +247,8 @@ class InternalInfluence(AttributionMethod):
         doi_val = self.model.fprop(
             model_args=model_inputs.args,
             model_kwargs=model_inputs.kwargs,
-            to_cut=doi_cut)
+            to_cut=doi_cut
+        )
 
         # DoI supports tensor or list of tensor. unwrap args to perform DoI on
         # top level list
@@ -275,7 +284,8 @@ class InternalInfluence(AttributionMethod):
             attribution_cut=self.slice.from_cut,
             to_cut=self.slice.to_cut,
             intervention=D,
-            doi_cut=doi_cut)
+            doi_cut=doi_cut
+        )
 
         # Take the mean across the samples in the DoI.
         if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
@@ -299,7 +309,8 @@ class InternalInfluence(AttributionMethod):
             z_val = self.model.fprop(
                 model_inputs.args,
                 model_inputs.kwargs,
-                to_cut=self.slice.from_cut)
+                to_cut=self.slice.from_cut
+            )
             if isinstance(z_val, DATA_CONTAINER_TYPE) and len(z_val) == 1:
                 z_val = z_val[0]
 
@@ -313,11 +324,14 @@ class InternalInfluence(AttributionMethod):
                     else:
                         attributions[i] *= (
                             self.doi.get_activation_multiplier(
-                                z_val, **extra_args))
+                                z_val, **extra_args
+                            )
+                        )
 
             else:
                 attributions *= self.doi.get_activation_multiplier(
-                    z_val, **extra_args)
+                    z_val, **extra_args
+                )
 
         return attributions
 
@@ -500,13 +514,14 @@ class InputAttribution(InternalInfluence):
     """
 
     def __init__(
-            self,
-            model: ModelWrapper,
-            qoi_cut: CutLike = None,
-            qoi: QoiLike = 'max',
-            doi_cut: CutLike = InputCut(),
-            doi: DoiLike = 'point',
-            multiply_activation: bool = True):
+        self,
+        model: ModelWrapper,
+        qoi_cut: CutLike = None,
+        qoi: QoiLike = 'max',
+        doi_cut: CutLike = InputCut(),
+        doi: DoiLike = 'point',
+        multiply_activation: bool = True
+    ):
         """
         Parameters:
             model :
@@ -621,7 +636,8 @@ class IntegratedGradients(InputAttribution):
         resolution: int = 50,
         doi_cut=InputCut(),
         qoi='max',
-        qoi_cut=OutputCut()):
+        qoi_cut=OutputCut()
+    ):
         """
         Parameters:
             model:
@@ -644,4 +660,5 @@ class IntegratedGradients(InputAttribution):
             qoi=qoi,
             doi_cut=doi_cut,
             doi=LinearDoi(baseline, resolution, cut=doi_cut),
-            multiply_activation=True)
+            multiply_activation=True
+        )

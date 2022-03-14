@@ -6,10 +6,9 @@ import numpy as np
 import tensorflow as tf
 
 from trulens.nn.backend import get_backend
-from trulens.utils import tru_logger
-from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, InterventionLike, KwargsLike, ModelInputs, as_args
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.slices import Cut, InputCut
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
@@ -72,7 +71,8 @@ class TensorflowModelWrapper(ModelWrapper):
         )
         self._outputs = (
             output_tensors if isinstance(output_tensors, DATA_CONTAINER_TYPE)
-            else [output_tensors])
+            else [output_tensors]
+        )
 
         self._internal_tensors = (
             internal_tensor_dict if internal_tensor_dict is not None else {}
@@ -149,9 +149,10 @@ class TensorflowModelWrapper(ModelWrapper):
         # set the first few tensors from args
         feed_dict.update(
             {
-                input_tensor: xi for input_tensor, xi in zip(
-                    self._inputs[0:num_args], input_tensors)
-            })
+                input_tensor: xi for input_tensor, xi in
+                zip(self._inputs[0:num_args], input_tensors)
+            }
+        )
 
         def _tensor(k):
             if tf.is_tensor(k):
@@ -189,7 +190,8 @@ class TensorflowModelWrapper(ModelWrapper):
             #    raise ValueError(f"Expected to get {len(doi_tensors)} inputs for intervention but got {len(args)} args and {len(kwargs)} kwargs.")
 
             intervention_dict.update(
-                {k: v for k, v in zip(doi_tensors[0:len(args)], args)})
+                {k: v for k, v in zip(doi_tensors[0:len(args)], args)}
+            )
             intervention_dict.update({_tensor(k): v for k, v in kwargs.items()})
             feed_dict.update(intervention_dict)
 
@@ -228,13 +230,14 @@ class TensorflowModelWrapper(ModelWrapper):
         return feed_dict, intervention
 
     def fprop(
-            self,
-            model_args: ArgsLike,
-            model_kwargs: KwargsLike = {},
-            doi_cut: Optional[Cut] = None,
-            to_cut: Optional[Cut] = None,
-            attribution_cut: Optional[Cut] = None,  # Not used
-            intervention: InterventionLike = None):
+        self,
+        model_args: ArgsLike,
+        model_kwargs: KwargsLike = {},
+        doi_cut: Optional[Cut] = None,
+        to_cut: Optional[Cut] = None,
+        attribution_cut: Optional[Cut] = None,  # Not used
+        intervention: InterventionLike = None
+    ):
         """
         fprop Forward propagate the model
 
@@ -276,7 +279,8 @@ class TensorflowModelWrapper(ModelWrapper):
             model_kwargs=model_kwargs,
             doi_cut=doi_cut,
             to_cut=to_cut,
-            intervention=intervention)
+            intervention=intervention
+        )
 
         model_args = model_inputs.args
         model_kwargs = model_inputs.kwargs

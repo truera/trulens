@@ -10,10 +10,17 @@ it should be wrapped as a `ModelWrapper` instance.
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
 from typing import Optional, Tuple
-from trulens.nn.slices import Cut, InputCut, OutputCut
 
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
+from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import DATA_CONTAINER_TYPE, ArgsLike, InterventionLike, KwargsLike, ModelInputs, as_args
+from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import as_args
+from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import InterventionLike
+from trulens.utils.typing import KwargsLike
+from trulens.utils.typing import ModelInputs
 
 
 class ModelWrapper(AbstractBaseClass):
@@ -126,7 +133,9 @@ class ModelWrapper(AbstractBaseClass):
         return self.fprop(x)[0]
 
     def _fprop_defaults(
-            self, model_args: ArgsLike, model_kwargs: KwargsLike, doi_cut: Cut, to_cut: Cut, intervention: InterventionLike) -> Tuple[Cut, Cut, InterventionLike, ModelInputs]:
+        self, model_args: ArgsLike, model_kwargs: KwargsLike, doi_cut: Cut,
+        to_cut: Cut, intervention: InterventionLike
+    ) -> Tuple[Cut, Cut, InterventionLike, ModelInputs]:
         """
         Creates default values for fprop that should be common across all
         backends. Also initial checks of parameters with warning/error messages
@@ -152,14 +161,14 @@ class ModelWrapper(AbstractBaseClass):
                     # Intervention overrides only args.
                     # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
                     intervention = ModelInputs(
-                        as_args(intervention), model_inputs.kwargs)
+                        as_args(intervention), model_inputs.kwargs
+                    )
                     model_inputs = intervention
 
                     if len(model_inputs.kwargs) > 0:
                         tru_logger.warn(
                             "Intervention for InputCut DoI specified but contains only positional arguments. The rest will be taken from model_kwargs. If you need to intervene on keyword arguments, provide the intervention as ModelInputs container."
                         )
-                
 
             else:
                 # If no intervention given, it is equal to model inputs.
@@ -182,14 +191,15 @@ class ModelWrapper(AbstractBaseClass):
 
     @abstractmethod
     def fprop(
-            self,
-            model_args: ArgsLike,
-            model_kwargs: KwargsLike = {},
-            doi_cut: Optional[Cut] = None,
-            to_cut: Optional[Cut] = None,
-            attribution_cut: Optional[Cut] = None,
-            intervention: InterventionLike = None,
-            **kwargs):
+        self,
+        model_args: ArgsLike,
+        model_kwargs: KwargsLike = {},
+        doi_cut: Optional[Cut] = None,
+        to_cut: Optional[Cut] = None,
+        attribution_cut: Optional[Cut] = None,
+        intervention: InterventionLike = None,
+        **kwargs
+    ):
         """
         **_Used internally by `AttributionMethod`._**
 
@@ -259,7 +269,9 @@ class ModelWrapper(AbstractBaseClass):
 
         raise NotImplementedError
 
-    def _qoi_bprop_defaults(self, doi_cut: Cut, to_cut: Cut, attribution_cut: Cut) -> Tuple[Cut, Cut, Cut]:
+    def _qoi_bprop_defaults(
+        self, doi_cut: Cut, to_cut: Cut, attribution_cut: Cut
+    ) -> Tuple[Cut, Cut, Cut]:
         """Produces default values for qoi_bprop parameters that are in common across backends. Common checks and warnings will be placed here. """
 
         if doi_cut is None:
@@ -274,15 +286,16 @@ class ModelWrapper(AbstractBaseClass):
 
     @abstractmethod
     def qoi_bprop(
-            self,
-            qoi,
-            model_args: ArgsLike,
-            model_kwargs: KwargsLike = {},
-            doi_cut: Optional[Cut] = None,
-            to_cut: Optional[Cut] = None,
-            attribution_cut: Optional[Cut] = None,
-            intervention: InterventionLike = None,
-            **kwargs):
+        self,
+        qoi,
+        model_args: ArgsLike,
+        model_kwargs: KwargsLike = {},
+        doi_cut: Optional[Cut] = None,
+        to_cut: Optional[Cut] = None,
+        attribution_cut: Optional[Cut] = None,
+        intervention: InterventionLike = None,
+        **kwargs
+    ):
         """
         **_Used internally by `AttributionMethod`._**
         
