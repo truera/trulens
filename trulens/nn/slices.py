@@ -29,10 +29,11 @@ class Cut(object):
     """
 
     def __init__(
-            self,
-            name: LayerIdentifier,
-            anchor: str = 'out',
-            accessor: Optional[Callable] = None):
+        self,
+        name: LayerIdentifier,
+        anchor: str = 'out',
+        accessor: Optional[Callable] = None
+    ):
         """
         Parameters:
             name:
@@ -60,7 +61,8 @@ class Cut(object):
 
                 warn(
                     '\n\nPytorch does not have native support for indexed '
-                    'layers. Using layer indices is not recommended.\n')
+                    'layers. Using layer indices is not recommended.\n'
+                )
 
         self.name = name
         self.accessor = accessor
@@ -85,7 +87,8 @@ class Cut(object):
         else:
             layer = (
                 layer[0]
-                if isinstance(layer, list) and len(layer) == 1 else layer)
+                if isinstance(layer, list) and len(layer) == 1 else layer
+            )
             return self.accessor(layer)
 
 
@@ -121,7 +124,8 @@ class OutputCut(Cut):
     """
 
     def __init__(
-            self, anchor: str = 'out', accessor: Optional[Callable] = None):
+        self, anchor: str = 'out', accessor: Optional[Callable] = None
+    ):
         """
         Parameters:
             anchor: 
@@ -149,7 +153,8 @@ class LogitCut(Cut):
     """
 
     def __init__(
-            self, anchor: str = 'out', accessor: Optional[Callable] = None):
+        self, anchor: str = 'out', accessor: Optional[Callable] = None
+    ):
         """
         Parameters:
             anchor: 

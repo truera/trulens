@@ -1,11 +1,14 @@
-from unittest import TestCase, main
+from unittest import main
+from unittest import TestCase
+
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
 
 from tests.unit.environment_test_base import EnvironmentTestBase
-from trulens.nn.models.tensorflow_v2 import Tensorflow2ModelWrapper
 from trulens.nn.backend import Backend
+from trulens.nn.models.tensorflow_v2 import Tensorflow2ModelWrapper
 
 
 class TFSubclassModel(Model):

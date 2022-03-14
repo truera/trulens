@@ -1,22 +1,26 @@
 import os
+
 os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
 from tensorflow.python.util import deprecation
+
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
+from unittest import main
+from unittest import TestCase
+
 import numpy as np
-import tensorflow as tf
-
 from tensorflow import Graph
+import tensorflow as tf
 from tensorflow.nn import relu
-from unittest import TestCase, main
 
-from trulens.nn.backend import get_backend
 from trulens.nn.attribution import InternalInfluence
+from trulens.nn.backend import get_backend
 from trulens.nn.distributions import PointDoi
 from trulens.nn.models import get_model_wrapper
 from trulens.nn.quantities import ClassQoI
-from trulens.nn.slices import InputCut, Cut
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
 
 
 class FfnEdgeCaseArchitecturesTest(TestCase):
@@ -33,13 +37,15 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             y = z3 @ tf.random.normal((7, 3))
 
         model = get_model_wrapper(
-            graph, input_tensors=[x1, x2], output_tensors=y)
+            graph, input_tensors=[x1, x2], output_tensors=y
+        )
 
         infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
 
         res = infl.attributions(
             [np.array([[1., 2., 3., 4., 5.]]),
-             np.array([[1.]])])
+             np.array([[1.]])]
+        )
 
         self.assertEqual(len(res), 2)
         self.assertEqual(res[0].shape, (1, 5))
@@ -62,14 +68,17 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             graph,
             input_tensors=[x1, x2],
             output_tensors=y,
-            internal_tensor_dict=dict(cut_layer1=z1, cut_layer2=z2))
+            internal_tensor_dict=dict(cut_layer1=z1, cut_layer2=z2)
+        )
 
         infl = InternalInfluence(
-            model, Cut(['cut_layer1', 'cut_layer2']), ClassQoI(1), PointDoi())
+            model, Cut(['cut_layer1', 'cut_layer2']), ClassQoI(1), PointDoi()
+        )
 
         res = infl.attributions(
             [np.array([[1., 2., 3., 4., 5.]]),
-             np.array([[1.]])])
+             np.array([[1.]])]
+        )
 
         self.assertEqual(len(res), 2)
         self.assertEqual(res[0].shape, (1, 6))
@@ -88,7 +97,8 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
 
         with self.assertRaises(ValueError):
             infl = InternalInfluence(
-                model, Cut('not_a_real_layer'), ClassQoI(0), PointDoi())
+                model, Cut('not_a_real_layer'), ClassQoI(0), PointDoi()
+            )
 
             infl.attributions(np.array([[1., 1.]]))
 

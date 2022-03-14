@@ -1,7 +1,9 @@
 import datetime
 from os import path
 import sys
-from setuptools import setup, find_namespace_packages
+
+from setuptools import find_namespace_packages
+from setuptools import setup
 
 version = "0.0.3"
 versionArgument = "--customVersion"
@@ -36,4 +38,5 @@ setup(
         "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: GNU Affero General Public License v3",
     ],
-    python_requires='>=3.6')
+    python_requires='>=3.6'
+)

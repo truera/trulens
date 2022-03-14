@@ -21,7 +21,9 @@ class QoiTestBase(object):
                         [[1., 2., 3., 4.], [5., 6., 7., 8.], [9., 0., 1., 2.]],
                         [[0., 2., 4., 6.], [0., 3., 6., 9.], [0., 1., 2., 3.]]
                     ]
-                ]))
+                ]
+            )
+        )
 
     # Tests for MaxClassQoI.
 
@@ -36,7 +38,8 @@ class QoiTestBase(object):
         res = qoi(self.y)
 
         self.assertTrue(
-            np.allclose(self.B.as_array(res), np.array([1., 2., 3.])))
+            np.allclose(self.B.as_array(res), np.array([1., 2., 3.]))
+        )
 
     def test_max_class_activation_string(self):
         qoi = MaxClassQoI(activation='softmax')
@@ -44,7 +47,9 @@ class QoiTestBase(object):
 
         self.assertTrue(
             np.allclose(
-                self.B.as_array(res), np.array([0.66524096, 0.66524096])))
+                self.B.as_array(res), np.array([0.66524096, 0.66524096])
+            )
+        )
 
     def test_max_class_activation_function(self):
         qoi = MaxClassQoI(activation=self.B.softmax)
@@ -52,7 +57,9 @@ class QoiTestBase(object):
 
         self.assertTrue(
             np.allclose(
-                self.B.as_array(res), np.array([0.66524096, 0.66524096])))
+                self.B.as_array(res), np.array([0.66524096, 0.66524096])
+            )
+        )
 
     # Tests for InternalChannelQoI.
 
@@ -62,7 +69,8 @@ class QoiTestBase(object):
 
         self.assertEqual(
             self.B.int_shape(res), (2,),
-            'Should return one scalar per row in the batch')
+            'Should return one scalar per row in the batch'
+        )
 
         self.assertTrue(np.allclose(self.B.as_array(res), np.array([3., -2.])))
 
@@ -72,7 +80,8 @@ class QoiTestBase(object):
 
         self.assertEqual(
             self.B.int_shape(res), (2,),
-            'Should return one scalar per row in the batch')
+            'Should return one scalar per row in the batch'
+        )
 
         self.assertTrue(np.allclose(self.B.as_array(res), np.array([24., 36.])))
 
@@ -82,7 +91,8 @@ class QoiTestBase(object):
 
         self.assertEqual(
             self.B.int_shape(res), (2,),
-            'Should return one scalar per row in the batch')
+            'Should return one scalar per row in the batch'
+        )
 
         self.assertTrue(np.allclose(self.B.as_array(res), np.array([21., 14.])))
 
@@ -99,7 +109,8 @@ class QoiTestBase(object):
 
         self.assertEqual(
             self.B.int_shape(res), (2,),
-            'Should return one scalar per row in the batch')
+            'Should return one scalar per row in the batch'
+        )
 
         self.assertTrue(np.allclose(self.B.as_array(res), np.array([2., -1.])))
 
@@ -111,7 +122,8 @@ class QoiTestBase(object):
 
         self.assertEqual(
             self.B.int_shape(res), (2,),
-            'Should return one scalar per row in the batch')
+            'Should return one scalar per row in the batch'
+        )
 
         self.assertTrue(np.allclose(self.B.as_array(res), np.array([1., -1.])))
 
@@ -123,7 +135,8 @@ class QoiTestBase(object):
 
         self.assertEqual(
             self.B.int_shape(res), (2,),
-            'Should return one scalar per row in the batch')
+            'Should return one scalar per row in the batch'
+        )
 
         self.assertTrue(np.allclose(self.B.as_array(res), np.array([3., -1.])))
 
@@ -140,7 +153,8 @@ class QoiTestBase(object):
 
         self.assertEqual(
             self.B.int_shape(res), (2,),
-            'Should return one scalar per row in the batch')
+            'Should return one scalar per row in the batch'
+        )
 
         self.assertTrue(np.allclose(self.B.as_array(res), np.array([4., 3.])))
 
@@ -150,7 +164,8 @@ class QoiTestBase(object):
 
         self.assertEqual(
             self.B.int_shape(res), (2,),
-            'Should return one scalar per row in the batch')
+            'Should return one scalar per row in the batch'
+        )
 
         self.assertTrue(np.allclose(self.B.as_array(res), np.array([-4., -3.])))
 
@@ -160,8 +175,11 @@ class QoiTestBase(object):
 
         self.assertEqual(
             self.B.int_shape(res), (2,),
-            'Should return one scalar per row in the batch')
+            'Should return one scalar per row in the batch'
+        )
 
         self.assertTrue(
             np.allclose(
-                self.B.as_array(res), np.array([1.1023126, -0.8881443])))
+                self.B.as_array(res), np.array([1.1023126, -0.8881443])
+            )
+        )

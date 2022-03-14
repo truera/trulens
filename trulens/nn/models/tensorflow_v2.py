@@ -4,13 +4,13 @@ import tensorflow.keras as keras
 import tensorflow.keras.backend as K
 
 from trulens.nn.backend import get_backend
-from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.models.keras import KerasModelWrapper
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
+from trulens.utils.typing import DATA_CONTAINER_TYPE
 
 if tf.executing_eagerly():
     tf.config.run_functions_eagerly(True)
@@ -22,12 +22,13 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
     """
 
     def __init__(
-            self,
-            model,
-            logit_layer=None,
-            replace_softmax=False,
-            softmax_layer=-1,
-            custom_objects=None):
+        self,
+        model,
+        logit_layer=None,
+        replace_softmax=False,
+        softmax_layer=-1,
+        custom_objects=None
+    ):
         """
         __init__ Constructor
 
@@ -43,7 +44,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
             logit_layer=logit_layer,
             replace_softmax=replace_softmax,
             softmax_layer=softmax_layer,
-            custom_objects=custom_objects)
+            custom_objects=custom_objects
+        )
 
         self._eager = tf.executing_eagerly()
 
@@ -137,13 +139,14 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
         self._model.outputs = output_layers
 
     def fprop(
-            self,
-            model_args,
-            model_kwargs={},
-            doi_cut=None,
-            to_cut=None,
-            attribution_cut=None,
-            intervention=None):
+        self,
+        model_args,
+        model_kwargs={},
+        doi_cut=None,
+        to_cut=None,
+        attribution_cut=None,
+        intervention=None
+    ):
         """
         fprop Forward propagate the model
 
@@ -185,7 +188,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
         if not self._eager:
             return super().fprop(
                 model_args, model_kwargs, doi_cut, to_cut, attribution_cut,
-                intervention)
+                intervention
+            )
 
         doi_cut, to_cut, intervention, model_inputs = ModelWrapper._fprop_defaults(
             self,
@@ -193,7 +197,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
             model_kwargs=model_kwargs,
             doi_cut=doi_cut,
             to_cut=to_cut,
-            intervention=intervention)
+            intervention=intervention
+        )
 
         model_args = model_inputs.args
         model_kwargs = model_inputs.kwargs
@@ -212,7 +217,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
             # Convert `x` to a data tensor if it isn't already.
             if return_numpy:
                 intervention = ModelWrapper._nested_apply(
-                    intervention, tf.constant)
+                    intervention, tf.constant
+                )
 
         try:
             if intervention:
@@ -225,14 +231,16 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
 
                     if isinstance(val, np.ndarray):
                         doi_resolution = int(
-                            doi_repeated_batch_size / val.shape[0])
+                            doi_repeated_batch_size / val.shape[0]
+                        )
                         tile_shape = [1] * len(val.shape)
                         tile_shape[0] = doi_resolution
                         val = np.tile(val, tuple(tile_shape))
 
                     elif tf.is_tensor(val):
                         doi_resolution = int(
-                            doi_repeated_batch_size / val.shape[0])
+                            doi_repeated_batch_size / val.shape[0]
+                        )
                         val = tf.repeat(val, doi_resolution, axis=0)
 
                     batched_model_args.append(val)
@@ -241,10 +249,12 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
 
                 if not isinstance(doi_cut, InputCut):
                     from_layers = (
-                        self._get_logit_layer() if isinstance(
-                            doi_cut, LogitCut) else self._get_output_layer()
+                        self._get_logit_layer()
+                        if isinstance(doi_cut,
+                                      LogitCut) else self._get_output_layer()
                         if isinstance(doi_cut, OutputCut) else
-                        self._get_layers_by_name(doi_cut.name))
+                        self._get_layers_by_name(doi_cut.name)
+                    )
 
                     for layer, x_i in zip(from_layers, intervention):
                         if doi_cut.anchor == 'in':
@@ -277,12 +287,16 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                         results[i] = (
                             inputs[0] if (
                                 isinstance(inputs, DATA_CONTAINER_TYPE) and
-                                len(inputs) == 1) else inputs)
+                                len(inputs) == 1
+                            ) else inputs
+                        )
                     else:
                         results[i] = (
                             output[0] if (
                                 isinstance(output, DATA_CONTAINER_TYPE) and
-                                len(output) == 1) else output)
+                                len(output) == 1
+                            ) else output
+                        )
 
                 return retrieve
 
@@ -291,16 +305,18 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
 
             else:
                 to_layers = (
-                    self._get_logit_layer() if (isinstance(
-                        to_cut, LogitCut)) else self._get_output_layer() if
+                    self._get_logit_layer() if (isinstance(to_cut, LogitCut))
+                    else self._get_output_layer() if
                     (isinstance(to_cut, OutputCut)) else
-                    self._get_layers_by_name(to_cut.name))
+                    self._get_layers_by_name(to_cut.name)
+                )
 
                 results = [None for _ in to_layers]
 
                 for i, layer in enumerate(to_layers):
                     layer.retrieve_functions.append(
-                        retrieve_index(i, results, to_cut.anchor))
+                        retrieve_index(i, results, to_cut.anchor)
+                    )
 
             if attribution_cut:
                 if isinstance(attribution_cut, InputCut):
@@ -314,7 +330,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                         (isinstance(attribution_cut,
                                     LogitCut)) else self._get_output_layer() if
                         (isinstance(attribution_cut, OutputCut)) else
-                        self._get_layers_by_name(attribution_cut.name))
+                        self._get_layers_by_name(attribution_cut.name)
+                    )
 
                     attribution_results = [None for _ in attribution_layers]
 
@@ -329,7 +346,9 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                             layer.retrieve_functions.append(
                                 retrieve_index(
                                     i, attribution_results,
-                                    attribution_cut.anchor))
+                                    attribution_cut.anchor
+                                )
+                            )
 
             # Run a point.
             # Some Models require inputs as single tensors while others require a list.
@@ -346,19 +365,21 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
         if return_numpy:
             results = ModelWrapper._nested_apply(
                 results, lambda t: t.numpy()
-                if not isinstance(t, np.ndarray) else t)
+                if not isinstance(t, np.ndarray) else t
+            )
 
         return (results, attribution_results) if attribution_cut else results
 
     def qoi_bprop(
-            self,
-            qoi,
-            model_args,
-            model_kwargs={},
-            doi_cut=None,
-            to_cut=None,
-            attribution_cut=None,
-            intervention=None):
+        self,
+        qoi,
+        model_args,
+        model_kwargs={},
+        doi_cut=None,
+        to_cut=None,
+        attribution_cut=None,
+        intervention=None
+    ):
         """
         qoi_bprop Run the model from the from_layer to the qoi layer
             and give the gradients w.r.t `attribution_cut`
@@ -405,7 +426,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
         if not self._eager:
             return super().qoi_bprop(
                 qoi, model_args, model_kwargs, doi_cut, to_cut, attribution_cut,
-                intervention)
+                intervention
+            )
 
         if attribution_cut is None:
             attribution_cut = InputCut()
@@ -417,11 +439,13 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
         with tf.GradientTape(persistent=True) as tape:
 
             intervention = intervention if isinstance(
-                intervention, DATA_CONTAINER_TYPE) else [intervention]
+                intervention, DATA_CONTAINER_TYPE
+            ) else [intervention]
             # We return a numpy array if we were given a numpy array; otherwise
             # we will let the returned values remain data tensors.
             return_numpy = isinstance(intervention, np.ndarray) or isinstance(
-                intervention[0], np.ndarray)
+                intervention[0], np.ndarray
+            )
 
             # Convert `intervention` to a data tensor if it isn't already.
 
@@ -440,7 +464,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                 doi_cut=doi_cut if doi_cut else InputCut(),
                 to_cut=to_cut,
                 attribution_cut=attribution_cut,
-                intervention=intervention)
+                intervention=intervention
+            )
             if isinstance(outputs, DATA_CONTAINER_TYPE) and isinstance(
                     outputs[0], DATA_CONTAINER_TYPE):
                 outputs = outputs[0]
@@ -450,15 +475,15 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                 Q = get_backend().sum(Q)
 
         grads = [tape.gradient(q, attribution_features) for q in Q
-                ] if isinstance(Q, DATA_CONTAINER_TYPE) else tape.gradient(
-                    Q, attribution_features)
+                ] if isinstance(Q, DATA_CONTAINER_TYPE
+                               ) else tape.gradient(Q, attribution_features)
 
-        grads = grads[0] if isinstance(
-            grads, DATA_CONTAINER_TYPE) and len(grads) == 1 else grads
+        grads = grads[0] if isinstance(grads, DATA_CONTAINER_TYPE
+                                      ) and len(grads) == 1 else grads
 
         grads = [attribution_cut.access_layer(g) for g in grads] if isinstance(
-            grads,
-            DATA_CONTAINER_TYPE) else attribution_cut.access_layer(grads)
+            grads, DATA_CONTAINER_TYPE
+        ) else attribution_cut.access_layer(grads)
 
         del tape
 
@@ -468,9 +493,9 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                                            get_backend().as_array)
                 for g in grads
             ] if isinstance(
-                grads, DATA_CONTAINER_TYPE) else ModelWrapper._nested_apply(
-                    grads,
-                    get_backend().as_array)
+                grads, DATA_CONTAINER_TYPE
+            ) else ModelWrapper._nested_apply(grads,
+                                              get_backend().as_array)
 
-        return grads[0] if isinstance(
-            grads, DATA_CONTAINER_TYPE) and len(grads) == 1 else grads
+        return grads[0] if isinstance(grads, DATA_CONTAINER_TYPE
+                                     ) and len(grads) == 1 else grads

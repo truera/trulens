@@ -1,10 +1,14 @@
 import os
-from unittest import TestCase, main
-from torch.nn import Linear, Module
+from unittest import main
+from unittest import TestCase
+
+from torch.nn import Linear
+from torch.nn import Module
 
 from tests.unit.environment_test_base import EnvironmentTestBase
+from trulens.nn.backend import Backend
+from trulens.nn.backend import get_backend
 from trulens.nn.models.pytorch import PytorchModelWrapper
-from trulens.nn.backend import get_backend, Backend
 
 
 class EnvironmentTest(EnvironmentTestBase, TestCase):
