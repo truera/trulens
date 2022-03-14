@@ -516,9 +516,9 @@ class InputAttribution(InternalInfluence):
     def __init__(
         self,
         model: ModelWrapper,
-        qoi_cut: CutLike = None,
+        qoi_cut: CutLike = None,  # see WARNING-LOAD-INIT
         qoi: QoiLike = 'max',
-        doi_cut: CutLike = InputCut(),
+        doi_cut: CutLike = None,  # see WARNING-LOAD-INIT
         doi: DoiLike = 'point',
         multiply_activation: bool = True
     ):
@@ -642,9 +642,9 @@ class IntegratedGradients(InputAttribution):
         model: ModelWrapper,
         baseline=None,
         resolution: int = 50,
-        doi_cut=InputCut(),
+        doi_cut=None,  # see WARNING-LOAD-INIT
         qoi='max',
-        qoi_cut=OutputCut()
+        qoi_cut=None  # see WARNING-LOAD-INIT
     ):
         """
         Parameters:
