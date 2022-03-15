@@ -23,7 +23,6 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         super(ModelWrapperTest, self).setUp()
 
         graph = Graph()
-
         with graph.as_default():
             x = placeholder('float32', (None, 2))
             z1 = relu(x @ self.layer1_weights + self.internal_bias)
@@ -38,6 +37,39 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         self.layer1 = 'z1'
         self.layer2 = z2.name
         self.out = y.name
+
+        # kwarg handling not yet implemented for tf backend:
+        """
+        graph = Graph()
+        with graph.as_default():
+            # args
+            X = placeholder('float32', (None, 3), name="X")
+            Coeffs = placeholder('float32', (None, 3), name="Coeffs")
+            divisor = placeholder('float32', (None, 1), name="divisor")
+
+            # kwargs for backends that support them
+            Degree = placeholder('float32', (None, 3), name="Degree")
+            offset = placeholder('float32', (None, 1), name="offset")
+
+            layer1 = X
+            layer2 = (layer1**Degree) * Coeffs / divisor + offset
+            y = layer2
+
+        # args must be provided first in input tensors, otherwise tf1 wrapper kwargs support fails
+        self.model_kwargs = TensorflowModelWrapper(
+            graph, (X, Coeffs, divisor, Degree, offset), y,
+            dict(
+                X=X,
+                Coeffs=Coeffs,
+                Degree=Degree,
+                divisor=divisor,
+                offset=offset,
+                layer1=layer1,
+                layer2=layer2))
+
+        self.model_kwargs_layer1 = "layer1"
+        self.model_kwargs_layer2 = "layer2"
+        """
 
 
 if __name__ == '__main__':
