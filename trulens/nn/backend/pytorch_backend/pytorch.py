@@ -17,6 +17,40 @@ dim_order = 'channels_first'
 channel_axis = 1
 backend = Backend.PYTORCH
 
+# May be needed when initializing tensors without another tensor to get the
+# device as in zeros_like or as_tensor called on numpy arrays.
+default_device = None
+
+def set_default_device(device: str):
+    """
+    Set the default device so methods that do not take in a tensor can still
+    produce a tensor on the right device.
+    """
+
+    global default_device
+
+    if not isinstance(device, str):
+        device = device.type
+
+    if "cuda" in device:
+        default_device = torch.device(device)
+    elif device == "cpu":
+        default_device = torch.device(device)
+    else:
+        raise ValueError(f"Unhandled device type {device}")
+
+def get_default_device(device=None):
+    if device is not None:
+        return device
+
+    if default_device is not None:
+        return default_device
+
+    if torch.cuda.is_available():
+        return torch.device("cuda:0")
+    
+    return torch.device('cpu')
+
 
 def gradient(scalar, wrt):
     """
@@ -85,10 +119,7 @@ def as_tensor(x, dtype=None, device=None):
     if dtype is None and x.dtype.kind == 'f':
         dtype = floatX
 
-    if device is None:
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    return torch.tensor(x, dtype=dtype).to(device)
+    return torch.tensor(x, dtype=dtype).to(get_default_device())
 
 
 def int_shape(t):
@@ -330,8 +361,11 @@ def zeros_like(t, dtype=None, requires_grad=False):
         A tensor of zeros has the same shape of input tensor
     """
     if not is_tensor(t):
+        dev = get_default_device()
         t = as_tensor(t)
-    return torch.zeros_like(t, dtype=dtype, requires_grad=requires_grad)
+    else:
+        dev = t.device
+    return torch.zeros_like(t, dtype=dtype, requires_grad=requires_grad, device=dev)
 
 
 def random_normal_like(t, mean=0., var=1.):
