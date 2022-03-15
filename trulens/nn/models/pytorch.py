@@ -7,6 +7,7 @@ import numpy as np
 import torch
 
 from trulens.nn.backend import get_backend
+from trulens.nn.backend.pytorch_backend import pytorch
 from trulens.nn.backend.pytorch_backend.pytorch import Tensor
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import QoI
@@ -64,13 +65,14 @@ class PytorchModelWrapper(ModelWrapper):
                 'pytorch model wrapper must pass the input_shape parameter'
             )
         model.eval()
+        
         if device is None:
-            self.device = torch.device(
-                "cuda:0" if torch.cuda.is_available() else "cpu"
-            )
-        else:
-            self.device = device
+            device = pytorch.get_default_device()
+        
+        pytorch.set_default_device(device)
+        self.device = device
         model.to(self.device)
+
         self._model = model
         self._input_shape = input_shape
         self._input_dtype = input_dtype
