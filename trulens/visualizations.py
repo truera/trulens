@@ -1049,7 +1049,7 @@ class Output(ABC):
 # TODO(piotrm): implement a latex output format
 
 
-class Text(Output):
+class PlainText(Output):
     """Plain text visualization output format."""
 
     def blank(self):
@@ -1175,7 +1175,9 @@ class NLP(object):
                 The wrapped model whose channel we're visualizing.
 
             output: Output, optional
-                Visualization output format. Defaults to Text unless ipython is detected and in which case defaults to IPython format.
+                Visualization output format. Defaults to PlainText unless
+                ipython is detected and in which case defaults to IPython
+                format.
 
             labels: Iterable[str], optional
                 Names of prediction classes for classification models.
@@ -1187,13 +1189,16 @@ class NLP(object):
                 Method to invert/decode the tokenization.
 
             input_accessor: Callable[[ModelInputs], Iterable[Tensor]]
-                Method to extract input/token ids from model inputs (tokenize output) if needed.
+                Method to extract input/token ids from model inputs (tokenize
+                output) if needed.
 
             output_accessor: Callable[[ModelOutput], Iterable[Tensor]]
-                Method to extract outout logits from output structures if needed.
+                Method to extract outout logits from output structures if
+                needed.
 
             attr_aggregation: Callable[[Tensor], Tensor]
-                Method to aggregate attribution for embedding into a single value. Defaults to sum.
+                Method to aggregate attribution for embedding into a single
+                value. Defaults to sum.
 
             hidden_tokens: Set[int]
                 For token-based visualizations, which tokens to hide.
@@ -1206,9 +1211,9 @@ class NLP(object):
                 output = IPython()
 
             except NameError:
-                output = Text()
+                output = PlainText()
                 tru_logger(
-                    "WARNING: could not guess preferred visualization output format, using Text"
+                    "WARNING: could not guess preferred visualization output format, using PlainText"
                 )
 
         # TODO: automatic inference of various parameters for common repositories like huggingface, tfhub.
