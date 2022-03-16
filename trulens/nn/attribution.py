@@ -236,7 +236,7 @@ class InternalInfluence(AttributionMethod):
 
         self.slice = InternalInfluence.__get_slice(cuts)
         self.qoi = InternalInfluence.__get_qoi(qoi)
-        self.doi = InternalInfluence.__get_doi(doi)
+        self.doi = InternalInfluence.__get_doi(doi, cut=self.slice.from_cut)
         self._do_multiply = multiply_activation
 
     def attributions(self, *model_args, **model_kwargs):
@@ -384,7 +384,7 @@ class InternalInfluence(AttributionMethod):
             raise ValueError('Unrecognized argument type for `qoi`')
 
     @staticmethod
-    def __get_doi(doi_arg):
+    def __get_doi(doi_arg, cut=None):
         """
         Helper function to get a `DoI` object from more user-friendly primitive 
         arguments.
@@ -397,10 +397,10 @@ class InternalInfluence(AttributionMethod):
             # We can specify `PointDoi` via the string 'point', or `LinearDoi`
             # via the string 'linear'.
             if doi_arg == 'point':
-                return PointDoi()
+                return PointDoi(cut=cut)
 
             elif doi_arg == 'linear':
-                return LinearDoi()
+                return LinearDoi(cut=cut)
 
             else:
                 raise ValueError(

@@ -435,6 +435,7 @@ class PytorchModelWrapper(ModelWrapper):
         ]
 
         # Run the network.
+        self._model.eval() # needed for determinism sometimes
         output = model_inputs.call_on(self._model)
 
         if isinstance(output, tuple):
@@ -519,8 +520,6 @@ class PytorchModelWrapper(ModelWrapper):
             doi_cut=doi_cut, to_cut=to_cut, attribution_cut=attribution_cut
         )
 
-        self._model.train()
-
         y, zs = self.fprop(
             model_args=model_args,
             model_kwargs=model_kwargs,
@@ -530,6 +529,9 @@ class PytorchModelWrapper(ModelWrapper):
             intervention=intervention,
             return_tensor=True
         )
+
+        # Unsure if needed.
+        self._model.train()
 
         y = to_cut.access_layer(y)
         grads_list = []
@@ -553,6 +555,7 @@ class PytorchModelWrapper(ModelWrapper):
             # attributions. If one wants a specific QoI, the sum hides the bugs
             # in the definition of that QoI. It might be better to give an error
             # when QoI is not a scalar.
+
             grads_flat = [
                 B.gradient(scalarize(q), z_flat) for q in qoi_out
             ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
