@@ -21,6 +21,7 @@ backend = Backend.PYTORCH
 # device as in zeros_like or as_tensor called on numpy arrays.
 default_device = None
 
+
 def set_default_device(device: str):
     """
     Set the default device so methods that do not take in a tensor can still
@@ -39,6 +40,7 @@ def set_default_device(device: str):
     else:
         raise ValueError(f"Unhandled device type {device}")
 
+
 def get_default_device(device=None):
     if device is not None:
         return device
@@ -48,7 +50,7 @@ def get_default_device(device=None):
 
     if torch.cuda.is_available():
         return torch.device("cuda:0")
-    
+
     return torch.device('cpu')
 
 
@@ -365,7 +367,9 @@ def zeros_like(t, dtype=None, requires_grad=False):
         t = as_tensor(t)
     else:
         dev = t.device
-    return torch.zeros_like(t, dtype=dtype, requires_grad=requires_grad, device=dev)
+    return torch.zeros_like(
+        t, dtype=dtype, requires_grad=requires_grad, device=dev
+    )
 
 
 def random_normal_like(t, mean=0., var=1.):

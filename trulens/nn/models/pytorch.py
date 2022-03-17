@@ -65,10 +65,10 @@ class PytorchModelWrapper(ModelWrapper):
                 'pytorch model wrapper must pass the input_shape parameter'
             )
         model.eval()
-        
+
         if device is None:
             device = pytorch.get_default_device()
-        
+
         pytorch.set_default_device(device)
         self.device = device
         model.to(self.device)
@@ -435,7 +435,7 @@ class PytorchModelWrapper(ModelWrapper):
         ]
 
         # Run the network.
-        self._model.eval() # needed for determinism sometimes
+        self._model.eval()  # needed for determinism sometimes
         output = model_inputs.call_on(self._model)
 
         if isinstance(output, tuple):
