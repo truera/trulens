@@ -14,7 +14,8 @@ interpreting attributions as images.
 # TODO: remove pip requirements from visualizers and move them to imports upon
 # their initialization.
 
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 import importlib
 from tkinter import S
 from typing import Callable, Iterable, Optional, Set, TypeVar
@@ -1016,7 +1017,7 @@ class ChannelMaskVisualizer(object):
 
 class Output(ABC):
     """Base class for visualization output formats."""
-    
+
     @abstractmethod
     def blank(self) -> str:
         ...
