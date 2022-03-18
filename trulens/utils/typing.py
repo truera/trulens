@@ -13,7 +13,8 @@ from typing import (
 
 import numpy as np
 
-from trulens.nn.backend import Tensor
+# Each backend should define this.
+Tensor = TypeVar("Tensor")
 
 # Atomic model inputs (at least from our perspective)
 DataLike = Union[np.ndarray, Tensor]
@@ -51,6 +52,12 @@ def as_args(ele):
     else:
         return [ele]
 
+# Opposite of the above.
+def as_container(ele):
+    if isinstance(ele, DATA_CONTAINER_TYPE) and len(ele) == 1 and isinstance(ele[0], DATA_CONTAINER_TYPE):
+        return ele[0]
+    else:
+        return ele
 
 class IndexableUtils:
 

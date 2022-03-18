@@ -3,9 +3,11 @@
 # pylint: disable=no-member
 # pylint: disable=not-callable
 
+from contextlib import contextmanager
 import numpy as np
 import torch
 
+import trulens.nn.backend as base_backend
 from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS
 from trulens.nn.backend import Backend
 
@@ -26,10 +28,14 @@ def set_default_device(device: str):
     Set the default device so methods that do not take in a tensor can still
     produce a tensor on the right device.
     """
-
+        
     global default_device
 
-    if not isinstance(device, str):
+    old_device = default_device
+    if device is None:
+        return old_device
+
+    if isinstance(device, torch.device):
         device = device.type
 
     if "cuda" in device:
@@ -38,6 +44,8 @@ def set_default_device(device: str):
         default_device = torch.device(device)
     else:
         raise ValueError(f"Unhandled device type {device}")
+
+    return old_device
 
 def get_default_device(device=None):
     if device is not None:
@@ -51,6 +59,13 @@ def get_default_device(device=None):
     
     return torch.device('cpu')
 
+def grace(*settings, device=None):
+    return base_backend.grace(
+        *settings,
+        call_before = lambda: set_default_device(device),
+        call_after = lambda old_device: set_default_device(old_device),
+        device=device
+    )
 
 def gradient(scalar, wrt):
     """

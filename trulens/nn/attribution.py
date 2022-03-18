@@ -17,6 +17,7 @@ from typing import Callable, Tuple, Union
 import numpy as np
 
 from trulens.nn.backend import get_backend
+from trulens.nn.backend.pytorch_backend.pytorch import grace
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
@@ -30,7 +31,7 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
-from trulens.utils.typing import accepts_model_inputs
+from trulens.utils.typing import accepts_model_inputs, as_container
 from trulens.utils.typing import as_args
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import ModelInputs
@@ -242,13 +243,18 @@ class InternalInfluence(AttributionMethod):
     def attributions(self, *model_args, **model_kwargs):
         model_inputs = ModelInputs(model_args, model_kwargs)
 
+        # Create a message for out-of-memory errors regarding batch size.
+        batch_size = model_inputs.first().shape[0]
+        param_msgs = [f"batch size = {batch_size}"]
+
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
-        doi_val = self.model.fprop(
-            model_args=model_inputs.args,
-            model_kwargs=model_inputs.kwargs,
-            to_cut=doi_cut
-        )
+        with grace(*param_msgs): # Handles out-of-memory messages.
+            doi_val = self.model.fprop(
+                model_args=model_inputs.args,
+                model_kwargs=model_inputs.kwargs,
+                to_cut=doi_cut
+            )
 
         # DoI supports tensor or list of tensor. unwrap args to perform DoI on
         # top level list
@@ -259,12 +265,13 @@ class InternalInfluence(AttributionMethod):
         # TODO(piotrm): automatic handling of other common containers like the ones
         # used for huggingface models.
         # TODO(piotrm): this unwrapping may not be necessary any more
-        if isinstance(doi_val, DATA_CONTAINER_TYPE) and isinstance(
-                doi_val[0], DATA_CONTAINER_TYPE):
-            doi_val = doi_val[0]
+        doi_val = as_container(doi_val)
+        #if isinstance(doi_val, DATA_CONTAINER_TYPE) and isinstance(
+        #        doi_val[0], DATA_CONTAINER_TYPE):
+        #    doi_val = doi_val[0]
 
-        if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
-            doi_val = doi_val[0]
+        #if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
+        #    doi_val = doi_val[0]
 
         if accepts_model_inputs(self.doi):
             D = self.doi(doi_val, model_inputs=model_inputs)
@@ -276,16 +283,20 @@ class InternalInfluence(AttributionMethod):
         D = InternalInfluence.__concatenate_doi(D)
         B = get_backend()
 
+        # Create a message for out-of-memory errors regarding doi_size.
+        doi_size_msg = f"distribution of interest size = {n_doi}"
+
         # Calculate the gradient of each of the points in the DoI.
-        qoi_grads = self.model.qoi_bprop(
-            qoi=self.qoi,
-            model_args=model_inputs.args,
-            model_kwargs=model_inputs.kwargs,
-            attribution_cut=self.slice.from_cut,
-            to_cut=self.slice.to_cut,
-            intervention=D,
-            doi_cut=doi_cut
-        )
+        with grace(param_msgs + [doi_size_msg]): # Handles out-of-memory messages.
+            qoi_grads = self.model.qoi_bprop(
+                qoi=self.qoi,
+                model_args=model_inputs.args,
+                model_kwargs=model_inputs.kwargs,
+                attribution_cut=self.slice.from_cut,
+                to_cut=self.slice.to_cut,
+                intervention=D,
+                doi_cut=doi_cut
+            )
 
         # Take the mean across the samples in the DoI.
         if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
@@ -306,11 +317,13 @@ class InternalInfluence(AttributionMethod):
 
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
-            z_val = self.model.fprop(
-                model_inputs.args,
-                model_inputs.kwargs,
-                to_cut=self.slice.from_cut
-            )
+            with grace(param_msgs):
+                z_val = self.model.fprop(
+                    model_inputs.args,
+                    model_inputs.kwargs,
+                    to_cut=self.slice.from_cut
+                )
+
             if isinstance(z_val, DATA_CONTAINER_TYPE) and len(z_val) == 1:
                 z_val = z_val[0]
 
@@ -495,6 +508,7 @@ class InternalInfluence(AttributionMethod):
         else:
             if not isinstance(D[0], np.ndarray):
                 D = [get_backend().as_array(d) for d in D]
+
             return np.concatenate(D)
 
 

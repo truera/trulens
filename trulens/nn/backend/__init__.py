@@ -1,21 +1,82 @@
+from contextlib import contextmanager
 from enum import Enum
 import importlib
 import os
+from re import S
 import traceback
 from typing import TypeVar
 
 from trulens.utils import tru_logger
+from trulens.utils.typing import as_container
 
 # Do not use directly, use get_backend
 _TRULENS_BACKEND_IMPL = None
 
 # Each backend module provides:
-Tensor = TypeVar("Tensor")
+# Tensor = TypeVar("Tensor")
 # dim_order
 # channel_axis
 # backend
 # floatX
 
+class OutOfMemory(RuntimeError):
+    def __init__(self, settings, **kwargs):
+        self.kwargs = kwargs
+        self.settings = settings
+
+    def __str__(self):
+        message = f"Ran out of memory ({self.kwargs}). Consider reducing memory-impactful parameters.\n"
+        for setting in self.settings:
+            message += "  " + setting + "\n"
+
+        return message
+
+@contextmanager
+def grace(*settings, call_before=None, call_after=None, **kwargs):
+    """
+    Context manager to catch device memory issues and report better suggestions
+    than default exceptions.
+    
+    Usage:
+
+        with grace("batch size=1000"):
+            # Something memory intensive that could be helped by reducing batch
+            # size.
+
+    This will catch out of memory issues and report the messages included in the
+    grace calls as suggestions for parameters to adjust. You can stack these and
+    put suggestions indicative of memory-related settings like batch sizes,
+    intervention sizes, data types, etc. Inside the context, another grace can
+    be used with more messages which will be combined for reporting if memory
+    does run out.
+
+    Before/after call are for extending this method with additional tasks like
+    default device handling in pytorch.
+    """
+
+    settings = as_container(list(settings))
+    state = None
+
+    try:
+        if call_before is not None:
+            state = call_before()
+
+        yield None
+
+    except OutOfMemory as e:
+        raise OutOfMemory(
+            settings=e.settings + settings, **e.kwargs
+        )
+
+    except RuntimeError as e:
+        if "out of memory" in str(e):
+            raise OutOfMemory(settings=settings, **kwargs)
+        else:
+            raise e
+
+    finally:
+        if call_after is not None:
+            call_after(state)
 
 class Backend(Enum):
     PYTORCH = 1
