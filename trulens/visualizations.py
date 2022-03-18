@@ -29,7 +29,7 @@ from scipy.ndimage.filters import gaussian_filter
 
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
-from trulens.nn.backend import Tensor
+from trulens.utils.typing import Tensor
 from trulens.nn.distributions import PointDoi
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import InternalChannelQoI

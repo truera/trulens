@@ -3,7 +3,7 @@
 from typing import Callable, Optional, Set
 
 from trulens.nn.backend import get_backend
-from trulens.nn.backend import Tensor
+from trulens.utils.typing import Tensor
 from trulens.utils.typing import BaselineLike
 from trulens.utils.typing import DataLike
 from trulens.utils.typing import ModelInputs

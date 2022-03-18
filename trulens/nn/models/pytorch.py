@@ -8,7 +8,7 @@ import torch
 
 from trulens.nn.backend import get_backend
 from trulens.nn.backend.pytorch_backend import pytorch
-from trulens.nn.backend.pytorch_backend.pytorch import Tensor
+from trulens.nn.backend.pytorch_backend.pytorch import Tensor, grace
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
@@ -320,14 +320,17 @@ class PytorchModelWrapper(ModelWrapper):
                 tile_shape[0] = doi_resolution
                 repeat_shape = tuple(tile_shape)
 
-                if isinstance(val, np.ndarray):
-                    return np.tile(val, repeat_shape)
-                elif torch.is_tensor(val):
-                    return val.repeat(repeat_shape)
-                else:
-                    raise ValueError(
-                        f"unhandled tensor type {val.__class__.__name__}"
-                    )
+                with grace(device=self._model.device):
+                    # likely place where memory issues might arise
+
+                    if isinstance(val, np.ndarray):
+                        return np.tile(val, repeat_shape)
+                    elif torch.is_tensor(val):
+                        return val.repeat(repeat_shape)
+                    else:
+                        raise ValueError(
+                            f"unhandled tensor type {val.__class__.__name__}"
+                        )
 
             # tile args and kwargs if necessary
             model_inputs = model_inputs.map(tile_val)
@@ -434,8 +437,9 @@ class PytorchModelWrapper(ModelWrapper):
             ) for name, anchor in names_and_anchors if name is not None
         ]
 
-        # Run the network.
-        output = model_inputs.call_on(self._model)
+        with grace(device=self._model.device):
+            # Run the network.
+            output = model_inputs.call_on(self._model)
 
         if isinstance(output, tuple):
             output = output[0]
@@ -553,10 +557,12 @@ class PytorchModelWrapper(ModelWrapper):
             # attributions. If one wants a specific QoI, the sum hides the bugs
             # in the definition of that QoI. It might be better to give an error
             # when QoI is not a scalar.
-            grads_flat = [
-                B.gradient(scalarize(q), z_flat) for q in qoi_out
-            ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
-                           ) else B.gradient(scalarize(qoi_out), z_flat)
+            with grace(device=self._model.device):
+                # Common place where memory issues arise.
+
+                grads_flat = [
+                    B.gradient(scalarize(q), z_flat) for q in qoi_out
+                ] if isinstance(qoi_out, DATA_CONTAINER_TYPE) else B.gradient(scalarize(qoi_out), z_flat)
 
             grads = [
                 ModelWrapper._unflatten(g, z, count=[0]) for g in grads_flat
