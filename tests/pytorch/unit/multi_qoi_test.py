@@ -6,6 +6,7 @@ from unittest import main
 from unittest import TestCase
 
 import numpy as np
+import torch
 from torch import cat
 from torch.nn import GRU
 from torch.nn import Linear
@@ -37,12 +38,17 @@ class MultiQoiTest(MultiQoiTestBase, TestCase):
                 z2 = self.dense(z1[0])
                 return z2
 
+        torch.backends.cudnn.enabled = False
+        # We have the same problem as this: https://github.com/pytorch/captum/issues/564
+
         model = get_model_wrapper(
             M(), input_shape=(num_timesteps, num_features)
         )
         super(MultiQoiTest, self).per_timestep_qoi(
             model, num_classes, num_features, num_timesteps, batch_size
         )
+
+        torch.backends.cudnn.enabled = True
 
 
 if __name__ == '__main__':
