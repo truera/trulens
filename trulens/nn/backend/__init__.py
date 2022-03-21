@@ -158,6 +158,8 @@ def get_backend(suppress_warnings=False):
 
 
 _ALL_BACKEND_API_FUNCTIONS = [
+    'set_seed',
+    'is_deterministic',
     'dim_order',
     'channel_axis',
     'floatX',

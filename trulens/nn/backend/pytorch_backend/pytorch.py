@@ -24,9 +24,19 @@ dim_order = 'channels_first'
 channel_axis = 1
 backend = Backend.PYTORCH
 
+
+def set_seed(seed: int) -> None:
+    torch.manual_seed(seed)
+
+
+def is_deterministic() -> bool:
+    return "cuda" not in get_default_device().type
+
+
 # May be needed when initializing tensors without another tensor to get the
 # device as in zeros_like or as_tensor called on numpy arrays.
 default_device = None
+
 
 def set_default_device(device: str):
     """
@@ -50,7 +60,6 @@ def set_default_device(device: str):
     else:
         raise ValueError(f"Unhandled device type {device}")
 
-    return old_device
 
 def get_default_device(device=None):
     if device is not None:
@@ -61,7 +70,7 @@ def get_default_device(device=None):
 
     if torch.cuda.is_available():
         return torch.device("cuda:0")
-    
+
     return torch.device('cpu')
 
 def grace(*settings, device=None):
@@ -390,7 +399,9 @@ def zeros_like(t, dtype=None, requires_grad=False):
         t = as_tensor(t)
     else:
         dev = t.device
-    return torch.zeros_like(t, dtype=dtype, requires_grad=requires_grad, device=dev)
+    return torch.zeros_like(
+        t, dtype=dtype, requires_grad=requires_grad, device=dev
+    )
 
 
 def random_normal_like(t, mean=0., var=1.):

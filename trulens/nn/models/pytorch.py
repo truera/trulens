@@ -65,10 +65,10 @@ class PytorchModelWrapper(ModelWrapper):
                 'pytorch model wrapper must pass the input_shape parameter'
             )
         model.eval()
-        
+
         if device is None:
             device = pytorch.get_default_device()
-        
+
         pytorch.set_default_device(device)
         self.device = device
         model.to(self.device)
@@ -439,7 +439,7 @@ class PytorchModelWrapper(ModelWrapper):
 
         with grace(device=self.device):
             # Run the network.
-            print("model_inputs=", model_inputs)
+            self._model.eval()  # needed for determinism sometimes
             output = model_inputs.call_on(self._model)
 
         if isinstance(output, tuple):
@@ -524,8 +524,6 @@ class PytorchModelWrapper(ModelWrapper):
             doi_cut=doi_cut, to_cut=to_cut, attribution_cut=attribution_cut
         )
 
-        self._model.train()
-
         y, zs = self.fprop(
             model_args=model_args,
             model_kwargs=model_kwargs,
@@ -550,40 +548,47 @@ class PytorchModelWrapper(ModelWrapper):
 
             return B.sum(t)
 
-        for z in zs:
-            z_flat = ModelWrapper._flatten(z)
-            qoi_out = qoi(y)
+        try:
+            for z in zs:
+                z_flat = ModelWrapper._flatten(z)
+                qoi_out = qoi(y)
 
-            # TODO(piotrm): this sum is a source of much bugs for me when using
-            # attributions. If one wants a specific QoI, the sum hides the bugs
-            # in the definition of that QoI. It might be better to give an error
-            # when QoI is not a scalar.
-            with grace(device=self.device):
-                # Common place where memory issues arise.
+                # TODO(piotrm): this sum is a source of much bugs for me when using
+                # attributions. If one wants a specific QoI, the sum hides the bugs
+                # in the definition of that QoI. It might be better to give an error
+                # when QoI is not a scalar.
+                with grace(device=self.device):
+                    # Common place where memory issues arise.
 
-                grads_flat = [
-                    B.gradient(scalarize(q), z_flat) for q in qoi_out
-                ] if isinstance(qoi_out, DATA_CONTAINER_TYPE) else B.gradient(scalarize(qoi_out), z_flat)
+                    grads_flat = [
+                        B.gradient(scalarize(q), z_flat) for q in qoi_out
+                    ] if isinstance(qoi_out, DATA_CONTAINER_TYPE) else B.gradient(scalarize(qoi_out), z_flat)
 
-            grads = [
-                ModelWrapper._unflatten(g, z, count=[0]) for g in grads_flat
-            ] if isinstance(qoi_out,
-                            DATA_CONTAINER_TYPE) else ModelWrapper._unflatten(
-                                grads_flat, z, count=[0]
-                            )
+                grads = [
+                    ModelWrapper._unflatten(g, z, count=[0]) for g in grads_flat
+                ] if isinstance(qoi_out,
+                                DATA_CONTAINER_TYPE) else ModelWrapper._unflatten(
+                                    grads_flat, z, count=[0]
+                                )
 
-            grads = [attribution_cut.access_layer(g) for g in grads
-                    ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
-                                   ) else attribution_cut.access_layer(grads)
+                grads = [attribution_cut.access_layer(g) for g in grads
+                        ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
+                                    ) else attribution_cut.access_layer(grads)
 
-            grads = [B.as_array(g) for g in grads
-                    ] if isinstance(qoi_out,
-                                    DATA_CONTAINER_TYPE) else B.as_array(grads)
+                grads = [B.as_array(g) for g in grads
+                        ] if isinstance(qoi_out,
+                                        DATA_CONTAINER_TYPE) else B.as_array(grads)
 
-            grads_list.append(grads)
+        except RuntimeError as e:
+            if "cudnn RNN backward can only be called in training mode" in str(e):
+                raise RuntimeError(
+                    "Cannot get deterministic gradients from RNN's with cudnn. See more about this issue here: https://github.com/pytorch/captum/issues/564 .\n"
+                    "Consider setting 'torch.backends.cudnn.enabled = False' for now."
+                )
+            raise e
+
 
         del y  # TODO: garbage collection
-        self._model.eval()
 
         return grads_list
         # NOTE(piotrm): commented out the below to have more consistent output types/shapes
