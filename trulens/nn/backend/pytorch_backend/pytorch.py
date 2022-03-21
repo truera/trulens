@@ -17,6 +17,15 @@ dim_order = 'channels_first'
 channel_axis = 1
 backend = Backend.PYTORCH
 
+
+def set_seed(seed: int) -> None:
+    torch.manual_seed(seed)
+
+
+def is_deterministic() -> bool:
+    return "cuda" not in get_default_device().type
+
+
 # May be needed when initializing tensors without another tensor to get the
 # device as in zeros_like or as_tensor called on numpy arrays.
 default_device = None

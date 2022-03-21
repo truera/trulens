@@ -530,9 +530,6 @@ class PytorchModelWrapper(ModelWrapper):
             return_tensor=True
         )
 
-        # Unsure if needed.
-        self._model.train()
-
         y = to_cut.access_layer(y)
         grads_list = []
 
@@ -547,39 +544,47 @@ class PytorchModelWrapper(ModelWrapper):
 
             return B.sum(t)
 
-        for z in zs:
-            z_flat = ModelWrapper._flatten(z)
-            qoi_out = qoi(y)
+        try:
+            for z in zs:
+                z_flat = ModelWrapper._flatten(z)
+                qoi_out = qoi(y)
 
-            # TODO(piotrm): this sum is a source of much bugs for me when using
-            # attributions. If one wants a specific QoI, the sum hides the bugs
-            # in the definition of that QoI. It might be better to give an error
-            # when QoI is not a scalar.
+                # TODO(piotrm): this sum is a source of much bugs for me when using
+                # attributions. If one wants a specific QoI, the sum hides the bugs
+                # in the definition of that QoI. It might be better to give an error
+                # when QoI is not a scalar.
 
-            grads_flat = [
-                B.gradient(scalarize(q), z_flat) for q in qoi_out
-            ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
-                           ) else B.gradient(scalarize(qoi_out), z_flat)
+                grads_flat = [
+                    B.gradient(scalarize(q), z_flat) for q in qoi_out
+                ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
+                            ) else B.gradient(scalarize(qoi_out), z_flat)
 
-            grads = [
-                ModelWrapper._unflatten(g, z, count=[0]) for g in grads_flat
-            ] if isinstance(qoi_out,
-                            DATA_CONTAINER_TYPE) else ModelWrapper._unflatten(
-                                grads_flat, z, count=[0]
-                            )
+                grads = [
+                    ModelWrapper._unflatten(g, z, count=[0]) for g in grads_flat
+                ] if isinstance(qoi_out,
+                                DATA_CONTAINER_TYPE) else ModelWrapper._unflatten(
+                                    grads_flat, z, count=[0]
+                                )
 
-            grads = [attribution_cut.access_layer(g) for g in grads
-                    ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
-                                   ) else attribution_cut.access_layer(grads)
+                grads = [attribution_cut.access_layer(g) for g in grads
+                        ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
+                                    ) else attribution_cut.access_layer(grads)
 
-            grads = [B.as_array(g) for g in grads
-                    ] if isinstance(qoi_out,
-                                    DATA_CONTAINER_TYPE) else B.as_array(grads)
+                grads = [B.as_array(g) for g in grads
+                        ] if isinstance(qoi_out,
+                                        DATA_CONTAINER_TYPE) else B.as_array(grads)
 
-            grads_list.append(grads)
+                grads_list.append(grads)
+        except RuntimeError as e:
+            if "cudnn RNN backward can only be called in training mode" in str(e):
+                raise RuntimeError(
+                    "Cannot get deterministic gradients from RNN's with cudnn. See more about this issue here: https://github.com/pytorch/captum/issues/564 .\n"
+                    "Consider setting 'torch.backends.cudnn.enabled = False' for now."
+                )
+            raise e
+
 
         del y  # TODO: garbage collection
-        self._model.eval()
 
         return grads_list[0] if len(grads_list) == 1 else grads_list
 
