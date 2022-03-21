@@ -16,6 +16,7 @@ from functools import partial
 import numpy as np
 
 from trulens.nn.attribution import InternalInfluence
+from trulens.nn.backend import get_backend
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
@@ -24,14 +25,14 @@ from trulens.nn.quantities import InternalChannelQoI
 from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
-
-ALLCLOSE_ATOL = 1e-08
-# NOTE(piotrm): if testing using CUDA, this needs to be more tolerant
+from trulens.utils.test import tolerance
 
 
 class AxiomsTestBase(object):
 
     def setUp(self):
+        self.atol = tolerance(get_backend())
+
         np.random.seed(2020)
 
         self.input_size = 5
@@ -126,14 +127,10 @@ class AxiomsTestBase(object):
         self.assertEqual(res.shape, (2, self.input_size))
 
         self.assertTrue(
-            np.allclose(
-                res[0], self.model_lin_weights[:, c], atol=ALLCLOSE_ATOL
-            )
+            np.allclose(res[0], self.model_lin_weights[:, c], atol=self.atol)
         )
         self.assertTrue(
-            np.allclose(
-                res[1], self.model_lin_weights[:, c], atol=ALLCLOSE_ATOL
-            )
+            np.allclose(res[1], self.model_lin_weights[:, c], atol=self.atol)
         )
 
     def test_linear_agreement_multiply_activation(self):
@@ -152,7 +149,7 @@ class AxiomsTestBase(object):
 
         self.assertTrue(
             np.allclose(
-                res, self.model_lin_weights[:, c] * self.x, atol=ALLCLOSE_ATOL
+                res, self.model_lin_weights[:, c] * self.x, atol=self.atol
             )
         )
 
@@ -171,12 +168,12 @@ class AxiomsTestBase(object):
 
         self.assertTrue(
             np.allclose(
-                res[0], self.model_deep_weights_2[:, c], atol=ALLCLOSE_ATOL
+                res[0], self.model_deep_weights_2[:, c], atol=self.atol
             )
         )
         self.assertTrue(
             np.allclose(
-                res[1], self.model_deep_weights_2[:, c], atol=ALLCLOSE_ATOL
+                res[1], self.model_deep_weights_2[:, c], atol=self.atol
             )
         )
 
@@ -197,7 +194,7 @@ class AxiomsTestBase(object):
 
         self.assertTrue(
             np.allclose(
-                res, self.model_deep_weights_2[:, c] * z, atol=ALLCLOSE_ATOL
+                res, self.model_deep_weights_2[:, c] * z, atol=self.atol
             )
         )
 
