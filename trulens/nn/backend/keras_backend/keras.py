@@ -30,6 +30,16 @@ dim_order = K.image_data_format()
 channel_axis = 1 if dim_order == 'channels_first' else 3
 
 
+def set_seed(seed: int) -> None:
+    # TODO
+    pass
+
+
+def is_deterministic() -> bool:
+    # TODO
+    return True
+
+
 def gradient(scalar, wrt):
     """
     gradient Gradient of a function with respect to a tensor.
