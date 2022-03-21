@@ -1236,7 +1236,7 @@ class NLP(object):
 
         self.hidden_tokens = hidden_tokens
 
-    def token_attribution(self, texts, attr):
+    def token_attribution(self, texts, attr, doi_per_batch=None):
         """Visualize a token-based input attribution."""
 
         B = get_backend()

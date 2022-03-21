@@ -12,7 +12,9 @@ package.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
+from collections import defaultdict
 from typing import Callable, Tuple, Union
+import sys
 
 import numpy as np
 
@@ -53,7 +55,7 @@ class AttributionMethod(AbstractBaseClass):
     """
 
     @abstractmethod
-    def __init__(self, model: ModelWrapper, *args, **kwargs):
+    def __init__(self, model: ModelWrapper, doi_per_batch=None, *args, **kwargs):
         """
         Abstract constructor.
 
@@ -62,6 +64,8 @@ class AttributionMethod(AbstractBaseClass):
                 Model for which attributions are calculated.
         """
         self._model = model
+
+        self.doi_per_batch = doi_per_batch
 
     @property
     def model(self) -> ModelWrapper:
@@ -241,11 +245,23 @@ class InternalInfluence(AttributionMethod):
         self._do_multiply = multiply_activation
 
     def attributions(self, *model_args, **model_kwargs):
-        model_inputs = ModelInputs(model_args, model_kwargs)
+        # NOTE: not symbolic
 
-        # Create a message for out-of-memory errors regarding batch size.
-        batch_size = model_inputs.first().shape[0]
-        param_msgs = [f"batch size = {batch_size}"]
+        B = get_backend()
+
+        model_inputs = ModelInputs(model_args, model_kwargs)
+        print("attributions: model_inputs=", model_inputs)
+
+        # Create a message for out-of-memory errors regarding float and batch size.
+        if len(list(model_inputs.values())) == 0:
+            batch_size = 1
+        else:
+            batch_size = model_inputs.first().shape[0]
+
+        param_msgs = [
+            f"float size = {B.floatX_size} ({B.floatX}); consider changing to a smaller type.",
+            f"batch size = {batch_size}; consider reducing the size of the batch you send to the attributions method."
+        ]
 
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
@@ -255,6 +271,8 @@ class InternalInfluence(AttributionMethod):
                 model_kwargs=model_inputs.kwargs,
                 to_cut=doi_cut
             )
+
+        print("doi_val=", doi_val)
 
         # DoI supports tensor or list of tensor. unwrap args to perform DoI on
         # top level list
@@ -266,12 +284,12 @@ class InternalInfluence(AttributionMethod):
         # used for huggingface models.
         # TODO(piotrm): this unwrapping may not be necessary any more
         doi_val = as_container(doi_val)
-        #if isinstance(doi_val, DATA_CONTAINER_TYPE) and isinstance(
-        #        doi_val[0], DATA_CONTAINER_TYPE):
-        #    doi_val = doi_val[0]
+        if isinstance(doi_val, DATA_CONTAINER_TYPE) and isinstance(
+                doi_val[0], DATA_CONTAINER_TYPE):
+            doi_val = doi_val[0]
 
-        #if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
-        #    doi_val = doi_val[0]
+        if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
+            doi_val = doi_val[0]
 
         if accepts_model_inputs(self.doi):
             D = self.doi(doi_val, model_inputs=model_inputs)
@@ -279,24 +297,52 @@ class InternalInfluence(AttributionMethod):
             D = self.doi(doi_val)
 
         n_doi = len(D)
+        doi_per_batch = self.doi_per_batch
+        if self.doi_per_batch is None:
+            doi_per_batch = n_doi
 
-        D = InternalInfluence.__concatenate_doi(D)
-        B = get_backend()
+        D = self.__concatenate_doi(D, doi_per_batch=doi_per_batch)
 
+        print("D=", D)
+  
         # Create a message for out-of-memory errors regarding doi_size.
-        doi_size_msg = f"distribution of interest size = {n_doi}"
+        # TODO: Generalize this message to doi other than LinearDoI:
+        doi_size_msg = f"distribution of interest size = {n_doi}; consider reducing intervention resolution."
+        doi_per_batch_msg = f"doi_per_batch = {doi_per_batch}; consider reducing this (default is same as the above)."
+
+        # TODO: Consider doing the model_inputs tiling here instead of inside qoi_bprop.
+
+        effective_batch_size = doi_per_batch * batch_size
+        effective_batch_msg = f"effective batch size = {effective_batch_size}; consider reducing batch size, intervention size, or doi_per_batch"
 
         # Calculate the gradient of each of the points in the DoI.
-        with grace(param_msgs + [doi_size_msg]): # Handles out-of-memory messages.
-            qoi_grads = self.model.qoi_bprop(
-                qoi=self.qoi,
-                model_args=model_inputs.args,
-                model_kwargs=model_inputs.kwargs,
-                attribution_cut=self.slice.from_cut,
-                to_cut=self.slice.to_cut,
-                intervention=D,
-                doi_cut=doi_cut
-            )
+        qoi_grads_per_arg = defaultdict(list)
+        with grace(param_msgs + [doi_size_msg, doi_per_batch_msg, effective_batch_msg]): # Handles out-of-memory messages.
+            for Dbatch in D:
+                print("Dbatch=", Dbatch)
+
+                qoi_grads_for_all_args = self.model.qoi_bprop(
+                    qoi=self.qoi,
+                    model_args=model_inputs.args,
+                    model_kwargs=model_inputs.kwargs,
+                    attribution_cut=self.slice.from_cut,
+                    to_cut=self.slice.to_cut,
+                    intervention=Dbatch,
+                    doi_cut=doi_cut
+                )
+                print("qoi_grads_for_all_args=", len(qoi_grads_for_all_args), type(qoi_grads_for_all_args))
+                for arg_index, qoi_grads_for_arg in enumerate(qoi_grads_for_all_args):
+                    qoi_grads_per_arg[arg_index].append(qoi_grads_for_arg)
+
+                    # print("qoi_grads_=", qoi_grads)
+
+        qoi_grads = [np.concatenate(qoi_grads_for_arg) for qoi_grads_for_arg in qoi_grads_per_arg.values()]
+        print("len(qoi_grads)=", len(qoi_grads), type(qoi_grads))
+        if len(qoi_grads) == 1:
+            qoi_grads = qoi_grads[0]
+        if len(qoi_grads) == 1:
+            qoi_grads = qoi_grads[0]
+        print("qoi_grads=", qoi_grads)
 
         # Take the mean across the samples in the DoI.
         if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
@@ -485,31 +531,60 @@ class InternalInfluence(AttributionMethod):
         else:
             raise ValueError('Unrecognized argument type for cut')
 
-    @staticmethod
-    def __concatenate_doi(D):
+    def __concatenate_doi(self, D, doi_per_batch):
         if len(D) == 0:
             raise ValueError(
                 'Got empty distribution of interest. `DoI` must return at '
                 'least one point.'
             )
 
-        if isinstance(D[0], DATA_CONTAINER_TYPE):
-            transposed = [[] for _ in range(len(D[0]))]
-            for point in D:
-                for i, v in enumerate(point):
-                    transposed[i].append(v)
+        # Why are there these two cases?
 
-            return [
-                np.concatenate(D_i)
-                if isinstance(D_i[0], np.ndarray) else D_i[0]
-                for D_i in transposed
-            ]
+        # DoI provides multiple values (i.e. for interventions for model inputs with multiple arguments).
+        if isinstance(D[0], DATA_CONTAINER_TYPE):
+            print("case1")
+            print("len(D)=", len(D))
+            print("len(D[0])=", len(D[0]))
+
+            batches = []
+            for i in range(0, len(D), doi_per_batch):
+
+                Di = D[i:i+doi_per_batch]
+
+                # number of arguments for model inputs
+                num_args = len(Di[0])
+
+                vals_per_arg = [[] for _ in range(num_args)]
+                for point in Di:
+                    for arg_index, v in enumerate(point):
+                        vals_per_arg[arg_index].append(v)# if isinstance(v, np.ndarray) else v[0])
+
+                #batches.append(
+                #    np.concatenate(D_i)
+                #    if isinstance(D_i[0], np.ndarray) else D_i[0]
+                #    for D_i in transposed
+                #)
+
+                batches.append([np.concatenate(vals_for_arg) for vals_for_arg in vals_per_arg])
+
+            return batches
 
         else:
+            print("case2")
+            print("len(D)=", len(D))
+            print("D[0]=", D[0].shape)           
+
             if not isinstance(D[0], np.ndarray):
                 D = [get_backend().as_array(d) for d in D]
 
-            return np.concatenate(D)
+            batches = []
+            for i in range(0, len(D), doi_per_batch):
+                batches.append(
+                    [np.concatenate(D[i:i+doi_per_batch])] # outer 1-item list indicates a single argument intervention
+                )
+
+            #return np.concatenate(D)
+            return batches
 
 
 class InputAttribution(InternalInfluence):

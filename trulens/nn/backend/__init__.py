@@ -13,7 +13,7 @@ from trulens.utils.typing import as_container
 _TRULENS_BACKEND_IMPL = None
 
 # Each backend module provides:
-# Tensor = TypeVar("Tensor")
+# Tensor
 # dim_order
 # channel_axis
 # backend
@@ -27,7 +27,7 @@ class OutOfMemory(RuntimeError):
     def __str__(self):
         message = f"Ran out of memory ({self.kwargs}). Consider reducing memory-impactful parameters.\n"
         for setting in self.settings:
-            message += "  " + setting + "\n"
+            message += "\t" + setting + "\n"
 
         return message
 
@@ -61,7 +61,7 @@ def grace(*settings, call_before=None, call_after=None, **kwargs):
         if call_before is not None:
             state = call_before()
 
-        yield None
+        yield state
 
     except OutOfMemory as e:
         raise OutOfMemory(
@@ -69,9 +69,10 @@ def grace(*settings, call_before=None, call_after=None, **kwargs):
         )
 
     except RuntimeError as e:
-        if "out of memory" in str(e):
+        if "out of memory" in str(e): # cuda out of memory exception
             raise OutOfMemory(settings=settings, **kwargs)
         else:
+            # TODO: catch similar exceptions in other backends
             raise e
 
     finally:

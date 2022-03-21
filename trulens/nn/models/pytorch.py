@@ -320,7 +320,7 @@ class PytorchModelWrapper(ModelWrapper):
                 tile_shape[0] = doi_resolution
                 repeat_shape = tuple(tile_shape)
 
-                with grace(device=self._model.device):
+                with grace(device=self.device):
                     # likely place where memory issues might arise
 
                     if isinstance(val, np.ndarray):
@@ -437,8 +437,9 @@ class PytorchModelWrapper(ModelWrapper):
             ) for name, anchor in names_and_anchors if name is not None
         ]
 
-        with grace(device=self._model.device):
+        with grace(device=self.device):
             # Run the network.
+            print("model_inputs=", model_inputs)
             output = model_inputs.call_on(self._model)
 
         if isinstance(output, tuple):
@@ -557,7 +558,7 @@ class PytorchModelWrapper(ModelWrapper):
             # attributions. If one wants a specific QoI, the sum hides the bugs
             # in the definition of that QoI. It might be better to give an error
             # when QoI is not a scalar.
-            with grace(device=self._model.device):
+            with grace(device=self.device):
                 # Common place where memory issues arise.
 
                 grads_flat = [
@@ -584,7 +585,10 @@ class PytorchModelWrapper(ModelWrapper):
         del y  # TODO: garbage collection
         self._model.eval()
 
-        return grads_list[0] if len(grads_list) == 1 else grads_list
+        return grads_list
+        # NOTE(piotrm): commented out the below to have more consistent output types/shapes
+        
+        # return grads_list[0] if len(grads_list) == 1 else grads_list
 
     def probits(self, x):
         """

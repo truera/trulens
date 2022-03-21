@@ -3,6 +3,10 @@
 # pylint: disable=no-member
 # pylint: disable=not-callable
 
+# TODO: Some of the backend methods accept and process numpy arrays instead of
+# pytorch tensors. This seems like a convenience but complicates reasoning.
+# Remove the convenience and fix users to not rely on it.
+
 from contextlib import contextmanager
 import numpy as np
 import torch
@@ -14,6 +18,7 @@ from trulens.nn.backend import Backend
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
 floatX = torch.get_default_dtype()
+floatX_size = torch.tensor([], dtype=floatX).element_size()
 Tensor = torch.Tensor
 dim_order = 'channels_first'
 channel_axis = 1
@@ -105,6 +110,8 @@ def as_array(t, dtype=None):
     np.array
         Same contents as t
     """
+
+    # TODO: remove handling of numpy input
     if isinstance(t, np.ndarray):
         return t if dtype is None else t.astype(dtype)
 
@@ -185,6 +192,7 @@ def reshape(t, shape):
 
 
 def mean(t, axis=None, keepdims=False):
+    # TODO: remove handling of numpy input
     if isinstance(t, np.ndarray):
         return t.mean(axis=axis, keepdims=keepdims)
 
@@ -214,6 +222,8 @@ def sum(t, axis=None, keepdims=False):
     backend.Tensor
         Sum of t
     """
+    
+    # TODO: remove handling of numpy input
     if isinstance(t, np.ndarray):
         return t.sum(axis=axis, keepdims=keepdims)
 
