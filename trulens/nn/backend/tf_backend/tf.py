@@ -20,6 +20,16 @@ backend = Backend.TENSORFLOW
 tf1 = tf.__version__.startswith('1.')
 
 
+def set_seed(seed: int) -> None:
+    # TODO
+    pass
+
+
+def is_deterministic() -> bool:
+    # TODO
+    return True
+
+
 def gradient(scalar, wrt):
     """
     gradient Gradient of a function with respect to a tensor.
