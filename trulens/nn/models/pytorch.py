@@ -228,71 +228,33 @@ class PytorchModelWrapper(ModelWrapper):
 
         return x
 
-    def fprop(
+    def _fprop(
         self,
-        model_args: ArgsLike,
-        model_kwargs: Dict[str, DataLike] = {},
-        doi_cut: Optional[Cut] = None,
-        to_cut: Optional[Cut] = None,
-        attribution_cut: Optional[Cut] = None,
-        intervention: InterventionLike = None,
+        model_inputs: ModelInputs, 
+        doi_cut: Cut,
+        to_cut: Cut,
+        attribution_cut: Cut,
+        intervention: InterventionLike,
         return_tensor: bool = False,
         input_timestep: Optional[int] = None
     ) -> Union[List[Tensor], List[np.ndarray]]:
         """
-        fprop Forward propagate the model.
+        See ModelWrapper.fprop .
 
-        Parameters
+        Backend-Specific Parameters
         ----------
-        model_args, model_kwargs: 
-            The args and kwargs given to the call method of a model. This should
-            represent the instances to obtain attributions for, assumed to be a
-            *batched* input. if `self.model` supports evaluation on *data
-            tensors*, the appropriate tensor type may be used (e.g., Pytorch
-            models may accept Pytorch tensors in additon to `np.ndarray`s). The
-            shape of the inputs must match the input shape of `self.model`. 
-        doi_cut: Cut, optional
-            The Cut from which to begin propagation. The shape of `intervention`
-            must match the input shape of this layer. This is usually used to
-            apply distributions of interest (DoI)
-        to_cut : Cut, optional
-            The Cut to return output activation tensors for. If `None`, assumed
-            to be just the final layer. By default None
-        attribution_cut : Cut, optional
-            An Cut to return activation tensors for. If `None` attributions
-            layer output is not returned.
-        intervention : ArgsLike (for non-InputCut DoIs) or
-            ModelInputs (for InputCut DoIs) Tensor(s) to propagate through the
-            model. If an intervention is ArgsLike for InputCut, we assume there
-            are no kwargs.
         input_timestep: int, optional
             Timestep to apply to the DoI if using an RNN
-
-        Returns
-        -------
-        (list of backend.Tensor or list of np.ndarray)
-            A list of output activations are returned, keeping the same type as
-            the input. If `attribution_cut` is supplied, also return the cut
-            activations.
         """
 
         B = get_backend()
-
-        doi_cut, to_cut, intervention, model_inputs = ModelWrapper._fprop_defaults(
-            self,
-            model_args=model_args,
-            model_kwargs=model_kwargs,
-            doi_cut=doi_cut,
-            to_cut=to_cut,
-            intervention=intervention
-        )
 
         model_inputs = model_inputs.map(self._to_tensor)
         intervention = intervention.map(self._to_tensor)
 
         if isinstance(doi_cut, InputCut):
             # all of the necessary logic here has been factored out into
-            # _fprop_defaults
+            # parent's fprop .
             pass
 
         else:  # doi_cut != InputCut
@@ -470,63 +432,24 @@ class PytorchModelWrapper(ModelWrapper):
         else:
             return self._extract_outputs_from_hooks(cut=to_cut, **extract_args)
 
-    def qoi_bprop(
+    def _qoi_bprop(
         self,
         qoi: QoI,
-        model_args: ArgsLike,
-        model_kwargs: Dict[str, DataLike] = {},
-        doi_cut: Optional[Cut] = None,
-        to_cut: Optional[Cut] = None,
-        attribution_cut: Optional[Cut] = None,
-        intervention: InterventionLike = None
-    ):
-        """
-        qoi_bprop Run the model from the from_layer to the qoi layer
-            and give the gradients w.r.t `attribution_cut`
-
-        Parameters
-        ----------
-        qoi: a Quantity of Interest
-            This method will accumulate all gradients of the qoi w.r.t
-            `attribution_cut`.
-        model_args, model_kwargs: 
-            The args and kwargs given to the call method of a model. This should
-            represent the instances to obtain attributions for, assumed to be a
-            *batched* input. if `self.model` supports evaluation on *data
-            tensors*, the  appropriate tensor type may be used (e.g., Pytorch
-            models may accept Pytorch tensors in additon to `np.ndarray`s). The
-            shape of the inputs must match the input shape of `self.model`. 
-        doi_cut: Cut, 
-            if `doi_cut` is None, this refers to the InputCut. Cut from which to
-            begin propagation. The shape of `intervention` must match the output
-            shape of this layer.
-        attribution_cut: Cut, optional
-            if `attribution_cut` is None, this refers to the InputCut. The Cut
-            in which attribution will be calculated. This is generally taken
-            from the attribution slyce's attribution_cut.
-        to_cut: Cut, optional
-            if `to_cut` is None, this refers to the OutputCut. The Cut in which
-            qoi will be calculated. This is generally taken from the attribution
-            slyce's to_cut.
+        model_inputs: ModelInputs,
+        doi_cut: Cut,
+        to_cut: Cut,
+        attribution_cut: Cut,
         intervention: InterventionLike
-            Input tensor to propagate through the model. If an np.array, will be
-            converted to a tensor on the same device as the model.
-
-        Returns
-        -------
-        (backend.Tensor or np.ndarray)
-            the gradients of `qoi` w.r.t. `attribution_cut`, keeping same type
-            as the input.
-        """
+    ):
         B = get_backend()
 
-        doi_cut, to_cut, attribution_cut = self._qoi_bprop_defaults(
-            doi_cut=doi_cut, to_cut=to_cut, attribution_cut=attribution_cut
-        )
+        if isinstance(intervention, ModelInputs):
+            pass
+        else:
+            intervention = ModelInputs(as_args(intervention), {})
 
-        y, zs = self.fprop(
-            model_args=model_args,
-            model_kwargs=model_kwargs,
+        y, zs = self._fprop(
+            model_inputs=model_inputs,
             doi_cut=doi_cut,
             to_cut=to_cut,
             attribution_cut=attribution_cut,
@@ -579,6 +502,8 @@ class PytorchModelWrapper(ModelWrapper):
                         ] if isinstance(qoi_out,
                                         DATA_CONTAINER_TYPE) else B.as_array(grads)
 
+                grads_list.append(grads)
+
         except RuntimeError as e:
             if "cudnn RNN backward can only be called in training mode" in str(e):
                 raise RuntimeError(
@@ -590,10 +515,10 @@ class PytorchModelWrapper(ModelWrapper):
 
         del y  # TODO: garbage collection
 
-        return grads_list
+        #return grads_list
         # NOTE(piotrm): commented out the below to have more consistent output types/shapes
         
-        # return grads_list[0] if len(grads_list) == 1 else grads_list
+        return grads_list[0] if len(grads_list) == 1 else grads_list
 
     def probits(self, x):
         """

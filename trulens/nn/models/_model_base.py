@@ -10,6 +10,7 @@ it should be wrapped as a `ModelWrapper` instance.
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
 from typing import Optional, Tuple
+from trulens.nn.quantities import QoI
 
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
@@ -132,64 +133,7 @@ class ModelWrapper(AbstractBaseClass):
         """
         return self.fprop(x)[0]
 
-    def _fprop_defaults(
-        self, model_args: ArgsLike, model_kwargs: KwargsLike, doi_cut: Cut,
-        to_cut: Cut, intervention: InterventionLike
-    ) -> Tuple[Cut, Cut, InterventionLike, ModelInputs]:
-        """
-        Creates default values for fprop that should be common across all
-        backends. Also initial checks of parameters with warning/error messages
-        when used incorrectly.
-        """
 
-        # TODO: Apply to backends other than pytorch.
-
-        model_inputs = ModelInputs(model_args, model_kwargs)
-
-        if doi_cut is None:
-            doi_cut = InputCut()
-        if to_cut is None:
-            to_cut = OutputCut()
-
-        if isinstance(doi_cut, InputCut):
-            # For input cuts, produce a ModelInputs container for the intervention and model inputs.
-            if intervention is not None:
-                if isinstance(intervention, ModelInputs):
-                    # Intervention overrides both args and kwargs
-                    model_inputs = intervention
-                else:
-                    # Intervention overrides only args.
-                    # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
-                    intervention = ModelInputs(
-                        as_args(intervention), model_inputs.kwargs
-                    )
-                    model_inputs = intervention
-
-                    if len(model_inputs.kwargs) > 0:
-                        tru_logger.warn(
-                            "Intervention for InputCut DoI specified but contains only positional arguments. The rest will be taken from model_kwargs. If you need to intervene on keyword arguments, provide the intervention as ModelInputs container."
-                        )
-
-            else:
-                # If no intervention given, it is equal to model inputs.
-                intervention = model_inputs
-
-        else:  # doi_cut is not InputCut
-            # For non-InputCut, interventions do not have kwargs but for simplifying the logics, we store it
-            # in a ModelInputs anyway.
-
-            if intervention is None:
-                # Any situations where one wants to specify a non-InputCut intervention with input arguments?
-                raise ValueError(
-                    "intervention needs to be given for DoI cuts that are not InputCut"
-                )
-            else:
-                # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
-                intervention = ModelInputs(as_args(intervention), {})
-
-        return doi_cut, to_cut, intervention, model_inputs
-
-    @abstractmethod
     def fprop(
         self,
         model_args: ArgsLike,
@@ -267,24 +211,84 @@ class ModelWrapper(AbstractBaseClass):
                 cut activations.
         """
 
-        raise NotImplementedError
-
-    def _qoi_bprop_defaults(
-        self, doi_cut: Cut, to_cut: Cut, attribution_cut: Cut
-    ) -> Tuple[Cut, Cut, Cut]:
-        """Produces default values for qoi_bprop parameters that are in common across backends. Common checks and warnings will be placed here. """
-
         if doi_cut is None:
             doi_cut = InputCut()
         if to_cut is None:
             to_cut = OutputCut()
 
-        if attribution_cut is None:
-            attribution_cut = InputCut()
+        model_inputs, intervention = self._organize_inputs(
+            doi_cut=doi_cut,
+            model_args=model_args, 
+            model_kwargs=model_kwargs, 
+            intervention=intervention
+        )
 
-        return doi_cut, to_cut, attribution_cut
+        return self._fprop(
+            model_inputs=model_inputs,
+            doi_cut=doi_cut,
+            to_cut=to_cut,
+            attribution_cut=attribution_cut,
+            intervention=intervention,
+            **kwargs
+        )
+
+    def _organize_inputs(self, *, doi_cut, model_args, model_kwargs, intervention):
+
+        model_inputs = ModelInputs(as_args(model_args), model_kwargs)
+
+        if isinstance(doi_cut, InputCut):
+            # For input cuts, produce a ModelInputs container for the intervention and model inputs.
+            if intervention is not None:
+                if isinstance(intervention, ModelInputs):
+                    # Intervention overrides both args and kwargs
+                    model_inputs = intervention
+                else:
+                    # Intervention overrides only args.
+                    # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
+                    intervention = ModelInputs(
+                        as_args(intervention), model_inputs.kwargs
+                    )
+                    model_inputs = intervention
+
+                    if len(model_inputs.kwargs) > 0:
+                        tru_logger.warn(
+                            "Intervention for InputCut DoI specified but contains only positional arguments. "
+                            "The rest will be taken from model_kwargs. If you need to intervene on keyword "
+                            "arguments, provide the intervention as ModelInputs container."
+                        )
+
+            else:
+                # If no intervention given, it is equal to model inputs.
+                intervention = model_inputs
+
+        else:  # doi_cut is not InputCut
+            # For non-InputCut, interventions do not have kwargs but for simplifying the logics, we store it
+            # in a ModelInputs anyway.
+
+            if intervention is None:
+                # Any situations where one wants to specify a non-InputCut intervention with input arguments?
+                raise ValueError(
+                    "intervention needs to be given for DoI cuts that are not InputCut"
+                )
+            else:
+                # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
+                intervention = ModelInputs(as_args(intervention), {})
+
+        return model_inputs, intervention
 
     @abstractmethod
+    def _fprop(
+        self,
+        *,
+        model_inputs: ModelInputs,
+        doi_cut: Cut,
+        to_cut: Cut,
+        attribution_cut: Cut,
+        intervention: ModelInputs,
+        **kwargs
+    ):
+        raise NotImplementedError
+
     def qoi_bprop(
         self,
         qoi,
@@ -346,6 +350,43 @@ class ModelWrapper(AbstractBaseClass):
                 the gradients of `qoi` w.r.t. `attribution_cut`, keeping same
                 type as the input.
         """
+
+        if doi_cut is None:
+            doi_cut = InputCut()
+        if to_cut is None:
+            to_cut = OutputCut()
+        if attribution_cut is None:
+            attribution_cut = InputCut()
+
+        model_inputs, intervention = self._organize_inputs(
+            doi_cut=doi_cut,
+            model_args=model_args, 
+            model_kwargs=model_kwargs, 
+            intervention=intervention
+        )
+
+        return self._qoi_bprop(
+            qoi=qoi,
+            model_inputs=model_inputs,
+            doi_cut=doi_cut,
+            to_cut=to_cut,
+            attribution_cut=attribution_cut,
+            intervention=intervention,
+            **kwargs
+        )
+
+    @abstractmethod
+    def _qoi_bprop(
+        self,
+        *,
+        qoi: QoI,
+        model_inputs: ModelInputs,
+        doi_cut: Cut,
+        to_cut: Cut,
+        attribution_cut: Cut,
+        intervention: ModelInputs,
+        **kwargs
+    ):
         raise NotImplementedError
 
     @staticmethod

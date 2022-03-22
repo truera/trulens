@@ -283,7 +283,7 @@ class InternalInfluence(AttributionMethod):
         # TODO(piotrm): automatic handling of other common containers like the ones
         # used for huggingface models.
         # TODO(piotrm): this unwrapping may not be necessary any more
-        doi_val = as_container(doi_val)
+        #doi_val = as_container(doi_val)
         if isinstance(doi_val, DATA_CONTAINER_TYPE) and isinstance(
                 doi_val[0], DATA_CONTAINER_TYPE):
             doi_val = doi_val[0]
@@ -301,7 +301,7 @@ class InternalInfluence(AttributionMethod):
         if self.doi_per_batch is None:
             doi_per_batch = n_doi
 
-        D = self.__concatenate_doi(D, doi_per_batch=doi_per_batch)
+        D = self.__concatenate_doi(D)#, doi_per_batch=doi_per_batch)
 
         print("D=", D)
   
@@ -318,31 +318,33 @@ class InternalInfluence(AttributionMethod):
         # Calculate the gradient of each of the points in the DoI.
         qoi_grads_per_arg = defaultdict(list)
         with grace(param_msgs + [doi_size_msg, doi_per_batch_msg, effective_batch_msg]): # Handles out-of-memory messages.
-            for Dbatch in D:
-                print("Dbatch=", Dbatch)
+            #for Dbatch in D:
+            #    print("Dbatch=", Dbatch)
 
-                qoi_grads_for_all_args = self.model.qoi_bprop(
+                #qoi_grads_for_all_args = 
+                qoi_grads = self.model.qoi_bprop(
                     qoi=self.qoi,
                     model_args=model_inputs.args,
                     model_kwargs=model_inputs.kwargs,
                     attribution_cut=self.slice.from_cut,
                     to_cut=self.slice.to_cut,
-                    intervention=Dbatch,
+                    #intervention=Dbatch,
+                    intervention = D,
                     doi_cut=doi_cut
                 )
-                print("qoi_grads_for_all_args=", len(qoi_grads_for_all_args), type(qoi_grads_for_all_args))
-                for arg_index, qoi_grads_for_arg in enumerate(qoi_grads_for_all_args):
-                    qoi_grads_per_arg[arg_index].append(qoi_grads_for_arg)
+                #print("qoi_grads_for_all_args=", len(qoi_grads_for_all_args), type(qoi_grads_for_all_args))
+                #for arg_index, qoi_grads_for_arg in enumerate(qoi_grads_for_all_args):
+                #    qoi_grads_per_arg[arg_index].append(qoi_grads_for_arg)
 
                     # print("qoi_grads_=", qoi_grads)
 
-        qoi_grads = [np.concatenate(qoi_grads_for_arg) for qoi_grads_for_arg in qoi_grads_per_arg.values()]
+        #qoi_grads = [np.concatenate(qoi_grads_for_arg) for qoi_grads_for_arg in qoi_grads_per_arg.values()]
         print("len(qoi_grads)=", len(qoi_grads), type(qoi_grads))
-        if len(qoi_grads) == 1:
-            qoi_grads = qoi_grads[0]
-        if len(qoi_grads) == 1:
-            qoi_grads = qoi_grads[0]
-        print("qoi_grads=", qoi_grads)
+        #if len(qoi_grads) == 1:
+        #    qoi_grads = qoi_grads[0]
+        #if len(qoi_grads) == 1:
+        #    qoi_grads = qoi_grads[0]
+        #print("qoi_grads=", qoi_grads)
 
         # Take the mean across the samples in the DoI.
         if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
@@ -531,7 +533,33 @@ class InternalInfluence(AttributionMethod):
         else:
             raise ValueError('Unrecognized argument type for cut')
 
-    def __concatenate_doi(self, D, doi_per_batch):
+    @staticmethod
+    def __concatenate_doi(D):
+        if len(D) == 0:
+            raise ValueError(
+                'Got empty distribution of interest. `DoI` must return at '
+                'least one point.'
+            )
+
+        if isinstance(D[0], DATA_CONTAINER_TYPE):
+            transposed = [[] for _ in range(len(D[0]))]
+            for point in D:
+                for i, v in enumerate(point):
+                    transposed[i].append(v)
+
+            return [
+                np.concatenate(D_i)
+                if isinstance(D_i[0], np.ndarray) else D_i[0]
+                for D_i in transposed
+            ]
+
+        else:
+            if not isinstance(D[0], np.ndarray):
+                D = [get_backend().as_array(d) for d in D]
+            return np.concatenate(D)
+
+
+    def __concatenate_doi2(self, D, doi_per_batch):
         if len(D) == 0:
             raise ValueError(
                 'Got empty distribution of interest. `DoI` must return at '
@@ -539,6 +567,8 @@ class InternalInfluence(AttributionMethod):
             )
 
         # Why are there these two cases?
+
+        doi_per_batch = len(D)
 
         # DoI provides multiple values (i.e. for interventions for model inputs with multiple arguments).
         if isinstance(D[0], DATA_CONTAINER_TYPE):
@@ -567,7 +597,7 @@ class InternalInfluence(AttributionMethod):
 
                 batches.append([np.concatenate(vals_for_arg) for vals_for_arg in vals_per_arg])
 
-            return batches
+            return batches[0]
 
         else:
             print("case2")
@@ -584,7 +614,7 @@ class InternalInfluence(AttributionMethod):
                 )
 
             #return np.concatenate(D)
-            return batches
+            return batches[0]
 
 
 class InputAttribution(InternalInfluence):
