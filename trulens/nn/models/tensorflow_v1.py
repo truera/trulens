@@ -7,6 +7,7 @@ import tensorflow as tf
 
 from trulens.nn.backend import get_backend
 from trulens.nn.models._model_base import ModelWrapper
+from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
@@ -123,6 +124,8 @@ class TensorflowModelWrapper(ModelWrapper):
         self, model_args, model_kwargs, intervention, doi_tensors
     ):
 
+        B = get_backend()
+
         feed_dict = {}
         input_tensors = model_args
 
@@ -229,58 +232,18 @@ class TensorflowModelWrapper(ModelWrapper):
 
         return feed_dict, intervention
 
-    def fprop(
+    def _fprop(
         self,
-        model_args: ArgsLike,
-        model_kwargs: KwargsLike = {},
-        doi_cut: Optional[Cut] = None,
-        to_cut: Optional[Cut] = None,
-        attribution_cut: Optional[Cut] = None,  # Not used
-        intervention: InterventionLike = None
+        *,
+        model_inputs: ModelInputs,
+        doi_cut: Cut,
+        to_cut: Cut,
+        attribution_cut: Cut,
+        intervention: ModelInputs
     ):
         """
-        fprop Forward propagate the model
-
-        Parameters
-        ----------
-        model_args, model_kwargs: 
-            The args and kwargs given to the call method of a model.
-            This should represent the instances to obtain attributions for, 
-            assumed to be a *batched* input. if `self.model` supports evaluation 
-            on *data tensors*, the  appropriate tensor type may be used (e.g.,
-            Pytorch models may accept Pytorch tensors in addition to 
-            `np.ndarray`s). The shape of the inputs must match the input shape
-            of `self.model`. 
-        doi_cut: Cut, optional
-            The Cut from which to begin propagation. The shape of `intervention`
-            must match the input shape of this layer. This is usually used to 
-            apply distributions of interest (DoI).
-        to_cut : Cut, optional
-            The Cut to return output activation tensors for. If `None`,
-            assumed to be just the final layer. By default None
-        attribution_cut : Cut, optional
-            An Cut to return activation tensors for. If `None` 
-            attributions layer output is not returned.
-        intervention : ArgsLike, KwargsLike, or ModelInputs (for InputCut doi_cut)
-            Input tensor(s) to propagate through the model. If an np.array, will be
-            converted to a tensor on the same device as the model.
-
-        Returns
-        -------
-        (list of backend.Tensor or np.ndarray)
-            A list of output activations are returned, keeping same type as the
-            input. If `attribution_cut` is supplied, also return the cut 
-            activations.
+        See ModelWrapper.fprop .
         """
-
-        doi_cut, to_cut, intervention, model_inputs = ModelWrapper._fprop_defaults(
-            self,
-            model_args=model_args,
-            model_kwargs=model_kwargs,
-            doi_cut=doi_cut,
-            to_cut=to_cut,
-            intervention=intervention
-        )
 
         model_args = model_inputs.args
         model_kwargs = model_inputs.kwargs
@@ -325,6 +288,10 @@ class TensorflowModelWrapper(ModelWrapper):
         return out_vals
 
     def _run_session(self, outs, feed_dict):
+        B = get_backend()
+        
+        feed_dict = {k: B.as_array(v) if B.is_tensor(v) else v for k, v in feed_dict.items()}
+
         if self._session is not None:
             return self._session.run(outs, feed_dict=feed_dict)
 
@@ -338,62 +305,22 @@ class TensorflowModelWrapper(ModelWrapper):
                         'Encountered uninitialized session variables. This could be caused by not saving all variables, or from other tensorflow default session implementation issues. Try passing in the session to the ModelWrapper __init__ function.'
                     ).with_traceback(tb)
 
-    def qoi_bprop(
+    def _qoi_bprop(
         self,
-        qoi,
-        model_args,
-        model_kwargs={},
-        doi_cut=None,
-        to_cut=None,
-        attribution_cut=None,
-        intervention=None
+        *,
+        qoi: QoI,
+        model_inputs: ModelInputs,
+        doi_cut: Cut,
+        to_cut: Cut,
+        attribution_cut: Cut,
+        intervention: ModelInputs
     ):
         """
-        qoi_bprop Run the model from the from_layer to the qoi layer
-            and give the gradients w.r.t `attribution_cut`
-
-        Parameters
-        ----------
-        model_args, model_kwargs: 
-            The args and kwargs given to the call method of a model.
-            This should represent the instances to obtain attributions for, 
-            assumed to be a *batched* input. if `self.model` supports evaluation 
-            on *data tensors*, the  appropriate tensor type may be used (e.g.,
-            Pytorch models may accept Pytorch tensors in addition to 
-            `np.ndarray`s). The shape of the inputs must match the input shape
-            of `self.model`.
-        qoi: a Quantity of Interest
-            This method will accumulate all gradients of the qoi w.r.t 
-            `attribution_cut`.
-        doi_cut: Cut, 
-            if `doi_cut` is None, this refers to the InputCut.
-            Cut from which to begin propagation. The shape of `intervention`
-            must match the output shape of this layer.
-        attribution_cut: Cut, optional
-            if `attribution_cut` is None, this refers to the InputCut.
-            The Cut in which attribution will be calculated. This is generally
-            taken from the attribution slyce's attribution_cut.
-        to_cut: Cut, optional
-            if `to_cut` is None, this refers to the OutputCut.
-            The Cut in which qoi will be calculated. This is generally
-            taken from the attribution slyce's to_cut.
-        intervention : backend.Tensor or np.array
-            Input tensor to propagate through the model. If an np.array, will be
-            converted to a tensor on the same device as the model.
-            intervention can also be a feed_dict
-
-        Returns
-        -------
-        (backend.Tensor or np.ndarray)
-            the gradients of `qoi` w.r.t. `attribution_cut`, keeping same type 
-            as the input.
+        See ModelWrapper.qoi_bprop .
         """
-        if attribution_cut is None:
-            attribution_cut = InputCut()
-        if to_cut is None:
-            to_cut = OutputCut()
 
-        doi_cut = doi_cut if doi_cut else InputCut()
+        model_args = model_inputs.args
+        model_kwargs = model_inputs.kwargs
 
         attribution_tensors = self._get_layers(attribution_cut)
         to_tensors = self._get_layers(to_cut)

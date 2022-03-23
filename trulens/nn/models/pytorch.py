@@ -253,9 +253,7 @@ class PytorchModelWrapper(ModelWrapper):
         intervention = intervention.map(self._to_tensor)
 
         if isinstance(doi_cut, InputCut):
-            # all of the necessary logic here has been factored out into
-            # parent's fprop .
-            pass
+            model_inputs = intervention
 
         else:  # doi_cut != InputCut
             # Tile model inputs so that batch dim at cut matches intervention
@@ -306,7 +304,10 @@ class PytorchModelWrapper(ModelWrapper):
                 else:
                     if isinstance(attribution_cut, InputCut):
                         raise ValueError(
-                            f"Requested tensors for attribution_cut=InputCut() but it contains a non-differentiable tensor of type {t.dtype}. You may need to provide an attribution_cut further down in the model where floating-point values first arise."
+                            f"Requested tensors for attribution_cut=InputCut() but it contains a "
+                            f"non-differentiable tensor of type {t.dtype}. You may need to provide "
+                            f"an attribution_cut further down in the model where floating-point "
+                            f"values first arise."
                         )
                     else:
                         # Could be a warning here but then we'd see a lot of warnings in NLP models.
@@ -439,14 +440,13 @@ class PytorchModelWrapper(ModelWrapper):
         doi_cut: Cut,
         to_cut: Cut,
         attribution_cut: Cut,
-        intervention: InterventionLike
+        intervention: ModelInputs
     ):
         B = get_backend()
 
-        if isinstance(intervention, ModelInputs):
-            pass
-        else:
-            intervention = ModelInputs(as_args(intervention), {})
+        print("qoi_bprop")
+        print("doi_cut=", doi_cut)
+        print("attribution_cut=", attribution_cut)
 
         y, zs = self._fprop(
             model_inputs=model_inputs,
@@ -466,7 +466,8 @@ class PytorchModelWrapper(ModelWrapper):
                 # being summed. If there is only 1 dim, its likely the batching
                 # dimension so sum there is probably expected.
                 tru_logger.warn(
-                    f"Attribution tensor is not scalar (it is of shape {t.shape} and will be summed. This may not be your intention."
+                    f"Attribution tensor is not scalar (it is of shape {t.shape} "
+                    f"and will be summed. This may not be your intention."
                 )
 
             return B.sum(t)
@@ -515,7 +516,7 @@ class PytorchModelWrapper(ModelWrapper):
 
         del y  # TODO: garbage collection
 
-        #return grads_list
+        # return grads_list
         # NOTE(piotrm): commented out the below to have more consistent output types/shapes
         
         return grads_list[0] if len(grads_list) == 1 else grads_list

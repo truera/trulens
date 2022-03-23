@@ -13,13 +13,13 @@ package.
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
 from collections import defaultdict
-from typing import Callable, Tuple, Union
+from typing import Callable, Iterable, List, Tuple, Union
 import sys
 
 import numpy as np
 
 from trulens.nn.backend import get_backend
-from trulens.nn.backend.pytorch_backend.pytorch import grace
+from trulens.nn.backend import grace
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
@@ -33,7 +33,7 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
-from trulens.utils.typing import accepts_model_inputs, as_container
+from trulens.utils.typing import accepts_model_inputs, argslike_cast, as_container
 from trulens.utils.typing import as_args
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import ModelInputs
@@ -250,7 +250,15 @@ class InternalInfluence(AttributionMethod):
         B = get_backend()
 
         model_inputs = ModelInputs(model_args, model_kwargs)
-        print("attributions: model_inputs=", model_inputs)
+
+        # Will cast results to this data container type.
+        return_type = type(model_inputs.first())
+
+        # From now on, data containers, whether B.Tensor or np.ndarray will be consistent.
+        model_inputs = model_inputs.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
+
+        print("attributions:")
+        print("model_inputs=", model_inputs)
 
         # Create a message for out-of-memory errors regarding float and batch size.
         if len(list(model_inputs.values())) == 0:
@@ -265,14 +273,16 @@ class InternalInfluence(AttributionMethod):
 
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
-        with grace(*param_msgs): # Handles out-of-memory messages.
-            doi_val = self.model.fprop(
-                model_args=model_inputs.args,
-                model_kwargs=model_inputs.kwargs,
-                to_cut=doi_cut
-            )
+        print("doi_cut=", doi_cut)
 
-        print("doi_val=", doi_val)
+        with grace(*param_msgs): # Handles out-of-memory messages.
+            doi_val: List[B.Tensor] = self.model._fprop(
+                model_inputs=model_inputs,
+                to_cut=doi_cut,
+                doi_cut=InputCut(),
+                attribution_cut=None,# InputCut(),
+                intervention=model_inputs
+            )
 
         # DoI supports tensor or list of tensor. unwrap args to perform DoI on
         # top level list
@@ -283,27 +293,58 @@ class InternalInfluence(AttributionMethod):
         # TODO(piotrm): automatic handling of other common containers like the ones
         # used for huggingface models.
         # TODO(piotrm): this unwrapping may not be necessary any more
-        #doi_val = as_container(doi_val)
-        if isinstance(doi_val, DATA_CONTAINER_TYPE) and isinstance(
-                doi_val[0], DATA_CONTAINER_TYPE):
-            doi_val = doi_val[0]
+        # doi_val = as_container(doi_val)
+
+        # doi_val = list(map(B.as_array, doi_val))
+
+        #if isinstance(doi_val, DATA_CONTAINER_TYPE) and isinstance(
+        #        doi_val[0], DATA_CONTAINER_TYPE):
+        #    doi_val = doi_val[0]
+
+        #if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
+        #    doi_val = doi_val[0]
+
+        # assert(len(doi_val) == 1)
+
+
+        print("doi_val=", doi_val)
+        doi_val = list(map(B.as_array, doi_val))
 
         if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
             doi_val = doi_val[0]
+
+        print("doi_val=", doi_val)
 
         if accepts_model_inputs(self.doi):
             D = self.doi(doi_val, model_inputs=model_inputs)
         else:
             D = self.doi(doi_val)
 
+        # D = D[0]
         n_doi = len(D)
         doi_per_batch = self.doi_per_batch
         if self.doi_per_batch is None:
             doi_per_batch = n_doi
 
-        D = self.__concatenate_doi(D)#, doi_per_batch=doi_per_batch)
+        print("D pre concat=", D)
+        #D_ = []
+        #for batch in self.__concatenate_doi(D):
+        #    if isinstance(batch, DATA_CONTAINER_TYPE):
+        #        D_.append(list(map(B.as_tensor, batch)))
+        #    else:
+        #        D_.append(B.as_tensor(batch))
 
-        print("D=", D)
+        # D = list(map(B.as_tensor, ))#, doi_per_batch=doi_per_batch)
+        #D = D
+
+        D = self.__concatenate_doi(D)
+
+        if isinstance(D, DATA_CONTAINER_TYPE):
+            D = list(map(B.as_tensor, D))
+        else:
+            D = B.as_tensor(D)
+
+        print("D post concat=", D)
   
         # Create a message for out-of-memory errors regarding doi_size.
         # TODO: Generalize this message to doi other than LinearDoI:
@@ -316,22 +357,23 @@ class InternalInfluence(AttributionMethod):
         effective_batch_msg = f"effective batch size = {effective_batch_size}; consider reducing batch size, intervention size, or doi_per_batch"
 
         # Calculate the gradient of each of the points in the DoI.
-        qoi_grads_per_arg = defaultdict(list)
+        # qoi_grads_per_arg = defaultdict(list)
         with grace(param_msgs + [doi_size_msg, doi_per_batch_msg, effective_batch_msg]): # Handles out-of-memory messages.
             #for Dbatch in D:
             #    print("Dbatch=", Dbatch)
 
                 #qoi_grads_for_all_args = 
-                qoi_grads = self.model.qoi_bprop(
-                    qoi=self.qoi,
-                    model_args=model_inputs.args,
-                    model_kwargs=model_inputs.kwargs,
-                    attribution_cut=self.slice.from_cut,
-                    to_cut=self.slice.to_cut,
-                    #intervention=Dbatch,
-                    intervention = D,
-                    doi_cut=doi_cut
-                )
+            qoi_grads = self.model._qoi_bprop(
+                qoi=self.qoi,
+                #model_args=model_inputs.args,
+                #model_kwargs=model_inputs.kwargs,
+                model_inputs=model_inputs,
+                attribution_cut=self.slice.from_cut,
+                to_cut=self.slice.to_cut,
+                #intervention=D,
+                intervention = ModelInputs(as_args(D), {}),
+                doi_cut=doi_cut
+            )
                 #print("qoi_grads_for_all_args=", len(qoi_grads_for_all_args), type(qoi_grads_for_all_args))
                 #for arg_index, qoi_grads_for_arg in enumerate(qoi_grads_for_all_args):
                 #    qoi_grads_per_arg[arg_index].append(qoi_grads_for_arg)
@@ -339,7 +381,7 @@ class InternalInfluence(AttributionMethod):
                     # print("qoi_grads_=", qoi_grads)
 
         #qoi_grads = [np.concatenate(qoi_grads_for_arg) for qoi_grads_for_arg in qoi_grads_per_arg.values()]
-        print("len(qoi_grads)=", len(qoi_grads), type(qoi_grads))
+        #print("len(qoi_grads)=", len(qoi_grads), type(qoi_grads))
         #if len(qoi_grads) == 1:
         #    qoi_grads = qoi_grads[0]
         #if len(qoi_grads) == 1:
@@ -347,7 +389,15 @@ class InternalInfluence(AttributionMethod):
         #print("qoi_grads=", qoi_grads)
 
         # Take the mean across the samples in the DoI.
+
+        # assert(len(qoi_grads) > 0)
+
+        
+
+        print("qoi_grads=", qoi_grads)
+
         if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
+            qoi_grads = list(map(B.as_array, qoi_grads))
             attributions = [
                 B.mean(
                     B.reshape(qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
@@ -355,9 +405,13 @@ class InternalInfluence(AttributionMethod):
                 ) for qoi_grad in qoi_grads
             ]
         else:
+            # raise ValueError("inconsistent")
+            qoi_grads = B.as_array(qoi_grads)
             attributions = B.mean(
                 B.reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]), axis=0
             )
+
+        # print("attributions=", attributions.shape)
 
         extra_args = dict()
         if accepts_model_inputs(self.doi.get_activation_multiplier):
@@ -366,14 +420,18 @@ class InternalInfluence(AttributionMethod):
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
             with grace(param_msgs):
-                z_val = self.model.fprop(
-                    model_inputs.args,
-                    model_inputs.kwargs,
-                    to_cut=self.slice.from_cut
+                z_val = self.model._fprop(
+                    model_inputs=model_inputs,
+                    doi_cut=InputCut(),
+                    attribution_cut=None,
+                    to_cut=self.slice.from_cut,
+                    intervention=model_inputs
                 )
 
             if isinstance(z_val, DATA_CONTAINER_TYPE) and len(z_val) == 1:
                 z_val = z_val[0]
+
+            # print("z_val=", z_val.shape)
 
             if isinstance(attributions, DATA_CONTAINER_TYPE):
                 for i in range(len(attributions)):
@@ -390,11 +448,17 @@ class InternalInfluence(AttributionMethod):
                         )
 
             else:
+                # raise ValueError("inconsistent")
                 attributions *= self.doi.get_activation_multiplier(
                     z_val, **extra_args
                 )
 
-        return attributions
+        # Cast to the same data type as provided inputs.
+        return argslike_cast(
+            backend=B,
+            astype=return_type,
+            args=attributions
+        )
 
     @staticmethod
     def __get_qoi(qoi_arg):

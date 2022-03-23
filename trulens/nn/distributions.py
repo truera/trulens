@@ -215,7 +215,7 @@ class LinearDoi(DoI):
         *,
         model_inputs: Optional[ModelInputs] = None
     ) -> List[DataLike]:
-
+        # TODO: Deambiguate.
         if isinstance(z, DATA_CONTAINER_TYPE) and len(z) == 1:
             z = z[0]
 
