@@ -12,6 +12,8 @@ from trulens.nn.backend import Backend
 __all__ = _ALL_BACKEND_API_FUNCTIONS + ['tf1']
 
 floatX = tf.keras.backend.floatx()
+# TODO: Generalize the size determiner.
+floatX_size = 4 if "32" in floatX else 8
 Tensor = tf.Tensor
 dim_order = 'channels_last'
 channel_axis = 1 if dim_order == 'channels_first' else 3

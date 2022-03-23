@@ -23,7 +23,7 @@ class DeterminismTestBase(object):
         out1 = self.model_nondet.fprop(model_args=[self.x])
         out2 = self.model_nondet.fprop(model_args=[self.x])
 
-        self.assertTrue(np.allclose(out1, out2))
+        self.assertTrue(np.allclose(out1[0], out2[0]))
 
     def test_qprop(self):
         """qprop determinism test."""

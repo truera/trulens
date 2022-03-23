@@ -24,6 +24,8 @@ else:
     import keras.backend as K
 
 floatX = K.floatx()
+# TODO: Generalize the size determiner.
+floatX_size = 4 if "32" in floatX else 8
 Tensor = type(K.constant((1, 1), dtype=floatX))
 TensorVar = type(K.zeros((1, 1), dtype=floatX))
 dim_order = K.image_data_format()

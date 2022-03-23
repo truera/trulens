@@ -9,14 +9,17 @@ it should be wrapped as a `ModelWrapper` instance.
 """
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple, Union
+
+import numpy as np
+from trulens.nn.backend import get_backend
 from trulens.nn.quantities import QoI
 
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import ArgsLike, DataLike, Tensor, argslike_cast, argslike_map
 from trulens.utils.typing import as_args
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import InterventionLike
@@ -204,6 +207,10 @@ class ModelWrapper(AbstractBaseClass):
                 `intervention` is `None`, then it is equivalent to the point
                 DoI.
 
+            *others*:
+                Some backends support additional parameters. Consult the appropriate
+                *BACKEND*ModelWrapper._fprop for details.
+
         Returns:
             (list of backend.Tensor or np.ndarray)
                 A list of output activations are returned, keeping the same type
@@ -223,17 +230,30 @@ class ModelWrapper(AbstractBaseClass):
             intervention=intervention
         )
 
-        return self._fprop(
-            model_inputs=model_inputs,
-            doi_cut=doi_cut,
-            to_cut=to_cut,
-            attribution_cut=attribution_cut,
-            intervention=intervention,
-            **kwargs
+        B = get_backend()
+
+        # Will cast results to this data container type.
+        return_type = type(model_inputs.first())
+
+        model_inputs = model_inputs.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
+        intervention = intervention.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
+
+        # Call the implementation and transform its results to the same type as model_inputs.
+        return argslike_cast(
+            backend=B,
+            astype=return_type,
+            args=self._fprop(
+                model_inputs=model_inputs,
+                doi_cut=doi_cut,
+                to_cut=to_cut,
+                attribution_cut=attribution_cut,
+                intervention=intervention,
+                **kwargs
+            )
         )
+    
 
-    def _organize_inputs(self, *, doi_cut, model_args, model_kwargs, intervention):
-
+    def _organize_inputs(self, *, doi_cut, model_args, model_kwargs, intervention) -> Tuple[ModelInputs, ModelInputs]:
         model_inputs = ModelInputs(as_args(model_args), model_kwargs)
 
         if isinstance(doi_cut, InputCut):
@@ -254,7 +274,7 @@ class ModelWrapper(AbstractBaseClass):
                         tru_logger.warn(
                             "Intervention for InputCut DoI specified but contains only positional arguments. "
                             "The rest will be taken from model_kwargs. If you need to intervene on keyword "
-                            "arguments, provide the intervention as ModelInputs container."
+                            "arguments, provide the intervention as a ModelInputs container."
                         )
 
             else:
@@ -280,13 +300,14 @@ class ModelWrapper(AbstractBaseClass):
     def _fprop(
         self,
         *,
-        model_inputs: ModelInputs,
+        model_inputs: ModelInputs, # Tensors only
         doi_cut: Cut,
         to_cut: Cut,
         attribution_cut: Cut,
-        intervention: ModelInputs,
+        intervention: ModelInputs, # Tensors only
         **kwargs
-    ):
+    ) -> List[Tensor]:
+        """Implementation of fprop; arguments, return, and their types are clarified. """
         raise NotImplementedError
 
     def qoi_bprop(
@@ -344,6 +365,9 @@ class ModelWrapper(AbstractBaseClass):
                 `intervention` is `None`, then it is equivalent to the point
                 DoI.
 
+            *others*:
+                Some backends support additional parameters. Consult the appropriate
+                *BACKEND*ModelWrapper._qoi_bprop for details.
 
         Returns:
             (backend.Tensor or np.ndarray)
@@ -365,14 +389,29 @@ class ModelWrapper(AbstractBaseClass):
             intervention=intervention
         )
 
-        return self._qoi_bprop(
-            qoi=qoi,
-            model_inputs=model_inputs,
-            doi_cut=doi_cut,
-            to_cut=to_cut,
-            attribution_cut=attribution_cut,
-            intervention=intervention,
-            **kwargs
+        B = get_backend()
+
+        # Will cast results to this data container type.
+        return_type = type(model_inputs.first())
+
+        # From now on, data containers, whether B.Tensor or np.ndarray will be consistent.
+        model_inputs = model_inputs.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
+        intervention = intervention.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
+
+        # Call the implementation and transform its results to the same type as model_inputs.
+        return argslike_cast(
+            backend=get_backend(),
+            astype=return_type,
+
+            args=self._qoi_bprop(
+                qoi=qoi,
+                model_inputs=model_inputs,
+                doi_cut=doi_cut,
+                to_cut=to_cut,
+                attribution_cut=attribution_cut,
+                intervention=intervention,
+                **kwargs
+            )
         )
 
     @abstractmethod
@@ -380,13 +419,14 @@ class ModelWrapper(AbstractBaseClass):
         self,
         *,
         qoi: QoI,
-        model_inputs: ModelInputs,
+        model_inputs: ModelInputs, # Tensors only
         doi_cut: Cut,
         to_cut: Cut,
         attribution_cut: Cut,
-        intervention: ModelInputs,
+        intervention: ModelInputs, # Tensors only
         **kwargs
-    ):
+    ) -> Tensor:
+        """Implementation of qoi_bprop; arguments, return, and their types are clarified. """
         raise NotImplementedError
 
     @staticmethod

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from inspect import signature
 from typing import (
-    Any, Callable, Dict, Generic, Iterable, List, Optional, Tuple, TypeVar,
+    Any, Callable, Dict, Generic, Iterable, List, Optional, Tuple, Type, TypeVar,
     Union
 )
 
@@ -39,11 +39,40 @@ C2 = TypeVar("C2")
 K = TypeVar("K")
 # V for "value"
 V = TypeVar("V")
+# Another, different value
+U = TypeVar("U")
 
 Indexable = Union[List[V], Tuple[V]]
 # For type checking the above.
 DATA_CONTAINER_TYPE = (list, tuple)
 
+
+def argslike_map(dat: ArgsLike, f: Callable[[DataLike], DataLike]) -> ArgsLike:
+    # ArgsLike[U], U -> V, ArgsLike[V]
+    """Map over datalike even if they are contained in a DATA_CONTAINER_TYPE. """
+
+    if isinstance(dat, DATA_CONTAINER_TYPE):
+        return dat.__class__(map(f, dat))
+    else:
+        return f(dat)
+
+
+def argslike_cast(
+    backend: 'Backend',
+    args: ArgsLike,
+    astype: Type[DataLike]
+):
+    """Transform set of values to the given type wrapping around List/Tuple if
+    needed."""
+
+    if issubclass(astype, np.ndarray):
+        caster = backend.as_array
+    elif issubclass(astype, backend.Tensor):
+        caster = backend.as_tensor
+    else:
+        raise ValueError(f"Cannot cast unhandled type {type(astype)}.")
+
+    return argslike_map(args, lambda x: caster(x) if type(x) != astype else x)
 
 # Convert a single element input to the multi-input one.
 def as_args(ele):
