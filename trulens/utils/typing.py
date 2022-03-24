@@ -47,6 +47,33 @@ Indexable = Union[List[V], Tuple[V]]
 DATA_CONTAINER_TYPE = (list, tuple)
 
 
+def float_size(name: str) -> int:
+    """Given a name of a floating type, guess its size in bytes."""
+
+    # Different backends have their own type structures so this is hard to
+    # generalize. Just guessing based on bitlengths in names for now.
+
+    if name == "double":
+        name = "float64"
+
+    if "float" not in name:
+        raise ValueError("Type name {name} does not refer to a float.")
+
+    if name == "float":
+        return 4
+
+    if "128" in name:
+        return 16
+    elif "64" in name:
+        return 8
+    elif "32" in name:
+        return 4
+    elif "16" in name:
+        return 2
+    
+    raise ValueError(f"Cannot guess size of {name}")
+
+
 def argslike_map(dat: ArgsLike, f: Callable[[DataLike], DataLike]) -> ArgsLike:
     # ArgsLike[U], U -> V, ArgsLike[V]
     """Map over datalike even if they are contained in a DATA_CONTAINER_TYPE. """
@@ -175,7 +202,6 @@ class Lens(Generic[C, V]):  # Container C with values V
             lambda c, e: l1.set(c, l2.set(l1.get(c), e))
         )
 
-
 @dataclass
 class ModelInputs:
     """Container for model input arguments, that is, args and kwargs."""
@@ -191,7 +217,6 @@ class ModelInputs:
     lens_kwargs: Lens['ModelInputs', KwargsLike] = Lens(
         lambda s: s.kwargs, lambda s, kw: ModelInputs(s.args, kw)
     )
-
     # lens focusing on the kwargs field of this container.
 
     def __init__(self, args: List[DataLike] = [], kwargs: KwargsLike = {}):
