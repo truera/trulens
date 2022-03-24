@@ -1,12 +1,13 @@
 import importlib
 import os
 import tempfile
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
+from trulens.nn.backend.keras_backend.keras import Tensor
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
@@ -282,10 +283,14 @@ class KerasModelWrapper(ModelWrapper):
         self, model_args, intervention, doi_tensors
     ):
         input_tensors = self._get_layers(InputCut())
+
         if not all(elem in doi_tensors for elem in input_tensors):
+
             intervention_batch_doi_len = len(intervention[0])
             model_args_batch_len = len(model_args[0])
+
             doi_tensors.extend(input_tensors)
+
             if intervention_batch_doi_len != model_args_batch_len:
                 doi_factor = intervention_batch_doi_len / model_args_batch_len
                 model_args_expanded = [
@@ -295,6 +300,7 @@ class KerasModelWrapper(ModelWrapper):
                 intervention.extend(model_args_expanded)
             else:
                 intervention.extend(model_args)
+
         return doi_tensors, intervention
 
     def _fprop(
@@ -305,7 +311,7 @@ class KerasModelWrapper(ModelWrapper):
         to_cut: Cut,
         attribution_cut: Cut,
         intervention: ModelInputs
-    ):
+    ) -> List[np.ndarray]:
         """
         See ModelWrapper.fprop .
         """
@@ -371,6 +377,7 @@ class KerasModelWrapper(ModelWrapper):
                 inputs=all_inputs, outputs=non_identity_to_tensors
             )
             out_vals = fprop_fn(all_vals)
+            print("out_vals=", out_vals)
             del fprop_fn
 
         else:
@@ -382,6 +389,8 @@ class KerasModelWrapper(ModelWrapper):
 
         for i in sorted(identity_map):
             out_vals.insert(i, intervention[identity_map[i]])
+
+        # out_vals = list(map(B.as_tensor, out_vals))
 
         return out_vals
 
@@ -405,9 +414,15 @@ class KerasModelWrapper(ModelWrapper):
 
         Q = qoi(to_tensors[0]) if len(to_tensors) == 1 else qoi(to_tensors)
 
+        int_copy = list(x for x in intervention.args)
+        doi_copy = list(x for x in doi_tensors)
+
         doi_tensors, intervention_args = self._prepare_intervention_with_input(
-            model_inputs.args, intervention.args, doi_tensors
+            model_inputs.args, int_copy, doi_copy
         )
+
+        # intervention_args = intervention_args[0]
+        print("intervention_args=", intervention_args)
 
         gradients = [
             self.keras.backend.function(

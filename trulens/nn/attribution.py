@@ -255,7 +255,7 @@ class InternalInfluence(AttributionMethod):
         return_type = type(model_inputs.first())
 
         # From now on, data containers, whether B.Tensor or np.ndarray will be consistent.
-        model_inputs = model_inputs.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
+        # model_inputs = model_inputs.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
 
         print("attributions:")
         print("model_inputs=", model_inputs)
@@ -306,12 +306,11 @@ class InternalInfluence(AttributionMethod):
 
         # assert(len(doi_val) == 1)
 
-
         print("doi_val=", doi_val)
-        doi_val = list(map(B.as_array, doi_val))
+        # doi_val = list(map(B.as_array, doi_val))
 
-        if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
-            doi_val = doi_val[0]
+        #if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
+        #    doi_val = doi_val[0]
 
         print("doi_val=", doi_val)
 
@@ -334,15 +333,19 @@ class InternalInfluence(AttributionMethod):
         #    else:
         #        D_.append(B.as_tensor(batch))
 
-        # D = list(map(B.as_tensor, ))#, doi_per_batch=doi_per_batch)
+        
         #D = D
 
         D = self.__concatenate_doi(D)
 
-        if isinstance(D, DATA_CONTAINER_TYPE):
-            D = list(map(B.as_tensor, D))
-        else:
-            D = B.as_tensor(D)
+        # D = list(map(B.as_tensor, D))#, doi_per_batch=doi_per_batch)
+
+        # D = B.as_tensor(D)
+
+        #if isinstance(D, DATA_CONTAINER_TYPE):
+        #    D = list(map(B.as_tensor, D))
+        #else:
+        #    D = B.as_tensor(D)
 
         print("D post concat=", D)
   
@@ -371,7 +374,7 @@ class InternalInfluence(AttributionMethod):
                 attribution_cut=self.slice.from_cut,
                 to_cut=self.slice.to_cut,
                 #intervention=D,
-                intervention = ModelInputs(as_args(D), {}),
+                intervention = ModelInputs(D, {}),
                 doi_cut=doi_cut
             )
                 #print("qoi_grads_for_all_args=", len(qoi_grads_for_all_args), type(qoi_grads_for_all_args))
@@ -392,12 +395,11 @@ class InternalInfluence(AttributionMethod):
 
         # assert(len(qoi_grads) > 0)
 
-        
-
         print("qoi_grads=", qoi_grads)
 
         if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
             qoi_grads = list(map(B.as_array, qoi_grads))
+            # TODO: Below is done in numpy.
             attributions = [
                 B.mean(
                     B.reshape(qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
@@ -406,6 +408,7 @@ class InternalInfluence(AttributionMethod):
             ]
         else:
             # raise ValueError("inconsistent")
+            # TODO: Below is actually done in numpy, not backend.
             qoi_grads = B.as_array(qoi_grads)
             attributions = B.mean(
                 B.reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]), axis=0

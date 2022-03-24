@@ -9,6 +9,7 @@ import numpy as np
 
 from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS
 from trulens.nn.backend import Backend
+from trulens.utils.typing import float_size
 
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
@@ -24,8 +25,7 @@ else:
     import keras.backend as K
 
 floatX = K.floatx()
-# TODO: Generalize the size determiner.
-floatX_size = 4 if "32" in floatX else 8
+floatX_size = float_size(str(floatX))
 Tensor = type(K.constant((1, 1), dtype=floatX))
 TensorVar = type(K.zeros((1, 1), dtype=floatX))
 dim_order = K.image_data_format()
@@ -85,6 +85,10 @@ def as_array(t, dtype=None):
     np.array
         Same contents as t
     """
+    
+    if isinstance(t, np.ndarray):
+        return t
+
     return K.get_value(t) if dtype is None else K.get_value(t).astype(dtype)
 
 
@@ -103,6 +107,10 @@ def as_tensor(x, dtype=None, device=None):
     backend.Tensor
         Same contents as x
     """
+
+    if isinstance(x, Tensor):
+        return x
+
     if dtype is None and x.dtype.kind == 'f':
         dtype = floatX
 

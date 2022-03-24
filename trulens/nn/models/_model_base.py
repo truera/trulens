@@ -300,14 +300,17 @@ class ModelWrapper(AbstractBaseClass):
     def _fprop(
         self,
         *,
-        model_inputs: ModelInputs, # Tensors only
+        model_inputs: ModelInputs, # DataLike contents only
         doi_cut: Cut,
         to_cut: Cut,
         attribution_cut: Cut,
-        intervention: ModelInputs, # Tensors only
+        intervention: ModelInputs, # DataLike contents only
         **kwargs
-    ) -> List[Tensor]:
+    ) -> List[DataLike]:
         """Implementation of fprop; arguments, return, and their types are clarified. """
+
+        # Should not have to use DATA_CONTAINER_TYPE internally.
+        
         raise NotImplementedError
 
     def qoi_bprop(
@@ -395,8 +398,8 @@ class ModelWrapper(AbstractBaseClass):
         return_type = type(model_inputs.first())
 
         # From now on, data containers, whether B.Tensor or np.ndarray will be consistent.
-        model_inputs = model_inputs.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
-        intervention = intervention.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
+        # model_inputs = model_inputs.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
+        # intervention = intervention.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
 
         # Call the implementation and transform its results to the same type as model_inputs.
         return argslike_cast(
@@ -419,14 +422,16 @@ class ModelWrapper(AbstractBaseClass):
         self,
         *,
         qoi: QoI,
-        model_inputs: ModelInputs, # Tensors only
+        model_inputs: ModelInputs, # DataLike contents only
         doi_cut: Cut,
         to_cut: Cut,
         attribution_cut: Cut,
-        intervention: ModelInputs, # Tensors only
+        intervention: ModelInputs, # DataLike contents only
         **kwargs
-    ) -> Tensor:
+    ) -> DataLike:
         """Implementation of qoi_bprop; arguments, return, and their types are clarified. """
+        # Should not have to use DATA_CONTAINER_TYPE internally.
+
         raise NotImplementedError
 
     @staticmethod
