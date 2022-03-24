@@ -19,9 +19,10 @@ import trulens
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
 from trulens.utils import tru_logger
+from trulens.utils.typing import ModelLike
 
 
-def discern_backend(model):
+def discern_backend(model: ModelLike):
     for base_class in inspect.getmro(model.__class__):
         type_str = str(base_class).lower()
         if 'torch' in type_str:
@@ -60,14 +61,14 @@ def discern_backend(model):
 
 
 def get_model_wrapper(
-    model,
+    model: ModelLike,
     logit_layer=None,
-    replace_softmax=False,
+    replace_softmax: bool=False,
     softmax_layer=-1,
     custom_objects=None,
     input_shape=None,
     input_dtype=None,
-    device=None,
+    device: str=None,
     input_tensors=None,
     output_tensors=None,
     internal_tensor_dict=None,
@@ -143,6 +144,8 @@ def get_model_wrapper(
         backend:
             _Optional, for forcing a specific backend._ String values recognized
             are pytorch, tensorflow, keras, or tf.keras.
+
+    Returns: ModelWrapper
     """
     # get existing backend
     B = get_backend(suppress_warnings=True)
