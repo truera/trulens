@@ -30,9 +30,11 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
-from trulens.utils.typing import ArgsLike, KwargsLike, accepts_model_inputs
+from trulens.utils.typing import accepts_model_inputs
+from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import as_args
 from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import KwargsLike
 from trulens.utils.typing import ModelInputs
 
 # Attribution-related type aliases.
@@ -70,7 +72,9 @@ class AttributionMethod(AbstractBaseClass):
         return self._model
 
     @abstractmethod
-    def attributions(self, *model_args: ArgsLike, **model_kwargs: KwargsLike) -> np.ndarray:
+    def attributions(
+        self, *model_args: ArgsLike, **model_kwargs: KwargsLike
+    ) -> np.ndarray:
         """
         Returns attributions for the given input. Attributions are in the same shape
         as the layer that attributions are being generated for. 
@@ -239,7 +243,9 @@ class InternalInfluence(AttributionMethod):
         self.doi = InternalInfluence.__get_doi(doi, cut=self.slice.from_cut)
         self._do_multiply = multiply_activation
 
-    def attributions(self, *model_args: ArgsLike, **model_kwargs: KwargsLike) -> np.ndarray:
+    def attributions(
+        self, *model_args: ArgsLike, **model_kwargs: KwargsLike
+    ) -> np.ndarray:
         model_inputs = ModelInputs(model_args, model_kwargs)
 
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()

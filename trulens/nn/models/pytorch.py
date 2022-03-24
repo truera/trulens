@@ -557,32 +557,34 @@ class PytorchModelWrapper(ModelWrapper):
                 grads_flat = [
                     B.gradient(scalarize(q), z_flat) for q in qoi_out
                 ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
-                            ) else B.gradient(scalarize(qoi_out), z_flat)
+                               ) else B.gradient(scalarize(qoi_out), z_flat)
 
                 grads = [
                     ModelWrapper._unflatten(g, z, count=[0]) for g in grads_flat
+                ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
+                               ) else ModelWrapper._unflatten(
+                                   grads_flat, z, count=[0]
+                               )
+
+                grads = [
+                    attribution_cut.access_layer(g) for g in grads
+                ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
+                               ) else attribution_cut.access_layer(grads)
+
+                grads = [
+                    B.as_array(g) for g in grads
                 ] if isinstance(qoi_out,
-                                DATA_CONTAINER_TYPE) else ModelWrapper._unflatten(
-                                    grads_flat, z, count=[0]
-                                )
-
-                grads = [attribution_cut.access_layer(g) for g in grads
-                        ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
-                                    ) else attribution_cut.access_layer(grads)
-
-                grads = [B.as_array(g) for g in grads
-                        ] if isinstance(qoi_out,
-                                        DATA_CONTAINER_TYPE) else B.as_array(grads)
+                                DATA_CONTAINER_TYPE) else B.as_array(grads)
 
                 grads_list.append(grads)
         except RuntimeError as e:
-            if "cudnn RNN backward can only be called in training mode" in str(e):
+            if "cudnn RNN backward can only be called in training mode" in str(e
+                                                                              ):
                 raise RuntimeError(
                     "Cannot get deterministic gradients from RNN's with cudnn. See more about this issue here: https://github.com/pytorch/captum/issues/564 .\n"
                     "Consider setting 'torch.backends.cudnn.enabled = False' for now."
                 )
             raise e
-
 
         del y  # TODO: garbage collection
 
