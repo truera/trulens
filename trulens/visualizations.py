@@ -28,7 +28,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 
-from trulens.nn.attribution import AttributionMethod, InternalInfluence
+from trulens.nn.attribution import AttributionMethod
+from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.nn.backend import Tensor
 from trulens.nn.distributions import PointDoi
@@ -860,7 +861,7 @@ class ChannelMaskVisualizer(object):
         blur=None,
         threshold=0.5,
         masked_opacity=0.2,
-        combine_channels: bool =True,
+        combine_channels: bool = True,
         use_attr_as_opacity=None,
         positive_only=None
     ):
