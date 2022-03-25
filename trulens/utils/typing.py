@@ -13,23 +13,6 @@ from typing import (
 
 import numpy as np
 
-# Each backend should define this.
-Tensor = TypeVar("Tensor")
-
-# Atomic model inputs (at least from our perspective)
-DataLike = Union[np.ndarray, Tensor]
-
-# Model input arguments. Either a single element or list/tuple of several.
-ArgsLike = Union[DataLike, List[DataLike], Tuple[DataLike]]
-
-# Model input kwargs.
-Kwargs = Dict[str, DataLike]
-
-# Some backends allow inputs in terms of dicts with tensors as keys (i.e. feed_dict in tf1).
-# We keep track of internal names so that these feed dicts can use strings as names instead.
-Feed = Dict[Union[str, Tensor], DataLike]
-
-KwargsLike = Union[Kwargs, Feed]
 
 # C for "container"
 C = TypeVar("C")
@@ -42,40 +25,58 @@ V = TypeVar("V")
 # Another, different value
 U = TypeVar("U")
 
+
+# Lists that represent the potentially multiple inputs to some neural layer.
+InputsList = List
+InputsTuple = Tuple
+
+# Lists that are meant to represent instances of some uniform distribution.
+UniformList = List
+
+
+# Each backend should define this.
+Tensor = TypeVar("Tensor")
+
+# Atomic model inputs (at least from our perspective)
+DataLike = Union[np.ndarray, Tensor]
+
+# Model input arguments. Either a single element or list/tuple of several.
+# User-provided methods are given DataLike and for single input models/layers
+# but internally we pass around InputList[DataLike] for consistency. Likewise
+# user-provided methods may return a single DataLike or UniformList[DataLike]
+# but we want to pass around InputsList[DataLike] or
+# InputsList[UniformList[DataLike]]. Because of this, there are checks with
+# wrapping/unwrapping around user-provided-function calls using the various
+# utilities below. Purely internal methods should not be doing
+# wrapping/unwrapping.
+ArgsLike = Union[
+    V,
+    InputsList[V], # len != 1
+    InputsTuple[V] # len != 1
+]
+# Will sometimes parameterize this as:
+# ArgsLike[T] = Union[
+#    T,
+#    InputsList[T],
+#    InputsTuple[T]
+# ]
+
+# Model input kwargs.
+Kwargs = Dict[str, V]
+
+# Some backends allow inputs in terms of dicts with tensors as keys (i.e. feed_dict in tf1).
+# We keep track of internal names so that these feed dicts can use strings as names instead.
+Feed = Dict[Union[str, Tensor], DataLike]
+
+KwargsLike = Union[Kwargs[DataLike], Feed]
+
+
 Indexable = Union[List[V], Tuple[V]]
-# For type checking the above.
+# For checking the above against an instance:
 DATA_CONTAINER_TYPE = (list, tuple)
 
 
-def float_size(name: str) -> int:
-    """Given a name of a floating type, guess its size in bytes."""
-
-    # Different backends have their own type structures so this is hard to
-    # generalize. Just guessing based on bitlengths in names for now.
-
-    if name == "double":
-        name = "float64"
-
-    if "float" not in name:
-        raise ValueError("Type name {name} does not refer to a float.")
-
-    if name == "float":
-        return 4
-
-    if "128" in name:
-        return 16
-    elif "64" in name:
-        return 8
-    elif "32" in name:
-        return 4
-    elif "16" in name:
-        return 2
-    
-    raise ValueError(f"Cannot guess size of {name}")
-
-
-def argslike_map(dat: ArgsLike, f: Callable[[DataLike], DataLike]) -> ArgsLike:
-    # ArgsLike[U], U -> V, ArgsLike[V]
+def argslike_map(dat: ArgsLike[U], f: Callable[[U], V]) -> ArgsLike[V]:
     """Map over datalike even if they are contained in a DATA_CONTAINER_TYPE. """
 
     if isinstance(dat, DATA_CONTAINER_TYPE):
@@ -84,39 +85,49 @@ def argslike_map(dat: ArgsLike, f: Callable[[DataLike], DataLike]) -> ArgsLike:
         return f(dat)
 
 
-def argslike_cast(
+def datalike_caster(
     backend: 'Backend',
-    args: ArgsLike,
-    astype: Type[DataLike]
-):
-    """Transform set of values to the given type wrapping around List/Tuple if
-    needed."""
+    astype: Type
+) -> Callable[[DataLike], DataLike]:
 
     if issubclass(astype, np.ndarray):
         caster = backend.as_array
     elif issubclass(astype, backend.Tensor):
         caster = backend.as_tensor
     else:
-        raise ValueError(f"Cannot cast unhandled type {type(astype)}.")
+        raise ValueError(f"Cannot cast unhandled type {astype}.")
+
+    return caster
+
+def argslike_cast(
+    backend: 'Backend',
+    args: ArgsLike[DataLike], # : of Backend.Tensor or np.ndarray
+    astype: Type # : select one of the two types
+) -> Union[ArgsLike[Tensor], ArgsLike[np.ndarray]]: # : of selected type
+    """Transform set of values to the given type wrapping around List/Tuple if
+    needed."""
+
+    caster = datalike_caster(backend, astype)
 
     return argslike_map(args, lambda x: caster(x) if type(x) != astype else x)
 
-# Convert a single element input to the multi-input one.
-def as_args(ele):
-    if isinstance(ele, DATA_CONTAINER_TYPE):
-        return ele
+# Convert ArgsLike (possibly a single V/DataLike) to InputsList.
+def as_inputs(args: ArgsLike[V]) -> InputsList[V]:
+    if isinstance(args, DATA_CONTAINER_TYPE):
+        return args
     else:
-        return [ele]
+        return [args]
 
 # Opposite of the above.
-def as_container(ele):
-    if isinstance(ele, DATA_CONTAINER_TYPE) and len(ele) == 1 and isinstance(ele[0], DATA_CONTAINER_TYPE):
-        return ele[0]
+def as_args(inputs: InputsList[V]) -> ArgsLike[V]:
+    # If there is more than 1 input, will remain InputsList, otherwise will become V (typically DataLike).
+
+    if len(inputs) == 1:
+        return inputs[0]
     else:
-        return ele
+        return inputs
 
 class IndexableUtils:
-
     def with_(l: Indexable[V], i: int, v: V) -> Indexable[V]:
         """Copy of the given list or tuple with the given index replaced by the given value."""
 
@@ -206,10 +217,10 @@ class Lens(Generic[C, V]):  # Container C with values V
 class ModelInputs:
     """Container for model input arguments, that is, args and kwargs."""
 
-    args: List[DataLike] = field(default_factory=list)
+    args: InputsList[DataLike] = field(default_factory=list)
     kwargs: KwargsLike = field(default_factory=dict)
 
-    lens_args: Lens['ModelInputs', List[DataLike]] = Lens(
+    lens_args: Lens['ModelInputs', InputsList[DataLike]] = Lens(
         lambda s: s.args, lambda s, a: ModelInputs(a, s.kwargs)
     )
     # lens focusing on the args field of this container.
@@ -219,7 +230,7 @@ class ModelInputs:
     )
     # lens focusing on the kwargs field of this container.
 
-    def __init__(self, args: List[DataLike] = [], kwargs: KwargsLike = {}):
+    def __init__(self, args: InputsList[DataLike] = [], kwargs: KwargsLike = {}):
         """
         Contain positional and keyword arguments. This should operate when given
         args received from a method with this signature:
@@ -233,10 +244,6 @@ class ModelInputs:
         second, it is a tuple with two. In either case, we convert it to a list
         with two.
         """
-
-        if isinstance(args, tuple) and len(args) == 1 and isinstance(
-                args[0], DATA_CONTAINER_TYPE):
-            args = args[0]
 
         self.args = args
         self.kwargs = kwargs
@@ -305,10 +312,37 @@ def accepts_model_inputs(func: Callable) -> bool:
 
 # Baselines are either explicit or computable from the same data as sent to DoI
 # __call__ .
-BaselineLike = Union[DataLike, Callable[[ArgsLike, Optional[ModelInputs]],
-                                        ArgsLike]]
+BaselineLike = Union[ArgsLike[DataLike], Callable[[ArgsLike[DataLike], Optional[ModelInputs]],
+                                        ArgsLike[DataLike]]]
 
 # Interventions for fprop specifiy either activations at some non-InputCut or
 # model inputs if DoI is InputCut (these include both args and kwargs).
 # Additionally, some backends (tf1) provide interventions as kwargs instead.
-InterventionLike = Union[DataLike, KwargsLike, ModelInputs]
+InterventionLike = Union[ArgsLike[DataLike], KwargsLike, ModelInputs]
+
+
+def float_size(name: str) -> int:
+    """Given a name of a floating type, guess its size in bytes."""
+
+    # Different backends have their own type structures so this is hard to
+    # generalize. Just guessing based on bitlengths in names for now.
+
+    if name == "double":
+        name = "float64"
+
+    if "float" not in name:
+        raise ValueError("Type name {name} does not refer to a float.")
+
+    if name == "float":
+        return 4
+
+    if "128" in name:
+        return 16
+    elif "64" in name:
+        return 8
+    elif "32" in name:
+        return 4
+    elif "16" in name:
+        return 2
+    
+    raise ValueError(f"Cannot guess size of {name}")

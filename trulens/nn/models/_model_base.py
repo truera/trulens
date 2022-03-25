@@ -20,7 +20,7 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import ArgsLike, DataLike, Tensor, argslike_cast, argslike_map
-from trulens.utils.typing import as_args
+from trulens.utils.typing import as_inputs
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import InterventionLike
 from trulens.utils.typing import KwargsLike
@@ -254,7 +254,7 @@ class ModelWrapper(AbstractBaseClass):
     
 
     def _organize_inputs(self, *, doi_cut, model_args, model_kwargs, intervention) -> Tuple[ModelInputs, ModelInputs]:
-        model_inputs = ModelInputs(as_args(model_args), model_kwargs)
+        model_inputs = ModelInputs(as_inputs(model_args), model_kwargs)
 
         if isinstance(doi_cut, InputCut):
             # For input cuts, produce a ModelInputs container for the intervention and model inputs.
@@ -266,7 +266,7 @@ class ModelWrapper(AbstractBaseClass):
                     # Intervention overrides only args.
                     # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
                     intervention = ModelInputs(
-                        as_args(intervention), model_inputs.kwargs
+                        as_inputs(intervention), model_inputs.kwargs
                     )
                     model_inputs = intervention
 
@@ -292,7 +292,7 @@ class ModelWrapper(AbstractBaseClass):
                 )
             else:
                 # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
-                intervention = ModelInputs(as_args(intervention), {})
+                intervention = ModelInputs(as_inputs(intervention), {})
 
         return model_inputs, intervention
 

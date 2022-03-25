@@ -33,8 +33,8 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
-from trulens.utils.typing import accepts_model_inputs, argslike_cast, as_container
-from trulens.utils.typing import as_args
+from trulens.utils.typing import DataLike, accepts_model_inputs, argslike_cast, as_args
+from trulens.utils.typing import as_inputs
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import ModelInputs
 
@@ -304,9 +304,9 @@ class InternalInfluence(AttributionMethod):
         #if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
         #    doi_val = doi_val[0]
 
-        # assert(len(doi_val) == 1)
-
         print("doi_val=", doi_val)
+        assert(len(doi_val) == 1)
+        
         # doi_val = list(map(B.as_array, doi_val))
 
         #if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
@@ -348,6 +348,9 @@ class InternalInfluence(AttributionMethod):
         #    D = B.as_tensor(D)
 
         print("D post concat=", D)
+
+        assert isinstance(D, DATA_CONTAINER_TYPE)
+        # assert isinstance(D[0], DATA_CONTAINER_TYPE)
   
         # Create a message for out-of-memory errors regarding doi_size.
         # TODO: Generalize this message to doi other than LinearDoI:
@@ -601,12 +604,18 @@ class InternalInfluence(AttributionMethod):
             raise ValueError('Unrecognized argument type for cut')
 
     @staticmethod
-    def __concatenate_doi(D):
+    def __concatenate_doi(D: Union[List[DataLike], List[List[DataLike]]]) -> List[DataLike]:
+        # 
+
+        # Returns one DataLike for each model input.
         if len(D) == 0:
             raise ValueError(
                 'Got empty distribution of interest. `DoI` must return at '
                 'least one point.'
             )
+
+        if not isinstance(D[0], DATA_CONTAINER_TYPE):
+            D = [D]
 
         if isinstance(D[0], DATA_CONTAINER_TYPE):
             transposed = [[] for _ in range(len(D[0]))]
@@ -621,9 +630,10 @@ class InternalInfluence(AttributionMethod):
             ]
 
         else:
+            assert(False)
             if not isinstance(D[0], np.ndarray):
                 D = [get_backend().as_array(d) for d in D]
-            return np.concatenate(D)
+            return [np.concatenate(D)]
 
 
     def __concatenate_doi2(self, D, doi_per_batch):

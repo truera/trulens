@@ -8,13 +8,14 @@ interested in a more general behavior over a distribution of samples.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Union
 
 import numpy as np
+from pkg_resources import Distribution
 
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
-from trulens.utils.typing import accepts_model_inputs
+from trulens.utils.typing import ArgsLike, InputsList, UniformList, accepts_model_inputs, argslike_cast, as_inputs, as_args, datalike_caster
 from trulens.utils.typing import BaselineLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
@@ -47,19 +48,39 @@ class DoI(AbstractBaseClass):
         """
         self._cut = cut
 
+    def __call__private__(self,
+        z: InputsList[DataLike],
+        *,
+        model_inputs: Optional[ModelInputs]
+    ) -> InputsList[UniformList[DataLike]]:
+        """Same as __call__ but input and output types are more specific and
+        less permissive. Formats the inputs for special cases that might be more
+        convenient for the user's __call__ implementation and formats its return
+        back to the consistent type."""
+
+        return as_inputs(self.__call__(as_args(z), model_inputs=model_inputs))
+
     @abstractmethod
     def __call__(
         self,
-        z: DataLike,
+        z: ArgsLike[DataLike],
         *,
         model_inputs: Optional[ModelInputs] = None
-    ) -> List[DataLike]:
+    ) -> ArgsLike[UniformList[DataLike]]:
         """
-        Computes the distribution of interest from an initial point.
+        Computes the distribution of interest from an initial point. If z:
+        DataLike is given, we assume there is only 1 input to the DoI layer. If
+        z: List[DataLike] is given, it provides all of the inputs to the DoI
+        layer. 
+        
+        Either way, we always return List[List[DataLike]] (alias
+        InputsList[UniformList[DataLike]]) with outer list spanning layer
+        inputs, and inner list spanning a distribution's instance.
 
         Parameters:
             z:
-                Input point from which the distribution is derived.
+                Input point from which the distribution is derived. If
+                list/tuple, the point is defined by multiple tensors.
             model_inputs:
                 Optional wrapped model input arguments that produce value z at
                 cut.
@@ -152,12 +173,17 @@ class PointDoi(DoI):
 
     def __call__(
         self,
-        z: DataLike,
+        z: ArgsLike,
         *,
         model_inputs: Optional[ModelInputs] = None
-    ) -> List[DataLike]:
+    ) -> InputsList[UniformList[ArgsLike]]:
 
-        return [z]
+        z: InputsList[DataLike] = as_inputs(z)
+
+        return [
+            [z_] # a point UniformList
+            for z_ in z
+        ]
 
 
 class LinearDoi(DoI):
@@ -211,31 +237,42 @@ class LinearDoi(DoI):
 
     def __call__(
         self,
-        z: DataLike,
+        z: ArgsLike,
         *,
         model_inputs: Optional[ModelInputs] = None
-    ) -> List[DataLike]:
+    ) -> InputsList[UniformList[DataLike]]:
         # TODO: Deambiguate.
-        if isinstance(z, DATA_CONTAINER_TYPE) and len(z) == 1:
-            z = z[0]
+        #if isinstance(z, DATA_CONTAINER_TYPE) and len(z) == 1:
+        #    z = z[0]
 
+        is_multiarg = isinstance(z, DATA_CONTAINER_TYPE)
+    
         self._assert_cut_contains_only_one_tensor(z)
 
         baseline = self._compute_baseline(z, model_inputs=model_inputs)
 
+        assert type(baseline) == type(z)
+        if is_multiarg:
+            assert len(baseline) == len(z)
+        else:
+            baseline = [baseline]
+            z = [z]
+
         r = 1. if self._resolution is 1 else self._resolution - 1.
 
-        return [
-            (1. - i / r) * z + i / r * baseline
-            for i in range(self._resolution)
+        return [ # InputsList
+            [ # UniformList
+                (1. - i / r) * z_ + i / r * b_ 
+                for i in range(self._resolution)
+            ] for z_, b_ in zip(z, baseline)
         ]
 
     def get_activation_multiplier(
         self,
-        activation: DataLike,
+        activation: InputsList[DataLike],
         *,
         model_inputs: Optional[ModelInputs] = None
-    ) -> DataLike:
+    ) -> InputsList[DataLike]:
         """
         Returns a term to multiply the gradient by to convert from "*influence 
         space*" to "*attribution space*". Conceptually, "influence space"
@@ -252,37 +289,47 @@ class LinearDoi(DoI):
             The activation adjusted by the baseline passed to the constructor.
         """
 
-        baseline = self._compute_baseline(activation, model_inputs=model_inputs)
+        baseline: InputsList[DataLike] = self._compute_baseline(activation, model_inputs=model_inputs)
 
-        return (activation if baseline is None else activation - baseline)
+        if baseline is None:
+            return activation
+
+        assert type(activation) == type(baseline)
+
+        if isinstance(baseline, DATA_CONTAINER_TYPE):
+            return [a - b for a, b in zip(activation, baseline)] # multi-arg
+        else:
+            return [activation - baseline] # single arg
+
 
     def _compute_baseline(
         self,
-        z: DataLike,
+        z: InputsList[DataLike],
         *,
         model_inputs: Optional[ModelInputs] = None
-    ) -> DataLike:
+    ) -> InputsList[DataLike]:
 
         B = get_backend()
 
-        _baseline = self.baseline
+        _baseline: BaselineLike = self.baseline # user-provided
 
         if isinstance(_baseline, Callable):
             if accepts_model_inputs(_baseline):
-                _baseline = _baseline(z, model_inputs=model_inputs)
+                _baseline: ArgsLike = as_inputs(_baseline(as_args(z), model_inputs=model_inputs))
             else:
-                _baseline = _baseline(z)
+                _baseline: ArgsLike = as_inputs(_baseline(as_args(z)))
+
+        else:
+            _baseline: ArgsLike
 
         if _baseline is None:
-            _baseline = B.zeros_like(z)
+            _baseline: InputsList[DataLike] = [B.zeros_like(z_) for z_ in z]
+        else:
+            _baseline: InputsList[DataLike] = as_inputs(_baseline) 
+            # Came from user; could have been single or multiple inputs.
 
-        if B.is_tensor(z) and not B.is_tensor(_baseline):
-            _baseline = B.as_tensor(_baseline)
-
-        if not B.is_tensor(z) and B.is_tensor(_baseline):
-            _baseline = B.as_array(_baseline)
-
-        return _baseline
+        # Cast to either Tensor or numpy.ndarray to match what was given in z.
+        return argslike_cast(backend=B, args=_baseline, astype=type(z[0]))
 
 
 class GaussianDoi(DoI):
@@ -308,20 +355,27 @@ class GaussianDoi(DoI):
         self._var = var
         self._resolution = resolution
 
-    def __call__(self, z: DataLike) -> List[DataLike]:
+    def __call__(self, z: ArgsLike) -> ArgsLike[UniformList[DataLike]]:
+        # Public interface.
+
         B = get_backend()
         self._assert_cut_contains_only_one_tensor(z)
 
-        if B.is_tensor(z):
-            # Tensor implementation.
-            return [
-                z + B.random_normal_like(z, var=self._var)
-                for _ in range(self._resolution)
-            ]
+        def gauss_of_input(z: DataLike) -> UniformList[DataLike]:
+            if B.is_tensor(z):
+                # Tensor implementation.
+                return [
+                    z + B.random_normal_like(z, var=self._var)
+                    for _ in range(self._resolution)
+                ] # UniformList
 
-        else:
-            # Array implementation.
-            return [
-                z + np.random.normal(0., np.sqrt(self._var), z.shape)
-                for _ in range(self._resolution)
-            ]
+            else:
+                # Array implementation.
+                return [
+                    z + np.random.normal(0., np.sqrt(self._var), z.shape)
+                    for _ in range(self._resolution)
+                ] # UniformList
+
+        z: InputsList[DataLike] = as_inputs(z)
+
+        return as_args(list(map(gauss_of_input, z)))

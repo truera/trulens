@@ -7,7 +7,7 @@ import traceback
 from typing import TypeVar
 
 from trulens.utils import tru_logger
-from trulens.utils.typing import as_container
+from trulens.utils.typing import as_args
 
 # Do not use directly, use get_backend
 _TRULENS_BACKEND_IMPL = None
@@ -54,7 +54,7 @@ def grace(*settings, call_before=None, call_after=None, **kwargs):
     default device handling in pytorch.
     """
 
-    settings = as_container(list(settings))
+    settings = as_args(list(settings))
     state = None
 
     try:
