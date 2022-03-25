@@ -14,7 +14,7 @@ from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import ArgsLike
-from trulens.utils.typing import as_args
+from trulens.utils.typing import as_inputs
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import InterventionLike
 from trulens.utils.typing import KwargsLike
@@ -184,7 +184,7 @@ class TensorflowModelWrapper(ModelWrapper):
                 kwargs = intervention.kwargs
 
             else:
-                args = as_args(intervention)
+                args = as_inputs(intervention)
                 kwargs = {}
 
             # TODO: Figure out a way to run the check below for InputCut. It currently
