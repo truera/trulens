@@ -33,7 +33,7 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
-from trulens.utils.typing import DataLike, accepts_model_inputs, argslike_cast, as_args
+from trulens.utils.typing import DataLike, InputsList, UniformList, accepts_model_inputs, argslike_assert_matched_pair, argslike_cast, as_args
 from trulens.utils.typing import as_inputs
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import ModelInputs
@@ -282,7 +282,7 @@ class InternalInfluence(AttributionMethod):
                 doi_cut=InputCut(),
                 attribution_cut=None,# InputCut(),
                 intervention=model_inputs
-            )
+            )[0]
 
         # DoI supports tensor or list of tensor. unwrap args to perform DoI on
         # top level list
@@ -305,22 +305,9 @@ class InternalInfluence(AttributionMethod):
         #    doi_val = doi_val[0]
 
         print("doi_val=", doi_val)
-        assert(len(doi_val) == 1)
-        
-        # doi_val = list(map(B.as_array, doi_val))
+        D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
-        #if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
-        #    doi_val = doi_val[0]
-
-        print("doi_val=", doi_val)
-
-        if accepts_model_inputs(self.doi):
-            D = self.doi(doi_val, model_inputs=model_inputs)
-        else:
-            D = self.doi(doi_val)
-
-        # D = D[0]
-        n_doi = len(D)
+        n_doi = len(D[0])
         doi_per_batch = self.doi_per_batch
         if self.doi_per_batch is None:
             doi_per_batch = n_doi
@@ -349,7 +336,7 @@ class InternalInfluence(AttributionMethod):
 
         print("D post concat=", D)
 
-        assert isinstance(D, DATA_CONTAINER_TYPE)
+        # assert isinstance(D, DATA_CONTAINER_TYPE)
         # assert isinstance(D[0], DATA_CONTAINER_TYPE)
   
         # Create a message for out-of-memory errors regarding doi_size.
@@ -377,7 +364,7 @@ class InternalInfluence(AttributionMethod):
                 attribution_cut=self.slice.from_cut,
                 to_cut=self.slice.to_cut,
                 #intervention=D,
-                intervention = ModelInputs(D, {}),
+                intervention = ModelInputs(args=D, kwargs={}),
                 doi_cut=doi_cut
             )
                 #print("qoi_grads_for_all_args=", len(qoi_grads_for_all_args), type(qoi_grads_for_all_args))
@@ -409,15 +396,16 @@ class InternalInfluence(AttributionMethod):
                     axis=0
                 ) for qoi_grad in qoi_grads
             ]
+
         else:
-            # raise ValueError("inconsistent")
+            raise ValueError("inconsistent")
             # TODO: Below is actually done in numpy, not backend.
             qoi_grads = B.as_array(qoi_grads)
             attributions = B.mean(
                 B.reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]), axis=0
             )
 
-        # print("attributions=", attributions.shape)
+        print("attributions=", attributions)
 
         extra_args = dict()
         if accepts_model_inputs(self.doi.get_activation_multiplier):
@@ -432,39 +420,55 @@ class InternalInfluence(AttributionMethod):
                     attribution_cut=None,
                     to_cut=self.slice.from_cut,
                     intervention=model_inputs
-                )
+                )[0]
 
-            if isinstance(z_val, DATA_CONTAINER_TYPE) and len(z_val) == 1:
-                z_val = z_val[0]
+            #if isinstance(z_val, DATA_CONTAINER_TYPE) and len(z_val) == 1:
+            #    z_val = z_val[0]
 
-            # print("z_val=", z_val.shape)
+            print("z_val=", z_val)
 
             if isinstance(attributions, DATA_CONTAINER_TYPE):
-                for i in range(len(attributions)):
-                    if isinstance(z_val, DATA_CONTAINER_TYPE) and len(
-                            z_val) == len(attributions):
-                        attributions[i] *= self.doi.get_activation_multiplier(
-                            z_val[i], **extra_args
-                        )
-                    else:
-                        attributions[i] *= (
-                            self.doi.get_activation_multiplier(
-                                z_val, **extra_args
-                            )
-                        )
+                z_val = argslike_cast(
+                    backend=B,
+                    args=z_val,
+                    astype=np.ndarray
+                )
+
+                print("z_val=", z_val)
+
+                argslike_assert_matched_pair(attributions, z_val)
+
+                mults = self.doi.get_activation_multiplier(z_val, **extra_args)
+
+                print("mults=", mults)
+
+                attributions = [attr * mult for attr, mult in zip(attributions, mults)]
+
+                #for i in range(len(attributions)):
+                #    if isinstance(z_val, DATA_CONTAINER_TYPE) and len(
+                #            z_val) == len(attributions):
+                #        attributions[i] *= self.doi.get_activation_multiplier(
+                #            z_val[i], **extra_args
+                #        )
+                #    else:
+                #        attributions[i] *= (
+                #            self.doi.get_activation_multiplier(
+                #                z_val, **extra_args
+                #            )
+                #        )
 
             else:
-                # raise ValueError("inconsistent")
+                raise ValueError("inconsistent")
                 attributions *= self.doi.get_activation_multiplier(
                     z_val, **extra_args
                 )
 
         # Cast to the same data type as provided inputs.
-        return argslike_cast(
+        return as_args(argslike_cast(
             backend=B,
             astype=return_type,
             args=attributions
-        )
+        ))
 
     @staticmethod
     def __get_qoi(qoi_arg):
@@ -604,37 +608,15 @@ class InternalInfluence(AttributionMethod):
             raise ValueError('Unrecognized argument type for cut')
 
     @staticmethod
-    def __concatenate_doi(D: Union[List[DataLike], List[List[DataLike]]]) -> List[DataLike]:
-        # 
-
+    def __concatenate_doi(D: InputsList[UniformList[DataLike]]) -> InputsList[DataLike]:
         # Returns one DataLike for each model input.
-        if len(D) == 0:
+        if len(D[0]) == 0:
             raise ValueError(
                 'Got empty distribution of interest. `DoI` must return at '
                 'least one point.'
             )
 
-        if not isinstance(D[0], DATA_CONTAINER_TYPE):
-            D = [D]
-
-        if isinstance(D[0], DATA_CONTAINER_TYPE):
-            transposed = [[] for _ in range(len(D[0]))]
-            for point in D:
-                for i, v in enumerate(point):
-                    transposed[i].append(v)
-
-            return [
-                np.concatenate(D_i)
-                if isinstance(D_i[0], np.ndarray) else D_i[0]
-                for D_i in transposed
-            ]
-
-        else:
-            assert(False)
-            if not isinstance(D[0], np.ndarray):
-                D = [get_backend().as_array(d) for d in D]
-            return [np.concatenate(D)]
-
+        return [np.concatenate(Di) for Di in D]
 
     def __concatenate_doi2(self, D, doi_per_batch):
         if len(D) == 0:

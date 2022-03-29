@@ -145,6 +145,8 @@ class AxiomsTestBase(object):
 
         res = infl.attributions(self.x)
 
+        print("self.x=", self.x, self.x.shape)
+
         self.assertEqual(res.shape, (2, self.input_size))
 
         self.assertTrue(
@@ -215,11 +217,21 @@ class AxiomsTestBase(object):
             multiply_activation=False
         )
 
+        print("first", self.model_deep.fprop((self.x[0:1],)))
+        print("second", self.model_deep.fprop((self.baseline,)))
+
         out_x = self.model_deep.fprop((self.x[0:1],))[0][:, c]
         out_baseline = self.model_deep.fprop((self.baseline,))[0][:, c]
 
+        print("out_x=", out_x)
+        print("out_baseline=", out_baseline)
+
         if not np.allclose(out_x, out_baseline):
+            print("x=", type(self.x), self.x)
+
             res = infl.attributions(self.x)
+
+            print("res=", res)
 
             self.assertEqual(res.shape, (2, self.input_size))
 

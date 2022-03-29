@@ -249,7 +249,7 @@ class ModelWrapper(AbstractBaseClass):
                 attribution_cut=attribution_cut,
                 intervention=intervention,
                 **kwargs
-            )
+            )[0]
         )
     
 

@@ -1,4 +1,99 @@
-"""Type aliases and data container classes. """
+"""Type aliases and data container classes. 
+
+Large part of these utilities are meant to support a design decision: public
+methods are permissive in the types they accept while private methods are not. 
+
+For example, 
+
+    attributions(*model_args: ArgsLike, **model_kwargs: ModelKwargs)
+
+For models that take in a single input, model_args can be a single Tensor or
+numpy array. For models that take in multiple inputs, model_args must be some
+iterable over Tensors or numpy arrays. The implication is that the user can call
+this method as in "attributions(inputA)" instead of attributions([inputA]). The
+other permissibility is that both backend Tensors and numpy arrays are supported
+and the method returns results in the same type. 
+
+List of flexible typings:
+
+    - Single vs. Multiple Inputs -- Can pass in a single value instad of list.
+      This is indicated by the `ArgsLike` type alias:
+
+      ``` ArgsLike[V] = Union[
+        V, InputsList[V], # len != 1 InputsTuple[V] # len != 1
+      ]
+      ```
+
+        - AttributionMethod.attributions: model_args argument
+        - DoI.__call__: z argument
+        - LinearDoI.__init__: baseline argument
+        - LinearDoI.baseline (when callable): first argument
+        - ModelWrapper.fprop: model_args, intervention arguments
+        - ModelWrapper.qoi_bprop: model_args argument
+
+    - Single vs. Multiple Outputs -- TODO
+
+    - Backend Tensor vs. Numpy Array -- Can pass in a backend Tensor or numpy
+      array. This is indicated by the `DataLike` type alias:
+
+      ``` DataLike = Union[np.ndarray, Tensor] ```
+
+        - AttributionMethod.attributions: model_args, model_kwargs arguments
+          (return type based first arg in either)
+
+        - DoI.__call__: z and model_inputs arguments (return type based on z)
+
+        - LinearDoI.baseline (when callable): first argument
+
+        - ModelWrapper.fprop: model_args, model_kwargs, intervention arguments
+
+        - ModelWrapper.qoi_bprop: model_args, model_kwargs, intervention
+          arguments
+
+    - ModelInputs input -- Can define method to accept ModelInputs structure or
+      just the args. To indicate the latter, must be keyword argument named
+      "model_inputs".
+
+        - DoI.__call__
+
+        - LinearDoI.baseline (when callable): see BaselineLike.
+
+    - ModelInputs or args -- Can pass in single value, iterable, dictionary, or
+      ModelInputs structure. These correspond to single positional arg, multiple
+      positional args, keyword args, and (both positional and keyword args).
+    
+        - ModelWrapper.fprop: intervention argument, see InterventionLike:
+
+        ``` InterventionLike = Union[
+              ArgsLike[DataLike], KwargsLike, ModelInputs]
+        ```
+
+        - ModelWrapper.qoi_bprop: intervention argument: see InterventionLike
+
+    - Callable Baselines -- Baselines can be methods that return baseline
+      values. See (paraphrased) BaselineLike:
+
+      ``` BaselineLike = Union[
+          ArgsLike[DataLike], ArgsLike[DataLike] -> ArgsLike[DataLike],
+          (ArgsLike[DataLike], ModelInputs) -> ArgsLike[DataLike]
+      ]
+      ```
+
+        - LinearDoI.__init__: baseline argument
+
+Part of the implementation of this design are private variants of public methods
+that do not have most of the above flexibility. Most, however, have the tensor
+vs. numpy array flexibility. These are to be used within Truera for more
+consistent expectations regarding inputs/outputs.
+
+    - DoI._wrap_private_call vs. DoI.__call__
+
+    - ModelWrapper._fprop vs. ModelWrapper.fprop
+
+    - ModelWrapper._qoi_bprop vs. ModelWrapper.qoi_bprop
+
+
+"""
 
 # NOTE(piotrm) had to move some things to this file to avoid circular
 # dependencies between the files that originally contained those things.
@@ -54,12 +149,6 @@ ArgsLike = Union[
     InputsList[V], # len != 1
     InputsTuple[V] # len != 1
 ]
-# Will sometimes parameterize this as:
-# ArgsLike[T] = Union[
-#    T,
-#    InputsList[T],
-#    InputsTuple[T]
-# ]
 
 # Model input kwargs.
 Kwargs = Dict[str, V]
@@ -76,6 +165,20 @@ Indexable = Union[List[V], Tuple[V]]
 DATA_CONTAINER_TYPE = (list, tuple)
 
 
+def argslike_assert_matched_pair(a1, a2):
+    """Assert that two ArgsLike's are of the same, contain the same number of
+    elements (if containers) and that those elements are also of the same
+    types."""
+
+    assert type(a1) == type(a2), f"ArgsLike's are of different types: {type(a1)} vs {type(a2)}"
+
+    if isinstance(a1, DATA_CONTAINER_TYPE):
+        assert len(a1) == len(a2), f"ArgsLike's are of different lengths: {len(a1)} vs {len(a2)}"
+
+        for i, (a, b) in enumerate(zip(a1, a2)):
+            assert type(a) == type(b), f"ArgsLike's element {i} are of different types: {type(a)} vs {type(b)}"
+
+
 def argslike_map(dat: ArgsLike[U], f: Callable[[U], V]) -> ArgsLike[V]:
     """Map over datalike even if they are contained in a DATA_CONTAINER_TYPE. """
 
@@ -89,6 +192,7 @@ def datalike_caster(
     backend: 'Backend',
     astype: Type
 ) -> Callable[[DataLike], DataLike]:
+    """Looking the method that lets one cast a DataLike to the specified type by the given backend."""
 
     if issubclass(astype, np.ndarray):
         caster = backend.as_array
@@ -111,16 +215,26 @@ def argslike_cast(
 
     return argslike_map(args, lambda x: caster(x) if type(x) != astype else x)
 
-# Convert ArgsLike (possibly a single V/DataLike) to InputsList.
-def as_inputs(args: ArgsLike[V]) -> InputsList[V]:
-    if isinstance(args, DATA_CONTAINER_TYPE):
+def as_inputs(args: ArgsLike[V], innertype: Type = None) -> InputsList[V]:
+    """
+    Convert ArgsLike (possibly a single V/DataLike) to InputsList[V]. For cases
+    where the element type V is also expected to be a container, provide the
+    innertype argument so that the check here can be done properly.
+    """
+    if isinstance(args, DATA_CONTAINER_TYPE) and (innertype is None or len(args) == 0 or isinstance(args[0], innertype)):
         return args
-    else:
+    elif innertype is None or isinstance(args, innertype):
         return [args]
+    else:
+        raise ValueError(f"Unhandled ArgsLike type {type(args)}")
 
-# Opposite of the above.
 def as_args(inputs: InputsList[V]) -> ArgsLike[V]:
-    # If there is more than 1 input, will remain InputsList, otherwise will become V (typically DataLike).
+    """
+    If there is more than 1 input, will remain InputsList, otherwise will become
+    V (typically DataLike).
+    
+    Opposite of `as_inputs`.
+    """
 
     if len(inputs) == 1:
         return inputs[0]
@@ -129,7 +243,8 @@ def as_args(inputs: InputsList[V]) -> ArgsLike[V]:
 
 class IndexableUtils:
     def with_(l: Indexable[V], i: int, v: V) -> Indexable[V]:
-        """Copy of the given list or tuple with the given index replaced by the given value."""
+        """Copy of the given list or tuple with the given index replaced by the
+        given value."""
 
         if isinstance(l, list):
             l = l.copy()
