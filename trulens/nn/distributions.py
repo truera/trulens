@@ -15,7 +15,7 @@ from pkg_resources import Distribution
 
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
-from trulens.utils.typing import ArgsLike, InputsList, UniformList, accepts_model_inputs, argslike_cast, as_inputs, as_args, datalike_caster
+from trulens.utils.typing import ArgsLike, InputsList, UniformList, accepts_model_inputs, argslike_assert_matched_pair, argslike_cast, as_inputs, as_args
 from trulens.utils.typing import BaselineLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
@@ -48,17 +48,26 @@ class DoI(AbstractBaseClass):
         """
         self._cut = cut
 
-    def __call__private__(self,
+    def _wrap_public_call(self,
         z: InputsList[DataLike],
         *,
-        model_inputs: Optional[ModelInputs]
+        model_inputs: ModelInputs
     ) -> InputsList[UniformList[DataLike]]:
         """Same as __call__ but input and output types are more specific and
         less permissive. Formats the inputs for special cases that might be more
         convenient for the user's __call__ implementation and formats its return
         back to the consistent type."""
 
-        return as_inputs(self.__call__(as_args(z), model_inputs=model_inputs))
+        if accepts_model_inputs(self.__call__):
+            return as_inputs(
+                self.__call__(as_args(z), model_inputs=model_inputs),
+                innertype=UniformList
+            )
+        else:
+            return as_inputs(
+                self.__call__(as_args(z)),
+                innertype=UniformList
+            )
 
     @abstractmethod
     def __call__(
@@ -132,6 +141,9 @@ class DoI(AbstractBaseClass):
         return activation
 
     def _assert_cut_contains_only_one_tensor(self, x):
+        if isinstance(x, list) and len(x) == 1:
+            x = x[0]
+
         if isinstance(x, list):
             raise DoiCutSupportError(
                 '\n\n'
@@ -176,14 +188,14 @@ class PointDoi(DoI):
         z: ArgsLike,
         *,
         model_inputs: Optional[ModelInputs] = None
-    ) -> InputsList[UniformList[ArgsLike]]:
+    ) -> ArgsLike[UniformList[ArgsLike]]:
 
         z: InputsList[DataLike] = as_inputs(z)
 
-        return [
+        return as_args([
             [z_] # a point UniformList
             for z_ in z
-        ]
+        ])
 
 
 class LinearDoi(DoI):
@@ -240,32 +252,26 @@ class LinearDoi(DoI):
         z: ArgsLike,
         *,
         model_inputs: Optional[ModelInputs] = None
-    ) -> InputsList[UniformList[DataLike]]:
-        # TODO: Deambiguate.
-        #if isinstance(z, DATA_CONTAINER_TYPE) and len(z) == 1:
-        #    z = z[0]
-
-        is_multiarg = isinstance(z, DATA_CONTAINER_TYPE)
-    
+    ) -> ArgsLike[UniformList[DataLike]]:
         self._assert_cut_contains_only_one_tensor(z)
+
+        z = as_inputs(z)
 
         baseline = self._compute_baseline(z, model_inputs=model_inputs)
 
-        assert type(baseline) == type(z)
-        if is_multiarg:
-            assert len(baseline) == len(z)
-        else:
-            baseline = [baseline]
-            z = [z]
+        print("baseline: ", type(baseline), baseline)
+        print("z: ", type(z), z)
+
+        argslike_assert_matched_pair(z, baseline)
 
         r = 1. if self._resolution is 1 else self._resolution - 1.
 
-        return [ # InputsList
+        return as_args([ # InputsList
             [ # UniformList
                 (1. - i / r) * z_ + i / r * b_ 
                 for i in range(self._resolution)
             ] for z_, b_ in zip(z, baseline)
-        ]
+        ])
 
     def get_activation_multiplier(
         self,
@@ -289,16 +295,22 @@ class LinearDoi(DoI):
             The activation adjusted by the baseline passed to the constructor.
         """
 
+        assert isinstance(activation, DATA_CONTAINER_TYPE), "activation was not an InputsList"
+
         baseline: InputsList[DataLike] = self._compute_baseline(activation, model_inputs=model_inputs)
+
+        print("activation=", activation)
+        print("baseline=", baseline)
 
         if baseline is None:
             return activation
 
-        assert type(activation) == type(baseline)
+        argslike_assert_matched_pair(activation, baseline)
 
         if isinstance(baseline, DATA_CONTAINER_TYPE):
             return [a - b for a, b in zip(activation, baseline)] # multi-arg
         else:
+            raise ValueError("inconsistent")
             return [activation - baseline] # single arg
 
 

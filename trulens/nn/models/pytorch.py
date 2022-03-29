@@ -16,7 +16,7 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import ArgsLike, InputsList
 from trulens.utils.typing import as_inputs
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
@@ -179,36 +179,40 @@ class PytorchModelWrapper(ModelWrapper):
 
     def _extract_outputs_from_hooks(
         self, cut, hooks, output, model_inputs, return_tensor
-    ):
+    ) -> InputsList[DataLike]:
 
-        B = get_backend()
+        # B = get_backend()
 
         return_output = None
 
         if isinstance(cut, OutputCut):
-            return_output = output
+            return_output = [output]
 
         elif isinstance(cut, InputCut):
             # TODO(piotrm): Figure out whether kwarg order is consistent.
-            return_output = tuple(model_inputs.args
-                                 ) + tuple(model_inputs.kwargs.values())
+            return_output = list(model_inputs.args
+                                 ) + list(model_inputs.kwargs.values())
 
         elif isinstance(cut, LogitCut):
-            return_output = hooks['logits' if self.
-                                  _logit_layer is None else self._logit_layer]
+            return_output = [hooks['logits' if self.
+                                  _logit_layer is None else self._logit_layer]]
 
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
             return_output = [hooks[name] for name in cut.name]
 
         else:
-            return_output = hooks[cut.name]
+            return_output = [hooks[cut.name]]
 
-        return_output = ModelWrapper._flatten(return_output)
+        return return_output
 
-        if return_tensor:
-            return return_output
-        else:
-            return ModelWrapper._nested_apply(return_output, B.as_array)
+        #return_output = ModelWrapper._flatten(return_output)
+
+        # return return_output
+
+        #if return_tensor:
+        #    return return_output
+        #else:
+        #return ModelWrapper._nested_apply(return_output, B.as_array)
 
     def _to_tensor(self, x):
         # Convert `x` to a tensor on `self.device`. Note that layer input can be
@@ -321,7 +325,7 @@ class PytorchModelWrapper(ModelWrapper):
 
         if not isinstance(doi_cut, InputCut):
             # Interventions only allowed onto one layer (see FIXME below.)
-            assert len(intervention) == 1
+            # assert len(intervention) == 1
 
             # Define the hookfn.
             counter = 0
@@ -431,7 +435,7 @@ class PytorchModelWrapper(ModelWrapper):
                 )
             ]
         else:
-            return self._extract_outputs_from_hooks(cut=to_cut, **extract_args)
+            return [self._extract_outputs_from_hooks(cut=to_cut, **extract_args), None]
 
     def _qoi_bprop(
         self,
@@ -519,7 +523,8 @@ class PytorchModelWrapper(ModelWrapper):
         # return grads_list
         # NOTE(piotrm): commented out the below to have more consistent output types/shapes
         
-        return grads_list[0] if len(grads_list) == 1 else grads_list
+        #return grads_list[0] if len(grads_list) == 1 else grads_list
+        return grads_list
 
     def probits(self, x):
         """
