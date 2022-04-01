@@ -7,7 +7,8 @@ from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
-from trulens.utils.typing import ModelInputs, nested_str
+from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_str
 
 
 class ModelWrapperTestBase(object):
@@ -93,8 +94,7 @@ class ModelWrapperTestBase(object):
                         ),
                     ),
                     to_cut=Cut(self.layer2)
-                ),
-                np.array([[1., 2.], [0., 2.], [0., 1.], [1., 1.], [1., 1.]])
+                ), np.array([[1., 2.], [0., 2.], [0., 1.], [1., 1.], [1., 1.]])
             )
         )
 

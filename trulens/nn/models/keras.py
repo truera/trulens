@@ -14,9 +14,11 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import DataLike, Outputs, om_of_many
 from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import DataLike
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Outputs
 
 
 def import_keras_backend():
@@ -300,15 +302,9 @@ class KerasModelWrapper(ModelWrapper):
         return doi_tensors, intervention
 
     def _fprop(
-        self,
-        *,
-        model_inputs: ModelInputs,
-        doi_cut: Cut,
-        to_cut: Cut,
-        attribution_cut: Cut,
-        intervention: ModelInputs
+        self, *, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
+        attribution_cut: Cut, intervention: ModelInputs
     ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
-    
         """
         See ModelWrapper.fprop .
         """
@@ -389,14 +385,8 @@ class KerasModelWrapper(ModelWrapper):
         return (out_vals, None)
 
     def _qoi_bprop(
-        self,
-        *,
-        qoi: QoI,
-        model_inputs: ModelInputs,
-        doi_cut: Cut,
-        to_cut: Cut,
-        attribution_cut: Cut,
-        intervention: ModelInputs
+        self, *, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
+        attribution_cut: Cut, intervention: ModelInputs
     ):
         """
         See ModelWrapper.qoi_bprop .

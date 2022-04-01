@@ -19,7 +19,9 @@ _TRULENS_BACKEND_IMPL = None
 # backend
 # floatX
 
+
 class OutOfMemory(RuntimeError):
+
     def __init__(self, settings, **kwargs):
         self.kwargs = kwargs
         self.settings = settings
@@ -30,6 +32,7 @@ class OutOfMemory(RuntimeError):
             message += "\t" + setting + "\n"
 
         return message
+
 
 @contextmanager
 def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
@@ -64,12 +67,10 @@ def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
         yield state
 
     except OutOfMemory as e:
-        raise OutOfMemory(
-            settings=e.settings + settings, **e.kwargs
-        )
+        raise OutOfMemory(settings=e.settings + settings, **e.kwargs)
 
     except RuntimeError as e:
-        if "out of memory" in str(e): # cuda out of memory exception
+        if "out of memory" in str(e):  # cuda out of memory exception
             raise OutOfMemory(settings=settings, **kwargs)
         else:
             # TODO: catch similar exceptions in other backends
@@ -78,6 +79,7 @@ def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
     finally:
         if call_after is not None:
             call_after(state)
+
 
 class Backend(Enum):
     PYTORCH = 1

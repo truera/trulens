@@ -13,10 +13,14 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import DataLike, Inputs, Outputs, Tensor, om_of_many
-from trulens.utils.typing import many_of_om
 from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import DataLike
+from trulens.utils.typing import Inputs
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Outputs
+from trulens.utils.typing import Tensor
 
 
 class TensorflowModelWrapper(ModelWrapper):
@@ -231,13 +235,8 @@ class TensorflowModelWrapper(ModelWrapper):
         return feed_dict, intervention
 
     def _fprop(
-        self,
-        *,
-        model_inputs: ModelInputs,
-        doi_cut: Cut,
-        to_cut: Cut,
-        attribution_cut: Cut,
-        intervention: ModelInputs
+        self, *, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
+        attribution_cut: Cut, intervention: ModelInputs
     ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
         """
         See ModelWrapper.fprop .
@@ -288,8 +287,11 @@ class TensorflowModelWrapper(ModelWrapper):
 
     def _run_session(self, outs, feed_dict):
         B = get_backend()
-        
-        feed_dict = {k: B.as_array(v) if B.is_tensor(v) else v for k, v in feed_dict.items()}
+
+        feed_dict = {
+            k: B.as_array(v) if B.is_tensor(v) else v
+            for k, v in feed_dict.items()
+        }
 
         if self._session is not None:
             return self._session.run(outs, feed_dict=feed_dict)
@@ -305,14 +307,8 @@ class TensorflowModelWrapper(ModelWrapper):
                     ).with_traceback(tb)
 
     def _qoi_bprop(
-        self,
-        *,
-        qoi: QoI,
-        model_inputs: ModelInputs,
-        doi_cut: Cut,
-        to_cut: Cut,
-        attribution_cut: Cut,
-        intervention: ModelInputs
+        self, *, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
+        attribution_cut: Cut, intervention: ModelInputs
     ) -> Outputs[Inputs[DataLike]]:
         """
         See ModelWrapper.qoi_bprop .
@@ -331,7 +327,6 @@ class TensorflowModelWrapper(ModelWrapper):
 
         z_grads = []
 
-
         with self._graph.as_default():
 
             for z in attribution_tensors:
@@ -342,11 +337,11 @@ class TensorflowModelWrapper(ModelWrapper):
                     grads = self._cached_gradient_tensors[gradient_tensor_key]
 
                 else:
-                    Q: Outputs[Tensor] = qoi._wrap_public_call(om_of_many(to_tensors))
+                    Q: Outputs[Tensor] = qoi._wrap_public_call(
+                        om_of_many(to_tensors)
+                    )
                     grads = get_backend().gradient(Q, z)
-                    grads = [
-                        attribution_cut.access_layer(g) for g in grads
-                    ]
+                    grads = [attribution_cut.access_layer(g) for g in grads]
 
                     self._cached_gradient_tensors[gradient_tensor_key] = grads
 
