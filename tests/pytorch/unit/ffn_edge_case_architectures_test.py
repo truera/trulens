@@ -1,5 +1,7 @@
 import os
 
+from trulens.utils.typing import nested_str
+
 os.environ['TRULENS_BACKEND'] = 'pytorch'
 
 from unittest import main

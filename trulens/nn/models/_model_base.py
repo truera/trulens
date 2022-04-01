@@ -19,8 +19,8 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike, DataLike, Tensor, argslike_cast, argslike_map
-from trulens.utils.typing import as_inputs
+from trulens.utils.typing import OM, ArgsLike, DataLike, Inputs, Outputs, nested_cast, om_of_many
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import InterventionLike
 from trulens.utils.typing import KwargsLike
@@ -146,7 +146,10 @@ class ModelWrapper(AbstractBaseClass):
         attribution_cut: Optional[Cut] = None,
         intervention: InterventionLike = None,
         **kwargs
-    ):
+    ) -> Union[
+            ArgsLike[DataLike], # attribution_cut is None
+            Tuple[ArgsLike[DataLike], ArgsLike[DataLike]] # attribution_cut is not None
+    ]:
         """
         **_Used internally by `AttributionMethod`._**
 
@@ -212,8 +215,8 @@ class ModelWrapper(AbstractBaseClass):
                 *BACKEND*ModelWrapper._fprop for details.
 
         Returns:
-            (list of backend.Tensor or np.ndarray)
-                A list of output activations are returned, keeping the same type
+            list of (backend.Tensor or np.ndarray) (or tuple of lists)
+                Lists of output activations are returned, keeping the same type
                 as the input. If `attribution_cut` is supplied, also return the
                 cut activations.
         """
@@ -238,23 +241,24 @@ class ModelWrapper(AbstractBaseClass):
         model_inputs = model_inputs.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
         intervention = intervention.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
 
-        # Call the implementation and transform its results to the same type as model_inputs.
-        return argslike_cast(
-            backend=B,
-            astype=return_type,
-            args=self._fprop(
+        rets: Tuple[Outputs[DataLike], Outputs[DataLike]] = self._fprop(
                 model_inputs=model_inputs,
                 doi_cut=doi_cut,
                 to_cut=to_cut,
                 attribution_cut=attribution_cut,
                 intervention=intervention,
                 **kwargs
-            )[0]
-        )
-    
+            )
 
+        rets = tuple(map(lambda ret: om_of_many(nested_cast(backend=B, astype=return_type, args=ret)) if ret is not None else None, rets))
+
+        if rets[1] is None:
+            return rets[0]
+        else:
+            return rets
+    
     def _organize_inputs(self, *, doi_cut, model_args, model_kwargs, intervention) -> Tuple[ModelInputs, ModelInputs]:
-        model_inputs = ModelInputs(as_inputs(model_args), model_kwargs)
+        model_inputs = ModelInputs(many_of_om(model_args), model_kwargs)
 
         if isinstance(doi_cut, InputCut):
             # For input cuts, produce a ModelInputs container for the intervention and model inputs.
@@ -266,7 +270,7 @@ class ModelWrapper(AbstractBaseClass):
                     # Intervention overrides only args.
                     # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
                     intervention = ModelInputs(
-                        as_inputs(intervention), model_inputs.kwargs
+                        many_of_om(intervention), model_inputs.kwargs
                     )
                     model_inputs = intervention
 
@@ -292,7 +296,7 @@ class ModelWrapper(AbstractBaseClass):
                 )
             else:
                 # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
-                intervention = ModelInputs(as_inputs(intervention), {})
+                intervention = ModelInputs(many_of_om(intervention), {})
 
         return model_inputs, intervention
 
@@ -306,7 +310,7 @@ class ModelWrapper(AbstractBaseClass):
         attribution_cut: Cut,
         intervention: ModelInputs, # DataLike contents only
         **kwargs
-    ) -> List[DataLike]:
+    ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
         """Implementation of fprop; arguments, return, and their types are clarified. """
 
         # Should not have to use DATA_CONTAINER_TYPE internally.
@@ -323,7 +327,7 @@ class ModelWrapper(AbstractBaseClass):
         attribution_cut: Optional[Cut] = None,
         intervention: InterventionLike = None,
         **kwargs
-    ):
+    ) -> OM[Outputs, OM[Inputs, DataLike]]:
         """
         **_Used internally by `AttributionMethod`._**
         
@@ -373,9 +377,11 @@ class ModelWrapper(AbstractBaseClass):
                 *BACKEND*ModelWrapper._qoi_bprop for details.
 
         Returns:
-            (backend.Tensor or np.ndarray)
+            (backend.Tensor or np.ndarray) for each attribution_cut input, for each qoi output
                 the gradients of `qoi` w.r.t. `attribution_cut`, keeping same
                 type as the input.
+                If attribution_cut has multiple inputs, return a list for each. 
+                If qoi has multiple outputs, returns a list of the above for each.
         """
 
         if doi_cut is None:
@@ -397,24 +403,24 @@ class ModelWrapper(AbstractBaseClass):
         # Will cast results to this data container type.
         return_type = type(model_inputs.first())
 
-        # From now on, data containers, whether B.Tensor or np.ndarray will be consistent.
-        # model_inputs = model_inputs.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
-        # intervention = intervention.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
+        attrs: Outputs[Inputs[DataLike]] = self._qoi_bprop(
+            qoi=qoi,
+            model_inputs=model_inputs,
+            doi_cut=doi_cut,
+            to_cut=to_cut,
+            attribution_cut=attribution_cut,
+            intervention=intervention,
+            **kwargs
+        )
+
+        attrs: Outputs[OM[Inputs, DataLike]] = [om_of_many(attr) for attr in attrs]
+        attrs: OM[Outputs, OM[Inputs]] = om_of_many(attrs)
 
         # Call the implementation and transform its results to the same type as model_inputs.
-        return argslike_cast(
+        return nested_cast(
             backend=get_backend(),
             astype=return_type,
-
-            args=self._qoi_bprop(
-                qoi=qoi,
-                model_inputs=model_inputs,
-                doi_cut=doi_cut,
-                to_cut=to_cut,
-                attribution_cut=attribution_cut,
-                intervention=intervention,
-                **kwargs
-            )
+            args=attrs
         )
 
     @abstractmethod
@@ -422,13 +428,13 @@ class ModelWrapper(AbstractBaseClass):
         self,
         *,
         qoi: QoI,
-        model_inputs: ModelInputs, # DataLike contents only
+        model_inputs: ModelInputs,
         doi_cut: Cut,
         to_cut: Cut,
         attribution_cut: Cut,
-        intervention: ModelInputs, # DataLike contents only
+        intervention: ModelInputs,
         **kwargs
-    ) -> DataLike:
+    ) -> Outputs[Inputs[DataLike]]: # One outer element for each QoI output, one inner element for each attribution_cut input.
         """Implementation of qoi_bprop; arguments, return, and their types are clarified. """
         # Should not have to use DATA_CONTAINER_TYPE internally.
 
@@ -459,34 +465,6 @@ class ModelWrapper(AbstractBaseClass):
                 # Assign directly to Tensor with below.
                 x.data = x.data.clone()
                 x.data[:] = y[:]
-
-    @staticmethod
-    def _nested_apply(y, fn):
-        """
-        _nested_apply Applies fn to tensors in y.
-
-        Parameters
-        ----------
-        y:  non-collective object or a nested list/tuple of objects
-            The leaf objects will be inputs to fn.
-        fn: function
-            The function applied to leaf objects in y. Should
-            take in a single non-collective object and return
-            a non-collective object.
-        Returns
-        ------
-        non-collective object or a nested list or tuple
-            Has the same structure as y, and contains the results
-            of fn applied to leaf objects in y.
-
-        """
-        if isinstance(y, DATA_CONTAINER_TYPE):
-            out = []
-            for i in range(len(y)):
-                out.append(ModelWrapper._nested_apply(y[i], fn))
-            return tuple(out) if isinstance(y, tuple) else out
-        else:
-            return fn(y)
 
     @staticmethod
     def _flatten(x):

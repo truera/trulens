@@ -135,9 +135,6 @@ class DoiTestBase(object):
         res1 = infl1.attributions(self.consts)
         expect1 = np.zeros_like(self.consts)
 
-        print("res1=", res1)
-        print("expect1=", expect1)
-
         self.assertTrue(np.allclose(res1, expect1))
 
         infl2 = InternalInfluence(

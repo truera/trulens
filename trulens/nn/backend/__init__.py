@@ -7,7 +7,7 @@ import traceback
 from typing import TypeVar
 
 from trulens.utils import tru_logger
-from trulens.utils.typing import as_args
+from trulens.utils.typing import om_of_many
 
 # Do not use directly, use get_backend
 _TRULENS_BACKEND_IMPL = None
@@ -32,29 +32,29 @@ class OutOfMemory(RuntimeError):
         return message
 
 @contextmanager
-def grace(*settings, call_before=None, call_after=None, **kwargs):
+def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
     """
     Context manager to catch device memory issues and report better suggestions
     than default exceptions.
     
     Usage:
 
-        with grace("batch size=1000"):
+        with memory_suggestions("batch size=1000"):
             # Something memory intensive that could be helped by reducing batch
             # size.
 
     This will catch out of memory issues and report the messages included in the
-    grace calls as suggestions for parameters to adjust. You can stack these and
-    put suggestions indicative of memory-related settings like batch sizes,
-    intervention sizes, data types, etc. Inside the context, another grace can
-    be used with more messages which will be combined for reporting if memory
-    does run out.
+    memory_suggestions calls as suggestions for parameters to adjust. You can
+    stack these and put suggestions indicative of memory-related settings like
+    batch sizes, intervention sizes, data types, etc. Inside the context,
+    another memory_suggestions can be used with more messages which will be
+    combined for reporting if memory does run out.
 
     Before/after call are for extending this method with additional tasks like
     default device handling in pytorch.
     """
 
-    settings = as_args(list(settings))
+    settings = om_of_many(list(settings))
     state = None
 
     try:

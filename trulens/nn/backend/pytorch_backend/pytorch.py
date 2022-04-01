@@ -73,8 +73,8 @@ def get_default_device(device=None):
 
     return torch.device('cpu')
 
-def grace(*settings, device=None):
-    return base_backend.grace(
+def memory_suggestions(*settings, device=None):
+    return base_backend.memory_suggestions(
         *settings,
         call_before = lambda: set_default_device(device),
         call_after = lambda old_device: set_default_device(old_device),

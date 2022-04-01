@@ -1,3 +1,4 @@
+from typing import Tuple
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras as keras
@@ -5,19 +6,19 @@ import tensorflow.keras.backend as K
 
 from trulens.nn.backend import get_backend
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.models.keras import KerasModelWrapper
+from trulens.nn.models.keras import KerasModelWrapper # dangerous to have this here if tf-less keras gets imported
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut, InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import DATA_CONTAINER_TYPE, ModelInputs
+from trulens.utils.typing import DATA_CONTAINER_TYPE, DataLike, Inputs, ModelInputs, Outputs, nested_map, om_of_many
 
 if tf.executing_eagerly():
     tf.config.run_functions_eagerly(True)
 
 
-class Tensorflow2ModelWrapper(KerasModelWrapper):
+class Tensorflow2ModelWrapper(KerasModelWrapper): # dangerous to extend keras model wrapper
     """
     Model wrapper that exposes internal layers of tf2 Keras models.
     """
@@ -147,10 +148,12 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
         to_cut: Cut,
         attribution_cut: Cut,
         intervention: ModelInputs
-    ):
+    ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
         """
         See ModelWrapper.fprop .
         """
+
+        B = get_backend()
 
         if not self._eager:
             return super()._fprop(
@@ -161,29 +164,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                 intervention=intervention
             )
 
-        # model_args = model_inputs.args
-        # model_kwargs = model_inputs.kwargs
-        # intervention = intervention.args
-
-        # if isinstance(doi_cut, InputCut):  # This logic happens later in this backend.
-        #     model_args = intervention
-
-        return_numpy = True
-
-        if intervention is not None:
-            # if not isinstance(intervention, DATA_CONTAINER_TYPE):
-            #     intervention = [intervention]
-
-            # We return a numpy array if we were given a numpy array; otherwise
-            # we will let the returned values remain data tensors.
-            return_numpy = isinstance(intervention.first(), np.ndarray)
-
-            assert not return_numpy
-
-            # Convert `x` to a data tensor if it isn't already.
-            #if return_numpy:
-            #    intervention = intervention.map(lambda t: ModelWrapper._nested_apply(t, tf.constant))
-            
+        attribution_results = None
 
         try:
             if intervention:
@@ -193,6 +174,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                 batched_model_args = []
 
                 for val in model_inputs.args:
+
                     if isinstance(val, np.ndarray):
                         doi_resolution = int(
                             doi_repeated_batch_size / val.shape[0]
@@ -226,54 +208,41 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                         else:
                             layer.output_intervention = lambda _: x_i
                 else:
-                    #arg_wrapped_list = False
-                    # Take care of the Keras Module case where args is a tuple
-                    # of list of inputs corresponding to `model._inputs`. This
-                    # would have gotten unwrapped as the logic operates on the
-                    # list of inputs. so needs to be re-wrapped in tuple for the
-                    # model arg execution.
-                    #if (isinstance(model_inputs.args, DATA_CONTAINER_TYPE) and
-                    #        isinstance(model_inputs.args[0], DATA_CONTAINER_TYPE)):
-
-                    #    arg_wrapped_list = True
-
                     model_inputs = intervention
 
-                    #if arg_wrapped_list:
-                    #    model_args = (model_args,)
-
-            # Get the output from the "to layers," and possibly the latent
+            # Get the output from the "to layers" and possibly the latent
             # layers.
             def retrieve_index(i, results, anchor):
-
                 def retrieve(inputs, output):
                     if anchor == 'in':
-                        results[i] = (
-                            inputs[0] if (
-                                isinstance(inputs, DATA_CONTAINER_TYPE) and
-                                len(inputs) == 1
-                            ) else inputs
-                        )
+                        # Why does this happen:?
+                        if isinstance(inputs, DATA_CONTAINER_TYPE) and len(inputs) == 1:
+                            results[i] = inputs[0]
+                        else:
+                            results[i] = inputs
                     else:
-                        results[i] = (
-                            output[0] if (
-                                isinstance(output, DATA_CONTAINER_TYPE) and
-                                len(output) == 1
-                            ) else output
-                        )
+                        results[i] = output
 
                 return retrieve
 
+            results: Outputs[DataLike]
+
+            # TODO: Clean this all up somehow: trulens for TF2 allows for cuts
+            # with anchors that can refer to a model's inputs or outputs. Layers
+            # can have more than 1 input. In those cases, the size of
+            # attribution_layers is not indicative of the how many tensors there
+            # will be in the results of this call.
+
             if isinstance(to_cut, InputCut):
-                results = model_inputs.args
+                results: Outputs[DataLike] = model_inputs.args
 
             else:
-                to_layers = (
-                    self._get_logit_layer() if (isinstance(to_cut, LogitCut))
-                    else self._get_output_layer() if
-                    (isinstance(to_cut, OutputCut)) else
-                    self._get_layers_by_name(to_cut.name)
-                )
+                if isinstance(to_cut, LogitCut):
+                    to_layers = self._get_logit_layer()
+                elif isinstance(to_cut, OutputCut):
+                    to_layers = self._get_output_layer()
+                else:
+                    to_layers = self._get_layers_by_name(to_cut.name)
 
                 results = [None for _ in to_layers]
 
@@ -289,13 +258,12 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                     attribution_results = intervention.args
 
                 else:
-                    attribution_layers = (
-                        self._get_logit_layer() if
-                        (isinstance(attribution_cut,
-                                    LogitCut)) else self._get_output_layer() if
-                        (isinstance(attribution_cut, OutputCut)) else
-                        self._get_layers_by_name(attribution_cut.name)
-                    )
+                    if isinstance(attribution_cut, LogitCut):
+                        attribution_layers = self._get_logit_layer()
+                    elif isinstance(attribution_cut, OutputCut):
+                        attribution_layers = self._get_output_layer()
+                    else:
+                        attribution_layers = self._get_layers_by_name(attribution_cut.name)
 
                     attribution_results = [None for _ in attribution_layers]
 
@@ -315,28 +283,20 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                             )
 
             # Run a point.
-            # Some Models require inputs as single tensors while others require a list.
-            if len(model_inputs.args) == 1:
-                model_args = model_inputs.args[0]
-            else:
-                model_args = model_inputs.args
-
-            self._model(model_args)
+            # keras.Layer have similar argument handling to our public interfaces
+            self._model(om_of_many(model_inputs.args))
 
         finally:
             # Clear the hooks after running the model so that `fprop` doesn't
             # leave the model in an altered state.
             self._clear_hooks()
 
-        #if return_numpy:
-        #    results = ModelWrapper._nested_apply(
-        #        results, lambda t: t.numpy()
-        #        if not isinstance(t, np.ndarray) else t
-        #    )
+        results = self._flatten(results)
 
-        print("results=", results)
+        if attribution_results is not None:
+            attribution_results = self._flatten(attribution_results)
 
-        return (results, attribution_results) if attribution_cut else results
+        return (results, attribution_results)
 
     def _qoi_bprop(
         self,
@@ -347,7 +307,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
         to_cut: Cut,
         attribution_cut: Cut,
         intervention: ModelInputs
-    ):
+    ) -> Outputs[Inputs[DataLike]]:
         """
         See ModelWrapper.qoi_bprop .
         """
@@ -363,17 +323,9 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
             )
 
         with tf.GradientTape(persistent=True) as tape:
-            # We return a numpy array if we were given a numpy array; otherwise
-            # we will let the returned values remain data tensors.
-
-            return_numpy = isinstance(intervention.first(), np.ndarray)
-
-            # Convert `intervention` to a data tensor if it isn't already.
-
-            if return_numpy:
-                intervention = intervention.map(lambda t: ModelWrapper._nested_apply(t, tf.constant))
+            intervention = intervention.map(tf.constant)
             
-            intervention.foreach(lambda t: ModelWrapper._nested_apply(t, tape.watch))
+            intervention.foreach(tape.watch)
 
             outputs, attribution_features = self._fprop(
                 model_inputs=model_inputs,
@@ -382,38 +334,25 @@ class Tensorflow2ModelWrapper(KerasModelWrapper):
                 attribution_cut=attribution_cut,
                 intervention=intervention
             )
-            if isinstance(outputs, DATA_CONTAINER_TYPE) and isinstance(
-                    outputs[0], DATA_CONTAINER_TYPE):
-                outputs = outputs[0]
+            outputs: Outputs[DataLike]
+            attribution_features: Outputs[DataLike]
 
-            Q = qoi(outputs[0]) if len(outputs) == 1 else qoi(outputs)
-            if isinstance(Q, DATA_CONTAINER_TYPE) and len(Q) == 1:
-                Q = get_backend().sum(Q)
+            Q = qoi._wrap_public_call(outputs)
 
-        grads = [tape.gradient(q, attribution_features) for q in Q
-                ] if isinstance(Q, DATA_CONTAINER_TYPE
-                               ) else tape.gradient(Q, attribution_features)
+        grads: Outputs[Inputs[DataLike]] = []
 
-        grads = grads[0] if isinstance(grads, DATA_CONTAINER_TYPE
-                                      ) and len(grads) == 1 else grads
+        for z in attribution_features:
+            zq: Inputs[DataLike] = []
+            for q in Q:
+                    grad_zq = tape.gradient(q, z)
+                    zq.append(grad_zq)
 
-        grads = [attribution_cut.access_layer(g) for g in grads] if isinstance(
-            grads, DATA_CONTAINER_TYPE
-        ) else attribution_cut.access_layer(grads)
+            grads.append(zq)
+
+        grads = nested_map(grads, attribution_cut.access_layer)
 
         del tape
 
-        #if return_numpy:
-        #    grads = [
-        #        ModelWrapper._nested_apply(g,
-        #                                   get_backend().as_array)
-        #        for g in grads
-        #    ] if isinstance(
-        #        grads, DATA_CONTAINER_TYPE
-        #    ) else ModelWrapper._nested_apply(grads,
-        #                                      get_backend().as_array)
+        grads = list(zip(*grads)) # transpose
 
         return grads
-
-        # return grads[0] if isinstance(grads, DATA_CONTAINER_TYPE
-        #                             ) and len(grads) == 1 else grads
