@@ -348,19 +348,23 @@ class PytorchModelWrapper(ModelWrapper):
 
         with memory_suggestions(device=self.device):
             # Run the network.
-            self._model.eval()  # needed for determinism sometimes
-            output = model_inputs.call_on(self._model)
+            try:
+                self._model.eval()  # needed for determinism sometimes
+                output = model_inputs.call_on(self._model)
 
-        if isinstance(output, tuple):
-            output = output[0]
+                if isinstance(output, tuple):
+                    output = output[0]
 
-        if not isinstance(doi_cut, InputCut):
-            # Clean up in handle.
-            in_handle.remove()
+            finally:
+                # Need to clean these up even if memory_suggestions catches the error.
+                
+                if not isinstance(doi_cut, InputCut):
+                    # Clean up in handle.
+                    in_handle.remove()
 
-        # Clean up out handles.
-        for handle in handles:
-            handle.remove()
+                # Clean up out handles.
+                for handle in handles:
+                    handle.remove()
 
         extract_args = dict(
             hooks=hooks, output=output, model_inputs=model_inputs

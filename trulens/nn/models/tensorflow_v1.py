@@ -171,8 +171,7 @@ class TensorflowModelWrapper(ModelWrapper):
         if model_kwargs is not None:
             feed_dict.update({_tensor(k): v for k, v in model_kwargs.items()})
 
-        # Keep track which feed tensors came from intervention (as opposed to model inputs) so that
-        # ones from model inputs that were not overriden by intervention can be tiled.
+        # Keep track which feed tensors came from intervention (as opposed to model inputs).
         intervention_dict = dict()
 
         # Convert `intervention` to a list of inputs if it isn't already.
@@ -198,32 +197,10 @@ class TensorflowModelWrapper(ModelWrapper):
                 {k: v for k, v in zip(doi_tensors[0:len(args)], args)}
             )
             intervention_dict.update({_tensor(k): v for k, v in kwargs.items()})
+
             feed_dict.update(intervention_dict)
 
             intervention = list(args) + [feed_dict[_tensor(k)] for k in kwargs]
-
-            doi_repeated_batch_size = intervention[0].shape[0]
-            expected_dim = None
-
-            # tile the feed tensors that came from model input arguments
-            # TODO(piotrm): figure out how to abstract this out from the backends
-            for k, val in feed_dict.items():
-                if k in intervention_dict:
-                    continue
-
-                if isinstance(val, np.ndarray):
-                    doi_resolution = int(doi_repeated_batch_size / val.shape[0])
-                    if expected_dim is None:
-                        expected_dim = val.shape[0]
-
-                    if expected_dim == val.shape[0]:
-                        tile_shape = [1] * len(val.shape)
-                        tile_shape[0] = doi_resolution
-                        feed_dict[k] = np.tile(val, tuple(tile_shape))
-                    else:
-                        tru_logger.warn(
-                            f"Value {val} of shape {val.shape} is assumed to not be batchable due to its shape not matching prior batchable inputs of shape ({expected_dim}, ...). If this is incorrect, make sure its first dimension matches prior batchable inputs."
-                        )
 
         elif intervention is None and doi_tensors == self._inputs:
             intervention = [feed_dict[key_tensor] for key_tensor in doi_tensors]
