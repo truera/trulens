@@ -329,10 +329,8 @@ class AxiomsTestBase(object):
             multiply_activation=True
         )
 
-        B = get_backend()
-
-        out_x = self.model_deep.fprop(self.x)[:, c]
-        out_baseline = self.model_deep.fprop(self.baseline)[:, c]
+        out_x = self.model_deep.fprop((self.x,))[:, c]
+        out_baseline = self.model_deep.fprop((self.baseline,))[:, c]
 
         res = infl.attributions(self.x)
 
@@ -350,8 +348,8 @@ class AxiomsTestBase(object):
             multiply_activation=True
         )
 
-        out_x = self.model_deep.fprop(self.x)[:, c]
-        out_baseline = self.model_deep.fprop(self.baseline * 0)[:, c]
+        out_x = self.model_deep.fprop((self.x,))[:, c]
+        out_baseline = self.model_deep.fprop((self.baseline * 0,))[:, c]
 
         res = infl.attributions(self.x)
 
