@@ -18,8 +18,7 @@ import sys
 
 import numpy as np
 
-from trulens.nn.backend import get_backend
-from trulens.nn.backend import grace
+from trulens.nn.backend import get_backend, memory_suggestions
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
@@ -33,8 +32,8 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
-from trulens.utils.typing import DataLike, InputsList, UniformList, accepts_model_inputs, argslike_assert_matched_pair, argslike_cast, as_args
-from trulens.utils.typing import as_inputs
+from trulens.utils.typing import OM, ArgsLike, DataLike, Inputs, KwargsLike, Outputs, Uniform, accepts_model_inputs, nested_str, om_assert_matched_pair, nested_cast, om_of_many, nested_map
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import ModelInputs
 
@@ -55,7 +54,9 @@ class AttributionMethod(AbstractBaseClass):
     """
 
     @abstractmethod
-    def __init__(self, model: ModelWrapper, doi_per_batch=None, *args, **kwargs):
+    def __init__(
+        self, model: ModelWrapper, doi_per_batch=None, *args, **kwargs
+    ):
         """
         Abstract constructor.
 
@@ -75,37 +76,47 @@ class AttributionMethod(AbstractBaseClass):
         return self._model
 
     @abstractmethod
-    def attributions(self, *model_args, **model_kwargs):
+    def attributions(
+        self, *model_args: ArgsLike, **model_kwargs: KwargsLike
+    ) -> Union[DataLike, ArgsLike[DataLike], ArgsLike[ArgsLike[DataLike]]]:
         """
-        Returns attributions for the given input. Attributions are in the same shape
-        as the layer that attributions are being generated for. 
+        Returns attributions for the given input. Attributions are in the same
+        shape as the layer that attributions are being generated for. 
         
-        The numeric scale of the attributions will depend on the specific implementations 
-        of the Distribution of Interest and Quantity of Interest. However it is generally 
-        related to the scale of gradients on the Quantity of Interest. 
+        The numeric scale of the attributions will depend on the specific
+        implementations of the Distribution of Interest and Quantity of
+        Interest. However it is generally related to the scale of gradients on
+        the Quantity of Interest. 
 
-        For example, Integrated Gradients uses the linear interpolation Distribution of Interest
-        which subsumes the completeness axiom which ensures the sum of all attributions of a record
-        equals the output determined by the Quantity of Interest on the same record. 
+        For example, Integrated Gradients uses the linear interpolation
+        Distribution of Interest which subsumes the completeness axiom which
+        ensures the sum of all attributions of a record equals the output
+        determined by the Quantity of Interest on the same record. 
 
-        The Point Distribution of Interest will be determined by the gradient at a single point,
-        thus being a good measure of model sensitivity. 
+        The Point Distribution of Interest will be determined by the gradient at
+        a single point, thus being a good measure of model sensitivity. 
 
         Parameters:
             model_args, model_kwargs: 
-                The args and kwargs given to the call method of a model.
-                This should represent the records to obtain attributions for, 
-                assumed to be a *batched* input. if `self.model` supports
-                evaluation on *data tensors*, the  appropriate tensor type may
-                be used (e.g., Pytorch models may accept Pytorch tensors in 
-                addition to `np.ndarray`s). The shape of the inputs must match
-                the input shape of `self.model`. 
+                The args and kwargs given to the call method of a model. This
+                should represent the records to obtain attributions for, assumed
+                to be a *batched* input. if `self.model` supports evaluation on
+                *data tensors*, the  appropriate tensor type may be used (e.g.,
+                Pytorch models may accept Pytorch tensors in addition to
+                `np.ndarray`s). The shape of the inputs must match the input
+                shape of `self.model`. 
 
         Returns:
             An array of attributions, matching the shape and type of `from_cut`
             of the slice. Each entry in the returned array represents the degree
             to which the corresponding feature affected the model's outcome on
             the corresponding point.
+
+            If attributing to a component with multiple inputs, a list for each
+            will be returned.
+
+            If the quantity of interest features multiple outputs, a list for
+            each will be returned.
         """
         raise NotImplementedError
 
@@ -244,21 +255,23 @@ class InternalInfluence(AttributionMethod):
         self.doi = InternalInfluence.__get_doi(doi, cut=self.slice.from_cut)
         self._do_multiply = multiply_activation
 
-    def attributions(self, *model_args, **model_kwargs):
+    def attributions(
+        self, *model_args: ArgsLike, **model_kwargs: KwargsLike
+    ) -> Union[DataLike, ArgsLike[DataLike], ArgsLike[ArgsLike[DataLike]]]:
         # NOTE: not symbolic
 
         B = get_backend()
+
+        if isinstance(
+                model_args,
+                DATA_CONTAINER_TYPE) and len(model_args) == 1 and isinstance(
+                    model_args[0], DATA_CONTAINER_TYPE):
+            model_args = model_args[0]
 
         model_inputs = ModelInputs(model_args, model_kwargs)
 
         # Will cast results to this data container type.
         return_type = type(model_inputs.first())
-
-        # From now on, data containers, whether B.Tensor or np.ndarray will be consistent.
-        # model_inputs = model_inputs.map(lambda t: t if B.is_tensor(t) else B.as_tensor(t))
-
-        print("attributions:")
-        print("model_inputs=", model_inputs)
 
         # Create a message for out-of-memory errors regarding float and batch size.
         if len(list(model_inputs.values())) == 0:
@@ -273,38 +286,15 @@ class InternalInfluence(AttributionMethod):
 
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
-        print("doi_cut=", doi_cut)
-
-        with grace(*param_msgs): # Handles out-of-memory messages.
+        with memory_suggestions(*param_msgs):  # Handles out-of-memory messages.
             doi_val: List[B.Tensor] = self.model._fprop(
                 model_inputs=model_inputs,
                 to_cut=doi_cut,
                 doi_cut=InputCut(),
-                attribution_cut=None,# InputCut(),
+                attribution_cut=None,  # InputCut(),
                 intervention=model_inputs
             )[0]
 
-        # DoI supports tensor or list of tensor. unwrap args to perform DoI on
-        # top level list
-
-        # Depending on the model_arg input, the data may be nested in data
-        # containers. We unwrap so that there operations are working on a single
-        # level of data container.
-        # TODO(piotrm): automatic handling of other common containers like the ones
-        # used for huggingface models.
-        # TODO(piotrm): this unwrapping may not be necessary any more
-        # doi_val = as_container(doi_val)
-
-        # doi_val = list(map(B.as_array, doi_val))
-
-        #if isinstance(doi_val, DATA_CONTAINER_TYPE) and isinstance(
-        #        doi_val[0], DATA_CONTAINER_TYPE):
-        #    doi_val = doi_val[0]
-
-        #if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
-        #    doi_val = doi_val[0]
-
-        print("doi_val=", doi_val)
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
         n_doi = len(D[0])
@@ -312,108 +302,41 @@ class InternalInfluence(AttributionMethod):
         if self.doi_per_batch is None:
             doi_per_batch = n_doi
 
-        print("D pre concat=", D)
-        #D_ = []
-        #for batch in self.__concatenate_doi(D):
-        #    if isinstance(batch, DATA_CONTAINER_TYPE):
-        #        D_.append(list(map(B.as_tensor, batch)))
-        #    else:
-        #        D_.append(B.as_tensor(batch))
-
-        
-        #D = D
-
         D = self.__concatenate_doi(D)
-
-        # D = list(map(B.as_tensor, D))#, doi_per_batch=doi_per_batch)
-
-        # D = B.as_tensor(D)
-
-        #if isinstance(D, DATA_CONTAINER_TYPE):
-        #    D = list(map(B.as_tensor, D))
-        #else:
-        #    D = B.as_tensor(D)
-
-        print("D post concat=", D)
-
-        # assert isinstance(D, DATA_CONTAINER_TYPE)
-        # assert isinstance(D[0], DATA_CONTAINER_TYPE)
-  
         # Create a message for out-of-memory errors regarding doi_size.
         # TODO: Generalize this message to doi other than LinearDoI:
         doi_size_msg = f"distribution of interest size = {n_doi}; consider reducing intervention resolution."
         doi_per_batch_msg = f"doi_per_batch = {doi_per_batch}; consider reducing this (default is same as the above)."
 
         # TODO: Consider doing the model_inputs tiling here instead of inside qoi_bprop.
-
         effective_batch_size = doi_per_batch * batch_size
         effective_batch_msg = f"effective batch size = {effective_batch_size}; consider reducing batch size, intervention size, or doi_per_batch"
 
         # Calculate the gradient of each of the points in the DoI.
-        # qoi_grads_per_arg = defaultdict(list)
-        with grace(param_msgs + [doi_size_msg, doi_per_batch_msg, effective_batch_msg]): # Handles out-of-memory messages.
-            #for Dbatch in D:
-            #    print("Dbatch=", Dbatch)
-
-                #qoi_grads_for_all_args = 
-            qoi_grads = self.model._qoi_bprop(
+        with memory_suggestions(
+                param_msgs +
+            [doi_size_msg, doi_per_batch_msg, effective_batch_msg]
+        ):  # Handles out-of-memory messages.
+            qoi_grads: Outputs[Inputs[DataLike]] = self.model._qoi_bprop(
                 qoi=self.qoi,
-                #model_args=model_inputs.args,
-                #model_kwargs=model_inputs.kwargs,
                 model_inputs=model_inputs,
                 attribution_cut=self.slice.from_cut,
                 to_cut=self.slice.to_cut,
-                #intervention=D,
-                intervention = ModelInputs(args=D, kwargs={}),
+                intervention=ModelInputs(args=D, kwargs={}),
                 doi_cut=doi_cut
             )
-                #print("qoi_grads_for_all_args=", len(qoi_grads_for_all_args), type(qoi_grads_for_all_args))
-                #for arg_index, qoi_grads_for_arg in enumerate(qoi_grads_for_all_args):
-                #    qoi_grads_per_arg[arg_index].append(qoi_grads_for_arg)
 
-                    # print("qoi_grads_=", qoi_grads)
+        qoi_grads = nested_map(qoi_grads, B.as_array)
 
-        #qoi_grads = [np.concatenate(qoi_grads_for_arg) for qoi_grads_for_arg in qoi_grads_per_arg.values()]
-        #print("len(qoi_grads)=", len(qoi_grads), type(qoi_grads))
-        #if len(qoi_grads) == 1:
-        #    qoi_grads = qoi_grads[0]
-        #if len(qoi_grads) == 1:
-        #    qoi_grads = qoi_grads[0]
-        #print("qoi_grads=", qoi_grads)
-
-        # Take the mean across the samples in the DoI.
-
-        # assert(len(qoi_grads) > 0)
-
-        print("qoi_grads=", qoi_grads)
-
-        if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
-            qoi_grads = list(map(B.as_array, qoi_grads))
-            # TODO: Below is done in numpy.
-            attributions = [
-                B.mean(
-                    B.reshape(qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
-                    axis=0
-                ) for qoi_grad in qoi_grads
-            ]
-
-        else:
-            raise ValueError("inconsistent")
-            # TODO: Below is actually done in numpy, not backend.
-            qoi_grads = B.as_array(qoi_grads)
-            attributions = B.mean(
-                B.reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]), axis=0
-            )
-
-        print("attributions=", attributions)
-
-        extra_args = dict()
-        if accepts_model_inputs(self.doi.get_activation_multiplier):
-            extra_args['model_inputs'] = model_inputs
+        # TODO: Below is done in numpy.
+        attrs: Outputs[Inputs[DataLike]] = nested_map(
+            qoi_grads, lambda grad: B.
+            mean(B.reshape(grad, (n_doi, -1) + grad.shape[1:]), axis=0)
+        )
 
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
-            with grace(param_msgs):
+            with memory_suggestions(param_msgs):
                 z_val = self.model._fprop(
                     model_inputs=model_inputs,
                     doi_cut=InputCut(),
@@ -422,53 +345,26 @@ class InternalInfluence(AttributionMethod):
                     intervention=model_inputs
                 )[0]
 
-            #if isinstance(z_val, DATA_CONTAINER_TYPE) and len(z_val) == 1:
-            #    z_val = z_val[0]
+            mults: Inputs[DataLike
+                         ] = self.doi._wrap_public_get_activation_multiplier(
+                             z_val, model_inputs=model_inputs
+                         )
+            mults: Inputs[np.ndarray] = nested_cast(
+                backend=B, args=mults, astype=np.ndarray
+            )
 
-            print("z_val=", z_val)
+            attrs = [
+                [
+                    att * mult for att, mult in zip(attr, mults)  # Inputs
+                ] for attr in attrs  # Outputs
+            ]
 
-            if isinstance(attributions, DATA_CONTAINER_TYPE):
-                z_val = argslike_cast(
-                    backend=B,
-                    args=z_val,
-                    astype=np.ndarray
-                )
-
-                print("z_val=", z_val)
-
-                argslike_assert_matched_pair(attributions, z_val)
-
-                mults = self.doi.get_activation_multiplier(z_val, **extra_args)
-
-                print("mults=", mults)
-
-                attributions = [attr * mult for attr, mult in zip(attributions, mults)]
-
-                #for i in range(len(attributions)):
-                #    if isinstance(z_val, DATA_CONTAINER_TYPE) and len(
-                #            z_val) == len(attributions):
-                #        attributions[i] *= self.doi.get_activation_multiplier(
-                #            z_val[i], **extra_args
-                #        )
-                #    else:
-                #        attributions[i] *= (
-                #            self.doi.get_activation_multiplier(
-                #                z_val, **extra_args
-                #            )
-                #        )
-
-            else:
-                raise ValueError("inconsistent")
-                attributions *= self.doi.get_activation_multiplier(
-                    z_val, **extra_args
-                )
+        attrs: Outputs[OM[Inputs,
+                          DataLike]] = [om_of_many(attr) for attr in attrs]
+        attrs: OM[Outputs, OM[Inputs]] = om_of_many(attrs)
 
         # Cast to the same data type as provided inputs.
-        return as_args(argslike_cast(
-            backend=B,
-            astype=return_type,
-            args=attributions
-        ))
+        return nested_cast(backend=B, astype=return_type, args=attrs)
 
     @staticmethod
     def __get_qoi(qoi_arg):
@@ -608,7 +504,7 @@ class InternalInfluence(AttributionMethod):
             raise ValueError('Unrecognized argument type for cut')
 
     @staticmethod
-    def __concatenate_doi(D: InputsList[UniformList[DataLike]]) -> InputsList[DataLike]:
+    def __concatenate_doi(D: Inputs[Uniform[DataLike]]) -> Inputs[DataLike]:
         # Returns one DataLike for each model input.
         if len(D[0]) == 0:
             raise ValueError(
@@ -616,64 +512,10 @@ class InternalInfluence(AttributionMethod):
                 'least one point.'
             )
 
+        # TODO: should this always be done in numpy or can we do it in backend?
+        D = nested_cast(backend=get_backend(), args=D, astype=np.ndarray)
+
         return [np.concatenate(Di) for Di in D]
-
-    def __concatenate_doi2(self, D, doi_per_batch):
-        if len(D) == 0:
-            raise ValueError(
-                'Got empty distribution of interest. `DoI` must return at '
-                'least one point.'
-            )
-
-        # Why are there these two cases?
-
-        doi_per_batch = len(D)
-
-        # DoI provides multiple values (i.e. for interventions for model inputs with multiple arguments).
-        if isinstance(D[0], DATA_CONTAINER_TYPE):
-            print("case1")
-            print("len(D)=", len(D))
-            print("len(D[0])=", len(D[0]))
-
-            batches = []
-            for i in range(0, len(D), doi_per_batch):
-
-                Di = D[i:i+doi_per_batch]
-
-                # number of arguments for model inputs
-                num_args = len(Di[0])
-
-                vals_per_arg = [[] for _ in range(num_args)]
-                for point in Di:
-                    for arg_index, v in enumerate(point):
-                        vals_per_arg[arg_index].append(v)# if isinstance(v, np.ndarray) else v[0])
-
-                #batches.append(
-                #    np.concatenate(D_i)
-                #    if isinstance(D_i[0], np.ndarray) else D_i[0]
-                #    for D_i in transposed
-                #)
-
-                batches.append([np.concatenate(vals_for_arg) for vals_for_arg in vals_per_arg])
-
-            return batches[0]
-
-        else:
-            print("case2")
-            print("len(D)=", len(D))
-            print("D[0]=", D[0].shape)           
-
-            if not isinstance(D[0], np.ndarray):
-                D = [get_backend().as_array(d) for d in D]
-
-            batches = []
-            for i in range(0, len(D), doi_per_batch):
-                batches.append(
-                    [np.concatenate(D[i:i+doi_per_batch])] # outer 1-item list indicates a single argument intervention
-                )
-
-            #return np.concatenate(D)
-            return batches[0]
 
 
 class InputAttribution(InternalInfluence):

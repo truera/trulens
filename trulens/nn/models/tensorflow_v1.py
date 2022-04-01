@@ -1,6 +1,6 @@
 from re import L
 import sys
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -13,11 +13,9 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike
-from trulens.utils.typing import as_inputs
+from trulens.utils.typing import DataLike, Inputs, Outputs, Tensor, om_of_many
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import InterventionLike
-from trulens.utils.typing import KwargsLike
 from trulens.utils.typing import ModelInputs
 
 
@@ -184,7 +182,7 @@ class TensorflowModelWrapper(ModelWrapper):
                 kwargs = intervention.kwargs
 
             else:
-                args = as_inputs(intervention)
+                args = many_of_om(intervention)
                 kwargs = {}
 
             # TODO: Figure out a way to run the check below for InputCut. It currently
@@ -240,7 +238,7 @@ class TensorflowModelWrapper(ModelWrapper):
         to_cut: Cut,
         attribution_cut: Cut,
         intervention: ModelInputs
-    ):
+    ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
         """
         See ModelWrapper.fprop .
         """
@@ -285,7 +283,8 @@ class TensorflowModelWrapper(ModelWrapper):
         for i in sorted(identity_map):
             out_vals.insert(i, intervention[identity_map[i]])
 
-        return out_vals
+        # Private _fprop returns two things.
+        return (out_vals, None)
 
     def _run_session(self, outs, feed_dict):
         B = get_backend()
@@ -314,7 +313,7 @@ class TensorflowModelWrapper(ModelWrapper):
         to_cut: Cut,
         attribution_cut: Cut,
         intervention: ModelInputs
-    ):
+    ) -> Outputs[Inputs[DataLike]]:
         """
         See ModelWrapper.qoi_bprop .
         """
@@ -329,33 +328,33 @@ class TensorflowModelWrapper(ModelWrapper):
         feed_dict, _ = self._prepare_feed_dict_with_intervention(
             model_args, model_kwargs, intervention, doi_tensors
         )
+
         z_grads = []
+
+
         with self._graph.as_default():
+
             for z in attribution_tensors:
+
                 gradient_tensor_key = (z, frozenset(to_tensors))
+
                 if gradient_tensor_key in self._cached_gradient_tensors:
                     grads = self._cached_gradient_tensors[gradient_tensor_key]
-                else:
-                    Q = qoi(to_tensors[0]
-                           ) if len(to_tensors) == 1 else qoi(to_tensors)
 
-                    grads = [
-                        get_backend().gradient(q, z)[0] for q in Q
-                    ] if isinstance(Q, DATA_CONTAINER_TYPE
-                                   ) else get_backend().gradient(Q, z)[0]
-                    grads = grads[0] if isinstance(
-                        grads, DATA_CONTAINER_TYPE
-                    ) and len(grads) == 1 else grads
+                else:
+                    Q: Outputs[Tensor] = qoi._wrap_public_call(om_of_many(to_tensors))
+                    grads = get_backend().gradient(Q, z)
                     grads = [
                         attribution_cut.access_layer(g) for g in grads
-                    ] if isinstance(grads, DATA_CONTAINER_TYPE
-                                   ) else attribution_cut.access_layer(grads)
+                    ]
+
                     self._cached_gradient_tensors[gradient_tensor_key] = grads
+
                 z_grads.append(grads)
 
-        grad_flat = ModelWrapper._flatten(z_grads)
+        # transpose
+        z_grads = list(zip(*z_grads))
 
-        gradients = [self._run_session(g, feed_dict) for g in grad_flat]
+        gradients = self._run_session(z_grads, feed_dict)
 
-        gradients = ModelWrapper._unflatten(gradients, z_grads)
-        return gradients[0] if len(gradients) == 1 else gradients
+        return gradients

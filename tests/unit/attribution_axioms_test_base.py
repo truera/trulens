@@ -26,12 +26,14 @@ from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.utils.test import tolerance
+from trulens.utils.typing import nested_str
 
 
 class AxiomsTestBase(object):
 
     def setUp(self):
         self.atol = tolerance(get_backend())
+        print("atol=", self.atol)
 
         np.random.seed(2020)
 
@@ -145,8 +147,6 @@ class AxiomsTestBase(object):
 
         res = infl.attributions(self.x)
 
-        print("self.x=", self.x, self.x.shape)
-
         self.assertEqual(res.shape, (2, self.input_size))
 
         self.assertTrue(
@@ -192,7 +192,7 @@ class AxiomsTestBase(object):
 
         self.assertEqual(res.shape, (2, self.internal1_size))
 
-        z = self.model_deep.fprop((self.x,), to_cut=Cut(self.layer2))[0]
+        z = self.model_deep.fprop(self.x, to_cut=Cut(self.layer2))
 
         self.assertTrue(
             np.allclose(
@@ -217,21 +217,11 @@ class AxiomsTestBase(object):
             multiply_activation=False
         )
 
-        print("first", self.model_deep.fprop((self.x[0:1],)))
-        print("second", self.model_deep.fprop((self.baseline,)))
-
-        out_x = self.model_deep.fprop((self.x[0:1],))[0][:, c]
-        out_baseline = self.model_deep.fprop((self.baseline,))[0][:, c]
-
-        print("out_x=", out_x)
-        print("out_baseline=", out_baseline)
+        out_x = self.model_deep.fprop(self.x[0:1])[:, c]
+        out_baseline = self.model_deep.fprop(self.baseline)[:, c]
 
         if not np.allclose(out_x, out_baseline):
-            print("x=", type(self.x), self.x)
-
             res = infl.attributions(self.x)
-
-            print("res=", res)
 
             self.assertEqual(res.shape, (2, self.input_size))
 
@@ -339,8 +329,10 @@ class AxiomsTestBase(object):
             multiply_activation=True
         )
 
-        out_x = self.model_deep.fprop((self.x,))[0][:, c]
-        out_baseline = self.model_deep.fprop((self.baseline,))[0][:, c]
+        B = get_backend()
+
+        out_x = self.model_deep.fprop(self.x)[:, c]
+        out_baseline = self.model_deep.fprop(self.baseline)[:, c]
 
         res = infl.attributions(self.x)
 
@@ -358,8 +350,8 @@ class AxiomsTestBase(object):
             multiply_activation=True
         )
 
-        out_x = self.model_deep.fprop((self.x,))[0][:, c]
-        out_baseline = self.model_deep.fprop((self.baseline * 0,))[0][:, c]
+        out_x = self.model_deep.fprop(self.x)[:, c]
+        out_baseline = self.model_deep.fprop(self.baseline * 0)[:, c]
 
         res = infl.attributions(self.x)
 
@@ -386,8 +378,8 @@ class AxiomsTestBase(object):
             intervention=np.tile(baseline, (2, 1))
         )
 
-        out_x = self.model_deep.fprop((self.x,))[0][:, c]
-        out_baseline = g((self.x,))[0][:, c]
+        out_x = self.model_deep.fprop(self.x,)[:, c]
+        out_baseline = g(self.x,)[:, c]
 
         res = infl.attributions(self.x)
 
@@ -411,8 +403,8 @@ class AxiomsTestBase(object):
             doi_cut=Cut(self.layer2),
             intervention=np.zeros((2, 10))
         )
-        out_x = self.model_deep.fprop((self.x,))[0][:, c]
-        out_baseline = g((self.x,))[0][:, c]
+        out_x = self.model_deep.fprop(self.x)[:, c]
+        out_baseline = g(self.x)[:, c]
 
         res = infl.attributions(self.x)
 

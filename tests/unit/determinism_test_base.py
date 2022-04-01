@@ -20,10 +20,10 @@ class DeterminismTestBase(object):
         # TODO: similar for other backends if appropriate
         self.model_nondet._model.train()
 
-        out1 = self.model_nondet.fprop(model_args=[self.x])
-        out2 = self.model_nondet.fprop(model_args=[self.x])
+        out1 = self.model_nondet.fprop(model_args=[self.x])[0]
+        out2 = self.model_nondet.fprop(model_args=[self.x])[0]
 
-        self.assertTrue(np.allclose(out1[0], out2[0]))
+        self.assertTrue(np.allclose(out1, out2))
 
     def test_qprop(self):
         """qprop determinism test."""
@@ -35,7 +35,7 @@ class DeterminismTestBase(object):
         # TODO: similar for other backends if appropriate
         self.model_nondet._model.train()
 
-        grad1 = self.model_nondet.qoi_bprop(qoi=qoi, model_args=[self.x])
-        grad2 = self.model_nondet.qoi_bprop(qoi=qoi, model_args=[self.x])
+        grad1 = self.model_nondet.qoi_bprop(qoi=qoi, model_args=[self.x]).detach()
+        grad2 = self.model_nondet.qoi_bprop(qoi=qoi, model_args=[self.x]).detach()
 
         self.assertTrue(np.allclose(grad1, grad2))

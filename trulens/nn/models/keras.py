@@ -1,13 +1,12 @@
 import importlib
 import os
 import tempfile
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import numpy as np
 
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
-from trulens.nn.backend.keras_backend.keras import Tensor
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
@@ -15,11 +14,8 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike
-from trulens.utils.typing import as_inputs
+from trulens.utils.typing import DataLike, Outputs, om_of_many
 from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import InterventionLike
-from trulens.utils.typing import KwargsLike
 from trulens.utils.typing import ModelInputs
 
 
@@ -311,7 +307,8 @@ class KerasModelWrapper(ModelWrapper):
         to_cut: Cut,
         attribution_cut: Cut,
         intervention: ModelInputs
-    ) -> List[np.ndarray]:
+    ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
+    
         """
         See ModelWrapper.fprop .
         """
@@ -348,7 +345,6 @@ class KerasModelWrapper(ModelWrapper):
 
         # Finally, interventions override any previously set tensors.
         val_map.update({k: v for k, v in zip(doi_tensors, intervention)})
-        # val_map.update({_tensor(k): v for k, v in intervention.kwargs.items()})
 
         # TODO: tiling
 
@@ -377,7 +373,6 @@ class KerasModelWrapper(ModelWrapper):
                 inputs=all_inputs, outputs=non_identity_to_tensors
             )
             out_vals = fprop_fn(all_vals)
-            print("out_vals=", out_vals)
             del fprop_fn
 
         else:
@@ -390,9 +385,8 @@ class KerasModelWrapper(ModelWrapper):
         for i in sorted(identity_map):
             out_vals.insert(i, intervention[identity_map[i]])
 
-        # out_vals = list(map(B.as_tensor, out_vals))
-
-        return out_vals
+        # internal _fprop returns two things in general
+        return (out_vals, None)
 
     def _qoi_bprop(
         self,
@@ -412,7 +406,8 @@ class KerasModelWrapper(ModelWrapper):
         to_tensors = self._get_layers(to_cut)
         doi_tensors = self._get_layers(doi_cut)
 
-        Q = qoi(to_tensors[0]) if len(to_tensors) == 1 else qoi(to_tensors)
+        to_tensors = om_of_many(to_tensors)
+        Q = qoi._wrap_public_call(to_tensors)
 
         int_copy = list(x for x in intervention.args)
         doi_copy = list(x for x in doi_tensors)
@@ -421,18 +416,11 @@ class KerasModelWrapper(ModelWrapper):
             model_inputs.args, int_copy, doi_copy
         )
 
-        # intervention_args = intervention_args[0]
-        print("intervention_args=", intervention_args)
-
         gradients = [
             self.keras.backend.function(
                 doi_tensors,
                 get_backend().gradient(q, attribution_tensors)
             )(intervention_args) for q in Q
-        ] if isinstance(Q,
-                        DATA_CONTAINER_TYPE) else self.keras.backend.function(
-                            doi_tensors,
-                            get_backend().gradient(Q, attribution_tensors)
-                        )(intervention_args)
+        ]
 
-        return gradients[0] if len(gradients) == 1 else gradients
+        return gradients

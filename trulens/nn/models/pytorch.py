@@ -8,7 +8,7 @@ import torch
 
 from trulens.nn.backend import get_backend
 from trulens.nn.backend.pytorch_backend import pytorch
-from trulens.nn.backend.pytorch_backend.pytorch import Tensor, grace
+from trulens.nn.backend.pytorch_backend.pytorch import Tensor, memory_suggestions
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
@@ -16,8 +16,8 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike, InputsList
-from trulens.utils.typing import as_inputs
+from trulens.utils.typing import Inputs, Outputs, om_of_many, nested_map
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
 from trulens.utils.typing import InterventionLike
@@ -178,41 +178,29 @@ class PytorchModelWrapper(ModelWrapper):
             names_and_anchors.append((cut.name, cut.anchor))
 
     def _extract_outputs_from_hooks(
-        self, cut, hooks, output, model_inputs, return_tensor
-    ) -> InputsList[DataLike]:
-
-        # B = get_backend()
+        self, cut, hooks, output, model_inputs
+    ) -> Inputs[DataLike]:
 
         return_output = None
 
         if isinstance(cut, OutputCut):
-            return_output = [output]
+            return_output = many_of_om(output)
 
         elif isinstance(cut, InputCut):
-            # TODO(piotrm): Figure out whether kwarg order is consistent.
             return_output = list(model_inputs.args
                                  ) + list(model_inputs.kwargs.values())
 
         elif isinstance(cut, LogitCut):
-            return_output = [hooks['logits' if self.
-                                  _logit_layer is None else self._logit_layer]]
+            return_output = many_of_om(hooks['logits' if self.
+                                  _logit_layer is None else self._logit_layer])
 
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
             return_output = [hooks[name] for name in cut.name]
 
         else:
-            return_output = [hooks[cut.name]]
+            return_output = many_of_om(hooks[cut.name])
 
-        return return_output
-
-        #return_output = ModelWrapper._flatten(return_output)
-
-        # return return_output
-
-        #if return_tensor:
-        #    return return_output
-        #else:
-        #return ModelWrapper._nested_apply(return_output, B.as_array)
+        return list(return_output)
 
     def _to_tensor(self, x):
         # Convert `x` to a tensor on `self.device`. Note that layer input can be
@@ -220,7 +208,7 @@ class PytorchModelWrapper(ModelWrapper):
         B = get_backend()
         if isinstance(x, np.ndarray) or (len(x) > 0 and
                                          isinstance(x[0], np.ndarray)):
-            x = ModelWrapper._nested_apply(
+            x = nested_map(
                 x, partial(B.as_tensor, device=self.device)
             )
 
@@ -228,7 +216,7 @@ class PytorchModelWrapper(ModelWrapper):
             x = [self._to_tensor(x_i) for x_i in x]
 
         else:
-            x = ModelWrapper._nested_apply(x, lambda x: x.to(self.device))
+            x = nested_map(x, lambda x: x.to(self.device))
 
         return x
 
@@ -239,9 +227,8 @@ class PytorchModelWrapper(ModelWrapper):
         to_cut: Cut,
         attribution_cut: Cut,
         intervention: InterventionLike,
-        return_tensor: bool = False,
         input_timestep: Optional[int] = None
-    ) -> Union[List[Tensor], List[np.ndarray]]:
+    ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
         """
         See ModelWrapper.fprop .
 
@@ -284,7 +271,7 @@ class PytorchModelWrapper(ModelWrapper):
                 tile_shape[0] = doi_resolution
                 repeat_shape = tuple(tile_shape)
 
-                with grace(device=self.device):
+                with memory_suggestions(device=self.device):
                     # likely place where memory issues might arise
 
                     if isinstance(val, np.ndarray):
@@ -325,7 +312,6 @@ class PytorchModelWrapper(ModelWrapper):
 
         if not isinstance(doi_cut, InputCut):
             # Interventions only allowed onto one layer (see FIXME below.)
-            # assert len(intervention) == 1
 
             # Define the hookfn.
             counter = 0
@@ -336,11 +322,10 @@ class PytorchModelWrapper(ModelWrapper):
                 if input_timestep is None or input_timestep == counter:
                     # FIXME: generalize to multi-input layers. Currently can
                     #   only intervene on one layer.
+                    
+                    # TODO: figure out whether this is needed
                     inpt = inpt[0] if len(inpt) == 1 else inpt
-                    if doi_cut.anchor == 'in':
-                        ModelWrapper._nested_assign(inpt, intervention.first())
-                    else:
-                        ModelWrapper._nested_assign(outpt, intervention.first())
+                    ModelWrapper._nested_assign(inpt if doi_cut.anchor == 'in' else outpt, intervention.first())
 
                 counter += 1
 
@@ -374,27 +359,14 @@ class PytorchModelWrapper(ModelWrapper):
                 nonlocal hooks, layer_name, anchor
 
                 # FIXME: generalize to multi-input layers
-                inpt = inpt[0] if len(inpt) == 1 else inpt
+                inpt = om_of_many(inpt)
 
-                if return_tensor:
-                    if anchor == 'in':
-                        hooks[layer_name] = inpt
-                    else:
-                        # FIXME : will not work for multibranch outputs
-                        # needed to ignore hidden states of RNNs
-                        outpt = outpt[0] if isinstance(outpt, tuple) else outpt
-                        hooks[layer_name] = outpt
-
+                if anchor == 'in':
+                    hooks[layer_name] = inpt
                 else:
-                    if anchor == 'in':
-                        hooks[layer_name] = ModelWrapper._nested_apply(
-                            inpt, B.as_array
-                        )
-                    else:
-                        outpt = outpt[0] if isinstance(outpt, tuple) else outpt
-                        hooks[layer_name] = ModelWrapper._nested_apply(
-                            outpt, B.as_array
-                        )
+                    # FIXME : will not work for multibranch outputs
+                    # needed to ignore hidden states of RNNs
+                    hooks[layer_name] = outpt
 
             return hookfn
 
@@ -404,7 +376,7 @@ class PytorchModelWrapper(ModelWrapper):
             ) for name, anchor in names_and_anchors if name is not None
         ]
 
-        with grace(device=self.device):
+        with memory_suggestions(device=self.device):
             # Run the network.
             self._model.eval()  # needed for determinism sometimes
             output = model_inputs.call_on(self._model)
@@ -423,19 +395,21 @@ class PytorchModelWrapper(ModelWrapper):
         extract_args = dict(
             hooks=hooks,
             output=output,
-            model_inputs=model_inputs,
-            return_tensor=return_tensor
+            model_inputs=model_inputs
         )
 
         if attribution_cut:
-            return [
+            return (
                 self._extract_outputs_from_hooks(cut=to_cut, **extract_args),
                 self._extract_outputs_from_hooks(
                     cut=attribution_cut, **extract_args
                 )
-            ]
+            )
         else:
-            return [self._extract_outputs_from_hooks(cut=to_cut, **extract_args), None]
+            return (
+                self._extract_outputs_from_hooks(cut=to_cut, **extract_args),
+                None
+            )
 
     def _qoi_bprop(
         self,
@@ -445,24 +419,17 @@ class PytorchModelWrapper(ModelWrapper):
         to_cut: Cut,
         attribution_cut: Cut,
         intervention: ModelInputs
-    ):
-        B = get_backend()
+    ) -> Outputs[Inputs[DataLike]]: # one outer element per QoI, one inner element per attribution_cut input
 
-        print("qoi_bprop")
-        print("doi_cut=", doi_cut)
-        print("attribution_cut=", attribution_cut)
+        B = get_backend()
 
         y, zs = self._fprop(
             model_inputs=model_inputs,
             doi_cut=doi_cut,
             to_cut=to_cut,
             attribution_cut=attribution_cut,
-            intervention=intervention,
-            return_tensor=True
+            intervention=intervention
         )
-
-        y = to_cut.access_layer(y)
-        grads_list = []
 
         def scalarize(t: torch.Tensor) -> torch.tensor:
             if len(t.shape) > 1 and np.array(t.shape).prod() != 1:
@@ -476,54 +443,31 @@ class PytorchModelWrapper(ModelWrapper):
 
             return B.sum(t)
 
-        try:
-            for z in zs:
-                z_flat = ModelWrapper._flatten(z)
-                qoi_out = qoi(y)
+        y = to_cut.access_layer(y)
 
-                # TODO(piotrm): this sum is a source of much bugs for me when using
-                # attributions. If one wants a specific QoI, the sum hides the bugs
-                # in the definition of that QoI. It might be better to give an error
-                # when QoI is not a scalar.
-                with grace(device=self.device):
-                    # Common place where memory issues arise.
+        qois_out: Outputs[Tensor] = qoi._wrap_public_call(y)
+        grads_list = [[] for _ in qois_out]
+        
+        for qoi_index, qoi_out in enumerate(qois_out):
+            qoi_out: DataLike = scalarize(qoi_out)
 
-                    grads_flat = [
-                        B.gradient(scalarize(q), z_flat) for q in qoi_out
-                    ] if isinstance(qoi_out, DATA_CONTAINER_TYPE) else B.gradient(scalarize(qoi_out), z_flat)
+            try:
+                with memory_suggestions(device=self.device):
+                    grads_for_qoi = B.gradient(qoi_out, zs)
 
-                grads = [
-                    ModelWrapper._unflatten(g, z, count=[0]) for g in grads_flat
-                ] if isinstance(qoi_out,
-                                DATA_CONTAINER_TYPE) else ModelWrapper._unflatten(
-                                    grads_flat, z, count=[0]
-                                )
+            except RuntimeError as e:
+                if "cudnn RNN backward can only be called in training mode" in str(e):
+                    raise RuntimeError(
+                        "Cannot get deterministic gradients from RNN's with cudnn. See more about this issue here: https://github.com/pytorch/captum/issues/564 .\n"
+                        "Consider setting 'torch.backends.cudnn.enabled = False' for now."
+                    )
+                raise e
 
-                grads = [attribution_cut.access_layer(g) for g in grads
-                        ] if isinstance(qoi_out, DATA_CONTAINER_TYPE
-                                    ) else attribution_cut.access_layer(grads)
-
-                grads = [B.as_array(g) for g in grads
-                        ] if isinstance(qoi_out,
-                                        DATA_CONTAINER_TYPE) else B.as_array(grads)
-
-                grads_list.append(grads)
-
-        except RuntimeError as e:
-            if "cudnn RNN backward can only be called in training mode" in str(e):
-                raise RuntimeError(
-                    "Cannot get deterministic gradients from RNN's with cudnn. See more about this issue here: https://github.com/pytorch/captum/issues/564 .\n"
-                    "Consider setting 'torch.backends.cudnn.enabled = False' for now."
-                )
-            raise e
-
+            for grad_for_qoi in grads_for_qoi:
+                grads_list[qoi_index].append(grad_for_qoi)
 
         del y  # TODO: garbage collection
 
-        # return grads_list
-        # NOTE(piotrm): commented out the below to have more consistent output types/shapes
-        
-        #return grads_list[0] if len(grads_list) == 1 else grads_list
         return grads_list
 
     def probits(self, x):
