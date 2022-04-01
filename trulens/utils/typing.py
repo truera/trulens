@@ -90,7 +90,7 @@ vs. numpy array flexibility. These are to be used within Truera for more
 consistent expectations regarding inputs/outputs.
 
     - DoI._wrap_public_call vs. DoI.__call__
-    - DoI._wrap_public_get_activation_multiplier
+    - DoI._wrap_public_get_activation_multiplier vs DoI.get_activation_multiplier
     - QoI._wrap_public_call vs. QoI.__call__
     - ModelWrapper._fprop vs. ModelWrapper.fprop
     - ModelWrapper._qoi_bprop vs. ModelWrapper.qoi_bprop
