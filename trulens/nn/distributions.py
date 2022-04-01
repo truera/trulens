@@ -8,17 +8,23 @@ interested in a more general behavior over a distribution of samples.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Callable, List, Optional
+from typing import Callable, Optional
 
 import numpy as np
+from pkg_resources import Distribution
 
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
 from trulens.utils.typing import accepts_model_inputs
 from trulens.utils.typing import BaselineLike
-from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
+from trulens.utils.typing import Inputs
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_cast
+from trulens.utils.typing import OM
+from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Uniform
 
 
 class DoiCutSupportError(ValueError):
@@ -47,19 +53,46 @@ class DoI(AbstractBaseClass):
         """
         self._cut = cut
 
+    def _wrap_public_call(
+        self, z: Inputs[DataLike], *, model_inputs: ModelInputs
+    ) -> Inputs[Uniform[DataLike]]:
+        """Same as __call__ but input and output types are more specific and
+        less permissive. Formats the inputs for special cases that might be more
+        convenient for the user's __call__ implementation and formats its return
+        back to the consistent type."""
+
+        z: Inputs[DataLike] = om_of_many(z)
+
+        if accepts_model_inputs(self.__call__):
+            ret = self.__call__(z, model_inputs=model_inputs)
+        else:
+            ret = self.__call__(z)
+
+        ret: Inputs[Uniform[DataLike]] = many_of_om(ret, innertype=Uniform)
+
+        return ret
+
     @abstractmethod
     def __call__(
         self,
-        z: DataLike,
+        z: OM[Inputs, DataLike],
         *,
         model_inputs: Optional[ModelInputs] = None
-    ) -> List[DataLike]:
+    ) -> OM[Inputs, Uniform[DataLike]]:
         """
-        Computes the distribution of interest from an initial point.
+        Computes the distribution of interest from an initial point. If z:
+        DataLike is given, we assume there is only 1 input to the DoI layer. If
+        z: List[DataLike] is given, it provides all of the inputs to the DoI
+        layer. 
+        
+        Either way, we always return List[List[DataLike]] (alias
+        Inputs[Uniform[DataLike]]) with outer list spanning layer inputs, and
+        inner list spanning a distribution's instance.
 
         Parameters:
             z:
-                Input point from which the distribution is derived.
+                Input point from which the distribution is derived. If
+                list/tuple, the point is defined by multiple tensors.
             model_inputs:
                 Optional wrapped model input arguments that produce value z at
                 cut.
@@ -67,8 +100,8 @@ class DoI(AbstractBaseClass):
         Returns:
             List of points which are all assigned equal probability mass in the
             distribution of interest, i.e., the distribution of interest is a
-            discrete, uniform distribution over the list of returned points.
-            Each point in the list shares the same type and shape as `z`.
+            discrete, uniform distribution over the list of returned points. If
+            z is multi-input, returns a distribution for each input.
         """
         raise NotImplementedError
 
@@ -82,35 +115,60 @@ class DoI(AbstractBaseClass):
         """
         return self._cut
 
+    def _wrap_public_get_activation_multiplier(
+        self, activation: Inputs[DataLike], *, model_inputs: ModelInputs
+    ) -> Inputs[DataLike]:
+        """Same as get_activation_multiplier but without "one-or-more". """
+
+        activations: OM[Inputs, DataLike] = om_of_many(activation)
+
+        # get_activation_multiplier is public
+        if accepts_model_inputs(self.get_activation_multiplier):
+            ret: OM[Inputs, DataLike] = self.get_activation_multiplier(
+                activations, model_inputs=model_inputs
+            )
+        else:
+            ret: OM[Inputs,
+                    DataLike] = self.get_activation_multiplier(activations)
+
+        ret: Inputs[DataLike] = many_of_om(ret)
+
+        return ret
+
     def get_activation_multiplier(
         self,
-        activation: DataLike,
+        activation: OM[Inputs, DataLike],
         *,
         model_inputs: Optional[ModelInputs] = None
-    ) -> DataLike:
+    ) -> OM[Inputs, DataLike]:
         """
-        Returns a term to multiply the gradient by to convert from "*influence 
+        Returns a term to multiply the gradient by to convert from "*influence
         space*" to "*attribution space*". Conceptually, "influence space"
-        corresponds to the potential effect of a slight increase in each 
+        corresponds to the potential effect of a slight increase in each
         feature, while "attribution space" corresponds to an approximation of
-        the net marginal contribution to the quantity of interest of each 
+        the net marginal contribution to the quantity of interest of each
         feature.
 
         Parameters:
             activation:
-                The activation of the layer the DoI is applied to.
+                The activation of the layer the DoI is applied to. DoI may be
+                multi-input in which case activation will be a list.
             model_inputs:
-                Optional wrapped model input arguments that produce activation at
-                cut.
+                Optional wrapped model input arguments that produce activation
+                at cut.
 
         Returns:
-            An array with the same shape as ``activation`` that will be 
-            multiplied by the gradient to obtain the attribution. The default 
-            implementation of this method simply returns ``activation``.
+            An array with the same shape as ``activation`` that will be
+            multiplied by the gradient to obtain the attribution. The default
+            implementation of this method simply returns ``activation``. If
+            activation is multi-input, returns one multiplier for each.
         """
-        return activation
+        return om_of_many(activation)
 
     def _assert_cut_contains_only_one_tensor(self, x):
+        if isinstance(x, list) and len(x) == 1:
+            x = x[0]
+
         if isinstance(x, list):
             raise DoiCutSupportError(
                 '\n\n'
@@ -152,12 +210,17 @@ class PointDoi(DoI):
 
     def __call__(
         self,
-        z: DataLike,
+        z: OM[Inputs, DataLike],
         *,
         model_inputs: Optional[ModelInputs] = None
-    ) -> List[DataLike]:
+    ) -> OM[Inputs, Uniform[DataLike]]:
 
-        return [z]
+        z: Inputs[DataLike] = many_of_om(z)
+
+        return om_of_many([
+            [z_]  # a point Uniform
+            for z_ in z
+        ])
 
 
 class LinearDoi(DoI):
@@ -211,31 +274,32 @@ class LinearDoi(DoI):
 
     def __call__(
         self,
-        z: DataLike,
+        z: OM[Inputs, DataLike],
         *,
         model_inputs: Optional[ModelInputs] = None
-    ) -> List[DataLike]:
-
-        if isinstance(z, DATA_CONTAINER_TYPE) and len(z) == 1:
-            z = z[0]
+    ) -> OM[Inputs, Uniform[DataLike]]:
 
         self._assert_cut_contains_only_one_tensor(z)
+
+        z: Inputs[DataLike] = many_of_om(z)
 
         baseline = self._compute_baseline(z, model_inputs=model_inputs)
 
         r = 1. if self._resolution is 1 else self._resolution - 1.
 
-        return [
-            (1. - i / r) * z + i / r * baseline
-            for i in range(self._resolution)
-        ]
+        return om_of_many([ # Inputs
+            [ # Uniform
+                (1. - i / r) * z_ + i / r * b_
+                for i in range(self._resolution)
+            ] for z_, b_ in zip(z, baseline)
+        ])
 
     def get_activation_multiplier(
         self,
-        activation: DataLike,
+        activation: OM[Inputs, DataLike],
         *,
         model_inputs: Optional[ModelInputs] = None
-    ) -> DataLike:
+    ) -> Inputs[DataLike]:
         """
         Returns a term to multiply the gradient by to convert from "*influence 
         space*" to "*attribution space*". Conceptually, "influence space"
@@ -252,37 +316,48 @@ class LinearDoi(DoI):
             The activation adjusted by the baseline passed to the constructor.
         """
 
-        baseline = self._compute_baseline(activation, model_inputs=model_inputs)
+        activation: Inputs[DataLike] = many_of_om(activation)
 
-        return (activation if baseline is None else activation - baseline)
+        baseline: Inputs[DataLike] = self._compute_baseline(
+            activation, model_inputs=model_inputs
+        )
+
+        if baseline is None:
+            return activation
+
+        return [a - b for a, b in zip(activation, baseline)]
 
     def _compute_baseline(
         self,
-        z: DataLike,
+        z: Inputs[DataLike],
         *,
         model_inputs: Optional[ModelInputs] = None
-    ) -> DataLike:
+    ) -> Inputs[DataLike]:
 
         B = get_backend()
 
-        _baseline = self.baseline
+        _baseline: BaselineLike = self.baseline  # user-provided
 
         if isinstance(_baseline, Callable):
             if accepts_model_inputs(_baseline):
-                _baseline = _baseline(z, model_inputs=model_inputs)
+                _baseline: OM[Inputs, DataLike] = many_of_om(
+                    _baseline(om_of_many(z), model_inputs=model_inputs)
+                )
             else:
-                _baseline = _baseline(z)
+                _baseline: OM[Inputs,
+                              DataLike] = many_of_om(_baseline(om_of_many(z)))
+
+        else:
+            _baseline: OM[Inputs, DataLike]
 
         if _baseline is None:
-            _baseline = B.zeros_like(z)
+            _baseline: Inputs[DataLike] = [B.zeros_like(z_) for z_ in z]
+        else:
+            _baseline: Inputs[DataLike] = many_of_om(_baseline)
+            # Came from user; could have been single or multiple inputs.
 
-        if B.is_tensor(z) and not B.is_tensor(_baseline):
-            _baseline = B.as_tensor(_baseline)
-
-        if not B.is_tensor(z) and B.is_tensor(_baseline):
-            _baseline = B.as_array(_baseline)
-
-        return _baseline
+        # Cast to either Tensor or numpy.ndarray to match what was given in z.
+        return nested_cast(backend=B, args=_baseline, astype=type(z[0]))
 
 
 class GaussianDoi(DoI):
@@ -308,20 +383,30 @@ class GaussianDoi(DoI):
         self._var = var
         self._resolution = resolution
 
-    def __call__(self, z: DataLike) -> List[DataLike]:
+    def __call__(self, z: OM[Inputs,
+                             DataLike]) -> OM[Inputs, Uniform[DataLike]]:
+        # Public interface.
+
         B = get_backend()
         self._assert_cut_contains_only_one_tensor(z)
 
-        if B.is_tensor(z):
-            # Tensor implementation.
-            return [
-                z + B.random_normal_like(z, var=self._var)
-                for _ in range(self._resolution)
-            ]
+        def gauss_of_input(z: DataLike) -> Uniform[DataLike]:
+            # TODO: make a pytorch backend with the same interface to use in places like these.
 
-        else:
-            # Array implementation.
-            return [
-                z + np.random.normal(0., np.sqrt(self._var), z.shape)
-                for _ in range(self._resolution)
-            ]
+            if B.is_tensor(z):
+                # Tensor implementation.
+                return [
+                    z + B.random_normal_like(z, var=self._var)
+                    for _ in range(self._resolution)
+                ]  # Uniform
+
+            else:
+                # Array implementation.
+                return [
+                    z + np.random.normal(0., np.sqrt(self._var), z.shape)
+                    for _ in range(self._resolution)
+                ]  # Uniform
+
+        z: Inputs[DataLike] = many_of_om(z)
+
+        return om_of_many(list(map(gauss_of_input, z)))

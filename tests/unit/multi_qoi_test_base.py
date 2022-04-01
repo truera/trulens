@@ -8,6 +8,9 @@ from trulens.nn.backend import get_backend
 from trulens.nn.distributions import DoI
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
+from trulens.utils.typing import OM
+from trulens.utils.typing import Outputs
+from trulens.utils.typing import Tensor
 
 
 class PerTimestepQoI(QoI):
@@ -43,7 +46,7 @@ class RNNLinearDoi(DoI):
         self._resolution = resolution
         self.B = get_backend()
 
-    def calc_doi(self, x_input, tf_cell=False):
+    def calc_doi(self, x_input, tf_cell=False) -> OM[Outputs, Tensor]:
 
         x = x_input[0] if tf_cell else x_input
         batch_size = len(x)
@@ -75,7 +78,7 @@ class RNNLinearDoi(DoI):
             doi_out = [[d, x_input[1]] for d in doi_out]
         return doi_out
 
-    def __call__(self, x):
+    def __call__(self, x) -> OM[Outputs, Tensor]:
         return self.calc_doi(x, tf_cell=False)
 
     def get_activation_multiplier(self, activation):
@@ -107,17 +110,22 @@ class MultiQoiTestBase(TestCase):
         batch_size
     ):
         cuts = (Cut('rnn', 'in', None), Cut('dense', 'out', None))
+
         infl = InternalInfluence(
             model_wrapper, cuts, PerTimestepQoI(), RNNLinearDoi()
         )
+
         input_attrs = infl.attributions(
             np.ones((batch_size, num_timesteps, num_features)
                    ).astype('float32')
         )
+
         original_output_shape = (
             num_classes * num_timesteps, batch_size, num_timesteps, num_features
         )
+
         self.assertEqual(np.stack(input_attrs).shape, original_output_shape)
+
         rotated = np.stack(input_attrs, axis=-1)
         attr_shape = list(rotated.shape)[:-1]
         attr_shape.append(int(rotated.shape[-1] / num_classes))

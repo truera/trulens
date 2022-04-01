@@ -12,11 +12,12 @@ package.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Callable, Tuple, Union
+from typing import Callable, List, Tuple, Union
 
 import numpy as np
 
 from trulens.nn.backend import get_backend
+from trulens.nn.backend import memory_suggestions
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
@@ -30,12 +31,18 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
-from trulens.utils.typing import accepts_model_inputs
 from trulens.utils.typing import ArgsLike
-from trulens.utils.typing import as_args
 from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import DataLike
+from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_cast
+from trulens.utils.typing import nested_map
+from trulens.utils.typing import OM
+from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Outputs
+from trulens.utils.typing import Uniform
 
 # Attribution-related type aliases.
 CutLike = Union[Cut, int, str, None]
@@ -74,37 +81,45 @@ class AttributionMethod(AbstractBaseClass):
     @abstractmethod
     def attributions(
         self, *model_args: ArgsLike, **model_kwargs: KwargsLike
-    ) -> np.ndarray:
+    ) -> Union[DataLike, ArgsLike[DataLike], ArgsLike[ArgsLike[DataLike]]]:
         """
-        Returns attributions for the given input. Attributions are in the same shape
-        as the layer that attributions are being generated for. 
+        Returns attributions for the given input. Attributions are in the same
+        shape as the layer that attributions are being generated for. 
         
-        The numeric scale of the attributions will depend on the specific implementations 
-        of the Distribution of Interest and Quantity of Interest. However it is generally 
-        related to the scale of gradients on the Quantity of Interest. 
+        The numeric scale of the attributions will depend on the specific
+        implementations of the Distribution of Interest and Quantity of
+        Interest. However it is generally related to the scale of gradients on
+        the Quantity of Interest. 
 
-        For example, Integrated Gradients uses the linear interpolation Distribution of Interest
-        which subsumes the completeness axiom which ensures the sum of all attributions of a record
-        equals the output determined by the Quantity of Interest on the same record. 
+        For example, Integrated Gradients uses the linear interpolation
+        Distribution of Interest which subsumes the completeness axiom which
+        ensures the sum of all attributions of a record equals the output
+        determined by the Quantity of Interest on the same record. 
 
-        The Point Distribution of Interest will be determined by the gradient at a single point,
-        thus being a good measure of model sensitivity. 
+        The Point Distribution of Interest will be determined by the gradient at
+        a single point, thus being a good measure of model sensitivity. 
 
         Parameters:
-            model_args: ArgsLike, model_kwargs: KwargsLike
-                The args and kwargs given to the call method of a model.
-                This should represent the records to obtain attributions for, 
-                assumed to be a *batched* input. if `self.model` supports
-                evaluation on *data tensors*, the  appropriate tensor type may
-                be used (e.g., Pytorch models may accept Pytorch tensors in 
-                addition to `np.ndarray`s). The shape of the inputs must match
-                the input shape of `self.model`. 
+            model_args, model_kwargs: 
+                The args and kwargs given to the call method of a model. This
+                should represent the records to obtain attributions for, assumed
+                to be a *batched* input. if `self.model` supports evaluation on
+                *data tensors*, the  appropriate tensor type may be used (e.g.,
+                Pytorch models may accept Pytorch tensors in addition to
+                `np.ndarray`s). The shape of the inputs must match the input
+                shape of `self.model`. 
 
         Returns np.ndarray:
             An array of attributions, matching the shape and type of `from_cut`
             of the slice. Each entry in the returned array represents the degree
             to which the corresponding feature affected the model's outcome on
             the corresponding point.
+
+            If attributing to a component with multiple inputs, a list for each
+            will be returned.
+
+            If the quantity of interest features multiple outputs, a list for
+            each will be returned.
         """
         raise NotImplementedError
 
@@ -245,101 +260,104 @@ class InternalInfluence(AttributionMethod):
 
     def attributions(
         self, *model_args: ArgsLike, **model_kwargs: KwargsLike
-    ) -> np.ndarray:
+    ) -> Union[DataLike, ArgsLike[DataLike], ArgsLike[ArgsLike[DataLike]]]:
+        # NOTE: not symbolic
+
+        B = get_backend()
+
+        if isinstance(
+                model_args,
+                DATA_CONTAINER_TYPE) and len(model_args) == 1 and isinstance(
+                    model_args[0], DATA_CONTAINER_TYPE):
+            model_args = model_args[0]
+
         model_inputs = ModelInputs(model_args, model_kwargs)
+
+        # Will cast results to this data container type.
+        return_type = type(model_inputs.first())
+
+        # Create a message for out-of-memory errors regarding float and batch size.
+        if len(list(model_inputs.values())) == 0:
+            batch_size = 1
+        else:
+            batch_size = model_inputs.first().shape[0]
+
+        param_msgs = [
+            f"float size = {B.floatX_size} ({B.floatX}); consider changing to a smaller type.",
+            f"batch size = {batch_size}; consider reducing the size of the batch you send to the attributions method."
+        ]
 
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
-        doi_val = self.model.fprop(
-            model_args=model_inputs.args,
-            model_kwargs=model_inputs.kwargs,
-            to_cut=doi_cut
-        )
+        with memory_suggestions(*param_msgs):  # Handles out-of-memory messages.
+            doi_val: List[B.Tensor] = self.model._fprop(
+                model_inputs=model_inputs,
+                to_cut=doi_cut,
+                doi_cut=InputCut(),
+                attribution_cut=None,  # InputCut(),
+                intervention=model_inputs
+            )[0]
 
-        # DoI supports tensor or list of tensor. unwrap args to perform DoI on
-        # top level list
+        D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
-        # Depending on the model_arg input, the data may be nested in data
-        # containers. We unwrap so that there operations are working on a single
-        # level of data container.
-        # TODO(piotrm): automatic handling of other common containers like the ones
-        # used for huggingface models.
-        # TODO(piotrm): this unwrapping may not be necessary any more
-        if isinstance(doi_val, DATA_CONTAINER_TYPE) and isinstance(
-                doi_val[0], DATA_CONTAINER_TYPE):
-            doi_val = doi_val[0]
+        n_doi = len(D[0])
 
-        if isinstance(doi_val, DATA_CONTAINER_TYPE) and len(doi_val) == 1:
-            doi_val = doi_val[0]
-
-        if accepts_model_inputs(self.doi):
-            D = self.doi(doi_val, model_inputs=model_inputs)
-        else:
-            D = self.doi(doi_val)
-
-        n_doi = len(D)
-
-        D = InternalInfluence.__concatenate_doi(D)
-        B = get_backend()
+        D = self.__concatenate_doi(D)
+        # Create a message for out-of-memory errors regarding doi_size.
+        # TODO: Generalize this message to doi other than LinearDoI:
+        doi_size_msg = f"distribution of interest size = {n_doi}; consider reducing intervention resolution."
 
         # Calculate the gradient of each of the points in the DoI.
-        qoi_grads = self.model.qoi_bprop(
-            qoi=self.qoi,
-            model_args=model_inputs.args,
-            model_kwargs=model_inputs.kwargs,
-            attribution_cut=self.slice.from_cut,
-            to_cut=self.slice.to_cut,
-            intervention=D,
-            doi_cut=doi_cut
-        )
-
-        # Take the mean across the samples in the DoI.
-        if isinstance(qoi_grads, DATA_CONTAINER_TYPE):
-            attributions = [
-                B.mean(
-                    B.reshape(qoi_grad, (n_doi, -1) + qoi_grad.shape[1:]),
-                    axis=0
-                ) for qoi_grad in qoi_grads
-            ]
-        else:
-            attributions = B.mean(
-                B.reshape(qoi_grads, (n_doi, -1) + qoi_grads.shape[1:]), axis=0
+        with memory_suggestions(param_msgs + [doi_size_msg]
+                               ):  # Handles out-of-memory messages.
+            qoi_grads: Outputs[Inputs[DataLike]] = self.model._qoi_bprop(
+                qoi=self.qoi,
+                model_inputs=model_inputs,
+                attribution_cut=self.slice.from_cut,
+                to_cut=self.slice.to_cut,
+                intervention=ModelInputs(args=D, kwargs={}),
+                doi_cut=doi_cut
             )
 
-        extra_args = dict()
-        if accepts_model_inputs(self.doi.get_activation_multiplier):
-            extra_args['model_inputs'] = model_inputs
+        qoi_grads = nested_map(qoi_grads, B.as_array)
+
+        # TODO: Below is done in numpy.
+        attrs: Outputs[Inputs[DataLike]] = nested_map(
+            qoi_grads, lambda grad: B.
+            mean(B.reshape(grad, (n_doi, -1) + grad.shape[1:]), axis=0)
+        )
 
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
-            z_val = self.model.fprop(
-                model_inputs.args,
-                model_inputs.kwargs,
-                to_cut=self.slice.from_cut
+            with memory_suggestions(param_msgs):
+                z_val = self.model._fprop(
+                    model_inputs=model_inputs,
+                    doi_cut=InputCut(),
+                    attribution_cut=None,
+                    to_cut=self.slice.from_cut,
+                    intervention=model_inputs
+                )[0]
+
+            mults: Inputs[DataLike
+                         ] = self.doi._wrap_public_get_activation_multiplier(
+                             z_val, model_inputs=model_inputs
+                         )
+            mults: Inputs[np.ndarray] = nested_cast(
+                backend=B, args=mults, astype=np.ndarray
             )
-            if isinstance(z_val, DATA_CONTAINER_TYPE) and len(z_val) == 1:
-                z_val = z_val[0]
 
-            if isinstance(attributions, DATA_CONTAINER_TYPE):
-                for i in range(len(attributions)):
-                    if isinstance(z_val, DATA_CONTAINER_TYPE) and len(
-                            z_val) == len(attributions):
-                        attributions[i] *= self.doi.get_activation_multiplier(
-                            z_val[i], **extra_args
-                        )
-                    else:
-                        attributions[i] *= (
-                            self.doi.get_activation_multiplier(
-                                z_val, **extra_args
-                            )
-                        )
+            attrs = [
+                [
+                    att * mult for att, mult in zip(attr, mults)  # Inputs
+                ] for attr in attrs  # Outputs
+            ]
 
-            else:
-                attributions *= self.doi.get_activation_multiplier(
-                    z_val, **extra_args
-                )
+        attrs: Outputs[OM[Inputs,
+                          DataLike]] = [om_of_many(attr) for attr in attrs]
+        attrs: OM[Outputs, OM[Inputs]] = om_of_many(attrs)
 
-        return attributions
+        # Cast to the same data type as provided inputs.
+        return nested_cast(backend=B, astype=return_type, args=attrs)
 
     @staticmethod
     def __get_qoi(qoi_arg):
@@ -479,29 +497,18 @@ class InternalInfluence(AttributionMethod):
             raise ValueError('Unrecognized argument type for cut')
 
     @staticmethod
-    def __concatenate_doi(D):
-        if len(D) == 0:
+    def __concatenate_doi(D: Inputs[Uniform[DataLike]]) -> Inputs[DataLike]:
+        # Returns one DataLike for each model input.
+        if len(D[0]) == 0:
             raise ValueError(
                 'Got empty distribution of interest. `DoI` must return at '
                 'least one point.'
             )
 
-        if isinstance(D[0], DATA_CONTAINER_TYPE):
-            transposed = [[] for _ in range(len(D[0]))]
-            for point in D:
-                for i, v in enumerate(point):
-                    transposed[i].append(v)
+        # TODO: should this always be done in numpy or can we do it in backend?
+        D = nested_cast(backend=get_backend(), args=D, astype=np.ndarray)
 
-            return [
-                np.concatenate(D_i)
-                if isinstance(D_i[0], np.ndarray) else D_i[0]
-                for D_i in transposed
-            ]
-
-        else:
-            if not isinstance(D[0], np.ndarray):
-                D = [get_backend().as_array(d) for d in D]
-            return np.concatenate(D)
+        return [np.concatenate(Di) for Di in D]
 
 
 class InputAttribution(InternalInfluence):

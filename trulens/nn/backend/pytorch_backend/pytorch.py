@@ -3,15 +3,23 @@
 # pylint: disable=no-member
 # pylint: disable=not-callable
 
+# TODO: Some of the backend methods accept and process numpy arrays instead of
+# pytorch tensors. This seems like a convenience but complicates reasoning.
+# Remove the convenience and fix users to not rely on it.
+
+from contextlib import contextmanager
+
 import numpy as np
 import torch
 
 from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS
 from trulens.nn.backend import Backend
+import trulens.nn.backend as base_backend
 
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
 floatX = torch.get_default_dtype()
+floatX_size = torch.tensor([], dtype=floatX).element_size()
 Tensor = torch.Tensor
 dim_order = 'channels_first'
 channel_axis = 1
@@ -39,7 +47,11 @@ def set_default_device(device: str):
 
     global default_device
 
-    if not isinstance(device, str):
+    old_device = default_device
+    if device is None:
+        return old_device
+
+    if isinstance(device, torch.device):
         device = device.type
 
     if "cuda" in device:
@@ -61,6 +73,15 @@ def get_default_device(device=None):
         return torch.device("cuda:0")
 
     return torch.device('cpu')
+
+
+def memory_suggestions(*settings, device=None):
+    return base_backend.memory_suggestions(
+        *settings,
+        call_before=lambda: set_default_device(device),
+        call_after=lambda old_device: set_default_device(old_device),
+        device=device
+    )
 
 
 def gradient(scalar, wrt):
@@ -101,6 +122,8 @@ def as_array(t, dtype=None):
     np.array
         Same contents as t
     """
+
+    # TODO: remove handling of numpy input
     if isinstance(t, np.ndarray):
         return t if dtype is None else t.astype(dtype)
 
@@ -181,6 +204,7 @@ def reshape(t, shape):
 
 
 def mean(t, axis=None, keepdims=False):
+    # TODO: remove handling of numpy input
     if isinstance(t, np.ndarray):
         return t.mean(axis=axis, keepdims=keepdims)
 
@@ -210,6 +234,8 @@ def sum(t, axis=None, keepdims=False):
     backend.Tensor
         Sum of t
     """
+
+    # TODO: remove handling of numpy input
     if isinstance(t, np.ndarray):
         return t.sum(axis=axis, keepdims=keepdims)
 
