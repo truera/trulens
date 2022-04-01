@@ -19,7 +19,14 @@ from inspect import signature
 from typing import Any, Callable, List, Optional, Union
 
 from trulens.nn.backend import get_backend
+from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import many_of_om
+from trulens.utils.typing import OM
+from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Outputs
+from trulens.utils.typing import Tensor
 
+# NEED INFO HERE
 # Define some type aliases.
 TensorLike = Union[Any, List[Union[Any]]]
 
@@ -39,8 +46,15 @@ class QoI(AbstractBaseClass):
     output behavior that the attributions describe.
     """
 
+    def _wrap_public_call(self, y: Outputs[Tensor]) -> Outputs[Tensor]:
+        """
+        Wrap a public call that may result one or more tensors. Signature of
+        this class is not specific while public calls are flexible. """
+
+        return many_of_om(self.__call__(om_of_many(y)))
+
     @abstractmethod
-    def __call__(self, y: TensorLike) -> TensorLike:
+    def __call__(self, y: OM[Outputs, Tensor]) -> OM[Outputs, Tensor]:
         """
         Computes the distribution of interest from an initial point.
 
@@ -55,7 +69,7 @@ class QoI(AbstractBaseClass):
         raise NotImplementedError
 
     def _assert_cut_contains_only_one_tensor(self, x):
-        if isinstance(x, list):
+        if isinstance(x, DATA_CONTAINER_TYPE):
             raise QoiCutSupportError(
                 'Cut provided to quantity of interest was comprised of '
                 'multiple tensors, but `{}` is only defined for cuts comprised '
@@ -375,4 +389,4 @@ class ClassSeqQoI(QoI):
         self._assert_cut_contains_only_one_tensor(y)
         assert get_backend().shape(y)[0] == len(self.seq_labels)
 
-        return y[:, seq_labels]
+        return y[:, self.seq_labels]

@@ -9,18 +9,28 @@ it should be wrapped as a `ModelWrapper` instance.
 """
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
+import numpy as np
+
+from trulens.nn.backend import get_backend
+from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import ArgsLike
-from trulens.utils.typing import as_args
 from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import DataLike
+from trulens.utils.typing import Inputs
 from trulens.utils.typing import InterventionLike
 from trulens.utils.typing import KwargsLike
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_cast
+from trulens.utils.typing import OM
+from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Outputs
 
 
 class ModelWrapper(AbstractBaseClass):
@@ -132,64 +142,6 @@ class ModelWrapper(AbstractBaseClass):
         """
         return self.fprop(x)[0]
 
-    def _fprop_defaults(
-        self, model_args: ArgsLike, model_kwargs: KwargsLike, doi_cut: Cut,
-        to_cut: Cut, intervention: InterventionLike
-    ) -> Tuple[Cut, Cut, InterventionLike, ModelInputs]:
-        """
-        Creates default values for fprop that should be common across all
-        backends. Also initial checks of parameters with warning/error messages
-        when used incorrectly.
-        """
-
-        # TODO: Apply to backends other than pytorch.
-
-        model_inputs = ModelInputs(model_args, model_kwargs)
-
-        if doi_cut is None:
-            doi_cut = InputCut()
-        if to_cut is None:
-            to_cut = OutputCut()
-
-        if isinstance(doi_cut, InputCut):
-            # For input cuts, produce a ModelInputs container for the intervention and model inputs.
-            if intervention is not None:
-                if isinstance(intervention, ModelInputs):
-                    # Intervention overrides both args and kwargs
-                    model_inputs = intervention
-                else:
-                    # Intervention overrides only args.
-                    # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
-                    intervention = ModelInputs(
-                        as_args(intervention), model_inputs.kwargs
-                    )
-                    model_inputs = intervention
-
-                    if len(model_inputs.kwargs) > 0:
-                        tru_logger.warn(
-                            "Intervention for InputCut DoI specified but contains only positional arguments. The rest will be taken from model_kwargs. If you need to intervene on keyword arguments, provide the intervention as ModelInputs container."
-                        )
-
-            else:
-                # If no intervention given, it is equal to model inputs.
-                intervention = model_inputs
-
-        else:  # doi_cut is not InputCut
-            # For non-InputCut, interventions do not have kwargs but for simplifying the logics, we store it
-            # in a ModelInputs anyway.
-
-            if intervention is None:
-                # Any situations where one wants to specify a non-InputCut intervention with input arguments?
-                raise ValueError(
-                    "intervention needs to be given for DoI cuts that are not InputCut"
-                )
-            else:
-                # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
-                intervention = ModelInputs(as_args(intervention), {})
-
-        return doi_cut, to_cut, intervention, model_inputs
-
-    @abstractmethod
     def fprop(
         self,
         model_args: ArgsLike,
@@ -199,7 +151,10 @@ class ModelWrapper(AbstractBaseClass):
         attribution_cut: Optional[Cut] = None,
         intervention: InterventionLike = None,
         **kwargs
-    ):
+    ) -> Union[ArgsLike[DataLike],  # attribution_cut is None
+               Tuple[ArgsLike[DataLike],
+                     ArgsLike[DataLike]]  # attribution_cut is not None
+              ]:
         """
         **_Used internally by `AttributionMethod`._**
 
@@ -260,31 +215,125 @@ class ModelWrapper(AbstractBaseClass):
                 `intervention` is `None`, then it is equivalent to the point
                 DoI.
 
+            *others*:
+                Some backends support additional parameters. Consult the appropriate
+                *BACKEND*ModelWrapper._fprop for details.
+
         Returns:
-            (list of backend.Tensor or np.ndarray)
-                A list of output activations are returned, keeping the same type
+            list of (backend.Tensor or np.ndarray) (or tuple of lists)
+                Lists of output activations are returned, keeping the same type
                 as the input. If `attribution_cut` is supplied, also return the
                 cut activations.
         """
-
-        raise NotImplementedError
-
-    def _qoi_bprop_defaults(
-        self, doi_cut: Cut, to_cut: Cut, attribution_cut: Cut
-    ) -> Tuple[Cut, Cut, Cut]:
-        """Produces default values for qoi_bprop parameters that are in common across backends. Common checks and warnings will be placed here. """
 
         if doi_cut is None:
             doi_cut = InputCut()
         if to_cut is None:
             to_cut = OutputCut()
 
-        if attribution_cut is None:
-            attribution_cut = InputCut()
+        model_inputs, intervention = self._organize_inputs(
+            doi_cut=doi_cut,
+            model_args=model_args,
+            model_kwargs=model_kwargs,
+            intervention=intervention
+        )
 
-        return doi_cut, to_cut, attribution_cut
+        B = get_backend()
+
+        # Will cast results to this data container type.
+        return_type = type(model_inputs.first())
+
+        model_inputs = model_inputs.map(
+            lambda t: t if B.is_tensor(t) else B.as_tensor(t)
+        )
+        intervention = intervention.map(
+            lambda t: t if B.is_tensor(t) else B.as_tensor(t)
+        )
+
+        rets: Tuple[Outputs[DataLike], Outputs[DataLike]] = self._fprop(
+            model_inputs=model_inputs,
+            doi_cut=doi_cut,
+            to_cut=to_cut,
+            attribution_cut=attribution_cut,
+            intervention=intervention,
+            **kwargs
+        )
+
+        rets = tuple(
+            map(
+                lambda ret: om_of_many(
+                    nested_cast(backend=B, astype=return_type, args=ret)
+                ) if ret is not None else None, rets
+            )
+        )
+
+        if rets[1] is None:
+            return rets[0]
+        else:
+            return rets
+
+    def _organize_inputs(
+        self, *, doi_cut, model_args, model_kwargs, intervention
+    ) -> Tuple[ModelInputs, ModelInputs]:
+        model_inputs = ModelInputs(many_of_om(model_args), model_kwargs)
+
+        if isinstance(doi_cut, InputCut):
+            # For input cuts, produce a ModelInputs container for the intervention and model inputs.
+            if intervention is not None:
+                if isinstance(intervention, ModelInputs):
+                    # Intervention overrides both args and kwargs
+                    model_inputs = intervention
+                else:
+                    # Intervention overrides only args.
+                    # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
+                    intervention = ModelInputs(
+                        many_of_om(intervention), model_inputs.kwargs
+                    )
+                    model_inputs = intervention
+
+                    if len(model_inputs.kwargs) > 0:
+                        tru_logger.warn(
+                            "Intervention for InputCut DoI specified but contains only positional arguments. "
+                            "The rest will be taken from model_kwargs. If you need to intervene on keyword "
+                            "arguments, provide the intervention as a ModelInputs container."
+                        )
+
+            else:
+                # If no intervention given, it is equal to model inputs.
+                intervention = model_inputs
+
+        else:  # doi_cut is not InputCut
+            # For non-InputCut, interventions do not have kwargs but for simplifying the logics, we store it
+            # in a ModelInputs anyway.
+
+            if intervention is None:
+                # Any situations where one wants to specify a non-InputCut intervention with input arguments?
+                raise ValueError(
+                    "intervention needs to be given for DoI cuts that are not InputCut"
+                )
+            else:
+                # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
+                intervention = ModelInputs(many_of_om(intervention), {})
+
+        return model_inputs, intervention
 
     @abstractmethod
+    def _fprop(
+        self,
+        *,
+        model_inputs: ModelInputs,  # DataLike contents only
+        doi_cut: Cut,
+        to_cut: Cut,
+        attribution_cut: Cut,
+        intervention: ModelInputs,  # DataLike contents only
+        **kwargs
+    ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
+        """Implementation of fprop; arguments, return, and their types are clarified. """
+
+        # Should not have to use DATA_CONTAINER_TYPE internally.
+
+        raise NotImplementedError
+
     def qoi_bprop(
         self,
         qoi,
@@ -295,7 +344,7 @@ class ModelWrapper(AbstractBaseClass):
         attribution_cut: Optional[Cut] = None,
         intervention: InterventionLike = None,
         **kwargs
-    ):
+    ) -> OM[Outputs, OM[Inputs, DataLike]]:
         """
         **_Used internally by `AttributionMethod`._**
         
@@ -340,12 +389,66 @@ class ModelWrapper(AbstractBaseClass):
                 `intervention` is `None`, then it is equivalent to the point
                 DoI.
 
+            *others*:
+                Some backends support additional parameters. Consult the appropriate
+                *BACKEND*ModelWrapper._qoi_bprop for details.
 
         Returns:
-            (backend.Tensor or np.ndarray)
+            (backend.Tensor or np.ndarray) for each attribution_cut input, for each qoi output
                 the gradients of `qoi` w.r.t. `attribution_cut`, keeping same
                 type as the input.
+                If attribution_cut has multiple inputs, return a list for each. 
+                If qoi has multiple outputs, returns a list of the above for each.
         """
+
+        if doi_cut is None:
+            doi_cut = InputCut()
+        if to_cut is None:
+            to_cut = OutputCut()
+        if attribution_cut is None:
+            attribution_cut = InputCut()
+
+        model_inputs, intervention = self._organize_inputs(
+            doi_cut=doi_cut,
+            model_args=model_args,
+            model_kwargs=model_kwargs,
+            intervention=intervention
+        )
+
+        B = get_backend()
+
+        # Will cast results to this data container type.
+        return_type = type(model_inputs.first())
+
+        attrs: Outputs[Inputs[DataLike]] = self._qoi_bprop(
+            qoi=qoi,
+            model_inputs=model_inputs,
+            doi_cut=doi_cut,
+            to_cut=to_cut,
+            attribution_cut=attribution_cut,
+            intervention=intervention,
+            **kwargs
+        )
+
+        attrs: Outputs[OM[Inputs,
+                          DataLike]] = [om_of_many(attr) for attr in attrs]
+        attrs: OM[Outputs, OM[Inputs]] = om_of_many(attrs)
+
+        # Call the implementation and transform its results to the same type as model_inputs.
+        return nested_cast(
+            backend=get_backend(), astype=return_type, args=attrs
+        )
+
+    @abstractmethod
+    def _qoi_bprop(
+        self, *, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
+        attribution_cut: Cut, intervention: ModelInputs, **kwargs
+    ) -> Outputs[
+            Inputs[DataLike]
+    ]:  # One outer element for each QoI output, one inner element for each attribution_cut input.
+        """Implementation of qoi_bprop; arguments, return, and their types are clarified. """
+        # Should not have to use DATA_CONTAINER_TYPE internally.
+
         raise NotImplementedError
 
     @staticmethod
@@ -373,34 +476,6 @@ class ModelWrapper(AbstractBaseClass):
                 # Assign directly to Tensor with below.
                 x.data = x.data.clone()
                 x.data[:] = y[:]
-
-    @staticmethod
-    def _nested_apply(y, fn):
-        """
-        _nested_apply Applies fn to tensors in y.
-
-        Parameters
-        ----------
-        y:  non-collective object or a nested list/tuple of objects
-            The leaf objects will be inputs to fn.
-        fn: function
-            The function applied to leaf objects in y. Should
-            take in a single non-collective object and return
-            a non-collective object.
-        Returns
-        ------
-        non-collective object or a nested list or tuple
-            Has the same structure as y, and contains the results
-            of fn applied to leaf objects in y.
-
-        """
-        if isinstance(y, DATA_CONTAINER_TYPE):
-            out = []
-            for i in range(len(y)):
-                out.append(ModelWrapper._nested_apply(y[i], fn))
-            return tuple(out) if isinstance(y, tuple) else out
-        else:
-            return fn(y)
 
     @staticmethod
     def _flatten(x):
