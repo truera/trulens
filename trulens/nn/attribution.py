@@ -63,14 +63,17 @@ class AttributionMethod(AbstractBaseClass):
 
     @abstractmethod
     def __init__(
-        self, model: ModelWrapper, rebatch_size=None, *args, **kwargs
+        self, model: ModelWrapper, rebatch_size: int = None, *args, **kwargs
     ):
         """
         Abstract constructor.
 
         Parameters:
-            model :
+            model: ModelWrapper
                 Model for which attributions are calculated.
+
+            rebatch_size: int (optional)
+                Will rebatch model inputs to this size if given.
         """
         self._model = model
 
