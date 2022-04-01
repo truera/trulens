@@ -47,7 +47,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
         Parameters
         ----------
         model : tf.keras.Model
-            tf.keras.Model or a subclassmake t
+            tf.keras.Model or a subclass
         eager: bool, optional:
             whether or not model is in eager mode.
         """
