@@ -176,7 +176,7 @@ DATA_CONTAINER_TYPE = (list, tuple)
 ## Utilities for dealing with nested structures
 
 
-def nested_map(y: OMNested[C, U], fn: Callable[[U], V]) -> OMNested[C, V]:
+def nested_map(y: OMNested[C, U], fn: Callable[[U], V], nest=999) -> OMNested[C, V]:
     """
     Applies fn to non-container elements in y. This works on "one or more" and even mested om.
 
@@ -194,10 +194,10 @@ def nested_map(y: OMNested[C, U], fn: Callable[[U], V]) -> OMNested[C, V]:
         leaf objects in y.
 
     """
-    if isinstance(y, DATA_CONTAINER_TYPE):
+    if isinstance(y, DATA_CONTAINER_TYPE) and nest > 0:
         out = []
         for i in range(len(y)):
-            out.append(nested_map(y[i], fn))
+            out.append(nested_map(y[i], fn, nest-1))
         return y.__class__(out)
     else:
         return fn(y)

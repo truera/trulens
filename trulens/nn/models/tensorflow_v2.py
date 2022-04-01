@@ -47,7 +47,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
         Parameters
         ----------
         model : tf.keras.Model
-            tf.keras.Model or a subclass
+            tf.keras.Model or a subclassmake t
         eager: bool, optional:
             whether or not model is in eager mode.
         """
@@ -173,33 +173,6 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
 
         try:
             if intervention:
-                # Get Inputs and batch then the same as DoI resolution
-                doi_repeated_batch_size = intervention.first().shape[0]
-
-                batched_model_args = []
-
-                for val in model_inputs.args:
-
-                    if isinstance(val, np.ndarray):
-                        doi_resolution = int(
-                            doi_repeated_batch_size / val.shape[0]
-                        )
-                        tile_shape = [1] * len(val.shape)
-                        tile_shape[0] = doi_resolution
-                        val = B.as_tensor(np.tile(val, tuple(tile_shape)))
-
-                    elif tf.is_tensor(val):
-                        doi_resolution = int(
-                            doi_repeated_batch_size / val.shape[0]
-                        )
-                        val = tf.repeat(val, doi_resolution, axis=0)
-
-                    batched_model_args.append(val)
-
-                model_inputs = ModelInputs(
-                    batched_model_args, model_inputs.kwargs
-                )
-
                 if not isinstance(doi_cut, InputCut):
                     from_layers = (
                         self._get_logit_layer()

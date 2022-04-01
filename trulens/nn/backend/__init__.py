@@ -4,7 +4,7 @@ import importlib
 import os
 from re import S
 import traceback
-from typing import TypeVar
+from typing import Iterable, Tuple, TypeVar
 
 import numpy as np
 
@@ -20,6 +20,7 @@ _TRULENS_BACKEND_IMPL = None
 # channel_axis
 # backend
 # floatX
+# floatX_size
 
 
 class OutOfMemory(RuntimeError):
@@ -83,6 +84,35 @@ def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
             call_after(state)
 
 
+def rebatch_model_inputs(
+    model_inputs: ModelInputs,
+    *model_inputss: Tuple[ModelInputs,...],
+    batch_size=None
+) -> Iterable[Tuple[ModelInputs,...]]:
+    original_batch_size = model_inputs.first().shape[0]
+
+    if batch_size is None:
+        batch_size = original_batch_size
+
+    def take(batch_idx):
+
+        def f(val):
+            if val.shape[0] != original_batch_size:
+                return val
+            else:
+                return val[batch_idx * batch_size:(batch_idx + 1) * batch_size]
+
+        return f
+
+    all_model_inputs: Tuple[ModelInputs,...] = (model_inputs,) + model_inputss
+
+    for batch_idx in range(0, 1 + original_batch_size // batch_size):
+        if batch_idx * batch_size >= original_batch_size:
+            continue
+
+        yield tuple(map(lambda mi: mi.map(take(batch_idx)), all_model_inputs))
+
+
 def tile_model_inputs(what: ModelInputs, onto: ModelInputs) -> ModelInputs:
     """Tiles elements of `what` some number of times so they have the same first
     dimension size as `onto`. Picks the number of tiles from the first of each
@@ -118,9 +148,7 @@ def tile_model_inputs(what: ModelInputs, onto: ModelInputs) -> ModelInputs:
         elif B.is_tensor(val):
             return B.tile(val, repeat_shape)
         else:
-            raise ValueError(
-                f"unhandled tensor type {val.__class__.__name__}"
-            )
+            raise ValueError(f"unhandled tensor type {val.__class__.__name__}")
 
     return what.map(tile_val)
 

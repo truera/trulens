@@ -3,12 +3,6 @@
 # pylint: disable=no-member
 # pylint: disable=not-callable
 
-# TODO: Some of the backend methods accept and process numpy arrays instead of
-# pytorch tensors. This seems like a convenience but complicates reasoning.
-# Remove the convenience and fix users to not rely on it.
-
-from contextlib import contextmanager
-
 import numpy as np
 import torch
 

@@ -342,8 +342,6 @@ class KerasModelWrapper(ModelWrapper):
         # Finally, interventions override any previously set tensors.
         val_map.update({k: v for k, v in zip(doi_tensors, intervention)})
 
-        # TODO: tiling
-
         all_inputs = list(val_map.keys())
         all_vals = list(val_map.values())
 

@@ -16,7 +16,7 @@ from typing import Callable, List, Tuple, Union
 
 import numpy as np
 
-from trulens.nn.backend import get_backend, tile_model_inputs
+from trulens.nn.backend import get_backend, rebatch_model_inputs, tile_model_inputs
 from trulens.nn.backend import memory_suggestions
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
@@ -63,7 +63,7 @@ class AttributionMethod(AbstractBaseClass):
 
     @abstractmethod
     def __init__(
-        self, model: ModelWrapper, doi_per_batch=None, *args, **kwargs
+        self, model: ModelWrapper, rebatch_size=None, *args, **kwargs
     ):
         """
         Abstract constructor.
@@ -74,7 +74,7 @@ class AttributionMethod(AbstractBaseClass):
         """
         self._model = model
 
-        self.doi_per_batch = doi_per_batch
+        self.rebatch_size = rebatch_size
 
     @property
     def model(self) -> ModelWrapper:
@@ -172,7 +172,9 @@ class InternalInfluence(AttributionMethod):
         cuts: SliceLike,
         qoi: QoiLike,
         doi: DoiLike,
-        multiply_activation: bool = True
+        multiply_activation: bool = True,
+        *args,
+        **kwargs
     ):
         """
         Parameters:
@@ -256,7 +258,7 @@ class InternalInfluence(AttributionMethod):
                 activation, thus converting from "*influence space*" to 
                 "*attribution space*."
         """
-        super().__init__(model)
+        super().__init__(model, *args, **kwargs)
 
         self.slice = InternalInfluence.__get_slice(cuts)
         self.qoi = InternalInfluence.__get_qoi(qoi)
@@ -306,9 +308,9 @@ class InternalInfluence(AttributionMethod):
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
         n_doi = len(D[0])
-        doi_per_batch = self.doi_per_batch
-        if self.doi_per_batch is None:
-            doi_per_batch = n_doi
+        rebatch_size = self.rebatch_size
+        if rebatch_size is None:
+             rebatch_size = n_doi
 
         D = self.__concatenate_doi(D)
 
@@ -319,28 +321,45 @@ class InternalInfluence(AttributionMethod):
         # Create a message for out-of-memory errors regarding doi_size.
         # TODO: Generalize this message to doi other than LinearDoI:
         doi_size_msg = f"distribution of interest size = {n_doi}; consider reducing intervention resolution."
-        doi_per_batch_msg = f"doi_per_batch = {doi_per_batch}; consider reducing this (default is same as the above)."
 
-        # TODO: Consider doing the model_inputs tiling here instead of inside qoi_bprop.
-        effective_batch_size = doi_per_batch * batch_size
-        effective_batch_msg = f"effective batch size = {effective_batch_size}; consider reducing batch size, intervention size, or doi_per_batch"
+        combined_batch_size = n_doi * batch_size
+        combined_batch_msg = f"combined batch size = {combined_batch_size}; consider reducing batch size, intervention size"
+
+        rebatch_size_msg = f"rebatch_size = {rebatch_size}; consider reducing this AttributionMethod constructor parameter (default is same as combined batch size)."
 
         # Calculate the gradient of each of the points in the DoI.
         with memory_suggestions(
                 param_msgs +
-            [doi_size_msg, doi_per_batch_msg, effective_batch_msg]
+            [doi_size_msg, combined_batch_msg, rebatch_size_msg]
         ):  # Handles out-of-memory messages.
-            qoi_grads_expanded: Outputs[Inputs[DataLike]] = self.model._qoi_bprop(
-                qoi=self.qoi,
-                model_inputs=model_inputs_expanded,
-                attribution_cut=self.slice.from_cut,
-                to_cut=self.slice.to_cut,
-                intervention=intervention,
-                doi_cut=doi_cut
-            )
+            qoi_grads_expanded: List[Outputs[Inputs[DataLike]]] = []
 
-        qoi_grads_expanded = nested_map(qoi_grads_expanded, B.as_array)
+            for inputs_batch, intervention_batch in rebatch_model_inputs(model_inputs_expanded, intervention, batch_size=rebatch_size):
 
+                qoi_grads_expanded_batch: Outputs[Inputs[DataLike]] = self.model._qoi_bprop(
+                    qoi=self.qoi,
+                    model_inputs=inputs_batch,
+                    attribution_cut=self.slice.from_cut,
+                    to_cut=self.slice.to_cut,
+                    intervention=intervention_batch,
+                    doi_cut=doi_cut
+                )
+
+                # important to cast to numpy inside loop:
+                qoi_grads_expanded.append(nested_map(qoi_grads_expanded_batch, B.as_array))
+
+        num_outputs = len(qoi_grads_expanded[0])
+        num_inputs = len(qoi_grads_expanded[0][0])
+
+        transpose = [[[] for _ in range(num_inputs)] for _ in range(num_outputs)]
+
+        for o in range(num_outputs):
+            for i in range(num_inputs):
+                for qoi_grads_batch in qoi_grads_expanded:
+                    transpose[o][i].append(qoi_grads_batch[o][i])
+
+        qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(transpose, np.concatenate, nest=2)
+            
         # TODO: Below is done in numpy.
         attrs: Outputs[Inputs[DataLike]] = nested_map(
             qoi_grads_expanded, lambda grad: B.
@@ -553,7 +572,9 @@ class InputAttribution(InternalInfluence):
         qoi: QoiLike = 'max',
         doi_cut: CutLike = None,  # see WARNING-LOAD-INIT
         doi: DoiLike = 'point',
-        multiply_activation: bool = True
+        multiply_activation: bool = True,
+        *args,
+        **kwargs
     ):
         """
         Parameters:
@@ -635,7 +656,9 @@ class InputAttribution(InternalInfluence):
             model, (doi_cut, qoi_cut),
             qoi,
             doi,
-            multiply_activation=multiply_activation
+            multiply_activation=multiply_activation,
+            *args,
+            **kwargs
         )
 
 
@@ -677,7 +700,9 @@ class IntegratedGradients(InputAttribution):
         resolution: int = 50,
         doi_cut=None,  # see WARNING-LOAD-INIT
         qoi='max',
-        qoi_cut=None  # see WARNING-LOAD-INIT
+        qoi_cut=None,  # see WARNING-LOAD-INIT
+        *args,
+        **kwargs
     ):
         """
         Parameters:
@@ -708,5 +733,7 @@ class IntegratedGradients(InputAttribution):
             qoi=qoi,
             doi_cut=doi_cut,
             doi=LinearDoi(baseline, resolution, cut=doi_cut),
-            multiply_activation=True
+            multiply_activation=True,
+            *args,
+            **kwargs
         )
