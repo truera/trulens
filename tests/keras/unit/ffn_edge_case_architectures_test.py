@@ -117,8 +117,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         )
 
         res = infl.attributions(
-            np.array([[1., 2., 3., 4., 5.]]),
-            np.array([[1.]])
+            np.array([[1., 2., 3., 4., 5.]]), np.array([[1.]])
         )
 
         self.assertEqual(len(res), 2)
@@ -142,8 +141,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         )
 
         res = infl.attributions(
-            np.array([[1., 2., 3., 4., 5.]]),
-            np.array([[1.]])
+            np.array([[1., 2., 3., 4., 5.]]), np.array([[1.]])
         )
 
         self.assertEqual(len(res), 2)

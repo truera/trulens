@@ -35,7 +35,11 @@ class DeterminismTestBase(object):
         # TODO: similar for other backends if appropriate
         self.model_nondet._model.train()
 
-        grad1 = self.model_nondet.qoi_bprop(qoi=qoi, model_args=[self.x]).detach()
-        grad2 = self.model_nondet.qoi_bprop(qoi=qoi, model_args=[self.x]).detach()
+        grad1 = self.model_nondet.qoi_bprop(
+            qoi=qoi, model_args=[self.x]
+        ).detach()
+        grad2 = self.model_nondet.qoi_bprop(
+            qoi=qoi, model_args=[self.x]
+        ).detach()
 
         self.assertTrue(np.allclose(grad1, grad2))

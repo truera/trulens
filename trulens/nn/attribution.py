@@ -13,12 +13,13 @@ package.
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
 from collections import defaultdict
-from typing import Callable, Iterable, List, Tuple, Union
 import sys
+from typing import Callable, Iterable, List, Tuple, Union
 
 import numpy as np
 
-from trulens.nn.backend import get_backend, memory_suggestions
+from trulens.nn.backend import get_backend
+from trulens.nn.backend import memory_suggestions
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
@@ -32,11 +33,22 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
-from trulens.utils.typing import OM, ArgsLike, DataLike, Inputs, KwargsLike, Outputs, Uniform, accepts_model_inputs, nested_str, om_assert_matched_pair, nested_cast, om_of_many, nested_map
-from trulens.utils.typing import many_of_om
+from trulens.utils.typing import accepts_model_inputs
+from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import DataLike
+from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_cast
+from trulens.utils.typing import nested_map
+from trulens.utils.typing import nested_str
+from trulens.utils.typing import OM
+from trulens.utils.typing import om_assert_matched_pair
+from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Outputs
+from trulens.utils.typing import Uniform
 
 # Attribution-related type aliases.
 CutLike = Union[Cut, int, str, None]

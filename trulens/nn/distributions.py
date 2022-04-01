@@ -15,11 +15,22 @@ from pkg_resources import Distribution
 
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
-from trulens.utils.typing import OM, ArgsLike, Inputs, Outputs, Uniform, accepts_model_inputs, nested_map, nested_str, om_assert_matched_pair, nested_cast, many_of_om, om_of_many
+from trulens.utils.typing import accepts_model_inputs
+from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import BaselineLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
+from trulens.utils.typing import Inputs
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_cast
+from trulens.utils.typing import nested_map
+from trulens.utils.typing import nested_str
+from trulens.utils.typing import OM
+from trulens.utils.typing import om_assert_matched_pair
+from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Outputs
+from trulens.utils.typing import Uniform
 
 
 class DoiCutSupportError(ValueError):
@@ -48,10 +59,8 @@ class DoI(AbstractBaseClass):
         """
         self._cut = cut
 
-    def _wrap_public_call(self,
-        z: Inputs[DataLike],
-        *,
-        model_inputs: ModelInputs
+    def _wrap_public_call(
+        self, z: Inputs[DataLike], *, model_inputs: ModelInputs
     ) -> Inputs[Uniform[DataLike]]:
         """Same as __call__ but input and output types are more specific and
         less permissive. Formats the inputs for special cases that might be more
@@ -113,10 +122,7 @@ class DoI(AbstractBaseClass):
         return self._cut
 
     def _wrap_public_get_activation_multiplier(
-        self, 
-        activation: Inputs[DataLike],
-        *,
-        model_inputs: ModelInputs
+        self, activation: Inputs[DataLike], *, model_inputs: ModelInputs
     ) -> Inputs[DataLike]:
         """Same as get_activation_multiplier but without "one-or-more". """
 
@@ -124,14 +130,16 @@ class DoI(AbstractBaseClass):
 
         # get_activation_multiplier is public
         if accepts_model_inputs(self.get_activation_multiplier):
-            ret: OM[Inputs, DataLike] = self.get_activation_multiplier(activations, model_inputs=model_inputs)
+            ret: OM[Inputs, DataLike] = self.get_activation_multiplier(
+                activations, model_inputs=model_inputs
+            )
         else:
-            ret: OM[Inputs, DataLike] = self.get_activation_multiplier(activations)
+            ret: OM[Inputs,
+                    DataLike] = self.get_activation_multiplier(activations)
 
         ret: Inputs[DataLike] = many_of_om(ret)
 
         return ret
-
 
     def get_activation_multiplier(
         self,
@@ -216,7 +224,7 @@ class PointDoi(DoI):
         z: Inputs[DataLike] = many_of_om(z)
 
         return om_of_many([
-            [z_] # a point Uniform
+            [z_]  # a point Uniform
             for z_ in z
         ])
 
@@ -287,7 +295,7 @@ class LinearDoi(DoI):
 
         return om_of_many([ # Inputs
             [ # Uniform
-                (1. - i / r) * z_ + i / r * b_ 
+                (1. - i / r) * z_ + i / r * b_
                 for i in range(self._resolution)
             ] for z_, b_ in zip(z, baseline)
         ])
@@ -316,13 +324,15 @@ class LinearDoi(DoI):
 
         activation: Inputs[DataLike] = many_of_om(activation)
 
-        baseline: Inputs[DataLike] = self._compute_baseline(activation, model_inputs=model_inputs)
+        baseline: Inputs[DataLike] = self._compute_baseline(
+            activation, model_inputs=model_inputs
+        )
 
         if baseline is None:
             return activation
 
-        return [a - b for a, b in zip(activation, baseline)] 
-        
+        return [a - b for a, b in zip(activation, baseline)]
+
     def _compute_baseline(
         self,
         z: Inputs[DataLike],
@@ -332,13 +342,16 @@ class LinearDoi(DoI):
 
         B = get_backend()
 
-        _baseline: BaselineLike = self.baseline # user-provided
+        _baseline: BaselineLike = self.baseline  # user-provided
 
         if isinstance(_baseline, Callable):
             if accepts_model_inputs(_baseline):
-                _baseline: OM[Inputs, DataLike] = many_of_om(_baseline(om_of_many(z), model_inputs=model_inputs))
+                _baseline: OM[Inputs, DataLike] = many_of_om(
+                    _baseline(om_of_many(z), model_inputs=model_inputs)
+                )
             else:
-                _baseline: OM[Inputs, DataLike] = many_of_om(_baseline(om_of_many(z)))
+                _baseline: OM[Inputs,
+                              DataLike] = many_of_om(_baseline(om_of_many(z)))
 
         else:
             _baseline: OM[Inputs, DataLike]
@@ -346,7 +359,7 @@ class LinearDoi(DoI):
         if _baseline is None:
             _baseline: Inputs[DataLike] = [B.zeros_like(z_) for z_ in z]
         else:
-            _baseline: Inputs[DataLike] = many_of_om(_baseline) 
+            _baseline: Inputs[DataLike] = many_of_om(_baseline)
             # Came from user; could have been single or multiple inputs.
 
         # Cast to either Tensor or numpy.ndarray to match what was given in z.
@@ -376,7 +389,8 @@ class GaussianDoi(DoI):
         self._var = var
         self._resolution = resolution
 
-    def __call__(self, z: OM[Inputs, DataLike]) -> OM[Inputs, Uniform[DataLike]]:
+    def __call__(self, z: OM[Inputs,
+                             DataLike]) -> OM[Inputs, Uniform[DataLike]]:
         # Public interface.
 
         B = get_backend()
@@ -390,14 +404,14 @@ class GaussianDoi(DoI):
                 return [
                     z + B.random_normal_like(z, var=self._var)
                     for _ in range(self._resolution)
-                ] # Uniform
+                ]  # Uniform
 
             else:
                 # Array implementation.
                 return [
                     z + np.random.normal(0., np.sqrt(self._var), z.shape)
                     for _ in range(self._resolution)
-                ] # Uniform
+                ]  # Uniform
 
         z: Inputs[DataLike] = many_of_om(z)
 

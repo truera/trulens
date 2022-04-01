@@ -1,4 +1,5 @@
 from typing import Tuple
+
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras as keras
@@ -6,19 +7,28 @@ import tensorflow.keras.backend as K
 
 from trulens.nn.backend import get_backend
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.models.keras import KerasModelWrapper # dangerous to have this here if tf-less keras gets imported
+from trulens.nn.models.keras import \
+    KerasModelWrapper  # dangerous to have this here if tf-less keras gets imported
 from trulens.nn.quantities import QoI
-from trulens.nn.slices import Cut, InputCut
+from trulens.nn.slices import Cut
+from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import DATA_CONTAINER_TYPE, DataLike, Inputs, ModelInputs, Outputs, nested_map, om_of_many
+from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import DataLike
+from trulens.utils.typing import Inputs
+from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_map
+from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Outputs
 
 if tf.executing_eagerly():
     tf.config.run_functions_eagerly(True)
 
 
-class Tensorflow2ModelWrapper(KerasModelWrapper): # dangerous to extend keras model wrapper
+class Tensorflow2ModelWrapper(KerasModelWrapper
+                             ):  # dangerous to extend keras model wrapper
     """
     Model wrapper that exposes internal layers of tf2 Keras models.
     """
@@ -141,13 +151,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper): # dangerous to extend keras mo
         self._model.outputs = output_layers
 
     def _fprop(
-        self,
-        *,
-        model_inputs: ModelInputs,
-        doi_cut: Cut,
-        to_cut: Cut,
-        attribution_cut: Cut,
-        intervention: ModelInputs
+        self, *, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
+        attribution_cut: Cut, intervention: ModelInputs
     ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
         """
         See ModelWrapper.fprop .
@@ -191,7 +196,9 @@ class Tensorflow2ModelWrapper(KerasModelWrapper): # dangerous to extend keras mo
 
                     batched_model_args.append(val)
 
-                model_inputs = ModelInputs(batched_model_args, model_inputs.kwargs)
+                model_inputs = ModelInputs(
+                    batched_model_args, model_inputs.kwargs
+                )
 
                 if not isinstance(doi_cut, InputCut):
                     from_layers = (
@@ -213,10 +220,12 @@ class Tensorflow2ModelWrapper(KerasModelWrapper): # dangerous to extend keras mo
             # Get the output from the "to layers" and possibly the latent
             # layers.
             def retrieve_index(i, results, anchor):
+
                 def retrieve(inputs, output):
                     if anchor == 'in':
                         # Why does this happen:?
-                        if isinstance(inputs, DATA_CONTAINER_TYPE) and len(inputs) == 1:
+                        if isinstance(inputs,
+                                      DATA_CONTAINER_TYPE) and len(inputs) == 1:
                             results[i] = inputs[0]
                         else:
                             results[i] = inputs
@@ -263,7 +272,9 @@ class Tensorflow2ModelWrapper(KerasModelWrapper): # dangerous to extend keras mo
                     elif isinstance(attribution_cut, OutputCut):
                         attribution_layers = self._get_output_layer()
                     else:
-                        attribution_layers = self._get_layers_by_name(attribution_cut.name)
+                        attribution_layers = self._get_layers_by_name(
+                            attribution_cut.name
+                        )
 
                     attribution_results = [None for _ in attribution_layers]
 
@@ -299,14 +310,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper): # dangerous to extend keras mo
         return (results, attribution_results)
 
     def _qoi_bprop(
-        self,
-        *,
-        qoi: QoI,
-        model_inputs: ModelInputs,
-        doi_cut: Cut,
-        to_cut: Cut,
-        attribution_cut: Cut,
-        intervention: ModelInputs
+        self, *, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
+        attribution_cut: Cut, intervention: ModelInputs
     ) -> Outputs[Inputs[DataLike]]:
         """
         See ModelWrapper.qoi_bprop .
@@ -324,7 +329,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper): # dangerous to extend keras mo
 
         with tf.GradientTape(persistent=True) as tape:
             intervention = intervention.map(tf.constant)
-            
+
             intervention.foreach(tape.watch)
 
             outputs, attribution_features = self._fprop(
@@ -344,8 +349,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper): # dangerous to extend keras mo
         for z in attribution_features:
             zq: Inputs[DataLike] = []
             for q in Q:
-                    grad_zq = tape.gradient(q, z)
-                    zq.append(grad_zq)
+                grad_zq = tape.gradient(q, z)
+                zq.append(grad_zq)
 
             grads.append(zq)
 
@@ -353,6 +358,6 @@ class Tensorflow2ModelWrapper(KerasModelWrapper): # dangerous to extend keras mo
 
         del tape
 
-        grads = list(zip(*grads)) # transpose
+        grads = list(zip(*grads))  # transpose
 
         return grads

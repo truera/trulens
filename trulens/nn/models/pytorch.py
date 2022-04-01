@@ -8,7 +8,8 @@ import torch
 
 from trulens.nn.backend import get_backend
 from trulens.nn.backend.pytorch_backend import pytorch
-from trulens.nn.backend.pytorch_backend.pytorch import Tensor, memory_suggestions
+from trulens.nn.backend.pytorch_backend.pytorch import memory_suggestions
+from trulens.nn.backend.pytorch_backend.pytorch import Tensor
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
@@ -16,12 +17,15 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import Inputs, Outputs, om_of_many, nested_map
-from trulens.utils.typing import many_of_om
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
+from trulens.utils.typing import Inputs
 from trulens.utils.typing import InterventionLike
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_map
+from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Outputs
 
 
 class PytorchModelWrapper(ModelWrapper):
@@ -177,9 +181,8 @@ class PytorchModelWrapper(ModelWrapper):
         elif not (isinstance(cut, OutputCut) or isinstance(cut, InputCut)):
             names_and_anchors.append((cut.name, cut.anchor))
 
-    def _extract_outputs_from_hooks(
-        self, cut, hooks, output, model_inputs
-    ) -> Inputs[DataLike]:
+    def _extract_outputs_from_hooks(self, cut, hooks, output,
+                                    model_inputs) -> Inputs[DataLike]:
 
         return_output = None
 
@@ -188,11 +191,13 @@ class PytorchModelWrapper(ModelWrapper):
 
         elif isinstance(cut, InputCut):
             return_output = list(model_inputs.args
-                                 ) + list(model_inputs.kwargs.values())
+                                ) + list(model_inputs.kwargs.values())
 
         elif isinstance(cut, LogitCut):
-            return_output = many_of_om(hooks['logits' if self.
-                                  _logit_layer is None else self._logit_layer])
+            return_output = many_of_om(
+                hooks['logits' if self._logit_layer is None else self.
+                      _logit_layer]
+            )
 
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
             return_output = [hooks[name] for name in cut.name]
@@ -208,9 +213,7 @@ class PytorchModelWrapper(ModelWrapper):
         B = get_backend()
         if isinstance(x, np.ndarray) or (len(x) > 0 and
                                          isinstance(x[0], np.ndarray)):
-            x = nested_map(
-                x, partial(B.as_tensor, device=self.device)
-            )
+            x = nested_map(x, partial(B.as_tensor, device=self.device))
 
         elif isinstance(x, DATA_CONTAINER_TYPE):
             x = [self._to_tensor(x_i) for x_i in x]
@@ -222,7 +225,7 @@ class PytorchModelWrapper(ModelWrapper):
 
     def _fprop(
         self,
-        model_inputs: ModelInputs, 
+        model_inputs: ModelInputs,
         doi_cut: Cut,
         to_cut: Cut,
         attribution_cut: Cut,
@@ -322,10 +325,13 @@ class PytorchModelWrapper(ModelWrapper):
                 if input_timestep is None or input_timestep == counter:
                     # FIXME: generalize to multi-input layers. Currently can
                     #   only intervene on one layer.
-                    
+
                     # TODO: figure out whether this is needed
                     inpt = inpt[0] if len(inpt) == 1 else inpt
-                    ModelWrapper._nested_assign(inpt if doi_cut.anchor == 'in' else outpt, intervention.first())
+                    ModelWrapper._nested_assign(
+                        inpt if doi_cut.anchor == 'in' else outpt,
+                        intervention.first()
+                    )
 
                 counter += 1
 
@@ -393,9 +399,7 @@ class PytorchModelWrapper(ModelWrapper):
             handle.remove()
 
         extract_args = dict(
-            hooks=hooks,
-            output=output,
-            model_inputs=model_inputs
+            hooks=hooks, output=output, model_inputs=model_inputs
         )
 
         if attribution_cut:
@@ -407,19 +411,16 @@ class PytorchModelWrapper(ModelWrapper):
             )
         else:
             return (
-                self._extract_outputs_from_hooks(cut=to_cut, **extract_args),
-                None
+                self._extract_outputs_from_hooks(cut=to_cut,
+                                                 **extract_args), None
             )
 
     def _qoi_bprop(
-        self,
-        qoi: QoI,
-        model_inputs: ModelInputs,
-        doi_cut: Cut,
-        to_cut: Cut,
-        attribution_cut: Cut,
-        intervention: ModelInputs
-    ) -> Outputs[Inputs[DataLike]]: # one outer element per QoI, one inner element per attribution_cut input
+        self, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
+        attribution_cut: Cut, intervention: ModelInputs
+    ) -> Outputs[
+            Inputs[DataLike]
+    ]:  # one outer element per QoI, one inner element per attribution_cut input
 
         B = get_backend()
 
@@ -447,7 +448,7 @@ class PytorchModelWrapper(ModelWrapper):
 
         qois_out: Outputs[Tensor] = qoi._wrap_public_call(y)
         grads_list = [[] for _ in qois_out]
-        
+
         for qoi_index, qoi_out in enumerate(qois_out):
             qoi_out: DataLike = scalarize(qoi_out)
 
@@ -456,7 +457,8 @@ class PytorchModelWrapper(ModelWrapper):
                     grads_for_qoi = B.gradient(qoi_out, zs)
 
             except RuntimeError as e:
-                if "cudnn RNN backward can only be called in training mode" in str(e):
+                if "cudnn RNN backward can only be called in training mode" in str(
+                        e):
                     raise RuntimeError(
                         "Cannot get deterministic gradients from RNN's with cudnn. See more about this issue here: https://github.com/pytorch/captum/issues/564 .\n"
                         "Consider setting 'torch.backends.cudnn.enabled = False' for now."

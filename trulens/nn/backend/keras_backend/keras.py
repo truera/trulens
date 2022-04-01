@@ -85,7 +85,7 @@ def as_array(t, dtype=None):
     np.array
         Same contents as t
     """
-    
+
     if isinstance(t, np.ndarray):
         return t
 

@@ -8,7 +8,11 @@ from trulens.nn.backend import get_backend
 from trulens.nn.distributions import DoI
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
-from trulens.utils.typing import OM, DataLike, Outputs, Tensor, nested_str
+from trulens.utils.typing import DataLike
+from trulens.utils.typing import nested_str
+from trulens.utils.typing import OM
+from trulens.utils.typing import Outputs
+from trulens.utils.typing import Tensor
 
 
 class PerTimestepQoI(QoI):
