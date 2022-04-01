@@ -35,6 +35,7 @@ from trulens.nn.slices import Slice
 from trulens.utils.typing import OM, ArgsLike, DataLike, Inputs, KwargsLike, Outputs, Uniform, accepts_model_inputs, nested_str, om_assert_matched_pair, nested_cast, om_of_many, nested_map
 from trulens.utils.typing import many_of_om
 from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import KwargsLike
 from trulens.utils.typing import ModelInputs
 
 # Attribution-related type aliases.
@@ -106,7 +107,7 @@ class AttributionMethod(AbstractBaseClass):
                 `np.ndarray`s). The shape of the inputs must match the input
                 shape of `self.model`. 
 
-        Returns:
+        Returns np.ndarray:
             An array of attributions, matching the shape and type of `from_cut`
             of the slice. Each entry in the returned array represents the degree
             to which the corresponding feature affected the model's outcome on

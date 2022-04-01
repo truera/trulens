@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 
+from trulens.nn.attribution import AttributionMethod
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.utils.typing import Tensor
@@ -173,7 +174,7 @@ class Visualizer(object):
         normalization_type=None,
         blur=None,
         cmap=None
-    ):
+    ) -> np.ndarray:
         """
         Visualizes the given attributions.
 
@@ -545,7 +546,7 @@ class HeatmapVisualizer(Visualizer):
         normalization_type=None,
         blur=None,
         cmap=None
-    ):
+    ) -> np.ndarray:
         """
         Visualizes the given attributions by overlaying an attribution heatmap 
         over the given image.
@@ -582,11 +583,6 @@ class HeatmapVisualizer(Visualizer):
                 Value in the range [0, 1] specifying the opacity for the heatmap
                 overlay. If `None`, defaults to the value supplied to the 
                 constructor.
-
-            combine_channels:
-                If `True`, the attributions will be averaged across the channel
-                dimension, resulting in a 1-channel attribution map. If `None`,
-                defaults to the value supplied to the constructor.
 
             normalization_type:
                 Specifies one of the following configurations for normalizing
@@ -865,7 +861,7 @@ class ChannelMaskVisualizer(object):
         blur=None,
         threshold=0.5,
         masked_opacity=0.2,
-        combine_channels=True,
+        combine_channels: bool = True,
         use_attr_as_opacity=None,
         positive_only=None
     ):
@@ -1136,7 +1132,7 @@ class IPython(HTML):
                 "Jupyter output requires IPython python module. Try 'pip install ipykernel'."
             )
 
-    def render(self, s):
+    def render(self, s: str):
         html = HTML.render(self, s)
         return self.m_ipy.display.HTML(html)
 
@@ -1183,25 +1179,25 @@ class NLP(object):
             labels: Iterable[str], optional
                 Names of prediction classes for classification models.
 
-            tokenize: Callable[[TextBatch], ModelInput]
+            tokenize: Callable[[TextBatch], ModelInput], optional
                 Method to tokenize an instance.
 
-            decode: Callable[[Tensor], str]
+            decode: Callable[[Tensor], str], optional
                 Method to invert/decode the tokenization.
 
-            input_accessor: Callable[[ModelInputs], Iterable[Tensor]]
+            input_accessor: Callable[[ModelInputs], Iterable[Tensor]], optional
                 Method to extract input/token ids from model inputs (tokenize
                 output) if needed.
 
-            output_accessor: Callable[[ModelOutput], Iterable[Tensor]]
+            output_accessor: Callable[[ModelOutput], Iterable[Tensor]], optional
                 Method to extract outout logits from output structures if
                 needed.
 
-            attr_aggregation: Callable[[Tensor], Tensor]
+            attr_aggregate: Callable[[Tensor], Tensor], optional
                 Method to aggregate attribution for embedding into a single
                 value. Defaults to sum.
 
-            hidden_tokens: Set[int]
+            hidden_tokens: Set[int], optional
                 For token-based visualizations, which tokens to hide.
         """
         if output is None:
@@ -1237,8 +1233,19 @@ class NLP(object):
 
         self.hidden_tokens = hidden_tokens
 
-    def token_attribution(self, texts, attr, doi_per_batch=None):
-        """Visualize a token-based input attribution."""
+    def token_attribution(self, texts: Iterable[str], attr: AttributionMethod):
+        """Visualize a token-based input attribution on given `texts` inputs via the attribution method `attr`.
+
+        Parameters:
+            texts: Iterable[str]
+                The input texts to visualize.
+
+            attr: AttributionMethod
+                The attribution method to generate the token importances with.
+        
+        Returns: Any
+            The visualization in the format specified by this class's `output` parameter.
+        """
 
         B = get_backend()
 

@@ -141,6 +141,12 @@ OMNested = Union[OM[V, C], 'OMNested[C, V]']
 # Each backend should define this.
 Tensor = TypeVar("Tensor")
 
+ModelLike = Union['tf.Graph',  # tf1 
+                  'keras.Model',  # keras
+                  'tensorflow.keras.Model',  # tf2
+                  'torch.nn.Module',  # pytorch
+                 ]
+
 # Atomic model inputs (at least from our perspective)
 DataLike = Union[np.ndarray, Tensor]
 
