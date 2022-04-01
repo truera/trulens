@@ -61,9 +61,7 @@ class AttributionMethod(AbstractBaseClass):
     """
 
     @abstractmethod
-    def __init__(
-        self, model: ModelWrapper, doi_per_batch=None, *args, **kwargs
-    ):
+    def __init__(self, model: ModelWrapper, *args, **kwargs):
         """
         Abstract constructor.
 
@@ -72,8 +70,6 @@ class AttributionMethod(AbstractBaseClass):
                 Model for which attributions are calculated.
         """
         self._model = model
-
-        self.doi_per_batch = doi_per_batch
 
     @property
     def model(self) -> ModelWrapper:
@@ -305,25 +301,15 @@ class InternalInfluence(AttributionMethod):
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
         n_doi = len(D[0])
-        doi_per_batch = self.doi_per_batch
-        if self.doi_per_batch is None:
-            doi_per_batch = n_doi
 
         D = self.__concatenate_doi(D)
         # Create a message for out-of-memory errors regarding doi_size.
         # TODO: Generalize this message to doi other than LinearDoI:
         doi_size_msg = f"distribution of interest size = {n_doi}; consider reducing intervention resolution."
-        doi_per_batch_msg = f"doi_per_batch = {doi_per_batch}; consider reducing this (default is same as the above)."
-
-        # TODO: Consider doing the model_inputs tiling here instead of inside qoi_bprop.
-        effective_batch_size = doi_per_batch * batch_size
-        effective_batch_msg = f"effective batch size = {effective_batch_size}; consider reducing batch size, intervention size, or doi_per_batch"
 
         # Calculate the gradient of each of the points in the DoI.
-        with memory_suggestions(
-                param_msgs +
-            [doi_size_msg, doi_per_batch_msg, effective_batch_msg]
-        ):  # Handles out-of-memory messages.
+        with memory_suggestions(param_msgs + [doi_size_msg]
+                               ):  # Handles out-of-memory messages.
             qoi_grads: Outputs[Inputs[DataLike]] = self.model._qoi_bprop(
                 qoi=self.qoi,
                 model_inputs=model_inputs,
