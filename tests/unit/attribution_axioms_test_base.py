@@ -192,7 +192,7 @@ class AxiomsTestBase(object):
 
         self.assertEqual(res.shape, (2, self.internal1_size))
 
-        z = self.model_deep.fprop(self.x, to_cut=Cut(self.layer2))
+        z = self.model_deep.fprop((self.x,), to_cut=Cut(self.layer2))
 
         self.assertTrue(
             np.allclose(
@@ -217,8 +217,8 @@ class AxiomsTestBase(object):
             multiply_activation=False
         )
 
-        out_x = self.model_deep.fprop(self.x[0:1])[:, c]
-        out_baseline = self.model_deep.fprop(self.baseline)[:, c]
+        out_x = self.model_deep.fprop((self.x[0:1],))[:, c]
+        out_baseline = self.model_deep.fprop((self.baseline,))[:, c]
 
         if not np.allclose(out_x, out_baseline):
             res = infl.attributions(self.x)
