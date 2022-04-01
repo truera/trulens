@@ -6,8 +6,10 @@ from re import S
 import traceback
 from typing import TypeVar
 
+import numpy as np
+
 from trulens.utils import tru_logger
-from trulens.utils.typing import om_of_many
+from trulens.utils.typing import C, DataLike, ModelInputs, OMNested, om_of_many
 
 # Do not use directly, use get_backend
 _TRULENS_BACKEND_IMPL = None
@@ -79,6 +81,48 @@ def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
     finally:
         if call_after is not None:
             call_after(state)
+
+
+def tile_model_inputs(what: ModelInputs, onto: ModelInputs) -> ModelInputs:
+    """Tiles elements of `what` some number of times so they have the same first
+    dimension size as `onto`. Picks the number of tiles from the first of each
+    container and skips tiling anything in `what` that does not have the same
+    first dimension as the first item in that container."""
+
+    inputs_dim = what.first().shape[0]
+    expected_dim = onto.first().shape[0]
+    doi_resolution = int(expected_dim // inputs_dim)
+
+    B = get_backend()
+
+    def tile_val(val):
+        """Tile the given value if expected_dim matches val's first
+        dimension. Otherwise return original val unchanged."""
+
+        if val.shape[0] != inputs_dim:
+            tru_logger.warn(
+                f"Value {val} of shape {val.shape} is assumed to not be "
+                f"batchable due to its shape not matching prior batchable "
+                f"inputs of shape ({inputs_dim},...). If this is "
+                f"incorrect, make sure its first dimension matches prior "
+                f"batchable inputs."
+            )
+            return val
+
+        tile_shape = [1 for _ in range(len(val.shape))]
+        tile_shape[0] = doi_resolution
+        repeat_shape = tuple(tile_shape)
+
+        if isinstance(val, np.ndarray):
+            return np.tile(val, repeat_shape)
+        elif B.is_tensor(val):
+            return B.tile(val, repeat_shape)
+        else:
+            raise ValueError(
+                f"unhandled tensor type {val.__class__.__name__}"
+            )
+
+    return what.map(tile_val)
 
 
 class Backend(Enum):

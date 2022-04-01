@@ -243,13 +243,9 @@ class ModelWrapper(AbstractBaseClass):
         # Will cast results to this data container type.
         return_type = type(model_inputs.first())
 
-        model_inputs = model_inputs.map(
-            lambda t: t if B.is_tensor(t) else B.as_tensor(t)
-        )
-        intervention = intervention.map(
-            lambda t: t if B.is_tensor(t) else B.as_tensor(t)
-        )
-
+        model_inputs = model_inputs.map(B.as_tensor)
+        intervention = intervention.map(B.as_tensor)
+    
         rets: Tuple[Outputs[DataLike], Outputs[DataLike]] = self._fprop(
             model_inputs=model_inputs,
             doi_cut=doi_cut,

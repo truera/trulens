@@ -16,7 +16,7 @@ from typing import Callable, List, Tuple, Union
 
 import numpy as np
 
-from trulens.nn.backend import get_backend
+from trulens.nn.backend import get_backend, tile_model_inputs
 from trulens.nn.backend import memory_suggestions
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
@@ -31,7 +31,8 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
-from trulens.utils.typing import ArgsLike
+from trulens.utils import tru_logger
+from trulens.utils.typing import ArgsLike, nested_str
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
@@ -310,6 +311,11 @@ class InternalInfluence(AttributionMethod):
             doi_per_batch = n_doi
 
         D = self.__concatenate_doi(D)
+
+        intervention = ModelInputs(args=D, kwargs={})
+
+        model_inputs_expanded = tile_model_inputs(what=model_inputs, onto=intervention)
+
         # Create a message for out-of-memory errors regarding doi_size.
         # TODO: Generalize this message to doi other than LinearDoI:
         doi_size_msg = f"distribution of interest size = {n_doi}; consider reducing intervention resolution."
@@ -324,20 +330,20 @@ class InternalInfluence(AttributionMethod):
                 param_msgs +
             [doi_size_msg, doi_per_batch_msg, effective_batch_msg]
         ):  # Handles out-of-memory messages.
-            qoi_grads: Outputs[Inputs[DataLike]] = self.model._qoi_bprop(
+            qoi_grads_expanded: Outputs[Inputs[DataLike]] = self.model._qoi_bprop(
                 qoi=self.qoi,
-                model_inputs=model_inputs,
+                model_inputs=model_inputs_expanded,
                 attribution_cut=self.slice.from_cut,
                 to_cut=self.slice.to_cut,
-                intervention=ModelInputs(args=D, kwargs={}),
+                intervention=intervention,
                 doi_cut=doi_cut
             )
 
-        qoi_grads = nested_map(qoi_grads, B.as_array)
+        qoi_grads_expanded = nested_map(qoi_grads_expanded, B.as_array)
 
         # TODO: Below is done in numpy.
         attrs: Outputs[Inputs[DataLike]] = nested_map(
-            qoi_grads, lambda grad: B.
+            qoi_grads_expanded, lambda grad: B.
             mean(B.reshape(grad, (n_doi, -1) + grad.shape[1:]), axis=0)
         )
 
