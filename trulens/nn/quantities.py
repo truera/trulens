@@ -21,7 +21,6 @@ from typing import Any, Callable, List, Optional, Union
 from trulens.nn.backend import get_backend
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import many_of_om
-from trulens.utils.typing import nested_str
 from trulens.utils.typing import OM
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
