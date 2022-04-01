@@ -205,7 +205,7 @@ class PytorchModelWrapper(ModelWrapper):
         else:
             return_output = many_of_om(hooks[cut.name])
 
-        return list(return_output)
+        return return_output
 
     def _to_tensor(self, x):
         # Convert `x` to a tensor on `self.device`. Note that layer input can be

@@ -26,7 +26,6 @@ from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.utils.test import tolerance
-from trulens.utils.typing import nested_str
 
 
 class AxiomsTestBase(object):
@@ -376,8 +375,8 @@ class AxiomsTestBase(object):
             intervention=np.tile(baseline, (2, 1))
         )
 
-        out_x = self.model_deep.fprop(self.x,)[:, c]
-        out_baseline = g(self.x,)[:, c]
+        out_x = self.model_deep.fprop((self.x,))[:, c]
+        out_baseline = g((self.x,))[:, c]
 
         res = infl.attributions(self.x)
 
@@ -401,8 +400,8 @@ class AxiomsTestBase(object):
             doi_cut=Cut(self.layer2),
             intervention=np.zeros((2, 10))
         )
-        out_x = self.model_deep.fprop(self.x)[:, c]
-        out_baseline = g(self.x)[:, c]
+        out_x = self.model_deep.fprop((self.x,))[:, c]
+        out_baseline = g((self.x,))[:, c]
 
         res = infl.attributions(self.x)
 
