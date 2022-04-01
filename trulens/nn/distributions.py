@@ -244,7 +244,7 @@ class LinearDoi(DoI):
                 The Cut in which the DoI will be applied. If `None`, the DoI
                 will be applied to the input. otherwise, the distribution should
                 be applied to the latent space defined by the cut. 
-            baseline (optional)
+            baseline (BaselineLike, optional):
                 The baseline to interpolate from. Must be same shape as the
                 space the distribution acts over, i.e., the shape of the points,
                 `z`, eventually passed to `__call__`. If `cut` is `None`, this
