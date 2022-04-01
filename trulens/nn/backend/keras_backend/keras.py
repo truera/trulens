@@ -420,6 +420,10 @@ def stack(t):
     """
     return K.stack(t)
 
+def tile(t: Tensor, shape):
+    """ Same as np.tile ."""
+
+    return K.tile(t, shape)
 
 def sigmoid(t, axis=None):
     """
