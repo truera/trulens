@@ -474,8 +474,9 @@ def stack(t):
     return torch.stack(t)
 
 
-def tile(t, shape):
-    """ Equivalent of np.tile ."""
+def tile(t: Tensor, shape):
+    """ Same as np.tile ."""
+
     return t.repeat(shape)
 
 def softmax(t, axis=-1):
