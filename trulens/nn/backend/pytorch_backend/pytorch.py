@@ -123,7 +123,6 @@ def as_array(t, dtype=None):
         Same contents as t
     """
 
-    # TODO: remove handling of numpy input
     if isinstance(t, np.ndarray):
         return t if dtype is None else t.astype(dtype)
 
@@ -150,6 +149,9 @@ def as_tensor(x, dtype=None, device=None):
     backend.Tensor
         Same contents as x
     """
+    if is_tensor(x):
+        return x
+
     if dtype is None and x.dtype.kind == 'f':
         dtype = floatX
 
@@ -477,6 +479,10 @@ def stack(t):
     """
     return torch.stack(t)
 
+
+def tile(t, shape):
+    """ Equivalent of np.tile ."""
+    return t.repeat(shape)
 
 def softmax(t, axis=-1):
     """

@@ -250,44 +250,8 @@ class PytorchModelWrapper(ModelWrapper):
             model_inputs = intervention
 
         else:  # doi_cut != InputCut
-            # Tile model inputs so that batch dim at cut matches intervention
-            # batch dim.
+            pass
 
-            expected_dim = model_inputs.first().shape[0]
-            doi_resolution = int(intervention.first().shape[0] // expected_dim)
-
-            def tile_val(val):
-                """Tile the given value if expected_dim matches val's first
-                dimension. Otherwise return original val unchanged."""
-
-                if val.shape[0] != expected_dim:
-                    tru_logger.warn(
-                        f"Value {val} of shape {val.shape} is assumed to not be "
-                        f"batchable due to its shape not matching prior batchable "
-                        f"inputs of shape ({expected_dim},...). If this is "
-                        f"incorrect, make sure its first dimension matches prior "
-                        f"batchable inputs."
-                    )
-                    return val
-
-                tile_shape = [1 for _ in range(len(val.shape))]
-                tile_shape[0] = doi_resolution
-                repeat_shape = tuple(tile_shape)
-
-                with memory_suggestions(device=self.device):
-                    # likely place where memory issues might arise
-
-                    if isinstance(val, np.ndarray):
-                        return np.tile(val, repeat_shape)
-                    elif torch.is_tensor(val):
-                        return val.repeat(repeat_shape)
-                    else:
-                        raise ValueError(
-                            f"unhandled tensor type {val.__class__.__name__}"
-                        )
-
-            # tile args and kwargs if necessary
-            model_inputs = model_inputs.map(tile_val)
 
         if attribution_cut is not None:
             # Specify that we want to preserve gradient information.
