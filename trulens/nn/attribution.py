@@ -31,8 +31,10 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
 from trulens.utils.typing import accepts_model_inputs
+from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import as_args
 from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import KwargsLike
 from trulens.utils.typing import ModelInputs
 
 # Attribution-related type aliases.
@@ -70,7 +72,9 @@ class AttributionMethod(AbstractBaseClass):
         return self._model
 
     @abstractmethod
-    def attributions(self, *model_args, **model_kwargs):
+    def attributions(
+        self, *model_args: ArgsLike, **model_kwargs: KwargsLike
+    ) -> np.ndarray:
         """
         Returns attributions for the given input. Attributions are in the same shape
         as the layer that attributions are being generated for. 
@@ -87,7 +91,7 @@ class AttributionMethod(AbstractBaseClass):
         thus being a good measure of model sensitivity. 
 
         Parameters:
-            model_args, model_kwargs: 
+            model_args: ArgsLike, model_kwargs: KwargsLike
                 The args and kwargs given to the call method of a model.
                 This should represent the records to obtain attributions for, 
                 assumed to be a *batched* input. if `self.model` supports
@@ -96,7 +100,7 @@ class AttributionMethod(AbstractBaseClass):
                 addition to `np.ndarray`s). The shape of the inputs must match
                 the input shape of `self.model`. 
 
-        Returns:
+        Returns np.ndarray:
             An array of attributions, matching the shape and type of `from_cut`
             of the slice. Each entry in the returned array represents the degree
             to which the corresponding feature affected the model's outcome on
@@ -239,7 +243,9 @@ class InternalInfluence(AttributionMethod):
         self.doi = InternalInfluence.__get_doi(doi, cut=self.slice.from_cut)
         self._do_multiply = multiply_activation
 
-    def attributions(self, *model_args, **model_kwargs):
+    def attributions(
+        self, *model_args: ArgsLike, **model_kwargs: KwargsLike
+    ) -> np.ndarray:
         model_inputs = ModelInputs(model_args, model_kwargs)
 
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
