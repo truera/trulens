@@ -59,7 +59,6 @@ List of flexible typings:
       "model_inputs".
 
         - DoI.__call__
-
         - LinearDoI.baseline (when callable): see BaselineLike.
 
     - ModelInputs or args -- Can pass in single value, iterable, dictionary, or
@@ -243,7 +242,7 @@ def nested_str(items: OMNested[C, DataLike]) -> str:
 
 def datalike_caster(backend: 'Backend',
                     astype: Type) -> Callable[[DataLike], DataLike]:
-    """Looking the method that lets one cast a DataLike to the specified type by
+    """Return a method that lets one cast a DataLike to the specified type by
     the given backend."""
 
     if issubclass(astype, np.ndarray):
@@ -256,12 +255,12 @@ def datalike_caster(backend: 'Backend',
     return caster
 
 
-## Utilities for dealing with "on or more"
+## Utilities for dealing with "one or more"
 
 
 def om_assert_matched_pair(a1, a2):
     """
-    Assert that two "on or more"'s are of the same type, contain the same number
+    Assert that two "one or more"'s are of the same type, contain the same number
     of elements (if containers) and that those elements are also of the same
     types."""
 
@@ -282,16 +281,18 @@ def om_assert_matched_pair(a1, a2):
 
 def many_of_om(args: OM[C, V], innertype: Type = None) -> 'C[V]':
     """
-    Convert "on or more" (possibly a single V/DataLike) to List/C[V]. For cases
+    Convert "one or more" (possibly a single V/DataLike) to List/C[V]. For cases
     where the element type V is also expected to be a container, provide the
     innertype argument so that the check here can be done properly.
+
+    Opposite of `om_of_many`.
     """
     if isinstance(args, DATA_CONTAINER_TYPE) and (innertype is None or
                                                   len(args) == 0 or isinstance(
                                                       args[0], innertype)):
         return args
     elif innertype is None or isinstance(args, innertype):
-        return [args]  # want C but cannot materialize C in python
+        return [args]  # want C(args) but cannot materialize C in python
     else:
         raise ValueError(f"Unhandled One-Or-More type {type(args)}")
 
@@ -301,7 +302,7 @@ def om_of_many(inputs: 'C[V]') -> OM[C, V]:
     If there is more than 1 thing in container, will remain a container,
     otherwise will become V (typically DataLike).
     
-    Opposite of `as_many`.
+    Opposite of `many_of_om`.
     """
 
     if isinstance(inputs, DATA_CONTAINER_TYPE):
@@ -517,6 +518,8 @@ InterventionLike = Union[ArgsLike[DataLike], KwargsLike, ModelInputs]
 
 def float_size(name: str) -> int:
     """Given a name of a floating type, guess its size in bytes."""
+
+    # TODO: Do this better.
 
     # Different backends have their own type structures so this is hard to
     # generalize. Just guessing based on bitlengths in names for now.
