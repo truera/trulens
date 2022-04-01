@@ -237,8 +237,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
             results: Outputs[DataLike]
 
             # TODO: Clean this all up somehow: trulens for TF2 allows for cuts
-            # with anchors that can refer to a model's inputs or outputs. Layers
-            # can have more than 1 input. In those cases, the size of
+            # with anchors that can refer to a layers's inputs or outputs.
+            # Layers can have more than 1 input. In those cases, the size of
             # attribution_layers is not indicative of the how many tensors there
             # will be in the results of this call.
 

@@ -8,7 +8,6 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.utils.typing import ModelInputs
-from trulens.utils.typing import nested_str
 
 
 class ModelWrapperTestBase(object):

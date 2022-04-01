@@ -8,7 +8,7 @@ interested in a more general behavior over a distribution of samples.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Callable, List, Optional, Union
+from typing import Callable, Optional
 
 import numpy as np
 from pkg_resources import Distribution
@@ -16,20 +16,14 @@ from pkg_resources import Distribution
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
 from trulens.utils.typing import accepts_model_inputs
-from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import BaselineLike
-from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import nested_cast
-from trulens.utils.typing import nested_map
-from trulens.utils.typing import nested_str
 from trulens.utils.typing import OM
-from trulens.utils.typing import om_assert_matched_pair
 from trulens.utils.typing import om_of_many
-from trulens.utils.typing import Outputs
 from trulens.utils.typing import Uniform
 
 
