@@ -227,6 +227,7 @@ _ALL_BACKEND_API_FUNCTIONS = [
     'random_normal_like',
     'clone',
     'stack',
+    'tile',
     'sign',
     'sigmoid',
     'softmax',
