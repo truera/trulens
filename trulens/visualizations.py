@@ -1142,19 +1142,23 @@ class HTML(Output):
             )
 
     def blank(self):
-        return dom.Text()
+        return dom.Text(" ")
 
     def space(self):
-        return html.HTMLElement("&nbsp;")
+        return dom.Text("&nbsp;")
 
     def label(self, s):
-        return self.m_html.escape(s)
+        return dom.Text(self.m_html.escape(s))
 
     def linebreak(self):
-        return "<br/>"
+        return html.br()
 
     def line(self, s):
-        return f"<span style='padding: 2px; margin: 2px; background: gray; border-radius: 4px;'>{s}</span>"
+        return html.span(
+            s,
+            style=dict(padding="2px", maring="2px", background="gray", border_radius="4px")
+        )
+        #return f"<span style='padding: 2px; margin: 2px; background: gray; border-radius: 4px;'>{s}</span>"
 
     def magnitude_colored(self, s, mag):
         red = 0.0
@@ -1172,10 +1176,15 @@ class HTML(Output):
 
         s = self.escape(s)
 
+        html.span(
+
+
+        )
+
         return f"<span title='{mag:0.3f}' style='margin: 1px; padding: 1px; border-radius: 4px; background: black; color: rgb({red*255}, {green*255}, {blue*255});'>{s}</span>"
 
     def append(self, *pieces):
-        return ''.join(pieces)
+        return dom.concatenate(pieces)
 
     def render(self, s):
         return f"<html><body>{s}</body></html>"
