@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from functools import partial
-from logging import LogRecord
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import torch
@@ -17,11 +16,9 @@ from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import ArgsLike
-from trulens.utils.typing import as_args
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
 from trulens.utils.typing import InterventionLike
-from trulens.utils.typing import ModelInputs
 
 
 class PytorchModelWrapper(ModelWrapper):
