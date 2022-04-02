@@ -16,7 +16,10 @@ interpreting attributions as images.
 
 from abc import ABC
 from abc import abstractmethod
+from enum import Enum
 import importlib
+from mimetypes import guess_type
+import tempfile
 from tkinter import S
 from typing import Callable, Iterable, Optional, Set, TypeVar
 
@@ -1046,9 +1049,44 @@ class Output(ABC):
     def render(self, s: str) -> str:
         ...
 
+    @abstractmethod
+    def open(self, s: str) -> None:
+        ...
+
 
 # TODO(piotrm): implement a latex output format
 
+class EnvType: ...
+class Term(EnvType): ...
+class Jupyter(EnvType): ...
+class Colab(Jupyter): ...
+
+def guess_env_type():
+    # From Andreas
+    '''
+    Tests whether current process is running in a:
+            o terminal as a regular Python shell
+            o jupyter notebook
+            o Google colab
+    returns one of {'terminal', 'jupyter', 'colab', None}
+    None means could not determine.
+    '''
+    try:
+        from IPython import get_ipython
+    except ImportError:
+        return Term()
+    try:
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return Jupyter()   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return Term()  # Terminal running IPython
+        elif shell == 'Shell' and  get_ipython().__class__.__module__ == 'google.colab._shell':
+            return Colab()
+        else:
+            return Term()  # Other type (?)
+    except NameError:
+        return Term()      # Probably standard Python interpreter
 
 class PlainText(Output):
     """Plain text visualization output format."""
@@ -1074,6 +1112,8 @@ class PlainText(Output):
     def render(self, s):
         return s
 
+    def open(self, s):
+        raise NotImplementedError
 
 class HTML(Output):
     """HTML visualization output format."""
@@ -1115,13 +1155,29 @@ class HTML(Output):
         blue = min(red, green)
         # blue = 1.0 - max(red, green)
 
+        s = self.escape(s)
+
         return f"<span title='{mag:0.3f}' style='margin: 1px; padding: 1px; border-radius: 4px; background: black; color: rgb({red*255}, {green*255}, {blue*255});'>{s}</span>"
 
     def append(self, *pieces):
         return ''.join(pieces)
 
     def render(self, s):
-        return s
+        return f"<html><body>{s}</body></html>"
+
+    def open(self, s):
+        try:
+            m = importlib.import_module("webbrowser")
+        except:
+            raise ImportError(
+                "Opening HTML output requires webbrowser python module. Try 'pip install webbrowser'."
+            )
+
+        # from Andreas
+
+        with tempfile.NamedTemporaryFile(prefix='attrs_', mode='w') as fd:
+            fd.write(s)
+            m.open_new_tab(f"file://{fd.name}")
 
 
 class IPython(HTML):
@@ -1205,13 +1261,11 @@ class NLP(object):
                 For token-based visualizations, which tokens to hide.
         """
         if output is None:
-            try:
-                # check if running in interactive python (jupyer, colab, etc) to
-                # use appropriate output format
-                get_ipython()
+            term_type = guess_env_type()
+            if isinstance(term_type, Jupyter):
                 output = IPython()
 
-            except NameError:
+            else:
                 output = PlainText()
                 tru_logger(
                     "WARNING: could not guess preferred visualization output format, using PlainText"
@@ -1306,7 +1360,7 @@ class NLP(object):
                 sent = self.output.append(
                     sent,
                     self.output.magnitude_colored(
-                        self.output.escape(word), mag
+                        word, mag
                     )
                 )
 
