@@ -21,7 +21,7 @@ import importlib
 from mimetypes import guess_type
 import tempfile
 from tkinter import S
-from typing import Callable, Iterable, Optional, Set, TypeVar
+from typing import Callable, Iterable, NewType, Optional, Set, TypeVar
 
 from matplotlib import cm
 from matplotlib.colors import Colormap
@@ -1021,36 +1021,42 @@ class ChannelMaskVisualizer(object):
 class Output(ABC):
     """Base class for visualization output formats."""
 
+    # Element type
+    E = TypeVar("E")
+
+    # Rendered output type
+    R = TypeVar("R")
+
     @abstractmethod
-    def blank(self) -> str:
+    def blank(self) -> E:
         ...
 
     @abstractmethod
-    def space(self) -> str:
+    def space(self) -> E:
         ...
 
     @abstractmethod
-    def escape(self, s: str) -> str:
+    def label(self, s: str) -> E:
         ...
 
     @abstractmethod
-    def line(self, s: str) -> str:
+    def line(self, e: E) -> E:
         ...
 
     @abstractmethod
-    def magnitude_colored(self, s: str, mag: float) -> str:
+    def magnitude_colored(self, s: str, mag: float) -> E:
         ...
 
     @abstractmethod
-    def append(self, *parts: Iterable[str]) -> str:
+    def append(self, *parts: Iterable[E]) -> E:
         ...
 
     @abstractmethod
-    def render(self, s: str) -> str:
+    def render(self, e: E) -> R:
         ...
 
     @abstractmethod
-    def open(self, s: str) -> None:
+    def open(self, r: R) -> None:
         ...
 
 
@@ -1091,32 +1097,41 @@ def guess_env_type():
 class PlainText(Output):
     """Plain text visualization output format."""
 
-    def blank(self):
+    E = str
+    R = str
+
+    def blank(self) -> E:
         return ""
 
-    def space(self):
+    def space(self) -> E:
         return " "
 
-    def escape(self, s):
+    def label(self, s: str) -> E:
         return s
 
-    def line(self, s):
-        return s
+    def line(self, e: E) -> E:
+        return e
 
-    def magnitude_colored(self, s, mag):
-        return f"{s}({mag:0.3f})"
+    def magnitude_colored(self, s: str, mag: float) -> E:
+        return f"{self.label(s)}({mag:0.3f})"
 
-    def append(self, *parts):
+    def append(self, *parts: Iterable[E]) -> E:
         return ''.join(parts)
 
-    def render(self, s):
-        return s
+    def render(self, e: E) -> R:
+        return e
 
-    def open(self, s):
+    def open(self, r: R) -> None:
         raise NotImplementedError
+
+from domonic import html
+from domonic import dom
 
 class HTML(Output):
     """HTML visualization output format."""
+
+    E = dom.Node
+    R = str
 
     def __init__(self):
         try:
@@ -1127,12 +1142,12 @@ class HTML(Output):
             )
 
     def blank(self):
-        return ""
+        return dom.Text()
 
     def space(self):
-        return "&nbsp;"
+        return html.HTMLElement("&nbsp;")
 
-    def escape(self, s):
+    def label(self, s):
         return self.m_html.escape(s)
 
     def linebreak(self):
@@ -1337,7 +1352,7 @@ class NLP(object):
                 pred_name = str(pred)
 
             sent = self.output.append(
-                self.output.escape(pred_name), ":", self.output.space()
+                self.output.label(pred_name), ":", self.output.space()
             )
 
             for word_id, attr in zip(sentence_word_id, attr):
