@@ -7,6 +7,12 @@ import torch
 
 from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
+from trulens.visualizations import NLP, HTML
+from trulens.nn.models import get_model_wrapper
+from trulens.nn.quantities import ClassQoI
+from trulens.nn.attribution import IntegratedGradients
+from trulens.nn.attribution import Cut, OutputCut
+from trulens.utils.typing import ModelInputs
 
 # Wrap all of the necessary components.
 class TwitterSentiment:
@@ -55,12 +61,6 @@ predictions = [task.labels[i] for i in outputs.logits.argmax(axis=1)]
 for sentence, logits, prediction in zip(sentences, outputs.logits, predictions):
     print(logits.to('cpu').detach().numpy(), prediction, sentence)
 
-from trulens.nn.models import get_model_wrapper
-from trulens.nn.quantities import ClassQoI
-from trulens.nn.attribution import IntegratedGradients
-from trulens.nn.attribution import Cut, OutputCut
-from trulens.utils.typing import ModelInputs
-
 task.wrapper = get_model_wrapper(task.model, input_shape=(None, task.tokenizer.model_max_length), device=task.device)
 
 task.wrapper.print_layer_names()
@@ -94,8 +94,6 @@ for token_ids, token_attr in zip(inputs['input_ids'], attrs):
         print(f"{word}({attr:0.3f})", end=' ')
 
     print()
-
-from trulens.visualizations import NLP, HTML
 
 h = HTML()
 
