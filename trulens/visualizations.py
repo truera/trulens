@@ -39,7 +39,7 @@ from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import InternalChannelQoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
-from trulens.utils import tru_logger
+from trulens.utils import tru_logger, try_import
 from trulens.utils.typing import KwargsLike
 from trulens.utils.typing import ModelInputs
 
@@ -1018,11 +1018,12 @@ class ChannelMaskVisualizer(object):
         )
 
 
+# TODO: Unify visualization parameters for vision above and for nlp below.
+
 # A colormap is a method that given a value between -1.0 and 1.0, returns a quad
 # of rgba values, each floating between 0.0 and 1.0.
 RGBA = Tuple[float, float, float, float]
 COLORMAP = Callable[[float], RGBA]
-
 
 class ColorMap:
 
@@ -1182,38 +1183,31 @@ class PlainText(Output):
         raise NotImplementedError
 
 
-import domonic as html
-from domonic import dom
-
-
 class HTML(Output):
     """HTML visualization output format."""
 
-    E = dom.Node
+    E = 'domonic.dom.Node'
     R = str
 
     def __init__(self):
-        try:
-            self.m_html = importlib.import_module("html")
-        except:
-            raise ImportError(
-                "HTML output requires html python module. Try 'pip install html'."
-            )
+        self.m_html_util = try_import("html", msg="html output")
+        self.m_dom = try_import("domonic.dom", msg="html output")
+        self.m_html = try_import("domonic", msg="html output")
 
     def blank(self) -> E:
-        return dom.Document.createDocumentFragment()
+        return self.m_dom.Document.createDocumentFragment()
 
     def space(self) -> E:
-        return dom.Text("&nbsp;")
+        return self.m_dom.Text("&nbsp;")
 
     def label(self, s: str) -> E:
-        return dom.Text(self.m_html.escape(s))
+        return self.m_dom.Text(self.m_html_util.escape(s))
 
     def linebreak(self) -> E:
-        return html.br()
+        return self.m_html.br()
 
     def line(self, e: E) -> E:
-        return html.span(
+        return self.m_html.span(
             e,
             style=
             "padding: 2px; maring: 2px; background: gray; border_radius: 4px;"
@@ -1226,7 +1220,7 @@ class HTML(Output):
         r, g, b, a = np.array(color_map(mag)) * 255
         s = self.label(s)
 
-        return html.span(
+        return self.m_html.span(
             s,
             title=f"{mag:0.3f}",
             style=
@@ -1241,21 +1235,16 @@ class HTML(Output):
         return temp
 
     def render(self, e: E) -> R:
-        return str(html.html(html.body(e)))
+        return str(self.m_html.html(self.m_html.body(e)))
 
     def open(self, r):
-        try:
-            m = importlib.import_module("webbrowser")
-        except:
-            raise ImportError(
-                "Opening HTML output requires webbrowser python module. Try 'pip install webbrowser'."
-            )
+        mod = try_import("webbrowser", msg="html open")
 
         # from Andreas
 
         with tempfile.NamedTemporaryFile(prefix='attrs_', mode='w') as fd:
             fd.write(r)
-            m.open_new_tab(f"file://{fd.name}")
+            mod.open_new_tab(f"file://{fd.name}")
 
 
 class IPython(HTML):
