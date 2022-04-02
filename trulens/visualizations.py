@@ -21,7 +21,7 @@ import importlib
 from mimetypes import guess_type
 import tempfile
 from tkinter import S
-from typing import Callable, Iterable, NewType, Optional, Set, TypeVar
+from typing import Callable, Iterable, NewType, Optional, Set, Tuple, TypeVar
 
 from matplotlib import cm
 from matplotlib.colors import Colormap
@@ -1018,6 +1018,47 @@ class ChannelMaskVisualizer(object):
         )
 
 
+# A colormap is a method that given a value between -1.0 and 1.0, returns a quad
+# of rgba values, each floating between 0.0 and 1.0.
+RGBA = Tuple[float, float, float, float]
+COLORMAP = Callable[[float], RGBA]
+
+
+class ColorMap:
+
+    @staticmethod
+    def of_matplotlib(divergent=None, positive=None, negative=None):
+        """Convert a matplotlib color map which expects values from [0.0, 1.0] into one we expect with values in [-1.0, 1.0]."""
+
+        if divergent is None:
+            if positive is None or negative is None:
+                raise ValueError("To convert a matplotlib colormap, provide either a symmetric divergent parameter or both positive and negative parameters.")
+
+            return lambda f: positive(f) if f >= 0.0 else negative(-f)
+        else:
+            if positive is not None or negative is not None:
+                raise ValueError("To convert a matplotlib colormap, provide either a symmetric divergent parameter or both positive and negative parameters.")
+
+            return lambda f: divergent((f + 1.0) / 2.0)
+
+    @staticmethod
+    def default(f: float) -> RGBA:  # :COLORMAP
+        red = 0.0
+        green = 0.0
+        if f > 0:
+            green = 1.0  # 0.5 + mag * 0.5
+            red = 1.0 - f * 0.5
+        else:
+            red = 1.0
+            green = 1.0 + f * 0.5
+            #red = 0.5 - mag * 0.5
+
+        blue = min(red, green)
+        # blue = 1.0 - max(red, green)
+
+        return (red, green, blue, 1.0)
+
+
 class Output(ABC):
     """Base class for visualization output formats."""
 
@@ -1044,11 +1085,11 @@ class Output(ABC):
         ...
 
     @abstractmethod
-    def magnitude_colored(self, s: str, mag: float) -> E:
+    def magnitude_colored(self, s: str, mag: float, color_map: COLORMAP) -> E:
         ...
 
     @abstractmethod
-    def append(self, *parts: Iterable[E]) -> E:
+    def concat(self, *parts: Iterable[E]) -> E:
         ...
 
     @abstractmethod
@@ -1062,10 +1103,22 @@ class Output(ABC):
 
 # TODO(piotrm): implement a latex output format
 
-class EnvType: ...
-class Term(EnvType): ...
-class Jupyter(EnvType): ...
-class Colab(Jupyter): ...
+
+class EnvType:
+    ...
+
+
+class Term(EnvType):
+    ...
+
+
+class Jupyter(EnvType):
+    ...
+
+
+class Colab(Jupyter):
+    ...
+
 
 def guess_env_type():
     # From Andreas
@@ -1084,15 +1137,17 @@ def guess_env_type():
     try:
         shell = get_ipython().__class__.__name__
         if shell == 'ZMQInteractiveShell':
-            return Jupyter()   # Jupyter notebook or qtconsole
+            return Jupyter()  # Jupyter notebook or qtconsole
         elif shell == 'TerminalInteractiveShell':
             return Term()  # Terminal running IPython
-        elif shell == 'Shell' and  get_ipython().__class__.__module__ == 'google.colab._shell':
+        elif shell == 'Shell' and get_ipython(
+        ).__class__.__module__ == 'google.colab._shell':
             return Colab()
         else:
             return Term()  # Other type (?)
     except NameError:
-        return Term()      # Probably standard Python interpreter
+        return Term()  # Probably standard Python interpreter
+
 
 class PlainText(Output):
     """Plain text visualization output format."""
@@ -1112,10 +1167,12 @@ class PlainText(Output):
     def line(self, e: E) -> E:
         return e
 
-    def magnitude_colored(self, s: str, mag: float) -> E:
+    def magnitude_colored(
+        self, s: str, mag: float, color_map: COLORMAP = ColorMap.default
+    ) -> E:
         return f"{self.label(s)}({mag:0.3f})"
 
-    def append(self, *parts: Iterable[E]) -> E:
+    def concat(self, *parts: Iterable[E]) -> E:
         return ''.join(parts)
 
     def render(self, e: E) -> R:
@@ -1124,8 +1181,10 @@ class PlainText(Output):
     def open(self, r: R) -> None:
         raise NotImplementedError
 
-from domonic import html
+
+import domonic as html
 from domonic import dom
+
 
 class HTML(Output):
     """HTML visualization output format."""
@@ -1141,55 +1200,50 @@ class HTML(Output):
                 "HTML output requires html python module. Try 'pip install html'."
             )
 
-    def blank(self):
-        return dom.Text(" ")
+    def blank(self) -> E:
+        return dom.Document.createDocumentFragment()
 
-    def space(self):
+    def space(self) -> E:
         return dom.Text("&nbsp;")
 
-    def label(self, s):
+    def label(self, s: str) -> E:
         return dom.Text(self.m_html.escape(s))
 
-    def linebreak(self):
+    def linebreak(self) -> E:
         return html.br()
 
-    def line(self, s):
+    def line(self, e: E) -> E:
         return html.span(
-            s,
-            style=dict(padding="2px", maring="2px", background="gray", border_radius="4px")
+            e,
+            style=
+            "padding: 2px; maring: 2px; background: gray; border_radius: 4px;"
         )
         #return f"<span style='padding: 2px; margin: 2px; background: gray; border-radius: 4px;'>{s}</span>"
 
-    def magnitude_colored(self, s, mag):
-        red = 0.0
-        green = 0.0
-        if mag > 0:
-            green = 1.0  # 0.5 + mag * 0.5
-            red = 1.0 - mag * 0.5
-        else:
-            red = 1.0
-            green = 1.0 + mag * 0.5
-            #red = 0.5 - mag * 0.5
+    def magnitude_colored(
+        self, s: str, mag: float, color_map=ColorMap.default
+    ) -> E:
+        r, g, b, a = np.array(color_map(mag)) * 255
+        s = self.label(s)
 
-        blue = min(red, green)
-        # blue = 1.0 - max(red, green)
-
-        s = self.escape(s)
-
-        html.span(
-
-
+        return html.span(
+            s,
+            title=f"{mag:0.3f}",
+            style=
+            f'margin: 1px; padding: 1px; border-radius: 4px; background: black; color: rgba({r}, {g}, {b}, {a});'
         )
 
-        return f"<span title='{mag:0.3f}' style='margin: 1px; padding: 1px; border-radius: 4px; background: black; color: rgb({red*255}, {green*255}, {blue*255});'>{s}</span>"
+    def concat(self, *pieces: Iterable[E]) -> E:
+        temp = self.blank()
+        for piece in pieces:
+            temp.appendChild(piece)
 
-    def append(self, *pieces):
-        return dom.concatenate(pieces)
+        return temp
 
-    def render(self, s):
-        return f"<html><body>{s}</body></html>"
+    def render(self, e: E) -> R:
+        return str(html.html(html.body(e)))
 
-    def open(self, s):
+    def open(self, r):
         try:
             m = importlib.import_module("webbrowser")
         except:
@@ -1200,7 +1254,7 @@ class HTML(Output):
         # from Andreas
 
         with tempfile.NamedTemporaryFile(prefix='attrs_', mode='w') as fd:
-            fd.write(s)
+            fd.write(r)
             m.open_new_tab(f"file://{fd.name}")
 
 
@@ -1216,8 +1270,8 @@ class IPython(HTML):
                 "Jupyter output requires IPython python module. Try 'pip install ipykernel'."
             )
 
-    def render(self, s):
-        html = HTML.render(self, s)
+    def render(self, e):
+        html = HTML.render(self, e)
         return self.m_ipy.display.HTML(html)
 
 
@@ -1247,7 +1301,9 @@ class NLP(object):
         output_accessor: Optional[Callable[[ModelOutput],
                                            Iterable[Tensor]]] = None,
         attr_aggregate: Optional[Callable[[Tensor], Tensor]] = None,
-        hidden_tokens: Optional[Set[int]] = set()
+        hidden_tokens: Optional[Set[int]] = set(),
+        color_map: Callable[[float], Tuple[float, float, float,
+                                           float]] = ColorMap.default
     ):
         """Initializate NLP visualization tools for a given environment.
 
@@ -1283,6 +1339,9 @@ class NLP(object):
 
             hidden_tokens: Set[int]
                 For token-based visualizations, which tokens to hide.
+
+            color_map: ColorMap
+                Means of coloring floats in [-1.0, 1.0]. 
         """
         if output is None:
             term_type = guess_env_type()
@@ -1315,6 +1374,8 @@ class NLP(object):
 
         self.hidden_tokens = hidden_tokens
 
+        self.color_map = color_map
+
     def token_attribution(self, texts, attr):
         """Visualize a token-based input attribution."""
 
@@ -1328,7 +1389,7 @@ class NLP(object):
         outputs = inputs.call_on(self.wrapper._model)
         attrs = inputs.call_on(attr.attributions)
 
-        content = self.output.blank()
+        content = []
 
         input_ids = inputs
         if self.input_accessor is not None:
@@ -1360,9 +1421,11 @@ class NLP(object):
             else:
                 pred_name = str(pred)
 
-            sent = self.output.append(
-                self.output.label(pred_name), ":", self.output.space()
-            )
+            sent = [
+                self.output.label(pred_name),
+                self.output.label(":"),
+                self.output.space()
+            ]
 
             for word_id, attr in zip(sentence_word_id, attr):
                 word_id = int(B.as_array(word_id))
@@ -1379,18 +1442,18 @@ class NLP(object):
 
                 if word[0] == ' ':
                     word = word[1:]
-                    sent = self.output.append(sent, self.output.space())
+                    sent += [self.output.space()]
 
-                sent = self.output.append(
-                    sent,
+                sent += [
                     self.output.magnitude_colored(
-                        word, mag
+                        word, mag, color_map=self.color_map
                     )
-                )
+                ]
 
-            content = self.output.append(
-                content, self.output.line(sent), self.output.linebreak(),
+            content += [
+                self.output.line(self.output.concat(*sent)),
+                self.output.linebreak(),
                 self.output.linebreak()
-            )
+            ]
 
-        return self.output.render(content)
+        return self.output.render(self.output.concat(*content))
