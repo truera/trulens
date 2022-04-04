@@ -32,7 +32,7 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike, nested_str
+from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
@@ -108,7 +108,7 @@ class AttributionMethod(AbstractBaseClass):
         a single point, thus being a good measure of model sensitivity. 
 
         Parameters:
-            model_args, model_kwargs: 
+            model_args: ArgsLike, model_kwargs: KwargsLike
                 The args and kwargs given to the call method of a model. This
                 should represent the records to obtain attributions for, assumed
                 to be a *batched* input. if `self.model` supports evaluation on
