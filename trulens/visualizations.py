@@ -1044,14 +1044,19 @@ class ColorMap:
 
     @staticmethod
     def default(f: float) -> RGBA:  # :COLORMAP
+        if f > 1.0:
+            f = 1.0
+        if f < -1.0:
+            f = -1.0
+
         red = 0.0
         green = 0.0
         if f > 0:
             green = 1.0  # 0.5 + mag * 0.5
-            red = 1.0 - f * 0.5
+            red = 1.0 - f
         else:
             red = 1.0
-            green = 1.0 + f * 0.5
+            green = 1.0 + f
             #red = 0.5 - mag * 0.5
 
         blue = min(red, green)
@@ -1210,9 +1215,8 @@ class HTML(Output):
         return self.m_html.span(
             e,
             style=
-            "padding: 2px; maring: 2px; background: gray; border_radius: 4px;"
+            "padding: 2px; maring: 2px; background: black; border_radius: 4px;"
         )
-        #return f"<span style='padding: 2px; margin: 2px; background: gray; border-radius: 4px;'>{s}</span>"
 
     def magnitude_colored(
         self, s: str, mag: float, color_map=ColorMap.default
@@ -1220,11 +1224,21 @@ class HTML(Output):
         r, g, b, a = np.array(color_map(mag)) * 255
         s = self.label(s)
 
+        rgba = f"rgba({r}, {g}, {b}, {a})"
+
+        pad_top = 0
+        pad_bot = 0
+
+        if mag > 0:
+            pad_top = int(min(mag, 1.0)*10)
+        else:
+            pad_bot = int(-max(mag,-1.0)*10)
+
         return self.m_html.span(
             s,
             title=f"{mag:0.3f}",
             style=
-            f'margin: 1px; padding: 1px; border-radius: 4px; background: black; color: rgba({r}, {g}, {b}, {a});'
+            f'border-top: {pad_top}px solid {rgba}; border-bottom: {pad_bot}px solid {rgba}; margin-left 1px; margin-right: 1px; background: black; color: {rgba};'
         )
 
     def concat(self, *pieces: Iterable[E]) -> E:
@@ -1365,6 +1379,16 @@ class NLP(object):
 
         self.color_map = color_map
 
+    def token_attribution_scale(self):
+        cells = [self.output.label("scale:"), self.output.space()]
+
+        for f in range(-10,11):
+            cells.append(
+                self.output.magnitude_colored(str(f/10.0) if f <= 0 else "+" + str(f/10.0), f/10.0, self.color_map)
+            )
+
+        return self.output.line(self.output.concat(*cells))
+
     def token_attribution(self, texts, attr):
         """Visualize a token-based input attribution."""
 
@@ -1378,7 +1402,11 @@ class NLP(object):
         outputs = inputs.call_on(self.wrapper._model)
         attrs = inputs.call_on(attr.attributions)
 
-        content = []
+        content = [
+            self.token_attribution_scale(),
+            self.output.linebreak(),
+            self.output.linebreak()
+        ]
 
         input_ids = inputs
         if self.input_accessor is not None:
@@ -1432,6 +1460,9 @@ class NLP(object):
                 if word[0] == ' ':
                     word = word[1:]
                     sent += [self.output.space()]
+
+                if word == "":
+                    word = "�"
 
                 sent += [
                     self.output.magnitude_colored(
