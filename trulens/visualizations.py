@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 
-from trulens.nn.attribution import InternalInfluence
+from trulens.nn.attribution import AttributionMethod, InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.nn.backend import Tensor
 from trulens.nn.distributions import PointDoi
@@ -1218,6 +1218,20 @@ class HTML(Output):
             "padding: 2px; maring: 2px; background: black; border_radius: 4px;"
         )
 
+    def token(
+        self, s: str
+    ) -> E:
+        s = self.label(s)
+
+        pad_top = 0
+        pad_bot = 2
+
+        return self.m_html.span(
+            s,
+            style=
+            f'border-top: {pad_top}px solid gray; border-bottom: {pad_bot}px solid gray; margin-left 1px; margin-right: 1px; background: black; color: white;'
+        )
+
     def magnitude_colored(
         self, s: str, mag: float, color_map=ColorMap.default
     ) -> E:
@@ -1294,7 +1308,7 @@ class NLP(object):
 
     def __init__(
         self,
-        wrapper: ModelWrapper,
+        wrapper: ModelWrapper = None,
         output: Optional[Output] = None,
         labels: Optional[Iterable[str]] = None,
         tokenize: Optional[Callable[[TextBatch], ModelInputs]] = None,
@@ -1389,7 +1403,8 @@ class NLP(object):
 
         return self.output.line(self.output.concat(*cells))
 
-    def token_attribution(self, texts, attr):
+
+    def tokens(self, texts, attr: AttributionMethod = None):
         """Visualize a token-based input attribution."""
 
         B = get_backend()
@@ -1399,14 +1414,25 @@ class NLP(object):
 
         inputs = self.tokenize(texts)
 
-        outputs = inputs.call_on(self.wrapper._model)
-        attrs = inputs.call_on(attr.attributions)
+        outputs = None
+        attrs = None
 
-        content = [
-            self.token_attribution_scale(),
-            self.output.linebreak(),
-            self.output.linebreak()
-        ]
+        if self.wrapper is not None:
+            outputs = inputs.call_on(self.wrapper._model)
+
+        if attr is not None:
+            attrs = inputs.call_on(attr.attributions)
+        else:
+            attrs = [None] * len(texts)
+
+        content = []
+
+        if attr is not None:
+            content += [
+                self.token_attribution_scale(),
+                self.output.linebreak(),
+                self.output.linebreak()
+            ]
 
         input_ids = inputs
         if self.input_accessor is not None:
@@ -1417,32 +1443,41 @@ class NLP(object):
                 f"Inputs ({input_ids.__class__.__name__}) need to be iterable over instances. You might need to set input_accessor."
             )
 
-        output_logits = outputs
-        if self.output_accessor is not None:
-            output_logits = self.output_accessor(outputs)
+        if self.wrapper is not None:
+            output_logits = outputs
+            if self.output_accessor is not None:
+                output_logits = self.output_accessor(outputs)
 
-        if (not isinstance(output_logits, Iterable)) or isinstance(
-                output_logits, dict):
-            raise ValueError(
-                f"Outputs ({output_logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor."
-            )
+            if (not isinstance(output_logits, Iterable)) or isinstance(
+                    output_logits, dict):
+                raise ValueError(
+                    f"Outputs ({output_logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor."
+                )
+        else:
+            output_logits = [None] * len(input_ids)
 
         for i, (sentence_word_id, attr,
                 logits) in enumerate(zip(input_ids, attrs, output_logits)):
 
-            logits = logits.to('cpu').detach().numpy()
-            pred = logits.argmax()
+            sent = []
 
-            if self.labels is not None:
-                pred_name = self.labels[pred]
-            else:
-                pred_name = str(pred)
+            if self.wrapper is not None:
+                logits = logits.to('cpu').detach().numpy()
+                pred = logits.argmax()
 
-            sent = [
-                self.output.label(pred_name),
-                self.output.label(":"),
-                self.output.space()
-            ]
+                if self.labels is not None:
+                    pred_name = self.labels[pred]
+                else:
+                    pred_name = str(pred)
+
+                sent += [
+                    self.output.label(pred_name),
+                    self.output.label(":"),
+                    self.output.space()
+                ]
+
+            if attr is None:
+                attr = [None] * len(sentence_word_id)
 
             for word_id, attr in zip(sentence_word_id, attr):
                 word_id = int(B.as_array(word_id))
@@ -1455,8 +1490,6 @@ class NLP(object):
                 else:
                     word = str(word_id)
 
-                mag = self.attr_aggregate(attr)
-
                 if word[0] == ' ':
                     word = word[1:]
                     sent += [self.output.space()]
@@ -1464,11 +1497,15 @@ class NLP(object):
                 if word == "":
                     word = "�"
 
-                sent += [
-                    self.output.magnitude_colored(
-                        word, mag, color_map=self.color_map
-                    )
-                ]
+                if attr is not None:
+                    mag = self.attr_aggregate(attr)
+                    sent += [
+                        self.output.magnitude_colored(
+                            word, mag, color_map=self.color_map
+                        )
+                    ]
+                else:
+                    sent += [self.output.token(word)]
 
             content += [
                 self.output.line(self.output.concat(*sent)),
