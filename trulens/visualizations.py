@@ -16,12 +16,14 @@ interpreting attributions as images.
 
 from abc import ABC
 from abc import abstractmethod
+from dataclasses import dataclass
 from enum import Enum
+from functools import reduce
 import importlib
 from mimetypes import guess_type
 import tempfile
 from tkinter import S
-from typing import Callable, Iterable, NewType, Optional, Set, Tuple, TypeVar
+from typing import Callable, Iterable, List, NewType, Optional, Set, Tuple, TypeVar
 
 from matplotlib import cm
 from matplotlib.colors import Colormap
@@ -1212,16 +1214,38 @@ class HTML(Output):
         return self.m_html.br()
 
     def line(self, e: E) -> E:
-        return self.m_html.span(
+        return self.m_html.div(
             e,
             style=
-            "padding: 2px; maring: 2px; background: black; border_radius: 4px;"
+            "padding: 5px; maring: 0px; background: black;"
         )
 
+    def big(self, e: E) -> E:
+        return self.m_html.strong(e)
+
+    def sub(self, e: E) -> E:
+        return self.m_html.sub(e)
+
+    def scores(self, scores: np.ndarray, labels: List[str]) -> E:
+        if sum(scores) != 1.0:
+            scores = np.exp(scores) / np.exp(scores).sum()
+
+        content = []
+        for score, label in zip(scores, labels):
+            content += [self.magnitude_colored(label, mag=score), self.label("-")]
+
+        return self.concat(*content)
+
     def token(
-        self, s: str
+        self,
+        s: str,
+        token_id=None
     ) -> E:
         s = self.label(s)
+
+        extra_arg = {}
+        if token_id is not None:
+            extra_arg['title'] = f"token id: {token_id}"
 
         pad_top = 0
         pad_bot = 2
@@ -1229,7 +1253,8 @@ class HTML(Output):
         return self.m_html.span(
             s,
             style=
-            f'border-top: {pad_top}px solid gray; border-bottom: {pad_bot}px solid gray; margin-left 1px; margin-right: 1px; background: black; color: white;'
+            f'border-top: {pad_top}px solid gray; border-bottom: {pad_bot}px solid gray; margin-left 1px; margin-right: 1px; background: black; color: white;',
+            **extra_arg
         )
 
     def magnitude_colored(
@@ -1403,114 +1428,152 @@ class NLP(object):
 
         return self.output.line(self.output.concat(*cells))
 
+    def _tokens_stability_line(self, sentence_word_id, logits, attr, show_id=False, highlights=None):
+        B = get_backend()
 
-    def tokens(self, texts, attr: AttributionMethod = None):
-        """Visualize a token-based input attribution."""
+        sent = []
 
+        if self.wrapper is not None:
+            logits = logits.to('cpu').detach().numpy()
+            pred = logits.argmax()
+
+            sent += [self.output.scores(logits, self.labels)]
+
+        if attr is None:
+            attr = [None] * len(sentence_word_id)
+
+        for i, (word_id, attr) in enumerate(zip(sentence_word_id, attr)):
+            word_id = int(B.as_array(word_id))
+
+            if word_id in self.hidden_tokens:
+                continue
+
+            if self.decode is not None:
+                word = self.decode(word_id)
+            else:
+                word = str(word_id)
+
+            if word[0] == ' ':
+                word = word[1:]
+                sent += [self.output.space()]
+
+            if word == "":
+                word = "�"
+
+            cap = lambda x: x
+
+            if highlights is not None and highlights[i]:  
+                cap = self.output.big
+
+            if attr is not None:
+                mag = self.attr_aggregate(attr)
+                sent += [
+                    cap(self.output.magnitude_colored(
+                        word, mag, color_map=self.color_map
+                    ))
+                ]
+            else:
+                sent += [cap(self.output.token(word, token_id=word_id))]
+
+            if show_id:
+                sent += [self.output.sub(self.output.label(str(word_id)))]
+
+        return self.output.concat(
+            self.output.line(self.output.concat(*sent))
+        )
+
+    def _get_optionals(
+        self, 
+        texts, 
+        attributor: AttributionMethod=None
+    ):
+        B = get_backend()
+
+        given_inputs = self.tokenize(texts)
+        inputs = ModelInputs(kwargs=given_inputs) if not isinstance(given_inputs, ModelInputs) else given_inputs
+
+        outputs = [None] * len(texts)
+        attributions = [None] * len(texts)
+        logits = [None] * len(texts)
+
+        if self.wrapper is not None:
+            outputs = inputs.call_on(self.wrapper._model)
+
+            if self.output_accessor is not None:
+                logits = self.output_accessor(outputs)
+            else:
+                logits = outputs
+
+            if (not isinstance(logits, Iterable)) or isinstance(logits, dict):
+                raise ValueError(
+                        f"Outputs ({logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor."
+                    )
+    
+        if attributor is not None:
+            attributions = inputs.call_on(attributor.attributions)
+        
+        input_ids = given_inputs
+        if self.input_accessor is not None:
+            input_ids = self.input_accessor(input_ids)
+
+            if (not isinstance(input_ids, Iterable)) or isinstance(input_ids, dict):
+                raise ValueError(
+                    f"Inputs ({input_ids.__class__.__name__}) need to be iterable over instances. You might need to set input_accessor."
+                )
+
+        return dict(attributions=attributions, logits=logits, input_ids=input_ids)
+
+    def tokens_stability(self, texts1, texts2=None, attributor: AttributionMethod=None, show_id: bool=False):
         B = get_backend()
 
         if self.tokenize is None:
             return ValueError("tokenize not provided to NLP visualizer.")
 
-        inputs = self.tokenize(texts)
+        textss = [texts1]
+        if texts2 is not None:
+            textss.append(texts2)
 
-        outputs = None
-        attrs = None
-
-        if self.wrapper is not None:
-            outputs = inputs.call_on(self.wrapper._model)
-
-        if attr is not None:
-            attrs = inputs.call_on(attr.attributions)
-        else:
-            attrs = [None] * len(texts)
+        opts = [self._get_optionals(texts, attributor=attributor) for texts in textss]
 
         content = []
 
-        if attr is not None:
+        if attributor is not None:
             content += [
                 self.token_attribution_scale(),
                 self.output.linebreak(),
                 self.output.linebreak()
             ]
 
-        input_ids = inputs
-        if self.input_accessor is not None:
-            input_ids = self.input_accessor(inputs)
+        for i, (sentence_word_id, attr, logits) in enumerate(zip(
+            opts[0]['input_ids'],
+            opts[0]['attributions'],
+            opts[0]['logits']
+        )):
 
-        if (not isinstance(input_ids, Iterable)) or isinstance(input_ids, dict):
-            raise ValueError(
-                f"Inputs ({input_ids.__class__.__name__}) need to be iterable over instances. You might need to set input_accessor."
-            )
+            aline = []
 
-        if self.wrapper is not None:
-            output_logits = outputs
-            if self.output_accessor is not None:
-                output_logits = self.output_accessor(outputs)
+            highlights = [False] * len(sentence_word_id)
 
-            if (not isinstance(output_logits, Iterable)) or isinstance(
-                    output_logits, dict):
-                raise ValueError(
-                    f"Outputs ({output_logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor."
-                )
-        else:
-            output_logits = [None] * len(input_ids)
+            if len(textss) > 1:
+                highlights = list(opts[0]['input_ids'][i] != opts[1]['input_ids'][i])
 
-        for i, (sentence_word_id, attr,
-                logits) in enumerate(zip(input_ids, attrs, output_logits)):
+            aline.append(
+                self._tokens_stability_line(sentence_word_id, logits, attr, show_id=show_id, highlights=highlights))
 
-            sent = []
+            if len(textss) > 1:
+                aline.append(self._tokens_stability_line(
+                    opts[1]['input_ids'][i],
+                    opts[1]['logits'][i],
+                    opts[1]['attributions'][i],
+                    show_id=show_id, 
+                    highlights=highlights
+                ))
 
-            if self.wrapper is not None:
-                logits = logits.to('cpu').detach().numpy()
-                pred = logits.argmax()
-
-                if self.labels is not None:
-                    pred_name = self.labels[pred]
-                else:
-                    pred_name = str(pred)
-
-                sent += [
-                    self.output.label(pred_name),
-                    self.output.label(":"),
-                    self.output.space()
-                ]
-
-            if attr is None:
-                attr = [None] * len(sentence_word_id)
-
-            for word_id, attr in zip(sentence_word_id, attr):
-                word_id = int(B.as_array(word_id))
-
-                if word_id in self.hidden_tokens:
-                    continue
-
-                if self.decode is not None:
-                    word = self.decode(word_id)
-                else:
-                    word = str(word_id)
-
-                if word[0] == ' ':
-                    word = word[1:]
-                    sent += [self.output.space()]
-
-                if word == "":
-                    word = "�"
-
-                if attr is not None:
-                    mag = self.attr_aggregate(attr)
-                    sent += [
-                        self.output.magnitude_colored(
-                            word, mag, color_map=self.color_map
-                        )
-                    ]
-                else:
-                    sent += [self.output.token(word)]
-
-            content += [
-                self.output.line(self.output.concat(*sent)),
-                self.output.linebreak(),
-                self.output.linebreak()
-            ]
+            content.append(self.output.line(self.output.concat(*aline)))
 
         return self.output.render(self.output.concat(*content))
+
+    def tokens(self, texts, attributor: AttributionMethod = None, show_id: bool = False):
+        """Visualize a token-based input attribution."""
+
+        return self.tokens_stability(texts1=texts, attributor=attributor, show_id=show_id)
