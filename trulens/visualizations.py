@@ -16,14 +16,10 @@ interpreting attributions as images.
 
 from abc import ABC
 from abc import abstractmethod
-from dataclasses import dataclass
-from enum import Enum
-from functools import reduce
 import importlib
-from mimetypes import guess_type
 import tempfile
 from tkinter import S
-from typing import Callable, Iterable, List, NewType, Optional, Set, Tuple, TypeVar
+from typing import Callable, Iterable, List, Optional, Set, Tuple, TypeVar
 
 from matplotlib import cm
 from matplotlib.colors import Colormap
@@ -1027,6 +1023,7 @@ class ChannelMaskVisualizer(object):
 RGBA = Tuple[float, float, float, float]
 COLORMAP = Callable[[float], RGBA]
 
+
 class ColorMap:
 
     @staticmethod
@@ -1035,12 +1032,16 @@ class ColorMap:
 
         if divergent is None:
             if positive is None or negative is None:
-                raise ValueError("To convert a matplotlib colormap, provide either a symmetric divergent parameter or both positive and negative parameters.")
+                raise ValueError(
+                    "To convert a matplotlib colormap, provide either a symmetric divergent parameter or both positive and negative parameters."
+                )
 
             return lambda f: positive(f) if f >= 0.0 else negative(-f)
         else:
             if positive is not None or negative is not None:
-                raise ValueError("To convert a matplotlib colormap, provide either a symmetric divergent parameter or both positive and negative parameters.")
+                raise ValueError(
+                    "To convert a matplotlib colormap, provide either a symmetric divergent parameter or both positive and negative parameters."
+                )
 
             return lambda f: divergent((f + 1.0) / 2.0)
 
@@ -1082,6 +1083,22 @@ class Output(ABC):
 
     @abstractmethod
     def space(self) -> E:
+        ...
+
+    @abstractmethod
+    def big(self, s: E) -> E:
+        ...
+
+    @abstractmethod
+    def sub(self, e: E) -> E:
+        ...
+
+    @abstractmethod
+    def scores(self, scores: np.ndarray, labels: List[str]) -> E:
+        ...
+
+    @abstractmethod
+    def token(self, s: str, token_id=None) -> E:
         ...
 
     @abstractmethod
@@ -1215,9 +1232,7 @@ class HTML(Output):
 
     def line(self, e: E) -> E:
         return self.m_html.div(
-            e,
-            style=
-            "padding: 5px; maring: 0px; background: black;"
+            e, style="padding: 5px; maring: 0px; background: black;"
         )
 
     def big(self, e: E) -> E:
@@ -1232,15 +1247,14 @@ class HTML(Output):
 
         content = []
         for score, label in zip(scores, labels):
-            content += [self.magnitude_colored(label, mag=score), self.label("-")]
+            content += [
+                self.magnitude_colored(label, mag=score),
+                self.label("-")
+            ]
 
         return self.concat(*content)
 
-    def token(
-        self,
-        s: str,
-        token_id=None
-    ) -> E:
+    def token(self, s: str, token_id=None) -> E:
         s = self.label(s)
 
         extra_arg = {}
@@ -1269,9 +1283,9 @@ class HTML(Output):
         pad_bot = 0
 
         if mag > 0:
-            pad_top = int(min(mag, 1.0)*10)
+            pad_top = int(min(mag, 1.0) * 10)
         else:
-            pad_bot = int(-max(mag,-1.0)*10)
+            pad_bot = int(-max(mag, -1.0) * 10)
 
         return self.m_html.span(
             s,
@@ -1421,14 +1435,19 @@ class NLP(object):
     def token_attribution_scale(self):
         cells = [self.output.label("scale:"), self.output.space()]
 
-        for f in range(-10,11):
+        for f in range(-10, 11):
             cells.append(
-                self.output.magnitude_colored(str(f/10.0) if f <= 0 else "+" + str(f/10.0), f/10.0, self.color_map)
+                self.output.magnitude_colored(
+                    str(f / 10.0) if f <= 0 else "+" + str(f / 10.0), f / 10.0,
+                    self.color_map
+                )
             )
 
         return self.output.line(self.output.concat(*cells))
 
-    def _tokens_stability_line(self, sentence_word_id, logits, attr, show_id=False, highlights=None):
+    def _tokens_stability_line(
+        self, sentence_word_id, logits, attr, show_id=False, highlights=None
+    ):
         B = get_backend()
 
         sent = []
@@ -1462,15 +1481,17 @@ class NLP(object):
 
             cap = lambda x: x
 
-            if highlights is not None and highlights[i]:  
+            if highlights is not None and highlights[i]:
                 cap = self.output.big
 
             if attr is not None:
                 mag = self.attr_aggregate(attr)
                 sent += [
-                    cap(self.output.magnitude_colored(
-                        word, mag, color_map=self.color_map
-                    ))
+                    cap(
+                        self.output.magnitude_colored(
+                            word, mag, color_map=self.color_map
+                        )
+                    )
                 ]
             else:
                 sent += [cap(self.output.token(word, token_id=word_id))]
@@ -1478,19 +1499,15 @@ class NLP(object):
             if show_id:
                 sent += [self.output.sub(self.output.label(str(word_id)))]
 
-        return self.output.concat(
-            self.output.line(self.output.concat(*sent))
-        )
+        return self.output.concat(self.output.line(self.output.concat(*sent)))
 
-    def _get_optionals(
-        self, 
-        texts, 
-        attributor: AttributionMethod=None
-    ):
+    def _get_optionals(self, texts, attributor: AttributionMethod = None):
         B = get_backend()
 
         given_inputs = self.tokenize(texts)
-        inputs = ModelInputs(kwargs=given_inputs) if not isinstance(given_inputs, ModelInputs) else given_inputs
+        inputs = ModelInputs(
+            kwargs=given_inputs
+        ) if not isinstance(given_inputs, ModelInputs) else given_inputs
 
         outputs = [None] * len(texts)
         attributions = [None] * len(texts)
@@ -1506,24 +1523,33 @@ class NLP(object):
 
             if (not isinstance(logits, Iterable)) or isinstance(logits, dict):
                 raise ValueError(
-                        f"Outputs ({logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor."
-                    )
-    
+                    f"Outputs ({logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor."
+                )
+
         if attributor is not None:
             attributions = inputs.call_on(attributor.attributions)
-        
+
         input_ids = given_inputs
         if self.input_accessor is not None:
             input_ids = self.input_accessor(input_ids)
 
-            if (not isinstance(input_ids, Iterable)) or isinstance(input_ids, dict):
+            if (not isinstance(input_ids, Iterable)) or isinstance(input_ids,
+                                                                   dict):
                 raise ValueError(
                     f"Inputs ({input_ids.__class__.__name__}) need to be iterable over instances. You might need to set input_accessor."
                 )
 
-        return dict(attributions=attributions, logits=logits, input_ids=input_ids)
+        return dict(
+            attributions=attributions, logits=logits, input_ids=input_ids
+        )
 
-    def tokens_stability(self, texts1, texts2=None, attributor: AttributionMethod=None, show_id: bool=False):
+    def tokens_stability(
+        self,
+        texts1,
+        texts2=None,
+        attributor: AttributionMethod = None,
+        show_id: bool = False
+    ):
         B = get_backend()
 
         if self.tokenize is None:
@@ -1533,7 +1559,10 @@ class NLP(object):
         if texts2 is not None:
             textss.append(texts2)
 
-        opts = [self._get_optionals(texts, attributor=attributor) for texts in textss]
+        opts = [
+            self._get_optionals(texts, attributor=attributor)
+            for texts in textss
+        ]
 
         content = []
 
@@ -1544,36 +1573,53 @@ class NLP(object):
                 self.output.linebreak()
             ]
 
-        for i, (sentence_word_id, attr, logits) in enumerate(zip(
-            opts[0]['input_ids'],
-            opts[0]['attributions'],
-            opts[0]['logits']
-        )):
+        for i, (sentence_word_id, attr,
+                logits) in enumerate(zip(opts[0]['input_ids'],
+                                         opts[0]['attributions'],
+                                         opts[0]['logits'])):
 
             aline = []
 
             highlights = [False] * len(sentence_word_id)
 
             if len(textss) > 1:
-                highlights = list(opts[0]['input_ids'][i] != opts[1]['input_ids'][i])
+                highlights = list(
+                    opts[0]['input_ids'][i] != opts[1]['input_ids'][i]
+                )
 
             aline.append(
-                self._tokens_stability_line(sentence_word_id, logits, attr, show_id=show_id, highlights=highlights))
+                self._tokens_stability_line(
+                    sentence_word_id,
+                    logits,
+                    attr,
+                    show_id=show_id,
+                    highlights=highlights
+                )
+            )
 
             if len(textss) > 1:
-                aline.append(self._tokens_stability_line(
-                    opts[1]['input_ids'][i],
-                    opts[1]['logits'][i],
-                    opts[1]['attributions'][i],
-                    show_id=show_id, 
-                    highlights=highlights
-                ))
+                aline.append(
+                    self._tokens_stability_line(
+                        opts[1]['input_ids'][i],
+                        opts[1]['logits'][i],
+                        opts[1]['attributions'][i],
+                        show_id=show_id,
+                        highlights=highlights
+                    )
+                )
 
             content.append(self.output.line(self.output.concat(*aline)))
 
         return self.output.render(self.output.concat(*content))
 
-    def tokens(self, texts, attributor: AttributionMethod = None, show_id: bool = False):
+    def tokens(
+        self,
+        texts,
+        attributor: AttributionMethod = None,
+        show_id: bool = False
+    ):
         """Visualize a token-based input attribution."""
 
-        return self.tokens_stability(texts1=texts, attributor=attributor, show_id=show_id)
+        return self.tokens_stability(
+            texts1=texts, attributor=attributor, show_id=show_id
+        )
