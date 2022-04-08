@@ -439,7 +439,7 @@ class ModelWrapper(AbstractBaseClass):
     @abstractmethod
     def _qoi_bprop(
         self, *, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: ModelInputs, **kwargs
+        attribution_cut: Cut, intervention: AK, **kwargs
     ) -> Outputs[
             Inputs[DataLike]
     ]:  # One outer element for each QoI output, one inner element for each attribution_cut input.
