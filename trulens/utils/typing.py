@@ -176,7 +176,9 @@ DATA_CONTAINER_TYPE = (list, tuple)
 ## Utilities for dealing with nested structures
 
 
-def nested_map(y: OMNested[C, U], fn: Callable[[U], V], nest=999) -> OMNested[C, V]:
+def nested_map(y: OMNested[C, U],
+               fn: Callable[[U], V],
+               nest=999) -> OMNested[C, V]:
     """
     Applies fn to non-container elements in y. This works on "one or more" and even mested om.
 
@@ -197,7 +199,7 @@ def nested_map(y: OMNested[C, U], fn: Callable[[U], V], nest=999) -> OMNested[C,
     if isinstance(y, DATA_CONTAINER_TYPE) and nest > 0:
         out = []
         for i in range(len(y)):
-            out.append(nested_map(y[i], fn, nest-1))
+            out.append(nested_map(y[i], fn, nest - 1))
         return y.__class__(out)
     else:
         return fn(y)
@@ -404,9 +406,10 @@ class Lens(Generic[C, V]):  # Container C with values V
             lambda c: l2.get(l1.get(c)),
             lambda c, e: l1.set(c, l2.set(l1.get(c), e))
         )
-    
+
+
 @dataclass
-class AK: # "Args and Kwargs"
+class AK:  # "Args and Kwargs"
     """Container for positional and keyword arguments."""
 
     args: Inputs[DataLike] = field(default_factory=list)
@@ -418,9 +421,9 @@ class AK: # "Args and Kwargs"
     )
 
     # lens focusing on the kwargs field of this container.
-    lens_kwargs: Lens['AK', KwargsLike] = Lens(
-        lambda s: s.kwargs, lambda s, kw: AK(s.args, kw)
-    )
+    lens_kwargs: Lens[
+        'AK',
+        KwargsLike] = Lens(lambda s: s.kwargs, lambda s, kw: AK(s.args, kw))
 
     def __init__(self, args: List[DataLike] = [], kwargs: KwargsLike = {}):
         self.args = args
@@ -472,9 +475,7 @@ class AK: # "Args and Kwargs"
         try:
             return next(self.values())
         except StopIteration:
-            raise ValueError(
-                "AK had neither arguments nor keyword arguments."
-            )
+            raise ValueError("AK had neither arguments nor keyword arguments.")
 
     def call_on(self, f):
         """Call the given method with the contained arguments."""
@@ -490,6 +491,7 @@ class ModelInputs(AK):
     @staticmethod
     def of_ak(vals: AK):
         return ModelInputs(vals.args, vals.kwargs)
+
 
 def accepts_model_inputs(func: Callable) -> bool:
     """Determine whether the given callable takes in model inputs or just

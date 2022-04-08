@@ -9,7 +9,9 @@ from typing import Iterable, Tuple, TypeVar
 import numpy as np
 
 from trulens.utils import tru_logger
-from trulens.utils.typing import AK, ModelInputs, om_of_many
+from trulens.utils.typing import AK
+from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import om_of_many
 
 # Do not use directly, use get_backend
 _TRULENS_BACKEND_IMPL = None
@@ -84,11 +86,9 @@ def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
             call_after(state)
 
 
-def rebatch(
-    vals: AK,
-    *extra_vals: Tuple[AK,...],
-    batch_size=None
-) -> Iterable[Tuple[AK,...]]:
+def rebatch(vals: AK,
+            *extra_vals: Tuple[AK, ...],
+            batch_size=None) -> Iterable[Tuple[AK, ...]]:
     """Rebatch the values in `vals` into bins of size `batch_size`. If more sets
     of values are given in `extra_vals`, those are batched into the same bins as
     well."""
@@ -108,7 +108,7 @@ def rebatch(
 
         return f
 
-    all_vals: Tuple[ModelInputs,...] = (vals,) + extra_vals
+    all_vals: Tuple[ModelInputs, ...] = (vals,) + extra_vals
 
     for batch_idx in range(0, 1 + original_batch_size // batch_size):
         if batch_idx * batch_size >= original_batch_size:

@@ -2,7 +2,8 @@ import numpy as np
 
 from trulens.nn.attribution import InputAttribution
 from trulens.nn.attribution import InternalInfluence
-from trulens.nn.backend import get_backend, tile
+from trulens.nn.backend import get_backend
+from trulens.nn.backend import tile
 from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
@@ -244,7 +245,10 @@ class ModelWrapperTestBase(object):
         )
 
         # fprop no longer tiles, call the tiling method manually:
-        temp_inputs = ModelInputs(args=[X, Coeffs, divisor], kwargs=dict(Degree=Degree, offset=offset))
+        temp_inputs = ModelInputs(
+            args=[X, Coeffs, divisor],
+            kwargs=dict(Degree=Degree, offset=offset)
+        )
         temp_intervention = ModelInputs(args=[X_intervention])
         temp_inputs_tiled = tile(what=temp_inputs, onto=temp_intervention)
 
