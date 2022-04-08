@@ -252,7 +252,6 @@ class PytorchModelWrapper(ModelWrapper):
         else:  # doi_cut != InputCut
             pass
 
-
         if attribution_cut is not None:
             # Specify that we want to preserve gradient information.
 
@@ -357,7 +356,7 @@ class PytorchModelWrapper(ModelWrapper):
 
             finally:
                 # Need to clean these up even if memory_suggestions catches the error.
-                
+
                 if not isinstance(doi_cut, InputCut):
                     # Clean up in handle.
                     in_handle.remove()

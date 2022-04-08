@@ -16,8 +16,10 @@ from typing import Callable, List, Tuple, Union
 
 import numpy as np
 
-from trulens.nn.backend import get_backend, rebatch, tile
+from trulens.nn.backend import get_backend
 from trulens.nn.backend import memory_suggestions
+from trulens.nn.backend import rebatch
+from trulens.nn.backend import tile
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
@@ -32,7 +34,8 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
 from trulens.utils import tru_logger
-from trulens.utils.typing import AK, ArgsLike
+from trulens.utils.typing import AK
+from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
@@ -318,7 +321,7 @@ class InternalInfluence(AttributionMethod):
         n_doi = len(D[0])
         rebatch_size = self.rebatch_size
         if rebatch_size is None:
-             rebatch_size = n_doi
+            rebatch_size = n_doi
 
         D = self.__concatenate_doi(D)
 
@@ -342,32 +345,41 @@ class InternalInfluence(AttributionMethod):
         ):  # Handles out-of-memory messages.
             qoi_grads_expanded: List[Outputs[Inputs[DataLike]]] = []
 
-            for inputs_batch, intervention_batch in rebatch(model_inputs_expanded, intervention, batch_size=rebatch_size):
+            for inputs_batch, intervention_batch in rebatch(
+                    model_inputs_expanded, intervention,
+                    batch_size=rebatch_size):
 
-                qoi_grads_expanded_batch: Outputs[Inputs[DataLike]] = self.model._qoi_bprop(
-                    qoi=self.qoi,
-                    model_inputs=inputs_batch,
-                    attribution_cut=self.slice.from_cut,
-                    to_cut=self.slice.to_cut,
-                    intervention=intervention_batch,
-                    doi_cut=doi_cut
-                )
+                qoi_grads_expanded_batch: Outputs[
+                    Inputs[DataLike]] = self.model._qoi_bprop(
+                        qoi=self.qoi,
+                        model_inputs=inputs_batch,
+                        attribution_cut=self.slice.from_cut,
+                        to_cut=self.slice.to_cut,
+                        intervention=intervention_batch,
+                        doi_cut=doi_cut
+                    )
 
                 # important to cast to numpy inside loop:
-                qoi_grads_expanded.append(nested_map(qoi_grads_expanded_batch, B.as_array))
+                qoi_grads_expanded.append(
+                    nested_map(qoi_grads_expanded_batch, B.as_array)
+                )
 
         num_outputs = len(qoi_grads_expanded[0])
         num_inputs = len(qoi_grads_expanded[0][0])
 
-        transpose = [[[] for _ in range(num_inputs)] for _ in range(num_outputs)]
+        transpose = [
+            [[] for _ in range(num_inputs)] for _ in range(num_outputs)
+        ]
 
         for o in range(num_outputs):
             for i in range(num_inputs):
                 for qoi_grads_batch in qoi_grads_expanded:
                     transpose[o][i].append(qoi_grads_batch[o][i])
 
-        qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(transpose, np.concatenate, nest=2)
-            
+        qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(
+            transpose, np.concatenate, nest=2
+        )
+
         # TODO: Below is done in numpy.
         attrs: Outputs[Inputs[DataLike]] = nested_map(
             qoi_grads_expanded, lambda grad: B.
@@ -382,7 +394,7 @@ class InternalInfluence(AttributionMethod):
                     doi_cut=InputCut(),
                     attribution_cut=None,
                     to_cut=self.slice.from_cut,
-                    intervention=model_inputs # intentional
+                    intervention=model_inputs  # intentional
                 )[0]
 
             mults: Inputs[DataLike

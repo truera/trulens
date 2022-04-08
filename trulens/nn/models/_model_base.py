@@ -19,7 +19,8 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import AK, ArgsLike
+from trulens.utils.typing import AK
+from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
@@ -245,7 +246,7 @@ class ModelWrapper(AbstractBaseClass):
 
         model_inputs = model_inputs.map(B.as_tensor)
         intervention = intervention.map(B.as_tensor)
-    
+
         rets: Tuple[Outputs[DataLike], Outputs[DataLike]] = self._fprop(
             model_inputs=model_inputs,
             doi_cut=doi_cut,

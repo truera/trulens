@@ -403,10 +403,12 @@ def stack(t):
     """
     return tf.stack(t)
 
+
 def tile(t: Tensor, shape):
     """ Same as np.tile ."""
 
     return tf.tile(t, shape)
+
 
 def sigmoid(t, axis=None):
     """
