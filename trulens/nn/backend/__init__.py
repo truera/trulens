@@ -9,7 +9,7 @@ from typing import Iterable, Tuple, TypeVar
 import numpy as np
 
 from trulens.utils import tru_logger
-from trulens.utils.typing import C, DataLike, ModelInputs, OMNested, om_of_many
+from trulens.utils.typing import AK, ModelInputs, om_of_many
 
 # Do not use directly, use get_backend
 _TRULENS_BACKEND_IMPL = None
@@ -77,19 +77,23 @@ def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
             raise OutOfMemory(settings=settings, **kwargs)
         else:
             # TODO: catch similar exceptions in other backends
-            raise e
+            raise
 
     finally:
         if call_after is not None:
             call_after(state)
 
 
-def rebatch_model_inputs(
-    model_inputs: ModelInputs,
-    *model_inputss: Tuple[ModelInputs,...],
+def rebatch(
+    vals: AK,
+    *extra_vals: Tuple[AK,...],
     batch_size=None
-) -> Iterable[Tuple[ModelInputs,...]]:
-    original_batch_size = model_inputs.first().shape[0]
+) -> Iterable[Tuple[AK,...]]:
+    """Rebatch the values in `vals` into bins of size `batch_size`. If more sets
+    of values are given in `extra_vals`, those are batched into the same bins as
+    well."""
+
+    original_batch_size = vals.first().shape[0]
 
     if batch_size is None:
         batch_size = original_batch_size
@@ -104,16 +108,16 @@ def rebatch_model_inputs(
 
         return f
 
-    all_model_inputs: Tuple[ModelInputs,...] = (model_inputs,) + model_inputss
+    all_vals: Tuple[ModelInputs,...] = (vals,) + extra_vals
 
     for batch_idx in range(0, 1 + original_batch_size // batch_size):
         if batch_idx * batch_size >= original_batch_size:
             continue
 
-        yield tuple(map(lambda mi: mi.map(take(batch_idx)), all_model_inputs))
+        yield tuple(map(lambda v: v.map(take(batch_idx)), all_vals))
 
 
-def tile_model_inputs(what: ModelInputs, onto: ModelInputs) -> ModelInputs:
+def tile(what: AK, onto: AK) -> AK:
     """Tiles elements of `what` some number of times so they have the same first
     dimension size as `onto`. Picks the number of tiles from the first of each
     container and skips tiling anything in `what` that does not have the same
@@ -133,9 +137,9 @@ def tile_model_inputs(what: ModelInputs, onto: ModelInputs) -> ModelInputs:
             tru_logger.warn(
                 f"Value {val} of shape {val.shape} is assumed to not be "
                 f"batchable due to its shape not matching prior batchable "
-                f"inputs of shape ({inputs_dim},...). If this is "
+                f"values of shape ({inputs_dim},...). If this is "
                 f"incorrect, make sure its first dimension matches prior "
-                f"batchable inputs."
+                f"batchable values."
             )
             return val
 

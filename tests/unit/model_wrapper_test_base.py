@@ -2,7 +2,7 @@ import numpy as np
 
 from trulens.nn.attribution import InputAttribution
 from trulens.nn.attribution import InternalInfluence
-from trulens.nn.backend import get_backend, tile_model_inputs
+from trulens.nn.backend import get_backend, tile
 from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
@@ -213,7 +213,7 @@ class ModelWrapperTestBase(object):
 
         self.assertTrue(np.allclose(actual, expected))
 
-    def test_tile_model_inputs(self):
+    def test_tile(self):
         """Test tiling utility for aligning interventions with inputs."""
 
         if not hasattr(self, 'model_kwargs'):
@@ -246,7 +246,7 @@ class ModelWrapperTestBase(object):
         # fprop no longer tiles, call the tiling method manually:
         temp_inputs = ModelInputs(args=[X, Coeffs, divisor], kwargs=dict(Degree=Degree, offset=offset))
         temp_intervention = ModelInputs(args=[X_intervention])
-        temp_inputs_tiled = tile_model_inputs(what=temp_inputs, onto=temp_intervention)
+        temp_inputs_tiled = tile(what=temp_inputs, onto=temp_intervention)
 
         actual = self.model_kwargs.fprop(
             temp_inputs_tiled.args,
