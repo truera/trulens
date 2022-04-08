@@ -15,6 +15,7 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
+from trulens.utils.typing import AK
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
@@ -152,7 +153,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
 
     def _fprop(
         self, *, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: ModelInputs
+        attribution_cut: Cut, intervention: AK
     ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
         """
         See ModelWrapper.fprop .
@@ -284,7 +285,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
 
     def _qoi_bprop(
         self, *, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: ModelInputs
+        attribution_cut: Cut, intervention: AK
     ) -> Outputs[Inputs[DataLike]]:
         """
         See ModelWrapper.qoi_bprop .
