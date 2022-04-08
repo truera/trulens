@@ -19,7 +19,7 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import AK, ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
@@ -231,7 +231,7 @@ class ModelWrapper(AbstractBaseClass):
         if to_cut is None:
             to_cut = OutputCut()
 
-        model_inputs, intervention = self._organize_inputs(
+        model_inputs, intervention = self._organize_vals(
             doi_cut=doi_cut,
             model_args=model_args,
             model_kwargs=model_kwargs,
@@ -268,24 +268,24 @@ class ModelWrapper(AbstractBaseClass):
         else:
             return rets
 
-    def _organize_inputs(
+    def _organize_vals(
         self, *, doi_cut, model_args, model_kwargs, intervention
-    ) -> Tuple[ModelInputs, ModelInputs]:
+    ) -> Tuple[ModelInputs, AK]:
         model_inputs = ModelInputs(many_of_om(model_args), model_kwargs)
 
         if isinstance(doi_cut, InputCut):
             # For input cuts, produce a ModelInputs container for the intervention and model inputs.
             if intervention is not None:
-                if isinstance(intervention, ModelInputs):
+                if isinstance(intervention, AK):
                     # Intervention overrides both args and kwargs
-                    model_inputs = intervention
+                    model_inputs = ModelInputs.of_ak(intervention)
                 else:
                     # Intervention overrides only args.
                     # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
-                    intervention = ModelInputs(
+                    intervention = AK(
                         many_of_om(intervention), model_inputs.kwargs
                     )
-                    model_inputs = intervention
+                    model_inputs = ModelInputs.of_ak(intervention)
 
                     if len(model_inputs.kwargs) > 0:
                         tru_logger.warn(
@@ -296,7 +296,7 @@ class ModelWrapper(AbstractBaseClass):
 
             else:
                 # If no intervention given, it is equal to model inputs.
-                intervention = model_inputs
+                intervention: AK = model_inputs
 
         else:  # doi_cut is not InputCut
             # For non-InputCut, interventions do not have kwargs but for simplifying the logics, we store it
@@ -309,7 +309,7 @@ class ModelWrapper(AbstractBaseClass):
                 )
             else:
                 # Using as_args here as sometimes interventions are passed in as single tensors but args needs a list.
-                intervention = ModelInputs(many_of_om(intervention), {})
+                intervention = AK(many_of_om(intervention), {})
 
         return model_inputs, intervention
 
@@ -321,7 +321,7 @@ class ModelWrapper(AbstractBaseClass):
         doi_cut: Cut,
         to_cut: Cut,
         attribution_cut: Cut,
-        intervention: ModelInputs,  # DataLike contents only
+        intervention: AK,  # DataLike contents only
         **kwargs
     ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
         """Implementation of fprop; arguments, return, and their types are clarified. """
@@ -404,7 +404,7 @@ class ModelWrapper(AbstractBaseClass):
         if attribution_cut is None:
             attribution_cut = InputCut()
 
-        model_inputs, intervention = self._organize_inputs(
+        model_inputs, intervention = self._organize_vals(
             doi_cut=doi_cut,
             model_args=model_args,
             model_kwargs=model_kwargs,

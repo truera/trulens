@@ -16,7 +16,7 @@ from typing import Callable, List, Tuple, Union
 
 import numpy as np
 
-from trulens.nn.backend import get_backend, rebatch_model_inputs, tile_model_inputs
+from trulens.nn.backend import get_backend, rebatch, tile
 from trulens.nn.backend import memory_suggestions
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
@@ -32,7 +32,7 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import AK, ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
@@ -73,7 +73,12 @@ class AttributionMethod(AbstractBaseClass):
                 Model for which attributions are calculated.
 
             rebatch_size: int (optional)
-                Will rebatch model inputs to this size if given.
+                Will rebatch instances to this size if given. This may be
+                required for GPU usage if using a DoI which produces multiple
+                instances per user-provided instance. Many valued DoIs will
+                expand the tensors sent to each layer to original_batch_size *
+                doi_size. The rebatch size will break up original_batch_size *
+                doi_size into rebatch_size chunks to send to model.
         """
         self._model = model
 
@@ -317,9 +322,9 @@ class InternalInfluence(AttributionMethod):
 
         D = self.__concatenate_doi(D)
 
-        intervention = ModelInputs(args=D, kwargs={})
+        intervention = AK(args=D, kwargs={})
 
-        model_inputs_expanded = tile_model_inputs(what=model_inputs, onto=intervention)
+        model_inputs_expanded = tile(what=model_inputs, onto=intervention)
 
         # Create a message for out-of-memory errors regarding doi_size.
         # TODO: Generalize this message to doi other than LinearDoI:
@@ -337,7 +342,7 @@ class InternalInfluence(AttributionMethod):
         ):  # Handles out-of-memory messages.
             qoi_grads_expanded: List[Outputs[Inputs[DataLike]]] = []
 
-            for inputs_batch, intervention_batch in rebatch_model_inputs(model_inputs_expanded, intervention, batch_size=rebatch_size):
+            for inputs_batch, intervention_batch in rebatch(model_inputs_expanded, intervention, batch_size=rebatch_size):
 
                 qoi_grads_expanded_batch: Outputs[Inputs[DataLike]] = self.model._qoi_bprop(
                     qoi=self.qoi,
@@ -377,7 +382,7 @@ class InternalInfluence(AttributionMethod):
                     doi_cut=InputCut(),
                     attribution_cut=None,
                     to_cut=self.slice.from_cut,
-                    intervention=model_inputs
+                    intervention=model_inputs # intentional
                 )[0]
 
             mults: Inputs[DataLike

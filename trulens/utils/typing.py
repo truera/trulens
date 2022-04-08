@@ -404,44 +404,29 @@ class Lens(Generic[C, V]):  # Container C with values V
             lambda c: l2.get(l1.get(c)),
             lambda c, e: l1.set(c, l2.set(l1.get(c), e))
         )
-
-
+    
 @dataclass
-class ModelInputs:
-    """Container for model input arguments, that is, args and kwargs."""
+class AK: # "Args and Kwargs"
+    """Container for positional and keyword arguments."""
 
     args: Inputs[DataLike] = field(default_factory=list)
     kwargs: KwargsLike = field(default_factory=dict)
 
-    lens_args: Lens['ModelInputs', Inputs[DataLike]] = Lens(
-        lambda s: s.args, lambda s, a: ModelInputs(a, s.kwargs)
-    )
     # lens focusing on the args field of this container.
-
-    lens_kwargs: Lens['ModelInputs', KwargsLike] = Lens(
-        lambda s: s.kwargs, lambda s, kw: ModelInputs(s.args, kw)
+    lens_args: Lens['AK', Inputs[DataLike]] = Lens(
+        lambda s: s.args, lambda s, a: AK(a, s.kwargs)
     )
 
     # lens focusing on the kwargs field of this container.
+    lens_kwargs: Lens['AK', KwargsLike] = Lens(
+        lambda s: s.kwargs, lambda s, kw: AK(s.args, kw)
+    )
 
-    def __init__(self, args: Inputs[DataLike] = [], kwargs: KwargsLike = {}):
-        """
-        Contain positional and keyword arguments. This should operate when given
-        args received from a method with this signature:
-
-        def method(*args, **kwargs):
-            something = ModelInputs(args, kwargs)
-
-        method([arg1, arg2]) method(arg1, arg2)
-        
-        In this first case, *args is a tuple with one element whereas in the
-        second, it is a tuple with two. In either case, we convert it to a list
-        with two.
-        """
-
+    def __init__(self, args: List[DataLike] = [], kwargs: KwargsLike = {}):
         self.args = args
         self.kwargs = kwargs
 
+        # Check to make sure we don't accidentally set args to a single element.
         if not isinstance(args, DATA_CONTAINER_TYPE):
             raise ValueError(f"container expected but is {args.__class__}")
 
@@ -453,10 +438,10 @@ class ModelInputs:
 
         return IterableUtils.then_(
             (
-                Lens.compose(ModelInputs.lens_args, l)
+                Lens.compose(AK.lens_args, l)
                 for l in Lens.lenses_elements(self.args)
             ), (
-                Lens.compose(ModelInputs.lens_kwargs, l)
+                Lens.compose(AK.lens_kwargs, l)
                 for l in Lens.lenses_values(self.kwargs)
             )
         )
@@ -468,7 +453,7 @@ class ModelInputs:
             yield l.get(self)
 
     def map(self, f):
-        """Produce a new set of inputs by transforming each value with the given function."""
+        """Produce a new set of args by transforming each value with the given function."""
 
         ret = self
         for l in self.lenses_values():
@@ -488,7 +473,7 @@ class ModelInputs:
             return next(self.values())
         except StopIteration:
             raise ValueError(
-                "ModelInputs had neither arguments nor keyword arguments."
+                "AK had neither arguments nor keyword arguments."
             )
 
     def call_on(self, f):
@@ -496,6 +481,15 @@ class ModelInputs:
 
         return f(*self.args, **self.kwargs)
 
+
+class ModelInputs(AK):
+    """
+    Positional and keyword arguments meant for model inputs.
+    """
+
+    @staticmethod
+    def of_ak(vals: AK):
+        return ModelInputs(vals.args, vals.kwargs)
 
 def accepts_model_inputs(func: Callable) -> bool:
     """Determine whether the given callable takes in model inputs or just
