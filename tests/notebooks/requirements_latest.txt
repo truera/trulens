@@ -6,3 +6,4 @@ tensorflow
 torch
 torchvision
 ipywidgets
+domonic
