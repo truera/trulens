@@ -11,24 +11,12 @@ via visualization. This module provides several visualization methods for
 interpreting attributions as images.
 """
 
-# TODO: remove pip requirements from visualizers and move them to imports upon
-# their initialization.
-
 from abc import ABC
 from abc import abstractmethod
-import importlib
 import tempfile
-from tkinter import S
 from typing import Callable, Iterable, List, Optional, Set, Tuple, TypeVar
 
-from matplotlib import cm
-from matplotlib.colors import Colormap
-from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.colors import ListedColormap
-import matplotlib.pyplot as plt
 import numpy as np
-from scipy.ndimage.filters import gaussian_filter
-
 from trulens.nn.attribution import AttributionMethod, InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.nn.backend import Tensor
@@ -38,8 +26,9 @@ from trulens.nn.quantities import InternalChannelQoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.utils import tru_logger, try_import
-from trulens.utils.typing import KwargsLike
 from trulens.utils.typing import ModelInputs
+
+# TODO: Unify the common things across image and NLP visualizations.
 
 
 class Tiler(object):
@@ -95,7 +84,7 @@ class Visualizer(object):
         combine_channels: bool = False,
         normalization_type: str = None,
         blur: float = 0.,
-        cmap: Colormap = None
+        cmap: 'matplotlib.colors.Colormap' = None
     ):
         """
         Configures the default parameters for the `__call__` method (these can 
@@ -154,6 +143,13 @@ class Visualizer(object):
                 type. This argument is only used for single-channel data
                 (including when `combine_channels` is True).
         """
+        purpose = "Image attribution visualization"
+
+        self.m_plt = try_import("matplotlib.pyplot", purpose)
+        self.m_cm = try_import("matplotlib", purpose)
+        self.m_colors = try_import("matplotlib.colors", purpose)
+        self.m_filters = try_import("scipy.ndimage.filters", purpose)
+
         self.default_combine_channels = combine_channels
         self.default_normalization_type = normalization_type
         self.default_blur = blur
@@ -275,19 +271,19 @@ class Visualizer(object):
         tiled_attributions = self.tiler.tile(attributions)
 
         # Display the figure:
-        _fig = plt.figure() if fig is None else fig
+        _fig = self.m_plt.figure() if fig is None else fig
 
-        plt.axis('off')
-        plt.imshow(tiled_attributions, cmap=cmap)
+        self.m_plt.axis('off')
+        self.m_plt.imshow(tiled_attributions, cmap=cmap)
 
         if output_file:
-            plt.savefig(output_file, bbox_inches=0)
+            self.m_plt.savefig(output_file, bbox_inches=0)
 
         if imshow:
-            plt.show()
+            self.m_plt.show()
 
         elif fig is None:
-            plt.close(_fig)
+            self.m_plt.close(_fig)
 
         return tiled_attributions if return_tiled else attributions
 
@@ -436,14 +432,16 @@ class Visualizer(object):
 
     def _blur(self, attributions, blur):
         for i in range(attributions.shape[0]):
-            attributions[i] = gaussian_filter(attributions[i], blur)
+            attributions[i] = self.m_filters.gaussian_filter(
+                attributions[i], blur
+            )
 
         return attributions
 
     def _get_hotcold(self):
-        hot = cm.get_cmap('hot', 128)
-        cool = cm.get_cmap('cool', 128)
-        binary = cm.get_cmap('binary', 128)
+        hot = self.m_cm.get_cmap('hot', 128)
+        cool = self.m_cm.get_cmap('cool', 128)
+        binary = self.m_cm.get_cmap('binary', 128)
         hotcold = np.vstack(
             (
                 binary(np.linspace(0, 1, 128)) * cool(np.linspace(0, 1, 128)),
@@ -451,7 +449,7 @@ class Visualizer(object):
             )
         )
 
-        return ListedColormap(hotcold, name='hotcold')
+        return self.m_colors.ListedColormap(hotcold, name='hotcold')
 
 
 class HeatmapVisualizer(Visualizer):
@@ -668,20 +666,20 @@ class HeatmapVisualizer(Visualizer):
             overlay_opacity = self.default_overlay_opacity
 
         # Display the figure:
-        _fig = plt.figure() if fig is None else fig
+        _fig = self.m_plt.figure() if fig is None else fig
 
-        plt.axis('off')
-        plt.imshow(tiled_x)
-        plt.imshow(tiled_attributions, alpha=overlay_opacity, cmap=cmap)
+        self.m_plt.axis('off')
+        self.m_plt.imshow(tiled_x)
+        self.m_plt.imshow(tiled_attributions, alpha=overlay_opacity, cmap=cmap)
 
         if output_file:
-            plt.savefig(output_file, bbox_inches=0)
+            self.m_plt.savefig(output_file, bbox_inches=0)
 
         if imshow:
-            plt.show()
+            self.m_plt.show()
 
         elif fig is None:
-            plt.close(_fig)
+            self.m_plt.close(_fig)
 
         return tiled_attributions if return_tiled else attributions
 
@@ -735,6 +733,15 @@ class MaskVisualizer(object):
                 unmasked (or given nonzero opacity when `use_attr_as_opacity` is
                 true).
         """
+
+        # TODO: Figure out why this is not a subclass of Visualizer.
+
+        purpose = "Mask visualization"
+
+        self.m_plt = try_import("matplotlib.pyplot", purpose)
+        self.m_cm = try_import("matplotlib", purpose)
+        self.m_colors = try_import("matplotlib.colors", purpose)
+        self.m_filters = try_import("scipy.ndimage.filters", purpose)
 
         self.default_blur = blur
         self.default_thresh = threshold
@@ -804,7 +811,9 @@ class MaskVisualizer(object):
 
         # Blur the attributions so the explanation is smoother.
         if blur is not None:
-            attributions = [gaussian_filter(a, blur) for a in attributions]
+            attributions = [
+                self.m_filters.gaussian_filter(a, blur) for a in attributions
+            ]
 
         # If `positive_only` clip attributions.
         if positive_only:
@@ -840,11 +849,11 @@ class MaskVisualizer(object):
         tiled_attributions = self.tiler.tile(attributions)
 
         if imshow:
-            plt.axis('off')
-            plt.imshow(tiled_attributions)
+            self.m_plt.axis('off')
+            self.m_plt.imshow(tiled_attributions)
 
             if output_file:
-                plt.savefig(output_file, bbox_inches=0)
+                self.m_plt.savefig(output_file, bbox_inches=0)
 
         return tiled_attributions if return_tiled else attributions
 
@@ -931,6 +940,16 @@ class ChannelMaskVisualizer(object):
                 unmasked (or given nonzero opacity when `use_attr_as_opacity` is
                 true).
         """
+
+        # TODO: Figure out why this is not a subclass of Visualizer.
+
+        purpose = "Channel mask visualization"
+
+        self.m_plt = try_import("matplotlib.pyplot", purpose)
+        self.m_cm = try_import("matplotlib", purpose)
+        self.m_colors = try_import("matplotlib.colors", purpose)
+        self.m_filters = try_import("scipy.ndimage.filters", purpose)
+
         B = get_backend()
         if (B is not None and (channel_axis is None or channel_axis < 0)):
             channel_axis = B.channel_axis
@@ -1093,9 +1112,18 @@ class Output(ABC):
     def sub(self, e: E) -> E:
         ...
 
-    @abstractmethod
     def scores(self, scores: np.ndarray, labels: List[str]) -> E:
-        ...
+        if sum(scores) != 1.0:
+            scores = np.exp(scores) / np.exp(scores).sum()
+
+        content = []
+        for score, label in zip(scores, labels):
+            content += [
+                self.magnitude_colored(label, mag=score),
+                self.label("-")
+            ]
+
+        return self.concat(*content)
 
     @abstractmethod
     def token(self, s: str, token_id=None) -> E:
@@ -1186,6 +1214,22 @@ class PlainText(Output):
     def space(self) -> E:
         return " "
 
+    def big(self, s: E) -> E:
+        return f"_{s}_"
+
+    def sub(self, s: E) -> E:
+        return f".{s}."
+
+    def token(self, s: str, token_id=None) -> E:
+        s = self.label(s)
+
+        content = s
+
+        if token_id is not None:
+            content += f"({token_id})"
+
+        return content
+
     def label(self, s: str) -> E:
         return s
 
@@ -1240,19 +1284,6 @@ class HTML(Output):
 
     def sub(self, e: E) -> E:
         return self.m_html.sub(e)
-
-    def scores(self, scores: np.ndarray, labels: List[str]) -> E:
-        if sum(scores) != 1.0:
-            scores = np.exp(scores) / np.exp(scores).sum()
-
-        content = []
-        for score, label in zip(scores, labels):
-            content += [
-                self.magnitude_colored(label, mag=score),
-                self.label("-")
-            ]
-
-        return self.concat(*content)
 
     def token(self, s: str, token_id=None) -> E:
         s = self.label(s)
@@ -1319,12 +1350,8 @@ class IPython(HTML):
 
     def __init__(self):
         super(IPython, self).__init__()
-        try:
-            self.m_ipy = importlib.import_module("IPython")
-        except:
-            raise ImportError(
-                "Jupyter output requires IPython python module. Try 'pip install ipykernel'."
-            )
+
+        self.m_ipy = try_import("IPython", "Jupyter output")
 
     def render(self, e):
         html = HTML.render(self, e)
