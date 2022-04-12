@@ -1,6 +1,5 @@
-from re import L
 import sys
-from typing import Dict, Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -13,15 +12,16 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import AK
 from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import Tensor
+from trulens.utils.typing import TensorAKs
+from trulens.utils.typing import TensorArgs
+from trulens.utils.typing import TensorLike
 
 
 class TensorflowModelWrapper(ModelWrapper):
@@ -176,12 +176,13 @@ class TensorflowModelWrapper(ModelWrapper):
         intervention_dict = dict()
 
         # Convert `intervention` to a list of inputs if it isn't already.
+        # TODO: This should have been done in the base wrapper.
         if intervention is not None:
             if isinstance(intervention, dict):
                 args = []
                 kwargs = intervention
 
-            elif isinstance(intervention, AK):
+            elif isinstance(intervention, TensorAKs):
                 args = intervention.args
                 kwargs = intervention.kwargs
 
@@ -214,8 +215,8 @@ class TensorflowModelWrapper(ModelWrapper):
 
     def _fprop(
         self, *, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: AK
-    ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
+        attribution_cut: Cut, intervention: TensorArgs
+    ) -> Tuple[Outputs[TensorLike], Outputs[TensorLike]]:
         """
         See ModelWrapper.fprop .
         """
@@ -286,8 +287,8 @@ class TensorflowModelWrapper(ModelWrapper):
 
     def _qoi_bprop(
         self, *, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: AK
-    ) -> Outputs[Inputs[DataLike]]:
+        attribution_cut: Cut, intervention: TensorArgs
+    ) -> Outputs[Inputs[TensorLike]]:
         """
         See ModelWrapper.qoi_bprop .
         """

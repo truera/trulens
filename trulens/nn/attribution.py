@@ -34,10 +34,8 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
 from trulens.utils import tru_logger
-from trulens.utils.typing import AK
 from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike
 from trulens.utils.typing import ModelInputs
@@ -46,6 +44,8 @@ from trulens.utils.typing import nested_map
 from trulens.utils.typing import OM
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
+from trulens.utils.typing import TensorArgs
+from trulens.utils.typing import TensorLike
 from trulens.utils.typing import Uniform
 
 # Attribution-related type aliases.
@@ -97,7 +97,8 @@ class AttributionMethod(AbstractBaseClass):
     @abstractmethod
     def attributions(
         self, *model_args: ArgsLike, **model_kwargs: KwargsLike
-    ) -> Union[DataLike, ArgsLike[DataLike], ArgsLike[ArgsLike[DataLike]]]:
+    ) -> Union[TensorLike, ArgsLike[TensorLike],
+               ArgsLike[ArgsLike[TensorLike]]]:
         """
         Returns attributions for the given input. Attributions are in the same
         shape as the layer that attributions are being generated for. 
@@ -278,7 +279,8 @@ class InternalInfluence(AttributionMethod):
 
     def attributions(
         self, *model_args: ArgsLike, **model_kwargs: KwargsLike
-    ) -> Union[DataLike, ArgsLike[DataLike], ArgsLike[ArgsLike[DataLike]]]:
+    ) -> Union[TensorLike, ArgsLike[TensorLike],
+               ArgsLike[ArgsLike[TensorLike]]]:
         # NOTE: not symbolic
 
         B = get_backend()
@@ -325,7 +327,7 @@ class InternalInfluence(AttributionMethod):
 
         D = self.__concatenate_doi(D)
 
-        intervention = AK(args=D, kwargs={})
+        intervention = TensorArgs(args=D)
 
         model_inputs_expanded = tile(what=model_inputs, onto=intervention)
 
@@ -343,14 +345,14 @@ class InternalInfluence(AttributionMethod):
                 param_msgs +
             [doi_size_msg, combined_batch_msg, rebatch_size_msg]
         ):  # Handles out-of-memory messages.
-            qoi_grads_expanded: List[Outputs[Inputs[DataLike]]] = []
+            qoi_grads_expanded: List[Outputs[Inputs[TensorLike]]] = []
 
             for inputs_batch, intervention_batch in rebatch(
                     model_inputs_expanded, intervention,
                     batch_size=rebatch_size):
 
                 qoi_grads_expanded_batch: Outputs[
-                    Inputs[DataLike]] = self.model._qoi_bprop(
+                    Inputs[TensorLike]] = self.model._qoi_bprop(
                         qoi=self.qoi,
                         model_inputs=inputs_batch,
                         attribution_cut=self.slice.from_cut,
@@ -381,7 +383,7 @@ class InternalInfluence(AttributionMethod):
         )
 
         # TODO: Below is done in numpy.
-        attrs: Outputs[Inputs[DataLike]] = nested_map(
+        attrs: Outputs[Inputs[TensorLike]] = nested_map(
             qoi_grads_expanded, lambda grad: B.
             mean(B.reshape(grad, (n_doi, -1) + grad.shape[1:]), axis=0)
         )
@@ -397,7 +399,7 @@ class InternalInfluence(AttributionMethod):
                     intervention=model_inputs  # intentional
                 )[0]
 
-            mults: Inputs[DataLike
+            mults: Inputs[TensorLike
                          ] = self.doi._wrap_public_get_activation_multiplier(
                              z_val, model_inputs=model_inputs
                          )
@@ -412,7 +414,7 @@ class InternalInfluence(AttributionMethod):
             ]
 
         attrs: Outputs[OM[Inputs,
-                          DataLike]] = [om_of_many(attr) for attr in attrs]
+                          TensorLike]] = [om_of_many(attr) for attr in attrs]
         attrs: OM[Outputs, OM[Inputs]] = om_of_many(attrs)
 
         # Cast to the same data type as provided inputs.
@@ -556,8 +558,8 @@ class InternalInfluence(AttributionMethod):
             raise ValueError('Unrecognized argument type for cut')
 
     @staticmethod
-    def __concatenate_doi(D: Inputs[Uniform[DataLike]]) -> Inputs[DataLike]:
-        # Returns one DataLike for each model input.
+    def __concatenate_doi(D: Inputs[Uniform[TensorLike]]) -> Inputs[TensorLike]:
+        # Returns one TensorLike for each model input.
         if len(D[0]) == 0:
             raise ValueError(
                 'Got empty distribution of interest. `DoI` must return at '

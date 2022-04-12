@@ -1,12 +1,8 @@
 from typing import Tuple
 
-import numpy as np
 import tensorflow as tf
-import tensorflow.keras as keras
-import tensorflow.keras.backend as K
 
 from trulens.nn.backend import get_backend
-from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.models.keras import \
     KerasModelWrapper  # dangerous to have this here if tf-less keras gets imported
 from trulens.nn.quantities import QoI
@@ -15,14 +11,14 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import AK
 from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import nested_map
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
+from trulens.utils.typing import TensorArgs
+from trulens.utils.typing import TensorLike
 
 if tf.executing_eagerly():
     tf.config.run_functions_eagerly(True)
@@ -153,8 +149,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
 
     def _fprop(
         self, *, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: AK
-    ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
+        attribution_cut: Cut, intervention: TensorArgs
+    ) -> Tuple[Outputs[TensorLike], Outputs[TensorLike]]:
         """
         See ModelWrapper.fprop .
         """
@@ -208,7 +204,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
 
                 return retrieve
 
-            results: Outputs[DataLike]
+            results: Outputs[TensorLike]
 
             # TODO: Clean this all up somehow: trulens for TF2 allows for cuts
             # with anchors that can refer to a layers's inputs or outputs.
@@ -217,7 +213,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
             # will be in the results of this call.
 
             if isinstance(to_cut, InputCut):
-                results: Outputs[DataLike] = model_inputs.args
+                results: Outputs[TensorLike] = model_inputs.args
 
             else:
                 if isinstance(to_cut, LogitCut):
@@ -285,8 +281,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
 
     def _qoi_bprop(
         self, *, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: AK
-    ) -> Outputs[Inputs[DataLike]]:
+        attribution_cut: Cut, intervention: TensorArgs
+    ) -> Outputs[Inputs[TensorLike]]:
         """
         See ModelWrapper.qoi_bprop .
         """
@@ -313,15 +309,15 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
                 attribution_cut=attribution_cut,
                 intervention=intervention
             )
-            outputs: Outputs[DataLike]
-            attribution_features: Outputs[DataLike]
+            outputs: Outputs[TensorLike]
+            attribution_features: Outputs[TensorLike]
 
             Q = qoi._wrap_public_call(outputs)
 
-        grads: Outputs[Inputs[DataLike]] = []
+        grads: Outputs[Inputs[TensorLike]] = []
 
         for z in attribution_features:
-            zq: Inputs[DataLike] = []
+            zq: Inputs[TensorLike] = []
             for q in Q:
                 grad_zq = tape.gradient(q, z)
                 zq.append(grad_zq)
