@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from functools import partial
-from logging import LogRecord
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import numpy as np
 import torch
@@ -17,16 +16,15 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import AK
 from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
-from trulens.utils.typing import InterventionLike
 from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import nested_map
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
+from trulens.utils.typing import TensorArgs
+from trulens.utils.typing import TensorLike
 
 
 class PytorchModelWrapper(ModelWrapper):
@@ -183,7 +181,7 @@ class PytorchModelWrapper(ModelWrapper):
             names_and_anchors.append((cut.name, cut.anchor))
 
     def _extract_outputs_from_hooks(self, cut, hooks, output,
-                                    model_inputs) -> Inputs[DataLike]:
+                                    model_inputs) -> Inputs[TensorLike]:
 
         return_output = None
 
@@ -230,9 +228,9 @@ class PytorchModelWrapper(ModelWrapper):
         doi_cut: Cut,
         to_cut: Cut,
         attribution_cut: Cut,
-        intervention: AK,
+        intervention: TensorArgs,
         input_timestep: Optional[int] = None
-    ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
+    ) -> Tuple[Outputs[TensorLike], Outputs[TensorLike]]:
         """
         See ModelWrapper.fprop .
 
@@ -244,14 +242,12 @@ class PytorchModelWrapper(ModelWrapper):
 
         B = get_backend()
 
-        model_inputs = model_inputs.map(self._to_tensor)
-        intervention = intervention.map(self._to_tensor)
+        # This method operates on backend tensors.
+        model_inputs = model_inputs.map(B.as_tensor)
+        intervention = intervention.map(B.as_tensor)
 
         if isinstance(doi_cut, InputCut):
             model_inputs = intervention
-
-        else:  # doi_cut != InputCut
-            pass
 
         if attribution_cut is not None:
             # Specify that we want to preserve gradient information.
@@ -385,9 +381,9 @@ class PytorchModelWrapper(ModelWrapper):
 
     def _qoi_bprop(
         self, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: AK
+        attribution_cut: Cut, intervention: TensorArgs
     ) -> Outputs[
-            Inputs[DataLike]
+            Inputs[TensorLike]
     ]:  # one outer element per QoI, one inner element per attribution_cut input
 
         B = get_backend()
@@ -418,7 +414,7 @@ class PytorchModelWrapper(ModelWrapper):
         grads_list = [[] for _ in qois_out]
 
         for qoi_index, qoi_out in enumerate(qois_out):
-            qoi_out: DataLike = scalarize(qoi_out)
+            qoi_out: TensorLike = scalarize(qoi_out)
 
             try:
                 with memory_suggestions(device=self.device):

@@ -38,9 +38,9 @@ List of flexible typings:
         - QoI.__call__ return
 
     - Backend Tensor vs. Numpy Array -- Can pass in a backend Tensor or numpy
-      array. This is indicated by the `DataLike` type alias:
+      array. This is indicated by the `TensorLike` type alias:
 
-      ``` DataLike = Union[np.ndarray, Tensor] ```
+      ``` TensorLike = Union[np.ndarray, Tensor] ```
 
         - AttributionMethod.attributions: model_args, model_kwargs arguments
           (return type based first arg in either).
@@ -62,13 +62,15 @@ List of flexible typings:
         - LinearDoI.baseline (when callable): see BaselineLike.
 
     - ModelInputs or args -- Can pass in single value, iterable, dictionary, or
-      ModelInputs structure. These correspond to single positional arg, multiple
-      positional args, keyword args, and (both positional and keyword args).
+      a Tensors (includes ModelInputs) structure. These correspond to single
+      positional arg, multiple positional args, keyword args, and (both
+      positional and keyword args).
     
-        - ModelWrapper.fprop: intervention argument, see InterventionLike (paraphrased):
+        - ModelWrapper.fprop: intervention argument, see InterventionLike
+          (paraphrased):
 
         ``` InterventionLike = Union[
-              ArgsLike[DataLike], KwargsLike, ModelInputs]
+              ArgsLike[TensorLike], KwargsLike, Tensors]
         ```
 
         - ModelWrapper.qoi_bprop: intervention argument: see InterventionLike
@@ -77,8 +79,8 @@ List of flexible typings:
       values. See (paraphrased) BaselineLike (paraphrased):
 
       ``` BaselineLike = Union[
-          ArgsLike[DataLike], ArgsLike[DataLike] -> ArgsLike[DataLike],
-          (ArgsLike[DataLike], ModelInputs) -> ArgsLike[DataLike]
+          ArgsLike[TensorLike], ArgsLike[TensorLike] -> ArgsLike[TensorLike],
+          (ArgsLike[TensorLike], ModelInputs) -> ArgsLike[TensorLike]
       ]
       ```
 
@@ -90,7 +92,8 @@ vs. numpy array flexibility. These are to be used within Truera for more
 consistent expectations regarding inputs/outputs.
 
     - DoI._wrap_public_call vs. DoI.__call__
-    - DoI._wrap_public_get_activation_multiplier vs DoI.get_activation_multiplier
+    - DoI._wrap_public_get_activation_multiplier vs
+      DoI.get_activation_multiplier
     - QoI._wrap_public_call vs. QoI.__call__
     - ModelWrapper._fprop vs. ModelWrapper.fprop
     - ModelWrapper._qoi_bprop vs. ModelWrapper.qoi_bprop
@@ -99,12 +102,14 @@ consistent expectations regarding inputs/outputs.
 # NOTE(piotrm) had to move some things to this file to avoid circular
 # dependencies between the files that originally contained those things.
 
+from abc import ABC
+from abc import abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
 from inspect import signature
 from typing import (
-    Any, Callable, Dict, Generic, Iterable, List, Optional, Tuple, Type,
-    TypeVar, Union
+    Callable, Dict, Generic, Iterable, List, Optional, Tuple, Type, TypeVar,
+    Union
 )
 
 import numpy as np
@@ -131,8 +136,8 @@ Uniform = List
 
 # "One or More" OM[C, V] (V for Value, C for Container)
 OM = Union[V, C]  # actually C[V] but cannot get python to accept that
-# e.g. OM[List, DataLike] - One or more DataLike where the more is contained in a List
-# e.g. OM[Inputs, DataLike] - One or more DataLike that represent model inputs.
+# e.g. OM[List, TensorLike] - One or more TensorLike where the more is contained in a List
+# e.g. OM[Inputs, TensorLike] - One or more TensorLike that represent model inputs.
 
 # "One or More" where the container type is itself a one or more.
 OMNested = Union[OM[V, C], 'OMNested[C, V]']
@@ -147,13 +152,13 @@ ModelLike = Union['tf.Graph',  # tf1
                  ]
 
 # Atomic model inputs (at least from our perspective)
-DataLike = Union[np.ndarray, Tensor]
+TensorLike = Union[np.ndarray, Tensor]
 
 # Model input arguments. Either a single element or list/tuple of several.
-# User-provided methods are given DataLike and for single input models/layers
-# but internally we pass around InputList[DataLike] for consistency. Likewise
-# user-provided methods may return a single DataLike or Uniform[DataLike] but we
-# want to pass around Inputs[DataLike] or Inputs[Uniform[DataLike]]. Because of
+# User-provided methods are given TensorLike and for single input models/layers
+# but internally we pass around InputList[TensorLike] for consistency. Likewise
+# user-provided methods may return a single TensorLike or Uniform[TensorLike] but we
+# want to pass around Inputs[TensorLike] or Inputs[Uniform[TensorLike]]. Because of
 # this, there are checks with wrapping/unwrapping around user-provided-function
 # calls using the various utilities below. Purely internal methods should not be
 # doing wrapping/unwrapping. Leaving this type only for the public methods while
@@ -165,9 +170,9 @@ Kwargs = Dict[str, V]  # Kwargs[V]
 
 # Some backends allow inputs in terms of dicts with tensors as keys (i.e. feed_dict in tf1).
 # We keep track of internal names so that these feed dicts can use strings as names instead.
-Feed = Dict[Union[str, Tensor], DataLike]
+Feed = Dict[Union[str, Tensor], TensorLike]
 
-KwargsLike = Union[Kwargs[DataLike], Feed]
+KwargsLike = Union[Kwargs[TensorLike], Feed]
 
 Indexable = Union[List[V], Tuple[V]]  # Indexable[V]
 # For checking the above against an instance:
@@ -207,13 +212,13 @@ def nested_map(y: OMNested[C, U],
 
 def nested_cast(
     backend: 'Backend',
-    args: OMNested[C, DataLike],
-    astype: Type  # : select one of the two types of DataLike
+    args: OMNested[C, TensorLike],
+    astype: Type  # : select one of the two types of TensorLike
 ) -> Union[OMNested[C, Tensor], OMNested[C, np.ndarray]]:  # : of selected type
     """Transform set of values to the given type wrapping around List/Tuple if
     needed."""
 
-    caster = datalike_caster(backend, astype)
+    caster = TensorLike_caster(backend, astype)
 
     return nested_map(args, lambda x: caster(x) if type(x) != astype else x)
 
@@ -222,7 +227,7 @@ def tab(s, tab="  "):
     return "\n".join(map(lambda ss: tab + ss, s.split("\n")))
 
 
-def nested_str(items: OMNested[C, DataLike]) -> str:
+def nested_str(items: OMNested[C, TensorLike]) -> str:
     ret = ""
 
     if isinstance(items, DATA_CONTAINER_TYPE):
@@ -239,12 +244,12 @@ def nested_str(items: OMNested[C, DataLike]) -> str:
     return ret
 
 
-## Utilities for dealing with DataLike
+## Utilities for dealing with TensorLike
 
 
-def datalike_caster(backend: 'Backend',
-                    astype: Type) -> Callable[[DataLike], DataLike]:
-    """Return a method that lets one cast a DataLike to the specified type by
+def TensorLike_caster(backend: 'Backend',
+                      astype: Type) -> Callable[[TensorLike], TensorLike]:
+    """Return a method that lets one cast a TensorLike to the specified type by
     the given backend."""
 
     if issubclass(astype, np.ndarray):
@@ -283,7 +288,7 @@ def om_assert_matched_pair(a1, a2):
 
 def many_of_om(args: OM[C, V], innertype: Type = None) -> 'C[V]':
     """
-    Convert "one or more" (possibly a single V/DataLike) to List/C[V]. For cases
+    Convert "one or more" (possibly a single V/TensorLike) to List/C[V]. For cases
     where the element type V is also expected to be a container, provide the
     innertype argument so that the check here can be done properly.
 
@@ -302,7 +307,7 @@ def many_of_om(args: OM[C, V], innertype: Type = None) -> 'C[V]':
 def om_of_many(inputs: 'C[V]') -> OM[C, V]:
     """
     If there is more than 1 thing in container, will remain a container,
-    otherwise will become V (typically DataLike).
+    otherwise will become V (typically TensorLike).
     
     Opposite of `many_of_om`.
     """
@@ -408,24 +413,32 @@ class Lens(Generic[C, V]):  # Container C with values V
         )
 
 
+class Tensors(ABC):
+    """Model inputs or internal layer inputs."""
+
+    @abstractmethod
+    def as_model_inputs(self) -> 'ModelInputs':
+        pass
+
+
 @dataclass
-class AK:  # "Args and Kwargs"
+class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
     """Container for positional and keyword arguments."""
 
-    args: Inputs[DataLike] = field(default_factory=list)
+    args: Inputs[TensorLike] = field(default_factory=list)
     kwargs: KwargsLike = field(default_factory=dict)
 
     # lens focusing on the args field of this container.
-    lens_args: Lens['AK', Inputs[DataLike]] = Lens(
-        lambda s: s.args, lambda s, a: AK(a, s.kwargs)
+    lens_args: Lens['TensorAKs', Inputs[TensorLike]] = Lens(
+        lambda s: s.args, lambda s, a: TensorAKs(a, s.kwargs)
     )
 
     # lens focusing on the kwargs field of this container.
-    lens_kwargs: Lens[
-        'AK',
-        KwargsLike] = Lens(lambda s: s.kwargs, lambda s, kw: AK(s.args, kw))
+    lens_kwargs: Lens['TensorAKs', KwargsLike] = Lens(
+        lambda s: s.kwargs, lambda s, kw: TensorAKs(s.args, kw)
+    )
 
-    def __init__(self, args: List[DataLike] = [], kwargs: KwargsLike = {}):
+    def __init__(self, args: List[TensorLike] = [], kwargs: KwargsLike = {}):
         self.args = args
         self.kwargs = kwargs
 
@@ -441,10 +454,10 @@ class AK:  # "Args and Kwargs"
 
         return IterableUtils.then_(
             (
-                Lens.compose(AK.lens_args, l)
+                Lens.compose(TensorAKs.lens_args, l)
                 for l in Lens.lenses_elements(self.args)
             ), (
-                Lens.compose(AK.lens_kwargs, l)
+                Lens.compose(TensorAKs.lens_kwargs, l)
                 for l in Lens.lenses_values(self.kwargs)
             )
         )
@@ -482,15 +495,26 @@ class AK:  # "Args and Kwargs"
 
         return f(*self.args, **self.kwargs)
 
+    def as_model_inputs(self) -> 'ModelInputs':
+        return ModelInputs(self.args, self.kwargs)
 
-class ModelInputs(AK):
+
+class TensorArgs(TensorAKs):
+    """Container for layer input that contain only positional arguments.
+    Presently internal layers only accept positional arguments; keyword
+    arguments are only for model inputs."""
+
+    def __init__(self, args: List[TensorLike]):
+        super(TensorArgs, self).__init__(args, {})
+
+
+class ModelInputs(TensorAKs):
     """
     Positional and keyword arguments meant for model inputs.
-    """
 
-    @staticmethod
-    def of_ak(vals: AK):
-        return ModelInputs(vals.args, vals.kwargs)
+    This is a separate class instead of alias to be able to do isinstance checks
+    with it.
+    """
 
 
 def accepts_model_inputs(func: Callable) -> bool:
@@ -502,23 +526,22 @@ def accepts_model_inputs(func: Callable) -> bool:
 
 # Baselines are either explicit or computable from the same data as sent to DoI
 # __call__ .
-BaselineLike = Union[ArgsLike[DataLike],
-                     Callable[[ArgsLike[DataLike], Optional[ModelInputs]],
-                              ArgsLike[DataLike]]]
+BaselineLike = Union[ArgsLike[TensorLike],
+                     Callable[[ArgsLike[TensorLike], Optional[ModelInputs]],
+                              ArgsLike[TensorLike]]]
 
 # Interventions for fprop specifiy either activations at some non-InputCut or
 # model inputs if DoI is InputCut (these include both args and kwargs).
 # Additionally, some backends (tf1) provide interventions as kwargs instead.
-InterventionLike = Union[ArgsLike[DataLike], KwargsLike, ModelInputs]
+InterventionLike = Union[ArgsLike[TensorLike], KwargsLike, Tensors]
 
 
 def float_size(name: str) -> int:
     """Given a name of a floating type, guess its size in bytes."""
 
-    # TODO: Do this better.
-
-    # Different backends have their own type structures so this is hard to
-    # generalize. Just guessing based on bitlengths in names for now.
+    # TODO: Do this better. Different backends have their own type structures so
+    # this is hard to generalize. Just guessing based on bitlengths in names for
+    # now.
 
     if name == "double":
         name = "float64"

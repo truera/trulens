@@ -2,16 +2,15 @@ from contextlib import contextmanager
 from enum import Enum
 import importlib
 import os
-from re import S
 import traceback
-from typing import Iterable, Tuple, TypeVar
+from typing import Iterable, Tuple
 
 import numpy as np
 
 from trulens.utils import tru_logger
-from trulens.utils.typing import AK
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Tensors
 
 # Do not use directly, use get_backend
 _TRULENS_BACKEND_IMPL = None
@@ -86,9 +85,9 @@ def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
             call_after(state)
 
 
-def rebatch(vals: AK,
-            *extra_vals: Tuple[AK, ...],
-            batch_size=None) -> Iterable[Tuple[AK, ...]]:
+def rebatch(vals: Tensors,
+            *extra_vals: Tuple[Tensors, ...],
+            batch_size=None) -> Iterable[Tuple[Tensors, ...]]:
     """Rebatch the values in `vals` into bins of size `batch_size`. If more sets
     of values are given in `extra_vals`, those are batched into the same bins as
     well."""
@@ -117,7 +116,7 @@ def rebatch(vals: AK,
         yield tuple(map(lambda v: v.map(take(batch_idx)), all_vals))
 
 
-def tile(what: AK, onto: AK) -> AK:
+def tile(what: Tensors, onto: Tensors) -> Tensors:
     """Tiles elements of `what` some number of times so they have the same first
     dimension size as `onto`. Picks the number of tiles from the first of each
     container and skips tiling anything in `what` that does not have the same
