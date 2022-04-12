@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from functools import partial
-from logging import LogRecord
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import numpy as np
 import torch
@@ -18,14 +17,14 @@ from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
-from trulens.utils.typing import InterventionLike
 from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import nested_map
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
+from trulens.utils.typing import TensorArgs
+from trulens.utils.typing import TensorLike
 
 
 class PytorchModelWrapper(ModelWrapper):
@@ -182,7 +181,7 @@ class PytorchModelWrapper(ModelWrapper):
             names_and_anchors.append((cut.name, cut.anchor))
 
     def _extract_outputs_from_hooks(self, cut, hooks, output,
-                                    model_inputs) -> Inputs[DataLike]:
+                                    model_inputs) -> Inputs[TensorLike]:
 
         return_output = None
 
@@ -229,9 +228,9 @@ class PytorchModelWrapper(ModelWrapper):
         doi_cut: Cut,
         to_cut: Cut,
         attribution_cut: Cut,
-        intervention: InterventionLike,
+        intervention: TensorArgs,
         input_timestep: Optional[int] = None
-    ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
+    ) -> Tuple[Outputs[TensorLike], Outputs[TensorLike]]:
         """
         See ModelWrapper.fprop .
 
@@ -243,51 +242,12 @@ class PytorchModelWrapper(ModelWrapper):
 
         B = get_backend()
 
-        model_inputs = model_inputs.map(self._to_tensor)
-        intervention = intervention.map(self._to_tensor)
+        # This method operates on backend tensors.
+        model_inputs = model_inputs.map(B.as_tensor)
+        intervention = intervention.map(B.as_tensor)
 
         if isinstance(doi_cut, InputCut):
             model_inputs = intervention
-
-        else:  # doi_cut != InputCut
-            # Tile model inputs so that batch dim at cut matches intervention
-            # batch dim.
-
-            expected_dim = model_inputs.first().shape[0]
-            doi_resolution = int(intervention.first().shape[0] // expected_dim)
-
-            def tile_val(val):
-                """Tile the given value if expected_dim matches val's first
-                dimension. Otherwise return original val unchanged."""
-
-                if val.shape[0] != expected_dim:
-                    tru_logger.warn(
-                        f"Value {val} of shape {val.shape} is assumed to not be "
-                        f"batchable due to its shape not matching prior batchable "
-                        f"inputs of shape ({expected_dim},...). If this is "
-                        f"incorrect, make sure its first dimension matches prior "
-                        f"batchable inputs."
-                    )
-                    return val
-
-                tile_shape = [1 for _ in range(len(val.shape))]
-                tile_shape[0] = doi_resolution
-                repeat_shape = tuple(tile_shape)
-
-                with memory_suggestions(device=self.device):
-                    # likely place where memory issues might arise
-
-                    if isinstance(val, np.ndarray):
-                        return np.tile(val, repeat_shape)
-                    elif torch.is_tensor(val):
-                        return val.repeat(repeat_shape)
-                    else:
-                        raise ValueError(
-                            f"unhandled tensor type {val.__class__.__name__}"
-                        )
-
-            # tile args and kwargs if necessary
-            model_inputs = model_inputs.map(tile_val)
 
         if attribution_cut is not None:
             # Specify that we want to preserve gradient information.
@@ -384,19 +344,23 @@ class PytorchModelWrapper(ModelWrapper):
 
         with memory_suggestions(device=self.device):
             # Run the network.
-            self._model.eval()  # needed for determinism sometimes
-            output = model_inputs.call_on(self._model)
+            try:
+                self._model.eval()  # needed for determinism sometimes
+                output = model_inputs.call_on(self._model)
 
-        if isinstance(output, tuple):
-            output = output[0]
+                if isinstance(output, tuple):
+                    output = output[0]
 
-        if not isinstance(doi_cut, InputCut):
-            # Clean up in handle.
-            in_handle.remove()
+            finally:
+                # Need to clean these up even if memory_suggestions catches the error.
 
-        # Clean up out handles.
-        for handle in handles:
-            handle.remove()
+                if not isinstance(doi_cut, InputCut):
+                    # Clean up in handle.
+                    in_handle.remove()
+
+                # Clean up out handles.
+                for handle in handles:
+                    handle.remove()
 
         extract_args = dict(
             hooks=hooks, output=output, model_inputs=model_inputs
@@ -417,9 +381,9 @@ class PytorchModelWrapper(ModelWrapper):
 
     def _qoi_bprop(
         self, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: ModelInputs
+        attribution_cut: Cut, intervention: TensorArgs
     ) -> Outputs[
-            Inputs[DataLike]
+            Inputs[TensorLike]
     ]:  # one outer element per QoI, one inner element per attribution_cut input
 
         B = get_backend()
@@ -450,7 +414,7 @@ class PytorchModelWrapper(ModelWrapper):
         grads_list = [[] for _ in qois_out]
 
         for qoi_index, qoi_out in enumerate(qois_out):
-            qoi_out: DataLike = scalarize(qoi_out)
+            qoi_out: TensorLike = scalarize(qoi_out)
 
             try:
                 with memory_suggestions(device=self.device):
