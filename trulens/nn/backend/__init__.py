@@ -1,20 +1,159 @@
+from contextlib import contextmanager
 from enum import Enum
 import importlib
 import os
 import traceback
-from typing import TypeVar
+from typing import Iterable, Tuple
+
+import numpy as np
 
 from trulens.utils import tru_logger
+from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Tensors
 
 # Do not use directly, use get_backend
 _TRULENS_BACKEND_IMPL = None
 
 # Each backend module provides:
-Tensor = TypeVar("Tensor")
+# Tensor
 # dim_order
 # channel_axis
 # backend
 # floatX
+# floatX_size
+
+
+class OutOfMemory(RuntimeError):
+
+    def __init__(self, settings, **kwargs):
+        self.kwargs = kwargs
+        self.settings = settings
+
+    def __str__(self):
+        message = f"Ran out of memory ({self.kwargs}). Consider reducing memory-impactful parameters.\n"
+        for setting in self.settings:
+            message += "\t" + setting + "\n"
+
+        return message
+
+
+@contextmanager
+def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
+    """
+    Context manager to catch device memory issues and report better suggestions
+    than default exceptions.
+    
+    Usage:
+
+        with memory_suggestions("batch size=1000"):
+            # Something memory intensive that could be helped by reducing batch
+            # size.
+
+    This will catch out of memory issues and report the messages included in the
+    memory_suggestions calls as suggestions for parameters to adjust. You can
+    stack these and put suggestions indicative of memory-related settings like
+    batch sizes, intervention sizes, data types, etc. Inside the context,
+    another memory_suggestions can be used with more messages which will be
+    combined for reporting if memory does run out.
+
+    Before/after call are for extending this method with additional tasks like
+    default device handling in pytorch.
+    """
+
+    settings = om_of_many(list(settings))
+    state = None
+
+    try:
+        if call_before is not None:
+            state = call_before()
+
+        yield state
+
+    except OutOfMemory as e:
+        raise OutOfMemory(settings=e.settings + settings, **e.kwargs)
+
+    except RuntimeError as e:
+        if "out of memory" in str(e):  # cuda out of memory exception
+            raise OutOfMemory(settings=settings, **kwargs)
+        else:
+            # TODO: catch similar exceptions in other backends
+            raise
+
+    finally:
+        if call_after is not None:
+            call_after(state)
+
+
+def rebatch(vals: Tensors,
+            *extra_vals: Tuple[Tensors, ...],
+            batch_size=None) -> Iterable[Tuple[Tensors, ...]]:
+    """Rebatch the values in `vals` into bins of size `batch_size`. If more sets
+    of values are given in `extra_vals`, those are batched into the same bins as
+    well."""
+
+    original_batch_size = vals.first().shape[0]
+
+    if batch_size is None:
+        batch_size = original_batch_size
+
+    def take(batch_idx):
+
+        def f(val):
+            if val.shape[0] != original_batch_size:
+                return val
+            else:
+                return val[batch_idx * batch_size:(batch_idx + 1) * batch_size]
+
+        return f
+
+    all_vals: Tuple[ModelInputs, ...] = (vals,) + extra_vals
+
+    for batch_idx in range(0, 1 + original_batch_size // batch_size):
+        if batch_idx * batch_size >= original_batch_size:
+            continue
+
+        yield tuple(map(lambda v: v.map(take(batch_idx)), all_vals))
+
+
+def tile(what: Tensors, onto: Tensors) -> Tensors:
+    """Tiles elements of `what` some number of times so they have the same first
+    dimension size as `onto`. Picks the number of tiles from the first of each
+    container and skips tiling anything in `what` that does not have the same
+    first dimension as the first item in that container."""
+
+    inputs_dim = what.first().shape[0]
+    expected_dim = onto.first().shape[0]
+    doi_resolution = int(expected_dim // inputs_dim)
+
+    B = get_backend()
+
+    def tile_val(val):
+        """Tile the given value if expected_dim matches val's first
+        dimension. Otherwise return original val unchanged."""
+
+        if val.shape[0] != inputs_dim:
+            tru_logger.warn(
+                f"Value {val} of shape {val.shape} is assumed to not be "
+                f"batchable due to its shape not matching prior batchable "
+                f"values of shape ({inputs_dim},...). If this is "
+                f"incorrect, make sure its first dimension matches prior "
+                f"batchable values."
+            )
+            return val
+
+        tile_shape = [1 for _ in range(len(val.shape))]
+        tile_shape[0] = doi_resolution
+        repeat_shape = tuple(tile_shape)
+
+        if isinstance(val, np.ndarray):
+            return np.tile(val, repeat_shape)
+        elif B.is_tensor(val):
+            return B.tile(val, repeat_shape)
+        else:
+            raise ValueError(f"unhandled tensor type {val.__class__.__name__}")
+
+    return what.map(tile_val)
 
 
 class Backend(Enum):
@@ -119,6 +258,7 @@ _ALL_BACKEND_API_FUNCTIONS = [
     'random_normal_like',
     'clone',
     'stack',
+    'tile',
     'sign',
     'sigmoid',
     'softmax',
