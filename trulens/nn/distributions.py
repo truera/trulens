@@ -14,7 +14,7 @@ import numpy as np
 
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
-from trulens.utils.typing import accepts_model_inputs
+from trulens.utils.typing import accepts_model_inputs, render_object
 from trulens.utils.typing import BaselineLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import DataLike
@@ -46,6 +46,9 @@ class DoI(AbstractBaseClass):
                 to the latent space defined by the cut. 
         """
         self._cut = cut
+
+    def __str__(self):
+         return render_object(self, ['_cut'])
 
     @abstractmethod
     def __call__(
@@ -209,6 +212,9 @@ class LinearDoi(DoI):
     def resolution(self) -> int:
         return self._resolution
 
+    def __str__(self):
+         return render_object(self, ['_cut', '_baseline', '_resolution'])
+
     def __call__(
         self,
         z: DataLike,
@@ -307,6 +313,9 @@ class GaussianDoi(DoI):
         super(GaussianDoi, self).__init__(cut)
         self._var = var
         self._resolution = resolution
+
+    def __str__(self):
+         return render_object(self, ['_cut', '_var', '_resolution'])
 
     def __call__(self, z: DataLike) -> List[DataLike]:
         B = get_backend()

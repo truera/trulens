@@ -16,6 +16,7 @@ from typing import Any, Callable, List, Optional, Union
 from warnings import warn
 
 from trulens.nn.backend import get_backend
+from trulens.utils.typing import render_object
 
 # Define some type aliases.
 LayerIdentifier = Union[int, str, List[Union[int, str]]]
@@ -67,6 +68,9 @@ class Cut(object):
         self.name = name
         self.accessor = accessor
         self.anchor = anchor
+
+    def __str__(self):
+         return render_object(self, ['name', 'accessor', 'anchor'])
 
     def access_layer(self, layer: TensorLike) -> TensorLike:
         """

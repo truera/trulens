@@ -19,6 +19,7 @@ from inspect import signature
 from typing import Any, Callable, List, Optional, Union
 
 from trulens.nn.backend import get_backend
+from trulens.utils.typing import render_object
 
 # Define some type aliases.
 TensorLike = Union[Any, List[Union[Any]]]
@@ -39,6 +40,12 @@ class QoI(AbstractBaseClass):
     output behavior that the attributions describe.
     """
 
+    def __str__(self):
+        return render_object(self, [])
+
+    # TODO: Need to give a seperate value of y at target instance here since
+    # these are values are interventions. Cannot presently define a QoI that says:
+    # logits of the predicted class for each instance. 
     @abstractmethod
     def __call__(self, y: TensorLike) -> TensorLike:
         """
@@ -106,6 +113,9 @@ class MaxClassQoI(QoI):
         """
         self._axis = axis
         self.activation = activation
+
+    def __str__(self):
+        return render_object(self, ["_axis", "activation"])
 
     def __call__(self, y: TensorLike) -> TensorLike:
         self._assert_cut_contains_only_one_tensor(y)
@@ -224,6 +234,9 @@ class ClassQoI(QoI):
         """
         self.cl = cl
 
+    def __str__(self):
+        return render_object(self, ["cl"])
+
     def __call__(self, y: TensorLike) -> TensorLike:
         self._assert_cut_contains_only_one_tensor(y)
 
@@ -246,6 +259,9 @@ class ComparativeQoI(QoI):
         """
         self.cl1 = cl1
         self.cl2 = cl2
+
+    def __str__(self):
+        return render_object(self, ["cl1", "cl2"])
 
     def __call__(self, y: TensorLike) -> TensorLike:
 
@@ -375,4 +391,5 @@ class ClassSeqQoI(QoI):
         self._assert_cut_contains_only_one_tensor(y)
         assert get_backend().shape(y)[0] == len(self.seq_labels)
 
+        # TODO: fix bug:
         return y[:, seq_labels]
