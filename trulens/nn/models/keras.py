@@ -1,24 +1,23 @@
 import importlib
 import os
 import tempfile
-from typing import Optional
-
-import numpy as np
+from typing import Tuple
 
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
 from trulens.nn.models._model_base import ModelWrapper
+from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike
-from trulens.utils.typing import as_args
 from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import InterventionLike
-from trulens.utils.typing import KwargsLike
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Outputs
+from trulens.utils.typing import TensorArgs
+from trulens.utils.typing import TensorLike
 
 
 def import_keras_backend():
@@ -281,10 +280,14 @@ class KerasModelWrapper(ModelWrapper):
         self, model_args, intervention, doi_tensors
     ):
         input_tensors = self._get_layers(InputCut())
+
         if not all(elem in doi_tensors for elem in input_tensors):
+
             intervention_batch_doi_len = len(intervention[0])
             model_args_batch_len = len(model_args[0])
+
             doi_tensors.extend(input_tensors)
+
             if intervention_batch_doi_len != model_args_batch_len:
                 doi_factor = intervention_batch_doi_len / model_args_batch_len
                 model_args_expanded = [
@@ -294,63 +297,18 @@ class KerasModelWrapper(ModelWrapper):
                 intervention.extend(model_args_expanded)
             else:
                 intervention.extend(model_args)
+
         return doi_tensors, intervention
 
-    def fprop(
-        self,
-        model_args: ArgsLike,
-        model_kwargs: KwargsLike = {},
-        doi_cut: Optional[Cut] = None,
-        to_cut: Optional[Cut] = None,
-        attribution_cut: Optional[Cut] = None,
-        intervention: InterventionLike = None
-    ):
+    def _fprop(
+        self, *, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
+        attribution_cut: Cut, intervention: TensorArgs
+    ) -> Tuple[Outputs[TensorLike], Outputs[TensorLike]]:
         """
-        fprop Forward propagate the model
-
-        Parameters
-        ----------
-        model_args, model_kwargs: 
-            The args and kwargs given to the call method of a model.
-            This should represent the instances to obtain attributions for, 
-            assumed to be a *batched* input. if `self.model` supports evaluation 
-            on *data tensors*, the  appropriate tensor type may be used (e.g., 
-            Pytorch models may accept Pytorch tensors in additon to 
-            `np.ndarray`s). The shape of the inputs must match the input shape
-            of `self.model`.
-        doi_cut: Cut, optional
-            The Cut from which to begin propagation. The shape of `intervention`
-            must match the input shape of this layer. This is usually used to 
-            apply distributions of interest (DoI)
-        to_cut : Cut, optional
-            The Cut to return output activation tensors for. If `None`,
-            assumed to be just the final layer. By default None
-        attribution_cut : Cut, optional
-            An Cut to return activation tensors for. If `None`, 
-            assumed to be the doi_cut
-            
-        intervention : backend.Tensor or np.array
-            Input tensor to propagate through the model. If an np.array, 
-            will be converted to a tensor on the same device as the model.
-
-        Returns
-        -------
-        (list of backend.Tensor or np.ndarray)
-            A list of output activations are returned, keeping the same type as
-            the input. If `attribution_cut` is supplied, also return the cut 
-            activations.
+        See ModelWrapper.fprop .
         """
 
         B = get_backend()
-
-        doi_cut, to_cut, intervention, model_inputs = ModelWrapper._fprop_defaults(
-            self,
-            model_args=model_args,
-            model_kwargs=model_kwargs,
-            doi_cut=doi_cut,
-            to_cut=to_cut,
-            intervention=intervention
-        )
 
         # TODO: use the ModelInputs structure in this backend
         intervention = intervention.args
@@ -382,9 +340,6 @@ class KerasModelWrapper(ModelWrapper):
 
         # Finally, interventions override any previously set tensors.
         val_map.update({k: v for k, v in zip(doi_tensors, intervention)})
-        # val_map.update({_tensor(k): v for k, v in intervention.kwargs.items()})
-
-        # TODO: tiling
 
         all_inputs = list(val_map.keys())
         all_vals = list(val_map.values())
@@ -423,91 +378,36 @@ class KerasModelWrapper(ModelWrapper):
         for i in sorted(identity_map):
             out_vals.insert(i, intervention[identity_map[i]])
 
-        return out_vals
+        # internal _fprop returns two things in general
+        return (out_vals, None)
 
-    def qoi_bprop(
-        self,
-        qoi,
-        model_args,
-        model_kwargs={},
-        doi_cut=None,
-        to_cut=None,
-        attribution_cut=None,
-        intervention=None
+    def _qoi_bprop(
+        self, *, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
+        attribution_cut: Cut, intervention: TensorArgs
     ):
         """
-        qoi_bprop Run the model from the from_layer to the qoi layer
-            and give the gradients w.r.t `attribution_cut`
-
-        Parameters
-        ----------
-        model_args, model_kwargs: 
-            The args and kwargs given to the call method of a model.
-            This should represent the instances to obtain attributions for, 
-            assumed to be a *batched* input. if `self.model` supports evaluation 
-            on *data tensors*, the  appropriate tensor type may be used (e.g.,
-            Pytorch models may accept Pytorch tensors in additon to
-            `np.ndarray`s). The shape of the inputs must match the input shape
-            of `self.model`. 
-        
-        qoi: a Quantity of Interest
-            This method will accumulate all gradients of the qoi w.r.t
-            `attribution_cut`
-        doi_cut: Cut, 
-            If `doi_cut` is None, this refers to the InputCut. Cut from which to
-            begin propagation. The shape of `intervention` must match the output
-            shape of this layer.
-        attribution_cut: Cut, optional
-            If `attribution_cut` is None, this refers to the InputCut. The Cut
-            in which attribution will be calculated. This is generally taken
-            from the attribution slyce's attribution_cut.
-        to_cut: Cut, optional
-            If `to_cut` is None, this refers to the OutputCut. The Cut in which
-            qoi will be calculated. This is generally taken from the attribution
-            slice's `to_cut`.
-        intervention : backend.Tensor or np.array
-            Input tensor to propagate through the model. If an np.array,
-            will be converted to a tensor on the same device as the model.
-
-        Returns
-        -------
-        (backend.Tensor or np.ndarray)
-            The gradients of `qoi` w.r.t. `attribution_cut`, keeping same type
-            as the input.
+        See ModelWrapper.qoi_bprop .
         """
-
-        if attribution_cut is None:
-            attribution_cut = InputCut()
-        if to_cut is None:
-            to_cut = OutputCut()
-
-        doi_cut = doi_cut if doi_cut else InputCut()
 
         attribution_tensors = self._get_layers(attribution_cut)
         to_tensors = self._get_layers(to_cut)
         doi_tensors = self._get_layers(doi_cut)
-        if intervention is None:
-            intervention = model_args
 
-        intervention = intervention if isinstance(
-            intervention, DATA_CONTAINER_TYPE
-        ) else [intervention]
+        to_tensors = om_of_many(to_tensors)
+        Q = qoi._wrap_public_call(to_tensors)
 
-        Q = qoi(to_tensors[0]) if len(to_tensors) == 1 else qoi(to_tensors)
+        int_copy = list(x for x in intervention.args)
+        doi_copy = list(x for x in doi_tensors)
 
-        doi_tensors, intervention = self._prepare_intervention_with_input(
-            model_args, intervention, doi_tensors
+        doi_tensors, intervention_args = self._prepare_intervention_with_input(
+            model_inputs.args, int_copy, doi_copy
         )
 
         gradients = [
             self.keras.backend.function(
                 doi_tensors,
                 get_backend().gradient(q, attribution_tensors)
-            )(intervention) for q in Q
-        ] if isinstance(Q,
-                        DATA_CONTAINER_TYPE) else self.keras.backend.function(
-                            doi_tensors,
-                            get_backend().gradient(Q, attribution_tensors)
-                        )(intervention)
+            )(intervention_args) for q in Q
+        ]
 
-        return gradients[0] if len(gradients) == 1 else gradients
+        return gradients
