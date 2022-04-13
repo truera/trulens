@@ -4,15 +4,18 @@ import sys
 sys.path.insert(0, "..")
 
 import torch
-
 from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
-from trulens.visualizations import NLP, HTML
+
+from trulens.nn.attribution import Cut
+from trulens.nn.attribution import IntegratedGradients
+from trulens.nn.attribution import OutputCut
 from trulens.nn.models import get_model_wrapper
 from trulens.nn.quantities import ClassQoI
-from trulens.nn.attribution import IntegratedGradients
-from trulens.nn.attribution import Cut, OutputCut
 from trulens.utils.typing import ModelInputs
+from trulens.visualizations import HTML
+from trulens.visualizations import NLP
+
 
 # Wrap all of the necessary components.
 class TwitterSentiment:
@@ -30,13 +33,19 @@ class TwitterSentiment:
     NEUTRAL = labels.index('neutral')
     POSITIVE = labels.index('positive')
 
+
 task = TwitterSentiment()
 
-sentences = ["I'm so happy!", "I'm so sad!", "I cannot tell whether I should be happy or sad!", "meh"]
+sentences = [
+    "I'm so happy!", "I'm so sad!",
+    "I cannot tell whether I should be happy or sad!", "meh"
+]
 
 # Input sentences need to be tokenized first.
 
-inputs = task.tokenizer(sentences, padding=True, return_tensors="pt").to(task.device) # pt refers to pytorch tensor
+inputs = task.tokenizer(
+    sentences, padding=True, return_tensors="pt"
+).to(task.device)  # pt refers to pytorch tensor
 
 # The tokenizer gives us vocabulary indexes for each input token (in this case,
 # words and some word parts like the "'m" part of "I'm" are tokens).
@@ -61,12 +70,16 @@ predictions = [task.labels[i] for i in outputs.logits.argmax(axis=1)]
 for sentence, logits, prediction in zip(sentences, outputs.logits, predictions):
     print(logits.to('cpu').detach().numpy(), prediction, sentence)
 
-task.wrapper = get_model_wrapper(task.model, input_shape=(None, task.tokenizer.model_max_length), device=task.device)
+task.wrapper = get_model_wrapper(
+    task.model,
+    input_shape=(None, task.tokenizer.model_max_length),
+    device=task.device
+)
 
 task.wrapper.print_layer_names()
 
 infl_max = IntegratedGradients(
-    model = task.wrapper,
+    model=task.wrapper,
     doi_cut=Cut('roberta_embeddings_word_embeddings'),
     qoi_cut=OutputCut(accessor=lambda o: o['logits'])
 )
@@ -74,7 +87,7 @@ infl_max = IntegratedGradients(
 # Alternatively we can look at a particular class:
 
 infl_positive = IntegratedGradients(
-    model = task.wrapper,
+    model=task.wrapper,
     doi_cut=Cut('roberta_embeddings_word_embeddings'),
     qoi=ClassQoI(task.POSITIVE),
     qoi_cut=OutputCut(accessor=lambda o: o['logits'])
@@ -102,15 +115,14 @@ V = NLP(
     output=h,
     labels=task.labels,
     decode=lambda x: task.tokenizer.decode(x),
-    tokenize=lambda sentences: ModelInputs(kwargs=task.tokenizer(sentences, padding=True, return_tensors='pt')).map(lambda t: t.to(task.device)),
+    tokenize=lambda sentences: ModelInputs(
+        kwargs=task.tokenizer(sentences, padding=True, return_tensors='pt')
+    ).map(lambda t: t.to(task.device)),
     # huggingface models can take as input the keyword args as per produced by their tokenizers.
-
     input_accessor=lambda x: x.kwargs['input_ids'],
     # for huggingface models, input/token ids are under input_ids key in the input dictionary
-
     output_accessor=lambda x: x['logits'],
     # and logits under 'logits' key in the output dictionary
-
     hidden_tokens=set([task.tokenizer.pad_token_id])
     # do not display these tokens
 )

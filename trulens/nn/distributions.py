@@ -14,7 +14,7 @@ import numpy as np
 
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
-from trulens.utils.typing import accepts_model_inputs, render_object
+from trulens.utils.typing import accepts_model_inputs
 from trulens.utils.typing import BaselineLike
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import many_of_om
@@ -22,6 +22,7 @@ from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import nested_cast
 from trulens.utils.typing import OM
 from trulens.utils.typing import om_of_many
+from trulens.utils.typing import render_object
 from trulens.utils.typing import TensorLike
 from trulens.utils.typing import Uniform
 
@@ -53,7 +54,7 @@ class DoI(AbstractBaseClass):
         self._cut = cut
 
     def __str__(self):
-         return render_object(self, ['_cut'])
+        return render_object(self, ['_cut'])
 
     def _wrap_public_call(
         self, z: Inputs[TensorLike], *, model_inputs: ModelInputs
@@ -275,7 +276,7 @@ class LinearDoi(DoI):
         return self._resolution
 
     def __str__(self):
-         return render_object(self, ['_cut', '_baseline', '_resolution'])
+        return render_object(self, ['_cut', '_baseline', '_resolution'])
 
     def __call__(
         self,
@@ -390,7 +391,7 @@ class GaussianDoi(DoI):
         self._resolution = resolution
 
     def __str__(self):
-         return render_object(self, ['_cut', '_var', '_resolution'])
+        return render_object(self, ['_cut', '_var', '_resolution'])
 
     def __call__(self, z: OM[Inputs,
                              TensorLike]) -> OM[Inputs, Uniform[TensorLike]]:

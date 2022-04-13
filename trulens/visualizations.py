@@ -16,6 +16,8 @@ from abc import abstractmethod
 import tempfile
 from typing import Callable, Iterable, List, Optional, Set, Tuple, TypeVar
 
+import numpy as np
+
 from trulens.nn.attribution import AttributionMethod
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
@@ -24,9 +26,11 @@ from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import InternalChannelQoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
-from trulens.utils import tru_logger, try_import
+from trulens.utils import tru_logger
+from trulens.utils import try_import
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import Tensor
+from trulens.utils.typing import Tensors
 
 # TODO: Unify the common things across image and NLP visualizations.
 
@@ -1527,9 +1531,11 @@ class NLP(object):
         B = get_backend()
 
         given_inputs = self.tokenize(texts)
-        inputs = ModelInputs(
-            kwargs=given_inputs
-        ) if not isinstance(given_inputs, ModelInputs) else given_inputs
+
+        if isinstance(given_inputs, Tensors):
+            inputs = given_inputs.as_model_inputs()
+        else:
+            inputs = ModelInputs(kwargs=given_inputs)
 
         outputs = [None] * len(texts)
         attributions = [None] * len(texts)
