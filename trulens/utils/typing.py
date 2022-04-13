@@ -535,6 +535,7 @@ BaselineLike = Union[ArgsLike[TensorLike],
 # Additionally, some backends (tf1) provide interventions as kwargs instead.
 InterventionLike = Union[ArgsLike[TensorLike], KwargsLike, Tensors]
 
+
 def render_object(obj, keys=None):
     """Render an instance of some class in a concise manner."""
 
@@ -550,6 +551,7 @@ def render_object(obj, keys=None):
     temp += ",".join(vals) + ")"
 
     return temp
+
 
 def float_size(name: str) -> int:
     """Given a name of a floating type, guess its size in bytes."""

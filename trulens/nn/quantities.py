@@ -19,13 +19,14 @@ from inspect import signature
 from typing import Callable, List, Optional, Union
 
 from trulens.nn.backend import get_backend
-from trulens.utils.typing import TensorLike, render_object
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import many_of_om
 from trulens.utils.typing import OM
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
+from trulens.utils.typing import render_object
 from trulens.utils.typing import Tensor
+from trulens.utils.typing import TensorLike
 
 
 class QoiCutSupportError(ValueError):
@@ -48,7 +49,7 @@ class QoI(AbstractBaseClass):
 
     # TODO: Need to give a seperate value of y at target instance here since
     # these are values are interventions. Cannot presently define a QoI that says:
-    # logits of the predicted class for each instance. 
+    # logits of the predicted class for each instance.
 
     def _wrap_public_call(self, y: Outputs[Tensor]) -> Outputs[Tensor]:
         """
