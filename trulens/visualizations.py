@@ -28,7 +28,7 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.utils import tru_logger
 from trulens.utils import try_import
-from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import ModelInputs, nested_cast
 from trulens.utils.typing import Tensor
 from trulens.utils.typing import Tensors
 
@@ -1479,7 +1479,7 @@ class NLP(object):
         sent = []
 
         if self.wrapper is not None:
-            logits = logits.to('cpu').detach().numpy()
+            logits = B.as_array(logits)
             pred = logits.argmax()
 
             sent += [self.output.scores(logits, self.labels)]
@@ -1511,7 +1511,7 @@ class NLP(object):
                 cap = self.output.big
 
             if attr is not None:
-                mag = self.attr_aggregate(attr)
+                mag = B.as_array(self.attr_aggregate(attr))
                 sent += [
                     cap(
                         self.output.magnitude_colored(
@@ -1554,8 +1554,11 @@ class NLP(object):
                     f"Outputs ({logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor."
                 )
 
+            # logits = nested_cast(backend=B, args=logits, astype=np.ndarray)
+
         if attributor is not None:
             attributions = inputs.call_on(attributor.attributions)
+            # attributions = nested_cast(backend=B, args=attributions, astype=np.ndarray)
 
         input_ids = given_inputs
         if self.input_accessor is not None:
