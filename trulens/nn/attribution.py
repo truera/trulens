@@ -167,7 +167,8 @@ class InternalInfluence(AttributionMethod):
         cuts: SliceLike,
         qoi: QoiLike,
         doi: DoiLike,
-        multiply_activation: bool = True
+        multiply_activation: bool = True,
+        return_grads:bool = False
     ):
         """
         Parameters:
@@ -257,6 +258,7 @@ class InternalInfluence(AttributionMethod):
         self.qoi = InternalInfluence.__get_qoi(qoi)
         self.doi = InternalInfluence.__get_doi(doi, cut=self.slice.from_cut)
         self._do_multiply = multiply_activation
+        self._return_grads = return_grads
 
     def attributions(
         self, *model_args: ArgsLike, **model_kwargs: KwargsLike
@@ -326,7 +328,6 @@ class InternalInfluence(AttributionMethod):
             qoi_grads, lambda grad: B.
             mean(B.reshape(grad, (n_doi, -1) + grad.shape[1:]), axis=0)
         )
-
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
             with memory_suggestions(param_msgs):
@@ -357,7 +358,11 @@ class InternalInfluence(AttributionMethod):
         attrs: OM[Outputs, OM[Inputs]] = om_of_many(attrs)
 
         # Cast to the same data type as provided inputs.
+        if self._return_grads:
+            return nested_cast(backend=B, astype=return_type, args=attrs), nested_cast(backend=B, astype=return_type, args=qoi_grads)
         return nested_cast(backend=B, astype=return_type, args=attrs)
+
+
 
     @staticmethod
     def __get_qoi(qoi_arg):
