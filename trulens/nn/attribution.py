@@ -168,7 +168,7 @@ class InternalInfluence(AttributionMethod):
         qoi: QoiLike,
         doi: DoiLike,
         multiply_activation: bool = True,
-        return_grads:bool = False
+        return_grads: bool = False
     ):
         """
         Parameters:
@@ -359,10 +359,12 @@ class InternalInfluence(AttributionMethod):
 
         # Cast to the same data type as provided inputs.
         if self._return_grads:
-            return nested_cast(backend=B, astype=return_type, args=attrs), nested_cast(backend=B, astype=return_type, args=qoi_grads)
+            return nested_cast(
+                backend=B, astype=return_type, args=attrs
+            ), nested_cast(
+                backend=B, astype=return_type, args=qoi_grads
+            )
         return nested_cast(backend=B, astype=return_type, args=attrs)
-
-
 
     @staticmethod
     def __get_qoi(qoi_arg):
