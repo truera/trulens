@@ -18,6 +18,8 @@ import numpy as np
 
 from trulens.nn.backend import get_backend
 from trulens.nn.backend import memory_suggestions
+from trulens.nn.backend import rebatch
+from trulens.nn.backend import tile
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
@@ -31,9 +33,9 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
+from trulens.utils import tru_logger
 from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike
 from trulens.utils.typing import ModelInputs
@@ -42,6 +44,8 @@ from trulens.utils.typing import nested_map
 from trulens.utils.typing import OM
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
+from trulens.utils.typing import TensorArgs
+from trulens.utils.typing import TensorLike
 from trulens.utils.typing import Uniform
 
 # Attribution-related type aliases.
@@ -61,15 +65,27 @@ class AttributionMethod(AbstractBaseClass):
     """
 
     @abstractmethod
-    def __init__(self, model: ModelWrapper, *args, **kwargs):
+    def __init__(
+        self, model: ModelWrapper, rebatch_size: int = None, *args, **kwargs
+    ):
         """
         Abstract constructor.
 
         Parameters:
-            model :
+            model: ModelWrapper
                 Model for which attributions are calculated.
+
+            rebatch_size: int (optional)
+                Will rebatch instances to this size if given. This may be
+                required for GPU usage if using a DoI which produces multiple
+                instances per user-provided instance. Many valued DoIs will
+                expand the tensors sent to each layer to original_batch_size *
+                doi_size. The rebatch size will break up original_batch_size *
+                doi_size into rebatch_size chunks to send to model.
         """
         self._model = model
+
+        self.rebatch_size = rebatch_size
 
     @property
     def model(self) -> ModelWrapper:
@@ -81,7 +97,8 @@ class AttributionMethod(AbstractBaseClass):
     @abstractmethod
     def attributions(
         self, *model_args: ArgsLike, **model_kwargs: KwargsLike
-    ) -> Union[DataLike, ArgsLike[DataLike], ArgsLike[ArgsLike[DataLike]]]:
+    ) -> Union[TensorLike, ArgsLike[TensorLike],
+               ArgsLike[ArgsLike[TensorLike]]]:
         """
         Returns attributions for the given input. Attributions are in the same
         shape as the layer that attributions are being generated for. 
@@ -100,7 +117,7 @@ class AttributionMethod(AbstractBaseClass):
         a single point, thus being a good measure of model sensitivity. 
 
         Parameters:
-            model_args, model_kwargs: 
+            model_args: ArgsLike, model_kwargs: KwargsLike
                 The args and kwargs given to the call method of a model. This
                 should represent the records to obtain attributions for, assumed
                 to be a *batched* input. if `self.model` supports evaluation on
@@ -169,6 +186,8 @@ class InternalInfluence(AttributionMethod):
         doi: DoiLike,
         multiply_activation: bool = True,
         return_grads: bool = False
+        *args,
+        **kwargs
     ):
         """
         Parameters:
@@ -252,7 +271,7 @@ class InternalInfluence(AttributionMethod):
                 activation, thus converting from "*influence space*" to 
                 "*attribution space*."
         """
-        super().__init__(model)
+        super().__init__(model, *args, **kwargs)
 
         self.slice = InternalInfluence.__get_slice(cuts)
         self.qoi = InternalInfluence.__get_qoi(qoi)
@@ -262,7 +281,8 @@ class InternalInfluence(AttributionMethod):
 
     def attributions(
         self, *model_args: ArgsLike, **model_kwargs: KwargsLike
-    ) -> Union[DataLike, ArgsLike[DataLike], ArgsLike[ArgsLike[DataLike]]]:
+    ) -> Union[TensorLike, ArgsLike[TensorLike],
+               ArgsLike[ArgsLike[TensorLike]]]:
         # NOTE: not symbolic
 
         B = get_backend()
@@ -303,29 +323,70 @@ class InternalInfluence(AttributionMethod):
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
         n_doi = len(D[0])
+        rebatch_size = self.rebatch_size
+        if rebatch_size is None:
+            rebatch_size = n_doi
 
         D = self.__concatenate_doi(D)
+
+        intervention = TensorArgs(args=D)
+
+        model_inputs_expanded = tile(what=model_inputs, onto=intervention)
+
         # Create a message for out-of-memory errors regarding doi_size.
         # TODO: Generalize this message to doi other than LinearDoI:
         doi_size_msg = f"distribution of interest size = {n_doi}; consider reducing intervention resolution."
 
-        # Calculate the gradient of each of the points in the DoI.
-        with memory_suggestions(param_msgs + [doi_size_msg]
-                               ):  # Handles out-of-memory messages.
-            qoi_grads: Outputs[Inputs[DataLike]] = self.model._qoi_bprop(
-                qoi=self.qoi,
-                model_inputs=model_inputs,
-                attribution_cut=self.slice.from_cut,
-                to_cut=self.slice.to_cut,
-                intervention=ModelInputs(args=D, kwargs={}),
-                doi_cut=doi_cut
-            )
+        combined_batch_size = n_doi * batch_size
+        combined_batch_msg = f"combined batch size = {combined_batch_size}; consider reducing batch size, intervention size"
 
-        qoi_grads = nested_map(qoi_grads, B.as_array)
+        rebatch_size_msg = f"rebatch_size = {rebatch_size}; consider reducing this AttributionMethod constructor parameter (default is same as combined batch size)."
+
+        # Calculate the gradient of each of the points in the DoI.
+        with memory_suggestions(
+                param_msgs +
+            [doi_size_msg, combined_batch_msg, rebatch_size_msg]
+        ):  # Handles out-of-memory messages.
+            qoi_grads_expanded: List[Outputs[Inputs[TensorLike]]] = []
+
+            for inputs_batch, intervention_batch in rebatch(
+                    model_inputs_expanded, intervention,
+                    batch_size=rebatch_size):
+
+                qoi_grads_expanded_batch: Outputs[
+                    Inputs[TensorLike]] = self.model._qoi_bprop(
+                        qoi=self.qoi,
+                        model_inputs=inputs_batch,
+                        attribution_cut=self.slice.from_cut,
+                        to_cut=self.slice.to_cut,
+                        intervention=intervention_batch,
+                        doi_cut=doi_cut
+                    )
+
+                # important to cast to numpy inside loop:
+                qoi_grads_expanded.append(
+                    nested_map(qoi_grads_expanded_batch, B.as_array)
+                )
+
+        num_outputs = len(qoi_grads_expanded[0])
+        num_inputs = len(qoi_grads_expanded[0][0])
+
+        transpose = [
+            [[] for _ in range(num_inputs)] for _ in range(num_outputs)
+        ]
+
+        for o in range(num_outputs):
+            for i in range(num_inputs):
+                for qoi_grads_batch in qoi_grads_expanded:
+                    transpose[o][i].append(qoi_grads_batch[o][i])
+
+        qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(
+            transpose, np.concatenate, nest=2
+        )
 
         # TODO: Below is done in numpy.
-        attrs: Outputs[Inputs[DataLike]] = nested_map(
-            qoi_grads, lambda grad: B.
+        attrs: Outputs[Inputs[TensorLike]] = nested_map(
+            qoi_grads_expanded, lambda grad: B.
             mean(B.reshape(grad, (n_doi, -1) + grad.shape[1:]), axis=0)
         )
         # Multiply by the activation multiplier if specified.
@@ -336,10 +397,10 @@ class InternalInfluence(AttributionMethod):
                     doi_cut=InputCut(),
                     attribution_cut=None,
                     to_cut=self.slice.from_cut,
-                    intervention=model_inputs
+                    intervention=model_inputs  # intentional
                 )[0]
 
-            mults: Inputs[DataLike
+            mults: Inputs[TensorLike
                          ] = self.doi._wrap_public_get_activation_multiplier(
                              z_val, model_inputs=model_inputs
                          )
@@ -354,7 +415,7 @@ class InternalInfluence(AttributionMethod):
             ]
 
         attrs: Outputs[OM[Inputs,
-                          DataLike]] = [om_of_many(attr) for attr in attrs]
+                          TensorLike]] = [om_of_many(attr) for attr in attrs]
         attrs: OM[Outputs, OM[Inputs]] = om_of_many(attrs)
 
         # Cast to the same data type as provided inputs.
@@ -504,8 +565,8 @@ class InternalInfluence(AttributionMethod):
             raise ValueError('Unrecognized argument type for cut')
 
     @staticmethod
-    def __concatenate_doi(D: Inputs[Uniform[DataLike]]) -> Inputs[DataLike]:
-        # Returns one DataLike for each model input.
+    def __concatenate_doi(D: Inputs[Uniform[TensorLike]]) -> Inputs[TensorLike]:
+        # Returns one TensorLike for each model input.
         if len(D[0]) == 0:
             raise ValueError(
                 'Got empty distribution of interest. `DoI` must return at '
@@ -540,7 +601,9 @@ class InputAttribution(InternalInfluence):
         qoi: QoiLike = 'max',
         doi_cut: CutLike = None,  # see WARNING-LOAD-INIT
         doi: DoiLike = 'point',
-        multiply_activation: bool = True
+        multiply_activation: bool = True,
+        *args,
+        **kwargs
     ):
         """
         Parameters:
@@ -622,7 +685,9 @@ class InputAttribution(InternalInfluence):
             model, (doi_cut, qoi_cut),
             qoi,
             doi,
-            multiply_activation=multiply_activation
+            multiply_activation=multiply_activation,
+            *args,
+            **kwargs
         )
 
 
@@ -664,7 +729,9 @@ class IntegratedGradients(InputAttribution):
         resolution: int = 50,
         doi_cut=None,  # see WARNING-LOAD-INIT
         qoi='max',
-        qoi_cut=None  # see WARNING-LOAD-INIT
+        qoi_cut=None,  # see WARNING-LOAD-INIT
+        *args,
+        **kwargs
     ):
         """
         Parameters:
@@ -695,5 +762,7 @@ class IntegratedGradients(InputAttribution):
             qoi=qoi,
             doi_cut=doi_cut,
             doi=LinearDoi(baseline, resolution, cut=doi_cut),
-            multiply_activation=True
+            multiply_activation=True,
+            *args,
+            **kwargs
         )

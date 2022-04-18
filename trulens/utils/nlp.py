@@ -4,9 +4,9 @@ from typing import Callable, Optional, Set
 
 from trulens.nn.backend import get_backend
 from trulens.utils.typing import BaselineLike
-from trulens.utils.typing import DataLike
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import Tensor
+from trulens.utils.typing import TensorLike
 
 
 def token_baseline(
@@ -35,7 +35,7 @@ def token_baseline(
 
     B = get_backend()
 
-    def base_ids(z: DataLike = None, model_inputs: ModelInputs = None):
+    def base_ids(z: TensorLike = None, model_inputs: ModelInputs = None):
         # :baseline_like
         input_ids = B.clone(input_accessor(model_inputs))
 
@@ -50,7 +50,7 @@ def token_baseline(
     if ids_to_embeddings is None:
         return base_ids
 
-    def base_embeddings(z: DataLike = None, model_inputs: ModelInputs = None):
+    def base_embeddings(z: TensorLike = None, model_inputs: ModelInputs = None):
         # :baseline_like
         input_ids = base_ids(z, model_inputs)
 

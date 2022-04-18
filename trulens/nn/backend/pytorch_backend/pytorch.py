@@ -3,12 +3,6 @@
 # pylint: disable=no-member
 # pylint: disable=not-callable
 
-# TODO: Some of the backend methods accept and process numpy arrays instead of
-# pytorch tensors. This seems like a convenience but complicates reasoning.
-# Remove the convenience and fix users to not rely on it.
-
-from contextlib import contextmanager
-
 import numpy as np
 import torch
 
@@ -123,7 +117,6 @@ def as_array(t, dtype=None):
         Same contents as t
     """
 
-    # TODO: remove handling of numpy input
     if isinstance(t, np.ndarray):
         return t if dtype is None else t.astype(dtype)
 
@@ -150,6 +143,9 @@ def as_tensor(x, dtype=None, device=None):
     backend.Tensor
         Same contents as x
     """
+    if is_tensor(x):
+        return x
+
     if dtype is None and x.dtype.kind == 'f':
         dtype = floatX
 
@@ -476,6 +472,12 @@ def stack(t):
 
     """
     return torch.stack(t)
+
+
+def tile(t: Tensor, shape):
+    """ Same as np.tile ."""
+
+    return t.repeat(shape)
 
 
 def softmax(t, axis=-1):
