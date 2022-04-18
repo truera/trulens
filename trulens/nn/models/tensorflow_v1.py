@@ -1,6 +1,5 @@
-from re import L
 import sys
-from typing import Dict, Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -14,13 +13,15 @@ from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import DataLike
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import Tensor
+from trulens.utils.typing import TensorAKs
+from trulens.utils.typing import TensorArgs
+from trulens.utils.typing import TensorLike
 
 
 class TensorflowModelWrapper(ModelWrapper):
@@ -171,17 +172,17 @@ class TensorflowModelWrapper(ModelWrapper):
         if model_kwargs is not None:
             feed_dict.update({_tensor(k): v for k, v in model_kwargs.items()})
 
-        # Keep track which feed tensors came from intervention (as opposed to model inputs) so that
-        # ones from model inputs that were not overriden by intervention can be tiled.
+        # Keep track which feed tensors came from intervention (as opposed to model inputs).
         intervention_dict = dict()
 
         # Convert `intervention` to a list of inputs if it isn't already.
+        # TODO: This should have been done in the base wrapper.
         if intervention is not None:
             if isinstance(intervention, dict):
                 args = []
                 kwargs = intervention
 
-            elif isinstance(intervention, ModelInputs):
+            elif isinstance(intervention, TensorAKs):
                 args = intervention.args
                 kwargs = intervention.kwargs
 
@@ -198,32 +199,10 @@ class TensorflowModelWrapper(ModelWrapper):
                 {k: v for k, v in zip(doi_tensors[0:len(args)], args)}
             )
             intervention_dict.update({_tensor(k): v for k, v in kwargs.items()})
+
             feed_dict.update(intervention_dict)
 
             intervention = list(args) + [feed_dict[_tensor(k)] for k in kwargs]
-
-            doi_repeated_batch_size = intervention[0].shape[0]
-            expected_dim = None
-
-            # tile the feed tensors that came from model input arguments
-            # TODO(piotrm): figure out how to abstract this out from the backends
-            for k, val in feed_dict.items():
-                if k in intervention_dict:
-                    continue
-
-                if isinstance(val, np.ndarray):
-                    doi_resolution = int(doi_repeated_batch_size / val.shape[0])
-                    if expected_dim is None:
-                        expected_dim = val.shape[0]
-
-                    if expected_dim == val.shape[0]:
-                        tile_shape = [1] * len(val.shape)
-                        tile_shape[0] = doi_resolution
-                        feed_dict[k] = np.tile(val, tuple(tile_shape))
-                    else:
-                        tru_logger.warn(
-                            f"Value {val} of shape {val.shape} is assumed to not be batchable due to its shape not matching prior batchable inputs of shape ({expected_dim}, ...). If this is incorrect, make sure its first dimension matches prior batchable inputs."
-                        )
 
         elif intervention is None and doi_tensors == self._inputs:
             intervention = [feed_dict[key_tensor] for key_tensor in doi_tensors]
@@ -236,8 +215,8 @@ class TensorflowModelWrapper(ModelWrapper):
 
     def _fprop(
         self, *, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: ModelInputs
-    ) -> Tuple[Outputs[DataLike], Outputs[DataLike]]:
+        attribution_cut: Cut, intervention: TensorArgs
+    ) -> Tuple[Outputs[TensorLike], Outputs[TensorLike]]:
         """
         See ModelWrapper.fprop .
         """
@@ -308,8 +287,8 @@ class TensorflowModelWrapper(ModelWrapper):
 
     def _qoi_bprop(
         self, *, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: ModelInputs
-    ) -> Outputs[Inputs[DataLike]]:
+        attribution_cut: Cut, intervention: TensorArgs
+    ) -> Outputs[Inputs[TensorLike]]:
         """
         See ModelWrapper.qoi_bprop .
         """
