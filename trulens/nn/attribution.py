@@ -185,7 +185,7 @@ class InternalInfluence(AttributionMethod):
         qoi: QoiLike,
         doi: DoiLike,
         multiply_activation: bool = True,
-        return_grads: bool = False
+        return_grads: bool = False,
         *args,
         **kwargs
     ):
