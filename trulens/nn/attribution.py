@@ -423,7 +423,7 @@ class InternalInfluence(AttributionMethod):
             return nested_cast(
                 backend=B, astype=return_type, args=attrs
             ), nested_cast(
-                backend=B, astype=return_type, args=qoi_grads
+                backend=B, astype=return_type, args=qoi_grads_expanded
             )
         return nested_cast(backend=B, astype=return_type, args=attrs)
 
