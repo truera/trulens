@@ -323,11 +323,12 @@ class InternalInfluence(AttributionMethod):
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
         n_doi = len(D[0])
+        
+        D = self.__concatenate_doi(D)
+
         rebatch_size = self.rebatch_size
         if rebatch_size is None:
-            rebatch_size = n_doi
-
-        D = self.__concatenate_doi(D)
+            rebatch_size = len(D[0])
 
         intervention = TensorArgs(args=D)
 
@@ -423,7 +424,7 @@ class InternalInfluence(AttributionMethod):
             return nested_cast(
                 backend=B, astype=return_type, args=attrs
             ), nested_cast(
-                backend=B, astype=return_type, args=qoi_grads
+                backend=B, astype=return_type, args=qoi_grads_expanded
             )
         return nested_cast(backend=B, astype=return_type, args=attrs)
 
