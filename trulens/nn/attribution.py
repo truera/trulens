@@ -185,6 +185,7 @@ class InternalInfluence(AttributionMethod):
         qoi: QoiLike,
         doi: DoiLike,
         multiply_activation: bool = True,
+        return_grads: bool = False,
         *args,
         **kwargs
     ):
@@ -276,6 +277,7 @@ class InternalInfluence(AttributionMethod):
         self.qoi = InternalInfluence.__get_qoi(qoi)
         self.doi = InternalInfluence.__get_doi(doi, cut=self.slice.from_cut)
         self._do_multiply = multiply_activation
+        self._return_grads = return_grads
 
     def attributions(
         self, *model_args: ArgsLike, **model_kwargs: KwargsLike
@@ -321,11 +323,12 @@ class InternalInfluence(AttributionMethod):
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
         n_doi = len(D[0])
+        
+        D = self.__concatenate_doi(D)
+
         rebatch_size = self.rebatch_size
         if rebatch_size is None:
-            rebatch_size = n_doi
-
-        D = self.__concatenate_doi(D)
+            rebatch_size = len(D[0])
 
         intervention = TensorArgs(args=D)
 
@@ -387,7 +390,6 @@ class InternalInfluence(AttributionMethod):
             qoi_grads_expanded, lambda grad: B.
             mean(B.reshape(grad, (n_doi, -1) + grad.shape[1:]), axis=0)
         )
-
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
             with memory_suggestions(param_msgs):
@@ -418,6 +420,12 @@ class InternalInfluence(AttributionMethod):
         attrs: OM[Outputs, OM[Inputs]] = om_of_many(attrs)
 
         # Cast to the same data type as provided inputs.
+        if self._return_grads:
+            return nested_cast(
+                backend=B, astype=return_type, args=attrs
+            ), nested_cast(
+                backend=B, astype=return_type, args=qoi_grads_expanded
+            )
         return nested_cast(backend=B, astype=return_type, args=attrs)
 
     @staticmethod
