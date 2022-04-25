@@ -1085,6 +1085,21 @@ class ColorMap:
 
         return (red, green, blue, 1.0)
 
+def arrays_different(a: np.ndarray, b: np.ndarray):
+    """
+    Given two arrays of potentially different lengths, return a boolean array
+    indicating in which indices the two are different. If one is shorter than
+    the other, the indices past the end of the shorter array are marked as
+    different. Assumes -1 is not used as a value in either array.
+    """
+
+    m = min(len(a), len(b))
+    M = max(len(a), len(b))
+
+    diff = np.array([True] * M)
+    diff[0:m] = a[0:m] != b[0:m]
+
+    return diff
 
 class Output(ABC):
     """Base class for visualization output formats."""
@@ -1459,6 +1474,10 @@ class NLP(object):
         self.color_map = color_map
 
     def token_attribution_scale(self):
+        """
+        Render an attribution scale.
+        """
+        
         cells = [self.output.label("scale:"), self.output.space()]
 
         for f in range(-10, 11):
@@ -1576,11 +1595,16 @@ class NLP(object):
 
     def tokens_stability(
         self,
-        texts1,
-        texts2=None,
-        attributor: AttributionMethod = None,
+        texts1: Iterable[str],
+        texts2: Optional[Iterable[str]] = None,
+        attributor: Optional[AttributionMethod] = None,
         show_id: bool = False
     ):
+        """
+        Visualize decoded token from sentence pairs. Shows pairs side-by-side
+        and highlights differences in them.
+        """
+
         B = get_backend()
 
         if self.tokenize is None:
@@ -1595,8 +1619,10 @@ class NLP(object):
             for texts in textss
         ]
 
+        # Accumulate total output here.
         content = []
 
+        # Include a scale if an attributor was provided.
         if attributor is not None:
             content += [
                 self.token_attribution_scale(),
@@ -1604,20 +1630,23 @@ class NLP(object):
                 self.output.linebreak()
             ]
 
+        # For each sentence,
         for i, (sentence_word_id, attr,
                 logits) in enumerate(zip(opts[0]['input_ids'],
                                          opts[0]['attributions'],
                                          opts[0]['logits'])):
 
+            # Accumulate per-sentence output here.
             aline = []
 
+            # If there are multiple texts, determine parts that differ to highlight.
             highlights = [False] * len(sentence_word_id)
-
             if len(textss) > 1:
                 highlights = list(
-                    opts[0]['input_ids'][i] != opts[1]['input_ids'][i]
+                    arrays_different(opts[0]['input_ids'][i], opts[1]['input_ids'][i])
                 )
 
+            # Add the visualization of the sentence.
             aline.append(
                 self._tokens_stability_line(
                     sentence_word_id,
@@ -1628,6 +1657,7 @@ class NLP(object):
                 )
             )
 
+            # Add the visualization of its pair of multiple texts were provided.
             if len(textss) > 1:
                 aline.append(
                     self._tokens_stability_line(
@@ -1639,8 +1669,10 @@ class NLP(object):
                     )
                 )
 
+            # Add the accumulated elements to the final output.
             content.append(self.output.line(self.output.concat(*aline)))
 
+        # Concat/render the entire content.
         return self.output.render(self.output.concat(*content))
 
     def tokens(
