@@ -1477,7 +1477,7 @@ class NLP(object):
         """
         Render an attribution scale.
         """
-        
+
         cells = [self.output.label("scale:"), self.output.space()]
 
         for f in range(-10, 11):
@@ -1576,7 +1576,7 @@ class NLP(object):
             # logits = nested_cast(backend=B, args=logits, astype=np.ndarray)
 
         if attributor is not None:
-            attributions = inputs.call_on(attributor.attributions)
+            attributions = inputs.call_on(attributor._attributions).attributions
             # attributions = nested_cast(backend=B, args=attributions, astype=np.ndarray)
 
         input_ids = given_inputs
@@ -1643,7 +1643,7 @@ class NLP(object):
             highlights = [False] * len(sentence_word_id)
             if len(textss) > 1:
                 highlights = list(
-                    arrays_different(opts[0]['input_ids'][i], opts[1]['input_ids'][i])
+                    arrays_different(opts[0]['input_ids'][i].cpu(), opts[1]['input_ids'][i].cpu())
                 )
 
             # Add the visualization of the sentence.
