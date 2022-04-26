@@ -60,8 +60,8 @@ DoiLike = Union[DoI, str]
 @dataclass
 class AttributionResult:
     attributions: Outputs[Inputs[TensorLike]] = None
-    gradients: Uniform[Outputs[Inputs[TensorLike]]] = None
-    interventions: Uniform[Inputs[TensorLike]] = None
+    gradients: Outputs[Inputs[Uniform[TensorLike]]] = None
+    interventions: Inputs[Uniform[TensorLike]] = None
 
 
 class AttributionMethod(AbstractBaseClass):
@@ -372,7 +372,7 @@ class InternalInfluence(AttributionMethod):
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
         if self._return_doi:
-            results.interventions = D  # Uniform[Inputs[TensorLike]]
+            results.interventions = D  # want: Uniform[Inputs[TensorLike]]
 
             # doi_to_return = nested_cast(backend=B, astype=np.ndarray, args=D)
             # doi_to_return = np.swapaxes(doi_to_return, 0, 2)

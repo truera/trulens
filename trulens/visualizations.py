@@ -1392,6 +1392,7 @@ class NLP(object):
         output: Optional[Output] = None,
         labels: Optional[Iterable[str]] = None,
         tokenize: Optional[Callable[[TextBatch], ModelInputs]] = None,
+        embeddings: Optional[np.ndarray] = None,
         decode: Optional[Callable[[Tensor], str]] = None,
         input_accessor: Optional[Callable[[ModelInputs],
                                           Iterable[Tensor]]] = None,
@@ -1459,6 +1460,8 @@ class NLP(object):
         self.decode = decode
         self.wrapper = wrapper
 
+        self.embeddings = embeddings
+
         self.input_accessor = input_accessor  # could be inferred
         self.output_accessor = output_accessor  # could be inferred
 
@@ -1490,8 +1493,8 @@ class NLP(object):
 
         return self.output.line(self.output.concat(*cells))
 
-    def _tokens_stability_line(
-        self, sentence_word_id, logits, attr, show_id=False, highlights=None
+    def _tokens_stability_instance(
+        self, sentence_word_id, logits, attr, gradients, interventions, show_id=False, show_doi=False, highlights=None
     ):
         B = get_backend()
 
@@ -1506,43 +1509,58 @@ class NLP(object):
         if attr is None:
             attr = [None] * len(sentence_word_id)
 
-        for i, (word_id, attr) in enumerate(zip(sentence_word_id, attr)):
-            word_id = int(B.as_array(word_id))
 
-            if word_id in self.hidden_tokens:
-                continue
+        effective_sentences_word_id = [sentence_word_id]
+        effective_attr = [attr]
 
-            if self.decode is not None:
-                word = self.decode(word_id)
-            else:
-                word = str(word_id)
+        if show_doi:
+            if interventions is None:
+                raise ValueError("show_doi requires return_doi to be enabled on attributor")
+            if gradients is None:
+                raise ValueError("show_doi requires return_grads to be enabled on attributor")
 
-            if word[0] == ' ':
-                word = word[1:]
-                sent += [self.output.space()]
+            effective_sentences_word_id = [sentence_word_id] * len(interventions)
+            effective_attr = [attr] * len(interventions)
 
-            if word == "":
-                word = "�"
+        for iid, (sentence_word_id, attr) in enumerate(zip(effective_sentences_word_id, effective_attr)):
 
-            cap = lambda x: x
+            for i, (word_id, attr) in enumerate(zip(sentence_word_id, attr)):
+                word_id = int(B.as_array(word_id))
 
-            if highlights is not None and highlights[i]:
-                cap = self.output.big
+                if word_id in self.hidden_tokens:
+                    continue
 
-            if attr is not None:
-                mag = B.as_array(self.attr_aggregate(attr))
-                sent += [
-                    cap(
-                        self.output.magnitude_colored(
-                            word, mag, color_map=self.color_map
+                if self.decode is not None:
+                    word = self.decode(word_id)
+                else:
+                    word = str(word_id)
+
+                if word[0] == ' ':
+                    word = word[1:]
+                    sent += [self.output.space()]
+
+                if word == "":
+                    word = "�"
+
+                cap = lambda x: x
+
+                if highlights is not None and highlights[i]:
+                    cap = self.output.big
+
+                if attr is not None:
+                    mag = float(self.attr_aggregate(attr))
+                    sent += [
+                        cap(
+                            self.output.magnitude_colored(
+                                word, mag, color_map=self.color_map
+                            )
                         )
-                    )
-                ]
-            else:
-                sent += [cap(self.output.token(word, token_id=word_id))]
+                    ]
+                else:
+                    sent += [cap(self.output.token(word, token_id=word_id))]
 
-            if show_id:
-                sent += [self.output.sub(self.output.label(str(word_id)))]
+                if show_id:
+                    sent += [self.output.sub(self.output.label(str(word_id)))]
 
         return self.output.concat(self.output.line(self.output.concat(*sent)))
 
@@ -1559,6 +1577,8 @@ class NLP(object):
         outputs = [None] * len(texts)
         attributions = [None] * len(texts)
         logits = [None] * len(texts)
+        gradients = [None] * len(texts)
+        interventions = [None] * len(texts)
 
         if self.wrapper is not None:
             outputs = inputs.call_on(self.wrapper._model)
@@ -1576,8 +1596,19 @@ class NLP(object):
             # logits = nested_cast(backend=B, args=logits, astype=np.ndarray)
 
         if attributor is not None:
-            attributions = attributor._attributions(inputs).attributions
-            # attributions = nested_cast(backend=B, args=attributions, astype=np.ndarray)
+            pieces = attributor._attributions(inputs)
+            attributions = pieces.attributions
+            if len(attributions) != 1 or len(attributions[0]) != 1:
+                raise ValueError("Only attrubutions with one attribution layer and one qoi output are supported for visualization.")
+            attributions = attributions[0][0]
+
+            if pieces.gradients is not None:
+                gradients = pieces.gradients
+                gradients = np.array(gradients)[0,0,:,:]
+
+            if pieces.interventions is not None:
+                interventions = pieces.interventions
+                interventions = np.array(nested_cast(backend=B, astype=np.ndarray, args=interventions))[0,:,:]            
 
         input_ids = given_inputs
         if self.input_accessor is not None:
@@ -1590,7 +1621,7 @@ class NLP(object):
                 )
 
         return dict(
-            attributions=attributions, logits=logits, input_ids=input_ids
+            attributions=attributions, logits=logits, input_ids=input_ids, gradients=gradients, interventions=interventions
         )
 
     def tokens_stability(
@@ -1598,7 +1629,8 @@ class NLP(object):
         texts1: Iterable[str],
         texts2: Optional[Iterable[str]] = None,
         attributor: Optional[AttributionMethod] = None,
-        show_id: bool = False
+        show_id: bool = False,
+        show_doi: bool = False
     ):
         """
         Visualize decoded token from sentence pairs. Shows pairs side-by-side
@@ -1632,9 +1664,11 @@ class NLP(object):
 
         # For each sentence,
         for i, (sentence_word_id, attr,
-                logits) in enumerate(zip(opts[0]['input_ids'],
+                logits, grads, intervs) in enumerate(zip(opts[0]['input_ids'],
                                          opts[0]['attributions'],
-                                         opts[0]['logits'])):
+                                         opts[0]['logits'],
+                                         opts[0]['gradients'],
+                                         opts[0]['interventions'])):
 
             # Accumulate per-sentence output here.
             aline = []
@@ -1648,11 +1682,14 @@ class NLP(object):
 
             # Add the visualization of the sentence.
             aline.append(
-                self._tokens_stability_line(
+                self._tokens_stability_instance(
                     sentence_word_id,
                     logits,
                     attr,
+                    grads,
+                    intervs,
                     show_id=show_id,
+                    show_doi=show_doi,
                     highlights=highlights
                 )
             )
@@ -1660,11 +1697,14 @@ class NLP(object):
             # Add the visualization of its pair of multiple texts were provided.
             if len(textss) > 1:
                 aline.append(
-                    self._tokens_stability_line(
+                    self._tokens_stability_instance(
                         opts[1]['input_ids'][i],
                         opts[1]['logits'][i],
                         opts[1]['attributions'][i],
+                        opts[1]['gradients'][i],
+                        opts[1]['interventions'][i],
                         show_id=show_id,
+                        show_doi=show_doi,
                         highlights=highlights
                     )
                 )
@@ -1679,10 +1719,98 @@ class NLP(object):
         self,
         texts,
         attributor: AttributionMethod = None,
-        show_id: bool = False
+        show_id: bool = False,
+        show_doi: bool = False
     ):
         """Visualize a token-based input attribution."""
 
         return self.tokens_stability(
-            texts1=texts, attributor=attributor, show_id=show_id
+            texts1=texts, attributor=attributor, show_id=show_id, show_doi=show_doi
         )
+
+    def _closest_token(embeddings, emb):
+        diffs = embeddings - emb
+        # print(diffs.shape)
+        distances = np.linalg.norm(diffs, ord=2, axis=1)
+        # print(distances.shape)
+        closest = np.argsort(distances)
+        # print(closest.shape)
+        return closest[0], distances[closest[0]]
+
+    def doi(
+        self,
+        texts,
+        attributor: AttributionMethod,
+        show_id: bool = False
+    ):
+
+        B = get_backend()
+
+        content = []
+
+        opt = self._get_optionals(texts, attributor=attributor)
+
+        samples_ids = opt['input_ids']
+
+        sample_inputs = self.tokenize(texts)#, return_tensors='pt').to("cuda")
+        # samples_ids = sample_inputs['input_ids'].cuda()
+        samples_embs = self.embedder(samples_ids.cuda()).cpu().detach().numpy()
+        # outputs = sample_inputs.call_on(self.wrapper._model)
+        logits = opt['logits']
+
+        pieces = attributor._attributions(ModelInputs(kwargs=sample_inputs))
+
+        attributions = np.array(pieces.attributions)
+        gradients = np.array(pieces.gradients)
+        interventions = np.array(nested_cast(backend=B, astype=np.ndarray, args=pieces.interventions))
+
+        # print(attributions.shape)
+        # print(gradients.shape)
+        # print(interventions.shape)
+
+        for sid, sentence in enumerate(texts):
+
+            sentence_content = []
+
+            sentence_ids = samples_ids[sid]
+            attr = attributions[0,0,sid]
+            grad = gradients[0,0,:,sid]
+            interv = interventions[0,:,sid]
+
+            # print(attr.shape)
+            # print(grad.shape)
+            # print(interv.shape)
+
+            base_embs = samples_embs[sid]
+
+            for iid in range(len(interv)):
+                grad_aggr = (grad[iid] * base_embs).sum(axis=1)
+
+                print(f"  {grad_aggr.sum():0.6f} ", end='')
+
+                for word_idx in range(len(sentence_ids)):
+                    word_emb = base_embs[word_idx]
+
+                    word_id = sentence_ids[word_idx]
+                    word_token = self.tokenizer.decode(word_id)
+
+                    grad_word = grad_aggr[word_idx]
+
+                    interv_emb = B.as_array(interv[iid][word_idx])
+                    # interv_emb = path[i][0][word_idx]
+                    close_id, close_dist = self._closest_token(self.embeddings, interv_emb)
+                    # print(close_id)
+                    close_emb = self.embeddings[close_id]
+                    close_token = self.tokenizer.decode(close_id)
+
+                    print(f"{close_token}({grad_word:0.6f})", end=' ')
+            
+
+                # self, sentence_word_id, logits, attr, show_id=False, highlights=None
+                sentence_content.append(self._tokens_stability_instance(sentence_ids, ))
+
+                print()
+
+        return self.output.render(self.output.concat(*content))
+
+            # print(word_emb[0:2], word_id, word_token, close_emb[0:2], close_id, close_token, close_dist, interv_emb[0:2])
