@@ -11,12 +11,22 @@ via visualization. This module provides several visualization methods for
 interpreting attributions as images.
 """
 
+# TODO: remove pip requirements from visualizers and move them to imports upon
+# their initialization.
+
 from abc import ABC
 from abc import abstractmethod
-import tempfile
-from typing import Callable, Iterable, List, Optional, Set, Tuple, TypeVar
+import importlib
+from tkinter import S
+from typing import Callable, Iterable, Optional, Set, TypeVar
 
+from matplotlib import cm
+from matplotlib.colors import Colormap
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import ListedColormap
+import matplotlib.pyplot as plt
 import numpy as np
+from scipy.ndimage.filters import gaussian_filter
 
 from trulens.nn.attribution import AttributionMethod
 from trulens.nn.attribution import InternalInfluence
@@ -27,12 +37,9 @@ from trulens.nn.quantities import InternalChannelQoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.utils import tru_logger
-from trulens.utils import try_import
-from trulens.utils.typing import ModelInputs, nested_cast
+from trulens.utils.typing import KwargsLike
+from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import Tensor
-from trulens.utils.typing import Tensors
-
-# TODO: Unify the common things across image and NLP visualizations.
 
 
 class Tiler(object):
@@ -88,7 +95,7 @@ class Visualizer(object):
         combine_channels: bool = False,
         normalization_type: str = None,
         blur: float = 0.,
-        cmap: 'matplotlib.colors.Colormap' = None
+        cmap: Colormap = None
     ):
         """
         Configures the default parameters for the `__call__` method (these can 
@@ -147,13 +154,6 @@ class Visualizer(object):
                 type. This argument is only used for single-channel data
                 (including when `combine_channels` is True).
         """
-        purpose = "Image attribution visualization"
-
-        self.m_plt = try_import("matplotlib.pyplot", purpose)
-        self.m_cm = try_import("matplotlib", purpose)
-        self.m_colors = try_import("matplotlib.colors", purpose)
-        self.m_filters = try_import("scipy.ndimage.filters", purpose)
-
         self.default_combine_channels = combine_channels
         self.default_normalization_type = normalization_type
         self.default_blur = blur
@@ -275,19 +275,19 @@ class Visualizer(object):
         tiled_attributions = self.tiler.tile(attributions)
 
         # Display the figure:
-        _fig = self.m_plt.figure() if fig is None else fig
+        _fig = plt.figure() if fig is None else fig
 
-        self.m_plt.axis('off')
-        self.m_plt.imshow(tiled_attributions, cmap=cmap)
+        plt.axis('off')
+        plt.imshow(tiled_attributions, cmap=cmap)
 
         if output_file:
-            self.m_plt.savefig(output_file, bbox_inches=0)
+            plt.savefig(output_file, bbox_inches=0)
 
         if imshow:
-            self.m_plt.show()
+            plt.show()
 
         elif fig is None:
-            self.m_plt.close(_fig)
+            plt.close(_fig)
 
         return tiled_attributions if return_tiled else attributions
 
@@ -436,16 +436,14 @@ class Visualizer(object):
 
     def _blur(self, attributions, blur):
         for i in range(attributions.shape[0]):
-            attributions[i] = self.m_filters.gaussian_filter(
-                attributions[i], blur
-            )
+            attributions[i] = gaussian_filter(attributions[i], blur)
 
         return attributions
 
     def _get_hotcold(self):
-        hot = self.m_cm.get_cmap('hot', 128)
-        cool = self.m_cm.get_cmap('cool', 128)
-        binary = self.m_cm.get_cmap('binary', 128)
+        hot = cm.get_cmap('hot', 128)
+        cool = cm.get_cmap('cool', 128)
+        binary = cm.get_cmap('binary', 128)
         hotcold = np.vstack(
             (
                 binary(np.linspace(0, 1, 128)) * cool(np.linspace(0, 1, 128)),
@@ -453,7 +451,7 @@ class Visualizer(object):
             )
         )
 
-        return self.m_colors.ListedColormap(hotcold, name='hotcold')
+        return ListedColormap(hotcold, name='hotcold')
 
 
 class HeatmapVisualizer(Visualizer):
@@ -665,20 +663,20 @@ class HeatmapVisualizer(Visualizer):
             overlay_opacity = self.default_overlay_opacity
 
         # Display the figure:
-        _fig = self.m_plt.figure() if fig is None else fig
+        _fig = plt.figure() if fig is None else fig
 
-        self.m_plt.axis('off')
-        self.m_plt.imshow(tiled_x)
-        self.m_plt.imshow(tiled_attributions, alpha=overlay_opacity, cmap=cmap)
+        plt.axis('off')
+        plt.imshow(tiled_x)
+        plt.imshow(tiled_attributions, alpha=overlay_opacity, cmap=cmap)
 
         if output_file:
-            self.m_plt.savefig(output_file, bbox_inches=0)
+            plt.savefig(output_file, bbox_inches=0)
 
         if imshow:
-            self.m_plt.show()
+            plt.show()
 
         elif fig is None:
-            self.m_plt.close(_fig)
+            plt.close(_fig)
 
         return tiled_attributions if return_tiled else attributions
 
@@ -732,15 +730,6 @@ class MaskVisualizer(object):
                 unmasked (or given nonzero opacity when `use_attr_as_opacity` is
                 true).
         """
-
-        # TODO: Figure out why this is not a subclass of Visualizer.
-
-        purpose = "Mask visualization"
-
-        self.m_plt = try_import("matplotlib.pyplot", purpose)
-        self.m_cm = try_import("matplotlib", purpose)
-        self.m_colors = try_import("matplotlib.colors", purpose)
-        self.m_filters = try_import("scipy.ndimage.filters", purpose)
 
         self.default_blur = blur
         self.default_thresh = threshold
@@ -810,9 +799,7 @@ class MaskVisualizer(object):
 
         # Blur the attributions so the explanation is smoother.
         if blur is not None:
-            attributions = [
-                self.m_filters.gaussian_filter(a, blur) for a in attributions
-            ]
+            attributions = [gaussian_filter(a, blur) for a in attributions]
 
         # If `positive_only` clip attributions.
         if positive_only:
@@ -848,11 +835,11 @@ class MaskVisualizer(object):
         tiled_attributions = self.tiler.tile(attributions)
 
         if imshow:
-            self.m_plt.axis('off')
-            self.m_plt.imshow(tiled_attributions)
+            plt.axis('off')
+            plt.imshow(tiled_attributions)
 
             if output_file:
-                self.m_plt.savefig(output_file, bbox_inches=0)
+                plt.savefig(output_file, bbox_inches=0)
 
         return tiled_attributions if return_tiled else attributions
 
@@ -939,16 +926,6 @@ class ChannelMaskVisualizer(object):
                 unmasked (or given nonzero opacity when `use_attr_as_opacity` is
                 true).
         """
-
-        # TODO: Figure out why this is not a subclass of Visualizer.
-
-        purpose = "Channel mask visualization"
-
-        self.m_plt = try_import("matplotlib.pyplot", purpose)
-        self.m_cm = try_import("matplotlib", purpose)
-        self.m_colors = try_import("matplotlib.colors", purpose)
-        self.m_filters = try_import("scipy.ndimage.filters", purpose)
-
         B = get_backend()
         if (B is not None and (channel_axis is None or channel_axis < 0)):
             channel_axis = B.channel_axis
@@ -1034,329 +1011,113 @@ class ChannelMaskVisualizer(object):
         )
 
 
-# TODO: Unify visualization parameters for vision above and for nlp below.
-
-# A colormap is a method that given a value between -1.0 and 1.0, returns a quad
-# of rgba values, each floating between 0.0 and 1.0.
-RGBA = Tuple[float, float, float, float]
-COLORMAP = Callable[[float], RGBA]
-
-
-class ColorMap:
-
-    @staticmethod
-    def of_matplotlib(divergent=None, positive=None, negative=None):
-        """Convert a matplotlib color map which expects values from [0.0, 1.0] into one we expect with values in [-1.0, 1.0]."""
-
-        if divergent is None:
-            if positive is None or negative is None:
-                raise ValueError(
-                    "To convert a matplotlib colormap, provide either a symmetric divergent parameter or both positive and negative parameters."
-                )
-
-            return lambda f: positive(f) if f >= 0.0 else negative(-f)
-        else:
-            if positive is not None or negative is not None:
-                raise ValueError(
-                    "To convert a matplotlib colormap, provide either a symmetric divergent parameter or both positive and negative parameters."
-                )
-
-            return lambda f: divergent((f + 1.0) / 2.0)
-
-    @staticmethod
-    def default(f: float) -> RGBA:  # :COLORMAP
-        if f > 1.0:
-            f = 1.0
-        if f < -1.0:
-            f = -1.0
-
-        red = 0.0
-        green = 0.0
-        if f > 0:
-            green = 1.0  # 0.5 + mag * 0.5
-            red = 1.0 - f
-        else:
-            red = 1.0
-            green = 1.0 + f
-            #red = 0.5 - mag * 0.5
-
-        blue = min(red, green)
-        # blue = 1.0 - max(red, green)
-
-        return (red, green, blue, 1.0)
-
-def arrays_different(a: np.ndarray, b: np.ndarray):
-    """
-    Given two arrays of potentially different lengths, return a boolean array
-    indicating in which indices the two are different. If one is shorter than
-    the other, the indices past the end of the shorter array are marked as
-    different. Assumes -1 is not used as a value in either array.
-    """
-
-    m = min(len(a), len(b))
-    M = max(len(a), len(b))
-
-    diff = np.array([True] * M)
-    diff[0:m] = a[0:m] != b[0:m]
-
-    return diff
-
 class Output(ABC):
     """Base class for visualization output formats."""
 
-    # Element type
-    E = TypeVar("E")
-
-    # Rendered output type
-    R = TypeVar("R")
-
     @abstractmethod
-    def blank(self) -> E:
+    def blank(self) -> str:
         ...
 
     @abstractmethod
-    def space(self) -> E:
+    def space(self) -> str:
         ...
 
     @abstractmethod
-    def big(self, s: E) -> E:
+    def escape(self, s: str) -> str:
         ...
 
     @abstractmethod
-    def sub(self, e: E) -> E:
-        ...
-
-    def scores(self, scores: np.ndarray, labels: List[str]) -> E:
-        if sum(scores) != 1.0:
-            scores = np.exp(scores) / np.exp(scores).sum()
-
-        content = []
-        for score, label in zip(scores, labels):
-            content += [
-                self.magnitude_colored(label, mag=score),
-                self.label("-")
-            ]
-
-        return self.concat(*content)
-
-    @abstractmethod
-    def token(self, s: str, token_id=None) -> E:
+    def line(self, s: str) -> str:
         ...
 
     @abstractmethod
-    def label(self, s: str) -> E:
+    def magnitude_colored(self, s: str, mag: float) -> str:
         ...
 
     @abstractmethod
-    def line(self, e: E) -> E:
+    def append(self, *parts: Iterable[str]) -> str:
         ...
 
     @abstractmethod
-    def magnitude_colored(self, s: str, mag: float, color_map: COLORMAP) -> E:
-        ...
-
-    @abstractmethod
-    def concat(self, *parts: Iterable[E]) -> E:
-        ...
-
-    @abstractmethod
-    def render(self, e: E) -> R:
-        ...
-
-    @abstractmethod
-    def open(self, r: R) -> None:
+    def render(self, s: str) -> str:
         ...
 
 
 # TODO(piotrm): implement a latex output format
 
 
-class EnvType:
-    ...
-
-
-class Term(EnvType):
-    ...
-
-
-class Jupyter(EnvType):
-    ...
-
-
-class Colab(Jupyter):
-    ...
-
-
-def guess_env_type():
-    # From Andreas
-    '''
-    Tests whether current process is running in a:
-            o terminal as a regular Python shell
-            o jupyter notebook
-            o Google colab
-    returns one of {'terminal', 'jupyter', 'colab', None}
-    None means could not determine.
-    '''
-    try:
-        from IPython import get_ipython
-    except ImportError:
-        return Term()
-    try:
-        shell = get_ipython().__class__.__name__
-        if shell == 'ZMQInteractiveShell':
-            return Jupyter()  # Jupyter notebook or qtconsole
-        elif shell == 'TerminalInteractiveShell':
-            return Term()  # Terminal running IPython
-        elif shell == 'Shell' and get_ipython(
-        ).__class__.__module__ == 'google.colab._shell':
-            return Colab()
-        else:
-            return Term()  # Other type (?)
-    except NameError:
-        return Term()  # Probably standard Python interpreter
-
-
 class PlainText(Output):
     """Plain text visualization output format."""
 
-    E = str
-    R = str
-
-    def blank(self) -> E:
+    def blank(self):
         return ""
 
-    def space(self) -> E:
+    def space(self):
         return " "
 
-    def big(self, s: E) -> E:
-        return f"_{s}_"
-
-    def sub(self, s: E) -> E:
-        return f".{s}."
-
-    def token(self, s: str, token_id=None) -> E:
-        s = self.label(s)
-
-        content = s
-
-        if token_id is not None:
-            content += f"({token_id})"
-
-        return content
-
-    def label(self, s: str) -> E:
+    def escape(self, s):
         return s
 
-    def line(self, e: E) -> E:
-        return e
+    def line(self, s):
+        return s
 
-    def magnitude_colored(
-        self, s: str, mag: float, color_map: COLORMAP = ColorMap.default
-    ) -> E:
-        return f"{self.label(s)}({mag:0.3f})"
+    def magnitude_colored(self, s, mag):
+        return f"{s}({mag:0.3f})"
 
-    def concat(self, *parts: Iterable[E]) -> E:
+    def append(self, *parts):
         return ''.join(parts)
 
-    def render(self, e: E) -> R:
-        return e
-
-    def open(self, r: R) -> None:
-        raise NotImplementedError
+    def render(self, s):
+        return s
 
 
 class HTML(Output):
     """HTML visualization output format."""
 
-    E = 'domonic.dom.Node'
-    R = str
-
     def __init__(self):
-        self.m_html_util = try_import("html", msg="html output")
-        self.m_dom = try_import("domonic.dom", msg="html output")
-        self.m_html = try_import("domonic", msg="html output")
+        try:
+            self.m_html = importlib.import_module("html")
+        except:
+            raise ImportError(
+                "HTML output requires html python module. Try 'pip install html'."
+            )
 
-    def blank(self) -> E:
-        return self.m_dom.Document.createDocumentFragment()
+    def blank(self):
+        return ""
 
-    def space(self) -> E:
-        return self.m_dom.Text("&nbsp;")
+    def space(self):
+        return "&nbsp;"
 
-    def label(self, s: str) -> E:
-        return self.m_dom.Text(self.m_html_util.escape(s))
+    def escape(self, s):
+        return self.m_html.escape(s)
 
-    def linebreak(self) -> E:
-        return self.m_html.br()
+    def linebreak(self):
+        return "<br/>"
 
-    def line(self, e: E) -> E:
-        return self.m_html.div(
-            e, style="padding: 5px; maring: 0px; background: black;"
-        )
+    def line(self, s):
+        return f"<span style='padding: 2px; margin: 2px; background: gray; border-radius: 4px;'>{s}</span>"
 
-    def big(self, e: E) -> E:
-        return self.m_html.strong(e)
-
-    def sub(self, e: E) -> E:
-        return self.m_html.sub(e)
-
-    def token(self, s: str, token_id=None) -> E:
-        s = self.label(s)
-
-        extra_arg = {}
-        if token_id is not None:
-            extra_arg['title'] = f"token id: {token_id}"
-
-        pad_top = 0
-        pad_bot = 2
-
-        return self.m_html.span(
-            s,
-            style=
-            f'border-top: {pad_top}px solid gray; border-bottom: {pad_bot}px solid gray; margin-left 1px; margin-right: 1px; background: black; color: white;',
-            **extra_arg
-        )
-
-    def magnitude_colored(
-        self, s: str, mag: float, color_map=ColorMap.default
-    ) -> E:
-        r, g, b, a = np.array(color_map(mag)) * 255
-        s = self.label(s)
-
-        rgba = f"rgba({r}, {g}, {b}, {a})"
-
-        pad_top = 0
-        pad_bot = 0
-
+    def magnitude_colored(self, s, mag):
+        red = 0.0
+        green = 0.0
         if mag > 0:
-            pad_top = int(min(mag, 1.0) * 10)
+            green = 1.0  # 0.5 + mag * 0.5
+            red = 1.0 - mag * 0.5
         else:
-            pad_bot = int(-max(mag, -1.0) * 10)
+            red = 1.0
+            green = 1.0 + mag * 0.5
+            #red = 0.5 - mag * 0.5
 
-        return self.m_html.span(
-            s,
-            title=f"{mag:0.3f}",
-            style=
-            f'border-top: {pad_top}px solid {rgba}; border-bottom: {pad_bot}px solid {rgba}; margin-left 1px; margin-right: 1px; background: black; color: {rgba};'
-        )
+        blue = min(red, green)
+        # blue = 1.0 - max(red, green)
 
-    def concat(self, *pieces: Iterable[E]) -> E:
-        temp = self.blank()
-        for piece in pieces:
-            temp.appendChild(piece)
+        return f"<span title='{mag:0.3f}' style='margin: 1px; padding: 1px; border-radius: 4px; background: black; color: rgb({red*255}, {green*255}, {blue*255});'>{s}</span>"
 
-        return temp
+    def append(self, *pieces):
+        return ''.join(pieces)
 
-    def render(self, e: E) -> R:
-        return str(self.m_html.html(self.m_html.body(e)))
-
-    def open(self, r):
-        mod = try_import("webbrowser", msg="html open")
-
-        # from Andreas
-
-        with tempfile.NamedTemporaryFile(prefix='attrs_', mode='w') as fd:
-            fd.write(r)
-            mod.open_new_tab(f"file://{fd.name}")
+    def render(self, s):
+        return s
 
 
 class IPython(HTML):
@@ -1364,11 +1125,15 @@ class IPython(HTML):
 
     def __init__(self):
         super(IPython, self).__init__()
+        try:
+            self.m_ipy = importlib.import_module("IPython")
+        except:
+            raise ImportError(
+                "Jupyter output requires IPython python module. Try 'pip install ipykernel'."
+            )
 
-        self.m_ipy = try_import("IPython", "Jupyter output")
-
-    def render(self, e):
-        html = HTML.render(self, e)
+    def render(self, s: str):
+        html = HTML.render(self, s)
         return self.m_ipy.display.HTML(html)
 
 
@@ -1388,7 +1153,7 @@ class NLP(object):
 
     def __init__(
         self,
-        wrapper: ModelWrapper = None,
+        wrapper: ModelWrapper,
         output: Optional[Output] = None,
         labels: Optional[Iterable[str]] = None,
         tokenize: Optional[Callable[[TextBatch], ModelInputs]] = None,
@@ -1398,9 +1163,7 @@ class NLP(object):
         output_accessor: Optional[Callable[[ModelOutput],
                                            Iterable[Tensor]]] = None,
         attr_aggregate: Optional[Callable[[Tensor], Tensor]] = None,
-        hidden_tokens: Optional[Set[int]] = set(),
-        color_map: Callable[[float], Tuple[float, float, float,
-                                           float]] = ColorMap.default
+        hidden_tokens: Optional[Set[int]] = set()
     ):
         """Initializate NLP visualization tools for a given environment.
 
@@ -1436,16 +1199,15 @@ class NLP(object):
 
             hidden_tokens: Set[int], optional
                 For token-based visualizations, which tokens to hide.
-
-            color_map: ColorMap
-                Means of coloring floats in [-1.0, 1.0]. 
         """
         if output is None:
-            term_type = guess_env_type()
-            if isinstance(term_type, Jupyter):
+            try:
+                # check if running in interactive python (jupyer, colab, etc) to
+                # use appropriate output format
+                get_ipython()
                 output = IPython()
 
-            else:
+            except NameError:
                 output = PlainText()
                 tru_logger(
                     "WARNING: could not guess preferred visualization output format, using PlainText"
@@ -1471,138 +1233,18 @@ class NLP(object):
 
         self.hidden_tokens = hidden_tokens
 
-        self.color_map = color_map
+    def token_attribution(self, texts: Iterable[str], attr: AttributionMethod):
+        """Visualize a token-based input attribution on given `texts` inputs via the attribution method `attr`.
 
-    def token_attribution_scale(self):
-        """
-        Render an attribution scale.
-        """
+        Parameters:
+            texts: Iterable[str]
+                The input texts to visualize.
 
-        cells = [self.output.label("scale:"), self.output.space()]
-
-        for f in range(-10, 11):
-            cells.append(
-                self.output.magnitude_colored(
-                    str(f / 10.0) if f <= 0 else "+" + str(f / 10.0), f / 10.0,
-                    self.color_map
-                )
-            )
-
-        return self.output.line(self.output.concat(*cells))
-
-    def _tokens_stability_line(
-        self, sentence_word_id, logits, attr, show_id=False, highlights=None
-    ):
-        B = get_backend()
-
-        sent = []
-
-        if self.wrapper is not None:
-            logits = B.as_array(logits)
-            pred = logits.argmax()
-
-            sent += [self.output.scores(logits, self.labels)]
-
-        if attr is None:
-            attr = [None] * len(sentence_word_id)
-
-        for i, (word_id, attr) in enumerate(zip(sentence_word_id, attr)):
-            word_id = int(B.as_array(word_id))
-
-            if word_id in self.hidden_tokens:
-                continue
-
-            if self.decode is not None:
-                word = self.decode(word_id)
-            else:
-                word = str(word_id)
-
-            if word[0] == ' ':
-                word = word[1:]
-                sent += [self.output.space()]
-
-            if word == "":
-                word = "�"
-
-            cap = lambda x: x
-
-            if highlights is not None and highlights[i]:
-                cap = self.output.big
-
-            if attr is not None:
-                mag = B.as_array(self.attr_aggregate(attr))
-                sent += [
-                    cap(
-                        self.output.magnitude_colored(
-                            word, mag, color_map=self.color_map
-                        )
-                    )
-                ]
-            else:
-                sent += [cap(self.output.token(word, token_id=word_id))]
-
-            if show_id:
-                sent += [self.output.sub(self.output.label(str(word_id)))]
-
-        return self.output.concat(self.output.line(self.output.concat(*sent)))
-
-    def _get_optionals(self, texts, attributor: AttributionMethod = None):
-        B = get_backend()
-
-        given_inputs = self.tokenize(texts)
-
-        if isinstance(given_inputs, Tensors):
-            inputs = given_inputs.as_model_inputs()
-        else:
-            inputs = ModelInputs(kwargs=given_inputs)
-
-        outputs = [None] * len(texts)
-        attributions = [None] * len(texts)
-        logits = [None] * len(texts)
-
-        if self.wrapper is not None:
-            outputs = inputs.call_on(self.wrapper._model)
-
-            if self.output_accessor is not None:
-                logits = self.output_accessor(outputs)
-            else:
-                logits = outputs
-
-            if (not isinstance(logits, Iterable)) or isinstance(logits, dict):
-                raise ValueError(
-                    f"Outputs ({logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor."
-                )
-
-            # logits = nested_cast(backend=B, args=logits, astype=np.ndarray)
-
-        if attributor is not None:
-            attributions = inputs.call_on(attributor._attributions).attributions
-            # attributions = nested_cast(backend=B, args=attributions, astype=np.ndarray)
-
-        input_ids = given_inputs
-        if self.input_accessor is not None:
-            input_ids = self.input_accessor(input_ids)
-
-            if (not isinstance(input_ids, Iterable)) or isinstance(input_ids,
-                                                                   dict):
-                raise ValueError(
-                    f"Inputs ({input_ids.__class__.__name__}) need to be iterable over instances. You might need to set input_accessor."
-                )
-
-        return dict(
-            attributions=attributions, logits=logits, input_ids=input_ids
-        )
-
-    def tokens_stability(
-        self,
-        texts1: Iterable[str],
-        texts2: Optional[Iterable[str]] = None,
-        attributor: Optional[AttributionMethod] = None,
-        show_id: bool = False
-    ):
-        """
-        Visualize decoded token from sentence pairs. Shows pairs side-by-side
-        and highlights differences in them.
+            attr: AttributionMethod
+                The attribution method to generate the token importances with.
+        
+        Returns: Any
+            The visualization in the format specified by this class's `output` parameter.
         """
 
         B = get_backend()
@@ -1610,79 +1252,74 @@ class NLP(object):
         if self.tokenize is None:
             return ValueError("tokenize not provided to NLP visualizer.")
 
-        textss = [texts1]
-        if texts2 is not None:
-            textss.append(texts2)
+        inputs = self.tokenize(texts)
 
-        opts = [
-            self._get_optionals(texts, attributor=attributor)
-            for texts in textss
-        ]
+        outputs = inputs.call_on(self.wrapper._model)
+        attrs = inputs.call_on(attr.attributions)
 
-        # Accumulate total output here.
-        content = []
+        content = self.output.blank()
 
-        # Include a scale if an attributor was provided.
-        if attributor is not None:
-            content += [
-                self.token_attribution_scale(),
-                self.output.linebreak(),
-                self.output.linebreak()
-            ]
+        input_ids = inputs
+        if self.input_accessor is not None:
+            input_ids = self.input_accessor(inputs)
 
-        # For each sentence,
-        for i, (sentence_word_id, attr,
-                logits) in enumerate(zip(opts[0]['input_ids'],
-                                         opts[0]['attributions'],
-                                         opts[0]['logits'])):
-
-            # Accumulate per-sentence output here.
-            aline = []
-
-            # If there are multiple texts, determine parts that differ to highlight.
-            highlights = [False] * len(sentence_word_id)
-            if len(textss) > 1:
-                highlights = list(
-                    arrays_different(opts[0]['input_ids'][i].cpu(), opts[1]['input_ids'][i].cpu())
-                )
-
-            # Add the visualization of the sentence.
-            aline.append(
-                self._tokens_stability_line(
-                    sentence_word_id,
-                    logits,
-                    attr,
-                    show_id=show_id,
-                    highlights=highlights
-                )
+        if (not isinstance(input_ids, Iterable)) or isinstance(input_ids, dict):
+            raise ValueError(
+                f"Inputs ({input_ids.__class__.__name__}) need to be iterable over instances. You might need to set input_accessor."
             )
 
-            # Add the visualization of its pair of multiple texts were provided.
-            if len(textss) > 1:
-                aline.append(
-                    self._tokens_stability_line(
-                        opts[1]['input_ids'][i],
-                        opts[1]['logits'][i],
-                        opts[1]['attributions'][i],
-                        show_id=show_id,
-                        highlights=highlights
+        output_logits = outputs
+        if self.output_accessor is not None:
+            output_logits = self.output_accessor(outputs)
+
+        if (not isinstance(output_logits, Iterable)) or isinstance(
+                output_logits, dict):
+            raise ValueError(
+                f"Outputs ({output_logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor."
+            )
+
+        for i, (sentence_word_id, attr,
+                logits) in enumerate(zip(input_ids, attrs, output_logits)):
+
+            logits = logits.to('cpu').detach().numpy()
+            pred = logits.argmax()
+
+            if self.labels is not None:
+                pred_name = self.labels[pred]
+            else:
+                pred_name = str(pred)
+
+            sent = self.output.append(
+                self.output.escape(pred_name), ":", self.output.space()
+            )
+
+            for word_id, attr in zip(sentence_word_id, attr):
+                word_id = int(B.as_array(word_id))
+
+                if word_id in self.hidden_tokens:
+                    continue
+
+                if self.decode is not None:
+                    word = self.decode(word_id)
+                else:
+                    word = str(word_id)
+
+                mag = self.attr_aggregate(attr)
+
+                if word[0] == ' ':
+                    word = word[1:]
+                    sent = self.output.append(sent, self.output.space())
+
+                sent = self.output.append(
+                    sent,
+                    self.output.magnitude_colored(
+                        self.output.escape(word), mag
                     )
                 )
 
-            # Add the accumulated elements to the final output.
-            content.append(self.output.line(self.output.concat(*aline)))
+            content = self.output.append(
+                content, self.output.line(sent), self.output.linebreak(),
+                self.output.linebreak()
+            )
 
-        # Concat/render the entire content.
-        return self.output.render(self.output.concat(*content))
-
-    def tokens(
-        self,
-        texts,
-        attributor: AttributionMethod = None,
-        show_id: bool = False
-    ):
-        """Visualize a token-based input attribution."""
-
-        return self.tokens_stability(
-            texts1=texts, attributor=attributor, show_id=show_id
-        )
+        return self.output.render(content)
