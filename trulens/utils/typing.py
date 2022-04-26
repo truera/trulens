@@ -536,23 +536,6 @@ BaselineLike = Union[ArgsLike[TensorLike],
 InterventionLike = Union[ArgsLike[TensorLike], KwargsLike, Tensors]
 
 
-def render_object(obj, keys=None):
-    """Render an instance of some class in a concise manner."""
-
-    temp = obj.__class__.__name__ + "("
-
-    if keys is None:
-        keys = dir(obj)
-
-    vals = []
-    for k in keys:
-        vals.append(f"{k}={getattr(obj, k)}")
-
-    temp += ",".join(vals) + ")"
-
-    return temp
-
-
 def float_size(name: str) -> int:
     """Given a name of a floating type, guess its size in bytes."""
 
