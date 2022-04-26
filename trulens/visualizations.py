@@ -1576,7 +1576,7 @@ class NLP(object):
             # logits = nested_cast(backend=B, args=logits, astype=np.ndarray)
 
         if attributor is not None:
-            attributions = inputs.call_on(attributor._attributions).attributions
+            attributions = attributor._attributions(inputs).attributions
             # attributions = nested_cast(backend=B, args=attributions, astype=np.ndarray)
 
         input_ids = given_inputs

@@ -32,7 +32,8 @@ def install_if_not_installed(packages):
 def load_or_make(filename: Path, loader, maker=None, saver=None, downloader=None):
   """
   Load something from a `filename` using `loader` if the file exists, otherwise
-  make it using `maker`, save it using `saver`, and return it.
+  make it using `maker` or download it using `downloader`, save it using
+  `saver`, and return it.
   """
 
   print(f"loading {filename} ... ", end="")
