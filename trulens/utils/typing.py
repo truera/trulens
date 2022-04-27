@@ -221,6 +221,12 @@ DATA_CONTAINER_TYPE = (list, tuple, Outputs, Inputs, Uniform)
 
 
 def nested_axes(typ):
+    """
+    Given a type annotation containing a nested structure of single argument
+    types, return a list of the nested types in order from outer to inner. Stop
+    at TensorLike.
+    """
+
     if typ == TensorLike:
         return [TensorLike]
 
