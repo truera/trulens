@@ -1090,7 +1090,7 @@ def arrays_different(a: np.ndarray, b: np.ndarray):
     Given two arrays of potentially different lengths, return a boolean array
     indicating in which indices the two are different. If one is shorter than
     the other, the indices past the end of the shorter array are marked as
-    different. Assumes -1 is not used as a value in either array.
+    different.
     """
 
     m = min(len(a), len(b))
