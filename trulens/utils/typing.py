@@ -1,4 +1,5 @@
-"""Type aliases and data container classes. 
+"""
+Type aliases and data container classes. 
 
 Large part of these utilities are meant to support a design decision: public
 methods are permissive in the types they accept while private methods are not. 
@@ -97,6 +98,37 @@ consistent expectations regarding inputs/outputs.
     - QoI._wrap_public_call vs. QoI.__call__
     - ModelWrapper._fprop vs. ModelWrapper.fprop
     - ModelWrapper._qoi_bprop vs. ModelWrapper.qoi_bprop
+
+Dealing with Magic Numbers for Axes Indices
+
+    Some multi-dimensional (or nested) containers contain type hint and
+    annotations for order of axes. For example AttributionResults:
+
+    AttributionResult.axes == 
+
+    {'attributions': [
+        trulens.utils.typing.Outputs,
+        trulens.utils.typing.Inputs,
+        typing.Union[numpy.ndarray, ~Tensor] # == TensorLike
+     ], 
+     'gradients': [
+         trulens.utils.typing.Outputs,
+         trulens.utils.typing.Inputs,
+         trulens.utils.typing.Uniform,
+         typing.Union[numpy.ndarray, ~Tensor] # == TensorLike
+     ],
+     'interventions': [
+         trulens.utils.typing.Inputs,
+         trulens.utils.typing.Uniform,
+         typing.Union[numpy.ndarray, ~Tensor] # == TensorLike
+     ]}
+
+     You can then lookup an axis of interest:
+
+     - gradients_axes = AttributionResult.axes['gradients']
+     - gradients_axes.index(Outputs) == 0 
+     - gradients_axes.index(TensorLike) == 3
+
 """
 
 # NOTE(piotrm) had to move some things to this file to avoid circular
@@ -125,14 +157,21 @@ V = TypeVar("V")
 # Another, different value
 U = TypeVar("U")
 
-# Lists that represent the potentially multiple inputs to some neural layer.
-Inputs = List
+
+# Lists that represent multiple inputs to some neural layer.
+class Inputs(Generic[V], List[V]):
+    ...
+
 
 # Lists that represent model outputs or quantities of interest if multiple.
-Outputs = List
+class Outputs(Generic[V], List[V]):
+    ...
 
-# Lists that are meant to represent instances of some uniform distribution.
-Uniform = List
+
+# Lists that represent instances of a uniform distribution.
+class Uniform(Generic[V], List[V]):
+    ...
+
 
 # "One or More" OM[C, V] (V for Value, C for Container)
 OM = Union[V, C]  # actually C[V] but cannot get python to accept that
@@ -180,9 +219,42 @@ KwargsLike = Union[Kwargs[TensorLike], Feed]
 
 Indexable = Union[List[V], Tuple[V]]  # Indexable[V]
 # For checking the above against an instance:
-DATA_CONTAINER_TYPE = (list, tuple)
+DATA_CONTAINER_TYPE = (list, tuple, Outputs, Inputs, Uniform)
 
 ## Utilities for dealing with nested structures
+
+
+def nested_axes(typ):
+    """
+    Given a type annotation containing a nested structure of single argument
+    types, return a list of the nested types in order from outer to inner. Stop
+    at TensorLike.
+    """
+
+    if typ == TensorLike:
+        return [TensorLike]
+
+    args = typ.__args__
+
+    if len(args) != 1:
+        raise ValueError(
+            f"Cannot extract axis order from multi-argument type {typ}."
+        )
+
+    ret = [typ.__origin__] + nested_axes(args[0])
+
+    return ret
+
+
+def numpy_of_nested(backend, x: OMNested[Iterable, TensorLike]) -> np.ndarray:
+    """
+    Convert arbitrarily nested tensors into a numpy ndarray. This likely
+    requires uniform dimensions of all items on the same level of nesting.
+    """
+
+    x = nested_cast(backend=backend, astype=np.ndarray, args=x)
+
+    return np.array(x)
 
 
 def nested_map(y: OMNested[C, U],
@@ -225,7 +297,9 @@ def nested_cast(
 
     caster = TensorLike_caster(backend, astype)
 
-    return nested_map(args, lambda x: caster(x) if type(x) != astype else x)
+    return nested_map(
+        args, lambda x: caster(x) if not issubclass(type(x), astype) else x
+    )
 
 
 def tab(s: str, tab:str = "  "):

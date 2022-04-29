@@ -13,7 +13,7 @@ package.
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Callable, List, Tuple, Union
+from typing import Callable, get_type_hints, List, Tuple, Union
 
 import numpy as np
 
@@ -39,7 +39,9 @@ from trulens.utils.typing import ArgsLike, many_of_om
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_axes
 from trulens.utils.typing import nested_cast
 from trulens.utils.typing import nested_map
 from trulens.utils.typing import OM
@@ -56,12 +58,23 @@ QoiLike = Union[QoI, int, Tuple[int], Callable, str]
 DoiLike = Union[DoI, str]
 
 
-# Internal version of attributions calls (_attributions) pack their potentially multiple outputs in this container:
 @dataclass
 class AttributionResult:
+    """
+    _attribution method output container.
+    """
+
     attributions: Outputs[Inputs[TensorLike]] = None
     gradients: Outputs[Inputs[Uniform[TensorLike]]] = None
     interventions: Inputs[Uniform[TensorLike]] = None
+
+
+# Order of dimensions for multi-dimensional or nested containers. See more
+# information in typing.py.
+AttributionResult.axes = {
+    attribute: nested_axes(typ)
+    for attribute, typ in get_type_hints(AttributionResult).items()
+}
 
 
 class AttributionMethod(AbstractBaseClass):
@@ -165,7 +178,7 @@ class AttributionMethod(AbstractBaseClass):
         # Calls like: attributions([arg1, arg2]) will get read as model_args =
         # ([arg1, arg2],), that is, a tuple with a single element containing the
         # model args. Test below checks for this. TODO: Disallow such
-        # invocations? They should be given as attributions(arg1, arg2). 
+        # invocations? They should be given as attributions(arg1, arg2).
         if isinstance(model_args,
                       tuple) and len(model_args) == 1 and isinstance(
                           model_args[0], DATA_CONTAINER_TYPE):
@@ -372,11 +385,7 @@ class InternalInfluence(AttributionMethod):
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
         if self._return_doi:
-            results.interventions = D  # want: Uniform[Inputs[TensorLike]]
-
-            # doi_to_return = nested_cast(backend=B, astype=np.ndarray, args=D)
-            # doi_to_return = np.swapaxes(doi_to_return, 0, 2)
-            # resulting dim order: (INSTANCE, INTERVENTION, INPUTARG, DATA...)
+            results.interventions = D  # : Inputs[Uniform[TensorLike]]
 
         n_doi = len(D[0])
 
@@ -448,23 +457,11 @@ class InternalInfluence(AttributionMethod):
         )
 
         if self._return_grads:
-            #grads_to_return = nested_cast(
-            #    backend=B, astype=np.ndarray, args=qoi_grads_expanded
-            #)
-            #grads_to_return = np.swapaxes(grads_to_return, 0, 3)
-            #grads_to_return = np.swapaxes(grads_to_return, 1, 2)
-            results.gradients = qoi_grads_expanded
-            # result dim order: (INSTANCE, INTERVENTION, OUTPUT, INPUTARG, DATA...)
+            results.gradients = qoi_grads_expanded  # : Outputs[Inputs[Uniform[TensorLike]]]
 
         # TODO: Does this need to be done in numpy?
         attrs: Outputs[Inputs[TensorLike]] = nested_map(
-            qoi_grads_expanded,
-            lambda grad: np.mean(
-                grad  # B.reshape(grad, (n_doi, -1) + grad.shape[1:])
-                ,
-                axis=0
-            ),
-            nest=2
+            qoi_grads_expanded, lambda grad: np.mean(grad, axis=0), nest=2
         )
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
@@ -491,7 +488,7 @@ class InternalInfluence(AttributionMethod):
                 ] for attr in attrs  # Outputs
             ]
 
-        results.attributions = attrs
+        results.attributions = attrs  # : Outputs[Inputs[TensorLike]]
 
         return results
 

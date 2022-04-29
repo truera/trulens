@@ -16,6 +16,7 @@ from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
 from trulens.utils.typing import accepts_model_inputs
 from trulens.utils.typing import BaselineLike
+from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
@@ -70,6 +71,12 @@ class DoI(AbstractBaseClass):
             ret = self.__call__(z, model_inputs=model_inputs)
         else:
             ret = self.__call__(z)
+
+        # Wrap the public doi generator with appropriate type aliases.
+        if isinstance(ret[0], DATA_CONTAINER_TYPE):
+            ret = Inputs(Uniform(x) for x in ret)
+        else:
+            ret = Uniform(ret)
 
         ret: Inputs[Uniform[TensorLike]] = many_of_om(ret, innertype=Uniform)
 
