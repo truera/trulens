@@ -136,8 +136,10 @@ Uniform = List
 
 # "One or More" OM[C, V] (V for Value, C for Container)
 OM = Union[V, C]  # actually C[V] but cannot get python to accept that
-# e.g. OM[List, TensorLike] - One or more TensorLike where the more is contained in a List
-# e.g. OM[Inputs, TensorLike] - One or more TensorLike that represent model inputs.
+# - e.g. OM[List, TensorLike] - One or more TensorLike where the more is
+#   contained in a List
+# - e.g. OM[Inputs, TensorLike] - One or more TensorLike that represent model
+#   inputs.
 
 # "One or More" where the container type is itself a one or more.
 OMNested = Union[OM[V, C], 'OMNested[C, V]']
@@ -157,19 +159,21 @@ TensorLike = Union[np.ndarray, Tensor]
 # Model input arguments. Either a single element or list/tuple of several.
 # User-provided methods are given TensorLike and for single input models/layers
 # but internally we pass around InputList[TensorLike] for consistency. Likewise
-# user-provided methods may return a single TensorLike or Uniform[TensorLike] but we
-# want to pass around Inputs[TensorLike] or Inputs[Uniform[TensorLike]]. Because of
-# this, there are checks with wrapping/unwrapping around user-provided-function
-# calls using the various utilities below. Purely internal methods should not be
-# doing wrapping/unwrapping. Leaving this type only for the public methods while
-# the private methods use the more informative OM type with purpose annotation.
+# user-provided methods may return a single TensorLike or Uniform[TensorLike]
+# but we want to pass around Inputs[TensorLike] or Inputs[Uniform[TensorLike]].
+# Because of this, there are checks with wrapping/unwrapping around
+# user-provided-function calls using the various utilities below. Purely
+# internal methods should not be doing wrapping/unwrapping. Leaving this type
+# only for the public methods while the private methods use the more informative
+# OM type with purpose annotation.
 ArgsLike = OM[Union[List, Tuple], V]  # ArgsLike[V]
 
 # Model input kwargs.
 Kwargs = Dict[str, V]  # Kwargs[V]
 
-# Some backends allow inputs in terms of dicts with tensors as keys (i.e. feed_dict in tf1).
-# We keep track of internal names so that these feed dicts can use strings as names instead.
+# Some backends allow inputs in terms of dicts with tensors as keys (i.e.
+# feed_dict in tf1). We keep track of internal names so that these feed dicts
+# can use strings as names instead.
 Feed = Dict[Union[str, Tensor], TensorLike]
 
 KwargsLike = Union[Kwargs[TensorLike], Feed]
@@ -185,7 +189,8 @@ def nested_map(y: OMNested[C, U],
                fn: Callable[[U], V],
                nest=999) -> OMNested[C, V]:
     """
-    Applies fn to non-container elements in y. This works on "one or more" and even mested om.
+    Applies fn to non-container elements in y. This works on "one or more" and
+    even mested om.
 
     Parameters
     ----------
@@ -223,11 +228,19 @@ def nested_cast(
     return nested_map(args, lambda x: caster(x) if type(x) != astype else x)
 
 
-def tab(s, tab="  "):
+def tab(s: str, tab:str = "  "):
+    """
+    Prepend `tab` to each line of input.
+    """
+
     return "\n".join(map(lambda ss: tab + ss, s.split("\n")))
 
 
 def nested_str(items: OMNested[C, TensorLike]) -> str:
+    """
+    Generate string with shape information of the contents of given `items`.
+    """
+
     ret = ""
 
     if isinstance(items, DATA_CONTAINER_TYPE):

@@ -14,7 +14,7 @@ interpreting attributions as images.
 from abc import ABC
 from abc import abstractmethod
 import tempfile
-from typing import Callable, Iterable, List, Optional, Set, Tuple, TypeVar
+from typing import Any, Callable, Iterable, List, Optional, Set, Tuple, TypeVar
 
 import numpy as np
 
@@ -28,7 +28,7 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.utils import tru_logger
 from trulens.utils import try_import
-from trulens.utils.typing import ModelInputs, nested_cast
+from trulens.utils.typing import Inputs, ModelInputs, nested_cast
 from trulens.utils.typing import Tensor
 from trulens.utils.typing import Tensors
 
@@ -1392,6 +1392,7 @@ class NLP(object):
         output: Optional[Output] = None,
         labels: Optional[Iterable[str]] = None,
         tokenize: Optional[Callable[[TextBatch], ModelInputs]] = None,
+        embedder: Optional[Any] = None, # fix type hint
         embeddings: Optional[np.ndarray] = None,
         decode: Optional[Callable[[Tensor], str]] = None,
         input_accessor: Optional[Callable[[ModelInputs],
@@ -1461,6 +1462,7 @@ class NLP(object):
         self.wrapper = wrapper
 
         self.embeddings = embeddings
+        self.embedder = embedder
 
         self.input_accessor = input_accessor  # could be inferred
         self.output_accessor = output_accessor  # could be inferred
@@ -1494,7 +1496,7 @@ class NLP(object):
         return self.output.line(self.output.concat(*cells))
 
     def _tokens_stability_instance(
-        self, sentence_word_id, logits, attr, gradients, interventions, show_id=False, show_doi=False, highlights=None
+        self, sentence_word_id, sentence_embeddings, multiplier, logits, attr, gradients, interventions, show_id=False, show_doi=False, highlights=None
     ):
         B = get_backend()
 
@@ -1509,9 +1511,9 @@ class NLP(object):
         if attr is None:
             attr = [None] * len(sentence_word_id)
 
-
         effective_sentences_word_id = [sentence_word_id]
         effective_attr = [attr]
+        effective_embeddings = [sentence_embeddings]
 
         if show_doi:
             if interventions is None:
@@ -1519,16 +1521,29 @@ class NLP(object):
             if gradients is None:
                 raise ValueError("show_doi requires return_grads to be enabled on attributor")
 
-            effective_sentences_word_id = [sentence_word_id] * len(interventions)
-            effective_attr = [attr] * len(interventions)
+            effective_sentences_word_id += [sentence_word_id] * len(interventions)
+            effective_embeddings += list(interventions)
+            effective_attr += list(gradients)
 
-        for iid, (sentence_word_id, attr) in enumerate(zip(effective_sentences_word_id, effective_attr)):
+        if len(effective_attr) > 1:
+            sent += [self.output.linebreak(), self.output.linebreak()]
 
-            for i, (word_id, attr) in enumerate(zip(sentence_word_id, attr)):
+        for iid, (sentence_word_id, sentence_embeddings, attr_for_intervention) in enumerate(zip(effective_sentences_word_id, effective_embeddings,  effective_attr)):
+
+            #print("attr_for_intervention=", attr_for_intervention.shape)
+
+            interv = []
+
+            for i, (word_id, embs, attr, mult) in enumerate(zip(sentence_word_id, sentence_embeddings, attr_for_intervention, multiplier)):
+                #print("attr=", attr.shape)
+
                 word_id = int(B.as_array(word_id))
 
-                if word_id in self.hidden_tokens:
-                    continue
+                if show_doi:
+                    word_id, dist = self._closest_token(embs)
+                else:
+                    if word_id in self.hidden_tokens:
+                        continue
 
                 if self.decode is not None:
                     word = self.decode(word_id)
@@ -1537,7 +1552,7 @@ class NLP(object):
 
                 if word[0] == ' ':
                     word = word[1:]
-                    sent += [self.output.space()]
+                    interv += [self.output.space()]
 
                 if word == "":
                     word = "�"
@@ -1548,8 +1563,13 @@ class NLP(object):
                     cap = self.output.big
 
                 if attr is not None:
+                    if show_doi and iid > 0: # as in multiply_activations
+                        attr = attr * mult # TODO: need to consider baseline here as well
+
                     mag = float(self.attr_aggregate(attr))
-                    sent += [
+
+                    # print(mag)
+                    interv += [
                         cap(
                             self.output.magnitude_colored(
                                 word, mag, color_map=self.color_map
@@ -1557,10 +1577,13 @@ class NLP(object):
                         )
                     ]
                 else:
-                    sent += [cap(self.output.token(word, token_id=word_id))]
+                    interv += [cap(self.output.token(word, token_id=word_id))]
 
                 if show_id:
-                    sent += [self.output.sub(self.output.label(str(word_id)))]
+                    interv += [self.output.sub(self.output.label(str(word_id)))]
+
+            sent += self.output.line(self.output.concat(*interv))
+            sent += [self.output.linebreak(), self.output.linebreak()]
 
         return self.output.concat(self.output.line(self.output.concat(*sent)))
 
@@ -1574,11 +1597,21 @@ class NLP(object):
         else:
             inputs = ModelInputs(kwargs=given_inputs)
 
+        given_inputs_tensor = given_inputs
+        if self.input_accessor:
+            given_inputs_tensor = self.input_accessor(given_inputs_tensor)
+
         outputs = [None] * len(texts)
         attributions = [None] * len(texts)
         logits = [None] * len(texts)
         gradients = [None] * len(texts)
         interventions = [None] * len(texts)
+        embeddings = [None] * len(texts)
+        multipliers = [None] * len(texts)
+
+        if self.embedder is not None:
+            embeddings = given_inputs_tensor
+            embeddings = nested_cast(backend=B, astype=np.ndarray, args=embeddings)
 
         if self.wrapper is not None:
             outputs = inputs.call_on(self.wrapper._model)
@@ -1608,7 +1641,9 @@ class NLP(object):
 
             if pieces.interventions is not None:
                 interventions = pieces.interventions
-                interventions = np.array(nested_cast(backend=B, astype=np.ndarray, args=interventions))[0,:,:]            
+                interventions = np.array(nested_cast(backend=B, astype=np.ndarray, args=interventions))[0,:,:]
+
+            multipliers = attributor.doi._wrap_public_get_activation_multiplier(activation=[given_inputs_tensor], model_inputs=inputs)
 
         input_ids = given_inputs
         if self.input_accessor is not None:
@@ -1621,7 +1656,7 @@ class NLP(object):
                 )
 
         return dict(
-            attributions=attributions, logits=logits, input_ids=input_ids, gradients=gradients, interventions=interventions
+            attributions=attributions, embeddings=embeddings, multipliers=multipliers, logits=logits, input_ids=input_ids, gradients=gradients, interventions=interventions
         )
 
     def tokens_stability(
@@ -1663,12 +1698,16 @@ class NLP(object):
             ]
 
         # For each sentence,
-        for i, (sentence_word_id, attr,
-                logits, grads, intervs) in enumerate(zip(opts[0]['input_ids'],
+        for i, (sentence_word_id, sentence_embedding, multipliers, attr,
+                logits) in enumerate(zip(opts[0]['input_ids'],
+                                         opts[0]['embeddings'],
+                                         opts[0]['multipliers'],
                                          opts[0]['attributions'],
-                                         opts[0]['logits'],
-                                         opts[0]['gradients'],
-                                         opts[0]['interventions'])):
+                                         opts[0]['logits'])):
+
+            if show_doi:
+                grads = opts[0]['gradients'][:,i]
+                intervs = opts[0]['interventions'][:,i]
 
             # Accumulate per-sentence output here.
             aline = []
@@ -1684,6 +1723,8 @@ class NLP(object):
             aline.append(
                 self._tokens_stability_instance(
                     sentence_word_id,
+                    sentence_embedding,
+                    multipliers,
                     logits,
                     attr,
                     grads,
@@ -1699,10 +1740,12 @@ class NLP(object):
                 aline.append(
                     self._tokens_stability_instance(
                         opts[1]['input_ids'][i],
+                        opts[1]['embeddings'][i],
+                        opts[1]['multipliers'][i],
                         opts[1]['logits'][i],
                         opts[1]['attributions'][i],
-                        opts[1]['gradients'][i],
-                        opts[1]['interventions'][i],
+                        opts[1]['gradients'][:,i],
+                        opts[1]['interventions'][:,i],
                         show_id=show_id,
                         show_doi=show_doi,
                         highlights=highlights
@@ -1728,8 +1771,8 @@ class NLP(object):
             texts1=texts, attributor=attributor, show_id=show_id, show_doi=show_doi
         )
 
-    def _closest_token(embeddings, emb):
-        diffs = embeddings - emb
+    def _closest_token(self, emb):
+        diffs = self.embeddings - emb
         # print(diffs.shape)
         distances = np.linalg.norm(diffs, ord=2, axis=1)
         # print(distances.shape)
