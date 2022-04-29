@@ -12,7 +12,8 @@ package.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import Callable, List, Tuple, Union
+from dataclasses import dataclass
+from typing import Callable, get_type_hints, List, Tuple, Union
 
 import numpy as np
 
@@ -38,7 +39,9 @@ from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_axes
 from trulens.utils.typing import nested_cast
 from trulens.utils.typing import nested_map
 from trulens.utils.typing import OM
@@ -53,6 +56,25 @@ CutLike = Union[Cut, int, str, None]
 SliceLike = Union[Slice, Tuple[CutLike], CutLike]
 QoiLike = Union[QoI, int, Tuple[int], Callable, str]
 DoiLike = Union[DoI, str]
+
+
+@dataclass
+class AttributionResult:
+    """
+    _attribution method output container.
+    """
+
+    attributions: Outputs[Inputs[TensorLike]] = None
+    gradients: Outputs[Inputs[Uniform[TensorLike]]] = None
+    interventions: Inputs[Uniform[TensorLike]] = None
+
+
+# Order of dimensions for multi-dimensional or nested containers. See more
+# information in typing.py.
+AttributionResult.axes = {
+    attribute: nested_axes(typ)
+    for attribute, typ in get_type_hints(AttributionResult).items()
+}
 
 
 class AttributionMethod(AbstractBaseClass):
@@ -95,6 +117,14 @@ class AttributionMethod(AbstractBaseClass):
         return self._model
 
     @abstractmethod
+    def _attributions(self, model_inputs: ModelInputs) -> AttributionResult:
+        """
+        For attributions that have options to return multiple things depending
+        on configuration, wrap those multiple things in the AttributionResult
+        tuple.
+        """
+        ...
+
     def attributions(
         self, *model_args: ArgsLike, **model_kwargs: KwargsLike
     ) -> Union[TensorLike, ArgsLike[TensorLike],
@@ -126,7 +156,13 @@ class AttributionMethod(AbstractBaseClass):
                 `np.ndarray`s). The shape of the inputs must match the input
                 shape of `self.model`. 
 
-        Returns np.ndarray:
+        Returns
+            - np.ndarray when single attribution_cut input, single qoi output
+            - or ArgsLike[np.ndarray] when single input, multiple output (or
+              vice versa) 
+            - or ArgsLike[ArgsLike[np.ndarray]] when multiple output (outer),
+              multiple input (inner)
+
             An array of attributions, matching the shape and type of `from_cut`
             of the slice. Each entry in the returned array represents the degree
             to which the corresponding feature affected the model's outcome on
@@ -138,7 +174,43 @@ class AttributionMethod(AbstractBaseClass):
             If the quantity of interest features multiple outputs, a list for
             each will be returned.
         """
-        raise NotImplementedError
+
+        # Calls like: attributions([arg1, arg2]) will get read as model_args =
+        # ([arg1, arg2],), that is, a tuple with a single element containing the
+        # model args. Test below checks for this. TODO: Disallow such
+        # invocations? They should be given as attributions(arg1, arg2).
+        if isinstance(model_args,
+                      tuple) and len(model_args) == 1 and isinstance(
+                          model_args[0], DATA_CONTAINER_TYPE):
+            model_args = model_args[0]
+
+        model_inputs = ModelInputs(
+            args=many_of_om(model_args), kwargs=model_kwargs
+        )
+
+        # Will cast results to this data container type.
+        return_type = type(model_inputs.first())
+
+        pieces = self._attributions(model_inputs)
+
+        # Format attributions into the public structure which throws out output
+        # lists and input lists if there is only one output or only one input.
+        # Also cast to whatever the input type was.
+        attributions: Outputs[Inputs[np.ndarray]] = nested_cast(
+            backend=get_backend(), astype=return_type, args=pieces.attributions
+        )
+        attributions: Outputs[OM[Inputs, np.ndarray]
+                             ] = [om_of_many(attr) for attr in attributions]
+        attributions: OM[Outputs, OM[Inputs,
+                                     np.ndarray]] = om_of_many(attributions)
+
+        if pieces.gradients is not None or pieces.interventions is not None:
+            tru_logger.warn(
+                "AttributionMethod configured to return gradients or interventions. "
+                "Use the internal _attribution call to retrieve those."
+            )
+
+        return attributions
 
 
 class InternalInfluence(AttributionMethod):
@@ -186,6 +258,7 @@ class InternalInfluence(AttributionMethod):
         doi: DoiLike,
         multiply_activation: bool = True,
         return_grads: bool = False,
+        return_doi: bool = False,
         *args,
         **kwargs
     ):
@@ -278,25 +351,14 @@ class InternalInfluence(AttributionMethod):
         self.doi = InternalInfluence.__get_doi(doi, cut=self.slice.from_cut)
         self._do_multiply = multiply_activation
         self._return_grads = return_grads
+        self._return_doi = return_doi
 
-    def attributions(
-        self, *model_args: ArgsLike, **model_kwargs: KwargsLike
-    ) -> Union[TensorLike, ArgsLike[TensorLike],
-               ArgsLike[ArgsLike[TensorLike]]]:
+    def _attributions(self, model_inputs: ModelInputs) -> AttributionResult:
         # NOTE: not symbolic
 
         B = get_backend()
 
-        if isinstance(
-                model_args,
-                DATA_CONTAINER_TYPE) and len(model_args) == 1 and isinstance(
-                    model_args[0], DATA_CONTAINER_TYPE):
-            model_args = model_args[0]
-
-        model_inputs = ModelInputs(model_args, model_kwargs)
-
-        # Will cast results to this data container type.
-        return_type = type(model_inputs.first())
+        results = AttributionResult()
 
         # Create a message for out-of-memory errors regarding float and batch size.
         if len(list(model_inputs.values())) == 0:
@@ -322,8 +384,11 @@ class InternalInfluence(AttributionMethod):
 
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
+        if self._return_doi:
+            results.interventions = D  # : Inputs[Uniform[TensorLike]]
+
         n_doi = len(D[0])
-        
+
         D = self.__concatenate_doi(D)
 
         rebatch_size = self.rebatch_size
@@ -385,10 +450,18 @@ class InternalInfluence(AttributionMethod):
             transpose, np.concatenate, nest=2
         )
 
-        # TODO: Below is done in numpy.
+        qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(
+            qoi_grads_expanded,
+            lambda grad: np.reshape(grad, (n_doi, -1) + grad.shape[1:]),
+            nest=2
+        )
+
+        if self._return_grads:
+            results.gradients = qoi_grads_expanded  # : Outputs[Inputs[Uniform[TensorLike]]]
+
+        # TODO: Does this need to be done in numpy?
         attrs: Outputs[Inputs[TensorLike]] = nested_map(
-            qoi_grads_expanded, lambda grad: B.
-            mean(B.reshape(grad, (n_doi, -1) + grad.shape[1:]), axis=0)
+            qoi_grads_expanded, lambda grad: np.mean(grad, axis=0), nest=2
         )
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
@@ -415,18 +488,9 @@ class InternalInfluence(AttributionMethod):
                 ] for attr in attrs  # Outputs
             ]
 
-        attrs: Outputs[OM[Inputs,
-                          TensorLike]] = [om_of_many(attr) for attr in attrs]
-        attrs: OM[Outputs, OM[Inputs]] = om_of_many(attrs)
+        results.attributions = attrs  # : Outputs[Inputs[TensorLike]]
 
-        # Cast to the same data type as provided inputs.
-        if self._return_grads:
-            return nested_cast(
-                backend=B, astype=return_type, args=attrs
-            ), nested_cast(
-                backend=B, astype=return_type, args=qoi_grads_expanded
-            )
-        return nested_cast(backend=B, astype=return_type, args=attrs)
+        return results
 
     @staticmethod
     def __get_qoi(qoi_arg):
