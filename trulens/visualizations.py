@@ -13,8 +13,10 @@ interpreting attributions as images.
 
 from abc import ABC
 from abc import abstractmethod
+from dataclasses import dataclass
 import tempfile
-from typing import Any, Callable, Iterable, List, Optional, Set, Tuple, TypeVar
+from tkinter import N
+from typing import Any, Callable, Iterable, List, Optional, Set, Tuple, TypeVar, Union
 
 import numpy as np
 
@@ -23,12 +25,12 @@ from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.nn.distributions import PointDoi
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.quantities import InternalChannelQoI
+from trulens.nn.quantities import ClassQoI, ComparativeQoI, InternalChannelQoI, MaxClassQoI, QoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.utils import tru_logger
 from trulens.utils import try_import
-from trulens.utils.typing import Inputs, ModelInputs, nested_cast
+from trulens.utils.typing import Inputs, ModelInputs, Outputs, TensorLike, Uniform, nested_cast
 from trulens.utils.typing import Tensor
 from trulens.utils.typing import Tensors
 
@@ -1085,6 +1087,7 @@ class ColorMap:
 
         return (red, green, blue, 1.0)
 
+
 def arrays_different(a: np.ndarray, b: np.ndarray):
     """
     Given two arrays of potentially different lengths, return a boolean array
@@ -1100,6 +1103,7 @@ def arrays_different(a: np.ndarray, b: np.ndarray):
     diff[0:m] = a[0:m] != b[0:m]
 
     return diff
+
 
 class Output(ABC):
     """Base class for visualization output formats."""
@@ -1123,19 +1127,61 @@ class Output(ABC):
         ...
 
     @abstractmethod
-    def sub(self, e: E) -> E:
+    def highlight(self, s: E) -> E:
         ...
 
-    def scores(self, scores: np.ndarray, labels: List[str]) -> E:
+    @abstractmethod
+    def sub(self, e: E, color: str) -> E:
+        ...
+
+    def scores(
+        self, scores: np.ndarray, labels: List[str], qoi: QoI = None
+    ) -> E:
         if sum(scores) != 1.0:
             scores = np.exp(scores) / np.exp(scores).sum()
 
+        highlights = [False] * len(scores)
+
+        color = "aqua"
+
         content = []
-        for score, label in zip(scores, labels):
+
+        if isinstance(qoi, ClassQoI):
+            highlights[qoi.cl] = color
             content += [
-                self.magnitude_colored(label, mag=score),
-                self.label("-")
+                self.label(f"ClassQoI", color=color),
+                self.sub(str(qoi.cl), color=color),
+                self.space()
             ]
+
+        if isinstance(qoi, MaxClassQoI):
+            highlights = [color] * len(scores)
+            content += [self.label(f"MaxClassQoI", color=color), self.space()]
+
+        if isinstance(qoi, ComparativeQoI):
+            highlights[qoi.cl1] = "green"
+            highlights[qoi.cl2] = "red"
+            content += [
+                self.label(f"ComparativeQoI", color=color),
+                self.sub(str(qoi.cl1), color="green"),
+                self.space(),
+                self.sub(str(qoi.cl2), color="red"),
+                self.space()
+            ]
+
+        for i, (score, label, highlight) in enumerate(zip(scores, labels,
+                                                          highlights)):
+            temp = self.magnitude_colored(label, mag=score)
+
+            if highlight is not None:
+                temp = self.highlight(temp, color=highlight)
+
+            content += [temp]
+
+            if i + 1 < len(scores):
+                content += [self.space()]
+
+        #content += [self.label(f")")]
 
         return self.concat(*content)
 
@@ -1231,7 +1277,10 @@ class PlainText(Output):
     def big(self, s: E) -> E:
         return f"_{s}_"
 
-    def sub(self, s: E) -> E:
+    def highlight(self, s: E, color: str) -> E:
+        return f"[{s}]"
+
+    def sub(self, s: E, color: str) -> E:
         return f".{s}."
 
     def token(self, s: str, token_id=None) -> E:
@@ -1244,7 +1293,7 @@ class PlainText(Output):
 
         return content
 
-    def label(self, s: str) -> E:
+    def label(self, s: str, color: str) -> E:
         return s
 
     def line(self, e: E) -> E:
@@ -1282,8 +1331,11 @@ class HTML(Output):
     def space(self) -> E:
         return self.m_dom.Text("&nbsp;")
 
-    def label(self, s: str) -> E:
-        return self.m_dom.Text(self.m_html_util.escape(s))
+    def label(self, s: str, color: str = "white") -> E:
+        return self.m_html.span(
+            self.m_dom.Text(self.m_html_util.escape(s)),
+            style=f"color: {color};"
+        )
 
     def linebreak(self) -> E:
         return self.m_html.br()
@@ -1296,8 +1348,13 @@ class HTML(Output):
     def big(self, e: E) -> E:
         return self.m_html.strong(e)
 
-    def sub(self, e: E) -> E:
-        return self.m_html.sub(e)
+    def highlight(self, s: E, color: str = "white") -> E:
+        return self.m_html.span(
+            s, style=f"padding: 2px; border: 2px solid {color};"
+        )
+
+    def sub(self, e: E, color: str = "white") -> E:
+        return self.m_html.sub(e, style=f"color: {color};")
 
     def token(self, s: str, token_id=None) -> E:
         s = self.label(s)
@@ -1316,27 +1373,116 @@ class HTML(Output):
             **extra_arg
         )
 
-    def magnitude_colored(
-        self, s: str, mag: float, color_map=ColorMap.default
-    ) -> E:
-        r, g, b, a = np.array(color_map(mag)) * 255
-        s = self.label(s)
+    def scale(self, mag: float, color_map=ColorMap.default) -> E:
 
-        rgba = f"rgba({r}, {g}, {b}, {a})"
+        if isinstance(mag, tuple):
+            maglabel = f"{mag[1]:0.1f}{mag[0]:0.1f}"
+        else:
+            maglabel = f"{mag:0.3f}"
+
+        if isinstance(mag, tuple):
+            magn = mag[0]
+            magp = mag[1]
+            rn, gn, bn, an = np.array(color_map(mag[0])) * 255
+            rp, gp, bp, ap = np.array(color_map(mag[1])) * 255
+        else:
+            if mag > 0:
+                magp = mag
+                magn = 0.0
+                rp, gp, bp, ap = np.array(color_map(mag)) * 255
+                rn, gn, bn, an = 0, 0, 0, 0
+            else:
+                magp = 0.0
+                magn = mag
+                rn, gn, bn, an = np.array(color_map(mag)) * 255
+                rp, gp, bp, ap = 0, 0, 0, 0
+
+        s = self.label(maglabel)
+
+        rgban = f"rgba({rn}, {gn}, {bn}, {an})"
+        rgbap = f"rgba({rp}, {gp}, {bp}, {ap})"
 
         pad_top = 0
         pad_bot = 0
 
-        if mag > 0:
-            pad_top = int(min(mag, 1.0) * 10)
+        pad_top = int(min(magp, 1.0) * 10)
+        pad_bot = int(-max(magn, -1.0) * 10)
+
+        pieces = []
+
+        pieces += [
+            self.m_html.span(
+                "",
+                title=f"{maglabel}",
+                style=
+                f'border-right: {pad_bot}px solid {rgban}; margin-left: {25-pad_bot}px;'
+            )
+        ]
+
+        pieces += [
+            self.m_html.span(
+                s,
+                title=f"{maglabel}",
+                style=
+                f'display: inline-block; width: 60px; padding: 2px; text-align: center;',
+            )
+        ]
+
+        pieces += [
+            self.m_html.span(
+                "",
+                title=f"{maglabel}",
+                style=
+                f'border-left: {pad_top}px solid {rgbap}; margin-right: {25-pad_top}px;'
+            )
+        ]
+
+        return self.concat(*pieces)
+
+    MagnitudeLike = Union[float, Tuple[float, float]]
+
+    def magnitude_colored(
+        self,
+        s: str,
+        mag: MagnitudeLike,
+        color_map=ColorMap.default,
+        color='white'
+    ) -> E:
+        if isinstance(mag, tuple):
+            maglabel = f"{mag[1]:0.2f}{mag[0]:0.2f}"
+            magn = mag[0]
+            magp = mag[1]
+            rn, gn, bn, an = np.array(color_map(mag[0])) * 255
+            rp, gp, bp, ap = np.array(color_map(mag[1])) * 255
         else:
-            pad_bot = int(-max(mag, -1.0) * 10)
+            maglabel = f"{mag:0.3f}"
+            if mag > 0:
+                magp = mag
+                magn = 0.0
+                rp, gp, bp, ap = np.array(color_map(mag)) * 255
+                rn, gn, bn, an = 0, 0, 0, 0
+            else:
+                magp = 0.0
+                magn = mag
+                rn, gn, bn, an = np.array(color_map(mag)) * 255
+                rp, gp, bp, ap = 0, 0, 0, 0
+
+        s = self.label(s)
+
+        rgban = f"rgba({rn}, {gn}, {bn}, {an})"
+        rgbap = f"rgba({rp}, {gp}, {bp}, {ap})"
+
+        pad_top = 0
+        pad_bot = 0
+
+        pad_top = int(min(magp, 1.0) * 10)
+        pad_bot = int(-max(magn, -1.0) * 10)
 
         return self.m_html.span(
             s,
-            title=f"{mag:0.3f}",
+            title=f"{maglabel}",
             style=
-            f'border-top: {pad_top}px solid {rgba}; border-bottom: {pad_bot}px solid {rgba}; margin-left 1px; margin-right: 1px; background: black; color: {rgba};'
+            f'border-top: {pad_top}px solid {rgbap}; border-bottom: {pad_bot}px solid {rgban}; margin-left 1px; margin-right: 1px; background: black; color={color};'
         )
 
     def concat(self, *pieces: Iterable[E]) -> E:
@@ -1372,6 +1518,94 @@ class IPython(HTML):
         return self.m_ipy.display.HTML(html)
 
 
+@dataclass
+class InstanceOptionals:
+    # Minimally available when rendering tokens or related.
+    texts: str
+    input_ids: TensorLike
+
+    # Next two available if model wrapper is known.
+    # outputs: TensorLike
+    logits: TensorLike
+
+    # Available if attributor is known.
+    attributions: Outputs[TensorLike]
+    multipliers: TensorLike
+
+    # Available if attributor is known and show_doi is set.
+    gradients: Outputs[Uniform[TensorLike]]
+    interventions: Uniform[TensorLike]
+
+    # Available if embedder is known.
+    embeddings: TensorLike
+
+
+@dataclass
+class InstancesOptionals:
+    # Minimally available when rendering tokens or related.
+    texts: Inputs[str]
+    input_ids: Inputs[TensorLike]
+
+    # Next two available if model wrapper is known.
+    # outputs: Inputs[TensorLike] # one for each Input
+    logits: Inputs[TensorLike] = None  # one for each Input
+
+    # Available if attributor is known.
+    attributions: Inputs[TensorLike] = None
+    multipliers: Inputs[TensorLike] = None
+
+    # Available if attributor is known and show_doi is set.
+    gradients: Inputs[Uniform[TensorLike]] = None
+    interventions: Inputs[Uniform[TensorLike]] = None
+
+    # Available if embedder is known.
+    embeddings: Inputs[TensorLike] = None
+
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        ret = ""
+
+        for k in dir(self):
+            v = getattr(self, k)
+
+            if k not in ["texts", "input_ids", "logits", "attributions",
+                         "multipliers", "gradients", "interventions",
+                         "embeddings"]:
+                continue
+
+            ret += k + "\t: "
+            if hasattr(v, "shape"):
+                ret += str(v.shape)
+            elif hasattr(v, "__len__"):
+                ret += f"[{len(v)}]"
+            else:
+                ret += str(v)
+
+            ret += "\n"
+
+        return ret
+
+    def for_text_index(self, i):
+        return InstanceOptionals(
+            texts=self.texts[i],
+            input_ids=self.input_ids[i],
+            # outputs = self.outputs[i],
+            logits=self.logits[i] if self.logits is not None else None,
+            attributions=self.attributions[i]
+            if self.attributions is not None else None,
+            multipliers=self.multipliers[i]
+            if self.multipliers is not None else None,
+            gradients=self.gradients[:,
+                                     i] if self.gradients is not None else None,
+            interventions=self.interventions[:, i]
+            if self.interventions is not None else None,
+            embeddings=self.embeddings[i]
+            if self.embeddings is not None else None
+        )
+
+
 class NLP(object):
     """NLP Visualization tools."""
 
@@ -1392,7 +1626,7 @@ class NLP(object):
         output: Optional[Output] = None,
         labels: Optional[Iterable[str]] = None,
         tokenize: Optional[Callable[[TextBatch], ModelInputs]] = None,
-        embedder: Optional[Any] = None, # fix type hint
+        embedder: Optional[Any] = None,  # fix type hint
         embeddings: Optional[np.ndarray] = None,
         decode: Optional[Callable[[Tensor], str]] = None,
         input_accessor: Optional[Callable[[ModelInputs],
@@ -1400,6 +1634,7 @@ class NLP(object):
         output_accessor: Optional[Callable[[ModelOutput],
                                            Iterable[Tensor]]] = None,
         attr_aggregate: Optional[Callable[[Tensor], Tensor]] = None,
+        aggregate_twosided: bool = False,
         hidden_tokens: Optional[Set[int]] = set(),
         color_map: Callable[[float], Tuple[float, float, float,
                                            float]] = ColorMap.default
@@ -1457,6 +1692,7 @@ class NLP(object):
 
         self.output = output
         self.labels = labels
+
         self.tokenize = tokenize
         self.decode = decode
         self.wrapper = wrapper
@@ -1469,8 +1705,13 @@ class NLP(object):
 
         B = get_backend()
 
+        self.aggregate_twosided = aggregate_twosided
+
         if attr_aggregate is None:
-            attr_aggregate = B.sum
+            if self.aggregate_twosided:
+                attr_aggregate = lambda t: (B.sum(t[t < 0]), B.sum(t[t > 0]))
+            else:
+                attr_aggregate = B.sum
 
         self.attr_aggregate = attr_aggregate
 
@@ -1496,59 +1737,114 @@ class NLP(object):
         return self.output.line(self.output.concat(*cells))
 
     def _tokens_stability_instance(
-        self, sentence_word_id, sentence_embeddings, multiplier, logits, attr, gradients, interventions, show_id=False, show_doi=False, highlights=None
+        self,
+        opt: InstanceOptionals,
+        show_id=False,
+        show_doi=False,
+        show_text=False,
+        highlights=None,
+        attributor=None
     ):
         B = get_backend()
 
         sent = []
 
         if self.wrapper is not None:
-            logits = B.as_array(logits)
-            pred = logits.argmax()
+            logits = B.as_array(opt.logits)
+            # TODO: show pred
+            # pred = logits.argmax()
 
-            sent += [self.output.scores(logits, self.labels)]
+            if self.labels is None:
+                self.labels = list(map(str, range(0, len(logits))))
 
-        if attr is None:
-            attr = [None] * len(sentence_word_id)
+            sent += [
+                self.output.scores(
+                    logits,
+                    self.labels,
+                    qoi=attributor.qoi if attributor else None
+                )
+            ]
 
-        effective_sentences_word_id = [sentence_word_id]
+        if opt.attributions is None:
+            attr = [None] * len(opt.input_ids)
+        else:
+            attr = opt.attributions
+
+        effective_input_ids = [opt.input_ids]
         effective_attr = [attr]
-        effective_embeddings = [sentence_embeddings]
+        effective_embeddings = [opt.embeddings]
 
         if show_doi:
-            if interventions is None:
-                raise ValueError("show_doi requires return_doi to be enabled on attributor")
-            if gradients is None:
-                raise ValueError("show_doi requires return_grads to be enabled on attributor")
+            if opt.interventions is None:
+                raise ValueError(
+                    "show_doi requires return_doi to be enabled on attributor"
+                )
+            if opt.gradients is None:
+                raise ValueError(
+                    "show_doi requires return_grads to be enabled on attributor"
+                )
 
-            effective_sentences_word_id += [sentence_word_id] * len(interventions)
-            effective_embeddings += list(interventions)
-            effective_attr += list(gradients)
+            effective_input_ids += [opt.input_ids] * len(opt.interventions)
+            effective_embeddings += list(opt.interventions)
+            effective_attr += list(opt.gradients)
 
         if len(effective_attr) > 1:
             sent += [self.output.linebreak(), self.output.linebreak()]
 
-        for iid, (sentence_word_id, sentence_embeddings, attr_for_intervention) in enumerate(zip(effective_sentences_word_id, effective_embeddings,  effective_attr)):
-
-            #print("attr_for_intervention=", attr_for_intervention.shape)
+        for iid, (sentence_input_ids, sentence_embeddings,
+                  sentence_attr) in enumerate(zip(effective_input_ids,
+                                                  effective_embeddings,
+                                                  effective_attr)):
 
             interv = []
 
-            for i, (word_id, embs, attr, mult) in enumerate(zip(sentence_word_id, sentence_embeddings, attr_for_intervention, multiplier)):
-                #print("attr=", attr.shape)
+            #print("attr_for_intervention=", attr_for_intervention.shape)
+            if show_text and iid == 0:
+                interv += [
+                    self.output.label(repr(opt.texts)),
+                    self.output.space(),
+                    self.output.label("=>", color="gray"),
+                    self.output.space()
+                ]
 
-                word_id = int(B.as_array(word_id))
+            #if opt.embeddings is None:
+            #    sentence_embeddings = [None] * len(sentence_input_ids)
+            #else:
+            #    sentence_embeddings = opt.embeddings
+
+            if opt.multipliers is None:
+                sentence_multiplier = [None] * len(sentence_input_ids)
+            else:
+                sentence_multiplier = opt.multipliers
+
+            if iid > 0:
+                interv += [
+                    self.output.label("+", color="gray"),
+                    self.output.space()
+                ]
+
+                mag_sentence = self.attr_aggregate(
+                    sentence_attr * sentence_multiplier
+                )
+
+                interv += [self.output.scale(mag_sentence), self.output.space()]
+
+            for i, (input_id, emb, attr,
+                    mult) in enumerate(zip(sentence_input_ids,
+                                           sentence_embeddings, sentence_attr,
+                                           sentence_multiplier)):
 
                 if show_doi:
-                    word_id, dist = self._closest_token(embs)
+                    input_id, dist = self._closest_token(emb)
                 else:
-                    if word_id in self.hidden_tokens:
+                    if input_id in self.hidden_tokens:
                         continue
+                    dist = None
 
                 if self.decode is not None:
-                    word = self.decode(word_id)
+                    word = self.decode(input_id)
                 else:
-                    word = str(word_id)
+                    word = str(input_id)
 
                 if word[0] == ' ':
                     word = word[1:]
@@ -1563,12 +1859,11 @@ class NLP(object):
                     cap = self.output.big
 
                 if attr is not None:
-                    if show_doi and iid > 0: # as in multiply_activations
-                        attr = attr * mult # TODO: need to consider baseline here as well
+                    if show_doi and iid > 0:  # as in multiply_activations
+                        attr = attr * mult  # TODO: need to consider baseline here as well
 
-                    mag = float(self.attr_aggregate(attr))
+                    mag = self.attr_aggregate(attr)
 
-                    # print(mag)
                     interv += [
                         cap(
                             self.output.magnitude_colored(
@@ -1577,18 +1872,33 @@ class NLP(object):
                         )
                     ]
                 else:
-                    interv += [cap(self.output.token(word, token_id=word_id))]
+                    interv += [cap(self.output.token(word, token_id=input_id))]
 
                 if show_id:
-                    interv += [self.output.sub(self.output.label(str(word_id)))]
+                    interv += [
+                        self.output.sub(self.output.label(str(input_id)))
+                    ]
+
+            if iid == 0 and len(effective_attr) > 1:
+                interv += [
+                    self.output.space(),
+                    self.output.label(
+                        f"= (1/{len(opt.interventions)}) * ", color="gray"
+                    )
+                ]
 
             sent += self.output.line(self.output.concat(*interv))
             sent += [self.output.linebreak(), self.output.linebreak()]
 
         return self.output.concat(self.output.line(self.output.concat(*sent)))
 
-    def _get_optionals(self, texts, attributor: AttributionMethod = None):
+    def _get_optionals(
+        self, texts: List[str], attributor: AttributionMethod = None
+    ):
         B = get_backend()
+
+        def to_numpy(thing):
+            return np.array(nested_cast(B, thing, np.ndarray))
 
         given_inputs = self.tokenize(texts)
 
@@ -1596,54 +1906,6 @@ class NLP(object):
             inputs = given_inputs.as_model_inputs()
         else:
             inputs = ModelInputs(kwargs=given_inputs)
-
-        given_inputs_tensor = given_inputs
-        if self.input_accessor:
-            given_inputs_tensor = self.input_accessor(given_inputs_tensor)
-
-        outputs = [None] * len(texts)
-        attributions = [None] * len(texts)
-        logits = [None] * len(texts)
-        gradients = [None] * len(texts)
-        interventions = [None] * len(texts)
-        embeddings = [None] * len(texts)
-        multipliers = [None] * len(texts)
-
-        if self.embedder is not None:
-            embeddings = given_inputs_tensor
-            embeddings = nested_cast(backend=B, astype=np.ndarray, args=embeddings)
-
-        if self.wrapper is not None:
-            outputs = inputs.call_on(self.wrapper._model)
-
-            if self.output_accessor is not None:
-                logits = self.output_accessor(outputs)
-            else:
-                logits = outputs
-
-            if (not isinstance(logits, Iterable)) or isinstance(logits, dict):
-                raise ValueError(
-                    f"Outputs ({logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor."
-                )
-
-            # logits = nested_cast(backend=B, args=logits, astype=np.ndarray)
-
-        if attributor is not None:
-            pieces = attributor._attributions(inputs)
-            attributions = pieces.attributions
-            if len(attributions) != 1 or len(attributions[0]) != 1:
-                raise ValueError("Only attrubutions with one attribution layer and one qoi output are supported for visualization.")
-            attributions = attributions[0][0]
-
-            if pieces.gradients is not None:
-                gradients = pieces.gradients
-                gradients = np.array(gradients)[0,0,:,:]
-
-            if pieces.interventions is not None:
-                interventions = pieces.interventions
-                interventions = np.array(nested_cast(backend=B, astype=np.ndarray, args=interventions))[0,:,:]
-
-            multipliers = attributor.doi._wrap_public_get_activation_multiplier(activation=[given_inputs_tensor], model_inputs=inputs)
 
         input_ids = given_inputs
         if self.input_accessor is not None:
@@ -1655,9 +1917,57 @@ class NLP(object):
                     f"Inputs ({input_ids.__class__.__name__}) need to be iterable over instances. You might need to set input_accessor."
                 )
 
-        return dict(
-            attributions=attributions, embeddings=embeddings, multipliers=multipliers, logits=logits, input_ids=input_ids, gradients=gradients, interventions=interventions
-        )
+        # Start constructing the collection of optional fields to return.
+        opt = InstancesOptionals(texts=texts, input_ids=to_numpy(input_ids))
+
+        if self.embedder is not None:
+            embeddings = self.embedder(input_ids)
+            opt.embeddings = to_numpy(embeddings)
+
+        if self.wrapper is not None:
+            outputs = inputs.call_on(self.wrapper._model)
+
+            if self.output_accessor is not None:
+                opt.logits = self.output_accessor(outputs)
+            else:
+                opt.logits = outputs
+
+            if (not isinstance(opt.logits, Iterable)) or isinstance(opt.logits,
+                                                                    dict):
+                raise ValueError(
+                    f"Outputs ({opt.logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor."
+                )
+
+            opt.logits = to_numpy(opt.logits)
+
+        if attributor is not None:
+            pieces = attributor._attributions(inputs)
+
+            attributions = pieces.attributions
+            if len(attributions) != 1 or len(attributions[0]) != 1:
+                raise ValueError(
+                    "Only attrubutions with one attribution layer and one qoi output are supported for visualization."
+                )
+
+            opt.attributions = to_numpy(attributions)[0, 0]
+
+            if pieces.gradients is not None:
+                gradients = pieces.gradients
+                opt.gradients = to_numpy(gradients)[0, 0]
+
+            if pieces.interventions is not None:
+                interventions = pieces.interventions
+                opt.interventions = to_numpy(interventions)[0]
+
+            if self.embedder is not None:
+                multipliers = attributor.doi._wrap_public_get_activation_multiplier(
+                    activation=embeddings, model_inputs=inputs
+                )
+                opt.multipliers = to_numpy(multipliers)[0]
+
+        print(opt)
+
+        return opt
 
     def tokens_stability(
         self,
@@ -1665,7 +1975,9 @@ class NLP(object):
         texts2: Optional[Iterable[str]] = None,
         attributor: Optional[AttributionMethod] = None,
         show_id: bool = False,
-        show_doi: bool = False
+        show_doi: bool = False,
+        show_scale: bool = True,
+        show_text: bool = False
     ):
         """
         Visualize decoded token from sentence pairs. Shows pairs side-by-side
@@ -1674,8 +1986,24 @@ class NLP(object):
 
         B = get_backend()
 
+        if show_doi:
+            if attributor is None:
+                raise ValueError(
+                    "show_doi requires attributor with doi to be given."
+                )
+
+            if not attributor._return_grads or not attributor._return_doi:
+                raise ValueError(
+                    "show_doi requires attributor to be configured with return_grads, return_doi."
+                )
+
+            if self.embedder is None or self.embeddings is None:
+                raise ValueError(
+                    "show_doi requires embedder and embeddings to be provided to NLP constructor."
+                )
+
         if self.tokenize is None:
-            return ValueError("tokenize not provided to NLP visualizer.")
+            raise ValueError("tokenize not provided to NLP visualizer.")
 
         textss = [texts1]
         if texts2 is not None:
@@ -1690,7 +2018,7 @@ class NLP(object):
         content = []
 
         # Include a scale if an attributor was provided.
-        if attributor is not None:
+        if attributor is not None and show_scale:
             content += [
                 self.token_attribution_scale(),
                 self.output.linebreak(),
@@ -1698,40 +2026,32 @@ class NLP(object):
             ]
 
         # For each sentence,
-        for i, (sentence_word_id, sentence_embedding, multipliers, attr,
-                logits) in enumerate(zip(opts[0]['input_ids'],
-                                         opts[0]['embeddings'],
-                                         opts[0]['multipliers'],
-                                         opts[0]['attributions'],
-                                         opts[0]['logits'])):
+        for i in range(len(texts1)):
 
-            if show_doi:
-                grads = opts[0]['gradients'][:,i]
-                intervs = opts[0]['interventions'][:,i]
+            opt0 = opts[0].for_text_index(i)
+            if len(textss) > 1:
+                opt1 = opts[1].for_text_index(i)
 
             # Accumulate per-sentence output here.
             aline = []
 
             # If there are multiple texts, determine parts that differ to highlight.
-            highlights = [False] * len(sentence_word_id)
             if len(textss) > 1:
                 highlights = list(
-                    arrays_different(opts[0]['input_ids'][i].cpu(), opts[1]['input_ids'][i].cpu())
+                    arrays_different(opt0.input_ids, opt1.input_ids)
                 )
+            else:
+                highlights = [False] * len(opt0.input_ids)
 
             # Add the visualization of the sentence.
             aline.append(
                 self._tokens_stability_instance(
-                    sentence_word_id,
-                    sentence_embedding,
-                    multipliers,
-                    logits,
-                    attr,
-                    grads,
-                    intervs,
+                    opt0,
                     show_id=show_id,
                     show_doi=show_doi,
-                    highlights=highlights
+                    show_text=show_text,
+                    highlights=highlights,
+                    attributor=attributor
                 )
             )
 
@@ -1739,16 +2059,12 @@ class NLP(object):
             if len(textss) > 1:
                 aline.append(
                     self._tokens_stability_instance(
-                        opts[1]['input_ids'][i],
-                        opts[1]['embeddings'][i],
-                        opts[1]['multipliers'][i],
-                        opts[1]['logits'][i],
-                        opts[1]['attributions'][i],
-                        opts[1]['gradients'][:,i],
-                        opts[1]['interventions'][:,i],
+                        opt1,
                         show_id=show_id,
                         show_doi=show_doi,
-                        highlights=highlights
+                        show_text=show_text,
+                        highlights=highlights,
+                        attributor=attributor
                     )
                 )
 
@@ -1763,12 +2079,17 @@ class NLP(object):
         texts,
         attributor: AttributionMethod = None,
         show_id: bool = False,
-        show_doi: bool = False
+        show_doi: bool = False,
+        show_text: bool = False
     ):
         """Visualize a token-based input attribution."""
 
         return self.tokens_stability(
-            texts1=texts, attributor=attributor, show_id=show_id, show_doi=show_doi
+            texts1=texts,
+            attributor=attributor,
+            show_id=show_id,
+            show_doi=show_doi,
+            show_text=show_text
         )
 
     def _closest_token(self, emb):
@@ -1779,81 +2100,3 @@ class NLP(object):
         closest = np.argsort(distances)
         # print(closest.shape)
         return closest[0], distances[closest[0]]
-
-    def doi(
-        self,
-        texts,
-        attributor: AttributionMethod,
-        show_id: bool = False
-    ):
-
-        B = get_backend()
-
-        content = []
-
-        opt = self._get_optionals(texts, attributor=attributor)
-
-        samples_ids = opt['input_ids']
-
-        sample_inputs = self.tokenize(texts)#, return_tensors='pt').to("cuda")
-        # samples_ids = sample_inputs['input_ids'].cuda()
-        samples_embs = self.embedder(samples_ids.cuda()).cpu().detach().numpy()
-        # outputs = sample_inputs.call_on(self.wrapper._model)
-        logits = opt['logits']
-
-        pieces = attributor._attributions(ModelInputs(kwargs=sample_inputs))
-
-        attributions = np.array(pieces.attributions)
-        gradients = np.array(pieces.gradients)
-        interventions = np.array(nested_cast(backend=B, astype=np.ndarray, args=pieces.interventions))
-
-        # print(attributions.shape)
-        # print(gradients.shape)
-        # print(interventions.shape)
-
-        for sid, sentence in enumerate(texts):
-
-            sentence_content = []
-
-            sentence_ids = samples_ids[sid]
-            attr = attributions[0,0,sid]
-            grad = gradients[0,0,:,sid]
-            interv = interventions[0,:,sid]
-
-            # print(attr.shape)
-            # print(grad.shape)
-            # print(interv.shape)
-
-            base_embs = samples_embs[sid]
-
-            for iid in range(len(interv)):
-                grad_aggr = (grad[iid] * base_embs).sum(axis=1)
-
-                print(f"  {grad_aggr.sum():0.6f} ", end='')
-
-                for word_idx in range(len(sentence_ids)):
-                    word_emb = base_embs[word_idx]
-
-                    word_id = sentence_ids[word_idx]
-                    word_token = self.tokenizer.decode(word_id)
-
-                    grad_word = grad_aggr[word_idx]
-
-                    interv_emb = B.as_array(interv[iid][word_idx])
-                    # interv_emb = path[i][0][word_idx]
-                    close_id, close_dist = self._closest_token(self.embeddings, interv_emb)
-                    # print(close_id)
-                    close_emb = self.embeddings[close_id]
-                    close_token = self.tokenizer.decode(close_id)
-
-                    print(f"{close_token}({grad_word:0.6f})", end=' ')
-            
-
-                # self, sentence_word_id, logits, attr, show_id=False, highlights=None
-                sentence_content.append(self._tokens_stability_instance(sentence_ids, ))
-
-                print()
-
-        return self.output.render(self.output.concat(*content))
-
-            # print(word_emb[0:2], word_id, word_token, close_emb[0:2], close_id, close_token, close_dist, interv_emb[0:2])

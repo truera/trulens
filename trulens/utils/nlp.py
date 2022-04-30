@@ -1,6 +1,6 @@
 """Utilities for using trulens with NLP models. """
 
-from typing import Callable, Optional, Set
+from typing import Callable, List, Optional, Set, Tuple
 
 from trulens.nn.backend import get_backend
 from trulens.utils.typing import BaselineLike
@@ -10,7 +10,7 @@ from trulens.utils.typing import TensorLike
 
 
 def token_baseline_swap(
-    token1: int, token2: int,
+    token_pairs: List[Tuple[int,int]],
     input_accessor: Callable[[ModelInputs], Tensor],
     ids_to_embeddings: Optional[Callable[[int], Tensor]]
 ):
@@ -24,11 +24,12 @@ def token_baseline_swap(
         # :baseline_like
         input_ids = B.clone(input_accessor(model_inputs))
 
-        ids_token1 = input_ids == token1
-        ids_token2 = input_ids == token2
+        for (token1, token2) in token_pairs:
+            ids_token1 = input_ids == token1
+            ids_token2 = input_ids == token2
 
-        input_ids[ids_token1] = token2
-        input_ids[ids_token2] = token1
+            input_ids[ids_token1] = token2
+            input_ids[ids_token2] = token1
 
         return input_ids
 
