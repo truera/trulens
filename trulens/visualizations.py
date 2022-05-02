@@ -1772,7 +1772,11 @@ class NLP(object):
 
         effective_input_ids = [opt.input_ids]
         effective_attr = [attr]
-        effective_embeddings = [opt.embeddings]
+
+        if opt.embeddings is not None:
+            effective_embeddings = [opt.embeddings]
+        else:
+            effective_embeddings = [None] * len(opt.input_ids)
 
         if show_doi:
             if opt.interventions is None:
@@ -1798,7 +1802,6 @@ class NLP(object):
 
             interv = []
 
-            #print("attr_for_intervention=", attr_for_intervention.shape)
             if show_text and iid == 0:
                 interv += [
                     self.output.label(repr(opt.texts)),
@@ -1807,15 +1810,13 @@ class NLP(object):
                     self.output.space()
                 ]
 
-            #if opt.embeddings is None:
-            #    sentence_embeddings = [None] * len(sentence_input_ids)
-            #else:
-            #    sentence_embeddings = opt.embeddings
-
             if opt.multipliers is None:
                 sentence_multiplier = [None] * len(sentence_input_ids)
             else:
                 sentence_multiplier = opt.multipliers
+
+            if sentence_embeddings is None:
+                sentence_embeddings = [None] * len(sentence_input_ids)
 
             if iid > 0:
                 interv += [
@@ -1965,7 +1966,7 @@ class NLP(object):
                 )
                 opt.multipliers = to_numpy(multipliers)[0]
 
-        print(opt)
+        # print(opt)
 
         return opt
 
