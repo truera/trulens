@@ -1142,9 +1142,11 @@ class Output(ABC):
 
         highlights = [False] * len(scores)
 
-        color = "aqua"
+        color = "rgba(0, 100, 100, 1.0)"
 
         content = []
+
+        pred = np.argmax(scores)
 
         if isinstance(qoi, ClassQoI):
             highlights[qoi.cl] = color
@@ -1175,6 +1177,9 @@ class Output(ABC):
 
             if highlight is not None:
                 temp = self.highlight(temp, color=highlight)
+
+            if pred == i:
+                temp = self.highlight(temp, color="white")
 
             content += [temp]
 
