@@ -10,8 +10,8 @@ from trulens.utils.typing import TensorLike
 
 
 def token_baseline_swap(
-    token_pairs: List[Tuple[int,int]],
-    input_accessor: Callable[[ModelInputs], Tensor],
+    token_pairs: List[Tuple[int, int]], input_accessor: Callable[[ModelInputs],
+                                                                 Tensor],
     ids_to_embeddings: Optional[Callable[[int], Tensor]]
 ):
     """
@@ -46,7 +46,8 @@ def token_baseline_swap(
 
     base_embeddings: BaselineLike  # expected type
 
-    return base_ids, base_embeddings 
+    return base_ids, base_embeddings
+
 
 def token_baseline(
     keep_tokens: Set[int], replacement_token: int,

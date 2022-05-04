@@ -35,7 +35,7 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike, many_of_om
+from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike

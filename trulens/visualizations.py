@@ -16,7 +16,9 @@ from abc import abstractmethod
 from dataclasses import dataclass
 import tempfile
 from tkinter import N
-from typing import Any, Callable, Iterable, List, Optional, Set, Tuple, TypeVar, Union
+from typing import (
+    Any, Callable, Iterable, List, Optional, Set, Tuple, TypeVar, Union
+)
 
 import numpy as np
 
@@ -25,14 +27,23 @@ from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.nn.distributions import PointDoi
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.quantities import ClassQoI, ComparativeQoI, InternalChannelQoI, MaxClassQoI, QoI
+from trulens.nn.quantities import ClassQoI
+from trulens.nn.quantities import ComparativeQoI
+from trulens.nn.quantities import InternalChannelQoI
+from trulens.nn.quantities import MaxClassQoI
+from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.utils import tru_logger
 from trulens.utils import try_import
-from trulens.utils.typing import Inputs, ModelInputs, Outputs, TensorLike, Uniform, nested_cast
+from trulens.utils.typing import Inputs
+from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_cast
+from trulens.utils.typing import Outputs
 from trulens.utils.typing import Tensor
+from trulens.utils.typing import TensorLike
 from trulens.utils.typing import Tensors
+from trulens.utils.typing import Uniform
 
 # TODO: Unify the common things across image and NLP visualizations.
 
@@ -1373,8 +1384,12 @@ class HTML(Output):
 
         return self.m_html.span(
             s,
-            style=
-            f'border-top: {pad_top}px solid gray; border-bottom: {pad_bot}px solid gray; margin-left 1px; margin-right: 1px; background: black; color: white;',
+            style=f'border-top: {pad_top}px solid gray; '
+            f'border-bottom: {pad_bot}px solid gray; '
+            f'margin-left 1px; '
+            f'margin-right: 1px; '
+            f'background: black; '
+            f'color: white;',
             **extra_arg
         )
 
@@ -1419,8 +1434,8 @@ class HTML(Output):
             self.m_html.span(
                 "",
                 title=f"{maglabel}",
-                style=
-                f'border-right: {pad_bot}px solid {rgban}; margin-left: {25-pad_bot}px;'
+                style=f'border-right: {pad_bot}px solid {rgban}; '
+                f'margin-left: {25-pad_bot}px;'
             )
         ]
 
@@ -1428,8 +1443,10 @@ class HTML(Output):
             self.m_html.span(
                 s,
                 title=f"{maglabel}",
-                style=
-                f'display: inline-block; width: 60px; padding: 2px; text-align: center;',
+                style=f'display: inline-block; '
+                f'width: 60px; '
+                f'padding: 2px; '
+                f'text-align: center;',
             )
         ]
 
@@ -1437,8 +1454,8 @@ class HTML(Output):
             self.m_html.span(
                 "",
                 title=f"{maglabel}",
-                style=
-                f'border-left: {pad_top}px solid {rgbap}; margin-right: {25-pad_top}px;'
+                style=f'border-left: {pad_top}px solid {rgbap}; '
+                f'margin-right: {25-pad_top}px;'
             )
         ]
 
@@ -1486,8 +1503,12 @@ class HTML(Output):
         return self.m_html.span(
             s,
             title=f"{maglabel}",
-            style=
-            f'border-top: {pad_top}px solid {rgbap}; border-bottom: {pad_bot}px solid {rgban}; margin-left 1px; margin-right: 1px; background: black; color={color};'
+            style=f'border-top: {pad_top}px solid {rgbap}; '
+            f'border-bottom: {pad_bot}px solid {rgban}; '
+            f'margin-left 1px; '
+            f'margin-right: 1px; '
+            f'background: black; '
+            f'color={color};'
         )
 
     def concat(self, *pieces: Iterable[E]) -> E:
@@ -1706,14 +1727,19 @@ class NLP(object):
         self.wrapper = wrapper
 
         self.embeddings = embeddings
-        if self.embeddings is not None and not isinstance(self.embeddings, np.ndarray):
-            raise ValueError(f"embeddings is expected to be a numpy arrow but {self.embeddings.__class__} was given")
+        if self.embeddings is not None and not isinstance(self.embeddings,
+                                                          np.ndarray):
+            raise ValueError(
+                f"embeddings is expected to be a numpy arrow but {self.embeddings.__class__} was given"
+            )
 
         self.embedder = embedder
         self.embedding_distance = embedding_distance
 
         if not isinstance(self.embedding_distance, Callable):
-            L = lambda ord: lambda emb: np.linalg.norm(emb - self.embeddings, ord=ord, axis=1)
+            L = lambda ord: lambda emb: np.linalg.norm(
+                emb - self.embeddings, ord=ord, axis=1
+            )
 
             if isinstance(self.embedding_distance, str):
                 if self.embedding_distance == "l2":
@@ -1721,15 +1747,21 @@ class NLP(object):
                 elif self.embedding_distance == "l1":
                     self.embedding_distance = L(1.0)
                 elif self.embedding_distance == "cosine":
-                    self.embedding_distance = lambda emb: - np.dot(emb, self.embeddings)
+                    self.embedding_distance = lambda emb: -np.dot(
+                        emb, self.embeddings
+                    )
                 else:
-                    raise ValueError(f"Unknown embedding distance indicator string {self.embedding_distance}")
+                    raise ValueError(
+                        f"Unknown embedding distance indicator string {self.embedding_distance}"
+                    )
 
             elif self.embedding_distance is None:
                 self.embedding_distance = L(2.0)
 
             else:
-                raise ValueError(f"Do not know how to interpret embedding distance = {self.embedding_distance}")
+                raise ValueError(
+                    f"Do not know how to interpret embedding distance = {self.embedding_distance}"
+                )
 
         self.input_accessor = input_accessor  # could be inferred
         self.output_accessor = output_accessor  # could be inferred
