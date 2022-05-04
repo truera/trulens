@@ -1682,6 +1682,8 @@ class NLP(object):
 
             color_map: ColorMap
                 Means of coloring floats in [-1.0, 1.0]. 
+
+            embeddings: np.ndarray
         """
         if output is None:
             term_type = guess_env_type()
@@ -1704,8 +1706,12 @@ class NLP(object):
         self.wrapper = wrapper
 
         self.embeddings = embeddings
+        if self.embeddings is not None and not isinstance(self.embeddings, np.ndarray):
+            raise ValueError(f"embeddings is expected to be a numpy arrow but {self.embeddings.__class__} was given")
+
         self.embedder = embedder
         self.embedding_distance = embedding_distance
+
         if not isinstance(self.embedding_distance, Callable):
             L = lambda ord: lambda emb: np.linalg.norm(emb - self.embeddings, ord=ord, axis=1)
 
@@ -1718,6 +1724,12 @@ class NLP(object):
                     self.embedding_distance = lambda emb: - np.dot(emb, self.embeddings)
                 else:
                     raise ValueError(f"Unknown embedding distance indicator string {self.embedding_distance}")
+
+            elif self.embedding_distance is None:
+                self.embedding_distance = L(2.0)
+
+            else:
+                raise ValueError(f"Do not know how to interpret embedding distance = {self.embedding_distance}")
 
         self.input_accessor = input_accessor  # could be inferred
         self.output_accessor = output_accessor  # could be inferred
