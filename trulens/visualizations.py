@@ -2126,10 +2126,5 @@ class NLP(object):
 
     def _closest_token(self, emb):
         distances = self.embedding_distance(emb)
-        # diffs = self.embeddings - emb
-        # print(diffs.shape)
-        # distances = np.linalg.norm(diffs, ord=2, axis=1)
-        # print(distances.shape)
         closest = np.argsort(distances)
-        # print(closest.shape)
         return closest[0], distances[closest[0]]
