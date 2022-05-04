@@ -1633,6 +1633,7 @@ class NLP(object):
         tokenize: Optional[Callable[[TextBatch], ModelInputs]] = None,
         embedder: Optional[Any] = None,  # fix type hint
         embeddings: Optional[np.ndarray] = None,
+        embedding_distance: Optional[Callable[[np.ndarray], np.ndarray]] = None,
         decode: Optional[Callable[[Tensor], str]] = None,
         input_accessor: Optional[Callable[[ModelInputs],
                                           Iterable[Tensor]]] = None,
@@ -1704,6 +1705,19 @@ class NLP(object):
 
         self.embeddings = embeddings
         self.embedder = embedder
+        self.embedding_distance = embedding_distance
+        if not isinstance(self.embedding_distance, Callable):
+            L = lambda ord: lambda emb: np.linalg.norm(emb - self.embeddings, ord=ord, axis=1)
+
+            if isinstance(self.embedding_distance, str):
+                if self.embedding_distance == "l2":
+                    self.embedding_distance = L(2.0)
+                elif self.embedding_distance == "l1":
+                    self.embedding_distance = L(1.0)
+                elif self.embedding_distance == "cosine":
+                    self.embedding_distance = lambda emb: - np.dot(emb, self.embeddings)
+                else:
+                    raise ValueError(f"Unknown embedding distance indicator string {self.embedding_distance}")
 
         self.input_accessor = input_accessor  # could be inferred
         self.output_accessor = output_accessor  # could be inferred
@@ -2099,9 +2113,10 @@ class NLP(object):
         )
 
     def _closest_token(self, emb):
-        diffs = self.embeddings - emb
+        distances = self.embedding_distance(emb)
+        # diffs = self.embeddings - emb
         # print(diffs.shape)
-        distances = np.linalg.norm(diffs, ord=2, axis=1)
+        # distances = np.linalg.norm(diffs, ord=2, axis=1)
         # print(distances.shape)
         closest = np.argsort(distances)
         # print(closest.shape)
