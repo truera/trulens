@@ -302,7 +302,7 @@ def nested_cast(
     )
 
 
-def tab(s: str, tab:str = "  "):
+def tab(s: str, tab: str = "  "):
     """
     Prepend `tab` to each line of input.
     """
