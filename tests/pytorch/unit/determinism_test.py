@@ -28,7 +28,7 @@ class DeterminismTest(DeterminismTestBase, TestCase):
             def forward(this, x):
                 return this.dropout1(x) * this.dropout2(x)
 
-        self.model_nondet = get_model_wrapper(NonDet(), input_shape=(10,))
+        self.model_nondet = get_model_wrapper(NonDet())
 
 
 if __name__ == '__main__':

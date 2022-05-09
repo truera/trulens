@@ -13,9 +13,9 @@ thought of as a sub-model that uses the features computed by $h$.
 #from __future__ import annotations # Avoid expanding type aliases in mkdocs.
 
 from typing import Any, Callable, List, Optional, Union
-from warnings import warn
 
 from trulens.nn.backend import get_backend
+from trulens.utils import tru_logger
 
 # Define some type aliases.
 LayerIdentifier = Union[int, str, List[Union[int, str]]]
@@ -59,7 +59,7 @@ class Cut(object):
             if (isinstance(name, int) or
                 (isinstance(name, list) and isinstance(name[0], int))):
 
-                warn(
+                tru_logger.warning(
                     '\n\nPytorch does not have native support for indexed '
                     'layers. Using layer indices is not recommended.\n'
                 )
