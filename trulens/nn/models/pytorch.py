@@ -48,14 +48,8 @@ class PytorchModelWrapper(ModelWrapper):
             device on which to run model, by default None
         """
 
-        if 'input_shape' in kwargs:
-            tru_logger.deprecate(
-                f"input_shape parameter is no longer used and will be removed in the future"
-            )
-        if 'input_dtype' in kwargs:
-            tru_logger.deprecate(
-                f"input_dtype parameter is no longer used and will be removed in the future"
-            )
+        super().__init__(model, **kwargs)
+        # sets self._model, issues cross-backend messages
 
         model.eval()
 
@@ -66,7 +60,6 @@ class PytorchModelWrapper(ModelWrapper):
         self.device = device
         model.to(self.device)
 
-        self._model = model
         self._logit_layer = logit_layer
 
         layers = OrderedDict(PytorchModelWrapper._get_model_layers(model))

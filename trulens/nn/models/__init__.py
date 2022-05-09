@@ -73,7 +73,8 @@ def get_model_wrapper(
     internal_tensor_dict=None,
     default_feed_dict=None,
     session=None,
-    backend=None
+    backend=None,
+    **kwargs
 ):
     """
     Returns a ModelWrapper implementation that exposes the components needed for computing attributions.
@@ -101,7 +102,6 @@ def get_model_wrapper(
         custom_objects:
             _Optional, for use with Keras models only._ A dictionary of
             custom objects used by the Keras model.
-
 
         device:
             _Optional, for use with Pytorch models only._ A string
@@ -139,6 +139,16 @@ def get_model_wrapper(
 
     Returns: ModelWrapper
     """
+
+    if 'input_shape' in kwargs:
+        tru_logger.deprecate(
+            f"get_model_wrapper: input_shape parameter is no longer used and will be removed in the future"
+        )
+    if 'input_dtype' in kwargs:
+        tru_logger.deprecate(
+            f"get_model_wrapper: input_dtype parameter is no longer used and will be removed in the future"
+        )
+
     # get existing backend
     B = get_backend(suppress_warnings=True)
 
