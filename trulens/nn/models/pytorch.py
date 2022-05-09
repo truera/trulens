@@ -48,6 +48,17 @@ class PytorchModelWrapper(ModelWrapper):
             device on which to run model, by default None
         """
 
+        if 'input_shape' in kwargs:
+            tru_logger.deprecate(
+                f"PytorchModelWrapper: input_shape parameter is no longer used and will be removed in the future"
+            )
+            del kwargs['input_shape']
+        if 'input_dtype' in kwargs:
+            tru_logger.deprecate(
+                f"PytorchModelWrapper: input_dtype parameter is no longer used and will be removed in the future"
+            )
+            del kwargs['input_dtype']
+
         super().__init__(model, **kwargs)
         # sets self._model, issues cross-backend messages
 
