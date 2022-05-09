@@ -212,8 +212,8 @@ def get_model_wrapper(
                 )
             return TensorflowModelWrapper(
                 model,
-                input_tensors,
-                output_tensors,
+                input_tensors=input_tensors,
+                output_tensors=output_tensors,
                 internal_tensor_dict=internal_tensor_dict,
                 session=session
             )
