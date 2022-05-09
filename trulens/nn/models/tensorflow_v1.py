@@ -148,7 +148,7 @@ class TensorflowModelWrapper(ModelWrapper):
             )
 
         if num_args > 0 and num_kwargs > 0:
-            tru_logger.warn(
+            tru_logger.warning(
                 "Got both args and kwargs as inputs; we assume the args correspond to the first input tensors."
             )
 

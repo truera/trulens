@@ -134,7 +134,7 @@ class KerasModelWrapper(ModelWrapper):
         # sigmoid.
         if not (activation == self.keras.activations.softmax or
                 activation == self.keras.activations.sigmoid):
-            tru_logger.warn(
+            tru_logger.warning(
                 'The activation of the specified layer to '
                 '`_replace_probits_with_logits` is not a softmax or a sigmoid; '
                 'it may not currently convert its input to probits.'

@@ -62,12 +62,11 @@ def discern_backend(model: ModelLike):
 
 def get_model_wrapper(
     model: ModelLike,
+    *,
     logit_layer=None,
     replace_softmax: bool = False,
     softmax_layer=-1,
     custom_objects=None,
-    input_shape=None,
-    input_dtype=None,
     device: str = None,
     input_tensors=None,
     output_tensors=None,
@@ -103,13 +102,6 @@ def get_model_wrapper(
             _Optional, for use with Keras models only._ A dictionary of
             custom objects used by the Keras model.
 
-        input_shape:
-            _Required for use with Pytorch models only._ Tuple specifying
-            the input shape (excluding the batch dimension) expected by the
-            model.
-        
-        input_dtype: torch.dtype
-            _Optional, for use with Pytorch models only._, The dtype of the input.
 
         device:
             _Optional, for use with Pytorch models only._ A string
@@ -184,14 +176,8 @@ def get_model_wrapper(
 
     elif B.backend == Backend.PYTORCH:
         from trulens.nn.models.pytorch import PytorchModelWrapper
-        if input_shape is None:
-            tru_logger.error('pytorch model must pass parameter: input_shape')
         return PytorchModelWrapper(
-            model,
-            input_shape,
-            input_dtype=input_dtype,
-            logit_layer=logit_layer,
-            device=device
+            model, logit_layer=logit_layer, device=device
         )
     elif B.backend == Backend.TENSORFLOW:
         import tensorflow as tf

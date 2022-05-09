@@ -48,12 +48,11 @@ class ModelWrapper(AbstractBaseClass):
     def __init__(
         self,
         model,
+        *,
         logit_layer=None,
         replace_softmax=False,
         softmax_layer=-1,
         custom_objects=None,
-        input_shape=None,
-        input_dtype=None,
         device=None,
         input_tensors=None,
         output_tensors=None,
@@ -85,13 +84,13 @@ class ModelWrapper(AbstractBaseClass):
                 _Optional, for use with Keras models only._ A dictionary of
                 custom objects used by the Keras model.
 
-            input_shape:
-                _Required for use with Pytorch models only._ Tuple specifying
-                the input shape (excluding the batch dimension) expected by the
-                model.
-            
-            input_dtype: torch.dtype
-                _Optional, for use with Pytorch models only._ The dtype of the input.
+            #input_shape:
+            #    _Required for use with Pytorch models only._ Tuple specifying
+            #    the input shape (excluding the batch dimension) expected by the
+            #    model.
+            #
+            #input_dtype: torch.dtype
+            #    _Optional, for use with Pytorch models only._ The dtype of the input.
 
             device:
                 _Optional, for use with Pytorch models only._ A string
@@ -297,7 +296,7 @@ class ModelWrapper(AbstractBaseClass):
                     model_inputs = intervention.as_model_inputs()
 
                     if len(model_inputs.kwargs) > 0:
-                        tru_logger.warn(
+                        tru_logger.warning(
                             "Intervention for InputCut DoI specified but contains only positional arguments. "
                             "The rest will be taken from model_kwargs. If you need to intervene on keyword "
                             "arguments, provide the intervention as a ModelInputs container."
