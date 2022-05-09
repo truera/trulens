@@ -32,11 +32,13 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
 
     def __init__(
         self,
+        *,
         model,
         logit_layer=None,
         replace_softmax=False,
         softmax_layer=-1,
-        custom_objects=None
+        custom_objects=None,
+        **kwargs
     ):
         """
         __init__ Constructor
@@ -53,7 +55,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
             logit_layer=logit_layer,
             replace_softmax=replace_softmax,
             softmax_layer=softmax_layer,
-            custom_objects=custom_objects
+            custom_objects=custom_objects,
+            **kwargs
         )
 
         self._eager = tf.executing_eagerly()

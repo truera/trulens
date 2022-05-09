@@ -58,7 +58,8 @@ class ModelWrapper(AbstractBaseClass):
         output_tensors=None,
         internal_tensor_dict=None,
         default_feed_dict=None,
-        session=None
+        session=None,
+        **kwargs
     ):
         """
         Parameters:
@@ -114,7 +115,10 @@ class ModelWrapper(AbstractBaseClass):
                 `tf.Session` object to run the model graph in. If `None`, a new
                 temporary session will be generated every time the model is run.
         """
-        self._model = model
+
+        if model is not None:
+            self._model = model
+        # tf1 backend stores "graph" instead
 
     @property
     def model(self):
