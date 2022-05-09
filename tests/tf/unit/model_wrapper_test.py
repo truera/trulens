@@ -30,7 +30,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
             y = z2 @ self.layer3_weights + self.bias
 
         self.model = TensorflowModelWrapper(
-            graph, x, y, dict(x=x, z1=z1, z2=z2, logits=y)
+            graph, input_tensors=x, output_tensors=y, internal_tensor_dict=dict(x=x, z1=z1, z2=z2, logits=y)
         )
 
         self.layer0 = 'x'
