@@ -84,14 +84,6 @@ class ModelWrapper(AbstractBaseClass):
                 _Optional, for use with Keras models only._ A dictionary of
                 custom objects used by the Keras model.
 
-            #input_shape:
-            #    _Required for use with Pytorch models only._ Tuple specifying
-            #    the input shape (excluding the batch dimension) expected by the
-            #    model.
-            #
-            #input_dtype: torch.dtype
-            #    _Optional, for use with Pytorch models only._ The dtype of the input.
-
             device:
                 _Optional, for use with Pytorch models only._ A string
                 specifying the device to run the model on.
