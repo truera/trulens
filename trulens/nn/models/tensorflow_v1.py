@@ -32,8 +32,8 @@ class TensorflowModelWrapper(ModelWrapper):
 
     def __init__(
         self,
-        *,
         graph,
+        *,
         input_tensors,
         output_tensors,
         internal_tensor_dict=None,
