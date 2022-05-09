@@ -144,10 +144,12 @@ def get_model_wrapper(
         tru_logger.deprecate(
             f"get_model_wrapper: input_shape parameter is no longer used and will be removed in the future"
         )
+        del kwargs['input_shape']
     if 'input_dtype' in kwargs:
         tru_logger.deprecate(
             f"get_model_wrapper: input_dtype parameter is no longer used and will be removed in the future"
         )
+        del kwargs['input_dtype']
 
     # get existing backend
     B = get_backend(suppress_warnings=True)

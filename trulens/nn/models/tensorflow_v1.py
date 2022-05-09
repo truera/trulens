@@ -62,7 +62,9 @@ class TensorflowModelWrapper(ModelWrapper):
         """
 
         if "model" in kwargs:
-            raise ValueError("TensorflowModelWrapper takes in a graph instead of a model.")
+            raise ValueError(
+                "TensorflowModelWrapper takes in a graph instead of a model."
+            )
 
         super().__init__(None, **kwargs)
         # sets self._model (but not in this case), issues cross-backend messages
