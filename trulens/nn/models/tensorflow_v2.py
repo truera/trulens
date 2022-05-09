@@ -32,8 +32,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
 
     def __init__(
         self,
-        *,
         model,
+        *,
         logit_layer=None,
         replace_softmax=False,
         softmax_layer=-1,
