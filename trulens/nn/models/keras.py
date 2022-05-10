@@ -2,6 +2,7 @@ import importlib
 import os
 import tempfile
 from typing import Tuple
+from collections import OrderedDict
 
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
@@ -85,7 +86,47 @@ class KerasModelWrapper(ModelWrapper):
             self._logit_layer = logit_layer
 
         self._layers = model.layers
-        self._layernames = [l.name for l in self._layers]
+        self._layernames = []
+        for layer in self._layers:
+            self._layernames.extend(w.name for w in layer.weights)
+
+    def print_layer_names(self, max_depth=1):
+
+        def nest_weights(weights, layer_name):
+            ret = OrderedDict()
+            for key, value in weights.items():
+                parts = key.split("/")
+                if parts[0] == layer_name:
+                    parts = parts[1:]
+                d = ret
+                for part in parts[:-1]:
+                    if part not in d:
+                        d[part] = OrderedDict()
+                    d = d[part]
+                d[parts[-1]] = value
+            return ret
+        
+        def print_nested_weights(weights_dict, depth=1):
+            if depth > max_depth:
+                return
+            indent = "  " * depth
+            idx_len = max_depth * 15
+            for part, value in weights_dict.items():
+                col = f"{indent}{part}"
+                if isinstance(value, OrderedDict):
+                    if depth == max_depth:
+                        nest_indicator = "..."
+                        print(f"{col:<{idx_len}}{nest_indicator:>20}")
+                    else:
+                        print(f"{col:<{idx_len}}")
+                    print_nested_weights(value, depth+1)
+                else:
+                    print(f"{col:<{idx_len}}{str(value.shape):>20}")
+
+        for layer in self._layers:
+            print(layer.name)
+            ordered_weights = nest_weights({tw.name: tw for tw in layer.weights}, layer.name)
+            print_nested_weights(ordered_weights)
 
     @staticmethod
     def _replace_probits_with_logits(
