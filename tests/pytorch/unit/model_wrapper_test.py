@@ -48,7 +48,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
                 x = this.l2_relu(x)
                 return this.logits(x)
 
-        self.model = PytorchModelWrapper(M(), (2,))
+        self.model = PytorchModelWrapper(M())
 
         self.layer0 = None
         self.layer1 = 'l1_relu'
@@ -84,7 +84,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
 
                 return layer2
 
-        self.model_kwargs = PytorchModelWrapper(Mkwargs(), (3,))
+        self.model_kwargs = PytorchModelWrapper(Mkwargs())
         self.model_kwargs_layer1 = "layer1"
         self.model_kwargs_layer2 = "layer2"
 

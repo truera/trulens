@@ -41,9 +41,7 @@ class MultiQoiTest(MultiQoiTestBase, TestCase):
         torch.backends.cudnn.enabled = False
         # We have the same problem as this: https://github.com/pytorch/captum/issues/564
 
-        model = get_model_wrapper(
-            M(), input_shape=(num_timesteps, num_features)
-        )
+        model = get_model_wrapper(M())
         super(MultiQoiTest, self).per_timestep_qoi(
             model, num_classes, num_features, num_timesteps, batch_size
         )

@@ -33,14 +33,7 @@ class PytorchModelWrapper(ModelWrapper):
     of Pytorch nn.Module objects.
     """
 
-    def __init__(
-        self,
-        model,
-        input_shape,
-        input_dtype=torch.float32,
-        logit_layer=None,
-        device=None
-    ):
+    def __init__(self, model, *, logit_layer=None, device=None, **kwargs):
         """
         __init__ Constructor
 
@@ -48,25 +41,27 @@ class PytorchModelWrapper(ModelWrapper):
         ----------
         model : pytorch.nn.Module
             Pytorch model implemented as nn.Module
-        input_shape: tuple
-            The shape of the input without the batch dimension.
-        input_dtype: torch.dtype
-            The dtype of the input.
         logit_layer: str
             The name of the logit layer. If not supplied, it will assume any 
             layer named 'logits' is the logit layer.
         device : string, optional
             device on which to run model, by default None
         """
-        if input_dtype is None:
-            tru_logger.debug(
-                "Input dtype was not passed in. Defaulting to `torch.float32`."
+
+        if 'input_shape' in kwargs:
+            tru_logger.deprecate(
+                f"PytorchModelWrapper: input_shape parameter is no longer used and will be removed in the future"
             )
-            input_dtype = torch.float32
-        if input_shape is None:
-            raise ValueError(
-                'pytorch model wrapper must pass the input_shape parameter'
+            del kwargs['input_shape']
+        if 'input_dtype' in kwargs:
+            tru_logger.deprecate(
+                f"PytorchModelWrapper: input_dtype parameter is no longer used and will be removed in the future"
             )
+            del kwargs['input_dtype']
+
+        super().__init__(model, **kwargs)
+        # sets self._model, issues cross-backend messages
+
         model.eval()
 
         if device is None:
@@ -76,9 +71,6 @@ class PytorchModelWrapper(ModelWrapper):
         self.device = device
         model.to(self.device)
 
-        self._model = model
-        self._input_shape = input_shape
-        self._input_dtype = input_dtype
         self._logit_layer = logit_layer
 
         layers = OrderedDict(PytorchModelWrapper._get_model_layers(model))
@@ -87,7 +79,7 @@ class PytorchModelWrapper(ModelWrapper):
         self._tensors = list(layers.values())
 
         if len(self._tensors) == 0:
-            tru_logger.warn(
+            tru_logger.warning(
                 "model has no visible components, you will not be able to specify cuts"
             )
 
@@ -401,7 +393,7 @@ class PytorchModelWrapper(ModelWrapper):
                 # Adding warning here only if there is more than 1 dimension
                 # being summed. If there is only 1 dim, its likely the batching
                 # dimension so sum there is probably expected.
-                tru_logger.warn(
+                tru_logger.warning(
                     f"Attribution tensor is not scalar (it is of shape {t.shape} "
                     f"and will be summed. This may not be your intention."
                 )

@@ -39,10 +39,12 @@ class KerasModelWrapper(ModelWrapper):
     def __init__(
         self,
         model,
+        *,
         logit_layer=None,
         replace_softmax=False,
         softmax_layer=-1,
-        custom_objects=None
+        custom_objects=None,
+        **kwargs
     ):
         """
         __init__ Constructor
@@ -72,7 +74,7 @@ class KerasModelWrapper(ModelWrapper):
             )
 
         if replace_softmax:
-            self._model = KerasModelWrapper._replace_probits_with_logits(
+            model = KerasModelWrapper._replace_probits_with_logits(
                 model,
                 probits_layer_name=softmax_layer,
                 custom_objects=custom_objects
@@ -81,8 +83,10 @@ class KerasModelWrapper(ModelWrapper):
             self._logit_layer = softmax_layer
 
         else:
-            self._model = model
             self._logit_layer = logit_layer
+
+        super().__init__(model, **kwargs)
+        # sets self._model, issues cross-backend messages
 
         self._layers = model.layers
         self._layernames = [l.name for l in self._layers]
@@ -134,7 +138,7 @@ class KerasModelWrapper(ModelWrapper):
         # sigmoid.
         if not (activation == self.keras.activations.softmax or
                 activation == self.keras.activations.sigmoid):
-            tru_logger.warn(
+            tru_logger.warning(
                 'The activation of the specified layer to '
                 '`_replace_probits_with_logits` is not a softmax or a sigmoid; '
                 'it may not currently convert its input to probits.'
