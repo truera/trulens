@@ -38,7 +38,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 z = this.z3(z)
                 return this.y(z)
 
-        model = get_model_wrapper(M(), input_shape=[(5,), (1,)])
+        model = get_model_wrapper(M())
 
         infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
 
@@ -73,7 +73,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 z = this.z3(z)
                 return this.y(z)
 
-        model = get_model_wrapper(M(), input_shape=[(5,), (1,)])
+        model = get_model_wrapper(M())
 
         infl = InternalInfluence(
             model, Cut('concat', anchor='in'), ClassQoI(1), PointDoi()
@@ -108,7 +108,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 z5 = this.z5(z4)
                 return this.y(z5)
 
-        model = get_model_wrapper(M(), input_shape=[(5,), (1,)])
+        model = get_model_wrapper(M())
 
         infl = InternalInfluence(
             model, Cut(['cut_layer1', 'cut_layer2']), ClassQoI(1), PointDoi()
@@ -146,7 +146,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 z2 = this.z2(z1)
                 return this.y(z2)
 
-        model = get_model_wrapper(M(), input_shape=(2,))
+        model = get_model_wrapper(M())
 
         infl_out = InternalInfluence(
             model,
@@ -187,7 +187,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
                 z2 = this.z2(z1)
                 return this.y(z2)
 
-        model = get_model_wrapper(M(), input_shape=(2,))
+        model = get_model_wrapper(M())
 
         with self.assertRaises(ValueError):
             infl = InternalInfluence(

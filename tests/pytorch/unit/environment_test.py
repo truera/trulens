@@ -31,6 +31,6 @@ class EnvironmentTest(EnvironmentTestBase, TestCase):
                 return this.layer(x)
 
         self.models = [M()]
-        self.models_wrapper_kwargs = [{'input_shape': (self.input_size,)}]
+        self.models_wrapper_kwargs = [{}]
         self.correct_backend = Backend.PYTORCH
         self.model_wrapper_type = PytorchModelWrapper

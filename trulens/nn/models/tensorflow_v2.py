@@ -33,10 +33,12 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
     def __init__(
         self,
         model,
+        *,
         logit_layer=None,
         replace_softmax=False,
         softmax_layer=-1,
-        custom_objects=None
+        custom_objects=None,
+        **kwargs
     ):
         """
         __init__ Constructor
@@ -53,7 +55,8 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
             logit_layer=logit_layer,
             replace_softmax=replace_softmax,
             softmax_layer=softmax_layer,
-            custom_objects=custom_objects
+            custom_objects=custom_objects,
+            **kwargs
         )
 
         self._eager = tf.executing_eagerly()
@@ -99,7 +102,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
     def _warn_keras_layers(self, layers):
         keras_layers = [l for l in layers if 'KerasLayer' in str(type(l))]
         if (keras_layers):
-            tru_logger.warn('Detected a KerasLayer in the model. This can sometimes create issues during attribution runs or subsequent model calls. \
+            tru_logger.warning('Detected a KerasLayer in the model. This can sometimes create issues during attribution runs or subsequent model calls. \
                 If failures occur: try saving the model, deactivating eager mode with tf.compat.v1.disable_eager_execution(), \
                 setting tf.config.run_functions_eagerly(False), and reloading the model.'\
                     'Detected KerasLayers from model.layers: %s' % str(keras_layers))
