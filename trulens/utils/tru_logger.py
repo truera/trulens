@@ -23,11 +23,11 @@ def info(msg, *args, **kwargs):
     get_logger().info(msg, *args, **kwargs)
 
 
-def warn(msg, *args, **kwargs):
+def warning(msg, *args, **kwargs):
     get_logger().warning(msg, *args, **kwargs)
 
 
-def warning(msg, *args, **kwargs):
+def deprecate(msg, *args, **kwargs):
     get_logger().warning(msg, *args, **kwargs)
 
 
