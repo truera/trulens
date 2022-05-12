@@ -85,48 +85,19 @@ class KerasModelWrapper(ModelWrapper):
             self._model = model
             self._logit_layer = logit_layer
 
-        self._layers = model.layers
-        self._layernames = []
-        for layer in self._layers:
-            self._layernames.extend(w.name for w in layer.weights)
+        # self._layers = model.layers
+        self._layers = OrderedDict()
+        for layer in model.layers:
+            self._layers[layer.name] = layer
+            for weight in layer.weights:
+                self._layers[f"{layer.name}/{weight.name}"] = weight
 
-    def print_layer_names(self, max_depth=1):
+        self._layernames = list(self._layers.keys())
+        self._tensors = list(self._layers.values())
 
-        def nest_weights(weights, layer_name):
-            ret = OrderedDict()
-            for key, value in weights.items():
-                parts = key.split("/")
-                if parts[0] == layer_name:
-                    parts = parts[1:]
-                d = ret
-                for part in parts[:-1]:
-                    if part not in d:
-                        d[part] = OrderedDict()
-                    d = d[part]
-                d[parts[-1]] = value
-            return ret
-        
-        def print_nested_weights(weights_dict, depth=1):
-            if depth > max_depth:
-                return
-            indent = "  " * depth
-            idx_len = max_depth * 15
-            for part, value in weights_dict.items():
-                col = f"{indent}{part}"
-                if isinstance(value, OrderedDict):
-                    if depth == max_depth:
-                        nest_indicator = "..."
-                        print(f"{col:<{idx_len}}{nest_indicator:>20}")
-                    else:
-                        print(f"{col:<{idx_len}}")
-                    print_nested_weights(value, depth+1)
-                else:
-                    print(f"{col:<{idx_len}}{str(value.shape):>20}")
-
-        for layer in self._layers:
-            print(layer.name)
-            ordered_weights = nest_weights({tw.name: tw for tw in layer.weights}, layer.name)
-            print_nested_weights(ordered_weights)
+    def print_layer_names(self):
+        for name in self._layernames:
+            print(f'\'{name}\':\t{self._layers[name]}')
 
     @staticmethod
     def _replace_probits_with_logits(
@@ -248,14 +219,16 @@ class KerasModelWrapper(ModelWrapper):
         if isinstance(name, str):
             if not name in self._layernames:
                 raise ValueError('No such layer tensor:', name)
-
-            return [self._model.get_layer(name=name)]
+            return [self._layers[name]]
+            # return [self._model.get_layer(name=name)]
 
         elif isinstance(name, int):
             if len(self._layers) <= name:
                 raise ValueError('Layer index out of bounds:', name)
-
-            return [self._model.get_layer(index=name)]
+            
+            name = self._layernames[name]
+            return [self._layers[name]]
+            # return [self._model.get_layer(index=name)]
 
         elif isinstance(name, DATA_CONTAINER_TYPE):
             return sum([self._get_layers_by_name(n) for n in name], [])
@@ -312,10 +285,17 @@ class KerasModelWrapper(ModelWrapper):
                     for layer in layers
                 ]
             )
-        return (
-            flat([layer.input for layer in layers])
-            if cut.anchor == 'in' else flat([layer.output for layer in layers])
-        )
+
+        def _layer_to_tensor(layer):
+            if not isinstance(layer, self.keras.layers.Layer):
+                # is tensor
+                return layer
+            elif cut.anchor == "in":
+                return layer.input
+            else:
+                return layer.output
+        
+        return flat([_layer_to_tensor(layer) for layer in layers])
 
     def _prepare_intervention_with_input(
         self, model_args, intervention, doi_tensors
@@ -325,7 +305,7 @@ class KerasModelWrapper(ModelWrapper):
         if not all(elem in doi_tensors for elem in input_tensors):
 
             intervention_batch_doi_len = len(intervention[0])
-            model_args_batch_len = len(model_args[0])
+            model_args_batch_len = model_args[0].shape[0]
 
             doi_tensors.extend(input_tensors)
 

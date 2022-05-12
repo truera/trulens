@@ -64,29 +64,29 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
         if self._eager:
             self._warn_keras_layers(self._layers)
 
-            def get_call_fn(layer):
-                old_call_fn = layer.call
+            # def get_call_fn(layer):
+            #     old_call_fn = layer.call
 
-                def call(*inputs, **kwargs):
-                    if layer.input_intervention:
-                        inputs = [layer.input_intervention(inputs)]
+            #     def call(*inputs, **kwargs):
+            #         if layer.input_intervention:
+            #             inputs = [layer.input_intervention(inputs)]
 
-                    output = old_call_fn(*inputs, **kwargs)
+            #         output = old_call_fn(*inputs, **kwargs)
 
-                    if layer.output_intervention:
-                        output = layer.output_intervention(output)
+            #         if layer.output_intervention:
+            #             output = layer.output_intervention(output)
 
-                    for retrieve in layer.retrieve_functions:
-                        retrieve(inputs, output)
+            #         for retrieve in layer.retrieve_functions:
+            #             retrieve(inputs, output)
 
-                    return output
+            #         return output
 
-                return call
+            #     return call
 
             self._clear_hooks()
 
-            for layer in self._layers:
-                layer.call = get_call_fn(layer)
+            # for _, layer in self._layers.items():
+            #     layer.call = get_call_fn(layer)
 
             self._cached_input = []
 
@@ -105,7 +105,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
                     'Detected KerasLayers from model.layers: %s' % str(keras_layers))
 
     def _clear_hooks(self):
-        for layer in self._layers:
+        for _, layer in self._layers.items():
             layer.input_intervention = None
             layer.output_intervention = None
             layer.retrieve_functions = []
