@@ -206,7 +206,7 @@ class AttributionMethod(AbstractBaseClass):
                                      np.ndarray]] = om_of_many(attributions)
 
         if pieces.gradients is not None or pieces.interventions is not None:
-            tru_logger.warn(
+            tru_logger.warning(
                 "AttributionMethod configured to return gradients or interventions. "
                 "Use the internal _attribution call to retrieve those."
             )

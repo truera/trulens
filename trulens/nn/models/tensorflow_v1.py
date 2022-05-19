@@ -33,10 +33,12 @@ class TensorflowModelWrapper(ModelWrapper):
     def __init__(
         self,
         graph,
+        *,
         input_tensors,
         output_tensors,
         internal_tensor_dict=None,
-        session=None
+        session=None,
+        **kwargs
     ):
         """
         Parameters
@@ -58,6 +60,15 @@ class TensorflowModelWrapper(ModelWrapper):
             `internal_tensor_dict` can be accessed via the name given to them by
             tensorflow.
         """
+
+        if "model" in kwargs:
+            raise ValueError(
+                "TensorflowModelWrapper takes in a graph instead of a model."
+            )
+
+        super().__init__(None, **kwargs)
+        # sets self._model (but not in this case), issues cross-backend messages
+
         if input_tensors is None:
             raise ValueError(
                 'Tensorflow1 model wrapper must pass the input_tensors parameter'
@@ -148,7 +159,7 @@ class TensorflowModelWrapper(ModelWrapper):
             )
 
         if num_args > 0 and num_kwargs > 0:
-            tru_logger.warn(
+            tru_logger.warning(
                 "Got both args and kwargs as inputs; we assume the args correspond to the first input tensors."
             )
 

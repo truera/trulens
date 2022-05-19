@@ -42,7 +42,7 @@ class DoiTest(DoiTestBase, TestCase):
             def forward(this, x):
                 return this.layer2(this.layer1(x))
 
-        self.model = get_model_wrapper(DoubleExponential(), input_shape=(1,))
+        self.model = get_model_wrapper(DoubleExponential())
 
         self.layer0 = None
         self.layer1 = "layer1"

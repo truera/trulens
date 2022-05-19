@@ -60,7 +60,7 @@ class Cut(object):
             if (isinstance(name, int) or
                 (isinstance(name, list) and isinstance(name[0], int))):
 
-                warn(
+                tru_logger.warning(
                     '\n\nPytorch does not have native support for indexed '
                     'layers. Using layer indices is not recommended.\n'
                 )

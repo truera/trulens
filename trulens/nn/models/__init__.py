@@ -62,19 +62,19 @@ def discern_backend(model: ModelLike):
 
 def get_model_wrapper(
     model: ModelLike,
+    *,
     logit_layer=None,
     replace_softmax: bool = False,
     softmax_layer=-1,
     custom_objects=None,
-    input_shape=None,
-    input_dtype=None,
     device: str = None,
     input_tensors=None,
     output_tensors=None,
     internal_tensor_dict=None,
     default_feed_dict=None,
     session=None,
-    backend=None
+    backend=None,
+    **kwargs
 ):
     """
     Returns a ModelWrapper implementation that exposes the components needed for computing attributions.
@@ -102,14 +102,6 @@ def get_model_wrapper(
         custom_objects:
             _Optional, for use with Keras models only._ A dictionary of
             custom objects used by the Keras model.
-
-        input_shape:
-            _Required for use with Pytorch models only._ Tuple specifying
-            the input shape (excluding the batch dimension) expected by the
-            model.
-        
-        input_dtype: torch.dtype
-            _Optional, for use with Pytorch models only._, The dtype of the input.
 
         device:
             _Optional, for use with Pytorch models only._ A string
@@ -147,6 +139,18 @@ def get_model_wrapper(
 
     Returns: ModelWrapper
     """
+
+    if 'input_shape' in kwargs:
+        tru_logger.deprecate(
+            f"get_model_wrapper: input_shape parameter is no longer used and will be removed in the future"
+        )
+        del kwargs['input_shape']
+    if 'input_dtype' in kwargs:
+        tru_logger.deprecate(
+            f"get_model_wrapper: input_dtype parameter is no longer used and will be removed in the future"
+        )
+        del kwargs['input_dtype']
+
     # get existing backend
     B = get_backend(suppress_warnings=True)
 
@@ -184,14 +188,8 @@ def get_model_wrapper(
 
     elif B.backend == Backend.PYTORCH:
         from trulens.nn.models.pytorch import PytorchModelWrapper
-        if input_shape is None:
-            tru_logger.error('pytorch model must pass parameter: input_shape')
         return PytorchModelWrapper(
-            model,
-            input_shape,
-            input_dtype=input_dtype,
-            logit_layer=logit_layer,
-            device=device
+            model, logit_layer=logit_layer, device=device
         )
     elif B.backend == Backend.TENSORFLOW:
         import tensorflow as tf
@@ -216,8 +214,8 @@ def get_model_wrapper(
                 )
             return TensorflowModelWrapper(
                 model,
-                input_tensors,
-                output_tensors,
+                input_tensors=input_tensors,
+                output_tensors=output_tensors,
                 internal_tensor_dict=internal_tensor_dict,
                 session=session
             )
