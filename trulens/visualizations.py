@@ -1812,21 +1812,23 @@ class NLP(object):
 
         sent = []
 
-        if self.wrapper is not None:
+        if self.wrapper is not None:            
             logits = B.as_array(opt.logits)
             # TODO: show pred
             # pred = logits.argmax()
 
-            if self.labels is None:
-                self.labels = list(map(str, range(0, len(logits))))
+            if len(logits.shape) <= 1:
+                
+                if self.labels is None:
+                    self.labels = list(map(str, range(0, len(logits))))
 
-            sent += [
-                self.output.scores(
-                    logits,
-                    self.labels,
-                    qoi=attributor.qoi if attributor else None
-                )
-            ]
+                sent += [
+                    self.output.scores(
+                        logits,
+                        self.labels,
+                        qoi=attributor.qoi if attributor else None
+                    )
+                ]
 
         if opt.attributions is None:
             attr = [None] * len(opt.input_ids)
@@ -1957,7 +1959,7 @@ class NLP(object):
         return self.output.concat(self.output.line(self.output.concat(*sent)))
 
     def _get_optionals(
-        self, texts: List[str], attributor: AttributionMethod = None
+        self, texts: List[str], attributor: AttributionMethod = None, extra_model_inputs: dict={}
     ):
         B = get_backend()
 
@@ -1970,6 +1972,9 @@ class NLP(object):
             inputs = given_inputs.as_model_inputs()
         else:
             inputs = ModelInputs(kwargs=given_inputs)
+
+        for k, v in extra_model_inputs.items():
+            inputs.kwargs[k] = v
 
         input_ids = given_inputs
         if self.input_accessor is not None:
@@ -2041,7 +2046,8 @@ class NLP(object):
         show_id: bool = False,
         show_doi: bool = False,
         show_scale: bool = True,
-        show_text: bool = False
+        show_text: bool = False,
+        extra_model_inputs: dict={}
     ):
         """
         Visualize decoded token from sentence pairs. Shows pairs side-by-side
@@ -2074,7 +2080,7 @@ class NLP(object):
             textss.append(texts2)
 
         opts = [
-            self._get_optionals(texts, attributor=attributor)
+            self._get_optionals(texts, attributor=attributor, extra_model_inputs=extra_model_inputs)
             for texts in textss
         ]
 
@@ -2144,7 +2150,8 @@ class NLP(object):
         attributor: AttributionMethod = None,
         show_id: bool = False,
         show_doi: bool = False,
-        show_text: bool = False
+        show_text: bool = False,
+        extra_model_inputs: dict={}
     ):
         """Visualize a token-based input attribution."""
 
@@ -2153,7 +2160,8 @@ class NLP(object):
             attributor=attributor,
             show_id=show_id,
             show_doi=show_doi,
-            show_text=show_text
+            show_text=show_text,
+            extra_model_inputs=extra_model_inputs
         )
 
     def _closest_token(self, emb):
