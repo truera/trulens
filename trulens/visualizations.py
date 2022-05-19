@@ -1233,7 +1233,7 @@ class NLP(object):
 
         self.hidden_tokens = hidden_tokens
 
-    def token_attribution(self, texts: Iterable[str], attr: AttributionMethod):
+    def token_attribution(self, texts: Iterable[str], attr: AttributionMethod, extra_model_inputs={}):
         """Visualize a token-based input attribution on given `texts` inputs via the attribution method `attr`.
 
         Parameters:
@@ -1242,6 +1242,9 @@ class NLP(object):
 
             attr: AttributionMethod
                 The attribution method to generate the token importances with.
+
+            extra_model_inputs: dict
+                Any other inputs to send to model along with output of tokenization.
         
         Returns: Any
             The visualization in the format specified by this class's `output` parameter.
@@ -1254,7 +1257,11 @@ class NLP(object):
 
         inputs = self.tokenize(texts)
 
+        for k, v in extra_model_inputs.items():
+            inputs.kwargs[k] = v
+
         outputs = inputs.call_on(self.wrapper._model)
+
         attrs = inputs.call_on(attr.attributions)
 
         content = self.output.blank()
