@@ -177,6 +177,13 @@ class PytorchModelWrapper(ModelWrapper):
 
         return_output = None
 
+        def _get_hook_val(k):
+            if k not in hooks:
+                # self.print_layer_names() # some of these prints might be useful for this error
+                # print(hooks.keys())
+                raise ValueError(f"Could not get values for layer {k}. Is it a layer in your model? Is it evaluated when computing doi cut from input cut?")
+            return hooks[k]
+
         if isinstance(cut, OutputCut):
             return_output = many_of_om(output)
 
@@ -191,10 +198,10 @@ class PytorchModelWrapper(ModelWrapper):
             )
 
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
-            return_output = [hooks[name] for name in cut.name]
+            return_output = [_get_hook_val(name) for name in cut.name]
 
         else:
-            return_output = many_of_om(hooks[cut.name])
+            return_output = many_of_om(_get_hook_val(cut.name))
 
         return return_output
 

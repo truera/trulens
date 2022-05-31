@@ -35,7 +35,7 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import ArgsLike, nested_str
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike
@@ -374,6 +374,8 @@ class InternalInfluence(AttributionMethod):
 
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
+        # print("model_inputs=", model_inputs)
+
         with memory_suggestions(*param_msgs):  # Handles out-of-memory messages.
             doi_val: List[B.Tensor] = self.model._fprop(
                 model_inputs=model_inputs,
@@ -381,7 +383,12 @@ class InternalInfluence(AttributionMethod):
                 doi_cut=InputCut(),
                 attribution_cut=None,  # InputCut(),
                 intervention=model_inputs
-            )[0]
+            )
+
+        doi_val = doi_val[0]
+
+        if isinstance(doi_val[0], DATA_CONTAINER_TYPE):
+            tru_logger.warning("Model's activation at doi cut was more than a single tensor. This might cause problems.")
 
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
