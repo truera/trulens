@@ -298,13 +298,24 @@ class LinearDoi(DoI):
 
         baseline = self._compute_baseline(z, model_inputs=model_inputs)
 
-        r = 1. if self._resolution is 1 else self._resolution - 1.
+        r = 1. if self._resolution is 1 else self._resolution
 
+        # If the above were resolution instead of resolution - 1, this would be
+        # equivalent to captum's riemann_right. Specifically, `i`` never reaches
+        # `self._resolution`` so the coefficient for baseline is never 1 while
+        # coeff for point `z`` starts at 1.0 but never reaches 0. With - 1,
+        # however, it is not quite the same and may cause slight differences in
+        # results depending on how sharp the gradient profile is. 
+
+        # TODO: consider making it identical to riemman_right or perhaps make it
+        # a configurable option?
+    
         return om_of_many([ # Inputs
-            [ # Uniform
-                (1. - i / r) * z_ + i / r * b_
+            list(reversed([ # Uniform 
+            # reversed to align with user expectations baseline -> point
+                ((1. - i / r) * z_) + ((i / r) * b_)
                 for i in range(self._resolution)
-            ] for z_, b_ in zip(z, baseline)
+            ])) for z_, b_ in zip(z, baseline)
         ])
 
     def get_activation_multiplier(

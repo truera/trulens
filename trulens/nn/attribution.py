@@ -374,8 +374,6 @@ class InternalInfluence(AttributionMethod):
 
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
 
-        # print("model_inputs=", model_inputs)
-
         with memory_suggestions(*param_msgs):  # Handles out-of-memory messages.
             doi_val: List[B.Tensor] = self.model._fprop(
                 model_inputs=model_inputs,
