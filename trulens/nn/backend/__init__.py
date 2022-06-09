@@ -133,7 +133,7 @@ def tile(what: Tensors, onto: Tensors) -> Tensors:
         dimension. Otherwise return original val unchanged."""
 
         if val.shape[0] != inputs_dim:
-            tru_logger.warn(
+            tru_logger.warning(
                 f"Value {val} of shape {val.shape} is assumed to not be "
                 f"batchable due to its shape not matching prior batchable "
                 f"values of shape ({inputs_dim},...). If this is "
@@ -213,7 +213,7 @@ def get_backend(suppress_warnings=False):
 
         elif _TRULENS_BACKEND == Backend.UNKNOWN:
             if not suppress_warnings:
-                tru_logger.warn(
+                tru_logger.warning(
                     'The current backend is unset or unknown. Trulens will '
                     'attempt to use any previously loaded backends, but may '
                     'cause problems. Valid backends are `pytorch`, '
