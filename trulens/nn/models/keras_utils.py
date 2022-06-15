@@ -1,6 +1,8 @@
 import collections
-import tensorflow_models as tfm
+
 from tensorflow_hub.module_v2 import resolve
+import tensorflow_models as tfm
+
 from trulens.nn.backend import get_backend
 
 
@@ -40,7 +42,10 @@ def get_layer_input_paths(model):
         if B.is_tensor(arg):
             return layer_outputs[layer.name][arg.ref()]
         elif isinstance(arg, collections.abc.Mapping):
-            return {key: layer_outputs[layer.name][a.ref()] for key, a in arg.items()}
+            return {
+                key: layer_outputs[layer.name][a.ref()]
+                for key, a in arg.items()
+            }
         elif isinstance(arg, collections.abc.Iterable):
             return [layer_outputs[layer.name][a.ref()] for a in arg]
         else:
@@ -48,7 +53,7 @@ def get_layer_input_paths(model):
 
     layer_outputs = {}
     layer_input_paths = {}
-    
+
     # Outputs of each layer
     # TODO: this may be cleaner with node traversal instead of layer traversal
     for layer in model.layers:
@@ -61,15 +66,20 @@ def get_layer_input_paths(model):
             next_layer = out_node.outbound_layer
             args = out_node.call_args
             kwargs = out_node.call_kwargs
-            
+
             arg_paths = [get_arg_path(layer, arg) for arg in args]
-            kwarg_paths = {key: get_arg_path(layer, arg) for key, arg in kwargs.items()}
-            
+            kwarg_paths = {
+                key: get_arg_path(layer, arg) for key, arg in kwargs.items()
+            }
+
             if next_layer.name not in layer_input_paths:
-                layer_input_paths[next_layer.name] = {"args": arg_paths, "kwargs": kwarg_paths}
+                layer_input_paths[next_layer.name] = {
+                    "args": arg_paths,
+                    "kwargs": kwarg_paths
+                }
             else:
-                layer_input_paths[next_layer.name]['args'].extend(arg_paths) 
-                layer_input_paths[next_layer.name]['kwargs'].update(kwarg_paths) 
+                layer_input_paths[next_layer.name]['args'].extend(arg_paths)
+                layer_input_paths[next_layer.name]['kwargs'].update(kwarg_paths)
     return layer_input_paths
 
 
@@ -100,12 +110,13 @@ def get_layer_input_tensors(layer, layer_outputs, layer_input_paths):
         for part in path[1:]:
             if isinstance(out, collections.abc.Mapping):
                 out = out[part]
-            elif isinstance(part, int) and isinstance(out, collections.abc.Iterable):
+            elif isinstance(part, int) and isinstance(out,
+                                                      collections.abc.Iterable):
                 out = out[part]
             else:
                 raise ValueError(f"Invalid part path {part} for object {out}")
         return out
-        
+
     def get_tensor_from_arg_path(arg):
         if isinstance(arg, collections.abc.Mapping):
             return {k: lookup_arg_path(path) for k, path in arg.items()}
@@ -114,7 +125,7 @@ def get_layer_input_tensors(layer, layer_outputs, layer_input_paths):
                 # one path
                 return lookup_arg_path(arg)
             elif isinstance(arg[0], collections.abc.Iterable):
-                 return [lookup_arg_path(path) for path in arg]
+                return [lookup_arg_path(path) for path in arg]
         else:
             raise ValueError(f"Invalid arg path {arg}")
 
@@ -125,8 +136,10 @@ def get_layer_input_tensors(layer, layer_outputs, layer_input_paths):
 
     # fetch input args for this layer
     input_args = [get_tensor_from_arg_path(arg) for arg in args]
-    input_kwargs = {key: get_tensor_from_arg_path(arg) for key, arg in kwargs.items()}
-    
+    input_kwargs = {
+        key: get_tensor_from_arg_path(arg) for key, arg in kwargs.items()
+    }
+
     return input_args, input_kwargs
 
 
@@ -164,34 +177,35 @@ def perform_replacements(model, replacements, keras_module):
             for n in nodes:
                 layer_outputs[n.layer.name] = n.layer.get_output_at(-1)
 
-            return prop_through_layer(depth=depth-1, dirty=dirty)
+            return prop_through_layer(depth=depth - 1, dirty=dirty)
         else:
             # is dirty or needs to perform replacement
             for n in nodes:
                 layer = n.layer
                 layer_fn = layer
                 layer_name = layer.name
-                
+
                 input_args, input_kwargs = get_layer_input_tensors(
                     layer,
-                    layer_outputs=layer_outputs, 
+                    layer_outputs=layer_outputs,
                     layer_input_paths=layer_input_paths
                 )
-                
+
                 if layer in replacements:
                     layer = replacements[layer]
                     layer_fn = layer.call
-                
+
                 output = layer_fn(*input_args, **input_kwargs)
                 layer_outputs[layer_name] = output
-            
-            return prop_through_layer(depth=depth-1, dirty=True)
-    
+
+            return prop_through_layer(depth=depth - 1, dirty=True)
+
     max_depth = max(list(model._nodes_by_depth.keys()))
     output = prop_through_layer(max_depth)
 
     new_model = keras_module.Model(inputs=model.inputs, outputs=output)
     return new_model
+
 
 def trace_input_indices(model):
     '''
@@ -221,14 +235,17 @@ def trace_input_indices(model):
         nodes = nodes_by_depth[depth]
         for node in nodes:
             out_layer = node.outbound_layer
-            if node in out_layer.inbound_nodes:                
+            if node in out_layer.inbound_nodes:
                 idx = out_layer.inbound_nodes.index(node)
-                if out_layer.name in innode_indices and innode_indices[out_layer.name] != idx:
+                if out_layer.name in innode_indices and innode_indices[
+                        out_layer.name] != idx:
                     # May occur if layer is shared between other layers in the same model
-                    print(f"{out_layer.name}: input node conflict. orig: {innode_indices[out_layer.name]}, new: {idx}. Keeping original")
+                    print(
+                        f"{out_layer.name}: input node conflict. orig: {innode_indices[out_layer.name]}, new: {idx}. Keeping original"
+                    )
                 if out_layer.name not in innode_indices:
                     innode_indices[out_layer.name] = idx
-        tracer(depth + 1)    
+        tracer(depth + 1)
 
     tracer(0)
     return innode_indices
@@ -270,7 +287,7 @@ def load_keras_model_from_handle(handle, orig_layer, keras_module):
         if len(non_input_layers) != 1:
             break
         keras_model = non_input_layers[0]
-    
+
     return keras_model
 
 
@@ -305,14 +322,18 @@ def replace_tfhub_layers(model, keras_module):
 
         if layer_config and "handle" in layer_config:
             try:
-                keras_model = load_keras_model_from_handle(layer_config['handle'], layer, keras_module)
+                keras_model = load_keras_model_from_handle(
+                    layer_config['handle'], layer, keras_module
+                )
                 keras_model = replace_tfhub_layers(keras_model, keras_module)
                 replacements[layer] = keras_model
             except (OSError, ValueError):
                 # TODO: default to chainrule if keras layer substitution doesn't work
-                print(f"Unable to substitute Tensorflow model {layer.name} with Keras implementation")
+                print(
+                    f"Unable to substitute Tensorflow model {layer.name} with Keras implementation"
+                )
         i += 1
-    
+
     if len(replacements) > 0:
         return perform_replacements(model, replacements, keras_module)
     return model

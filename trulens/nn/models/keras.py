@@ -1,12 +1,14 @@
+from collections import OrderedDict
 import importlib
 import os
 import tempfile
 from typing import Tuple
-from collections import OrderedDict
 
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
 from trulens.nn.models._model_base import ModelWrapper
+from trulens.nn.models.keras_utils import replace_tfhub_layers
+from trulens.nn.models.keras_utils import trace_input_indices
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
@@ -14,13 +16,11 @@ from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import many_of_om
+from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import TensorArgs
 from trulens.utils.typing import TensorLike
-from trulens.nn.models.keras_utils import replace_tfhub_layers
-from trulens.nn.models.keras_utils import trace_input_indices
 
 
 def import_keras_backend():
@@ -33,15 +33,18 @@ def import_keras_backend():
     ).backend == Backend.TENSORFLOW:
         return importlib.import_module(name='tensorflow.keras')
 
+
 def import_tensorflow():
     '''
     Dynamically import Tensorflow (if available). 
     Used for calculating gradients using tf.GradientTape when tf.keras runs in eager execution mode.
     '''
-    if get_backend().backend == Backend.TF_KERAS or get_backend().backend == Backend.TENSORFLOW:
+    if get_backend().backend == Backend.TF_KERAS or get_backend(
+    ).backend == Backend.TENSORFLOW:
         return importlib.import_module(name='tensorflow')
     else:
         return None
+
 
 class KerasModelWrapper(ModelWrapper):
     """
@@ -302,15 +305,27 @@ class KerasModelWrapper(ModelWrapper):
         if cut.anchor not in ['in', 'out']:
             return flat(
                 [
-                    layer.get_output_at(self._innode_index[layer.name])[cut.anchor][0]
-                    if cut.anchor in layer.get_output_at(self._innode_index[layer.name]) else layer.get_output_at(self._innode_index[layer.name])
+                    layer.get_output_at(self._innode_index[layer.name]
+                                       )[cut.anchor][0] if cut.anchor
+                    in layer.get_output_at(self._innode_index[layer.name]) else
+                    layer.get_output_at(self._innode_index[layer.name])
                     for layer in layers
                 ]
             )
         elif cut.anchor == 'in':
-            return flat([layer.get_input_at(self._innode_index[layer.name]) for layer in layers])
+            return flat(
+                [
+                    layer.get_input_at(self._innode_index[layer.name])
+                    for layer in layers
+                ]
+            )
         else:
-            return flat([layer.get_output_at(self._innode_index[layer.name]) for layer in layers])
+            return flat(
+                [
+                    layer.get_output_at(self._innode_index[layer.name])
+                    for layer in layers
+                ]
+            )
 
     def _prepare_intervention_with_input(
         self, model_args, intervention, doi_tensors
@@ -434,15 +449,24 @@ class KerasModelWrapper(ModelWrapper):
         to_tensors = self._get_layers(to_cut)
         doi_tensors = self._get_layers(doi_cut)
 
-        if (B.backend == Backend.TF_KERAS or B.backend == Backend.TENSORFLOW) and self.tf.executing_eagerly():
+        if (B.backend == Backend.TF_KERAS or B.backend
+                == Backend.TENSORFLOW) and self.tf.executing_eagerly():
             with self.tf.GradientTape(persistent=True) as tape:
-                pre_model = self.keras.Model(inputs=doi_tensors, outputs=attribution_tensors)
-                post_model = self.keras.Model(inputs=attribution_tensors + input_tensors, outputs=to_tensors)
+                pre_model = self.keras.Model(
+                    inputs=doi_tensors, outputs=attribution_tensors
+                )
+                post_model = self.keras.Model(
+                    inputs=attribution_tensors + input_tensors,
+                    outputs=to_tensors
+                )
 
                 attr_input = pre_model(intervention.args)
                 attr_input = many_of_om(attr_input)
                 tape.watch(attr_input)
-                out_tensors = post_model(attr_input + list(many_of_om(model_inputs.args)), **model_inputs.kwargs)
+                out_tensors = post_model(
+                    attr_input + list(many_of_om(model_inputs.args)),
+                    **model_inputs.kwargs
+                )
 
                 Q = qoi._wrap_public_call(out_tensors)
 
@@ -455,7 +479,10 @@ class KerasModelWrapper(ModelWrapper):
                 gradients.append(zq)
 
         else:
-            doi_tensors, intervention_args = self._prepare_intervention_with_input(model_inputs.args, [x for x in intervention.args], [x for x in doi_tensors])
+            doi_tensors, intervention_args = self._prepare_intervention_with_input(
+                model_inputs.args, [x for x in intervention.args],
+                [x for x in doi_tensors]
+            )
             Q = qoi._wrap_public_call(to_tensors)
             gradients = [
                 self.keras.backend.function(
