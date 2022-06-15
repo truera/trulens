@@ -2,6 +2,7 @@ import importlib
 import os
 import tempfile
 from typing import Tuple
+from collections import OrderedDict
 
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
@@ -14,10 +15,12 @@ from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import ModelInputs
-from trulens.utils.typing import om_of_many
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import TensorArgs
 from trulens.utils.typing import TensorLike
+from trulens.nn.models.keras_utils import replace_tfhub_layers
+from trulens.nn.models.keras_utils import trace_input_indices
 
 
 def import_keras_backend():
@@ -30,6 +33,15 @@ def import_keras_backend():
     ).backend == Backend.TENSORFLOW:
         return importlib.import_module(name='tensorflow.keras')
 
+def import_tensorflow():
+    '''
+    Dynamically import Tensorflow (if available). 
+    Used for calculating gradients using tf.GradientTape when tf.keras runs in eager execution mode.
+    '''
+    if get_backend().backend == Backend.TF_KERAS or get_backend().backend == Backend.TENSORFLOW:
+        return importlib.import_module(name='tensorflow')
+    else:
+        return None
 
 class KerasModelWrapper(ModelWrapper):
     """
@@ -65,6 +77,7 @@ class KerasModelWrapper(ModelWrapper):
             modified. By default `False`.
         """
         self.keras = import_keras_backend()
+        self.tf = import_tensorflow()
         if not isinstance(model, self.keras.models.Model):
             raise ValueError(
                 'Model must be an instance of `{}.models.Model`.\n\n'
@@ -73,6 +86,7 @@ class KerasModelWrapper(ModelWrapper):
                 'vice-versa)'.format(get_backend().backend)
             )
 
+        model = replace_tfhub_layers(model, self.keras)
         if replace_softmax:
             model = KerasModelWrapper._replace_probits_with_logits(
                 model,
@@ -87,9 +101,27 @@ class KerasModelWrapper(ModelWrapper):
 
         super().__init__(model, **kwargs)
         # sets self._model, issues cross-backend messages
+        self._layers = self._traverse_model(model)
+        self._innode_index = trace_input_indices(model)
 
-        self._layers = model.layers
-        self._layernames = [l.name for l in self._layers]
+    def _traverse_model(self, model):
+        layers = OrderedDict()
+
+        for layer in model.layers:
+            layer_name = layer.name
+            layers[layer_name] = layer
+            total_layers += 1
+
+            if hasattr(layer, "layers"):
+                # is a nested keras model
+                sub_layers = self._traverse_model(layer)
+
+            else:
+                continue
+            for sub_layer_name, sub_layer in sub_layers.items():
+                layers[f"{layer_name}/{sub_layer_name}"] = sub_layer
+
+        return layers
 
     @staticmethod
     def _replace_probits_with_logits(
@@ -173,7 +205,7 @@ class KerasModelWrapper(ModelWrapper):
         if self._logit_layer is not None:
             return self._get_layers_by_name(self._logit_layer)
 
-        elif 'logits' in self._layernames:
+        elif 'logits' in self._layers:
             return self._get_layers_by_name('logits')
 
         else:
@@ -209,10 +241,10 @@ class KerasModelWrapper(ModelWrapper):
             Layer index out of bounds.
         '''
         if isinstance(name, str):
-            if not name in self._layernames:
+            if not name in self._layers:
                 raise ValueError('No such layer tensor:', name)
 
-            return [self._model.get_layer(name=name)]
+            return [self._layers[name]]
 
         elif isinstance(name, int):
             if len(self._layers) <= name:
@@ -270,25 +302,29 @@ class KerasModelWrapper(ModelWrapper):
         if cut.anchor not in ['in', 'out']:
             return flat(
                 [
-                    layer.output[cut.anchor][0]
-                    if cut.anchor in layer.output else layer.output
+                    layer.get_output_at(self._innode_index[layer.name])[cut.anchor][0]
+                    if cut.anchor in layer.get_output_at(self._innode_index[layer.name]) else layer.get_output_at(self._innode_index[layer.name])
                     for layer in layers
                 ]
             )
-        return (
-            flat([layer.input for layer in layers])
-            if cut.anchor == 'in' else flat([layer.output for layer in layers])
-        )
+        elif cut.anchor == 'in':
+            return flat([layer.get_input_at(self._innode_index[layer.name]) for layer in layers])
+        else:
+            return flat([layer.get_output_at(self._innode_index[layer.name]) for layer in layers])
 
     def _prepare_intervention_with_input(
         self, model_args, intervention, doi_tensors
     ):
         input_tensors = self._get_layers(InputCut())
+        doi_tensors_ref = [tensor.ref() for tensor in doi_tensors]
 
-        if not all(elem in doi_tensors for elem in input_tensors):
+        if not all(elem.ref() in doi_tensors_ref for elem in input_tensors):
 
             intervention_batch_doi_len = len(intervention[0])
-            model_args_batch_len = len(model_args[0])
+            try:
+                model_args_batch_len = len(model_args[0])
+            except TypeError:
+                model_args_batch_len = model_args[0].shape[0]
 
             doi_tensors.extend(input_tensors)
 
@@ -326,26 +362,26 @@ class KerasModelWrapper(ModelWrapper):
             if isinstance(k, B.Tensor):
                 return k
             # any named inputs must correspond to layer names
-            return self._model.get_layer(k).output
+            layer = self._model.get_layer(k)
+            return layer.get_output_at(self._innode_index[layer.name])
 
-        val_map = dict()
-
+        val_map = {}
         # construct a feed_dict
 
         # Model inputs come from model_args
         val_map.update(
             {
-                k: v for k, v in
-                zip(self._model.inputs[0:len(model_args)], model_args)
+                k.ref(): v for k, v in
+                zip(self._model.inputs[:len(model_args)], model_args)
             }
         )
         # Other placeholders come from kwargs.
-        val_map.update({_tensor(k): v for k, v in model_kwargs.items()})
+        val_map.update({_tensor(k).ref(): v for k, v in model_kwargs.items()})
 
         # Finally, interventions override any previously set tensors.
-        val_map.update({k: v for k, v in zip(doi_tensors, intervention)})
+        val_map.update({k.ref(): v for k, v in zip(doi_tensors, intervention)})
 
-        all_inputs = list(val_map.keys())
+        all_inputs = [k.deref() for k in val_map]
         all_vals = list(val_map.values())
 
         # Tensorflow doesn't allow you to make a function that returns the same
@@ -366,6 +402,7 @@ class KerasModelWrapper(ModelWrapper):
         # Compute the output values of `to_tensors` unless all `to_tensor`s were
         # also `doi_tensors`.
         if non_identity_to_tensors:
+            # Model for tf.Tensor output. backend.function returns numpy
             fprop_fn = self.keras.backend.function(
                 inputs=all_inputs, outputs=non_identity_to_tensors
             )
@@ -378,7 +415,6 @@ class KerasModelWrapper(ModelWrapper):
         # For any `to_tensor`s that were also `from_tensor`s, insert the
         # corresponding concrete input value from `intervention` in the output's
         # place.
-
         for i in sorted(identity_map):
             out_vals.insert(i, intervention[identity_map[i]])
 
@@ -392,26 +428,40 @@ class KerasModelWrapper(ModelWrapper):
         """
         See ModelWrapper.qoi_bprop .
         """
-
+        B = get_backend()
         attribution_tensors = self._get_layers(attribution_cut)
+        input_tensors = self._get_layers(InputCut())
         to_tensors = self._get_layers(to_cut)
         doi_tensors = self._get_layers(doi_cut)
 
-        to_tensors = om_of_many(to_tensors)
-        Q = qoi._wrap_public_call(to_tensors)
+        if (B.backend == Backend.TF_KERAS or B.backend == Backend.TENSORFLOW) and self.tf.executing_eagerly():
+            with self.tf.GradientTape(persistent=True) as tape:
+                pre_model = self.keras.Model(inputs=doi_tensors, outputs=attribution_tensors)
+                post_model = self.keras.Model(inputs=attribution_tensors + input_tensors, outputs=to_tensors)
 
-        int_copy = list(x for x in intervention.args)
-        doi_copy = list(x for x in doi_tensors)
+                attr_input = pre_model(intervention.args)
+                attr_input = many_of_om(attr_input)
+                tape.watch(attr_input)
+                out_tensors = post_model(attr_input + list(many_of_om(model_inputs.args)), **model_inputs.kwargs)
 
-        doi_tensors, intervention_args = self._prepare_intervention_with_input(
-            model_inputs.args, int_copy, doi_copy
-        )
+                Q = qoi._wrap_public_call(out_tensors)
 
-        gradients = [
-            self.keras.backend.function(
-                doi_tensors,
-                get_backend().gradient(q, attribution_tensors)
-            )(intervention_args) for q in Q
-        ]
+            gradients = []
+            for z in attr_input:
+                zq = []
+                for q in Q:
+                    grad_zq = tape.gradient(q, z)
+                    zq.append(grad_zq)
+                gradients.append(zq)
+
+        else:
+            doi_tensors, intervention_args = self._prepare_intervention_with_input(model_inputs.args, [x for x in intervention.args], [x for x in doi_tensors])
+            Q = qoi._wrap_public_call(to_tensors)
+            gradients = [
+                self.keras.backend.function(
+                    doi_tensors,
+                    get_backend().gradient(q, attribution_tensors)
+                )(intervention_args) for q in Q
+            ]
 
         return gradients
