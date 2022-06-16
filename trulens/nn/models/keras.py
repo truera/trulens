@@ -57,7 +57,7 @@ def import_tfhub_deps():
         tfhub = importlib.import_module(name='tensorflow_hub')
     except ModuleNotFoundError:
         print(
-            "To work with Tensorflow Hub models, run pip install tensorflow_hub tensorflow_models"
+            "To use Trulens with Tensorflow Hub models, run 'pip install tensorflow-hub tf-models-official'"
         )
 
     return tfhub
