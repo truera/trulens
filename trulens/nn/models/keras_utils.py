@@ -235,6 +235,12 @@ def trace_input_indices(model):
         nodes = nodes_by_depth[depth]
         for node in nodes:
             out_layer = node.outbound_layer
+            if hasattr(out_layer, "layers"):
+                # Is nested model, recurse
+                sub_innode_indices = trace_input_indices(out_layer)
+                for layer_name, idx in sub_innode_indices.items():
+                    innode_indices[f"{out_layer.name}/{layer_name}"] = idx
+
             if node in out_layer.inbound_nodes:
                 idx = out_layer.inbound_nodes.index(node)
                 if out_layer.name in innode_indices and innode_indices[

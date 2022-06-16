@@ -105,6 +105,11 @@ class KerasModelWrapper(ModelWrapper):
         super().__init__(model, **kwargs)
         # sets self._model, issues cross-backend messages
         self._layers = self._traverse_model(model)
+        # Used to find full path for layers in nested models
+        self._layer_name_map = {
+            layer: name for name, layer in self._layers.items()
+        }
+        # Index of input node used in model (in case layer is shared between models)
         self._innode_index = trace_input_indices(model)
 
     def _traverse_model(self, model):
@@ -113,7 +118,6 @@ class KerasModelWrapper(ModelWrapper):
         for layer in model.layers:
             layer_name = layer.name
             layers[layer_name] = layer
-            total_layers += 1
 
             if hasattr(layer, "layers"):
                 # is a nested keras model
@@ -305,25 +309,29 @@ class KerasModelWrapper(ModelWrapper):
         if cut.anchor not in ['in', 'out']:
             return flat(
                 [
-                    layer.get_output_at(self._innode_index[layer.name]
-                                       )[cut.anchor][0] if cut.anchor
-                    in layer.get_output_at(self._innode_index[layer.name]) else
-                    layer.get_output_at(self._innode_index[layer.name])
-                    for layer in layers
+                    layer.get_output_at(
+                        self._innode_index[self._layer_name_map[layer]]
+                    )[cut.anchor][0] if cut.anchor in layer.get_output_at(
+                        self._innode_index[self._layer_name_map[layer]]
+                    ) else layer.get_output_at(
+                        self._innode_index[self._layer_name_map[layer]]
+                    ) for layer in layers
                 ]
             )
         elif cut.anchor == 'in':
             return flat(
                 [
-                    layer.get_input_at(self._innode_index[layer.name])
-                    for layer in layers
+                    layer.get_input_at(
+                        self._innode_index[self._layer_name_map[layer]]
+                    ) for layer in layers
                 ]
             )
         else:
             return flat(
                 [
-                    layer.get_output_at(self._innode_index[layer.name])
-                    for layer in layers
+                    layer.get_output_at(
+                        self._innode_index[self._layer_name_map[layer]]
+                    ) for layer in layers
                 ]
             )
 
@@ -378,7 +386,9 @@ class KerasModelWrapper(ModelWrapper):
                 return k
             # any named inputs must correspond to layer names
             layer = self._model.get_layer(k)
-            return layer.get_output_at(self._innode_index[layer.name])
+            return layer.get_output_at(
+                self._innode_index[self._layer_name_map[layer]]
+            )
 
         val_map = {}
         # construct a feed_dict
