@@ -46,6 +46,23 @@ def import_tensorflow():
         return None
 
 
+def import_tfhub_deps():
+    try:
+        importlib.import_module(name='tensorflow_models')
+    except ModuleNotFoundError:
+        pass
+
+    tfhub = None
+    try:
+        tfhub = importlib.import_module(name='tensorflow_hub')
+    except ModuleNotFoundError:
+        print(
+            "To work with Tensorflow Hub models, run pip install tensorflow_hub tensorflow_models"
+        )
+
+    return tfhub
+
+
 class KerasModelWrapper(ModelWrapper):
     """
     Model wrapper that exposes internal layers of Keras models.
@@ -81,6 +98,8 @@ class KerasModelWrapper(ModelWrapper):
         """
         self.keras = import_keras_backend()
         self.tf = import_tensorflow()
+        self.tfhub = import_tfhub_deps()
+
         if not isinstance(model, self.keras.models.Model):
             raise ValueError(
                 'Model must be an instance of `{}.models.Model`.\n\n'
@@ -88,8 +107,9 @@ class KerasModelWrapper(ModelWrapper):
                 '`tensorflow.keras` model while using the \'keras\' backend or '
                 'vice-versa)'.format(get_backend().backend)
             )
+        if self.tfhub:
+            model = replace_tfhub_layers(model, self.keras, self.tfhub)
 
-        model = replace_tfhub_layers(model, self.keras)
         if replace_softmax:
             model = KerasModelWrapper._replace_probits_with_logits(
                 model,

@@ -1,8 +1,5 @@
 import collections
 
-from tensorflow_hub.module_v2 import resolve
-import tensorflow_models as tfm
-
 from trulens.nn.backend import get_backend
 
 
@@ -257,7 +254,9 @@ def trace_input_indices(model):
     return innode_indices
 
 
-def load_keras_model_from_handle(handle, orig_layer, keras_module):
+def load_keras_model_from_handle(
+    handle, orig_layer, keras_module, tfhub_module
+):
     '''
     load_keras_model_from_handle Load the tensorflow hub KerasLayer as a keras Model.
      
@@ -265,16 +264,21 @@ def load_keras_model_from_handle(handle, orig_layer, keras_module):
     ----------
     handle : str
         TFHub handle
+
     orig_layer : KerasLayer
+    
     keras_module : Python Module
         Either the keras module or tf.keras module
+    
+    tfhub_module : Python Module
+        tensorflow_hub module. Used to resolve tfhub model paths
     
     Returns
     -------
     keras.models.Model
 
     '''
-    module_path = resolve(handle)
+    module_path = tfhub_module.module_v2.resolve(handle)
     keras_model = keras_module.models.load_model(module_path)
     keras_model.set_weights(orig_layer.get_weights())
     keras_model._name = orig_layer.name
@@ -297,7 +301,7 @@ def load_keras_model_from_handle(handle, orig_layer, keras_module):
     return keras_model
 
 
-def replace_tfhub_layers(model, keras_module):
+def replace_tfhub_layers(model, keras_module, tfhub_module):
     '''
     replace_tfhub_layers Find all TFHub KerasLayers and 
     replace them with a keras Model.
@@ -309,6 +313,9 @@ def replace_tfhub_layers(model, keras_module):
 
     keras_module : Python Module
         Either the keras module or tf.keras module
+    
+    tfhub_module : Python Module
+        tensorflow_hub module. Used to resolve tfhub model paths
     
     Returns
     -------
@@ -329,9 +336,11 @@ def replace_tfhub_layers(model, keras_module):
         if layer_config and "handle" in layer_config:
             try:
                 keras_model = load_keras_model_from_handle(
-                    layer_config['handle'], layer, keras_module
+                    layer_config['handle'], layer, keras_module, tfhub_module
                 )
-                keras_model = replace_tfhub_layers(keras_model, keras_module)
+                keras_model = replace_tfhub_layers(
+                    keras_model, keras_module, tfhub_module
+                )
                 replacements[layer] = keras_model
             except (OSError, ValueError):
                 # TODO: default to chainrule if keras layer substitution doesn't work
