@@ -313,7 +313,7 @@ class LinearDoi(DoI):
         return om_of_many([ # Inputs
             list(reversed([ # Uniform 
             # reversed to align with user expectations baseline -> point
-                ((1. - i / r) * z_) + ((i / r) * b_)
+                (((r - i) * z_) + (i * b_)) / r
                 for i in range(self._resolution)
             ])) for z_, b_ in zip(z, baseline)
         ])
