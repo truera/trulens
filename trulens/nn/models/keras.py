@@ -7,8 +7,10 @@ from typing import Tuple
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.models.keras_utils import replace_tfhub_layers, hash_tensor, unhash_tensor
+from trulens.nn.models.keras_utils import hash_tensor
+from trulens.nn.models.keras_utils import replace_tfhub_layers
 from trulens.nn.models.keras_utils import trace_input_indices
+from trulens.nn.models.keras_utils import unhash_tensor
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
@@ -16,8 +18,9 @@ from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import many_of_om,om_of_many
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import TensorArgs
 from trulens.utils.typing import TensorLike
@@ -154,7 +157,8 @@ class KerasModelWrapper(ModelWrapper):
                     layers[f"{layer_name}/{sub_layer_name}"] = sub_layer
         return layers
 
-    def _replace_probits_with_logits(self, model, probits_layer_name=-1, custom_objects=None
+    def _replace_probits_with_logits(
+        self, model, probits_layer_name=-1, custom_objects=None
     ):
         """
         _replace_softmax_with_logits Remove the final layer's activation 
@@ -287,7 +291,6 @@ class KerasModelWrapper(ModelWrapper):
         else:
             raise ValueError('Unsupported type for cut name:', type(name))
 
-
     def _get_layer_input(self, layer):
         """Gets layer input tensor for layer in model. 
         Since the layer can be shared (and have multiple input nodes) across different models,
@@ -300,11 +303,11 @@ class KerasModelWrapper(ModelWrapper):
             Tensor: the input tensor to the layer
         """
         layer_name = self._layer_name_map[layer]
-        if layer_name in self._innode_index and self._innode_index[layer_name] < len(layer._inbound_nodes):
+        if layer_name in self._innode_index and self._innode_index[
+                layer_name] < len(layer._inbound_nodes):
             return layer.get_input_at(self._innode_index[layer_name])
         else:
             return layer.input
-
 
     def _get_layer_output(self, layer):
         """Gets layer output tensor for layer in model. 
@@ -318,11 +321,11 @@ class KerasModelWrapper(ModelWrapper):
             Tensor: the output tensor to the layer
         """
         layer_name = self._layer_name_map[layer]
-        if layer_name in self._innode_index and self._innode_index[layer_name] < len(layer._inbound_nodes):
+        if layer_name in self._innode_index and self._innode_index[
+                layer_name] < len(layer._inbound_nodes):
             return layer.get_output_at(self._innode_index[layer_name])
         else:
             return layer.output
-
 
     def _get_layers(self, cut):
         '''
@@ -367,7 +370,10 @@ class KerasModelWrapper(ModelWrapper):
 
         if cut.anchor not in ['in', 'out']:
             outputs = [self._get_layer_output(layer) for layer in layers]
-            outputs = [out[cut.anchor][0] if cut.anchor in out else out for out in outputs]
+            outputs = [
+                out[cut.anchor][0] if cut.anchor in out else out
+                for out in outputs
+            ]
             return flat(outputs)
 
         elif cut.anchor == 'in':
@@ -381,10 +387,11 @@ class KerasModelWrapper(ModelWrapper):
         input_tensors = self._get_layers(InputCut())
         doi_tensors_ref = [hash_tensor(tensor) for tensor in doi_tensors]
 
-        if not all(hash_tensor(elem) in doi_tensors_ref for elem in input_tensors):
+        if not all(
+                hash_tensor(elem) in doi_tensors_ref for elem in input_tensors):
 
             intervention_batch_doi_len = len(intervention[0])
-            
+
             # __len__ is not defined for symbolic Tensors in some TF versions
             # Conversely, .shape() is not defined for built-in python containers
             # So we'll try both
@@ -443,10 +450,14 @@ class KerasModelWrapper(ModelWrapper):
             }
         )
         # Other placeholders come from kwargs.
-        val_map.update({hash_tensor(_tensor(k)): v for k, v in model_kwargs.items()})
+        val_map.update(
+            {hash_tensor(_tensor(k)): v for k, v in model_kwargs.items()}
+        )
 
         # Finally, interventions override any previously set tensors.
-        val_map.update({hash_tensor(k): v for k, v in zip(doi_tensors, intervention)})
+        val_map.update(
+            {hash_tensor(k): v for k, v in zip(doi_tensors, intervention)}
+        )
 
         all_inputs = [unhash_tensor(k) for k in val_map]
         all_vals = list(val_map.values())

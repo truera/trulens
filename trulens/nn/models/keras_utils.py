@@ -9,11 +9,13 @@ def hash_tensor(tensor):
     else:
         return tensor
 
+
 def unhash_tensor(tensor_ref):
     if hasattr(tensor_ref, "deref"):
         return tensor_ref.deref()
     else:
         return tensor_ref
+
 
 def get_layer_input_paths(model):
     '''
@@ -251,6 +253,7 @@ def trace_input_indices(model):
     Returns a mapping of layer names to the index of the inbound node associated with model
 
     '''
+
     def tracer(depth):
         if depth not in nodes_by_depth:
             return
