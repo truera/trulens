@@ -100,9 +100,6 @@ class KerasModelWrapper(ModelWrapper):
         self.tf = import_tensorflow()
         self.tfhub = import_tfhub_deps()
 
-        if not hasattr(model, "_nodes_by_depth"):
-            model = self.subclass_model_to_graphed_model(model)
-
         if not isinstance(model, self.keras.models.Model):
             raise ValueError(
                 'Model must be an instance of `{}.models.Model`.\n\n'
@@ -156,34 +153,6 @@ class KerasModelWrapper(ModelWrapper):
                 for sub_layer_name, sub_layer in sub_layers.items():
                     layers[f"{layer_name}/{sub_layer_name}"] = sub_layer
         return layers
-
-
-    def subclass_model_to_graphed_model(self, model):
-        """
-        Recreates subclassed models with a built computation graph
-
-        Parameters
-        ----------
-        model : keras.models.Model
-            The Keras model
-
-        keras_module : Python Module
-            Either the keras module or tf.keras module
-
-        Returns
-        -------
-            keras.models.Model: A built Keras Model
-        """
-        try:
-            input_shape_dims = model.layers[0]._build_input_shape._dims
-        except AttributeError:
-            raise ValueError("Run the model with data at least once or call .compile() or .build() with a valid input shape")
-
-        # Use input_shape_dims[1:] because Input excludes batch size
-        t_in = self.keras.Input(input_shape_dims[1:])
-        t_out = model(t_in)
-        return self.keras.Model(inputs=t_in, outputs=t_out)
-
 
     def _replace_probits_with_logits(self, model, probits_layer_name=-1, custom_objects=None
     ):
