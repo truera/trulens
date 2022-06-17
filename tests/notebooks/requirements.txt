@@ -7,3 +7,4 @@ tensorflow==2.6.4
 torch==1.6.0
 torchvision==0.7.0
 ipywidgets
+protobuf==3.20.*
