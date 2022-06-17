@@ -7,7 +7,7 @@ from typing import Tuple
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
 from trulens.nn.models._model_base import ModelWrapper
-from trulens.nn.models.keras_utils import replace_tfhub_layers
+from trulens.nn.models.keras_utils import replace_tfhub_layers, hash_tensor, unhash_tensor
 from trulens.nn.models.keras_utils import trace_input_indices
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
@@ -16,7 +16,7 @@ from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import many_of_om
+from trulens.utils.typing import many_of_om,om_of_many
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import TensorArgs
@@ -100,6 +100,9 @@ class KerasModelWrapper(ModelWrapper):
         self.tf = import_tensorflow()
         self.tfhub = import_tfhub_deps()
 
+        if not hasattr(model, "_nodes_by_depth"):
+            model = self.subclass_model_to_graphed_model(model)
+
         if not isinstance(model, self.keras.models.Model):
             raise ValueError(
                 'Model must be an instance of `{}.models.Model`.\n\n'
@@ -107,11 +110,11 @@ class KerasModelWrapper(ModelWrapper):
                 '`tensorflow.keras` model while using the \'keras\' backend or '
                 'vice-versa)'.format(get_backend().backend)
             )
-        if self.tfhub:
+        elif self.keras and self.tfhub:
             model = replace_tfhub_layers(model, self.keras, self.tfhub)
 
         if replace_softmax:
-            model = KerasModelWrapper._replace_probits_with_logits(
+            model = self._replace_probits_with_logits(
                 model,
                 probits_layer_name=softmax_layer,
                 custom_objects=custom_objects
@@ -133,6 +136,14 @@ class KerasModelWrapper(ModelWrapper):
         self._innode_index = trace_input_indices(model)
 
     def _traverse_model(self, model):
+        """Traverses model to gather heirarchical layer data
+
+        Args:
+            model (keras.models.Model): Keras model
+
+        Returns:
+            OrderedDict[str, keras.layers.Layer]: Mapping of full heirarchical layer name to layer object  
+        """
         layers = OrderedDict()
 
         for layer in model.layers:
@@ -142,17 +153,39 @@ class KerasModelWrapper(ModelWrapper):
             if hasattr(layer, "layers"):
                 # is a nested keras model
                 sub_layers = self._traverse_model(layer)
-
-            else:
-                continue
-            for sub_layer_name, sub_layer in sub_layers.items():
-                layers[f"{layer_name}/{sub_layer_name}"] = sub_layer
-
+                for sub_layer_name, sub_layer in sub_layers.items():
+                    layers[f"{layer_name}/{sub_layer_name}"] = sub_layer
         return layers
 
-    @staticmethod
-    def _replace_probits_with_logits(
-        model, probits_layer_name=-1, custom_objects=None
+
+    def subclass_model_to_graphed_model(self, model):
+        """
+        Recreates subclassed models with a built computation graph
+
+        Parameters
+        ----------
+        model : keras.models.Model
+            The Keras model
+
+        keras_module : Python Module
+            Either the keras module or tf.keras module
+
+        Returns
+        -------
+            keras.models.Model: A built Keras Model
+        """
+        try:
+            input_shape_dims = model.layers[0]._build_input_shape._dims
+        except AttributeError:
+            raise ValueError("Run the model with data at least once or call .compile() or .build() with a valid input shape")
+
+        # Use input_shape_dims[1:] because Input excludes batch size
+        t_in = self.keras.Input(input_shape_dims[1:])
+        t_out = model(t_in)
+        return self.keras.Model(inputs=t_in, outputs=t_out)
+
+
+    def _replace_probits_with_logits(self, model, probits_layer_name=-1, custom_objects=None
     ):
         """
         _replace_softmax_with_logits Remove the final layer's activation 
@@ -285,6 +318,43 @@ class KerasModelWrapper(ModelWrapper):
         else:
             raise ValueError('Unsupported type for cut name:', type(name))
 
+
+    def _get_layer_input(self, layer):
+        """Gets layer input tensor for layer in model. 
+        Since the layer can be shared (and have multiple input nodes) across different models,
+        _innode_index tracks the input node index in this model
+
+        Args:
+            layer (keras.layers.Layer): the layer object
+
+        Returns:
+            Tensor: the input tensor to the layer
+        """
+        layer_name = self._layer_name_map[layer]
+        if layer_name in self._innode_index and self._innode_index[layer_name] < len(layer._inbound_nodes):
+            return layer.get_input_at(self._innode_index[layer_name])
+        else:
+            return layer.input
+
+
+    def _get_layer_output(self, layer):
+        """Gets layer output tensor for layer in model. 
+        Since the layer can be shared (and have multiple input nodes) across different models,
+        _innode_index tracks the input node index in this model
+
+        Args:
+            layer (keras.layers.Layer): the layer object
+
+        Returns:
+            Tensor: the output tensor to the layer
+        """
+        layer_name = self._layer_name_map[layer]
+        if layer_name in self._innode_index and self._innode_index[layer_name] < len(layer._inbound_nodes):
+            return layer.get_output_at(self._innode_index[layer_name])
+        else:
+            return layer.output
+
+
     def _get_layers(self, cut):
         '''
         get_layer Return the tensor(s) representing the layer(s) specified by 
@@ -327,43 +397,28 @@ class KerasModelWrapper(ModelWrapper):
         ]
 
         if cut.anchor not in ['in', 'out']:
-            return flat(
-                [
-                    layer.get_output_at(
-                        self._innode_index[self._layer_name_map[layer]]
-                    )[cut.anchor][0] if cut.anchor in layer.get_output_at(
-                        self._innode_index[self._layer_name_map[layer]]
-                    ) else layer.get_output_at(
-                        self._innode_index[self._layer_name_map[layer]]
-                    ) for layer in layers
-                ]
-            )
+            outputs = [self._get_layer_output(layer) for layer in layers]
+            outputs = [out[cut.anchor][0] if cut.anchor in out else out for out in outputs]
+            return flat(outputs)
+
         elif cut.anchor == 'in':
-            return flat(
-                [
-                    layer.get_input_at(
-                        self._innode_index[self._layer_name_map[layer]]
-                    ) for layer in layers
-                ]
-            )
+            return flat([self._get_layer_input(layer) for layer in layers])
         else:
-            return flat(
-                [
-                    layer.get_output_at(
-                        self._innode_index[self._layer_name_map[layer]]
-                    ) for layer in layers
-                ]
-            )
+            return flat([self._get_layer_output(layer) for layer in layers])
 
     def _prepare_intervention_with_input(
         self, model_args, intervention, doi_tensors
     ):
         input_tensors = self._get_layers(InputCut())
-        doi_tensors_ref = [tensor.ref() for tensor in doi_tensors]
+        doi_tensors_ref = [hash_tensor(tensor) for tensor in doi_tensors]
 
-        if not all(elem.ref() in doi_tensors_ref for elem in input_tensors):
+        if not all(hash_tensor(elem) in doi_tensors_ref for elem in input_tensors):
 
             intervention_batch_doi_len = len(intervention[0])
+            
+            # __len__ is not defined for symbolic Tensors in some TF versions
+            # Conversely, .shape() is not defined for built-in python containers
+            # So we'll try both
             try:
                 model_args_batch_len = len(model_args[0])
             except TypeError:
@@ -406,9 +461,7 @@ class KerasModelWrapper(ModelWrapper):
                 return k
             # any named inputs must correspond to layer names
             layer = self._model.get_layer(k)
-            return layer.get_output_at(
-                self._innode_index[self._layer_name_map[layer]]
-            )
+            return self._get_layer_output(layer)
 
         val_map = {}
         # construct a feed_dict
@@ -416,17 +469,17 @@ class KerasModelWrapper(ModelWrapper):
         # Model inputs come from model_args
         val_map.update(
             {
-                k.ref(): v for k, v in
+                hash_tensor(k): v for k, v in
                 zip(self._model.inputs[:len(model_args)], model_args)
             }
         )
         # Other placeholders come from kwargs.
-        val_map.update({_tensor(k).ref(): v for k, v in model_kwargs.items()})
+        val_map.update({hash_tensor(_tensor(k)): v for k, v in model_kwargs.items()})
 
         # Finally, interventions override any previously set tensors.
-        val_map.update({k.ref(): v for k, v in zip(doi_tensors, intervention)})
+        val_map.update({hash_tensor(k): v for k, v in zip(doi_tensors, intervention)})
 
-        all_inputs = [k.deref() for k in val_map]
+        all_inputs = [unhash_tensor(k) for k in val_map]
         all_vals = list(val_map.values())
 
         # Tensorflow doesn't allow you to make a function that returns the same

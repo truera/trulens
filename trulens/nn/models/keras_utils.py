@@ -3,6 +3,18 @@ import collections
 from trulens.nn.backend import get_backend
 
 
+def hash_tensor(tensor):
+    if hasattr(tensor, "ref"):
+        return tensor.ref()
+    else:
+        return tensor
+
+def unhash_tensor(tensor_ref):
+    if hasattr(tensor_ref, "deref"):
+        return tensor_ref.deref()
+    else:
+        return tensor_ref
+
 def get_layer_input_paths(model):
     '''
     get_layer_input_paths Gets the nesting path to each layer's input tensor
@@ -20,11 +32,17 @@ def get_layer_input_paths(model):
     B = get_backend()
 
     def recurse_outputs(obj, prefix=None):
+        """Given a possibly nested data structure, return a mapping from Tensors to their path in the data structure.
+        
+        Primitives used:
+            str: represent dictionary keys
+            int: represent list indexes or dictionary keys 
+        """
         ret = {}
         prefix = [] if prefix is None else prefix
 
         if B.is_tensor(obj):
-            return {obj.ref(): prefix}
+            return {hash_tensor(obj): prefix}
         elif isinstance(obj, collections.abc.Mapping):
             for key, val in obj.items():
                 ret.update(recurse_outputs(val, prefix + [key]))
@@ -36,15 +54,16 @@ def get_layer_input_paths(model):
         return ret
 
     def get_arg_path(layer, arg):
+        """Given the tensor argument path, retrieve the actual tensor(s) in the matching data structure"""
         if B.is_tensor(arg):
-            return layer_outputs[layer.name][arg.ref()]
+            return layer_outputs[layer.name][hash_tensor(arg)]
         elif isinstance(arg, collections.abc.Mapping):
             return {
-                key: layer_outputs[layer.name][a.ref()]
+                key: layer_outputs[layer.name][hash_tensor(a)]
                 for key, a in arg.items()
             }
         elif isinstance(arg, collections.abc.Iterable):
-            return [layer_outputs[layer.name][a.ref()] for a in arg]
+            return [layer_outputs[layer.name][hash_tensor(a)] for a in arg]
         else:
             raise ValueError("Invalid argument found")
 
@@ -58,7 +77,7 @@ def get_layer_input_paths(model):
 
     # Path to inputs of each layer
     for layer in model.layers:
-        out_nodes = set(layer.outbound_nodes)
+        out_nodes = set(layer._outbound_nodes)
         for out_node in out_nodes:
             next_layer = out_node.outbound_layer
             args = out_node.call_args
@@ -164,6 +183,15 @@ def perform_replacements(model, replacements, keras_module):
     layer_outputs = {}
 
     def prop_through_layer(depth, dirty=False):
+        """Recursively go through the layer via model graph nodes and update layers with their replacements if necessary.
+
+        Args:
+            depth (int): The model is represented as a DAG. depth represents the node depth from the end of the DAG.
+            dirty (bool, optional): True if nodes at a previous depth have been replaced. Defaults to False.
+
+        Returns:
+            List[Tensor]: The output tensors of the updated computational graph.
+        """
         if depth < 0:
             nodes = model._nodes_by_depth[0]
             return [layer_outputs[n.layer.name] for n in nodes]
@@ -200,16 +228,16 @@ def perform_replacements(model, replacements, keras_module):
     max_depth = max(list(model._nodes_by_depth.keys()))
     output = prop_through_layer(max_depth)
 
-    new_model = keras_module.Model(inputs=model.inputs, outputs=output)
-    return new_model
+    new_submodel = keras_module.Model(inputs=model.inputs, outputs=output)
+    return new_submodel
 
 
 def trace_input_indices(model):
     '''
-    trace_input_indices Get index of input nodes for each layer in model. 
-    If layers in model are shared across multiple models, they may have multiple 
-    disconnected inbound nodes. To specify which inbound nodes belong to the 
-    provided model, this method returns a mapping of layers to the index of their 
+    trace_input_indices Get index of input nodes for each layer in model.
+    If layers in model are shared across multiple models, they may have multiple
+    disconnected inbound nodes. To specify which inbound nodes belong to the
+    provided model, this method returns a mapping of layers to the index of their
     respective inbound node.
      
     Parameters
@@ -223,9 +251,6 @@ def trace_input_indices(model):
     Returns a mapping of layer names to the index of the inbound node associated with model
 
     '''
-    innode_indices = {}
-    nodes_by_depth = model._nodes_by_depth
-
     def tracer(depth):
         if depth not in nodes_by_depth:
             return
@@ -238,8 +263,8 @@ def trace_input_indices(model):
                 for layer_name, idx in sub_innode_indices.items():
                     innode_indices[f"{out_layer.name}/{layer_name}"] = idx
 
-            if node in out_layer.inbound_nodes:
-                idx = out_layer.inbound_nodes.index(node)
+            if node in out_layer._inbound_nodes:
+                idx = out_layer._inbound_nodes.index(node)
                 if out_layer.name in innode_indices and innode_indices[
                         out_layer.name] != idx:
                     # May occur if layer is shared between other layers in the same model
@@ -250,7 +275,12 @@ def trace_input_indices(model):
                     innode_indices[out_layer.name] = idx
         tracer(depth + 1)
 
-    tracer(0)
+    try:
+        innode_indices = {}
+        nodes_by_depth = model._nodes_by_depth
+        tracer(0)
+    except AttributeError:
+        return {}
     return innode_indices
 
 
@@ -335,13 +365,13 @@ def replace_tfhub_layers(model, keras_module, tfhub_module):
 
         if layer_config and "handle" in layer_config:
             try:
-                keras_model = load_keras_model_from_handle(
+                submodel = load_keras_model_from_handle(
                     layer_config['handle'], layer, keras_module, tfhub_module
                 )
-                keras_model = replace_tfhub_layers(
-                    keras_model, keras_module, tfhub_module
+                submodel = replace_tfhub_layers(
+                    submodel, keras_module, tfhub_module
                 )
-                replacements[layer] = keras_model
+                replacements[layer] = submodel
             except (OSError, ValueError):
                 # TODO: default to chainrule if keras layer substitution doesn't work
                 print(
