@@ -416,7 +416,7 @@ def flatten_substitute_tfhub(model, keras_module, tfhub_module):
     for layer in model.layers:
         try:
             layer_config = layer.get_config()
-        except NotImplementedError:
+        except (NotImplementedError, TypeError):
             layer_config = None
 
         if tfhub_module and layer_config and "handle" in layer_config:
