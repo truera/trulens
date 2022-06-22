@@ -7,8 +7,8 @@ from typing import Tuple
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
 from trulens.nn.models._model_base import ModelWrapper
+from trulens.nn.models.keras_utils import flatten_substitute_tfhub
 from trulens.nn.models.keras_utils import hash_tensor
-from trulens.nn.models.keras_utils import replace_tfhub_layers
 from trulens.nn.models.keras_utils import trace_input_indices
 from trulens.nn.models.keras_utils import unhash_tensor
 from trulens.nn.quantities import QoI
@@ -20,7 +20,6 @@ from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
-from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import TensorArgs
 from trulens.utils.typing import TensorLike
@@ -59,7 +58,7 @@ def import_tfhub_deps():
     try:
         tfhub = importlib.import_module(name='tensorflow_hub')
     except ModuleNotFoundError:
-        print(
+        tru_logger.info(
             "To use Trulens with Tensorflow Hub models, run 'pip install tensorflow-hub tf-models-official'"
         )
 
@@ -101,7 +100,6 @@ class KerasModelWrapper(ModelWrapper):
         """
         self.keras = import_keras_backend()
         self.tf = import_tensorflow()
-        self.tfhub = import_tfhub_deps()
 
         if not isinstance(model, self.keras.models.Model):
             raise ValueError(
@@ -110,8 +108,14 @@ class KerasModelWrapper(ModelWrapper):
                 '`tensorflow.keras` model while using the \'keras\' backend or '
                 'vice-versa)'.format(get_backend().backend)
             )
-        elif self.keras and self.tfhub:
-            model = replace_tfhub_layers(model, self.keras, self.tfhub)
+        nested_or_tfhub_layers = [
+            layer for layer in model.layers
+            if isinstance(layer, self.keras.models.Model) or
+            'KerasLayer' in str(type(layer))
+        ]
+        if nested_or_tfhub_layers:
+            self.tfhub = import_tfhub_deps()
+            model = flatten_substitute_tfhub(model, self.keras, self.tfhub)
 
         if replace_softmax:
             model = self._replace_probits_with_logits(
@@ -133,7 +137,7 @@ class KerasModelWrapper(ModelWrapper):
             layer: name for name, layer in self._layers.items()
         }
         # Index of input node used in model (in case layer is shared between models)
-        self._innode_index = trace_input_indices(model)
+        self._innode_index = trace_input_indices(model, self.keras)
 
     def _traverse_model(self, model):
         """Traverses model to gather heirarchical layer data
@@ -150,7 +154,7 @@ class KerasModelWrapper(ModelWrapper):
             layer_name = layer.name
             layers[layer_name] = layer
 
-            if hasattr(layer, "layers"):
+            if isinstance(layer, self.keras.models.Model):
                 # is a nested keras model
                 sub_layers = self._traverse_model(layer)
                 for sub_layer_name, sub_layer in sub_layers.items():
