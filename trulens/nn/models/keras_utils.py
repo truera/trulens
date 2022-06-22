@@ -90,15 +90,20 @@ def get_layer_input_paths(model):
             break
         for node in model._nodes_by_depth[depth]:
             # add layer output to layer_outputs
-            layer = node.layer
-            layer_outputs[layer.name
-                         ] = recurse_outputs(node.outputs, [layer.name])
-
-            if not node.is_input:
+            layer = node.outbound_layer
+            layer_outputs[layer.name] = recurse_outputs(om_of_many(node.output_tensors), [layer.name])
+            if node.inbound_layers:
                 # Get input tensor paths for next layer from from prev layer's outputs
                 prev_layers = set(many_of_om(node.inbound_layers))
-                args = node.call_args
-                kwargs = node.call_kwargs
+
+                try:
+                    args = many_of_om(node.call_args)
+                    kwargs = node.call_kwargs
+                except AttributeError:
+                    # call_args, call_kwargs attributes don't exist in older Keras versions
+                    args = many_of_om(node.input_tensors)
+                    kwargs = {}
+                
                 arg_paths = [get_arg_path(prev_layers, arg) for arg in args]
                 kwarg_paths = {
                     key: get_arg_path(prev_layers, arg)
@@ -245,25 +250,25 @@ def perform_replacements(model, replacements, keras_module):
         Returns:
             List[Tensor]: The output tensors of the updated computational graph.
         """
-        nodes = model._nodes_by_depth[depth]
         if depth < 0:
             nodes = model._nodes_by_depth[0]
-            return om_of_many([layer_outputs[n.layer.name] for n in nodes])
+            return om_of_many([layer_outputs[node.outbound_layer.name] for node in nodes])
 
-        elif not dirty and all(
-                n.layer not in replacements and
-                not isinstance(n.layer, keras_module.models.Model)
-                for n in nodes):
+        nodes = model._nodes_by_depth[depth]
+        if not dirty and all(
+                node.outbound_layer not in replacements and
+                not isinstance(node.outbound_layer, keras_module.models.Model)
+                for node in nodes):
             # no prior modifications, no nested models, and no replacements at this depth, continue on
             for node in nodes:
-                layer_outputs[node.layer.name] = node.layer.get_output_at(-1)
+                layer_outputs[node.outbound_layer.name] = node.outbound_layer.get_output_at(-1)
 
             return prop_through_layer(depth=depth - 1, dirty=dirty)
 
         else:
             # is dirty or needs to perform replacement
             for node in nodes:
-                layer = node.layer
+                layer = node.outbound_layer
                 layer_name = layer.name
 
                 input_args, input_kwargs = get_layer_input_tensors(
