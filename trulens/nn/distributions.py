@@ -291,7 +291,7 @@ class LinearDoi(DoI):
 
         baseline = self._compute_baseline(z, model_inputs=model_inputs)
 
-        r = 1. if self._resolution is 1 else self._resolution - 1.
+        r = 1. if self._resolution == 1 else self._resolution - 1.
 
         return om_of_many([ # Inputs
             [ # Uniform

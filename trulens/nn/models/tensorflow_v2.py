@@ -65,7 +65,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
         # outputs and internal gradients.
         # See: https://github.com/tensorflow/tensorflow/issues/33478
         if self._eager:
-            self._warn_keras_layers(self._layers)
+            self._warn_keras_layers(self._layers.values())
 
             def get_call_fn(layer):
                 old_call_fn = layer.call
@@ -88,7 +88,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
 
             self._clear_hooks()
 
-            for layer in self._layers:
+            for layer in self._layers.values():
                 layer.call = get_call_fn(layer)
 
             self._cached_input = []
@@ -108,7 +108,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
                     'Detected KerasLayers from model.layers: %s' % str(keras_layers))
 
     def _clear_hooks(self):
-        for layer in self._layers:
+        for layer in self._layers.values():
             layer.input_intervention = None
             layer.output_intervention = None
             layer.retrieve_functions = []
@@ -120,7 +120,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
                 "Unable to determine output layers. Please set the outputs using set_output_layers."
             )
         for output in self._model.outputs:
-            for layer in self._layers:
+            for layer in self._layers.values():
                 try:
                     if layer is output or layer.output is output:
                         output_layers.append(layer)
