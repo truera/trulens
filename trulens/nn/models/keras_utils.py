@@ -94,7 +94,10 @@ def get_layer_input_paths(model):
             layer_outputs[layer.name] = recurse_outputs(om_of_many(node.output_tensors), [layer.name])
             if node.inbound_layers:
                 # Get input tensor paths for next layer from from prev layer's outputs
-                prev_layers = set(many_of_om(node.inbound_layers))
+                if isinstance(node.inbound_layers, dict):
+                    prev_layers = set(node.inbound_layers.values())
+                else:
+                    prev_layers = set(many_of_om(node.inbound_layers))
 
                 try:
                     args = many_of_om(node.call_args)
@@ -261,7 +264,7 @@ def perform_replacements(model, replacements, keras_module):
                 for node in nodes):
             # no prior modifications, no nested models, and no replacements at this depth, continue on
             for node in nodes:
-                layer_outputs[node.outbound_layer.name] = node.outbound_layer.get_output_at(-1)
+                layer_outputs[node.outbound_layer.name] = om_of_many(node.output_tensors)
 
             return prop_through_layer(depth=depth - 1, dirty=dirty)
 
