@@ -91,7 +91,9 @@ def get_layer_input_paths(model):
         for node in model._nodes_by_depth[depth]:
             # add layer output to layer_outputs
             layer = node.outbound_layer
-            layer_outputs[layer.name] = recurse_outputs(om_of_many(node.output_tensors), [layer.name])
+            layer_outputs[
+                layer.name
+            ] = recurse_outputs(om_of_many(node.output_tensors), [layer.name])
             if node.inbound_layers:
                 # Get input tensor paths for next layer from from prev layer's outputs
                 if isinstance(node.inbound_layers, dict):
@@ -106,7 +108,7 @@ def get_layer_input_paths(model):
                     # call_args, call_kwargs attributes don't exist in older Keras versions
                     args = many_of_om(node.input_tensors)
                     kwargs = {}
-                
+
                 arg_paths = [get_arg_path(prev_layers, arg) for arg in args]
                 kwarg_paths = {
                     key: get_arg_path(prev_layers, arg)
@@ -255,7 +257,9 @@ def perform_replacements(model, replacements, keras_module):
         """
         if depth < 0:
             nodes = model._nodes_by_depth[0]
-            return om_of_many([layer_outputs[node.outbound_layer.name] for node in nodes])
+            return om_of_many(
+                [layer_outputs[node.outbound_layer.name] for node in nodes]
+            )
 
         nodes = model._nodes_by_depth[depth]
         if not dirty and all(
@@ -264,7 +268,8 @@ def perform_replacements(model, replacements, keras_module):
                 for node in nodes):
             # no prior modifications, no nested models, and no replacements at this depth, continue on
             for node in nodes:
-                layer_outputs[node.outbound_layer.name] = om_of_many(node.output_tensors)
+                layer_outputs[node.outbound_layer.name
+                             ] = om_of_many(node.output_tensors)
 
             return prop_through_layer(depth=depth - 1, dirty=dirty)
 
