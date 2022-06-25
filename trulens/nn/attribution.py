@@ -381,7 +381,7 @@ class InternalInfluence(AttributionMethod):
                 attribution_cut=None,  # InputCut(),
                 intervention=model_inputs
             )[0]
-
+        doi_val = [B.as_array(val) for val in many_of_om(doi_val)]
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
         if self._return_doi:
