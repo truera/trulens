@@ -13,7 +13,9 @@ from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_cast
 from trulens.utils.typing import nested_map
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
@@ -122,25 +124,31 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
         for output in self._model.outputs:
             for layer in self._layers.values():
                 try:
-                    if layer is output or layer.output is output:
+                    if layer is output or self._get_layer_output(layer
+                                                                ) is output:
                         output_layers.append(layer)
                 except:
-                    # layer.output may not be instantiated when using model subclassing,
-                    # but it is not a problem because self._model.outputs is only autoselected as output_layer.output
-                    # when not subclassing.
+                    # layer output may not be instantiated when using model subclassing,
+                    # but it is not a problem because self._model.outputs is only autoselected as
+                    # the output_layer output when not subclassing.
                     continue
 
         return output_layers
 
     def _is_input_layer(self, layer):
         if (self._model.inputs is not None):
-            return any([inpt is layer.output for inpt in self._model.inputs])
+            return any(
+                [
+                    inpt is self._get_layer_output(layer)
+                    for inpt in self._model.inputs
+                ]
+            )
         else:
             return False
 
     def _input_layer_index(self, layer):
         for i, inpt in enumerate(self._model.inputs):
-            if inpt is layer.output:
+            if inpt is self._get_layer_output(layer):
                 return i
 
         return None
@@ -183,10 +191,19 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
                     )
 
                     for layer, x_i in zip(from_layers, intervention.args):
+
+                        def intervention_fn(x):
+                            nonlocal x_i
+                            x, x_i = many_of_om(x), many_of_om(x_i)
+                            for i, (_x, _x_i) in enumerate(zip(x, x_i)):
+                                if _x.dtype != _x_i.dtype:
+                                    x_i[i] = tf.cast(_x_i, _x.dtype)
+                            return om_of_many(x_i)
+
                         if doi_cut.anchor == 'in':
-                            layer.input_intervention = lambda _: x_i
+                            layer.input_intervention = intervention_fn
                         else:
-                            layer.output_intervention = lambda _: x_i
+                            layer.output_intervention = intervention_fn
                 else:
                     model_inputs = intervention
 
