@@ -454,4 +454,7 @@ def is_tensor(x):
     ----------
     x : backend.Tensor or other
     """
-    return isinstance(x, Tensor)
+    try:
+        return isinstance(x, Tensor) or tf.keras.backend.is_keras_tensor(x)
+    except:
+        return False

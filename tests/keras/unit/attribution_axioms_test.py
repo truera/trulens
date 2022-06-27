@@ -54,6 +54,7 @@ class AxiomsTest(AxiomsTestBase, TestCase):
         self.layer2 = 2
         self.layer3 = 3
 
+
 class NestedAxiomsTest(AxiomsTestBase, TestCase):
 
     def setUp(self):
