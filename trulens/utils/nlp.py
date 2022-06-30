@@ -37,11 +37,13 @@ def token_baseline(
 
     def base_ids(z: TensorLike = None, model_inputs: ModelInputs = None):
         # :baseline_like
-        input_ids = B.clone(input_accessor(model_inputs))
-
-        ids = (1 - sum(input_ids == v for v in keep_tokens)).bool()
+        input_ids = input_accessor(model_inputs)
+        device = input_ids.device if hasattr(input_ids, "device") else None
+        input_ids = B.as_array(B.clone(input_ids))
+        ids = (1 - sum(input_ids == v for v in keep_tokens))
 
         input_ids[ids] = replacement_token
+        input_ids = B.as_tensor(input_ids, dtype=input_ids.dtype, device=device)
 
         return input_ids
 
@@ -54,7 +56,7 @@ def token_baseline(
         # :baseline_like
         input_ids = base_ids(z, model_inputs)
 
-        return ids_to_embeddings(input_ids)
+        return ids_to_embeddings(input_ids, B.as_tensor(model_inputs.args[0], device=input_ids.device))
 
     base_embeddings: BaselineLike  # expected type
 

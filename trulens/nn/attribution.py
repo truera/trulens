@@ -364,7 +364,11 @@ class InternalInfluence(AttributionMethod):
         if len(list(model_inputs.values())) == 0:
             batch_size = 1
         else:
-            batch_size = model_inputs.first().shape[0]
+            first_batch = model_inputs.first()
+            if isinstance(first_batch, DATA_CONTAINER_TYPE):
+                batch_size = len(first_batch)
+            else:
+                batch_size = first_batch.shape[0]
 
         param_msgs = [
             f"float size = {B.floatX_size} ({B.floatX}); consider changing to a smaller type.",
