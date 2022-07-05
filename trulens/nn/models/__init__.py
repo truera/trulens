@@ -74,7 +74,7 @@ def get_model_wrapper(
     default_feed_dict=None,
     session=None,
     backend=None,
-    force_eval_mode=True,
+    force_eval=True,
     **kwargs
 ):
     """
@@ -138,7 +138,7 @@ def get_model_wrapper(
             _Optional, for forcing a specific backend._ String values recognized
             are pytorch, tensorflow, keras, or tf.keras.
         
-        force_eval_mode:
+        force_eval:
             _Optional, True will force a model.eval() call for PyTorch models. False
             will retain current model state
 
@@ -197,7 +197,7 @@ def get_model_wrapper(
             model,
             logit_layer=logit_layer,
             device=device,
-            force_eval_mode=force_eval_mode
+            force_eval=force_eval
         )
     elif B.backend == Backend.TENSORFLOW:
         import tensorflow as tf
