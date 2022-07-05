@@ -39,7 +39,7 @@ class PytorchModelWrapper(ModelWrapper):
         *,
         logit_layer=None,
         device=None,
-        force_eval_mode=True,
+        force_eval=True,
         **kwargs
     ):
         """
@@ -54,7 +54,7 @@ class PytorchModelWrapper(ModelWrapper):
             layer named 'logits' is the logit layer.
         device : string, optional
             device on which to run model, by default None
-        force_eval_mode : bool, optional
+        force_eval : bool, optional
             If True, will call model.eval() to ensure determinism. Otherwise, keeps current model state, by default True
             
         """
@@ -72,8 +72,8 @@ class PytorchModelWrapper(ModelWrapper):
 
         super().__init__(model, **kwargs)
         # sets self._model, issues cross-backend messages
-        self.force_eval_mode = force_eval_mode
-        if self.force_eval_mode:
+        self.force_eval = force_eval
+        if self.force_eval:
             model.eval()
 
         if device is None:
@@ -349,7 +349,7 @@ class PytorchModelWrapper(ModelWrapper):
         with memory_suggestions(device=self.device):
             # Run the network.
             try:
-                if self.force_eval_mode:
+                if self.force_eval:
                     self._model.eval()  # needed for determinism sometimes
                 output = model_inputs.call_on(self._model)
 
