@@ -33,7 +33,15 @@ class PytorchModelWrapper(ModelWrapper):
     of Pytorch nn.Module objects.
     """
 
-    def __init__(self, model, *, logit_layer=None, device=None, **kwargs):
+    def __init__(
+        self,
+        model,
+        *,
+        logit_layer=None,
+        device=None,
+        force_eval_mode=True,
+        **kwargs
+    ):
         """
         __init__ Constructor
 
@@ -46,6 +54,9 @@ class PytorchModelWrapper(ModelWrapper):
             layer named 'logits' is the logit layer.
         device : string, optional
             device on which to run model, by default None
+        force_eval_mode : bool, optional
+            If True, will call model.eval() to ensure determinism. Otherwise, keeps current model state, by default True
+            
         """
 
         if 'input_shape' in kwargs:
@@ -61,8 +72,9 @@ class PytorchModelWrapper(ModelWrapper):
 
         super().__init__(model, **kwargs)
         # sets self._model, issues cross-backend messages
-
-        model.eval()
+        self.force_eval_mode = force_eval_mode
+        if self.force_eval_mode:
+            model.eval()
 
         if device is None:
             device = pytorch.get_default_device()
@@ -337,7 +349,8 @@ class PytorchModelWrapper(ModelWrapper):
         with memory_suggestions(device=self.device):
             # Run the network.
             try:
-                self._model.eval()  # needed for determinism sometimes
+                if self.force_eval_mode:
+                    self._model.eval()  # needed for determinism sometimes
                 output = model_inputs.call_on(self._model)
 
                 if isinstance(output, tuple):
