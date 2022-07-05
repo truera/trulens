@@ -775,7 +775,7 @@ __init__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 <tbody>
 <tr>
 <td><code>name</code></td>
-<td><code>Union[int, str, List[Union[int, str]]]</code></td>
+<td><code>LayerIdentifier</code></td>
 <td>
 <p>The name or index of a layer in the model, or a list containing
 the names/indices of mutliple layers.</p>
@@ -815,10 +815,11 @@ following accessor function will be used:
           <summary>Source code in <code>trulens/nn/slices.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">name</span><span class="p">:</span> <span class="n">LayerIdentifier</span><span class="p">,</span>
-        <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'out'</span><span class="p">,</span>
-        <span class="n">accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">LayerIdentifier</span><span class="p">,</span>
+    <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'out'</span><span class="p">,</span>
+    <span class="n">accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Parameters:</span>
 <span class="sd">        name:</span>
@@ -844,9 +845,10 @@ following accessor function will be used:
         <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span>
             <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">))):</span>
 
-            <span class="n">warn</span><span class="p">(</span>
+            <span class="n">tru_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                 <span class="s1">'</span><span class="se">\n\n</span><span class="s1">Pytorch does not have native support for indexed '</span>
-                <span class="s1">'layers. Using layer indices is not recommended.</span><span class="se">\n</span><span class="s1">'</span><span class="p">)</span>
+                <span class="s1">'layers. Using layer indices is not recommended.</span><span class="se">\n</span><span class="s1">'</span>
+            <span class="p">)</span>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">accessor</span> <span class="o">=</span> <span class="n">accessor</span>
@@ -880,7 +882,7 @@ tensor(s) associated with a layer's output.</p>
 <tbody>
 <tr>
 <td><code>layer</code></td>
-<td><code>Union[Any, List[Any]]</code></td>
+<td><code>TensorLike</code></td>
 <td>
 <p>The tensor output (or input, if so specified by the anchor) of 
 the layer(s) specified by this cut.</p>
@@ -899,7 +901,7 @@ the layer(s) specified by this cut.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>Union[Any, List[Any]]</code></td>
+<td><code>TensorLike</code></td>
 <td>
 <p>The result of applying <code>self.accessor</code> to the given layer.</p>
 </td>
@@ -928,7 +930,8 @@ the layer(s) specified by this cut.</p>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">layer</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">layer</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">layer</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">layer</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">accessor</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
 </code></pre>
 </div>
@@ -1097,7 +1100,8 @@ following accessor function will be used:
           <summary>Source code in <code>trulens/nn/slices.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'out'</span><span class="p">,</span> <span class="n">accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'out'</span><span class="p">,</span> <span class="n">accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Parameters:</span>
 <span class="sd">        anchor: </span>
@@ -1190,7 +1194,8 @@ following accessor function will be used:
           <summary>Source code in <code>trulens/nn/slices.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'out'</span><span class="p">,</span> <span class="n">accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'out'</span><span class="p">,</span> <span class="n">accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Parameters:</span>
 <span class="sd">        anchor: </span>

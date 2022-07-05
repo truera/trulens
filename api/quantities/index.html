@@ -1075,10 +1075,11 @@ used when the channels are scalars, e.g., for dense layers.</p>
           <summary>Source code in <code>trulens/nn/quantities.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">channel</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
-        <span class="n">channel_axis</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">agg_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">channel</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+    <span class="n">channel_axis</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">agg_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Parameters:</span>
 <span class="sd">        channel:</span>
@@ -1175,7 +1176,9 @@ representing the QoI.</p>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s1">'QoI function must take exactly 1 argument, but provided '</span>
             <span class="s1">'function takes </span><span class="si">{}</span><span class="s1"> arguments'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                <span class="nb">len</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="n">function</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)))</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="n">function</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">function</span> <span class="o">=</span> <span class="n">function</span>
 </code></pre>
@@ -1230,7 +1233,7 @@ __init__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 </tr>
 <tr>
 <td><code>activation</code></td>
-<td><code>Optional[Union[Callable, str]]</code></td>
+<td><code>Union[Callable, str, None]</code></td>
 <td>
 <p>Activation function to be applied to the output before taking 
 the max. If <code>activation</code> is a string, use the corresponding 
@@ -1252,7 +1255,8 @@ the input.</p>
           <summary>Source code in <code>trulens/nn/quantities.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Parameters:</span>
 <span class="sd">        axis:</span>
@@ -1319,7 +1323,7 @@ __call__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 <tbody>
 <tr>
 <td><code>y</code></td>
-<td><code>Union[Any, List[Any]]</code></td>
+<td><code>OM[Outputs, Tensor]</code></td>
 <td>
 <p>Output point from which the quantity is derived. Must be a
 differentiable tensor.</p>
@@ -1338,7 +1342,7 @@ differentiable tensor.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>Union[Any, List[Any]]</code></td>
+<td><code>OM[Outputs, Tensor]</code></td>
 <td>
 <p>A differentiable batched scalar tensor representing the QoI.</p>
 </td>
@@ -1349,7 +1353,7 @@ differentiable tensor.</p>
           <summary>Source code in <code>trulens/nn/quantities.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="nd">@abstractmethod</span>
-<span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">TensorLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TensorLike</span><span class="p">:</span>
+<span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">OM</span><span class="p">[</span><span class="n">Outputs</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OM</span><span class="p">[</span><span class="n">Outputs</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
     <span class="sd">"""</span>
 <span class="sd">    Computes the distribution of interest from an initial point.</span>
 
@@ -1445,7 +1449,7 @@ threshold from the output with activations above the threshold.</p>
 </tr>
 <tr>
 <td><code>activation</code></td>
-<td><code>Optional[Union[Callable, str]]</code></td>
+<td><code>Union[Callable, str, None]</code></td>
 <td>
 <p>str or function, optional
 Activation function to be applied to the quantity before taking
@@ -1464,10 +1468,11 @@ to the quantity.</p>
           <summary>Source code in <code>trulens/nn/quantities.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">low_minus_high</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">activation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">low_minus_high</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">activation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Parameters:</span>
 <span class="sd">        threshold:</span>

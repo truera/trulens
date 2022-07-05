@@ -710,7 +710,7 @@ aggregated.</p>
 <h3 class="doc doc-heading" id="trulens.nn.distributions.DoI.__call__">
 
         <code class="highlight language-python">
-__call__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>        </code>
+__call__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">model_inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>        </code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -718,7 +718,13 @@ __call__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 
       <a class="headerlink" href="#trulens.nn.distributions.DoI.__call__" title="Permanent link">&para;</a></h3>
 <div class="doc doc-contents ">
-<p>Computes the distribution of interest from an initial point.</p>
+<p>Computes the distribution of interest from an initial point. If z:
+TensorLike is given, we assume there is only 1 input to the DoI layer. If
+z: List[TensorLike] is given, it provides all of the inputs to the DoI
+layer. </p>
+<p>Either way, we always return List[List[TensorLike]] (alias
+Inputs[Uniform[TensorLike]]) with outer list spanning layer inputs, and
+inner list spanning a distribution's instance.</p>
 <p><strong>Parameters:</strong></p>
 <table>
 <thead>
@@ -732,11 +738,21 @@ __call__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 <tbody>
 <tr>
 <td><code>z</code></td>
-<td><code>Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]</code></td>
+<td><code>OM[Inputs, TensorLike]</code></td>
 <td>
-<p>Input point from which the distribution is derived.</p>
+<p>Input point from which the distribution is derived. If
+list/tuple, the point is defined by multiple tensors.</p>
 </td>
 <td><em>required</em></td>
+</tr>
+<tr>
+<td><code>model_inputs</code></td>
+<td><code>Optional[ModelInputs]</code></td>
+<td>
+<p>Optional wrapped model input arguments that produce value z at
+cut.</p>
+</td>
+<td><code>None</code></td>
 </tr>
 </tbody>
 </table>
@@ -750,12 +766,12 @@ __call__<span class="p">(</span><span class="bp">self</span><span class="p">,</s
 </thead>
 <tbody>
 <tr>
-<td><code>List[Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]]</code></td>
+<td><code>OM[Inputs, Uniform[TensorLike]]</code></td>
 <td>
 <p>List of points which are all assigned equal probability mass in the
-distribution of interest, i.e., the distribution of interest is
-a discrete, uniform distribution over the list of returned points.
-Each point in the list shares the same type and shape as <code>z</code>.</p>
+distribution of interest, i.e., the distribution of interest is a
+discrete, uniform distribution over the list of returned points. If
+z is multi-input, returns a distribution for each input.</p>
 </td>
 </tr>
 </tbody>
@@ -764,19 +780,35 @@ Each point in the list shares the same type and shape as <code>z</code>.</p>
           <summary>Source code in <code>trulens/nn/distributions.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="nd">@abstractmethod</span>
-<span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">]:</span>
+<span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">z</span><span class="p">:</span> <span class="n">OM</span><span class="p">[</span><span class="n">Inputs</span><span class="p">,</span> <span class="n">TensorLike</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">model_inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModelInputs</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OM</span><span class="p">[</span><span class="n">Inputs</span><span class="p">,</span> <span class="n">Uniform</span><span class="p">[</span><span class="n">TensorLike</span><span class="p">]]:</span>
     <span class="sd">"""</span>
-<span class="sd">    Computes the distribution of interest from an initial point.</span>
+<span class="sd">    Computes the distribution of interest from an initial point. If z:</span>
+<span class="sd">    TensorLike is given, we assume there is only 1 input to the DoI layer. If</span>
+<span class="sd">    z: List[TensorLike] is given, it provides all of the inputs to the DoI</span>
+<span class="sd">    layer. </span>
+
+<span class="sd">    Either way, we always return List[List[TensorLike]] (alias</span>
+<span class="sd">    Inputs[Uniform[TensorLike]]) with outer list spanning layer inputs, and</span>
+<span class="sd">    inner list spanning a distribution's instance.</span>
 
 <span class="sd">    Parameters:</span>
 <span class="sd">        z:</span>
-<span class="sd">            Input point from which the distribution is derived.</span>
+<span class="sd">            Input point from which the distribution is derived. If</span>
+<span class="sd">            list/tuple, the point is defined by multiple tensors.</span>
+<span class="sd">        model_inputs:</span>
+<span class="sd">            Optional wrapped model input arguments that produce value z at</span>
+<span class="sd">            cut.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List of points which are all assigned equal probability mass in the</span>
-<span class="sd">        distribution of interest, i.e., the distribution of interest is</span>
-<span class="sd">        a discrete, uniform distribution over the list of returned points.</span>
-<span class="sd">        Each point in the list shares the same type and shape as `z`.</span>
+<span class="sd">        distribution of interest, i.e., the distribution of interest is a</span>
+<span class="sd">        discrete, uniform distribution over the list of returned points. If</span>
+<span class="sd">        z is multi-input, returns a distribution for each input.</span>
 <span class="sd">    """</span>
     <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </code></pre>
@@ -886,16 +918,16 @@ to the latent space defined by the cut. </p>
 <h3 class="doc doc-heading" id="trulens.nn.distributions.DoI.get_activation_multiplier">
 
         <code class="highlight language-python">
-get_activation_multiplier<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">)</span>        </code>
+get_activation_multiplier<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">model_inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>        </code>
 
 
       <a class="headerlink" href="#trulens.nn.distributions.DoI.get_activation_multiplier" title="Permanent link">&para;</a></h3>
 <div class="doc doc-contents ">
-<p>Returns a term to multiply the gradient by to convert from "<em>influence 
+<p>Returns a term to multiply the gradient by to convert from "<em>influence
 space</em>" to "<em>attribution space</em>". Conceptually, "influence space"
-corresponds to the potential effect of a slight increase in each 
+corresponds to the potential effect of a slight increase in each
 feature, while "attribution space" corresponds to an approximation of
-the net marginal contribution to the quantity of interest of each 
+the net marginal contribution to the quantity of interest of each
 feature.</p>
 <p><strong>Parameters:</strong></p>
 <table>
@@ -910,11 +942,21 @@ feature.</p>
 <tbody>
 <tr>
 <td><code>activation</code></td>
-<td><code>Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]</code></td>
+<td><code>OM[Inputs, TensorLike]</code></td>
 <td>
-<p>The activation of the layer the DoI is applied to.</p>
+<p>The activation of the layer the DoI is applied to. DoI may be
+multi-input in which case activation will be a list.</p>
 </td>
 <td><em>required</em></td>
+</tr>
+<tr>
+<td><code>model_inputs</code></td>
+<td><code>Optional[ModelInputs]</code></td>
+<td>
+<p>Optional wrapped model input arguments that produce activation
+at cut.</p>
+</td>
+<td><code>None</code></td>
 </tr>
 </tbody>
 </table>
@@ -928,11 +970,12 @@ feature.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]</code></td>
+<td><code>OM[Inputs, TensorLike]</code></td>
 <td>
-<p>An array with the same shape as <code>activation</code> that will be 
-multiplied by the gradient to obtain the attribution. The default 
-implementation of this method simply returns <code>activation</code>.</p>
+<p>An array with the same shape as <code>activation</code> that will be
+multiplied by the gradient to obtain the attribution. The default
+implementation of this method simply returns <code>activation</code>. If
+activation is multi-input, returns one multiplier for each.</p>
 </td>
 </tr>
 </tbody>
@@ -940,25 +983,35 @@ implementation of this method simply returns <code>activation</code>.</p>
 <details class="quote">
           <summary>Source code in <code>trulens/nn/distributions.py</code></summary>
           <div class="highlight">
-<pre><span></span><code><span class="k">def</span> <span class="nf">get_activation_multiplier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLike</span><span class="p">:</span>
+<pre><span></span><code><span class="k">def</span> <span class="nf">get_activation_multiplier</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">activation</span><span class="p">:</span> <span class="n">OM</span><span class="p">[</span><span class="n">Inputs</span><span class="p">,</span> <span class="n">TensorLike</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">model_inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModelInputs</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OM</span><span class="p">[</span><span class="n">Inputs</span><span class="p">,</span> <span class="n">TensorLike</span><span class="p">]:</span>
     <span class="sd">"""</span>
-<span class="sd">    Returns a term to multiply the gradient by to convert from "*influence </span>
+<span class="sd">    Returns a term to multiply the gradient by to convert from "*influence</span>
 <span class="sd">    space*" to "*attribution space*". Conceptually, "influence space"</span>
-<span class="sd">    corresponds to the potential effect of a slight increase in each </span>
+<span class="sd">    corresponds to the potential effect of a slight increase in each</span>
 <span class="sd">    feature, while "attribution space" corresponds to an approximation of</span>
-<span class="sd">    the net marginal contribution to the quantity of interest of each </span>
+<span class="sd">    the net marginal contribution to the quantity of interest of each</span>
 <span class="sd">    feature.</span>
 
 <span class="sd">    Parameters:</span>
 <span class="sd">        activation:</span>
-<span class="sd">            The activation of the layer the DoI is applied to.</span>
+<span class="sd">            The activation of the layer the DoI is applied to. DoI may be</span>
+<span class="sd">            multi-input in which case activation will be a list.</span>
+<span class="sd">        model_inputs:</span>
+<span class="sd">            Optional wrapped model input arguments that produce activation</span>
+<span class="sd">            at cut.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        An array with the same shape as ``activation`` that will be </span>
-<span class="sd">        multiplied by the gradient to obtain the attribution. The default </span>
-<span class="sd">        implementation of this method simply returns ``activation``.</span>
+<span class="sd">        An array with the same shape as ``activation`` that will be</span>
+<span class="sd">        multiplied by the gradient to obtain the attribution. The default</span>
+<span class="sd">        implementation of this method simply returns ``activation``. If</span>
+<span class="sd">        activation is multi-input, returns one multiplier for each.</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">activation</span>
+    <span class="k">return</span> <span class="n">om_of_many</span><span class="p">(</span><span class="n">activation</span><span class="p">)</span>
 </code></pre>
 </div>
 </details>
@@ -1083,7 +1136,7 @@ the given point. Used by Integrated Gradients.</p>
 <h3 class="doc doc-heading" id="trulens.nn.distributions.LinearDoi.__init__">
 
         <code class="highlight language-python">
-__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>        </code>
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>        </code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -1106,16 +1159,27 @@ sample of <code>resolution</code> points equally spaced along this segment.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>baseline</code></td>
-<td><code>Optional[Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]]</code></td>
+<td><code>cut</code></td>
+<td><code>Cut</code></td>
 <td>
-<p>The baseline to interpolate from. Must be same shape as the 
-space the distribution acts over, i.e., the shape of the points, 
+<p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI
+will be applied to the input. otherwise, the distribution should
+be applied to the latent space defined by the cut. </p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>baseline</code></td>
+<td><code>BaselineLike</code></td>
+<td>
+<p>The baseline to interpolate from. Must be same shape as the
+space the distribution acts over, i.e., the shape of the points,
 <code>z</code>, eventually passed to <code>__call__</code>. If <code>cut</code> is <code>None</code>, this
 must be the same shape as the input, otherwise this must be the
 same shape as the latent space defined by the cut. If <code>None</code> is
-given, <code>baseline</code> will be the zero vector in the appropriate 
-shape.</p>
+given, <code>baseline</code> will be the zero vector in the appropriate
+shape. If the baseline is callable, it is expected to return the
+<code>baseline</code>, given <code>z</code> and optional model arguments.</p>
 </td>
 <td><code>None</code></td>
 </tr>
@@ -1123,21 +1187,11 @@ shape.</p>
 <td><code>resolution</code></td>
 <td><code>int</code></td>
 <td>
-<p>Number of points returned by each call to this DoI. A higher 
+<p>Number of points returned by each call to this DoI. A higher
 resolution is more computationally expensive, but gives a better
 approximation of the DoI this object mathematically represents.</p>
 </td>
 <td><code>10</code></td>
-</tr>
-<tr>
-<td><code>cut</code></td>
-<td><code>Cut</code></td>
-<td>
-<p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
-applied to the input. otherwise, the distribution should be applied
-to the latent space defined by the cut. </p>
-</td>
-<td><code>None</code></td>
 </tr>
 </tbody>
 </table>
@@ -1145,34 +1199,35 @@ to the latent space defined by the cut. </p>
           <summary>Source code in <code>trulens/nn/distributions.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">baseline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">resolution</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-        <span class="n">cut</span><span class="p">:</span> <span class="n">Cut</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">baseline</span><span class="p">:</span> <span class="n">BaselineLike</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">resolution</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">cut</span><span class="p">:</span> <span class="n">Cut</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    The DoI for point, `z`, will be a uniform distribution over the points</span>
 <span class="sd">    on the line segment connecting `z` to `baseline`, approximated by a</span>
 <span class="sd">    sample of `resolution` points equally spaced along this segment.</span>
 
 <span class="sd">    Parameters:</span>
-<span class="sd">        baseline:</span>
-<span class="sd">            The baseline to interpolate from. Must be same shape as the </span>
-<span class="sd">            space the distribution acts over, i.e., the shape of the points, </span>
+<span class="sd">        cut (Cut, optional, from DoI): </span>
+<span class="sd">            The Cut in which the DoI will be applied. If `None`, the DoI</span>
+<span class="sd">            will be applied to the input. otherwise, the distribution should</span>
+<span class="sd">            be applied to the latent space defined by the cut. </span>
+<span class="sd">        baseline (BaselineLike, optional):</span>
+<span class="sd">            The baseline to interpolate from. Must be same shape as the</span>
+<span class="sd">            space the distribution acts over, i.e., the shape of the points,</span>
 <span class="sd">            `z`, eventually passed to `__call__`. If `cut` is `None`, this</span>
 <span class="sd">            must be the same shape as the input, otherwise this must be the</span>
 <span class="sd">            same shape as the latent space defined by the cut. If `None` is</span>
-<span class="sd">            given, `baseline` will be the zero vector in the appropriate </span>
-<span class="sd">            shape.</span>
-
-<span class="sd">        resolution:</span>
-<span class="sd">            Number of points returned by each call to this DoI. A higher </span>
+<span class="sd">            given, `baseline` will be the zero vector in the appropriate</span>
+<span class="sd">            shape. If the baseline is callable, it is expected to return the</span>
+<span class="sd">            `baseline`, given `z` and optional model arguments.</span>
+<span class="sd">        resolution (int):</span>
+<span class="sd">            Number of points returned by each call to this DoI. A higher</span>
 <span class="sd">            resolution is more computationally expensive, but gives a better</span>
 <span class="sd">            approximation of the DoI this object mathematically represents.</span>
-
-<span class="sd">        cut (Cut, optional): </span>
-<span class="sd">            The Cut in which the DoI will be applied. If `None`, the DoI will be</span>
-<span class="sd">            applied to the input. otherwise, the distribution should be applied</span>
-<span class="sd">            to the latent space defined by the cut. </span>
 <span class="sd">    """</span>
     <span class="nb">super</span><span class="p">(</span><span class="n">LinearDoi</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_baseline</span> <span class="o">=</span> <span class="n">baseline</span>
@@ -1186,7 +1241,7 @@ to the latent space defined by the cut. </p>
 <h3 class="doc doc-heading" id="trulens.nn.distributions.LinearDoi.get_activation_multiplier">
 
         <code class="highlight language-python">
-get_activation_multiplier<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">)</span>        </code>
+get_activation_multiplier<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">model_inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>        </code>
 
 
       <a class="headerlink" href="#trulens.nn.distributions.LinearDoi.get_activation_multiplier" title="Permanent link">&para;</a></h3>
@@ -1210,7 +1265,7 @@ feature.</p>
 <tbody>
 <tr>
 <td><code>activation</code></td>
-<td><code>Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]</code></td>
+<td><code>OM[Inputs, TensorLike]</code></td>
 <td>
 <p>The activation of the layer the DoI is applied to.</p>
 </td>
@@ -1228,7 +1283,7 @@ feature.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>Union[numpy.ndarray, Any, List[Union[numpy.ndarray, Any]]]</code></td>
+<td><code>Inputs[TensorLike]</code></td>
 <td>
 <p>The activation adjusted by the baseline passed to the constructor.</p>
 </td>
@@ -1238,7 +1293,12 @@ feature.</p>
 <details class="quote">
           <summary>Source code in <code>trulens/nn/distributions.py</code></summary>
           <div class="highlight">
-<pre><span></span><code><span class="k">def</span> <span class="nf">get_activation_multiplier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">activation</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLike</span><span class="p">:</span>
+<pre><span></span><code><span class="k">def</span> <span class="nf">get_activation_multiplier</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">activation</span><span class="p">:</span> <span class="n">OM</span><span class="p">[</span><span class="n">Inputs</span><span class="p">,</span> <span class="n">TensorLike</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">model_inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModelInputs</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inputs</span><span class="p">[</span><span class="n">TensorLike</span><span class="p">]:</span>
     <span class="sd">"""</span>
 <span class="sd">    Returns a term to multiply the gradient by to convert from "*influence </span>
 <span class="sd">    space*" to "*attribution space*". Conceptually, "influence space"</span>
@@ -1254,9 +1314,17 @@ feature.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        The activation adjusted by the baseline passed to the constructor.</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="p">(</span>
-        <span class="n">activation</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseline</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">activation</span> <span class="o">-</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_baseline</span><span class="p">)</span>
+
+    <span class="n">activation</span><span class="p">:</span> <span class="n">Inputs</span><span class="p">[</span><span class="n">TensorLike</span><span class="p">]</span> <span class="o">=</span> <span class="n">many_of_om</span><span class="p">(</span><span class="n">activation</span><span class="p">)</span>
+
+    <span class="n">baseline</span><span class="p">:</span> <span class="n">Inputs</span><span class="p">[</span><span class="n">TensorLike</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_baseline</span><span class="p">(</span>
+        <span class="n">activation</span><span class="p">,</span> <span class="n">model_inputs</span><span class="o">=</span><span class="n">model_inputs</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">baseline</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">activation</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">a</span> <span class="o">-</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">activation</span><span class="p">,</span> <span class="n">baseline</span><span class="p">)]</span>
 </code></pre>
 </div>
 </details>

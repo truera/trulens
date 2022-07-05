@@ -421,6 +421,20 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#trulens.visualizations.HTML" class="md-nav__link">
+    HTML
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens.visualizations.IPython" class="md-nav__link">
+    IPython
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#trulens.visualizations.MaskVisualizer" class="md-nav__link">
     MaskVisualizer
   </a>
@@ -437,6 +451,47 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens.visualizations.NLP" class="md-nav__link">
+    NLP
+  </a>
+  
+    <nav class="md-nav" aria-label="NLP">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.visualizations.NLP.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens.visualizations.NLP.token_attribution" class="md-nav__link">
+    token_attribution()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens.visualizations.Output" class="md-nav__link">
+    Output
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens.visualizations.PlainText" class="md-nav__link">
+    PlainText
+  </a>
   
 </li>
       
@@ -643,6 +698,20 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#trulens.visualizations.HTML" class="md-nav__link">
+    HTML
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens.visualizations.IPython" class="md-nav__link">
+    IPython
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#trulens.visualizations.MaskVisualizer" class="md-nav__link">
     MaskVisualizer
   </a>
@@ -659,6 +728,47 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens.visualizations.NLP" class="md-nav__link">
+    NLP
+  </a>
+  
+    <nav class="md-nav" aria-label="NLP">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens.visualizations.NLP.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens.visualizations.NLP.token_attribution" class="md-nav__link">
+    token_attribution()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens.visualizations.Output" class="md-nav__link">
+    Output
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens.visualizations.PlainText" class="md-nav__link">
+    PlainText
+  </a>
   
 </li>
       
@@ -802,14 +912,15 @@ value supplied to the constructor. Default None.</p>
           <summary>Source code in <code>trulens/visualizations.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">x</span><span class="p">,</span>
-        <span class="n">x_preprocessed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">threshold</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">masked_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">combine_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">,</span>
+    <span class="n">x_preprocessed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">masked_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">combine_channels</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Visualizes the given attributions by overlaying an attribution heatmap </span>
 <span class="sd">    over the given image.</span>
@@ -859,11 +970,13 @@ value supplied to the constructor. Default None.</p>
 <span class="sd">    """</span>
 
     <span class="n">attrs_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">infl_input</span><span class="o">.</span><span class="n">attributions</span><span class="p">(</span>
-        <span class="n">x</span> <span class="k">if</span> <span class="n">x_preprocessed</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x_preprocessed</span><span class="p">)</span>
+        <span class="n">x</span> <span class="k">if</span> <span class="n">x_preprocessed</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x_preprocessed</span>
+    <span class="p">)</span>
 
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_visualizer</span><span class="p">(</span>
         <span class="n">attrs_input</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">blur</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">masked_opacity</span><span class="p">,</span>
-        <span class="n">combine_channels</span><span class="p">)</span>
+        <span class="n">combine_channels</span>
+    <span class="p">)</span>
 </code></pre>
 </div>
 </details>
@@ -983,7 +1096,7 @@ of the image that are masked.</p>
 </tr>
 <tr>
 <td><code>combine_channels</code></td>
-<td><code></code></td>
+<td><code>bool</code></td>
 <td>
 <p>If <code>True</code>, the attributions will be averaged across the channel
 dimension, resulting in a 1-channel attribution map.</p>
@@ -1016,19 +1129,20 @@ true).</p>
           <summary>Source code in <code>trulens/visualizations.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">,</span>
-        <span class="n">layer</span><span class="p">,</span>
-        <span class="n">channel</span><span class="p">,</span>
-        <span class="n">channel_axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">agg_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">doi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-        <span class="n">masked_opacity</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
-        <span class="n">combine_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">use_attr_as_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">positive_only</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="n">layer</span><span class="p">,</span>
+    <span class="n">channel</span><span class="p">,</span>
+    <span class="n">channel_axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">agg_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">doi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">masked_opacity</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+    <span class="n">combine_channels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">use_attr_as_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">positive_only</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Configures the default parameters for the `__call__` method (these can </span>
 <span class="sd">    be overridden by passing in values to `__call__`).</span>
@@ -1098,12 +1212,14 @@ true).</p>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">mask_visualizer</span> <span class="o">=</span> <span class="n">MaskVisualizer</span><span class="p">(</span>
         <span class="n">blur</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">masked_opacity</span><span class="p">,</span> <span class="n">combine_channels</span><span class="p">,</span>
-        <span class="n">use_attr_as_opacity</span><span class="p">,</span> <span class="n">positive_only</span><span class="p">)</span>
+        <span class="n">use_attr_as_opacity</span><span class="p">,</span> <span class="n">positive_only</span>
+    <span class="p">)</span>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">infl_input</span> <span class="o">=</span> <span class="n">InternalInfluence</span><span class="p">(</span>
         <span class="n">model</span><span class="p">,</span> <span class="p">(</span><span class="n">InputCut</span><span class="p">(),</span> <span class="n">Cut</span><span class="p">(</span><span class="n">layer</span><span class="p">)),</span>
         <span class="n">InternalChannelQoI</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">channel_axis</span><span class="p">,</span> <span class="n">agg_fn</span><span class="p">),</span>
-        <span class="n">PointDoi</span><span class="p">()</span> <span class="k">if</span> <span class="n">doi</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">doi</span><span class="p">)</span>
+        <span class="n">PointDoi</span><span class="p">()</span> <span class="k">if</span> <span class="n">doi</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">doi</span>
+    <span class="p">)</span>
 </code></pre>
 </div>
 </details>
@@ -1217,16 +1333,6 @@ constructor.</p>
 <td><code>None</code></td>
 </tr>
 <tr>
-<td><code>combine_channels</code></td>
-<td><code></code></td>
-<td>
-<p>If <code>True</code>, the attributions will be averaged across the channel
-dimension, resulting in a 1-channel attribution map. If <code>None</code>,
-defaults to the value supplied to the constructor.</p>
-</td>
-<td><em>required</em></td>
-</tr>
-<tr>
 <td><code>normalization_type</code></td>
 <td><code></code></td>
 <td>
@@ -1299,7 +1405,7 @@ Colormap or name of a Colormap to use for the visualization. If
 </thead>
 <tbody>
 <tr>
-<td><code></code></td>
+<td><code>ndarray</code></td>
 <td>
 <p>A <code>np.ndarray</code> array of the numerical representation of the
 attributions as modified for the visualization. This includes 
@@ -1312,17 +1418,18 @@ normalization, blurring, etc.</p>
           <summary>Source code in <code>trulens/visualizations.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">attributions</span><span class="p">,</span>
-        <span class="n">x</span><span class="p">,</span>
-        <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">imshow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">return_tiled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">overlay_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">attributions</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">,</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">imshow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">return_tiled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">overlay_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">"""</span>
 <span class="sd">    Visualizes the given attributions by overlaying an attribution heatmap </span>
 <span class="sd">    over the given image.</span>
@@ -1359,11 +1466,6 @@ normalization, blurring, etc.</p>
 <span class="sd">            Value in the range [0, 1] specifying the opacity for the heatmap</span>
 <span class="sd">            overlay. If `None`, defaults to the value supplied to the </span>
 <span class="sd">            constructor.</span>
-
-<span class="sd">        combine_channels:</span>
-<span class="sd">            If `True`, the attributions will be averaged across the channel</span>
-<span class="sd">            dimension, resulting in a 1-channel attribution map. If `None`,</span>
-<span class="sd">            defaults to the value supplied to the constructor.</span>
 
 <span class="sd">        normalization_type:</span>
 <span class="sd">            Specifies one of the following configurations for normalizing</span>
@@ -1416,11 +1518,13 @@ normalization, blurring, etc.</p>
 <span class="sd">        normalization, blurring, etc.</span>
 <span class="sd">    """</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">normalization_type</span><span class="p">,</span> <span class="n">blur</span><span class="p">,</span> <span class="n">cmap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_args</span><span class="p">(</span>
-        <span class="n">attributions</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalization_type</span><span class="p">,</span> <span class="n">blur</span><span class="p">,</span> <span class="n">cmap</span><span class="p">)</span>
+        <span class="n">attributions</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalization_type</span><span class="p">,</span> <span class="n">blur</span><span class="p">,</span> <span class="n">cmap</span>
+    <span class="p">)</span>
 
     <span class="c1"># Combine the channels.</span>
     <span class="n">attributions</span> <span class="o">=</span> <span class="n">attributions</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
-        <span class="n">axis</span><span class="o">=</span><span class="n">get_backend</span><span class="p">()</span><span class="o">.</span><span class="n">channel_axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">axis</span><span class="o">=</span><span class="n">get_backend</span><span class="p">()</span><span class="o">.</span><span class="n">channel_axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
 
     <span class="c1"># Blur the attributions so the explanation is smoother.</span>
     <span class="k">if</span> <span class="n">blur</span><span class="p">:</span>
@@ -1568,11 +1672,12 @@ type. This argument is only used for single-channel data
           <summary>Source code in <code>trulens/visualizations.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">overlay_opacity</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-        <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">blur</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span>
-        <span class="n">cmap</span><span class="o">=</span><span class="s1">'jet'</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">overlay_opacity</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">blur</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="s1">'jet'</span>
+<span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Configures the default parameters for the `__call__` method (these can </span>
 <span class="sd">    be overridden by passing in values to `__call__`).</span>
@@ -1635,7 +1740,8 @@ type. This argument is only used for single-channel data
         <span class="n">combine_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">normalization_type</span><span class="o">=</span><span class="n">normalization_type</span><span class="p">,</span>
         <span class="n">blur</span><span class="o">=</span><span class="n">blur</span><span class="p">,</span>
-        <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
+        <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span>
+    <span class="p">)</span>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">default_overlay_opacity</span> <span class="o">=</span> <span class="n">overlay_opacity</span>
 </code></pre>
@@ -1644,6 +1750,54 @@ type. This argument is only used for single-channel data
 </div>
 </div>
 </div>
+</div>
+</div>
+<div class="doc doc-object doc-class">
+<h2 class="doc doc-heading" id="trulens.visualizations.HTML">
+
+        <code>HTML</code>
+
+
+      <a class="headerlink" href="#trulens.visualizations.HTML" title="Permanent link">&para;</a></h2>
+<div class="doc doc-contents ">
+<p>HTML visualization output format.</p>
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+</div>
+</div>
+<div class="doc doc-object doc-class">
+<h2 class="doc doc-heading" id="trulens.visualizations.IPython">
+
+        <code>IPython</code>
+
+
+      <a class="headerlink" href="#trulens.visualizations.IPython" title="Permanent link">&para;</a></h2>
+<div class="doc doc-contents ">
+<p>Interactive python visualization output format.</p>
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
 </div>
 </div>
 <div class="doc doc-object doc-class">
@@ -1747,13 +1901,14 @@ true).</p>
           <summary>Source code in <code>trulens/visualizations.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">blur</span><span class="o">=</span><span class="mf">5.</span><span class="p">,</span>
-        <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-        <span class="n">masked_opacity</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
-        <span class="n">combine_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">use_attr_as_opacity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">positive_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">blur</span><span class="o">=</span><span class="mf">5.</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">masked_opacity</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+    <span class="n">combine_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">use_attr_as_opacity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">positive_only</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Configures the default parameters for the `__call__` method (these can </span>
 <span class="sd">    be overridden by passing in values to `__call__`).</span>
@@ -1802,6 +1957,411 @@ true).</p>
 </div>
 </div>
 </div>
+</div>
+</div>
+<div class="doc doc-object doc-class">
+<h2 class="doc doc-heading" id="trulens.visualizations.NLP">
+
+        <code>NLP</code>
+
+
+      <a class="headerlink" href="#trulens.visualizations.NLP" title="Permanent link">&para;</a></h2>
+<div class="doc doc-contents ">
+<p>NLP Visualization tools.</p>
+<div class="doc doc-children">
+<div class="doc doc-object doc-method">
+<h3 class="doc doc-heading" id="trulens.visualizations.NLP.__init__">
+
+        <code class="highlight language-python">
+__init__<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapper</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tokenize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">decode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_accessor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_accessor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attr_aggregate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hidden_tokens</span><span class="o">=</span><span class="nb">set</span><span class="p">())</span>        </code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+      <a class="headerlink" href="#trulens.visualizations.NLP.__init__" title="Permanent link">&para;</a></h3>
+<div class="doc doc-contents ">
+<p>Initializate NLP visualization tools for a given environment.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wrapper</code></td>
+<td><code>ModelWrapper</code></td>
+<td>
+<p>ModelWrapper
+The wrapped model whose channel we're visualizing.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>output</code></td>
+<td><code>Optional[trulens.visualizations.Output]</code></td>
+<td>
+<p>Output, optional
+Visualization output format. Defaults to PlainText unless
+ipython is detected and in which case defaults to IPython
+format.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>labels</code></td>
+<td><code>Optional[Iterable[str]]</code></td>
+<td>
+<p>Iterable[str], optional
+Names of prediction classes for classification models.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>tokenize</code></td>
+<td><code>Optional[Callable[[~TextBatch], trulens.utils.ModelInputs]]</code></td>
+<td>
+<p>Callable[[TextBatch], ModelInput], optional
+Method to tokenize an instance.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>decode</code></td>
+<td><code>Optional[Callable[[~Tensor], str]]</code></td>
+<td>
+<p>Callable[[Tensor], str], optional
+Method to invert/decode the tokenization.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>input_accessor</code></td>
+<td><code>Optional[Callable[[trulens.utils.ModelInputs], Iterable[~Tensor]]]</code></td>
+<td>
+<p>Callable[[ModelInputs], Iterable[Tensor]], optional
+Method to extract input/token ids from model inputs (tokenize
+output) if needed.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>output_accessor</code></td>
+<td><code>Optional[Callable[[~ModelOutput], Iterable[~Tensor]]]</code></td>
+<td>
+<p>Callable[[ModelOutput], Iterable[Tensor]], optional
+Method to extract outout logits from output structures if
+needed.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>attr_aggregate</code></td>
+<td><code>Optional[Callable[[~Tensor], ~Tensor]]</code></td>
+<td>
+<p>Callable[[Tensor], Tensor], optional
+Method to aggregate attribution for embedding into a single
+value. Defaults to sum.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>hidden_tokens</code></td>
+<td><code>Optional[Set[int]]</code></td>
+<td>
+<p>Set[int], optional
+For token-based visualizations, which tokens to hide.</p>
+</td>
+<td><code>set()</code></td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+          <summary>Source code in <code>trulens/visualizations.py</code></summary>
+          <div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">wrapper</span><span class="p">:</span> <span class="n">ModelWrapper</span><span class="p">,</span>
+    <span class="n">output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Output</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tokenize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">TextBatch</span><span class="p">],</span> <span class="n">ModelInputs</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">decode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">input_accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">ModelInputs</span><span class="p">],</span>
+                                      <span class="n">Iterable</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">output_accessor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">ModelOutput</span><span class="p">],</span>
+                                       <span class="n">Iterable</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">attr_aggregate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">hidden_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<span class="p">):</span>
+    <span class="sd">"""Initializate NLP visualization tools for a given environment.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        wrapper: ModelWrapper</span>
+<span class="sd">            The wrapped model whose channel we're visualizing.</span>
+
+<span class="sd">        output: Output, optional</span>
+<span class="sd">            Visualization output format. Defaults to PlainText unless</span>
+<span class="sd">            ipython is detected and in which case defaults to IPython</span>
+<span class="sd">            format.</span>
+
+<span class="sd">        labels: Iterable[str], optional</span>
+<span class="sd">            Names of prediction classes for classification models.</span>
+
+<span class="sd">        tokenize: Callable[[TextBatch], ModelInput], optional</span>
+<span class="sd">            Method to tokenize an instance.</span>
+
+<span class="sd">        decode: Callable[[Tensor], str], optional</span>
+<span class="sd">            Method to invert/decode the tokenization.</span>
+
+<span class="sd">        input_accessor: Callable[[ModelInputs], Iterable[Tensor]], optional</span>
+<span class="sd">            Method to extract input/token ids from model inputs (tokenize</span>
+<span class="sd">            output) if needed.</span>
+
+<span class="sd">        output_accessor: Callable[[ModelOutput], Iterable[Tensor]], optional</span>
+<span class="sd">            Method to extract outout logits from output structures if</span>
+<span class="sd">            needed.</span>
+
+<span class="sd">        attr_aggregate: Callable[[Tensor], Tensor], optional</span>
+<span class="sd">            Method to aggregate attribution for embedding into a single</span>
+<span class="sd">            value. Defaults to sum.</span>
+
+<span class="sd">        hidden_tokens: Set[int], optional</span>
+<span class="sd">            For token-based visualizations, which tokens to hide.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">output</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># check if running in interactive python (jupyer, colab, etc) to</span>
+            <span class="c1"># use appropriate output format</span>
+            <span class="n">get_ipython</span><span class="p">()</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">IPython</span><span class="p">()</span>
+
+        <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">PlainText</span><span class="p">()</span>
+            <span class="n">tru_logger</span><span class="p">(</span>
+                <span class="s2">"WARNING: could not guess preferred visualization output format, using PlainText"</span>
+            <span class="p">)</span>
+
+    <span class="c1"># TODO: automatic inference of various parameters for common repositories like huggingface, tfhub.</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">output</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tokenize</span> <span class="o">=</span> <span class="n">tokenize</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">decode</span> <span class="o">=</span> <span class="n">decode</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">wrapper</span> <span class="o">=</span> <span class="n">wrapper</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">input_accessor</span> <span class="o">=</span> <span class="n">input_accessor</span>  <span class="c1"># could be inferred</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">output_accessor</span> <span class="o">=</span> <span class="n">output_accessor</span>  <span class="c1"># could be inferred</span>
+
+    <span class="n">B</span> <span class="o">=</span> <span class="n">get_backend</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">attr_aggregate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">attr_aggregate</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">sum</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">attr_aggregate</span> <span class="o">=</span> <span class="n">attr_aggregate</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">hidden_tokens</span> <span class="o">=</span> <span class="n">hidden_tokens</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
+<h3 class="doc doc-heading" id="trulens.visualizations.NLP.token_attribution">
+
+        <code class="highlight language-python">
+token_attribution<span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>        </code>
+
+
+      <a class="headerlink" href="#trulens.visualizations.NLP.token_attribution" title="Permanent link">&para;</a></h3>
+<div class="doc doc-contents ">
+<p>Visualize a token-based input attribution on given <code>texts</code> inputs via the attribution method <code>attr</code>.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>texts</code></td>
+<td><code>Iterable[str]</code></td>
+<td>
+<p>Iterable[str]
+The input texts to visualize.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>attr</code></td>
+<td><code>AttributionMethod</code></td>
+<td>
+<p>AttributionMethod
+The attribution method to generate the token importances with.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition returns">
+<p class="admonition-title">Any</p>
+<p>The visualization in the format specified by this class's <code>output</code> parameter.</p>
+</div>
+<details class="quote">
+          <summary>Source code in <code>trulens/visualizations.py</code></summary>
+          <div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="nf">token_attribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">attr</span><span class="p">:</span> <span class="n">AttributionMethod</span><span class="p">):</span>
+    <span class="sd">"""Visualize a token-based input attribution on given `texts` inputs via the attribution method `attr`.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        texts: Iterable[str]</span>
+<span class="sd">            The input texts to visualize.</span>
+
+<span class="sd">        attr: AttributionMethod</span>
+<span class="sd">            The attribution method to generate the token importances with.</span>
+
+<span class="sd">    Returns: Any</span>
+<span class="sd">        The visualization in the format specified by this class's `output` parameter.</span>
+<span class="sd">    """</span>
+
+    <span class="n">B</span> <span class="o">=</span> <span class="n">get_backend</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenize</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"tokenize not provided to NLP visualizer."</span><span class="p">)</span>
+
+    <span class="n">inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
+
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">call_on</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wrapper</span><span class="o">.</span><span class="n">_model</span><span class="p">)</span>
+    <span class="n">attrs</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">call_on</span><span class="p">(</span><span class="n">attr</span><span class="o">.</span><span class="n">attributions</span><span class="p">)</span>
+
+    <span class="n">content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">blank</span><span class="p">()</span>
+
+    <span class="n">input_ids</span> <span class="o">=</span> <span class="n">inputs</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_accessor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">input_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_accessor</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Inputs (</span><span class="si">{</span><span class="n">input_ids</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) need to be iterable over instances. You might need to set input_accessor."</span>
+        <span class="p">)</span>
+
+    <span class="n">output_logits</span> <span class="o">=</span> <span class="n">outputs</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_accessor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">output_logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_accessor</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output_logits</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">output_logits</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Outputs (</span><span class="si">{</span><span class="n">output_logits</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) need to be iterable over instances. You might need to set output_accessor."</span>
+        <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">sentence_word_id</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span>
+            <span class="n">logits</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">attrs</span><span class="p">,</span> <span class="n">output_logits</span><span class="p">)):</span>
+
+        <span class="n">logits</span> <span class="o">=</span> <span class="n">logits</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">'cpu'</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="n">logits</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pred_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pred_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
+
+        <span class="n">sent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">pred_name</span><span class="p">),</span> <span class="s2">":"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">space</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">word_id</span><span class="p">,</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sentence_word_id</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+            <span class="n">word_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">as_array</span><span class="p">(</span><span class="n">word_id</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">word_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_tokens</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">word</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">word_id</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">word</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">word_id</span><span class="p">)</span>
+
+            <span class="n">mag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_aggregate</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">word</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">' '</span><span class="p">:</span>
+                <span class="n">word</span> <span class="o">=</span> <span class="n">word</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                <span class="n">sent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">space</span><span class="p">())</span>
+
+            <span class="n">sent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">sent</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">magnitude_colored</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">word</span><span class="p">),</span> <span class="n">mag</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">content</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">sent</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">linebreak</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">linebreak</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="doc doc-object doc-class">
+<h2 class="doc doc-heading" id="trulens.visualizations.Output">
+
+        <code>Output</code>
+
+
+      <a class="headerlink" href="#trulens.visualizations.Output" title="Permanent link">&para;</a></h2>
+<div class="doc doc-contents ">
+<p>Base class for visualization output formats.</p>
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+</div>
+</div>
+<div class="doc doc-object doc-class">
+<h2 class="doc doc-heading" id="trulens.visualizations.PlainText">
+
+        <code>PlainText</code>
+
+
+      <a class="headerlink" href="#trulens.visualizations.PlainText" title="Permanent link">&para;</a></h2>
+<div class="doc doc-contents ">
+<p>Plain text visualization output format.</p>
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
 </div>
 </div>
 <div class="doc doc-object doc-class">
@@ -2075,7 +2635,7 @@ Colormap or name of a Colormap to use for the visualization. If
 </thead>
 <tbody>
 <tr>
-<td><code></code></td>
+<td><code>ndarray</code></td>
 <td>
 <p>A <code>np.ndarray</code> array of the numerical representation of the
 attributions as modified for the visualization. This includes 
@@ -2088,16 +2648,17 @@ normalization, blurring, etc.</p>
           <summary>Source code in <code>trulens/visualizations.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">attributions</span><span class="p">,</span>
-        <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">imshow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">return_tiled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">combine_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">attributions</span><span class="p">,</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">imshow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">return_tiled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">combine_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">"""</span>
 <span class="sd">    Visualizes the given attributions.</span>
 
@@ -2179,12 +2740,14 @@ normalization, blurring, etc.</p>
 <span class="sd">        normalization, blurring, etc.</span>
 <span class="sd">    """</span>
     <span class="n">combine_channels</span><span class="p">,</span> <span class="n">normalization_type</span><span class="p">,</span> <span class="n">blur</span><span class="p">,</span> <span class="n">cmap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_args</span><span class="p">(</span>
-        <span class="n">attributions</span><span class="p">,</span> <span class="n">combine_channels</span><span class="p">,</span> <span class="n">normalization_type</span><span class="p">,</span> <span class="n">blur</span><span class="p">,</span> <span class="n">cmap</span><span class="p">)</span>
+        <span class="n">attributions</span><span class="p">,</span> <span class="n">combine_channels</span><span class="p">,</span> <span class="n">normalization_type</span><span class="p">,</span> <span class="n">blur</span><span class="p">,</span> <span class="n">cmap</span>
+    <span class="p">)</span>
 
     <span class="c1"># Combine the channels if specified.</span>
     <span class="k">if</span> <span class="n">combine_channels</span><span class="p">:</span>
         <span class="n">attributions</span> <span class="o">=</span> <span class="n">attributions</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
-            <span class="n">axis</span><span class="o">=</span><span class="n">get_backend</span><span class="p">()</span><span class="o">.</span><span class="n">channel_axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">axis</span><span class="o">=</span><span class="n">get_backend</span><span class="p">()</span><span class="o">.</span><span class="n">channel_axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
 
     <span class="c1"># Blur the attributions so the explanation is smoother.</span>
     <span class="k">if</span> <span class="n">blur</span><span class="p">:</span>
@@ -2320,11 +2883,12 @@ type. This argument is only used for single-channel data
           <summary>Source code in <code>trulens/visualizations.py</code></summary>
           <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">combine_channels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">normalization_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">blur</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span>
-        <span class="n">cmap</span><span class="p">:</span> <span class="n">Colormap</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">combine_channels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">normalization_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">blur</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="p">:</span> <span class="n">Colormap</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Configures the default parameters for the `__call__` method (these can </span>
 <span class="sd">    be overridden by passing in values to `__call__`).</span>
