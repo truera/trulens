@@ -10,6 +10,7 @@
 .Python
 build/
 develop-eggs/
+site/
 dist/
 downloads/
 eggs/
