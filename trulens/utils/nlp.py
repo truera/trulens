@@ -40,7 +40,7 @@ def token_baseline(
         input_ids = input_accessor(model_inputs)
         device = input_ids.device if hasattr(input_ids, "device") else None
         input_ids = B.as_array(B.clone(input_ids))
-        ids = (1 - sum(input_ids == v for v in keep_tokens))
+        ids = (1 - sum(input_ids == v for v in keep_tokens)) == 1
 
         input_ids[ids] = replacement_token
         input_ids = B.as_tensor(input_ids, dtype=input_ids.dtype, device=device)
