@@ -139,6 +139,10 @@ class KerasModelWrapper(ModelWrapper):
         # Index of input node used in model (in case layer is shared between models)
         self._innode_index = trace_input_indices(model, self.keras)
 
+    def print_layer_names(self):
+        for name, layer in self._layers.items():
+            print(f'\'{name}\':\t{layer}')
+
     def _traverse_model(self, model):
         """Traverses model to gather heirarchical layer data
 
