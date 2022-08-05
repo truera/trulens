@@ -247,11 +247,14 @@ class PytorchModelWrapper(ModelWrapper):
         B = get_backend()
 
         # This method operates on backend tensors.
-        model_inputs = model_inputs.map(B.as_tensor)
         intervention = intervention.map(B.as_tensor)
 
+        # TODO: generalize the condition to include Cut objects that start at the beginning. Until then, clone the model args to avoid mutations (see MLNN-229)
         if isinstance(doi_cut, InputCut):
             model_inputs = intervention
+        else:
+            model_inputs = model_inputs.map(B.as_tensor)
+            model_inputs = model_inputs.map(B.clone)
 
         if attribution_cut is not None:
             # Specify that we want to preserve gradient information.
@@ -276,7 +279,7 @@ class PytorchModelWrapper(ModelWrapper):
 
         # Set up the intervention hookfn if we are starting from an intermediate
         # layer.
-
+        # TODO: generalize the condition to include Cut objects that start at the beginning. Until then, clone the model args to avoid mutations (see MLNN-229)
         if not isinstance(doi_cut, InputCut):
             # Interventions only allowed onto one layer (see FIXME below.)
 
