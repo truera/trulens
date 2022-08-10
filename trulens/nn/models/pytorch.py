@@ -86,14 +86,18 @@ class PytorchModelWrapper(ModelWrapper):
                     f"Model's parameters span more than one device ({devices})."
                 )
 
-            mdevice = list(devices)[0]
+            if len(devices) == 0:
+                # Model without any parameters. No need to do anything here.
+                pass
+            else:
+                mdevice = list(devices)[0]
 
-            if mdevice != device:
-                tru_logger.warning(
-                    f"Model is not on default device ({device}), moving it there. "
-                    f"If you intend to work on {mdevice}, set it as the default pytorch device or explicitly provide it as the device argument to get_model_wrapper."
-                )
-                model.to(device)
+                if mdevice != device:
+                    tru_logger.warning(
+                        f"Model is not on default device ({device}), moving it there. "
+                        f"If you intend to work on {mdevice}, set it as the default pytorch device or explicitly provide it as the device argument to get_model_wrapper."
+                    )
+                    model.to(device)
 
         else:
             model.to(device)

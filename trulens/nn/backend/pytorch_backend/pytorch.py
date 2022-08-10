@@ -64,8 +64,8 @@ def get_default_device(device: DeviceLike = None):
 
     if torch.cuda.is_available():
         return torch.device("cuda", torch.cuda.current_device())
-
-    return torch.device('cpu')
+    else:
+        return torch.device('cpu')
 
 
 def memory_suggestions(*settings, device=None):
