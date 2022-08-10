@@ -79,9 +79,34 @@ class PytorchModelWrapper(ModelWrapper):
         if device is None:
             device = pytorch.get_default_device()
 
+            devices = set(p.device for p in model.parameters())
+
+            if len(devices) > 1:
+                tru_logger.warning(
+                    f"Model's parameters span more than one device ({devices})."
+                )
+
+            mdevice = list(devices)[0]
+
+            if mdevice != device:
+                tru_logger.warning(
+                    f"Model is not on default device ({device}), moving it there. "
+                    f"If you intend to work on {mdevice}, set it as the default pytorch device or explicitly provide it as the device argument to get_model_wrapper."
+                )
+                model.to(device)
+
+        else:
+            model.to(device)
+
+            def_device = pytorch.get_default_device()
+            if device != def_device:
+                tru_logger.warning(
+                    f"Model's device ({device}) differs from pytorch's default device ({def_device}). Changing default to model device."
+                )
+                pytorch.set_default_device(device)
+
         pytorch.set_default_device(device)
         self.device = device
-        model.to(self.device)
 
         self._logit_layer = logit_layer
 
