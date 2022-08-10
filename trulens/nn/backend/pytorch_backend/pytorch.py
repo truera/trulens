@@ -4,6 +4,7 @@
 # pylint: disable=not-callable
 
 from typing import Union
+
 import numpy as np
 import torch
 
@@ -35,6 +36,7 @@ default_device = None
 
 DeviceLike = Union[str, torch.device]
 
+
 def set_default_device(device: DeviceLike):
     """
     Set the default device so methods that do not take in a tensor can still
@@ -51,6 +53,7 @@ def set_default_device(device: DeviceLike):
         device = torch.device(device)
 
     default_device = device
+
 
 def get_default_device(device: DeviceLike = None):
     if device is not None:
