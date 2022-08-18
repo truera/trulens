@@ -63,7 +63,7 @@ class Cut(object):
                 assert isinstance(
                     n, (int, str)
                 ), f"Elements in Cut.name must be layer names (str) or indices (int). Got type {type(n)}"
-
+        anchor = str(anchor)
         assert anchor in [
             'in', 'out'
         ], "Cut.anchor must be one of ('in', 'out')"
