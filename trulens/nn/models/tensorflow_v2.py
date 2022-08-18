@@ -202,8 +202,12 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
 
                         if doi_cut.anchor == 'in':
                             layer.input_intervention = intervention_fn
-                        else:
+                        elif doi_cut.anchor == 'out':
                             layer.output_intervention = intervention_fn
+                        else:
+                            raise ValueError(
+                                f"The doi_cut anchor must be one of ('in', 'out'). Got {doi_cut.anchor} instead."
+                            )
                 else:
                     model_inputs = intervention
 
@@ -219,8 +223,12 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
                             results[i] = inputs[0]
                         else:
                             results[i] = inputs
-                    else:
+                    elif anchor == 'out':
                         results[i] = output
+                    else:
+                        raise ValueError(
+                            f"The anchor must be one of ('in', 'out'). Got {anchor} instead."
+                        )
 
                 return retrieve
 

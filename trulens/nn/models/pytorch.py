@@ -281,6 +281,9 @@ class PytorchModelWrapper(ModelWrapper):
         # layer.
         # TODO: generalize the condition to include Cut objects that start at the beginning. Until then, clone the model args to avoid mutations (see MLNN-229)
         if not isinstance(doi_cut, InputCut):
+            assert doi_cut.anchor in [
+                'in', 'out'
+            ], f"doi_cut.anchor must be one of ('in', 'out'). Got {doi_cut.anchor} instead"
             # Interventions only allowed onto one layer (see FIXME below.)
 
             # Define the hookfn.
@@ -336,10 +339,14 @@ class PytorchModelWrapper(ModelWrapper):
 
                 if anchor == 'in':
                     hooks[layer_name] = inpt
-                else:
+                elif anchor == 'out':
                     # FIXME : will not work for multibranch outputs
                     # needed to ignore hidden states of RNNs
                     hooks[layer_name] = outpt
+                else:
+                    raise ValueError(
+                        f"The to_cut anchor must be one of ('in', 'out'). Got {anchor} instead."
+                    )
 
             return hookfn
 
