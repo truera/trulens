@@ -55,7 +55,7 @@ class Cut(object):
                 lambda t: t[-1] if isinstance(t, list) else t
                 ```
         """
-        assert isinstance(
+        assert name is None or isinstance(
             name, (list, int, str)
         ), "Cut.name must be one of: layer index, layer name, or list of names/indices of multiple layers"
         if isinstance(name, list):
