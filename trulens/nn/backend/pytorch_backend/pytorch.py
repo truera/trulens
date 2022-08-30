@@ -3,6 +3,8 @@
 # pylint: disable=no-member
 # pylint: disable=not-callable
 
+from typing import Union
+
 import numpy as np
 import torch
 
@@ -32,8 +34,10 @@ def is_deterministic() -> bool:
 # device as in zeros_like or as_tensor called on numpy arrays.
 default_device = None
 
+DeviceLike = Union[str, torch.device]
 
-def set_default_device(device: str):
+
+def set_default_device(device: DeviceLike):
     """
     Set the default device so methods that do not take in a tensor can still
     produce a tensor on the right device.
@@ -45,18 +49,13 @@ def set_default_device(device: str):
     if device is None:
         return old_device
 
-    if isinstance(device, torch.device):
-        device = device.type
+    if isinstance(device, str):
+        device = torch.device(device)
 
-    if "cuda" in device:
-        default_device = torch.device(device)
-    elif device == "cpu":
-        default_device = torch.device(device)
-    else:
-        raise ValueError(f"Unhandled device type {device}")
+    default_device = device
 
 
-def get_default_device(device=None):
+def get_default_device(device: DeviceLike = None):
     if device is not None:
         return device
 
@@ -64,9 +63,9 @@ def get_default_device(device=None):
         return default_device
 
     if torch.cuda.is_available():
-        return torch.device("cuda:0")
-
-    return torch.device('cpu')
+        return torch.device("cuda", torch.cuda.current_device())
+    else:
+        return torch.device('cpu')
 
 
 def memory_suggestions(*settings, device=None):
