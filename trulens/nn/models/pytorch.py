@@ -79,9 +79,38 @@ class PytorchModelWrapper(ModelWrapper):
         if device is None:
             device = pytorch.get_default_device()
 
+            devices = set(p.device for p in model.parameters())
+
+            if len(devices) > 1:
+                tru_logger.warning(
+                    f"Model's parameters span more than one device ({devices})."
+                )
+
+            if len(devices) == 0:
+                # Model without any parameters. No need to do anything here.
+                pass
+            else:
+                mdevice = list(devices)[0]
+
+                if mdevice != device:
+                    tru_logger.warning(
+                        f"Model is not on default device ({device}), moving it there. "
+                        f"If you intend to work on {mdevice}, set it as the default pytorch device or explicitly provide it as the device argument to get_model_wrapper."
+                    )
+                    model.to(device)
+
+        else:
+            model.to(device)
+
+            def_device = pytorch.get_default_device()
+            if device != def_device:
+                tru_logger.warning(
+                    f"Model's device ({device}) differs from pytorch's default device ({def_device}). Changing default to model device."
+                )
+                pytorch.set_default_device(device)
+
         pytorch.set_default_device(device)
         self.device = device
-        model.to(self.device)
 
         self._logit_layer = logit_layer
 
@@ -247,11 +276,14 @@ class PytorchModelWrapper(ModelWrapper):
         B = get_backend()
 
         # This method operates on backend tensors.
-        model_inputs = model_inputs.map(B.as_tensor)
         intervention = intervention.map(B.as_tensor)
 
+        # TODO: generalize the condition to include Cut objects that start at the beginning. Until then, clone the model args to avoid mutations (see MLNN-229)
         if isinstance(doi_cut, InputCut):
             model_inputs = intervention
+        else:
+            model_inputs = model_inputs.map(B.as_tensor)
+            model_inputs = model_inputs.map(B.clone)
 
         if attribution_cut is not None:
             # Specify that we want to preserve gradient information.
@@ -276,7 +308,7 @@ class PytorchModelWrapper(ModelWrapper):
 
         # Set up the intervention hookfn if we are starting from an intermediate
         # layer.
-
+        # TODO: generalize the condition to include Cut objects that start at the beginning. Until then, clone the model args to avoid mutations (see MLNN-229)
         if not isinstance(doi_cut, InputCut):
             # Interventions only allowed onto one layer (see FIXME below.)
 
