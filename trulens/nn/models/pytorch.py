@@ -339,6 +339,10 @@ class PytorchModelWrapper(ModelWrapper):
                     )
                 )
             else:
+                if doi_cut.anchor is not None and doi_cut.anchor != 'out':
+                    tru_logger.warning(
+                        f"Unrecognized doi_cut.anchor {doi_cut.anchor}. Defaulting to `out` anchor."
+                    )
                 in_handle = (
                     self._get_layer(doi_cut.name
                                    ).register_forward_hook(intervene_hookfn)
