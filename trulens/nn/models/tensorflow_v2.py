@@ -203,6 +203,10 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
                         if doi_cut.anchor == 'in':
                             layer.input_intervention = intervention_fn
                         else:
+                            if doi_cut.anchor is not None and doi_cut.anchor != 'out':
+                                tru_logger.warning(
+                                    f"Unrecognized doi_cut.anchor {doi_cut.anchor}. Defaulting to `out` anchor."
+                                )
                             layer.output_intervention = intervention_fn
                 else:
                     model_inputs = intervention

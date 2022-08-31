@@ -377,6 +377,9 @@ class KerasModelWrapper(ModelWrapper):
         ]
 
         if cut.anchor not in ['in', 'out']:
+            tru_logger.warning(
+                f"Unrecognized cut.anchor {cut.anchor}. Defaulting to `out` anchor."
+            )
             outputs = [self._get_layer_output(layer) for layer in layers]
             outputs = [
                 out[cut.anchor][0] if cut.anchor in out else out
