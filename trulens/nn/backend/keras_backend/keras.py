@@ -29,7 +29,7 @@ floatX_size = float_size(str(floatX))
 Tensor = type(K.constant((1, 1), dtype=floatX))
 TensorVar = type(K.zeros((1, 1), dtype=floatX))
 dim_order = K.image_data_format()
-channel_axis = 1 if dim_order == 'channels_first' else 3
+channel_axis = 1 if dim_order == 'channels_first' else -1
 
 
 def set_seed(seed: int) -> None:

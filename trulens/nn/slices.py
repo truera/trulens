@@ -42,7 +42,7 @@ class Cut(object):
 
             anchor: 
                 Determines whether input (`'in'`) or the output (`'out'`) tensor
-                of the spcified layer should be used.
+                of the specified layer should be used.
 
             accessor:
                 An accessor function that operates on the layer, mapping the 
@@ -146,7 +146,7 @@ class OutputCut(Cut):
         Parameters:
             anchor: 
                 Determines whether input (`'in'`) or the output (`'out'`) tensor
-                of the spcified layer should be used.
+                of the specified layer should be used.
 
             accessor:
                 An accessor function that operates on the layer, mapping the 
@@ -175,7 +175,7 @@ class LogitCut(Cut):
         Parameters:
             anchor: 
                 Determines whether input (`'in'`) or the output (`'out'`) tensor
-                of the spcified layer should be used.
+                of the specified layer should be used.
 
             accessor:
                 An accessor function that operates on the layer, mapping the 

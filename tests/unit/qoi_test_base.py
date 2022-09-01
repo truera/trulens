@@ -86,7 +86,7 @@ class QoiTestBase(object):
         self.assertTrue(np.allclose(self.B.as_array(res), np.array([24., 36.])))
 
     def test_internal_channel_axis3(self):
-        qoi = InternalChannelQoI(1, channel_axis=3)
+        qoi = InternalChannelQoI(1, channel_axis=-1)
         res = qoi(self.z)
 
         self.assertEqual(

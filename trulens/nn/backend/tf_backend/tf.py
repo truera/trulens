@@ -16,7 +16,7 @@ floatX = tf.keras.backend.floatx()
 floatX_size = float_size(str(floatX))
 Tensor = tf.Tensor
 dim_order = 'channels_last'
-channel_axis = 1 if dim_order == 'channels_first' else 3
+channel_axis = 1 if dim_order == 'channels_first' else -1
 backend = Backend.TENSORFLOW
 
 tf1 = tf.__version__.startswith('1.')

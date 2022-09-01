@@ -298,7 +298,7 @@ class Visualizer(object):
         Validates the arguments, and sets them to their default values if they
         are not specified.
         """
-        if attributions.ndim != 4 and attributions.ndim != 5:
+        if attributions.ndim != 4:
             raise ValueError(
                 '`Visualizer` is intended for 4-D or 5-D image-format data. Given '
                 'input with dimension {}'.format(attributions.ndim)
