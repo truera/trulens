@@ -56,7 +56,7 @@ Eg: If you want to explain a logit layer instead of the probit layer (the final 
 **QoI Cut** → Your logit layer, anchor:'out'
  
 #### Case 3: The Attribution Cut
-Now suppose you want to know the influence of some internal layer on the final output. 
+Now suppose you want to know the attribution of some internal layer on the final output. 
 
 **Use cases:** 
 
@@ -65,7 +65,7 @@ Now suppose you want to know the influence of some internal layer on the final o
 
 **Cuts needed:** As you want to know the affect of some other layer rather than the input layer, you need to customize the attribution cut.  
 **Model inputs** → InputCut  
-**Attribution Cut** → Your attribution layer (The layer you want to assign importance/influences with respect to output), anchor:'in'  
+**Attribution Cut** → Your attribution layer (The layer you want to assign importance/attributions with respect to output), anchor:'in'  
 **QoI Cut** → OutputCut
  
 #### Case 4: The DoI Cut / Explanation flexibility
