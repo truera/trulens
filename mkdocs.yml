@@ -61,7 +61,7 @@ nav:
   - Welcome to TruLens!: welcome.md
   - Installation: install.md
   - Quickstart: quickstart.md
-  - Attributions for Different Use Cases!: attribution_parameterization.md
+  - Attributions for Different Use Cases: attribution_parameterization.md
   - API Reference: 
     - Attribution: api/attribution.md
     - Models: api/model_wrappers.md
