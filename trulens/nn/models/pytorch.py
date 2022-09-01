@@ -218,6 +218,22 @@ class PytorchModelWrapper(ModelWrapper):
 
         return_output = None
 
+        def _get_hook_val(k):
+            if k not in hooks:
+                # TODO: incoporate some more info in this error. Some of these
+                # prints might be useful for this error.
+                
+                # self.print_layer_names()
+                # print(hooks.keys())
+                
+                # TODO: create a new exception type for this so it can be caught
+                # by downstream users better.
+
+                # TODO: similar messages for other backends.
+                
+                raise ValueError(f"Could not get values for layer {k}. Is it evaluated when computing doi cut from input cut?")
+            return hooks[k]
+
         if isinstance(cut, OutputCut):
             return_output = many_of_om(output)
 
@@ -232,10 +248,10 @@ class PytorchModelWrapper(ModelWrapper):
             )
 
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
-            return_output = [hooks[name] for name in cut.name]
+            return_output = [_get_hook_val(name) for name in cut.name]
 
         else:
-            return_output = many_of_om(hooks[cut.name])
+            return_output = many_of_om(_get_hook_val(cut.name))
 
         return return_output
 
@@ -307,8 +323,12 @@ class PytorchModelWrapper(ModelWrapper):
             model_inputs.foreach(enable_grad)
 
         # Set up the intervention hookfn if we are starting from an intermediate
-        # layer.
-        # TODO: generalize the condition to include Cut objects that start at the beginning. Until then, clone the model args to avoid mutations (see MLNN-229)
+        # layer. These hooks replace the activations of the model at doi_cut
+        # with what is given by intervention. This can cause some confusion as
+        # it may appear that a model is evaluated on the wrong inputs (which are
+        # then fixed by these hooks). Need a good way to present this to the
+        # user.
+
         if not isinstance(doi_cut, InputCut):
             # Interventions only allowed onto one layer (see FIXME below.)
 
@@ -322,8 +342,13 @@ class PytorchModelWrapper(ModelWrapper):
                     # FIXME: generalize to multi-input layers. Currently can
                     #   only intervene on one layer.
 
+                    # TODO: figure out how to check the case where intervention
+                    # is on something that will never be executed. Would be good
+                    # to give a user a warning in that case.
+
                     # TODO: figure out whether this is needed
                     inpt = inpt[0] if len(inpt) == 1 else inpt
+
                     ModelWrapper._nested_assign(
                         inpt if doi_cut.anchor == 'in' else outpt,
                         intervention.first()

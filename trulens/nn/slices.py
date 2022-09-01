@@ -12,14 +12,15 @@ thought of as a sub-model that uses the features computed by $h$.
 """
 #from __future__ import annotations # Avoid expanding type aliases in mkdocs.
 
-from typing import Any, Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union
+from warnings import warn
 
 from trulens.nn.backend import get_backend
-from trulens.utils import tru_logger
+from trulens.utils.typing import render_object
+from trulens.utils.typing import TensorLike
 
 # Define some type aliases.
 LayerIdentifier = Union[int, str, List[Union[int, str]]]
-TensorLike = Union[Any, List[Any]]
 
 
 class Cut(object):
@@ -84,6 +85,10 @@ class Cut(object):
         self.accessor = accessor
         self.anchor = anchor
 
+    def __str__(self):
+        return render_object(self, ['name', 'accessor', 'anchor'])
+
+    # TODO: layer arg might need to be more specific
     def access_layer(self, layer: TensorLike) -> TensorLike:
         """
         Applies `self.accessor` to the result of collecting the relevant 

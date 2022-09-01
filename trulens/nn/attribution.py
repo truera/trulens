@@ -35,7 +35,7 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import ArgsLike, nested_str
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike
@@ -52,6 +52,7 @@ from trulens.utils.typing import TensorLike
 from trulens.utils.typing import Uniform
 
 # Attribution-related type aliases.
+# TODO: Verify these and move to typing utils?
 CutLike = Union[Cut, int, str, None]
 SliceLike = Union[Slice, Tuple[CutLike], CutLike]
 QoiLike = Union[QoI, int, Tuple[int], Callable, str]
