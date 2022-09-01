@@ -69,7 +69,7 @@ Now suppose you want to know the attribution of some internal layer on the final
  
 #### Case 4: The Distribution of Interest (DoI) Cut / Explanation flexibility
 
-Usually, we explain the output with respect to each point in the input. Now, suppose you want to explain using an aggregate over samples of points.  
+Usually, we explain the output with respect to each point in the input. All cases up to now were using a default called PointDoI. Now, suppose you want to explain using an aggregate over samples of points.  
 
 **Use case:** You want to do integrated gradients, gradcam, shapley values instead of saliency maps. These only differ by sampling strategies.  
 Eg: Integrated gradients is a sample from a straight line from a baseline to a value.  
