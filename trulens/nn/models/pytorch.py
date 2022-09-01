@@ -305,11 +305,6 @@ class PytorchModelWrapper(ModelWrapper):
                     # TODO: figure out whether this is needed
                     inpt = inpt[0] if len(inpt) == 1 else inpt
 
-                    # print("trulens, replacing doi_cut.anochr=", doi_cut.anchor)
-                    # print("trulens, inpt=", inpt.shape, inpt.sum(dim=[1,2]))
-                    # print("trulens, outpt=", outpt.shape, outpt.sum(dim=[1,2]))
-                    # print("trulens, with: ", intervention.first().shape, intervention.first().sum(dim=[1,2]))
-
                     ModelWrapper._nested_assign(
                         inpt if doi_cut.anchor == 'in' else outpt,
                         intervention.first()
