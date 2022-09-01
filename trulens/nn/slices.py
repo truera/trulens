@@ -56,6 +56,22 @@ class Cut(object):
                 lambda t: t[-1] if isinstance(t, list) else t
                 ```
         """
+        assert name is None or isinstance(
+            name, (list, int, str)
+        ), "Cut.name must be one of: layer index, layer name, or list of names/indices of multiple layers"
+        if isinstance(name, list):
+            for n in name:
+                assert isinstance(
+                    n, (int, str)
+                ), f"Elements in Cut.name must be layer names (str) or indices (int). Got type {type(n)}"
+        anchor = str(anchor)
+        assert anchor in [
+            'in', 'out'
+        ], "Cut.anchor must be one of ('in', 'out')"
+        assert accessor is None or isinstance(
+            accessor, Callable
+        ), "Cut.accessor must be callable or None"
+
         if get_backend().backend == 'pytorch':
             if (isinstance(name, int) or
                 (isinstance(name, list) and isinstance(name[0], int))):

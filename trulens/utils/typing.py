@@ -536,6 +536,12 @@ class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
     def __len__(self):
         return len(self.args) + len(self.kwargs)
 
+    def __contains__(self, item):
+        for val in self.values():
+            if item is val:
+                return True
+        return False
+
     def lenses_values(self):
         """Get lenses focusing on each contained value."""
 

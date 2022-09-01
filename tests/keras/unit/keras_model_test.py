@@ -56,5 +56,34 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
             KerasModelWrapper(tf_keras_model)
 
 
+class NestedModelWrapperTest(ModelWrapperTestBase, TestCase):
+
+    def setUp(self):
+        super(NestedModelWrapperTest, self).setUp()
+        n_x = Input((2,))
+        n_y = Dense(2, activation='relu')(n_x)
+        nested_model = Model([n_x], [n_y])
+
+        x = Input((2,))
+        z = nested_model(x)
+        z = Dense(2, activation='relu')(z)
+        y = Dense(1, name='logits')(z)
+        model = Model(x, y)
+
+        self.model = KerasModelWrapper(model)
+
+        self.model._model.set_weights(
+            [
+                self.layer1_weights, self.internal_bias, self.layer2_weights,
+                self.internal_bias, self.layer3_weights, self.bias
+            ]
+        )
+
+        self.layer0 = 0
+        self.layer1 = 1
+        self.layer2 = 2
+        self.out = 'logits'
+
+
 if __name__ == '__main__':
     main()

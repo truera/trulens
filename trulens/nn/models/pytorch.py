@@ -33,7 +33,15 @@ class PytorchModelWrapper(ModelWrapper):
     of Pytorch nn.Module objects.
     """
 
-    def __init__(self, model, *, logit_layer=None, device=None, **kwargs):
+    def __init__(
+        self,
+        model,
+        *,
+        logit_layer=None,
+        device=None,
+        force_eval=True,
+        **kwargs
+    ):
         """
         __init__ Constructor
 
@@ -46,6 +54,9 @@ class PytorchModelWrapper(ModelWrapper):
             layer named 'logits' is the logit layer.
         device : string, optional
             device on which to run model, by default None
+        force_eval : bool, optional
+            If True, will call model.eval() to ensure determinism. Otherwise, keeps current model state, by default True
+            
         """
 
         if 'input_shape' in kwargs:
@@ -61,15 +72,45 @@ class PytorchModelWrapper(ModelWrapper):
 
         super().__init__(model, **kwargs)
         # sets self._model, issues cross-backend messages
-
-        model.eval()
+        self.force_eval = force_eval
+        if self.force_eval:
+            model.eval()
 
         if device is None:
             device = pytorch.get_default_device()
 
+            devices = set(p.device for p in model.parameters())
+
+            if len(devices) > 1:
+                tru_logger.warning(
+                    f"Model's parameters span more than one device ({devices})."
+                )
+
+            if len(devices) == 0:
+                # Model without any parameters. No need to do anything here.
+                pass
+            else:
+                mdevice = list(devices)[0]
+
+                if mdevice != device:
+                    tru_logger.warning(
+                        f"Model is not on default device ({device}), moving it there. "
+                        f"If you intend to work on {mdevice}, set it as the default pytorch device or explicitly provide it as the device argument to get_model_wrapper."
+                    )
+                    model.to(device)
+
+        else:
+            model.to(device)
+
+            def_device = pytorch.get_default_device()
+            if device != def_device:
+                tru_logger.warning(
+                    f"Model's device ({device}) differs from pytorch's default device ({def_device}). Changing default to model device."
+                )
+                pytorch.set_default_device(device)
+
         pytorch.set_default_device(device)
         self.device = device
-        model.to(self.device)
 
         self._logit_layer = logit_layer
 
@@ -251,11 +292,14 @@ class PytorchModelWrapper(ModelWrapper):
         B = get_backend()
 
         # This method operates on backend tensors.
-        model_inputs = model_inputs.map(B.as_tensor)
         intervention = intervention.map(B.as_tensor)
 
+        # TODO: generalize the condition to include Cut objects that start at the beginning. Until then, clone the model args to avoid mutations (see MLNN-229)
         if isinstance(doi_cut, InputCut):
             model_inputs = intervention
+        else:
+            model_inputs = model_inputs.map(B.as_tensor)
+            model_inputs = model_inputs.map(B.clone)
 
         if attribution_cut is not None:
             # Specify that we want to preserve gradient information.
@@ -320,6 +364,10 @@ class PytorchModelWrapper(ModelWrapper):
                     )
                 )
             else:
+                if doi_cut.anchor is not None and doi_cut.anchor != 'out':
+                    tru_logger.warning(
+                        f"Unrecognized doi_cut.anchor {doi_cut.anchor}. Defaulting to `out` anchor."
+                    )
                 in_handle = (
                     self._get_layer(doi_cut.name
                                    ).register_forward_hook(intervene_hookfn)
@@ -362,7 +410,8 @@ class PytorchModelWrapper(ModelWrapper):
         with memory_suggestions(device=self.device):
             # Run the network.
             try:
-                self._model.eval()  # needed for determinism sometimes
+                if self.force_eval:
+                    self._model.eval()  # needed for determinism sometimes
                 output = model_inputs.call_on(self._model)
 
                 if isinstance(output, tuple):

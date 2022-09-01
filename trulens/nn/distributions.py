@@ -298,7 +298,7 @@ class LinearDoi(DoI):
 
         baseline = self._compute_baseline(z, model_inputs=model_inputs)
 
-        r = 1. if self._resolution is 1 else self._resolution
+        r = 1. if self._resolution == 1 else self._resolution
 
         # If the above were resolution instead of resolution - 1, this would be
         # equivalent to captum's riemann_right. Specifically, `i`` never reaches

@@ -381,13 +381,8 @@ class InternalInfluence(AttributionMethod):
                 doi_cut=InputCut(),
                 attribution_cut=None,  # InputCut(),
                 intervention=model_inputs
-            )
-
-        doi_val = doi_val[0]
-
-        if isinstance(doi_val[0], DATA_CONTAINER_TYPE):
-            tru_logger.warning("Model's activation at doi cut was more than a single tensor. This might cause problems.")
-
+            )[0]
+        doi_val = nested_map(doi_val, B.as_array)
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
         if self._return_doi:
