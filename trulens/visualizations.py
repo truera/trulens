@@ -187,7 +187,7 @@ class Visualizer(object):
                 image will be saved, but the figure can still be displayed.
 
             imshow:
-                If true, a the visualization will be displayed. Otherwise the
+                If true, the visualization will be displayed. Otherwise the
                 figure will not be displayed, but the figure can still be saved.
 
             fig:
@@ -298,9 +298,9 @@ class Visualizer(object):
         Validates the arguments, and sets them to their default values if they
         are not specified.
         """
-        if attributions.ndim != 4:
+        if attributions.ndim != 4 and attributions.ndim != 5:
             raise ValueError(
-                '`Visualizer` is inteded for 4-D image-format data. Given '
+                '`Visualizer` is intended for 4-D or 5-D image-format data. Given '
                 'input with dimension {}'.format(attributions.ndim)
             )
 
@@ -777,7 +777,7 @@ class MaskVisualizer(object):
 
         if len(attributions.shape) != 4:
             raise ValueError(
-                '`MaskVisualizer` is inteded for 4-D image-format data. Given '
+                '`MaskVisualizer` is intended for 4-D image-format data. Given '
                 'input with dimension {}'.format(len(attributions.shape))
             )
 
