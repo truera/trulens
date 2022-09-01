@@ -110,7 +110,9 @@ If you want to explain an internal layer, you do not move the DoI layer.
 ### Summary
 
 **InputCut** is model args / kwargs  
+**OutputCut** is the model output
+
 **BaselineCut** is the tensor associated with the Integrated gradients baseline. Can be the InputCut or later.  
 **DoICut** is the tensor associated with explanation sampling. Can be the BaselineCut or later  
 **AttributionCut** is the tensor that should be explained. Can be the DoICut or later  
-**OutputCut** is what is being explained with a QoI. Must be after the AttributionCut  
+**QoICut** is what is being explained with a QoI. Must be after the AttributionCut  
