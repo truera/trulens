@@ -67,7 +67,7 @@ Now suppose you want to know the attribution of some internal layer on the final
 **Attribution Cut** → Your attribution layer (The layer you want to assign importance/attributions with respect to output), anchor:'in'  
 **QoI Cut** → OutputCut
 
-#### Advanced Use Cases
+### Advanced Use Cases
 For the following use cases, it may help to see the [Advanced Definitions](#advanced-definitions)
 
 #### Case 4: The Distribution of Interest (DoI) Cut / Explanation flexibility
@@ -121,8 +121,6 @@ If you want to explain an internal layer, you do not move the DoI layer.
 
 ### Advanced Definitions
 
-For basic usage, you can skip this. These are here for reference for the more complex use cases.
-
 **What is a Distribution of Interest (DoI)?**
 
 The distribution of interest is a concept of aggregating attributions over a sample or distribution. 
@@ -135,7 +133,7 @@ The distribution of interest is a concept of aggregating attributions over a sam
 
 The sample or distributions are taken at a place that is humanly considered the input, even if this differs from the programatic model input.
 
-For attributions, all parts of a network can have have an attribution towards the QoI. It is that the most common use case is to explain the tensors that are also the humanly considered input.
+For attributions, all parts of a network can have have an attribution towards the QoI. It is that the most common use case is to explain the tensors that are also the humanly considered input (which is where the DoI occurs).
 
 ***How does this relate to the Baseline Cut?***
 
