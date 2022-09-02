@@ -66,7 +66,10 @@ Now suppose you want to know the attribution of some internal layer on the final
 **Model inputs** → InputCut  
 **Attribution Cut** → Your attribution layer (The layer you want to assign importance/attributions with respect to output), anchor:'in'  
 **QoI Cut** → OutputCut
- 
+
+#### Advanced Use Cases
+For the following use cases, it may help to see the [Advanced Definitions](#advanced-definitions)
+
 #### Case 4: The Distribution of Interest (DoI) Cut / Explanation flexibility
 
 Usually, we explain the output with respect to each point in the input. All cases up to now were using a default called PointDoI. Now, suppose you want to explain using an aggregate over samples of points.  
@@ -115,3 +118,27 @@ If you want to explain an internal layer, you do not move the DoI layer.
 **DoI Cut** is the tensor associated with explanation sampling. Can be the BaselineCut or later.  
 **Attribution Cut** is the tensor that should be explained. Can be the DoICut or later.  
 **QoI Cut** is what is being explained with a QoI. Must be after the AttributionCut.  
+
+### Advanced Definitions
+
+For basic usage, you can skip this. These are here for reference for the more complex use cases.
+
+**What is a Distribution of Interest (DoI)?**
+
+The distribution of interest is a concept of aggregating attributions over a sample or distribution. 
+
+* GradCam does this over a guassian distribution of inputs. 
+* Shapley values do this over different background data. 
+* Integrated gradients does this over an interpolation from a baseline to the input.
+
+***How does this relate to the Attribution Cut?***
+
+The sample or distributions are taken at a place that is humanly considered the input, even if this differs from the programatic model input.
+
+For attributions, all parts of a network can have have an attribution towards the QoI. It is that the most common use case is to explain the tensors that are also the humanly considered input.
+
+***How does this relate to the Baseline Cut?***
+
+The Baseline Cut is only applicable to the Integrated Gradients method. It is also only needed when there is no mathematical way to interpolate the baseline to the input.
+
+Eg. if the input is 'Hello', but the baseline is a '[MASK]' token, we cannot interpolate that. We define the baseline at the token layer, but interpolate on a numeric layer like the embeddings.
