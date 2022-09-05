@@ -300,7 +300,7 @@ class Visualizer(object):
         """
         if attributions.ndim != 4:
             raise ValueError(
-                '`Visualizer` is intended for 4-D or 5-D image-format data. Given '
+                '`Visualizer` is intended for 4-D image-format data. Given '
                 'input with dimension {}'.format(attributions.ndim)
             )
 

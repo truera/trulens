@@ -206,7 +206,7 @@ class InternalChannelQoI(QoI):
             if self._channel_ax == 1:
                 return sum([self._agg_fn(y[:, ch]) for ch in self._channels])
 
-            elif self._channel_ax == 3:
+            elif self._channel_ax == -1:
                 return sum(
                     [self._agg_fn(y[:, :, :, ch]) for ch in self._channels]
                 )
@@ -217,6 +217,20 @@ class InternalChannelQoI(QoI):
                     format(self._channel_ax)
                 )
 
+        elif len(B.int_shape(y)) == 5:
+            if self._channel_ax == 1:
+                return sum([self._agg_fn(y[:, ch]) for ch in self._channels])
+
+            elif self._channel_ax == -1:
+                return sum(
+                    [self._agg_fn(y[:, :, :, :, ch]) for ch in self._channels]
+                )
+
+            else:
+                raise ValueError(
+                    'Unsupported channel axis for convolutional layer: {}'.
+                    format(self._channel_ax)
+                )
         else:
             raise QoiCutSupportError(
                 'Unsupported tensor rank for `InternalChannelQoI`: {}'.format(
