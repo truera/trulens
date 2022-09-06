@@ -25,6 +25,8 @@ from matplotlib.colors import Colormap
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 
@@ -91,11 +93,11 @@ class Visualizer(object):
     """
 
     def __init__(
-        self,
-        combine_channels: bool = False,
-        normalization_type: str = None,
-        blur: float = 0.,
-        cmap: Colormap = None
+            self,
+            combine_channels: bool = False,
+            normalization_type: str = None,
+            blur: float = 0.,
+            cmap: Colormap = None
     ):
         """
         Configures the default parameters for the `__call__` method (these can 
@@ -164,16 +166,16 @@ class Visualizer(object):
         self.tiler = Tiler()
 
     def __call__(
-        self,
-        attributions,
-        output_file=None,
-        imshow=True,
-        fig=None,
-        return_tiled=False,
-        combine_channels=None,
-        normalization_type=None,
-        blur=None,
-        cmap=None
+            self,
+            attributions,
+            output_file=None,
+            imshow=True,
+            fig=None,
+            return_tiled=False,
+            combine_channels=None,
+            normalization_type=None,
+            blur=None,
+            cmap=None
     ) -> np.ndarray:
         """
         Visualizes the given attributions.
@@ -292,7 +294,7 @@ class Visualizer(object):
         return tiled_attributions if return_tiled else attributions
 
     def _check_args(
-        self, attributions, combine_channels, normalization_type, blur, cmap
+            self, attributions, combine_channels, normalization_type, blur, cmap
     ):
         """
         Validates the arguments, and sets them to their default values if they
@@ -310,7 +312,6 @@ class Visualizer(object):
         channel_axis = get_backend().channel_axis
         if not (attributions.shape[channel_axis] in (1, 3, 4) or
                 combine_channels):
-
             raise ValueError(
                 'To visualize, attributions must have either 1, 3, or 4 color '
                 'channels, but `Visualizer` got {} channels.\n'
@@ -375,12 +376,12 @@ class Visualizer(object):
         for c_map in channel_split:
             if normalization_type == 'magnitude_max':
                 c_map = np.abs(c_map) / (
-                    np.abs(c_map).max(axis=(1, 2, 3), keepdims=True) + eps
+                        np.abs(c_map).max(axis=(1, 2, 3), keepdims=True) + eps
                 )
 
             elif normalization_type == 'magnitude_sum':
                 c_map = np.abs(c_map) / (
-                    np.abs(c_map).sum(axis=(1, 2, 3), keepdims=True) + eps
+                        np.abs(c_map).sum(axis=(1, 2, 3), keepdims=True) + eps
                 )
 
             elif normalization_type.startswith('signed_max'):
@@ -417,7 +418,7 @@ class Visualizer(object):
 
             elif normalization_type.startswith('unsigned_max'):
                 c_map = c_map / (
-                    np.abs(c_map).max(axis=(1, 2, 3), keepdims=True) + eps
+                        np.abs(c_map).max(axis=(1, 2, 3), keepdims=True) + eps
                 )
 
                 # If positive-centered, normalize so that all scores are in the
@@ -454,6 +455,257 @@ class Visualizer(object):
         return ListedColormap(hotcold, name='hotcold')
 
 
+class Visualizer3D(object):
+    """
+        Visualizes 3D attributions using 2D visualizer as either a montage of slices or three slices of canonical
+        views (sagittal, coronal, and axial). Intended particularly for
+        use with input-attributions.
+
+        This can also be used for viewing 3D volumetric images (rather than attributions). Currently, the support is
+        limited to Euclidean-structured data.
+        3D visualization also assumes the data format to be (batch_size, conv_dim1, conv_dim2, conv_dim3, channel),
+        where channel is default to 1 for density volumetric representation
+    """
+
+    def __init__(
+            self,
+            combine_channels: bool = True,
+            normalization_type: str = None,
+            blur: float = 0.,
+            cmap: Colormap = None
+    ):
+        self.default_combine_channels = combine_channels
+        self.default_normalization_type = normalization_type
+        self.default_blur = blur
+        self.default_cmap = cmap if cmap is not None else 'jet'
+
+        # TODO (Daniel) Tiler for 3D representation
+    def __call__(
+            self,
+            attributions_3d,
+            dim_of_montage=None,
+            output_file=None,
+            imshow=True,
+            fig=None,
+            combine_channels=None,
+            normalization_type=None,
+            blur=None,
+            cmap=None,
+            threshold=0.05,
+            alpha=0.3
+    ) -> np.ndarray:
+        combine_channels, normalization_type, blur, cmap = self._check_args(
+            attributions_3d, combine_channels, normalization_type, blur, cmap
+        )
+        # Combine the channels if specified. For 3D-image with density representation,
+        # default number of channels will be 1 and combine_channels = True
+        if combine_channels:
+            attributions_3d = attributions_3d.mean(
+                axis=get_backend().channel_axis, keepdims=True
+            )
+
+        # Blur the attributions so the explanation is smoother.
+        if blur:
+            attributions_3d = self._blur(attributions_3d, blur)
+
+        # Normalize the attributions.
+        attributions_3d = self._normalize(attributions_3d, normalization_type)
+
+        width, height, depth = attributions_3d.shape[1], attributions_3d.shape[2], attributions_3d.shape[3]
+
+        if dim_of_montage:
+            if len(dim_of_montage) != 2 or not isinstance(dim_of_montage[0], int) \
+                    or not isinstance(dim_of_montage[1], int):
+                raise ValueError("Dimension of montage is expected to be (num_rows, num_columns). "
+                                 "Given input {}".format(dim_of_montage))
+            num_rows, num_cols = dim_of_montage[0], dim_of_montage[1]
+
+        else:
+            # use 3 canonical views: sagittal, coronal, and axial
+            sagittal_idx, coronal_idx, axial_idx = width // 2, height // 2, depth // 2
+
+            fig, axes = plt.subplots(ncols=3, figsize=(15, 5))
+            ax = axes.ravel()
+            ax[0].imshow(attributions_3d[sagittal_idx, :, :], cmap=cmap)
+            ax[1].imshow(attributions_3d[:, coronal_idx, :], cmap=cmap)
+            ax[2].imshow(attributions_3d[:, :, axial_idx], cmap=cmap)
+            ax[0].set_title('Sagittal view')
+            ax[1].set_title('Coronal view')
+            ax[2].set_title('Axial view')
+
+            attributions_3d = np.where(attributions_3d < threshold, 0, attributions_3d)
+
+            self._visualize_slice(ax[0], attributions_3d[sagittal_idx, :, :], cmap, alpha)
+            self._visualize_slice(ax[1], attributions_3d[:, coronal_idx, :], cmap, alpha)
+            self._visualize_slice(ax[2], attributions_3d[:, :, axial_idx], cmap, alpha)
+
+            # TODO cmap `jet` vs `gray`
+
+        return attributions_3d
+
+    def _visualize_slice(self, ax, attributions, cmap, alpha):
+        divider = make_axes_locatable(ax)
+
+        ax_cb = divider.new_horizontal(size="5%", pad=0.05)
+        fig = ax.get_figure()
+        fig.add_axes(ax_cb)
+
+        im = ax.imshow(attributions, cmap=cmap, alpha=alpha)
+
+        plt.colorbar(im, cax=ax_cb)
+        ax_cb.yaxis.tick_right()
+        ax_cb.yaxis.set_tick_params(labelright=False)
+
+    def _check_args(
+            self, attributions, combine_channels, normalization_type, blur, cmap
+    ):
+        """
+        Validates the arguments, and sets them to their default values if they
+        are not specified.
+        """
+        if attributions.ndim != 5:
+            raise ValueError(
+                '`Visualizer3D` is intended for 5-D image-format data. Given '
+                'input with dimension {}'.format(attributions.ndim)
+            )
+
+        if combine_channels is None:
+            combine_channels = self.default_combine_channels
+
+        channel_axis = get_backend().channel_axis
+        if not (attributions.shape[channel_axis] in (1, 3, 4) or
+                combine_channels):
+            raise ValueError(
+                'To visualize, attributions must have either 1, 3, or 4 color '
+                'channels, but `Visualizer` got {} channels.\n'
+                'If you are visualizing an internal layer, consider setting '
+                '`combine_channels` to True'.format(
+                    attributions.shape[channel_axis]
+                )
+            )
+
+        if normalization_type is None:
+            normalization_type = self.default_normalization_type
+
+            if normalization_type is None:
+                if combine_channels or attributions.shape[channel_axis] == 1:
+                    normalization_type = 'unsigned_max'
+                else:
+                    normalization_type = 'unsigned_max_positive_centered'
+
+        valid_normalization_types = [
+            'unsigned_max',
+            'unsigned_max_positive_centered',
+            'magnitude_max',
+            'magnitude_sum',
+            'signed_max',
+            'signed_max_positive_centered',
+            'signed_sum',
+            '01',
+            'unnormalized',
+        ]
+        if normalization_type not in valid_normalization_types:
+            raise ValueError(
+                '`norm` must be None or one of the following options:' +
+                ','.join(
+                    [
+                        '\'{}\''.form(norm_type)
+                        for norm_type in valid_normalization_types
+                    ]
+                )
+            )
+
+        if blur is None:
+            blur = self.default_blur
+
+        if cmap is None:
+            cmap = self.default_cmap
+
+        return combine_channels, normalization_type, blur, cmap
+
+    def _normalize(self, attributions, normalization_type, eps=1e-20):
+        channel_axis = get_backend().channel_axis
+        if normalization_type == 'unnormalized':
+            return attributions
+
+        split_by_channel = normalization_type.endswith('sum')
+
+        channel_split = [attributions] if split_by_channel else np.split(
+            attributions, attributions.shape[channel_axis], axis=channel_axis
+        )
+
+        normalized_attributions = []
+        for c_map in channel_split:
+            if normalization_type == 'magnitude_max':
+                c_map = np.abs(c_map) / (
+                        np.abs(c_map).max(axis=(1, 2, 3, 4), keepdims=True) + eps
+                )
+
+            elif normalization_type == 'magnitude_sum':
+                c_map = np.abs(c_map) / (
+                        np.abs(c_map).sum(axis=(1, 2, 3, 4), keepdims=True) + eps
+                )
+
+            elif normalization_type.startswith('signed_max'):
+                postive_max = c_map.max(axis=(1, 2, 3, 4), keepdims=True)
+                negative_max = (-c_map).max(axis=(1, 2, 3, 4), keepdims=True)
+
+                # Normalize the positive scores to [0, 1] and negative scores to
+                # [-1, 0].
+                normalization_factor = np.where(
+                    c_map >= 0, postive_max, negative_max
+                )
+                c_map = c_map / (normalization_factor + eps)
+
+                # If positive-centered, normalize so that all scores are in the
+                # range [0, 1], with negative scores less than 0.5 and positive
+                # scores greater than 0.5.
+                if normalization_type.endswith('positive_centered'):
+                    c_map = c_map / 2. + 0.5
+
+            elif normalization_type == 'signed_sum':
+                positive_max = np.maximum(c_map, 0).sum(
+                    axis=(1, 2, 3, 4), keepdims=True
+                )
+                negative_max = np.maximum(-c_map, 0).sum(
+                    axis=(1, 2, 3, 4), keepdims=True
+                )
+
+                # Normalize the postive socres to ensure they sum to 1 and the
+                # negative scores to ensure they sum to -1.
+                normalization_factor = np.where(
+                    c_map >= 0, positive_max, negative_max
+                )
+                c_map = c_map / (normalization_factor + eps)
+
+            elif normalization_type.startswith('unsigned_max'):
+                c_map = c_map / (
+                        np.abs(c_map).max(axis=(1, 2, 3, 4), keepdims=True) + eps
+                )
+
+                # If positive-centered, normalize so that all scores are in the
+                # range [0, 1], with negative scores less than 0.5 and positive
+                # scores greater than 0.5.
+                if normalization_type.endswith('positive_centered'):
+                    c_map = c_map / 2. + 0.5
+
+            elif normalization_type == '01':
+                c_map = c_map - c_map.min(axis=(1, 2, 3, 4), keepdims=True)
+                c_map = c_map / (c_map.max(axis=(1, 2, 3, 4), keepdims=True) + eps)
+
+            normalized_attributions.append(c_map)
+
+        return np.concatenate(normalized_attributions, axis=channel_axis)
+
+    def _blur(self, attributions, blur):
+        for i in range(attributions.shape[0]):
+            attributions[i] = gaussian_filter(attributions[i], blur)
+
+        return attributions
+
+    # TODO (Daniel) implement kernel-based smoothing
+
+
 class HeatmapVisualizer(Visualizer):
     """
     Visualizes attributions by overlaying an attribution heatmap over the
@@ -461,11 +713,11 @@ class HeatmapVisualizer(Visualizer):
     """
 
     def __init__(
-        self,
-        overlay_opacity=0.5,
-        normalization_type=None,
-        blur=10.,
-        cmap='jet'
+            self,
+            overlay_opacity=0.5,
+            normalization_type=None,
+            blur=10.,
+            cmap='jet'
     ):
         """
         Configures the default parameters for the `__call__` method (these can 
@@ -535,17 +787,17 @@ class HeatmapVisualizer(Visualizer):
         self.default_overlay_opacity = overlay_opacity
 
     def __call__(
-        self,
-        attributions,
-        x,
-        output_file=None,
-        imshow=True,
-        fig=None,
-        return_tiled=False,
-        overlay_opacity=None,
-        normalization_type=None,
-        blur=None,
-        cmap=None
+            self,
+            attributions,
+            x,
+            output_file=None,
+            imshow=True,
+            fig=None,
+            return_tiled=False,
+            overlay_opacity=None,
+            normalization_type=None,
+            blur=None,
+            cmap=None
     ) -> np.ndarray:
         """
         Visualizes the given attributions by overlaying an attribution heatmap 
@@ -689,13 +941,13 @@ class MaskVisualizer(object):
     """
 
     def __init__(
-        self,
-        blur=5.,
-        threshold=0.5,
-        masked_opacity=0.2,
-        combine_channels=True,
-        use_attr_as_opacity=False,
-        positive_only=True
+            self,
+            blur=5.,
+            threshold=0.5,
+            masked_opacity=0.2,
+            combine_channels=True,
+            use_attr_as_opacity=False,
+            positive_only=True
     ):
         """
         Configures the default parameters for the `__call__` method (these can 
@@ -741,19 +993,19 @@ class MaskVisualizer(object):
         self.tiler = Tiler()
 
     def __call__(
-        self,
-        attributions,
-        x,
-        output_file=None,
-        imshow=True,
-        fig=None,
-        return_tiled=True,
-        blur=None,
-        threshold=None,
-        masked_opacity=None,
-        combine_channels=None,
-        use_attr_as_opacity=None,
-        positive_only=None
+            self,
+            attributions,
+            x,
+            output_file=None,
+            imshow=True,
+            fig=None,
+            return_tiled=True,
+            blur=None,
+            threshold=None,
+            masked_opacity=None,
+            combine_channels=None,
+            use_attr_as_opacity=None,
+            positive_only=None
     ):
         channel_axis = get_backend().channel_axis
         if attributions.shape != x.shape:
@@ -851,19 +1103,19 @@ class ChannelMaskVisualizer(object):
     """
 
     def __init__(
-        self,
-        model,
-        layer,
-        channel,
-        channel_axis=None,
-        agg_fn=None,
-        doi=None,
-        blur=None,
-        threshold=0.5,
-        masked_opacity=0.2,
-        combine_channels: bool = True,
-        use_attr_as_opacity=None,
-        positive_only=None
+            self,
+            model,
+            layer,
+            channel,
+            channel_axis=None,
+            agg_fn=None,
+            doi=None,
+            blur=None,
+            threshold=0.5,
+            masked_opacity=0.2,
+            combine_channels: bool = True,
+            use_attr_as_opacity=None,
+            positive_only=None
     ):
         """
         Configures the default parameters for the `__call__` method (these can 
@@ -944,14 +1196,14 @@ class ChannelMaskVisualizer(object):
         )
 
     def __call__(
-        self,
-        x,
-        x_preprocessed=None,
-        output_file=None,
-        blur=None,
-        threshold=None,
-        masked_opacity=None,
-        combine_channels=None
+            self,
+            x,
+            x_preprocessed=None,
+            output_file=None,
+            blur=None,
+            threshold=None,
+            masked_opacity=None,
+            combine_channels=None
     ):
         """
         Visualizes the given attributions by overlaying an attribution heatmap 
@@ -1106,12 +1358,12 @@ class HTML(Output):
         else:
             red = 1.0
             green = 1.0 + mag * 0.5
-            #red = 0.5 - mag * 0.5
+            # red = 0.5 - mag * 0.5
 
         blue = min(red, green)
         # blue = 1.0 - max(red, green)
 
-        return f"<span title='{mag:0.3f}' style='margin: 1px; padding: 1px; border-radius: 4px; background: black; color: rgb({red*255}, {green*255}, {blue*255});'>{s}</span>"
+        return f"<span title='{mag:0.3f}' style='margin: 1px; padding: 1px; border-radius: 4px; background: black; color: rgb({red * 255}, {green * 255}, {blue * 255});'>{s}</span>"
 
     def append(self, *pieces):
         return ''.join(pieces)
@@ -1152,18 +1404,18 @@ class NLP(object):
     ModelOutput = TypeVar("ModelOutput")
 
     def __init__(
-        self,
-        wrapper: ModelWrapper,
-        output: Optional[Output] = None,
-        labels: Optional[Iterable[str]] = None,
-        tokenize: Optional[Callable[[TextBatch], ModelInputs]] = None,
-        decode: Optional[Callable[[Tensor], str]] = None,
-        input_accessor: Optional[Callable[[ModelInputs],
-                                          Iterable[Tensor]]] = None,
-        output_accessor: Optional[Callable[[ModelOutput],
-                                           Iterable[Tensor]]] = None,
-        attr_aggregate: Optional[Callable[[Tensor], Tensor]] = None,
-        hidden_tokens: Optional[Set[int]] = set()
+            self,
+            wrapper: ModelWrapper,
+            output: Optional[Output] = None,
+            labels: Optional[Iterable[str]] = None,
+            tokenize: Optional[Callable[[TextBatch], ModelInputs]] = None,
+            decode: Optional[Callable[[Tensor], str]] = None,
+            input_accessor: Optional[Callable[[ModelInputs],
+                                              Iterable[Tensor]]] = None,
+            output_accessor: Optional[Callable[[ModelOutput],
+                                               Iterable[Tensor]]] = None,
+            attr_aggregate: Optional[Callable[[Tensor], Tensor]] = None,
+            hidden_tokens: Optional[Set[int]] = set()
     ):
         """Initializate NLP visualization tools for a given environment.
 
