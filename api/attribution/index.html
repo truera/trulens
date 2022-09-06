@@ -833,9 +833,9 @@ shape of <code>self.model</code>. </p>
     - or ArgsLike[ArgsLike[np.ndarray]] when multiple output (outer),
       multiple input (inner)</p>
 <div class="codehilite">
-<pre><span></span><code><span class="n">An</span><span class="w"> </span><span class="k">array</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="n">attributions</span><span class="p">,</span><span class="w"> </span><span class="n">matching</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">shape</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="k">type</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="n n-Quoted">`from_cut`</span><span class="w"></span>
-<span class="k">of</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">slice</span><span class="p">.</span><span class="w"> </span><span class="k">Each</span><span class="w"> </span><span class="n">entry</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">returned</span><span class="w"> </span><span class="k">array</span><span class="w"> </span><span class="n">represents</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">degree</span><span class="w"></span>
-<span class="k">to</span><span class="w"> </span><span class="n">which</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">corresponding</span><span class="w"> </span><span class="n">feature</span><span class="w"> </span><span class="n">affected</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">model</span><span class="s1">'s outcome on</span>
+<pre><span></span><code><span class="n">An</span> <span class="k">array</span> <span class="k">of</span> <span class="n">attributions</span><span class="p">,</span> <span class="n">matching</span> <span class="n">the</span> <span class="n">shape</span> <span class="k">and</span> <span class="k">type</span> <span class="k">of</span> <span class="n">`from_cut`</span>
+<span class="k">of</span> <span class="n">the</span> <span class="n">slice</span><span class="p">.</span> <span class="k">Each</span> <span class="n">entry</span> <span class="k">in</span> <span class="n">the</span> <span class="n">returned</span> <span class="k">array</span> <span class="n">represents</span> <span class="n">the</span> <span class="n">degree</span>
+<span class="k">to</span> <span class="n">which</span> <span class="n">the</span> <span class="n">corresponding</span> <span class="n">feature</span> <span class="n">affected</span> <span class="n">the</span> <span class="n">model</span><span class="s1">'s outcome on</span>
 <span class="s1">the corresponding point.</span>
 
 <span class="s1">If attributing to a component with multiple inputs, a list for each</span>
@@ -1224,13 +1224,13 @@ activation, thus converting from "<em>influence space</em>" to
 <p><a href="https://arxiv.org/pdf/1703.01365">Axiomatic Attribution for Deep Networks</a></p>
 <p>This should be cited using:</p>
 <div class="highlight">
-<pre><span></span><code><span class="nc">@INPROCEEDINGS</span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nl">sundararajan17axiomatic</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="na">author</span><span class="p">=</span><span class="s">{Mukund Sundararajan and Ankur Taly, and Qiqi Yan}</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="na">title</span><span class="p">=</span><span class="s">{Axiomatic Attribution for Deep Networks}</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="na">booktitle</span><span class="p">=</span><span class="s">{International Conference on Machine Learning (ICML)}</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="na">year</span><span class="p">=</span><span class="s">{2017}</span><span class="p">,</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<pre><span></span><code><span class="nc">@INPROCEEDINGS</span><span class="p">{</span>
+    <span class="nl">sundararajan17axiomatic</span><span class="p">,</span>
+    <span class="na">author</span><span class="p">=</span><span class="s">{Mukund Sundararajan and Ankur Taly, and Qiqi Yan}</span><span class="p">,</span>
+    <span class="na">title</span><span class="p">=</span><span class="s">{Axiomatic Attribution for Deep Networks}</span><span class="p">,</span>
+    <span class="na">booktitle</span><span class="p">=</span><span class="s">{International Conference on Machine Learning (ICML)}</span><span class="p">,</span>
+    <span class="na">year</span><span class="p">=</span><span class="s">{2017}</span><span class="p">,</span>
+<span class="p">}</span>
 </code></pre>
 </div>
 <p>This is essentially an alias for</p>
@@ -1374,20 +1374,20 @@ specifies the records over which the attributions are aggregated.</p>
 <p><a href="https://arxiv.org/pdf/1802.03788.pdf">Influence-Directed Explanations for Deep Convolutional Networks</a></p>
 <p>This should be cited using:</p>
 <div class="highlight">
-<pre><span></span><code><span class="nc">@INPROCEEDINGS</span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nl">leino18influence</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="na">author</span><span class="p">=</span><span class="s">{</span>
+<pre><span></span><code><span class="nc">@INPROCEEDINGS</span><span class="p">{</span>
+    <span class="nl">leino18influence</span><span class="p">,</span>
+    <span class="na">author</span><span class="p">=</span><span class="s">{</span>
 <span class="s">        Klas Leino and</span>
 <span class="s">        Shayak Sen and</span>
 <span class="s">        Anupam Datta and</span>
 <span class="s">        Matt Fredrikson and</span>
-<span class="s">        Linyi Li}</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="na">title</span><span class="p">=</span><span class="s">{</span>
+<span class="s">        Linyi Li}</span><span class="p">,</span>
+    <span class="na">title</span><span class="p">=</span><span class="s">{</span>
 <span class="s">        Influence-Directed Explanations</span>
-<span class="s">        for Deep Convolutional Networks}</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="na">booktitle</span><span class="p">=</span><span class="s">{IEEE International Test Conference (ITC)}</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="na">year</span><span class="p">=</span><span class="s">{2018}</span><span class="p">,</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="s">        for Deep Convolutional Networks}</span><span class="p">,</span>
+    <span class="na">booktitle</span><span class="p">=</span><span class="s">{IEEE International Test Conference (ITC)}</span><span class="p">,</span>
+    <span class="na">year</span><span class="p">=</span><span class="s">{2018}</span><span class="p">,</span>
+<span class="p">}</span>
 </code></pre>
 </div>
 <div class="doc doc-children">
