@@ -841,22 +841,6 @@ following accessor function will be used:
 <span class="sd">            lambda t: t[-1] if isinstance(t, list) else t</span>
 <span class="sd">            ```</span>
 <span class="sd">    """</span>
-    <span class="k">assert</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
-        <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-    <span class="p">),</span> <span class="s2">"Cut.name must be one of: layer index, layer name, or list of names/indices of multiple layers"</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-                <span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-            <span class="p">),</span> <span class="sa">f</span><span class="s2">"Elements in Cut.name must be layer names (str) or indices (int). Got type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
-    <span class="n">anchor</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">anchor</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">anchor</span> <span class="ow">in</span> <span class="p">[</span>
-        <span class="s1">'in'</span><span class="p">,</span> <span class="s1">'out'</span>
-    <span class="p">],</span> <span class="s2">"Cut.anchor must be one of ('in', 'out')"</span>
-    <span class="k">assert</span> <span class="n">accessor</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
-        <span class="n">accessor</span><span class="p">,</span> <span class="n">Callable</span>
-    <span class="p">),</span> <span class="s2">"Cut.accessor must be callable or None"</span>
-
     <span class="k">if</span> <span class="n">get_backend</span><span class="p">()</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s1">'pytorch'</span><span class="p">:</span>
         <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span>
             <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">))):</span>
