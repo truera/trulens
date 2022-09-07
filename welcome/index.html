@@ -515,7 +515,7 @@ Several common default implementations are provided in this module as well.</p>
 <p>The <em>distribution of interest</em> (DoI) essentially specifies for which points surrounding each record the calculated attribution should be valid.
 The distribution can be specified via an implementation of the <code>DoI</code> class in the <code>trulens.nn.distributions</code> module, which is a function taking an input record and producing a list of sample input points to aggregate attribution over.
 A few common default distributions implementing the <code>DoI</code> class can be found in the <code>trulens.nn.distributions</code> module. </p>
-<p>See <a href="trulens.org/attribution_parameterization/">Attributions for Different Use Cases</a> for further explanations of the purpose of these parameters and examples of their usage.</p>
+<p>See <a href="https://trulens.org/attribution_parameterization/">Attributions for Different Use Cases</a> for further explanations of the purpose of these parameters and examples of their usage.</p>
 <h2 id="visualizations">Visualizations<a class="headerlink" href="#visualizations" title="Permanent link">&para;</a></h2>
 <p>In order to interpret the attributions produced by an <code>AttributionMethod</code>, a few useful visualizers are provided in the <code>trulens.visualizations</code> module.
 While the interface of each visualizer varies slightly, in general, the visualizers are a function taking an <code>np.Array</code> representing the attributions returned from an <code>AttributionMethod</code> and producing an image that can be used to interpret the attributions.</p>
