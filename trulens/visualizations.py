@@ -1358,7 +1358,7 @@ class HTML(Output):
 
     def line(self, e: E) -> E:
         return self.m_html.div(
-            e, style="padding: 5px; maring: 0px; background: black;"
+            e, style="padding: 5px; maring: 0px; background: black; overflow-wrap: break-word;"
         )
 
     def big(self, e: E) -> E:
