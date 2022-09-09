@@ -1954,7 +1954,7 @@ class NLP(object):
                 ]
 
             sent += self.output.line(self.output.concat(*interv))
-            sent += [self.output.linebreak(), self.output.linebreak()]
+            sent += [self.output.linebreak()]#, self.output.linebreak()]
 
         return self.output.concat(self.output.line(self.output.concat(*sent)))
 
@@ -2045,7 +2045,7 @@ class NLP(object):
         attributor: Optional[AttributionMethod] = None,
         show_id: bool = False,
         show_doi: bool = False,
-        show_scale: bool = True,
+        show_scale: bool = False,
         show_text: bool = False,
         extra_model_inputs: dict={}
     ):
@@ -2151,6 +2151,7 @@ class NLP(object):
         show_id: bool = False,
         show_doi: bool = False,
         show_text: bool = False,
+        show_scale: bool = False,
         extra_model_inputs: dict={}
     ):
         """Visualize a token-based input attribution."""
@@ -2161,6 +2162,7 @@ class NLP(object):
             show_id=show_id,
             show_doi=show_doi,
             show_text=show_text,
+            show_scale=show_scale,
             extra_model_inputs=extra_model_inputs
         )
 
