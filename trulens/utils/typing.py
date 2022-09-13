@@ -216,7 +216,7 @@ KwargsLike = Union[Kwargs[TensorLike], Feed]
 Indexable = Union[List[V], Tuple[V]]  # Indexable[V]
 # For checking the above against an instance:
 DATA_CONTAINER_TYPE = (list, tuple, Outputs, Inputs, Uniform)
-
+MAP_CONTAINER_TYPE = (dict)
 ## Utilities for dealing with nested structures
 
 
@@ -277,6 +277,11 @@ def nested_map(y: OMNested[C, U],
         out = []
         for i in range(len(y)):
             out.append(nested_map(y[i], fn, nest - 1))
+        return y.__class__(out)
+    if isinstance(y, MAP_CONTAINER_TYPE) and nest > 0:
+        out = {}
+        for k in y.keys():
+            out[k] = nested_map(y[k], fn, nest - 1)
         return y.__class__(out)
     else:
         return fn(y)
@@ -499,11 +504,11 @@ class Tensors(ABC):
 class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
     """Container for positional and keyword arguments."""
 
-    args: Inputs[TensorLike] = field(default_factory=list)
+    args: ArgsLike = field(default_factory=list)
     kwargs: KwargsLike = field(default_factory=dict)
 
     # lens focusing on the args field of this container.
-    lens_args: Lens['TensorAKs', Inputs[TensorLike]] = Lens(
+    lens_args: Lens['TensorAKs', ArgsLike] = Lens(
         lambda s: s.args, lambda s, a: TensorAKs(a, s.kwargs)
     )
 
@@ -550,11 +555,9 @@ class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
 
     def map(self, f):
         """Produce a new set of args by transforming each value with the given function."""
-
-        ret = self
-        for l in self.lenses_values():
-            ret = l.set(ret, f(l.get(ret)))
-        return ret
+        new_args = nested_map(self.args, f)
+        new_kwargs = nested_map(self.kwargs, f)
+        return TensorAKs(args=new_args, kwargs=new_kwargs)
 
     def foreach(self, f):
         """Apply the given function to each value."""
@@ -562,13 +565,18 @@ class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
         for l in self.lenses_values():
             f(l.get(self))
 
-    def first(self):
-        """Get the first value, whether it is an arg or kwargs. args come first."""
-
-        try:
-            return next(self.values())
-        except StopIteration:
-            raise ValueError("AK had neither arguments nor keyword arguments.")
+    def first_batchable(self, backend):
+        """Find the first object that may be considered a batchable input."""
+        for v in self.values():
+            # Current assumption is that batchable items are in the args list or kwargs vals. Continuing this assumption until other use cases seen.
+            if isinstance(v, (np.ndarray, backend.Tensor)):
+                return v
+            # However, we will look one level deep if a dict is found: there is a known case where placeholders expect tensor inputs as dict.
+            elif isinstance(v, dict):
+                for k in v.keys():
+                    if isinstance(v[k], (np.ndarray, backend.Tensor)):
+                        return v[k]
+        return None
 
     def call_on(self, f):
         """Call the given method with the contained arguments."""
