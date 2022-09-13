@@ -189,7 +189,7 @@ class AttributionMethod(AbstractBaseClass):
         )
 
         # Will cast results to this data container type.
-        return_type = type(model_inputs.first())
+        return_type = type(model_inputs.first_batchable(get_backend()))
 
         pieces = self._attributions(model_inputs)
 
@@ -364,7 +364,7 @@ class InternalInfluence(AttributionMethod):
         if len(list(model_inputs.values())) == 0:
             batch_size = 1
         else:
-            batch_size = model_inputs.first().shape[0]
+            batch_size = model_inputs.first_batchable(B).shape[0]
 
         param_msgs = [
             f"float size = {B.floatX_size} ({B.floatX}); consider changing to a smaller type.",
