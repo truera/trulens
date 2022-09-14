@@ -9,12 +9,13 @@ interested in a more general behavior over a distribution of samples.
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
 from typing import Callable, Optional
+from build.lib.trulens.utils.typing import ArgsLike
 
 import numpy as np
 
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
-from trulens.utils.typing import accepts_model_inputs
+from trulens.utils.typing import MAP_CONTAINER_TYPE, TensorAKs, accepts_model_inputs, nested_map, nested_zip
 from trulens.utils.typing import BaselineLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
@@ -67,15 +68,16 @@ class DoI(AbstractBaseClass):
             ret = self.__call__(z, model_inputs=model_inputs)
         else:
             ret = self.__call__(z)
-
         # Wrap the public doi generator with appropriate type aliases.
-        if isinstance(ret[0], DATA_CONTAINER_TYPE):
-            ret = Inputs(Uniform(x) for x in ret)
+        if isinstance(ret, DATA_CONTAINER_TYPE): 
+            if isinstance(ret[0], DATA_CONTAINER_TYPE):
+                ret = Inputs(Uniform(x) for x in ret)
+            else:
+                ret = Uniform(ret)
+
+            ret: Inputs[Uniform[TensorLike]] = many_of_om(ret, innertype=Uniform)
         else:
-            ret = Uniform(ret)
-
-        ret: Inputs[Uniform[TensorLike]] = many_of_om(ret, innertype=Uniform)
-
+            ret: ArgsLike = [ret]
         return ret
 
     @abstractmethod
@@ -172,8 +174,10 @@ class DoI(AbstractBaseClass):
         return om_of_many(activation)
 
     def _assert_cut_contains_only_one_tensor(self, x):
-        if isinstance(x, list) and len(x) == 1:
+        if isinstance(x, DATA_CONTAINER_TYPE) and len(x) == 1:
             x = x[0]
+        if isinstance(x, MAP_CONTAINER_TYPE) and len(x) == 1:
+            x = list(x.values())[0]
 
         if isinstance(x, list):
             raise DoiCutSupportError(
@@ -286,19 +290,24 @@ class LinearDoi(DoI):
     ) -> OM[Inputs, Uniform[TensorLike]]:
 
         self._assert_cut_contains_only_one_tensor(z)
-
+        
         z: Inputs[TensorLike] = many_of_om(z)
 
         baseline = self._compute_baseline(z, model_inputs=model_inputs)
-
+        
         r = 1. if self._resolution == 1 else self._resolution - 1.
-
-        return om_of_many([ # Inputs
-            [ # Uniform
+        zipped = nested_zip(z, baseline)
+        def interpolate(zipped_z_baseline):
+            z_ = zipped_z_baseline[0]
+            b_ = zipped_z_baseline[1]
+            return [ # Uniform
                 (1. - i / r) * z_ + i / r * b_
                 for i in range(self._resolution)
-            ] for z_, b_ in zip(z, baseline)
-        ])
+            ]
+
+        ret = om_of_many(nested_map(zipped, interpolate, check_accessor=lambda x: x[0]))
+        
+        return ret
 
     def get_activation_multiplier(
         self,
@@ -358,13 +367,13 @@ class LinearDoi(DoI):
             _baseline: OM[Inputs, TensorLike]
 
         if _baseline is None:
-            _baseline: Inputs[TensorLike] = [B.zeros_like(z_) for z_ in z]
+            _baseline: Inputs[TensorLike] = nested_map(z,B.zeros_like)
         else:
             _baseline: Inputs[TensorLike] = many_of_om(_baseline)
             # Came from user; could have been single or multiple inputs.
-
+        tensor_wrapper = TensorAKs(args=z)
         # Cast to either Tensor or numpy.ndarray to match what was given in z.
-        return nested_cast(backend=B, args=_baseline, astype=type(z[0]))
+        return nested_cast(backend=B, args=_baseline, astype=type(tensor_wrapper.first_batchable(B)))
 
 
 class GaussianDoi(DoI):

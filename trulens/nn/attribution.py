@@ -187,7 +187,6 @@ class AttributionMethod(AbstractBaseClass):
         model_inputs = ModelInputs(
             args=many_of_om(model_args), kwargs=model_kwargs
         )
-
         # Will cast results to this data container type.
         return_type = type(model_inputs.first_batchable(get_backend()))
 
@@ -381,14 +380,14 @@ class InternalInfluence(AttributionMethod):
                 attribution_cut=None,  # InputCut(),
                 intervention=model_inputs
             )[0]
+
         doi_val = nested_map(doi_val, B.as_array)
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
         if self._return_doi:
             results.interventions = D  # : Inputs[Uniform[TensorLike]]
-
-        n_doi = len(D[0])
-
+        
+        
         D = self.__concatenate_doi(D)
 
         rebatch_size = self.rebatch_size
@@ -396,7 +395,8 @@ class InternalInfluence(AttributionMethod):
             rebatch_size = len(D[0])
 
         intervention = TensorArgs(args=D)
-
+        n_doi = len(intervention.first_batchable(B))
+        
         model_inputs_expanded = tile(what=model_inputs, onto=intervention)
 
         # Create a message for out-of-memory errors regarding doi_size.
@@ -640,8 +640,8 @@ class InternalInfluence(AttributionMethod):
 
         # TODO: should this always be done in numpy or can we do it in backend?
         D = nested_cast(backend=get_backend(), args=D, astype=np.ndarray)
-
-        return [np.concatenate(Di) for Di in D]
+        ret = nested_map(D, np.concatenate, check_accessor=lambda x: x[0])
+        return ret
 
 
 class InputAttribution(InternalInfluence):

@@ -14,7 +14,7 @@ from tensorflow.keras.models import Model
 
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
-from trulens.nn.distributions import PointDoi
+from trulens.nn.distributions import DoI, LinearDoi, PointDoi
 from trulens.nn.models import get_model_wrapper
 from trulens.nn.quantities import ClassQoI
 from trulens.nn.slices import Cut
@@ -34,7 +34,6 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         model = get_model_wrapper(Model([x1, x2], y))
 
         infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
-
         res = infl.attributions(
             [np.array([[1., 2., 3., 4., 5.]]),
              np.array([[1.]])]
@@ -43,6 +42,23 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         self.assertEqual(len(res), 2)
         self.assertEqual(res[0].shape, (1, 5))
         self.assertEqual(res[1].shape, (1, 1))
+
+    def test_dict_inputs(self):
+        x1 = Input((5,), name="input1")
+        z1 = Dense(6)(x1)
+        y = Dense(3)(z1)
+        inputs = dict(input1=x1)
+        
+        model = get_model_wrapper(Model(inputs, y))
+        
+        infl = InternalInfluence(model, InputCut(), ClassQoI(1), LinearDoi())
+        #infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
+        res = infl.attributions(
+            *[{"input1": np.array([[1., 2., 3., 4., 5.]])}]
+        )
+
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res.shape, (1, 5))
 
     def test_multiple_outputs(self):
         x = Input((5,))
