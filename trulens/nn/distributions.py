@@ -304,7 +304,7 @@ class LinearDoi(DoI):
                 (1. - i / r) * z_ + i / r * b_
                 for i in range(self._resolution)
             ]
-
+        
         ret = om_of_many(nested_map(zipped, interpolate, check_accessor=lambda x: x[0]))
         
         return ret

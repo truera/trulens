@@ -54,11 +54,11 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         infl = InternalInfluence(model, InputCut(), ClassQoI(1), LinearDoi())
         #infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
         res = infl.attributions(
-            *[{"input1": np.array([[1., 2., 3., 4., 5.]])}]
+            *[{"input1": np.array([[1., 2., 3., 4., 5.], [1., 2., 3., 4., 5.]])}]
         )
 
-        self.assertEqual(len(res), 1)
-        self.assertEqual(res.shape, (1, 5))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res.shape, (2, 5))
 
     def test_multiple_outputs(self):
         x = Input((5,))

@@ -35,7 +35,7 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import MAP_CONTAINER_TYPE, ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike
@@ -356,14 +356,14 @@ class InternalInfluence(AttributionMethod):
         # NOTE: not symbolic
 
         B = get_backend()
-
         results = AttributionResult()
 
         # Create a message for out-of-memory errors regarding float and batch size.
-        if len(list(model_inputs.values())) == 0:
+        first_batchable = model_inputs.first_batchable(B)
+        if first_batchable is None:
             batch_size = 1
         else:
-            batch_size = model_inputs.first_batchable(B).shape[0]
+            batch_size = first_batchable.shape[0]
 
         param_msgs = [
             f"float size = {B.floatX_size} ({B.floatX}); consider changing to a smaller type.",
@@ -382,23 +382,25 @@ class InternalInfluence(AttributionMethod):
             )[0]
 
         doi_val = nested_map(doi_val, B.as_array)
+
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
         if self._return_doi:
             results.interventions = D  # : Inputs[Uniform[TensorLike]]
         
-        
+        D_tensors = D[0]
+        n_doi = len(D_tensors)
+        if isinstance(D_tensors, MAP_CONTAINER_TYPE):
+            for k in D_tensors.keys():
+                if isinstance(D_tensors[k], DATA_CONTAINER_TYPE):
+                    n_doi = len(D_tensors[k])
         D = self.__concatenate_doi(D)
-
         rebatch_size = self.rebatch_size
         if rebatch_size is None:
             rebatch_size = len(D[0])
 
         intervention = TensorArgs(args=D)
-        n_doi = len(intervention.first_batchable(B))
-        
         model_inputs_expanded = tile(what=model_inputs, onto=intervention)
-
         # Create a message for out-of-memory errors regarding doi_size.
         # TODO: Generalize this message to doi other than LinearDoI:
         doi_size_msg = f"distribution of interest size = {n_doi}; consider reducing intervention resolution."
@@ -440,22 +442,27 @@ class InternalInfluence(AttributionMethod):
         transpose = [
             [[] for _ in range(num_inputs)] for _ in range(num_outputs)
         ]
-
         for o in range(num_outputs):
             for i in range(num_inputs):
                 for qoi_grads_batch in qoi_grads_expanded:
                     transpose[o][i].append(qoi_grads_batch[o][i])
 
+        def data_or_map_concat(x):
+            if isinstance(x[0], MAP_CONTAINER_TYPE):
+                ret_map = {}
+                for k in x[0].keys():
+                    ret_map[k] = np.concatenate([_dict[k] for _dict in x])
+                return ret_map
+            else:
+                return np.concatenate(x)
         qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(
-            transpose, np.concatenate, nest=2
+            transpose, data_or_map_concat, nest=2
         )
-
         qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(
             qoi_grads_expanded,
             lambda grad: np.reshape(grad, (n_doi, -1) + grad.shape[1:]),
             nest=2
         )
-
         if self._return_grads:
             results.gradients = qoi_grads_expanded  # : Outputs[Inputs[Uniform[TensorLike]]]
 
@@ -463,6 +470,7 @@ class InternalInfluence(AttributionMethod):
         attrs: Outputs[Inputs[TensorLike]] = nested_map(
             qoi_grads_expanded, lambda grad: np.mean(grad, axis=0), nest=2
         )
+
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
             with memory_suggestions(param_msgs):
