@@ -57,8 +57,8 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             *[{"input1": np.array([[1., 2., 3., 4., 5.], [1., 2., 3., 4., 5.]])}]
         )
 
-        self.assertEqual(len(res), 2)
-        self.assertEqual(res.shape, (2, 5))
+        self.assertEqual(len(res["input1"]), 2)
+        self.assertEqual(res["input1"].shape, (2, 5))
 
     def test_multiple_outputs(self):
         x = Input((5,))

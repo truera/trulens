@@ -35,7 +35,7 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
 from trulens.utils import tru_logger
-from trulens.utils.typing import MAP_CONTAINER_TYPE, ArgsLike
+from trulens.utils.typing import MAP_CONTAINER_TYPE, ArgsLike, nested_zip
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike
@@ -489,12 +489,16 @@ class InternalInfluence(AttributionMethod):
             mults: Inputs[np.ndarray] = nested_cast(
                 backend=B, args=mults, astype=np.ndarray
             )
-
-            attrs = [
-                [
-                    att * mult for att, mult in zip(attr, mults)  # Inputs
-                ] for attr in attrs  # Outputs
-            ]
+            for attr in attrs:  # Outputs
+                attrs = []
+                zipped = nested_zip(attr, mults)
+                def zip_mult(zipped_attr_mults):
+                    attr = zipped_attr_mults[0]
+                    mults = zipped_attr_mults[1]
+                    return attr * mults
+                
+                attr = nested_map(zipped, zip_mult, check_accessor=lambda x: x[0])
+                attrs.append(attr)
 
         results.attributions = attrs  # : Outputs[Inputs[TensorLike]]
 
