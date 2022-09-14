@@ -151,6 +151,7 @@ def tile(what: TensorAKs, onto: TensorAKs) -> TensorAKs:
             return B.tile(val, repeat_shape)
         else:
             tru_logger.debug(f"Ignoring tiling of unhandled val {val.__class__.__name__}")
+            return val
 
     return what.map(tile_val)
 

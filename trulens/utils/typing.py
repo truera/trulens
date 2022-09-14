@@ -172,7 +172,6 @@ class Outputs(Generic[V], List[V]):
 class Uniform(Generic[V], List[V]):
     ...
 
-
 # "One or More" OM[C, V] (V for Value, C for Container)
 OM = Union[V, C]  # actually C[V] but cannot get python to accept that
 # e.g. OM[List, TensorLike] - One or more TensorLike where the more is contained in a List
@@ -216,7 +215,7 @@ KwargsLike = Union[Kwargs[TensorLike], Feed]
 Indexable = Union[List[V], Tuple[V]]  # Indexable[V]
 # For checking the above against an instance:
 DATA_CONTAINER_TYPE = (list, tuple, Outputs, Inputs, Uniform)
-MAP_CONTAINER_TYPE = (dict)
+MAP_CONTAINER_TYPE = (dict,)
 ## Utilities for dealing with nested structures
 
 
@@ -254,8 +253,51 @@ def numpy_of_nested(backend, x: OMNested[Iterable, TensorLike]) -> np.ndarray:
 
 
 def nested_map(y: OMNested[C, U],
-               fn: Callable[[U], V],
-               nest=999) -> OMNested[C, V]:
+               fn: Callable[[U], V],*, 
+               check_accessor: Callable[[C], V] = None,
+               nest:int=999) -> OMNested[C, V]:
+    """
+    Applies fn to non-container elements in y. This works on "one or more" and even mested om.
+
+    Parameters
+    ----------
+    y:  non-collective object or a nested list/tuple of objects
+        The leaf objects will be inputs to fn.
+    fn: function
+        The function applied to leaf objects in y. Should take in a single
+        non-collective object and return a non-collective object.
+    check_accessor: function
+        A way to make instance checks from the container level.
+    Returns
+    ------
+    non-collective object or a nested list or tuple
+        Has the same structure as y, and contains the results of fn applied to
+        leaf objects in y.
+
+    """
+    if check_accessor is not None:
+        try:
+            check_y = check_accessor(y)
+            if not isinstance(check_y, DATA_CONTAINER_TYPE + MAP_CONTAINER_TYPE):
+                return fn(y)
+        except:
+            pass
+    if isinstance(y, DATA_CONTAINER_TYPE) and nest > 0:
+        out = []
+        for i in range(len(y)):
+            out.append(nested_map(y[i], fn, check_accessor=check_accessor, nest=nest - 1))
+        return y.__class__(out)
+    if isinstance(y, MAP_CONTAINER_TYPE) and nest > 0:
+        out = {}
+        for k in y.keys():
+            out[k] = nested_map(y[k], fn, check_accessor=check_accessor, nest=nest - 1)
+        return y.__class__(out)
+    else:
+        return fn(y)
+
+def nested_zip(y1: OMNested[C, U],
+               y2: OMNested[C, V],
+               nest=999) -> OMNested[C, Tuple[U,V]]:
     """
     Applies fn to non-container elements in y. This works on "one or more" and even mested om.
 
@@ -273,18 +315,20 @@ def nested_map(y: OMNested[C, U],
         leaf objects in y.
 
     """
-    if isinstance(y, DATA_CONTAINER_TYPE) and nest > 0:
+    if isinstance(y1, DATA_CONTAINER_TYPE) and nest > 0:
+        assert len(y1) == len(y2)
         out = []
-        for i in range(len(y)):
-            out.append(nested_map(y[i], fn, nest - 1))
-        return y.__class__(out)
-    if isinstance(y, MAP_CONTAINER_TYPE) and nest > 0:
+        for i in range(len(y1)):
+            out.append(nested_zip(y1[i], y2[i], nest - 1))
+        return y1.__class__(out)
+    if isinstance(y1, MAP_CONTAINER_TYPE) and nest > 0:
         out = {}
-        for k in y.keys():
-            out[k] = nested_map(y[k], fn, nest - 1)
-        return y.__class__(out)
+        assert len(y1.keys()) == len(y2.keys())
+        for k in y1.keys():
+            out[k] = nested_zip(y1[k], y2[k], nest - 1)
+        return y1.__class__(out)
     else:
-        return fn(y)
+        return (y1,y2)
 
 
 def nested_cast(
