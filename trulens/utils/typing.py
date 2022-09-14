@@ -268,6 +268,9 @@ def nested_map(y: OMNested[C, U],
         non-collective object and return a non-collective object.
     check_accessor: function
         A way to make instance checks from the container level.
+    nest: int
+        Another way to specify which level to apply the function. This is the only way to apply a fn on a DATA_CONTAINER_TYPE. 
+        Currently MAP_CONTAINER_TYPE is not included in the nesting levels as they usually wrap tensors.
     Returns
     ------
     non-collective object or a nested list or tuple
@@ -287,10 +290,10 @@ def nested_map(y: OMNested[C, U],
         for i in range(len(y)):
             out.append(nested_map(y[i], fn, check_accessor=check_accessor, nest=nest - 1))
         return y.__class__(out)
-    if isinstance(y, MAP_CONTAINER_TYPE) and nest > 0:
+    if isinstance(y, MAP_CONTAINER_TYPE):
         out = {}
         for k in y.keys():
-            out[k] = nested_map(y[k], fn, check_accessor=check_accessor, nest=nest - 1)
+            out[k] = nested_map(y[k], fn, check_accessor=check_accessor, nest=nest)
         return y.__class__(out)
     else:
         return fn(y)
@@ -611,6 +614,7 @@ class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
 
     def first_batchable(self, backend):
         """Find the first object that may be considered a batchable input."""
+        
         for v in self.values():
             # Current assumption is that batchable items are in the args list or kwargs vals. Continuing this assumption until other use cases seen.
             if isinstance(v, (np.ndarray, backend.Tensor)):
