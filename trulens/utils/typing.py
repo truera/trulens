@@ -136,6 +136,7 @@ Dealing with Magic Numbers for Axes Indices
 
 from abc import ABC
 from abc import abstractmethod
+import collections
 from dataclasses import dataclass
 from dataclasses import field
 from inspect import signature
@@ -215,7 +216,7 @@ KwargsLike = Union[Kwargs[TensorLike], Feed]
 Indexable = Union[List[V], Tuple[V]]  # Indexable[V]
 # For checking the above against an instance:
 DATA_CONTAINER_TYPE = (list, tuple, Outputs, Inputs, Uniform)
-MAP_CONTAINER_TYPE = (dict,)
+MAP_CONTAINER_TYPE = (collections.abc.Mapping,)
 ## Utilities for dealing with nested structures
 
 

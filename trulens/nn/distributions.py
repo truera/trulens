@@ -340,7 +340,14 @@ class LinearDoi(DoI):
         if baseline is None:
             return activation
 
-        return [a - b for a, b in zip(activation, baseline)]
+        zipped = nested_zip(activation, baseline)
+        def subtract(zipped_activation_baseline):
+            activation = zipped_activation_baseline[0]
+            baseline = zipped_activation_baseline[1]
+            return activation - baseline
+        
+        ret = nested_map(zipped, subtract, check_accessor=lambda x: x[0])
+        return ret
 
     def _compute_baseline(
         self,
