@@ -123,7 +123,6 @@ class MultiQoiTestBase(TestCase):
         original_output_shape = (
             num_classes * num_timesteps, batch_size, num_timesteps, num_features
         )
-
         self.assertEqual(np.stack(input_attrs).shape, original_output_shape)
 
         rotated = np.stack(input_attrs, axis=-1)

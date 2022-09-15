@@ -35,15 +35,17 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
 from trulens.utils import tru_logger
-from trulens.utils.typing import MAP_CONTAINER_TYPE, ArgsLike, nested_zip
+from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike
 from trulens.utils.typing import many_of_om
+from trulens.utils.typing import MAP_CONTAINER_TYPE
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import nested_axes
 from trulens.utils.typing import nested_cast
 from trulens.utils.typing import nested_map
+from trulens.utils.typing import nested_zip
 from trulens.utils.typing import OM
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
@@ -387,7 +389,7 @@ class InternalInfluence(AttributionMethod):
 
         if self._return_doi:
             results.interventions = D  # : Inputs[Uniform[TensorLike]]
-        
+
         D_tensors = D[0]
         n_doi = len(D_tensors)
         if isinstance(D_tensors, MAP_CONTAINER_TYPE):
@@ -438,7 +440,6 @@ class InternalInfluence(AttributionMethod):
 
         num_outputs = len(qoi_grads_expanded[0])
         num_inputs = len(qoi_grads_expanded[0][0])
-
         transpose = [
             [[] for _ in range(num_inputs)] for _ in range(num_outputs)
         ]
@@ -455,6 +456,7 @@ class InternalInfluence(AttributionMethod):
                 return ret_map
             else:
                 return np.concatenate(x)
+
         qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(
             transpose, data_or_map_concat, nest=2
         )
@@ -489,17 +491,21 @@ class InternalInfluence(AttributionMethod):
             mults: Inputs[np.ndarray] = nested_cast(
                 backend=B, args=mults, astype=np.ndarray
             )
+            mult_attrs = []
             for attr in attrs:  # Outputs
-                attrs = []
+
                 zipped = nested_zip(attr, mults)
+
                 def zip_mult(zipped_attr_mults):
                     attr = zipped_attr_mults[0]
                     mults = zipped_attr_mults[1]
                     return attr * mults
-                
-                attr = nested_map(zipped, zip_mult, check_accessor=lambda x: x[0])
-                attrs.append(attr)
 
+                attr = nested_map(
+                    zipped, zip_mult, check_accessor=lambda x: x[0]
+                )
+                mult_attrs.append(attr)
+            attrs = mult_attrs
         results.attributions = attrs  # : Outputs[Inputs[TensorLike]]
 
         return results
