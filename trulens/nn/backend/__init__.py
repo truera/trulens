@@ -9,7 +9,9 @@ import numpy as np
 
 from trulens.utils import tru_logger
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_map
 from trulens.utils.typing import om_of_many
+from trulens.utils.typing import TensorAKs
 from trulens.utils.typing import Tensors
 
 # Do not use directly, use get_backend
@@ -91,8 +93,8 @@ def rebatch(vals: Tensors,
     """Rebatch the values in `vals` into bins of size `batch_size`. If more sets
     of values are given in `extra_vals`, those are batched into the same bins as
     well."""
-
-    original_batch_size = vals.first().shape[0]
+    B = get_backend()
+    original_batch_size = vals.first_batchable(B).shape[0]
 
     if batch_size is None:
         batch_size = original_batch_size
@@ -116,17 +118,16 @@ def rebatch(vals: Tensors,
         yield tuple(map(lambda v: v.map(take(batch_idx)), all_vals))
 
 
-def tile(what: Tensors, onto: Tensors) -> Tensors:
+def tile(what: TensorAKs, onto: TensorAKs) -> TensorAKs:
     """Tiles elements of `what` some number of times so they have the same first
     dimension size as `onto`. Picks the number of tiles from the first of each
     container and skips tiling anything in `what` that does not have the same
     first dimension as the first item in that container."""
-
-    inputs_dim = what.first().shape[0]
-    expected_dim = onto.first().shape[0]
-    doi_resolution = int(expected_dim // inputs_dim)
-
     B = get_backend()
+
+    inputs_dim = what.first_batchable(B).shape[0]
+    expected_dim = onto.first_batchable(B).shape[0]
+    doi_resolution = int(expected_dim // inputs_dim)
 
     def tile_val(val):
         """Tile the given value if expected_dim matches val's first
@@ -151,7 +152,10 @@ def tile(what: Tensors, onto: Tensors) -> Tensors:
         elif B.is_tensor(val):
             return B.tile(val, repeat_shape)
         else:
-            raise ValueError(f"unhandled tensor type {val.__class__.__name__}")
+            tru_logger.debug(
+                f"Ignoring tiling of unhandled val {val.__class__.__name__}"
+            )
+            return val
 
     return what.map(tile_val)
 
