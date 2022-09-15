@@ -402,8 +402,6 @@ class InternalInfluence(AttributionMethod):
             rebatch_size = len(D[0])
 
         intervention = TensorArgs(args=D)
-        print(f"model_inputs {model_inputs}")
-        print(f"intervention {intervention}")
         model_inputs_expanded = tile(what=model_inputs, onto=intervention)
         # Create a message for out-of-memory errors regarding doi_size.
         # TODO: Generalize this message to doi other than LinearDoI:
@@ -450,7 +448,15 @@ class InternalInfluence(AttributionMethod):
                 for qoi_grads_batch in qoi_grads_expanded:
                     transpose[o][i].append(qoi_grads_batch[o][i])
 
-        def data_or_map_concat(x):
+        def container_concat(x):
+            """Applies np concatenate on a container. If it is a map type, it will apply it on each key.
+
+            Args:
+                x (map or data container): A container of tensors
+
+            Returns:
+                concatenated tensors of the container.
+            """
             if isinstance(x[0], MAP_CONTAINER_TYPE):
                 ret_map = {}
                 for k in x[0].keys():
@@ -460,7 +466,7 @@ class InternalInfluence(AttributionMethod):
                 return np.concatenate(x)
 
         qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(
-            transpose, data_or_map_concat, nest=2
+            transpose, container_concat, nest=2
         )
         qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(
             qoi_grads_expanded,
@@ -657,7 +663,6 @@ class InternalInfluence(AttributionMethod):
                 'Got empty distribution of interest. `DoI` must return at '
                 'least one point.'
             )
-        print(f"D: {D}")
         # TODO: should this always be done in numpy or can we do it in backend?
         D = nested_cast(backend=get_backend(), args=D, astype=np.ndarray)
         ret = nested_map(D, np.concatenate, nest=1)
