@@ -232,10 +232,7 @@ class PointDoi(DoI):
 
         z: Inputs[TensorLike] = many_of_om(z)
 
-        return om_of_many([
-            [z_]  # a point Uniform
-            for z_ in z
-        ])
+        return om_of_many(nested_map(z, lambda x: [x]))
 
 
 class LinearDoi(DoI):
@@ -445,4 +442,4 @@ class GaussianDoi(DoI):
 
         z: Inputs[TensorLike] = many_of_om(z)
 
-        return om_of_many(list(map(gauss_of_input, z)))
+        return om_of_many(nested_map(z, gauss_of_input))

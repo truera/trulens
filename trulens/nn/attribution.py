@@ -402,6 +402,8 @@ class InternalInfluence(AttributionMethod):
             rebatch_size = len(D[0])
 
         intervention = TensorArgs(args=D)
+        print(f"model_inputs {model_inputs}")
+        print(f"intervention {intervention}")
         model_inputs_expanded = tile(what=model_inputs, onto=intervention)
         # Create a message for out-of-memory errors regarding doi_size.
         # TODO: Generalize this message to doi other than LinearDoI:
@@ -655,10 +657,10 @@ class InternalInfluence(AttributionMethod):
                 'Got empty distribution of interest. `DoI` must return at '
                 'least one point.'
             )
-
+        print(f"D: {D}")
         # TODO: should this always be done in numpy or can we do it in backend?
         D = nested_cast(backend=get_backend(), args=D, astype=np.ndarray)
-        ret = nested_map(D, np.concatenate, check_accessor=lambda x: x[0])
+        ret = nested_map(D, np.concatenate, nest=1)
         return ret
 
 
