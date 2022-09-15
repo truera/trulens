@@ -74,7 +74,8 @@ jobs:
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
-          pip install ipykernel==6.15.2
+          pip install pyzmq==23.2.1
+          pip install ipykernel
           pip install -r $(requirementsFile)
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name "$(condaEnvFileSuffix)"
         displayName: Install pip package
