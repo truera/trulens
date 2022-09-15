@@ -173,6 +173,7 @@ class Outputs(Generic[V], List[V]):
 class Uniform(Generic[V], List[V]):
     ...
 
+
 # "One or More" OM[C, V] (V for Value, C for Container)
 OM = Union[V, C]  # actually C[V] but cannot get python to accept that
 # e.g. OM[List, TensorLike] - One or more TensorLike where the more is contained in a List
@@ -253,10 +254,13 @@ def numpy_of_nested(backend, x: OMNested[Iterable, TensorLike]) -> np.ndarray:
     return np.array(x)
 
 
-def nested_map(y: OMNested[C, U],
-               fn: Callable[[U], V],*, 
-               check_accessor: Callable[[C], V] = None,
-               nest:int=999) -> OMNested[C, V]:
+def nested_map(
+    y: OMNested[C, U],
+    fn: Callable[[U], V],
+    *,
+    check_accessor: Callable[[C], V] = None,
+    nest: int = 999
+) -> OMNested[C, V]:
     """
     Applies fn to non-container elements in y. This works on "one or more" and even mested om.
 
@@ -282,26 +286,34 @@ def nested_map(y: OMNested[C, U],
     if check_accessor is not None:
         try:
             check_y = check_accessor(y)
-            if not isinstance(check_y, DATA_CONTAINER_TYPE + MAP_CONTAINER_TYPE):
+            if not isinstance(check_y,
+                              DATA_CONTAINER_TYPE + MAP_CONTAINER_TYPE):
                 return fn(y)
         except:
             pass
     if isinstance(y, DATA_CONTAINER_TYPE) and nest > 0:
         out = []
         for i in range(len(y)):
-            out.append(nested_map(y[i], fn, check_accessor=check_accessor, nest=nest - 1))
+            out.append(
+                nested_map(
+                    y[i], fn, check_accessor=check_accessor, nest=nest - 1
+                )
+            )
         return y.__class__(out)
     if isinstance(y, MAP_CONTAINER_TYPE):
         out = {}
         for k in y.keys():
-            out[k] = nested_map(y[k], fn, check_accessor=check_accessor, nest=nest)
+            out[k] = nested_map(
+                y[k], fn, check_accessor=check_accessor, nest=nest
+            )
         return y.__class__(out)
     else:
         return fn(y)
 
+
 def nested_zip(y1: OMNested[C, U],
                y2: OMNested[C, V],
-               nest=999) -> OMNested[C, Tuple[U,V]]:
+               nest=999) -> OMNested[C, Tuple[U, V]]:
     """
     Applies fn to non-container elements in y. This works on "one or more" and even mested om.
 
@@ -332,7 +344,7 @@ def nested_zip(y1: OMNested[C, U],
             out[k] = nested_zip(y1[k], y2[k], nest - 1)
         return y1.__class__(out)
     else:
-        return (y1,y2)
+        return (y1, y2)
 
 
 def nested_cast(
@@ -556,9 +568,9 @@ class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
     kwargs: KwargsLike = field(default_factory=dict)
 
     # lens focusing on the args field of this container.
-    lens_args: Lens['TensorAKs', ArgsLike] = Lens(
-        lambda s: s.args, lambda s, a: TensorAKs(a, s.kwargs)
-    )
+    lens_args: Lens[
+        'TensorAKs',
+        ArgsLike] = Lens(lambda s: s.args, lambda s, a: TensorAKs(a, s.kwargs))
 
     # lens focusing on the kwargs field of this container.
     lens_kwargs: Lens['TensorAKs', KwargsLike] = Lens(
@@ -615,7 +627,7 @@ class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
 
     def first_batchable(self, backend):
         """Find the first object that may be considered a batchable input."""
-        
+
         for v in self.values():
             # Current assumption is that batchable items are in the args list or kwargs vals. Continuing this assumption until other use cases seen.
             if isinstance(v, (np.ndarray, backend.Tensor)):

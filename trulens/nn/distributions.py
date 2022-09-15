@@ -9,21 +9,24 @@ interested in a more general behavior over a distribution of samples.
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
 from typing import Callable, Optional
-from build.lib.trulens.utils.typing import ArgsLike
 
 import numpy as np
 
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
-from trulens.utils.typing import MAP_CONTAINER_TYPE, TensorAKs, accepts_model_inputs, nested_map, nested_zip
+from trulens.utils.typing import accepts_model_inputs
 from trulens.utils.typing import BaselineLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import many_of_om
+from trulens.utils.typing import MAP_CONTAINER_TYPE
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import nested_cast
+from trulens.utils.typing import nested_map
+from trulens.utils.typing import nested_zip
 from trulens.utils.typing import OM
 from trulens.utils.typing import om_of_many
+from trulens.utils.typing import TensorAKs
 from trulens.utils.typing import TensorLike
 from trulens.utils.typing import Uniform
 
@@ -69,13 +72,15 @@ class DoI(AbstractBaseClass):
         else:
             ret = self.__call__(z)
         # Wrap the public doi generator with appropriate type aliases.
-        if isinstance(ret, DATA_CONTAINER_TYPE): 
+        if isinstance(ret, DATA_CONTAINER_TYPE):
             if isinstance(ret[0], DATA_CONTAINER_TYPE):
                 ret = Inputs(Uniform(x) for x in ret)
             else:
                 ret = Uniform(ret)
 
-            ret: Inputs[Uniform[TensorLike]] = many_of_om(ret, innertype=Uniform)
+            ret: Inputs[Uniform[TensorLike]] = many_of_om(
+                ret, innertype=Uniform
+            )
         else:
             ret: ArgsLike = [ret]
         return ret
@@ -290,13 +295,14 @@ class LinearDoi(DoI):
     ) -> OM[Inputs, Uniform[TensorLike]]:
 
         self._assert_cut_contains_only_one_tensor(z)
-        
+
         z: Inputs[TensorLike] = many_of_om(z)
 
         baseline = self._compute_baseline(z, model_inputs=model_inputs)
-        
+
         r = 1. if self._resolution == 1 else self._resolution - 1.
         zipped = nested_zip(z, baseline)
+
         def interpolate(zipped_z_baseline):
             z_ = zipped_z_baseline[0]
             b_ = zipped_z_baseline[1]
@@ -304,9 +310,11 @@ class LinearDoi(DoI):
                 (1. - i / r) * z_ + i / r * b_
                 for i in range(self._resolution)
             ]
-        
-        ret = om_of_many(nested_map(zipped, interpolate, check_accessor=lambda x: x[0]))
-        
+
+        ret = om_of_many(
+            nested_map(zipped, interpolate, check_accessor=lambda x: x[0])
+        )
+
         return ret
 
     def get_activation_multiplier(
@@ -341,11 +349,12 @@ class LinearDoi(DoI):
             return activation
 
         zipped = nested_zip(activation, baseline)
+
         def subtract(zipped_activation_baseline):
             activation = zipped_activation_baseline[0]
             baseline = zipped_activation_baseline[1]
             return activation - baseline
-        
+
         ret = nested_map(zipped, subtract, check_accessor=lambda x: x[0])
         return ret
 
@@ -374,13 +383,17 @@ class LinearDoi(DoI):
             _baseline: OM[Inputs, TensorLike]
 
         if _baseline is None:
-            _baseline: Inputs[TensorLike] = nested_map(z,B.zeros_like)
+            _baseline: Inputs[TensorLike] = nested_map(z, B.zeros_like)
         else:
             _baseline: Inputs[TensorLike] = many_of_om(_baseline)
             # Came from user; could have been single or multiple inputs.
         tensor_wrapper = TensorAKs(args=z)
         # Cast to either Tensor or numpy.ndarray to match what was given in z.
-        return nested_cast(backend=B, args=_baseline, astype=type(tensor_wrapper.first_batchable(B)))
+        return nested_cast(
+            backend=B,
+            args=_baseline,
+            astype=type(tensor_wrapper.first_batchable(B))
+        )
 
 
 class GaussianDoi(DoI):

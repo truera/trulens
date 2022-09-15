@@ -162,7 +162,7 @@ class AxiomsTestBase(object):
             PointDoi(),
             multiply_activation=False
         )
-        
+
         res = infl.attributions(self.x)
 
         self.assertEqual(res.shape, (2, self.internal1_size))

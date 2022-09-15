@@ -9,8 +9,10 @@ import numpy as np
 
 from trulens.utils import tru_logger
 from trulens.utils.typing import ModelInputs
-from trulens.utils.typing import nested_map, om_of_many
-from trulens.utils.typing import TensorAKs, Tensors
+from trulens.utils.typing import nested_map
+from trulens.utils.typing import om_of_many
+from trulens.utils.typing import TensorAKs
+from trulens.utils.typing import Tensors
 
 # Do not use directly, use get_backend
 _TRULENS_BACKEND_IMPL = None
@@ -150,7 +152,9 @@ def tile(what: TensorAKs, onto: TensorAKs) -> TensorAKs:
         elif B.is_tensor(val):
             return B.tile(val, repeat_shape)
         else:
-            tru_logger.debug(f"Ignoring tiling of unhandled val {val.__class__.__name__}")
+            tru_logger.debug(
+                f"Ignoring tiling of unhandled val {val.__class__.__name__}"
+            )
             return val
 
     return what.map(tile_val)
