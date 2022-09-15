@@ -326,7 +326,7 @@ class PytorchModelWrapper(ModelWrapper):
                     inpt = inpt[0] if len(inpt) == 1 else inpt
                     ModelWrapper._nested_assign(
                         inpt if doi_cut.anchor == 'in' else outpt,
-                        intervention.first()
+                        intervention.first_batchable(B)
                     )
 
                 counter += 1
