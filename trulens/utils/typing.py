@@ -275,7 +275,7 @@ def nested_map(
         A way to make instance checks from the container level.
     nest: int
         Another way to specify which level to apply the function. This is the only way to apply a fn on a DATA_CONTAINER_TYPE. 
-        Currently MAP_CONTAINER_TYPE is not included in the nesting levels as they usually wrap tensors.
+        Currently MAP_CONTAINER_TYPE is not included in the nesting levels as they usually wrap tensors and functionally are not an actual container.
     Returns
     ------
     non-collective object or a nested list or tuple
@@ -315,20 +315,21 @@ def nested_zip(y1: OMNested[C, U],
                y2: OMNested[C, V],
                nest=999) -> OMNested[C, Tuple[U, V]]:
     """
-    Applies fn to non-container elements in y. This works on "one or more" and even mested om.
+    zips at the element level each element in y1 witheach element in y2. This works on "one or more" and even mested om.
 
     Parameters
     ----------
-    y:  non-collective object or a nested list/tuple of objects
-        The leaf objects will be inputs to fn.
-    fn: function
-        The function applied to leaf objects in y. Should take in a single
-        non-collective object and return a non-collective object.
+    y1:  non-collective object or a nested list/tuple of objects
+        The leaf objects will be zipped.
+    y2:  non-collective object or a nested list/tuple of objects
+        The leaf objects will be zipped.
+    nest: int
+        A way to specify which level to apply the zip. This is the only way to apply a zip on a DATA_CONTAINER_TYPE. 
+        Currently MAP_CONTAINER_TYPE is not included in the nesting levels as they usually wrap tensors and functionally are not an actual container.
     Returns
     ------
     non-collective object or a nested list or tuple
-        Has the same structure as y, and contains the results of fn applied to
-        leaf objects in y.
+        Has the same structure as y1, zips leaf objects in y1 with leaf objects in y2.
 
     """
     if isinstance(y1, DATA_CONTAINER_TYPE) and nest > 0:
@@ -337,11 +338,11 @@ def nested_zip(y1: OMNested[C, U],
         for i in range(len(y1)):
             out.append(nested_zip(y1[i], y2[i], nest - 1))
         return y1.__class__(out)
-    if isinstance(y1, MAP_CONTAINER_TYPE) and nest > 0:
+    if isinstance(y1, MAP_CONTAINER_TYPE):
         out = {}
         assert len(y1.keys()) == len(y2.keys())
         for k in y1.keys():
-            out[k] = nested_zip(y1[k], y2[k], nest - 1)
+            out[k] = nested_zip(y1[k], y2[k], nest)
         return y1.__class__(out)
     else:
         return (y1, y2)

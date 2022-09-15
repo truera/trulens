@@ -300,7 +300,15 @@ class LinearDoi(DoI):
         r = 1. if self._resolution == 1 else self._resolution - 1.
         zipped = nested_zip(z, baseline)
 
-        def interpolate(zipped_z_baseline):
+        def zipped_interpolate(zipped_z_baseline):
+            """interpolates zipped elements
+
+            Args:
+                zipped_z_baseline: A tuple expecting the first element to be the z_val, and second to be the baseline.
+
+            Returns:
+                a list of interpolations from z to baseline
+            """
             z_ = zipped_z_baseline[0]
             b_ = zipped_z_baseline[1]
             return [ # Uniform
@@ -309,7 +317,9 @@ class LinearDoi(DoI):
             ]
 
         ret = om_of_many(
-            nested_map(zipped, interpolate, check_accessor=lambda x: x[0])
+            nested_map(
+                zipped, zipped_interpolate, check_accessor=lambda x: x[0]
+            )
         )
 
         return ret
@@ -347,12 +357,20 @@ class LinearDoi(DoI):
 
         zipped = nested_zip(activation, baseline)
 
-        def subtract(zipped_activation_baseline):
+        def zipped_subtract(zipped_activation_baseline):
+            """subtracts zipped elements
+
+            Args:
+                zipped_activation_baseline: A tuple expecting the first element to be the activation, and second to be the baseline.
+
+            Returns:
+                a subtraction of activation and baseline
+            """
             activation = zipped_activation_baseline[0]
             baseline = zipped_activation_baseline[1]
             return activation - baseline
 
-        ret = nested_map(zipped, subtract, check_accessor=lambda x: x[0])
+        ret = nested_map(zipped, zipped_subtract, check_accessor=lambda x: x[0])
         return ret
 
     def _compute_baseline(
