@@ -209,7 +209,7 @@ class AttributionMethod(AbstractBaseClass):
                 "AttributionMethod configured to return gradients or interventions. "
                 "Use the internal _attribution call to retrieve those."
             )
-
+ 
         return attributions
 
 
