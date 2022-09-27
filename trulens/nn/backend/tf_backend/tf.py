@@ -3,7 +3,7 @@
 # pylint: disable=no-member
 # pylint: disable=not-callable
 
-from typing import Iterable, Sequence
+from typing import Sequence
 
 import numpy as np
 import tensorflow as tf
