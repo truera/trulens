@@ -61,3 +61,13 @@ clean:
 	conda env remove -n $(CONDA_ENV)_tf2_non_eager
 	conda env remove -n $(CONDA_ENV)_notebooks
 	conda env remove -n $(CONDA_ENV)_notebooks_latest
+
+.ONESHELL:
+upload:
+	read -s -p "Enter PyPi password: " temp
+	# Removes previous build files
+	git clean -fxd
+	# Packages trulens into .whl file
+	python setup.py bdist_wheel
+	# Uploads .whl file to PyPi
+	twine upload -u truera -p $$temp dist/*.whl
