@@ -3,7 +3,7 @@
 # pylint: disable=no-member
 # pylint: disable=not-callable
 
-from typing import Union
+from typing import Iterable, Sequence, Union
 
 import numpy as np
 import torch
@@ -125,7 +125,7 @@ def as_array(t, dtype=None):
     )
 
 
-def as_tensor(x, dtype=None, device=None):
+def as_tensor(x: np.ndarray, dtype=None, device=None):
     """
     as_tensor Convert numpy array to tensor
 
@@ -477,6 +477,25 @@ def tile(t: Tensor, shape):
     """ Same as np.tile ."""
 
     return t.repeat(shape)
+
+
+def concat(ts: Sequence[Tensor], axis: int = 0) -> Tensor:
+    """
+    Concatenate the given tensors `ts` along the given `axis`.
+
+    Parameters
+    ----------
+    ts : Sequence[backend.Tensor] 
+        The sequence of tensors to concatenante.
+    axis : int, optional
+        The dimensions along which to concatenate.
+
+    Returns
+    -------
+    backend.Tensor
+    
+    """
+    return torch.cat(ts, axis=axis)
 
 
 def softmax(t, axis=-1):
