@@ -4,6 +4,7 @@
 # pylint: disable=not-callable
 
 import os
+from typing import Sequence
 
 import numpy as np
 
@@ -425,6 +426,25 @@ def tile(t: Tensor, shape):
     """ Same as np.tile ."""
 
     return K.tile(t, shape)
+
+
+def concat(ts: Sequence[Tensor], axis: int = 0) -> Tensor:
+    """
+    Concatenate the given tensors `ts` along the given `axis`.
+
+    Parameters
+    ----------
+    ts : Sequence[backend.Tensor] 
+        The sequence of tensors to concatenante.
+    axis : int, optional
+        The dimensions along which to concatenate.
+
+    Returns
+    -------
+    backend.Tensor
+    
+    """
+    return K.concatenate(ts, axis=axis)
 
 
 def sigmoid(t, axis=None):
