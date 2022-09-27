@@ -3,7 +3,7 @@
 # pylint: disable=no-member
 # pylint: disable=not-callable
 
-from typing import Iterable, Sequence, Union
+from typing import Sequence, Union
 
 import numpy as np
 import torch

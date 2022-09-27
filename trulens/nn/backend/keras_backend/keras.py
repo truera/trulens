@@ -4,7 +4,7 @@
 # pylint: disable=not-callable
 
 import os
-from typing import Iterable, Sequence
+from typing import Sequence
 
 import numpy as np
 
