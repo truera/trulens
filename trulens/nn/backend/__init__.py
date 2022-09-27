@@ -263,6 +263,7 @@ _ALL_BACKEND_API_FUNCTIONS = [
     'clone',
     'stack',
     'tile',
+    'concat',
     'sign',
     'sigmoid',
     'softmax',
