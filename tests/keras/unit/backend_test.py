@@ -8,10 +8,10 @@ from unittest import TestCase
 from tests.unit.backend_test_base import BackendTestBase
 
 
-class AxiomsTest(BackendTestBase, TestCase):
+class BaselineTest(BackendTestBase, TestCase):
 
     def setUp(self):
-        super(AxiomsTest, self).setUp()
+        super(BaselineTest, self).setUp()
 
 
 if __name__ == '__main__':
