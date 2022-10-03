@@ -249,7 +249,7 @@ class ModelWrapper(AbstractBaseClass):
             intervention=intervention,
             **kwargs
         )
-        rets = to_cut.access_layer(rets)
+        rets = (to_cut.access_layer(rets[0]), rets[1])
         rets = tuple(
             map(
                 lambda ret: om_of_many(
