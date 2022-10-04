@@ -6,12 +6,20 @@ from tensorflow.python.util import deprecation
 
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
+import importlib
 from unittest import main
 from unittest import TestCase
 
-from tensorflow import Graph
-from tensorflow import placeholder
-from tensorflow.nn import relu
+import tensorflow as tf
+
+if tf.__version__.startswith("1"):
+    Graph = importlib.import_module("tensorflow.Graph")
+    placeholder = importlib.import_module("tensorflow.placeholder")
+    relu = importlib.import_module("tensorflow.nn.relu")
+else:
+    raise RuntimeError(
+        f"Running Tensorflow 1 tests with incorrect version of Tensorflow. Expected 1.x, got {tf.__version__}"
+    )
 
 from tests.unit.batch_test_base import BatchTestBase
 from trulens.nn.models import get_model_wrapper

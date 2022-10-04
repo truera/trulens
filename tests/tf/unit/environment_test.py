@@ -1,8 +1,16 @@
+import importlib
 from unittest import main
 from unittest import TestCase
 
-from tensorflow import Graph
-from tensorflow import placeholder
+import tensorflow as tf
+
+if tf.__version__.startswith("1"):
+    Graph = importlib.import_module("tensorflow.Graph")
+    placeholder = importlib.import_module("tensorflow.placeholder")
+else:
+    raise RuntimeError(
+        f"Running Tensorflow 1 tests with incorrect version of Tensorflow. Expected 1.x, got {tf.__version__}"
+    )
 
 from tests.unit.environment_test_base import EnvironmentTestBase
 from trulens.nn.backend import Backend
