@@ -13,9 +13,9 @@ from unittest import TestCase
 import tensorflow as tf
 
 if tf.__version__.startswith("1"):
-    Graph = importlib.import_module("tensorflow.Graph")
-    placeholder = importlib.import_module("tensorflow.placeholder")
-    relu = importlib.import_module("tensorflow.nn.relu")
+    from tensorflow import Graph
+    from tensorflow import placeholder
+    from tensorflow.nn import relu
 else:
     raise ImportError(
         f"Running Tensorflow 1 tests with incorrect version of Tensorflow. Expected 1.x, got {tf.__version__}"
