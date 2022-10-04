@@ -100,7 +100,8 @@ class Cut(object):
         if layer is None:
             return layer
         elif self.accessor is None:
-            return layer[-1] if isinstance(layer, list) and len(layer) > 0 else layer
+            return layer[-1] if isinstance(layer,
+                                           list) and len(layer) > 0 else layer
         else:
             layer = (
                 layer[0]
