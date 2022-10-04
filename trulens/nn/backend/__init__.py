@@ -9,7 +9,6 @@ import numpy as np
 
 from trulens.utils import tru_logger
 from trulens.utils.typing import ModelInputs
-from trulens.utils.typing import nested_map
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import TensorAKs
 from trulens.utils.typing import Tensors
