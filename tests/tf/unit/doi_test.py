@@ -9,9 +9,9 @@ from unittest import TestCase
 import tensorflow as tf
 
 if tf.__version__.startswith("1"):
-    Graph = importlib.import_module("tensorflow.Graph")
-    placeholder = importlib.import_module("tensorflow.placeholder")
-    deprecation = importlib.import_module("tensorflow.python.util.deprecation")
+    from tensorflow import Graph
+    from tensorflow import placeholder
+    from tensorflow.python.util import deprecation
     deprecation._PRINT_DEPRECATION_WARNINGS = False
 else:
     raise ImportError(
