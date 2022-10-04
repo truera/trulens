@@ -34,8 +34,3 @@ imagenet_class_index.json.*
 
 # Visual studio
 .vscode/*
-!.vscode/extensions.json
-**/.settings/*
-**/.classpath
-**/.project
-**/bin/
