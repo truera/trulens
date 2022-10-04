@@ -8,7 +8,7 @@ if tf.__version__.startswith("1"):
     Graph = importlib.import_module("tensorflow.Graph")
     placeholder = importlib.import_module("tensorflow.placeholder")
 else:
-    raise RuntimeError(
+    raise ImportError(
         f"Running Tensorflow 1 tests with incorrect version of Tensorflow. Expected 1.x, got {tf.__version__}"
     )
 

@@ -14,7 +14,7 @@ if tf.__version__.startswith("1"):
     deprecation = importlib.import_module("tensorflow.python.util.deprecation")
     deprecation._PRINT_DEPRECATION_WARNINGS = False
 else:
-    raise RuntimeError(
+    raise ImportError(
         f"Running Tensorflow 1 tests with incorrect version of Tensorflow. Expected 1.x, got {tf.__version__}"
     )
 
