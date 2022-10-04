@@ -17,7 +17,7 @@ if tf.__version__.startswith("1"):
     placeholder = importlib.import_module("tensorflow.placeholder")
     relu = importlib.import_module("tensorflow.nn.relu")
 else:
-    raise RuntimeError(
+    raise ImportError(
         f"Running Tensorflow 1 tests with incorrect version of Tensorflow. Expected 1.x, got {tf.__version__}"
     )
 
