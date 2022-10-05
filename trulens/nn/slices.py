@@ -97,9 +97,10 @@ class Cut(object):
         Returns:
             The result of applying `self.accessor` to the given layer.
         """
-        if self.accessor is None:
-            return layer[-1] if isinstance(layer, list) else layer
-
+        if layer is None:
+            return layer
+        elif self.accessor is None:
+            return layer
         else:
             layer = (
                 layer[0]
