@@ -429,6 +429,7 @@ class PytorchModelWrapper(ModelWrapper):
             return B.sum(t)
 
         y = to_cut.access_layer(y)
+        zs = doi_cut.access_layer(zs)
 
         qois_out: Outputs[Tensor] = qoi._wrap_public_call(y)
         grads_list = [[] for _ in qois_out]
