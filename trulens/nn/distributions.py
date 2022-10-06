@@ -26,6 +26,7 @@ from trulens.utils.typing import nested_map
 from trulens.utils.typing import nested_zip
 from trulens.utils.typing import OM
 from trulens.utils.typing import om_of_many
+from trulens.utils.typing import render_object
 from trulens.utils.typing import TensorAKs
 from trulens.utils.typing import TensorLike
 from trulens.utils.typing import Uniform
@@ -56,6 +57,9 @@ class DoI(AbstractBaseClass):
                 to the latent space defined by the cut. 
         """
         self._cut = cut
+
+    def __str__(self):
+        return render_object(self, ['_cut'])
 
     def _wrap_public_call(
         self, z: Inputs[TensorLike], *, model_inputs: ModelInputs
@@ -284,6 +288,9 @@ class LinearDoi(DoI):
     def resolution(self) -> int:
         return self._resolution
 
+    def __str__(self):
+        return render_object(self, ['_cut', '_baseline', '_resolution'])
+
     def __call__(
         self,
         z: OM[Inputs, TensorLike],
@@ -433,6 +440,9 @@ class GaussianDoi(DoI):
         super(GaussianDoi, self).__init__(cut)
         self._var = var
         self._resolution = resolution
+
+    def __str__(self):
+        return render_object(self, ['_cut', '_var', '_resolution'])
 
     def __call__(self, z: OM[Inputs,
                              TensorLike]) -> OM[Inputs, Uniform[TensorLike]]:
