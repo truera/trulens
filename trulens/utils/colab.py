@@ -8,8 +8,8 @@ import sys
 
 def install_if_not_installed(packages):
     """
-  Install the given packages if they are not already installed.
-  """
+    Install the given packages if they are not already installed.
+    """
 
     for package in packages:
         if isinstance(package, tuple):
@@ -35,10 +35,10 @@ def load_or_make(
     filename: Path, loader, maker=None, saver=None, downloader=None
 ):
     """
-  Load something from a `filename` using `loader` if the file exists, otherwise
-  make it using `maker` or download it using `downloader`, save it using
-  `saver`, and return it.
-  """
+    Load something from a `filename` using `loader` if the file exists, otherwise
+    make it using `maker` or download it using `downloader`, save it using
+    `saver`, and return it.
+    """
 
     print(f"loading {filename} ... ", end="")
 
