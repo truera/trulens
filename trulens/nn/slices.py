@@ -13,7 +13,6 @@ thought of as a sub-model that uses the features computed by $h$.
 #from __future__ import annotations # Avoid expanding type aliases in mkdocs.
 
 from typing import Callable, List, Optional, Union
-from warnings import warn
 
 from trulens.nn.backend import get_backend
 from trulens.utils.typing import render_object
