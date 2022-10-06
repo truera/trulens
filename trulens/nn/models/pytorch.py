@@ -1,3 +1,4 @@
+from collections import Counter
 from collections import OrderedDict
 from functools import partial
 from typing import Optional, Tuple
@@ -77,40 +78,18 @@ class PytorchModelWrapper(ModelWrapper):
             model.eval()
 
         if device is None:
-            device = pytorch.get_default_device()
-
-            devices = set(p.device for p in model.parameters())
-
-            if len(devices) > 1:
-                tru_logger.warning(
-                    f"Model's parameters span more than one device ({devices})."
+            try:
+                device_counter = Counter(
+                    [param.get_device() for param in model.parameters()]
                 )
-
-            if len(devices) == 0:
-                # Model without any parameters. No need to do anything here.
-                pass
-            else:
-                mdevice = list(devices)[0]
-
-                if mdevice != device:
-                    tru_logger.warning(
-                        f"Model is not on default device ({device}), moving it there. "
-                        f"If you intend to work on {mdevice}, set it as the default pytorch device or explicitly provide it as the device argument to get_model_wrapper."
-                    )
-                    model.to(device)
-
-        else:
-            model.to(device)
-
-            def_device = pytorch.get_default_device()
-            if device != def_device:
-                tru_logger.warning(
-                    f"Model's device ({device}) differs from pytorch's default device ({def_device}). Changing default to model device."
-                )
-                pytorch.set_default_device(device)
+                device = torch.device(device_counter.most_common()[0][0])
+            except:
+                device = pytorch.get_default_device()
 
         pytorch.set_default_device(device)
+
         self.device = device
+        model.to(self.device)
 
         self._logit_layer = logit_layer
 
@@ -351,7 +330,7 @@ class PytorchModelWrapper(ModelWrapper):
 
                     ModelWrapper._nested_assign(
                         inpt if doi_cut.anchor == 'in' else outpt,
-                        intervention.first()
+                        intervention.first_batchable(B)
                     )
 
                 counter += 1
@@ -475,6 +454,7 @@ class PytorchModelWrapper(ModelWrapper):
             return B.sum(t)
 
         y = to_cut.access_layer(y)
+        zs = doi_cut.access_layer(zs)
 
         qois_out: Outputs[Tensor] = qoi._wrap_public_call(y)
         grads_list = [[] for _ in qois_out]

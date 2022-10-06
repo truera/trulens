@@ -19,11 +19,15 @@ from trulens.utils.typing import BaselineLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import many_of_om
+from trulens.utils.typing import MAP_CONTAINER_TYPE
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import nested_cast
+from trulens.utils.typing import nested_map
+from trulens.utils.typing import nested_zip
 from trulens.utils.typing import OM
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import render_object
+from trulens.utils.typing import TensorAKs
 from trulens.utils.typing import TensorLike
 from trulens.utils.typing import Uniform
 
@@ -71,15 +75,18 @@ class DoI(AbstractBaseClass):
             ret = self.__call__(z, model_inputs=model_inputs)
         else:
             ret = self.__call__(z)
-
         # Wrap the public doi generator with appropriate type aliases.
-        if isinstance(ret[0], DATA_CONTAINER_TYPE):
-            ret = Inputs(Uniform(x) for x in ret)
+        if isinstance(ret, DATA_CONTAINER_TYPE):
+            if isinstance(ret[0], DATA_CONTAINER_TYPE):
+                ret = Inputs(Uniform(x) for x in ret)
+            else:
+                ret = Uniform(ret)
+
+            ret: Inputs[Uniform[TensorLike]] = many_of_om(
+                ret, innertype=Uniform
+            )
         else:
-            ret = Uniform(ret)
-
-        ret: Inputs[Uniform[TensorLike]] = many_of_om(ret, innertype=Uniform)
-
+            ret: ArgsLike = [ret]
         return ret
 
     @abstractmethod
@@ -176,8 +183,10 @@ class DoI(AbstractBaseClass):
         return om_of_many(activation)
 
     def _assert_cut_contains_only_one_tensor(self, x):
-        if isinstance(x, list) and len(x) == 1:
+        if isinstance(x, DATA_CONTAINER_TYPE) and len(x) == 1:
             x = x[0]
+        if isinstance(x, MAP_CONTAINER_TYPE) and len(x) == 1:
+            x = list(x.values())[0]
 
         if isinstance(x, list):
             raise DoiCutSupportError(
@@ -227,10 +236,7 @@ class PointDoi(DoI):
 
         z: Inputs[TensorLike] = many_of_om(z)
 
-        return om_of_many([
-            [z_]  # a point Uniform
-            for z_ in z
-        ])
+        return om_of_many(nested_map(z, lambda x: [x]))
 
 
 class LinearDoi(DoI):
@@ -298,25 +304,32 @@ class LinearDoi(DoI):
 
         baseline = self._compute_baseline(z, model_inputs=model_inputs)
 
-        r = 1. if self._resolution == 1 else self._resolution
+        r = 1. if self._resolution == 1 else self._resolution - 1.
+        zipped = nested_zip(z, baseline)
 
-        # If the above were resolution instead of resolution - 1, this would be
-        # equivalent to captum's riemann_right. Specifically, `i`` never reaches
-        # `self._resolution`` so the coefficient for baseline is never 1 while
-        # coeff for point `z`` starts at 1.0 but never reaches 0. With - 1,
-        # however, it is not quite the same and may cause slight differences in
-        # results depending on how sharp the gradient profile is. 
+        def zipped_interpolate(zipped_z_baseline):
+            """interpolates zipped elements
 
-        # TODO: consider making it identical to riemman_right or perhaps make it
-        # a configurable option?
-    
-        return om_of_many([ # Inputs
-            list(reversed([ # Uniform 
-            # reversed to align with user expectations baseline -> point
-                (((r - i) * z_) + (i * b_)) / r
+            Args:
+                zipped_z_baseline: A tuple expecting the first element to be the z_val, and second to be the baseline.
+
+            Returns:
+                a list of interpolations from z to baseline
+            """
+            z_ = zipped_z_baseline[0]
+            b_ = zipped_z_baseline[1]
+            return [ # Uniform
+                (1. - i / r) * z_ + i / r * b_
                 for i in range(self._resolution)
-            ])) for z_, b_ in zip(z, baseline)
-        ])
+            ]
+
+        ret = om_of_many(
+            nested_map(
+                zipped, zipped_interpolate, check_accessor=lambda x: x[0]
+            )
+        )
+
+        return ret
 
     def get_activation_multiplier(
         self,
@@ -349,7 +362,23 @@ class LinearDoi(DoI):
         if baseline is None:
             return activation
 
-        return [a - b for a, b in zip(activation, baseline)]
+        zipped = nested_zip(activation, baseline)
+
+        def zipped_subtract(zipped_activation_baseline):
+            """subtracts zipped elements
+
+            Args:
+                zipped_activation_baseline: A tuple expecting the first element to be the activation, and second to be the baseline.
+
+            Returns:
+                a subtraction of activation and baseline
+            """
+            activation = zipped_activation_baseline[0]
+            baseline = zipped_activation_baseline[1]
+            return activation - baseline
+
+        ret = nested_map(zipped, zipped_subtract, check_accessor=lambda x: x[0])
+        return ret
 
     def _compute_baseline(
         self,
@@ -376,13 +405,17 @@ class LinearDoi(DoI):
             _baseline: OM[Inputs, TensorLike]
 
         if _baseline is None:
-            _baseline: Inputs[TensorLike] = [B.zeros_like(z_) for z_ in z]
+            _baseline: Inputs[TensorLike] = nested_map(z, B.zeros_like)
         else:
             _baseline: Inputs[TensorLike] = many_of_om(_baseline)
             # Came from user; could have been single or multiple inputs.
-
+        tensor_wrapper = TensorAKs(args=z)
         # Cast to either Tensor or numpy.ndarray to match what was given in z.
-        return nested_cast(backend=B, args=_baseline, astype=type(z[0]))
+        return nested_cast(
+            backend=B,
+            args=_baseline,
+            astype=type(tensor_wrapper.first_batchable(B))
+        )
 
 
 class GaussianDoi(DoI):
@@ -437,4 +470,4 @@ class GaussianDoi(DoI):
 
         z: Inputs[TensorLike] = many_of_om(z)
 
-        return om_of_many(list(map(gauss_of_input, z)))
+        return om_of_many(nested_map(z, gauss_of_input))

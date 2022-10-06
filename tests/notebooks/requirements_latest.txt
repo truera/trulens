@@ -15,3 +15,4 @@ plotly
 gdown
 protobuf==3.20.*
 domonic
+opencv-python-headless<4.6

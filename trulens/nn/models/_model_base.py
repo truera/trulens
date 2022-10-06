@@ -9,7 +9,7 @@ it should be wrapped as a `ModelWrapper` instance.
 """
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Type, Union
 
 import numpy as np
 
@@ -239,7 +239,7 @@ class ModelWrapper(AbstractBaseClass):
         B = get_backend()
 
         # Will cast results to this data container type.
-        return_type = type(model_inputs.first())
+        return_type = type(model_inputs.first_batchable(B))
 
         rets: Tuple[Outputs[TensorLike], Outputs[TensorLike]] = self._fprop(
             model_inputs=model_inputs,
@@ -249,7 +249,7 @@ class ModelWrapper(AbstractBaseClass):
             intervention=intervention,
             **kwargs
         )
-
+        rets = (to_cut.access_layer(rets[0]), doi_cut.access_layer(rets[1]))
         rets = tuple(
             map(
                 lambda ret: om_of_many(
@@ -415,10 +415,8 @@ class ModelWrapper(AbstractBaseClass):
             intervention=intervention
         )
 
-        B = get_backend()
-
         # Will cast results to this data container type.
-        return_type = type(model_inputs.first())
+        return_type = type(model_inputs.first_batchable(get_backend()))
 
         attrs: Outputs[Inputs[TensorLike]] = self._qoi_bprop(
             qoi=qoi,

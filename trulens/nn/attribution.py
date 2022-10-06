@@ -40,10 +40,12 @@ from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike
 from trulens.utils.typing import many_of_om
+from trulens.utils.typing import MAP_CONTAINER_TYPE
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import nested_axes
 from trulens.utils.typing import nested_cast
 from trulens.utils.typing import nested_map
+from trulens.utils.typing import nested_zip
 from trulens.utils.typing import OM
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
@@ -188,9 +190,8 @@ class AttributionMethod(AbstractBaseClass):
         model_inputs = ModelInputs(
             args=many_of_om(model_args), kwargs=model_kwargs
         )
-
         # Will cast results to this data container type.
-        return_type = type(model_inputs.first())
+        return_type = type(model_inputs.first_batchable(get_backend()))
 
         pieces = self._attributions(model_inputs)
 
@@ -358,14 +359,14 @@ class InternalInfluence(AttributionMethod):
         # NOTE: not symbolic
 
         B = get_backend()
-
         results = AttributionResult()
 
         # Create a message for out-of-memory errors regarding float and batch size.
-        if len(list(model_inputs.values())) == 0:
+        first_batchable = model_inputs.first_batchable(B)
+        if first_batchable is None:
             batch_size = 1
         else:
-            batch_size = model_inputs.first().shape[0]
+            batch_size = first_batchable.shape[0]
 
         param_msgs = [
             f"float size = {B.floatX_size} ({B.floatX}); consider changing to a smaller type.",
@@ -382,24 +383,27 @@ class InternalInfluence(AttributionMethod):
                 attribution_cut=None,  # InputCut(),
                 intervention=model_inputs
             )[0]
+
         doi_val = nested_map(doi_val, B.as_array)
+
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
 
         if self._return_doi:
             results.interventions = D  # : Inputs[Uniform[TensorLike]]
 
-        n_doi = len(D[0])
-
+        D_tensors = D[0]
+        n_doi = len(D_tensors)
+        if isinstance(D_tensors, MAP_CONTAINER_TYPE):
+            for k in D_tensors.keys():
+                if isinstance(D_tensors[k], DATA_CONTAINER_TYPE):
+                    n_doi = len(D_tensors[k])
         D = self.__concatenate_doi(D)
-
         rebatch_size = self.rebatch_size
         if rebatch_size is None:
             rebatch_size = len(D[0])
 
         intervention = TensorArgs(args=D)
-
         model_inputs_expanded = tile(what=model_inputs, onto=intervention)
-
         # Create a message for out-of-memory errors regarding doi_size.
         # TODO: Generalize this message to doi other than LinearDoI:
         doi_size_msg = f"distribution of interest size = {n_doi}; consider reducing intervention resolution."
@@ -437,26 +441,39 @@ class InternalInfluence(AttributionMethod):
 
         num_outputs = len(qoi_grads_expanded[0])
         num_inputs = len(qoi_grads_expanded[0][0])
-
         transpose = [
             [[] for _ in range(num_inputs)] for _ in range(num_outputs)
         ]
-
         for o in range(num_outputs):
             for i in range(num_inputs):
                 for qoi_grads_batch in qoi_grads_expanded:
                     transpose[o][i].append(qoi_grads_batch[o][i])
 
-        qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(
-            transpose, np.concatenate, nest=2
-        )
+        def container_concat(x):
+            """Applies np concatenate on a container. If it is a map type, it will apply it on each key.
 
+            Args:
+                x (map or data container): A container of tensors
+
+            Returns:
+                concatenated tensors of the container.
+            """
+            if isinstance(x[0], MAP_CONTAINER_TYPE):
+                ret_map = {}
+                for k in x[0].keys():
+                    ret_map[k] = np.concatenate([_dict[k] for _dict in x])
+                return ret_map
+            else:
+                return np.concatenate(x)
+
+        qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(
+            transpose, container_concat, nest=2
+        )
         qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(
             qoi_grads_expanded,
             lambda grad: np.reshape(grad, (n_doi, -1) + grad.shape[1:]),
             nest=2
         )
-
         if self._return_grads:
             results.gradients = qoi_grads_expanded  # : Outputs[Inputs[Uniform[TensorLike]]]
 
@@ -464,6 +481,7 @@ class InternalInfluence(AttributionMethod):
         attrs: Outputs[Inputs[TensorLike]] = nested_map(
             qoi_grads_expanded, lambda grad: np.mean(grad, axis=0), nest=2
         )
+
         # Multiply by the activation multiplier if specified.
         if self._do_multiply:
             with memory_suggestions(param_msgs):
@@ -482,13 +500,21 @@ class InternalInfluence(AttributionMethod):
             mults: Inputs[np.ndarray] = nested_cast(
                 backend=B, args=mults, astype=np.ndarray
             )
+            mult_attrs = []
+            for attr in attrs:  # Outputs
 
-            attrs = [
-                [
-                    att * mult for att, mult in zip(attr, mults)  # Inputs
-                ] for attr in attrs  # Outputs
-            ]
+                zipped = nested_zip(attr, mults)
 
+                def zip_mult(zipped_attr_mults):
+                    attr = zipped_attr_mults[0]
+                    mults = zipped_attr_mults[1]
+                    return attr * mults
+
+                attr = nested_map(
+                    zipped, zip_mult, check_accessor=lambda x: x[0]
+                )
+                mult_attrs.append(attr)
+            attrs = mult_attrs
         results.attributions = attrs  # : Outputs[Inputs[TensorLike]]
 
         return results
@@ -638,11 +664,10 @@ class InternalInfluence(AttributionMethod):
                 'Got empty distribution of interest. `DoI` must return at '
                 'least one point.'
             )
-
         # TODO: should this always be done in numpy or can we do it in backend?
         D = nested_cast(backend=get_backend(), args=D, astype=np.ndarray)
-
-        return [np.concatenate(Di) for Di in D]
+        ret = nested_map(D, np.concatenate, nest=1)
+        return ret
 
 
 class InputAttribution(InternalInfluence):

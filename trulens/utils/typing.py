@@ -136,6 +136,7 @@ Dealing with Magic Numbers for Axes Indices
 
 from abc import ABC
 from abc import abstractmethod
+import collections
 from dataclasses import dataclass
 from dataclasses import field
 from inspect import signature
@@ -220,7 +221,7 @@ KwargsLike = Union[Kwargs[TensorLike], Feed]
 Indexable = Union[List[V], Tuple[V]]  # Indexable[V]
 # For checking the above against an instance:
 DATA_CONTAINER_TYPE = (list, tuple, Outputs, Inputs, Uniform)
-
+MAP_CONTAINER_TYPE = (collections.abc.Mapping,)
 ## Utilities for dealing with nested structures
 
 
@@ -257,9 +258,13 @@ def numpy_of_nested(backend, x: OMNested[Iterable, TensorLike]) -> np.ndarray:
     return np.array(x)
 
 
-def nested_map(y: OMNested[C, U],
-               fn: Callable[[U], V],
-               nest=999) -> OMNested[C, V]:
+def nested_map(
+    y: OMNested[C, U],
+    fn: Callable[[U], V],
+    *,
+    check_accessor: Callable[[C], V] = None,
+    nest: int = 999
+) -> OMNested[C, V]:
     """
     Applies fn to non-container elements in y. This works on "one or more" and
     even mested om.
@@ -271,6 +276,11 @@ def nested_map(y: OMNested[C, U],
     fn: function
         The function applied to leaf objects in y. Should take in a single
         non-collective object and return a non-collective object.
+    check_accessor: function
+        A way to make instance checks from the container level.
+    nest: int
+        Another way to specify which level to apply the function. This is the only way to apply a fn on a DATA_CONTAINER_TYPE. 
+        Currently MAP_CONTAINER_TYPE is not included in the nesting levels as they usually wrap tensors and functionally are not an actual container.
     Returns
     ------
     non-collective object or a nested list or tuple
@@ -278,13 +288,69 @@ def nested_map(y: OMNested[C, U],
         leaf objects in y.
 
     """
+    if check_accessor is not None:
+        try:
+            check_y = check_accessor(y)
+            if not isinstance(check_y,
+                              DATA_CONTAINER_TYPE + MAP_CONTAINER_TYPE):
+                return fn(y)
+        except:
+            pass
     if isinstance(y, DATA_CONTAINER_TYPE) and nest > 0:
         out = []
         for i in range(len(y)):
-            out.append(nested_map(y[i], fn, nest - 1))
+            out.append(
+                nested_map(
+                    y[i], fn, check_accessor=check_accessor, nest=nest - 1
+                )
+            )
+        return y.__class__(out)
+    if isinstance(y, MAP_CONTAINER_TYPE):
+        out = {}
+        for k in y.keys():
+            out[k] = nested_map(
+                y[k], fn, check_accessor=check_accessor, nest=nest
+            )
         return y.__class__(out)
     else:
         return fn(y)
+
+
+def nested_zip(y1: OMNested[C, U],
+               y2: OMNested[C, V],
+               nest=999) -> OMNested[C, Tuple[U, V]]:
+    """
+    zips at the element level each element in y1 witheach element in y2. This works on "one or more" and even mested om.
+
+    Parameters
+    ----------
+    y1:  non-collective object or a nested list/tuple of objects
+        The leaf objects will be zipped.
+    y2:  non-collective object or a nested list/tuple of objects
+        The leaf objects will be zipped.
+    nest: int
+        A way to specify which level to apply the zip. This is the only way to apply a zip on a DATA_CONTAINER_TYPE. 
+        Currently MAP_CONTAINER_TYPE is not included in the nesting levels as they usually wrap tensors and functionally are not an actual container.
+    Returns
+    ------
+    non-collective object or a nested list or tuple
+        Has the same structure as y1, zips leaf objects in y1 with leaf objects in y2.
+
+    """
+    if isinstance(y1, DATA_CONTAINER_TYPE) and nest > 0:
+        assert len(y1) == len(y2)
+        out = []
+        for i in range(len(y1)):
+            out.append(nested_zip(y1[i], y2[i], nest - 1))
+        return y1.__class__(out)
+    if isinstance(y1, MAP_CONTAINER_TYPE):
+        out = {}
+        assert len(y1.keys()) == len(y2.keys())
+        for k in y1.keys():
+            out[k] = nested_zip(y1[k], y2[k], nest)
+        return y1.__class__(out)
+    else:
+        return (y1, y2)
 
 
 def nested_cast(
@@ -512,13 +578,13 @@ class Tensors(ABC):
 class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
     """Container for positional and keyword arguments."""
 
-    args: Inputs[TensorLike] = field(default_factory=list)
+    args: ArgsLike = field(default_factory=list)
     kwargs: KwargsLike = field(default_factory=dict)
 
     # lens focusing on the args field of this container.
-    lens_args: Lens['TensorAKs', Inputs[TensorLike]] = Lens(
-        lambda s: s.args, lambda s, a: TensorAKs(a, s.kwargs)
-    )
+    lens_args: Lens[
+        'TensorAKs',
+        ArgsLike] = Lens(lambda s: s.args, lambda s, a: TensorAKs(a, s.kwargs))
 
     # lens focusing on the kwargs field of this container.
     lens_kwargs: Lens['TensorAKs', KwargsLike] = Lens(
@@ -563,11 +629,9 @@ class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
 
     def map(self, f):
         """Produce a new set of args by transforming each value with the given function."""
-
-        ret = self
-        for l in self.lenses_values():
-            ret = l.set(ret, f(l.get(ret)))
-        return ret
+        new_args = nested_map(self.args, f)
+        new_kwargs = nested_map(self.kwargs, f)
+        return TensorAKs(args=new_args, kwargs=new_kwargs)
 
     def foreach(self, f):
         """Apply the given function to each value."""
@@ -575,13 +639,19 @@ class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
         for l in self.lenses_values():
             f(l.get(self))
 
-    def first(self):
-        """Get the first value, whether it is an arg or kwargs. args come first."""
+    def first_batchable(self, backend):
+        """Find the first object that may be considered a batchable input."""
 
-        try:
-            return next(self.values())
-        except StopIteration:
-            raise ValueError("AK had neither arguments nor keyword arguments.")
+        for v in self.values():
+            # Current assumption is that batchable items are in the args list or kwargs vals. Continuing this assumption until other use cases seen.
+            if isinstance(v, (np.ndarray, backend.Tensor)):
+                return v
+            # However, we will look one level deep if a dict is found: there is a known case where placeholders expect tensor inputs as dict.
+            elif isinstance(v, dict):
+                for k in v.keys():
+                    if isinstance(v[k], (np.ndarray, backend.Tensor)):
+                        return v[k]
+        return None
 
     def call_on(self, f):
         """Call the given method with the contained arguments."""
