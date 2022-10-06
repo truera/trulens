@@ -2,18 +2,24 @@ import os
 
 os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
+import importlib
 from unittest import main
 from unittest import TestCase
 
-from tensorflow import Graph
-from tensorflow import placeholder
-from tensorflow.python.util import deprecation
+import tensorflow as tf
 
-from trulens.nn.models import get_model_wrapper
-
-deprecation._PRINT_DEPRECATION_WARNINGS = False
+if tf.__version__.startswith("1"):
+    from tensorflow import Graph
+    from tensorflow import placeholder
+    from tensorflow.python.util import deprecation
+    deprecation._PRINT_DEPRECATION_WARNINGS = False
+else:
+    raise ImportError(
+        f"Running Tensorflow 1 tests with incorrect version of Tensorflow. Expected 1.x, got {tf.__version__}"
+    )
 
 from tests.unit.doi_test_base import DoiTestBase
+from trulens.nn.models import get_model_wrapper
 
 
 class DoiTest(DoiTestBase, TestCase):
