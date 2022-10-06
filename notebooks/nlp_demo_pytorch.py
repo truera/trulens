@@ -13,8 +13,8 @@ from trulens.nn.attribution import OutputCut
 from trulens.nn.models import get_model_wrapper
 from trulens.nn.quantities import ClassQoI
 from trulens.utils.typing import ModelInputs
-from trulens.visualizations import HTML
-from trulens.visualizations import NLP
+from trulens.vis.nlp import HTML
+from trulens.vis.nlp import NLP
 
 
 # Wrap all of the necessary components.
