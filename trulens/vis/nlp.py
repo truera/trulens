@@ -264,7 +264,20 @@ class HTML(NLPOutput):
     def label(self, s: str, color: str = "white") -> E:
         return self.m_html.span(
             self.m_dom.Text(self.m_html_util.escape(s)),
-            style=f"color: {color};"
+            style=f"color: {color};" if color is not None else ""
+        )
+
+    def quote(self, e: E, mark:str='"', background: str = "black", color: str = "white") -> E:
+        if isinstance(e, str):
+            e = self.label(self.m_html_util.escape(e), color=color)
+
+        return self.m_html.div(
+            [
+                self.m_html.div(mark, style=f"text-align: center; line-height: 0.5; width: 4%; font-size: 3.0em; padding: 5px; color: gray; display: inline-block; border: 0px solid white; vertical-align: top; "),
+                self.m_html.div(e, style=f"display: inline-block; max-width: 88%;  border: 0px solid white; color: {color};"),
+                self.m_html.div(mark, style=f"text-align: center; line-height: 0.5; width: 4%; font-size: 3.0em; padding: 5px; color: gray; display: inline-block; border: 0px solid white; vertical-align: bottom; "),
+            ],
+            style=f"color: {color}; border: 0px solid white; padding: 5px; background: {background};"
         )
 
     def linebreak(self) -> E:
@@ -272,7 +285,7 @@ class HTML(NLPOutput):
 
     def line(self, e: E) -> E:
         return self.m_html.div(
-            e, style="padding: 5px; maring: 0px; background: black; overflow-wrap: break-word;"
+            e, style="padding: 5px; maring: 0px; background: black; overflow-wrap: break-word; line-height: 3.0;"
         )
 
     def big(self, e: E) -> E:
@@ -287,7 +300,7 @@ class HTML(NLPOutput):
         return self.m_html.sub(e, style=f"color: {color};")
 
     def token(self, s: str, token_id=None) -> E:
-        s = self.label(s)
+        s = self.label(s, color=None)
 
         extra_arg = {}
         if token_id is not None:
@@ -302,7 +315,7 @@ class HTML(NLPOutput):
             f'border-bottom: {pad_bot}px solid gray; '
             f'margin-left 1px; '
             f'margin-right: 1px; '
-            f'background: black; '
+            # f'background: black; '
             f'color: white;',
             **extra_arg
         )
@@ -421,7 +434,7 @@ class HTML(NLPOutput):
             f'border-bottom: {pad_bot}px solid {rgban}; '
             f'margin-left 1px; '
             f'margin-right: 1px; '
-            f'background: black; '
+            # f'background: black; '
             f'color={color};'
         )
 
@@ -716,15 +729,26 @@ class NLP(object):
     def _tokens_stability_instance(
         self,
         opt: InstanceOptionals,
+        index: int,
         show_id=False,
         show_doi=False,
         show_text=False,
         highlights=None,
         attributor=None
     ):
+        """
+        Produce the entire output for a single input instance. This might
+        include multiple interpolations if show_doi is enabled.
+        """
+
         B = get_backend()
 
-        sent = []
+        sent = [
+            self.output.label(f"Instance ", color="gray"),
+            self.output.label(str(index)),
+            self.output.label(" : ", color="gray"), 
+            self.output.space()
+        ]
 
         if self.wrapper is not None:            
             logits = B.as_array(opt.logits)
@@ -737,12 +761,15 @@ class NLP(object):
                     self.labels = list(map(str, range(0, len(logits))))
 
                 sent += [
+                    self.output.label("Output/QoI: ", color="gray"),
                     self.output.scores(
                         logits,
                         self.labels,
                         qoi=attributor.qoi if attributor else None
                     )
                 ]
+
+                sent += [self.output.linebreak()]
 
         if opt.attributions is None:
             attr = [None] * len(opt.input_ids)
@@ -772,7 +799,8 @@ class NLP(object):
             effective_attr += list(opt.gradients)
 
         if len(effective_attr) > 1:
-            sent += [self.output.linebreak(), self.output.linebreak()]
+            #sent += [self.output.linebreak(), self.output.linebreak()]
+            pass
 
         for iid, (sentence_input_ids, sentence_embeddings,
                   sentence_attr) in enumerate(zip(effective_input_ids,
@@ -782,11 +810,11 @@ class NLP(object):
             interv = []
 
             if show_text and iid == 0:
-                interv += [
-                    self.output.label(repr(opt.texts)),
-                    self.output.space(),
-                    self.output.label("=>", color="gray"),
-                    self.output.space()
+                sent += [
+                    self.output.quote(opt.texts, background="white", color="black"),
+                    #self.output.space(),
+                    #self.output.label("=>", color="gray"),
+                    #self.output.space()
                 ]
 
             if opt.multipliers is None:
@@ -867,8 +895,8 @@ class NLP(object):
                     )
                 ]
 
-            sent += self.output.line(self.output.concat(*interv))
-            sent += [self.output.linebreak()]#, self.output.linebreak()]
+            sent += [self.output.quote(self.output.concat(*interv), mark="/", background='teal')]
+            #all += [self.output.linebreak()]#, self.output.linebreak()]
 
         return self.output.concat(self.output.line(self.output.concat(*sent)))
 
@@ -1031,6 +1059,7 @@ class NLP(object):
             aline.append(
                 self._tokens_stability_instance(
                     opt0,
+                    index=i,
                     show_id=show_id,
                     show_doi=show_doi,
                     show_text=show_text,
@@ -1044,6 +1073,7 @@ class NLP(object):
                 aline.append(
                     self._tokens_stability_instance(
                         opt1,
+                        index=i,
                         show_id=show_id,
                         show_doi=show_doi,
                         show_text=show_text,
