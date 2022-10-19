@@ -16,7 +16,7 @@ roof of the car, a “car feature” not shared by convertibles.
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
 from inspect import signature
-from typing import Any, Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 from trulens.nn.backend import get_backend
 from trulens.utils.typing import DATA_CONTAINER_TYPE
@@ -24,11 +24,9 @@ from trulens.utils.typing import many_of_om
 from trulens.utils.typing import OM
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
+from trulens.utils.typing import render_object
 from trulens.utils.typing import Tensor
-
-# NEED INFO HERE
-# Define some type aliases.
-TensorLike = Union[Any, List[Union[Any]]]
+from trulens.utils.typing import TensorLike
 
 
 class QoiCutSupportError(ValueError):
@@ -46,10 +44,19 @@ class QoI(AbstractBaseClass):
     output behavior that the attributions describe.
     """
 
+    def __str__(self):
+        return render_object(self, [])
+
+    # TODO: Need to give a seperate value of y at target instance here since
+    # these are values are interventions. Cannot presently define a QoI that says:
+    # logits of the predicted class for each instance.
+    # Issue GH-72 . Task MLNN-415 .
+
     def _wrap_public_call(self, y: Outputs[Tensor]) -> Outputs[Tensor]:
         """
-        Wrap a public call that may result one or more tensors. Signature of
-        this class is not specific while public calls are flexible. """
+        Wrap a public call that may result in one or more tensors. Signature of
+        this class is not specific while public calls are flexible.
+        """
 
         return many_of_om(self.__call__(om_of_many(y)))
 
@@ -120,6 +127,9 @@ class MaxClassQoI(QoI):
         """
         self._axis = axis
         self.activation = activation
+
+    def __str__(self):
+        return render_object(self, ["_axis", "activation"])
 
     def __call__(self, y: TensorLike) -> TensorLike:
         self._assert_cut_contains_only_one_tensor(y)
@@ -238,6 +248,9 @@ class ClassQoI(QoI):
         """
         self.cl = cl
 
+    def __str__(self):
+        return render_object(self, ["cl"])
+
     def __call__(self, y: TensorLike) -> TensorLike:
         self._assert_cut_contains_only_one_tensor(y)
 
@@ -260,6 +273,9 @@ class ComparativeQoI(QoI):
         """
         self.cl1 = cl1
         self.cl2 = cl2
+
+    def __str__(self):
+        return render_object(self, ["cl1", "cl2"])
 
     def __call__(self, y: TensorLike) -> TensorLike:
 
