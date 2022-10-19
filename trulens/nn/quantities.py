@@ -50,11 +50,13 @@ class QoI(AbstractBaseClass):
     # TODO: Need to give a seperate value of y at target instance here since
     # these are values are interventions. Cannot presently define a QoI that says:
     # logits of the predicted class for each instance.
+    # Issue GH-72 . Task MLNN-415 .
 
     def _wrap_public_call(self, y: Outputs[Tensor]) -> Outputs[Tensor]:
         """
-        Wrap a public call that may result one or more tensors. Signature of
-        this class is not specific while public calls are flexible. """
+        Wrap a public call that may result in one or more tensors. Signature of
+        this class is not specific while public calls are flexible.
+        """
 
         return many_of_om(self.__call__(om_of_many(y)))
 
