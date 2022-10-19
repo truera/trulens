@@ -54,6 +54,7 @@ from trulens.utils.typing import TensorLike
 from trulens.utils.typing import Uniform
 
 # Attribution-related type aliases.
+# TODO: Verify these and move to typing utils?
 CutLike = Union[Cut, int, str, None]
 SliceLike = Union[Slice, Tuple[CutLike], CutLike]
 QoiLike = Union[QoI, int, Tuple[int], Callable, str]
