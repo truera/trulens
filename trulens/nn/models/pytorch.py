@@ -93,7 +93,14 @@ class PytorchModelWrapper(ModelWrapper):
 
         self._logit_layer = logit_layer
 
-        layers = OrderedDict(PytorchModelWrapper._get_model_layers(model))
+        layers = PytorchModelWrapper._get_model_layers(model)
+        try:
+            encoder_layers = PytorchModelWrapper._get_model_layers(model.get_encoder())
+            layers.extend(encoder_layers)
+        except:
+            pass
+        layers = OrderedDict(layers)
+        
         self._layers = layers
         self._layernames = list(layers.keys())
         self._tensors = list(layers.values())
@@ -271,7 +278,8 @@ class PytorchModelWrapper(ModelWrapper):
         B = get_backend()
 
         # This method operates on backend tensors.
-        intervention = intervention.map(B.as_tensor)
+        if intervention != model_inputs:
+            intervention = intervention.map(B.as_tensor)
 
         # TODO: generalize the condition to include Cut objects that start at the beginning. Until then, clone the model args to avoid mutations (see MLNN-229)
         if isinstance(doi_cut, InputCut):
@@ -298,8 +306,8 @@ class PytorchModelWrapper(ModelWrapper):
                         # Could be a warning here but then we'd see a lot of warnings in NLP models.
                         pass
 
-            intervention.foreach(lambda v: v.requires_grad_(True))
-            model_inputs.foreach(enable_grad)
+            #intervention.foreach(lambda v: v.requires_grad_(True))
+            #model_inputs.foreach(enable_grad)
 
         # Set up the intervention hookfn if we are starting from an intermediate
         # layer. These hooks replace the activations of the model at doi_cut
@@ -307,7 +315,6 @@ class PytorchModelWrapper(ModelWrapper):
         # it may appear that a model is evaluated on the wrong inputs (which are
         # then fixed by these hooks). Need a good way to present this to the
         # user.
-
         if not isinstance(doi_cut, InputCut):
             # Interventions only allowed onto one layer (see FIXME below.)
 

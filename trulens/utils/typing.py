@@ -313,7 +313,10 @@ def nested_map(
             )
         return y.__class__(out)
     else:
-        return fn(y)
+        try:
+            return fn(y)
+        except:
+            pass
 
 
 def nested_zip(y1: OMNested[C, U],

@@ -194,7 +194,7 @@ class AttributionMethod(AbstractBaseClass):
         return_type = type(model_inputs.first_batchable(get_backend()))
 
         pieces = self._attributions(model_inputs)
-
+        return pieces
         # Format attributions into the public structure which throws out output
         # lists and input lists if there is only one output or only one input.
         # Also cast to whatever the input type was.
@@ -215,6 +215,144 @@ class AttributionMethod(AbstractBaseClass):
         return attributions
 
 
+class Saliency(AttributionMethod):
+    def __init__(
+        self,
+        model: ModelWrapper,
+        cuts: SliceLike,
+        qoi: QoiLike,
+        *args,
+        **kwargs
+    ):
+        
+        super().__init__(model, *args, **kwargs)
+
+        self.slice = Saliency.__get_slice(cuts)
+        self.qoi = Saliency.__get_qoi(qoi)
+
+    def _attributions(self, model_inputs: ModelInputs) -> AttributionResult:
+        # NOTE: not symbolic
+
+        
+        qoi_grads_expanded_batch: Outputs[
+            Inputs[TensorLike]] = self.model._qoi_bprop(
+                qoi=self.qoi,
+                model_inputs=model_inputs,
+                attribution_cut=self.slice.from_cut,
+                to_cut=self.slice.to_cut,
+                doi_cut=InputCut(),
+                intervention=model_inputs
+            )
+        return qoi_grads_expanded_batch
+    
+    @staticmethod
+    def __get_slice(slice_arg):
+        """
+        Helper function to get a `Slice` object from more user-friendly
+        primitive arguments.
+        """
+        if isinstance(slice_arg, Slice):
+            # We are already given a Slice, so return it.
+            return slice_arg
+
+        elif (isinstance(slice_arg, Cut) or isinstance(slice_arg, int) or
+              isinstance(slice_arg, str) or slice_arg is None or
+              slice_arg == 0):
+
+            # If we receive a Cut, we take it to be the Cut of the start layer.
+            return Slice(Saliency.__get_cut(slice_arg), OutputCut())
+
+        elif isinstance(slice_arg, DATA_CONTAINER_TYPE):
+            # If we receive a DATA_CONTAINER_TYPE, we take it to be the start
+            # and end layer of the slice.
+            if len(slice_arg) == 2:
+                if slice_arg[1] is None:
+                    return Slice(
+                        Saliency.__get_cut(slice_arg[0]), OutputCut()
+                    )
+                else:
+                    return Slice(
+                        Saliency.__get_cut(slice_arg[0]),
+                        Saliency.__get_cut(slice_arg[1])
+                    )
+
+            else:
+                raise ValueError(
+                    'Tuple or list argument for `cuts` must have length 2'
+                )
+
+        else:
+            raise ValueError('Unrecognized argument type for `cuts`')
+
+    @staticmethod
+    def __get_cut(cut_arg):
+        """
+        Helper function to get a `Cut` object from more user-friendly primitive
+        arguments.
+        """
+        if isinstance(cut_arg, Cut):
+            # We are already given a Cut, so return it.
+            return cut_arg
+
+        elif cut_arg is None or cut_arg == 0:
+            # If we receive None or zero, we take it to be the input cut.
+            return InputCut()
+
+        # TODO(klas): may want a bit more validation here.
+        elif isinstance(cut_arg, int) or isinstance(cut_arg, str):
+            return Cut(cut_arg)
+
+        else:
+            raise ValueError('Unrecognized argument type for cut')
+
+    @staticmethod
+    def __get_qoi(qoi_arg):
+        """
+        Helper function to get a `QoI` object from more user-friendly primitive 
+        arguments.
+        """
+        # TODO(klas): we could potentially do some basic error catching here,
+        #   for example, making sure the index for a given channel is in range.
+
+        if isinstance(qoi_arg, QoI):
+            # We were already given a QoI, so return it.
+            return qoi_arg
+
+        elif callable(qoi_arg):
+            # If we were given a callable, treat that function as a QoI.
+            return LambdaQoI(qoi_arg)
+
+        elif isinstance(qoi_arg, int):
+            # If we receive an int, we take it to be the class/channel index
+            # (whether it's a class or channel depends on the layer the quantity
+            # is for, but `InternalChannelQoI` generalizes to both).
+            return InternalChannelQoI(qoi_arg)
+
+        elif isinstance(qoi_arg, DATA_CONTAINER_TYPE):
+            # If we receive a DATA_CONTAINER_TYPE, we take it to be two classes
+            # for which we are performing a comparative quantity of interest.
+            if len(qoi_arg) == 2:
+                return ComparativeQoI(*qoi_arg)
+
+            else:
+                raise ValueError(
+                    'Tuple or list argument for `qoi` must have length 2'
+                )
+
+        elif isinstance(qoi_arg, str):
+            # We can specify `MaxClassQoI` via the string 'max'.
+            if qoi_arg == 'max':
+                return MaxClassQoI()
+
+            else:
+                raise ValueError(
+                    'String argument for `qoi` must be one of the following:\n'
+                    '  - "max"'
+                )
+
+        else:
+            raise ValueError('Unrecognized argument type for `qoi`')
+                
 class InternalInfluence(AttributionMethod):
     """Internal attributions parameterized by a slice, quantity of interest, and
     distribution of interest.
@@ -374,7 +512,6 @@ class InternalInfluence(AttributionMethod):
         ]
 
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
-
         with memory_suggestions(*param_msgs):  # Handles out-of-memory messages.
             doi_val: List[B.Tensor] = self.model._fprop(
                 model_inputs=model_inputs,
@@ -383,7 +520,6 @@ class InternalInfluence(AttributionMethod):
                 attribution_cut=None,  # InputCut(),
                 intervention=model_inputs
             )[0]
-
         doi_val = nested_map(doi_val, B.as_array)
 
         D = self.doi._wrap_public_call(doi_val, model_inputs=model_inputs)
