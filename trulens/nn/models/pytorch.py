@@ -201,16 +201,18 @@ class PytorchModelWrapper(ModelWrapper):
             if k not in hooks:
                 # TODO: incoporate some more info in this error. Some of these
                 # prints might be useful for this error.
-                
+
                 # self.print_layer_names()
                 # print(hooks.keys())
-                
+
                 # TODO: create a new exception type for this so it can be caught
                 # by downstream users better.
 
                 # TODO: similar messages for other backends.
-                
-                raise ValueError(f"Could not get values for layer {k}. Is it evaluated when computing doi cut from input cut?")
+
+                raise ValueError(
+                    f"Could not get values for layer {k}. Is it evaluated when computing doi cut from input cut?"
+                )
             return hooks[k]
 
         if isinstance(cut, OutputCut):
