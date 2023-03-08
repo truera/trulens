@@ -637,7 +637,7 @@ class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
         """Apply the given function to each value."""
 
         for l in self.lenses_values():
-            f(l.get(self))
+            nested_map(l.get(self), f)
 
     def first_batchable(self, backend):
         """Find the first object that may be considered a batchable input."""
