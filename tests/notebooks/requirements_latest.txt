@@ -4,9 +4,9 @@ nbconvert==6.0.7
 matplotlib
 pandas
 tensorflow-hub==0.12.0 # Temporarily fix the tf version until tensorflow 2.12 is consistently working. Remove when tf-models-official 2.12 is released.
-tensorflow-text==2.10.0 # Temporarily fix the tf version until tensorflow 2.12 is consistently working. Remove when tf-models-official 2.12 is released.
-tensorflow==2.10.0 # Temporarily fix the tf version until tensorflow 2.12 is consistently working. Remove when tf-models-official 2.12 is released.
-tf-models-official==2.10.0 # Temporarily fix the tf version until tensorflow 2.12 is consistently working. Remove when tf-models-official 2.12 is released.
+tensorflow-text==2.9.0 # Temporarily fix the tf version until tensorflow 2.12 is consistently working. Remove when tf-models-official 2.12 is released.
+tensorflow==2.9.0 # Temporarily fix the tf version until tensorflow 2.12 is consistently working. Remove when tf-models-official 2.12 is released.
+tf-models-official==2.9.0 # Temporarily fix the tf version until tensorflow 2.12 is consistently working. Remove when tf-models-official 2.12 is released.
 scipy
 torch
 torchvision
