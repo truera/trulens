@@ -3,15 +3,15 @@ nbformat==5.0.8
 nbconvert==6.0.7
 matplotlib
 pandas
-tensorflow-hub
-tf-models-official
-tensorflow-text
+tensorflow-hub==0.12.0 # Temporarily fix the tf version until tensorflow 2.12 is consistently working. Remove when tensorflow 2.12 works.
+tensorflow-text==2.10.0 # Temporarily fix the tf version until tensorflow 2.12 is consistently working. Remove when tensorflow 2.12 works.
+tensorflow==2.10.0 # Temporarily fix the tf version until tensorflow 2.12 is consistently working. Remove when tensorflow 2.12 works.
+tf-models-official==2.10.0 # Temporarily fix the tf version until tensorflow 2.12 is consistently working. Remove when tensorflow 2.12 works.
 scipy
-tensorflow
 torch
 torchvision
 ipywidgets
 plotly
 gdown
-protobuf==3.20.*
+protobuf==3.20.* # Temporarily fix the tf version until tensorflow 2.12 is consistently working. Remove when tensorflow 2.12 works.
 opencv-python-headless<4.6
