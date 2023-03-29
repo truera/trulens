@@ -1,5 +1,5 @@
 #TODO: This is incomplete and does not include all the dependencies required for development.
-name: python37
+name: python3_10
 channels:
   - defaults
 dependencies:
@@ -13,7 +13,7 @@ dependencies:
   - ncurses=6.2
   - openssl=1.1.1d
   - pip=20.0.2
-  - python=3.7.3
+  - python=3.10.6
   - readline=7.0
   - setuptools=45.2.0
   - sqlite=3.31.1
@@ -30,4 +30,4 @@ dependencies:
       - python-markdown-math==0.7
       - yapf==0.32.0
       - isort==5.10.1
-prefix: /home/truera/miniconda3/envs/python37
+prefix: /home/truera/miniconda3/envs/python3_10
