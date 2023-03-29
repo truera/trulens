@@ -4,20 +4,25 @@ channels:
   - defaults
 dependencies:
   - _libgcc_mutex=0.1
+  - _openmp_mutex=5.1
+  - bzip2=1.0.8
   - ca-certificates=2023.01.10
   - certifi=2022.12.7
-  - libedit=3.1.20181209
+  - ld_impl_linux-64=2.38
   - libffi=3.4.2
-  - libgcc-ng=9.1.0
-  - libstdcxx-ng=9.1.0
-  - ncurses=6.2
+  - libgcc-ng=11.2.0
+  - libgomp=11.2.0
+  - libstdcxx-ng=11.2.0
+  - libuuid=1.41.5
+  - ncurses=6.4
   - openssl=1.1.1t
   - pip=23.0.1
-  - python=3.10.6
+  - python=3.10.10
   - readline=8.2
   - setuptools=65.6.3
   - sqlite=3.41.1
   - tk=8.6.12
+  - tzdata=2022g
   - wheel=0.38.4
   - xz=5.2.10
   - zlib=1.2.13
