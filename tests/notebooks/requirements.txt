@@ -9,7 +9,7 @@ tensorflow-text==2.10.0
 tensorflow==2.10.0
 tf-models-official==2.10.0
 torch==1.13.1
-torchvision==0.7.0
+torchvision==0.15.1
 ipywidgets
 plotly
 gdown==4.5.1
