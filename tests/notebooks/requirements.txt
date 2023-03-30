@@ -5,9 +5,9 @@ pandas==1.3.5
 matplotlib
 scipy
 tensorflow-hub==0.12.0
-tensorflow-text==2.11.0
-tensorflow==2.11.0
-tf-models-official==2.11.0
+tensorflow-text==2.10.0
+tensorflow==2.10.0
+tf-models-official==2.10.0
 torch==1.13.1
 torchvision==0.15.1
 ipywidgets
