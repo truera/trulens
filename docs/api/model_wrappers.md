@@ -1,3 +1,3 @@
 # Model Wrappers
 
-::: trulens.nn.models.__init__
+::: trulens.nn.models
