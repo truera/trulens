@@ -43,13 +43,13 @@ jobs:
           requirementsFile: "tests/tf2/requirements.txt"
           testSubdirectory: "tests/tf2_non_eager"
 
-        py37_notebooks:
-          condaEnvFileSuffix: "python37"
+        py3_10_notebooks:
+          condaEnvFileSuffix: "python3_10"
           requirementsFile: "tests/notebooks/requirements.txt"
           testSubdirectory: "tests/notebooks"
 
-        py37_notebooks_latest:
-          condaEnvFileSuffix: "python37"
+        py3_10_notebooks_latest:
+          condaEnvFileSuffix: "python3_10"
           requirementsFile: "tests/notebooks/requirements_latest.txt"
           testSubdirectory: "tests/notebooks"
 
