@@ -14,5 +14,5 @@ ipywidgets
 plotly
 gdown==4.5.1
 protobuf==3.19.*
-opencv-python==4.7.0.72
-opencv-python-headless==4.7.0.72
+opencv-python==4.5.2.52
+opencv-python-headless==4.5.2.52
