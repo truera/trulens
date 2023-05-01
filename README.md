@@ -18,3 +18,5 @@ You can then run:
 `streamlit run gpt3_streamlit.py`
 
 `streamlit run feedback_viewer.py`
+
+`streamlit run benchmark_streamlit.py`
