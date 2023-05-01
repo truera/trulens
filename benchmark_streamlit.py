@@ -14,7 +14,8 @@ openai.api_key = config['OPENAI_API_KEY']
 # Set up Streamlit app
 st.title("Feedback Function Benchmarking")
 function_choice = st.selectbox(
-    'What feedback function do you want to benchmark?', ['sentiment'])
+    'What feedback function do you want to benchmark?',
+    list(tru_feedback.FEEDBACK_FUNCTIONS.keys()))
 
 dataset_choice = st.selectbox(
     'What dataset do you want to use for benchmarking?', ['imdb'])
@@ -48,7 +49,8 @@ samples = sample_data(data, num_samples)
 samples_with_feedback = samples.copy()
 
 samples_with_feedback['feedback'] = samples_with_feedback['text'].apply(
-    lambda x: tru_feedback.sentiment_function('', x)).astype(int)
+    lambda x: tru_feedback.FEEDBACK_FUNCTIONS[function_choice]('', x)).astype(
+        int)
 
 samples_with_feedback['correct'] = samples_with_feedback[
     'label'] == samples_with_feedback['feedback']
