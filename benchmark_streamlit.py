@@ -75,8 +75,6 @@ else:
     samples_with_feedback['feedback'] = samples_with_feedback['text'].apply(
         lambda x: tru_feedback.FEEDBACK_FUNCTIONS[function_choice]('', x))
 
-    st.write(samples_with_feedback)
-
     samples_with_feedback['correct'] = samples_with_feedback[
         'label'] == samples_with_feedback['feedback']
 
