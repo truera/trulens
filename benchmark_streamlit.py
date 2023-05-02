@@ -19,7 +19,13 @@ function_choice = st.selectbox(
 
 dataset_choice = st.selectbox(
     'What dataset do you want to use for benchmarking?',
-    ['imdb (binary sentiment)'])
+    ['imdb (binary sentiment)', 'provide my own'])
+
+if dataset_choice == 'provide my own':
+    uploaded_file = st.file_uploader(
+        "Choose a CSV file. Must have the columns: ['text','label'].")
+    if uploaded_file is not None:
+        provided_data = pd.read_csv(uploaded_file)
 
 num_samples = st.selectbox('How many samples do you want to test?',
                            [1, 10, 50, 100, 1000])
@@ -47,23 +53,31 @@ def sample_data(data, num_samples):
     return data.sample(num_samples)
 
 
-data = load_data(dataset_choice)
-samples = sample_data(data, num_samples)
+if dataset_choice == 'provide my own':
+    if uploaded_file is not None:
+        data = provided_data
+else:
+    data = load_data(dataset_choice)
 
-# get feedback to test
-samples_with_feedback = samples.copy()
+if dataset_choice == 'provide my own' and uploaded_file is None:
+    st.write('Data not yet uploaded or selected.')
+else:
+    samples = sample_data(data, num_samples)
 
-samples_with_feedback['feedback'] = samples_with_feedback['text'].apply(
-    lambda x: tru_feedback.FEEDBACK_FUNCTIONS[function_choice]('', x)).astype(
-        int)
+    # get feedback to test
+    samples_with_feedback = samples.copy()
 
-samples_with_feedback['correct'] = samples_with_feedback[
-    'label'] == samples_with_feedback['feedback']
+    samples_with_feedback['feedback'] = samples_with_feedback['text'].apply(
+        lambda x: tru_feedback.FEEDBACK_FUNCTIONS[function_choice]
+        ('', x)).astype(int)
 
-score = samples_with_feedback['correct'].sum() / len(samples_with_feedback)
+    samples_with_feedback['correct'] = samples_with_feedback[
+        'label'] == samples_with_feedback['feedback']
 
-st.write(function_choice, 'scored: ', '{:.1%}'.format(score),
-         'on the benchmark: ', dataset_choice)
+    score = samples_with_feedback['correct'].sum() / len(samples_with_feedback)
 
-if st.button('See Examples'):
-    st.write(samples_with_feedback)
+    st.write(function_choice, 'scored: ', '{:.1%}'.format(score),
+             'on the benchmark: ', dataset_choice)
+
+    if st.button('See Examples'):
+        st.write(samples_with_feedback)
