@@ -3,27 +3,18 @@ import os
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION']='python'
 
 import logging
+from keys import (PINECONE_API_KEY, PINECONE_ENV, SLACK_SIGNING_SECRET,
+                     SLACK_TOKEN)
+
 import pinecone
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
 from langchain.vectorstores import Pinecone
-# Use the package we installed
 from slack_bolt import App
 from slack_sdk import WebClient
 
-from secrets import PINECONE_API_KEY, PINECONE_ENV, SLACK_TOKEN, SLACK_SIGNING_SECRET 
-
 PORT = 3000
-
-SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
-LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
-TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
-GIBBERISH_API_URL = "https://api-inference.huggingface.co/models/madhurjindal/autonlp-Gibberish-Detector-492513457"
-Q_OR_S_API_URL = "https://api-inference.huggingface.co/models/shahrukhx01/question-vs-statement-classifier"
-EMOTION_API_URL = "https://api-inference.huggingface.co/models/joeddav/distilbert-base-uncased-go-emotions-student"
-OFFENSIVE_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-offensive"
-GPT2_DETECTOR_API_URL = "https://api-inference.huggingface.co/models/roberta-large-openai-detector"
 
 # create a conversational chain with relevant models and vector store
 
