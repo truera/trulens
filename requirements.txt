@@ -15,3 +15,5 @@ beautifulsoup4
 unstructured
 pypdf
 pdfminer.six
+streamlit
+python-dotenv
