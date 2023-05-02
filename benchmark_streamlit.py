@@ -1,3 +1,4 @@
+import cohere
 import dotenv
 import openai
 import pandas as pd
@@ -10,6 +11,10 @@ config = dotenv.dotenv_values(".env")
 
 # Set OpenAI API key
 openai.api_key = config['OPENAI_API_KEY']
+config = dotenv.dotenv_values(".env")
+cohere.api_key = config['COHERE_API_KEY']
+
+co = cohere.Client(cohere.api_key)
 
 # Set up Streamlit app
 st.title("Feedback Function Benchmarking")
@@ -68,8 +73,9 @@ else:
     samples_with_feedback = samples.copy()
 
     samples_with_feedback['feedback'] = samples_with_feedback['text'].apply(
-        lambda x: tru_feedback.FEEDBACK_FUNCTIONS[function_choice]
-        ('', x)).astype(int)
+        lambda x: tru_feedback.FEEDBACK_FUNCTIONS[function_choice]('', x))
+
+    st.write(samples_with_feedback)
 
     samples_with_feedback['correct'] = samples_with_feedback[
         'label'] == samples_with_feedback['feedback']
