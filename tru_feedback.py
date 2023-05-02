@@ -1,9 +1,14 @@
 import re
+from pathlib import Path
+from urllib.parse import urlparse
 
 import openai
+import requests
+
+from keys import HUGGINGFACE_HEADERS
 
 
-def relevance_function(prompt, response):
+def openai_relevance_function(prompt, response):
     return re.search(
         '[0-9]+',
         openai.ChatCompletion.create(
@@ -24,9 +29,9 @@ def relevance_function(prompt, response):
             }])["choices"][0]["message"]["content"]).group()
 
 
-def sentiment_function(prompt, response):
+def opeani_response_sentiment_function(prompt, response):
     model_engine = "text-davinci-002"
-    prompt = (
+    model_prompt = (
         f"Please classify the sentiment of the following text: \"{response}\" as one of the following:\n"
         "Positive\n"
         "Negative\n"
@@ -34,7 +39,7 @@ def sentiment_function(prompt, response):
 
     response = openai.Completion.create(
         engine=model_engine,
-        prompt=prompt,
+        prompt=model_prompt,
         max_tokens=1,
         n=1,
         stop=None,
@@ -49,7 +54,130 @@ def sentiment_function(prompt, response):
         return 0
 
 
+def opeani_prompt_sentiment_function(prompt, response):
+    model_engine = "text-davinci-002"
+    model_prompt = (
+        f"Please classify the sentiment of the following text: \"{prompt}\" as one of the following:\n"
+        "Positive\n"
+        "Negative\n"
+        "Classify the sentiment:")
+
+    model_response = openai.Completion.create(
+        engine=model_engine,
+        prompt=model_prompt,
+        max_tokens=1,
+        n=1,
+        stop=None,
+        temperature=0.5,
+    )
+
+    sentiment = model_response.choices[0].text.strip().lower()
+
+    if sentiment == "positive":
+        return 1
+    else:
+        return 0
+
+
+# huggingface end points
+
+SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
+TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
+
+
+def query(payload, url):
+    response = requests.post(url, headers=HUGGINGFACE_HEADERS, json=payload)
+    return response.json()
+
+
+# These queries via huggingface are free but may need to wait for models to load.
+
+hf_sentiment_query = lambda p: query(p, SENTIMENT_API_URL)[0]
+hf_toxic_query = lambda p: query(p, TOXIC_API_URL)[0]
+
+
+def hf_response_positive_sentiment(prompt, response):
+    labels = hf_sentiment_query(response)
+    for label in labels:
+        if label['label'] == 'LABEL_2':
+            return label['score']
+    return None
+
+
+def hf_prompt_positive_sentiment(prompt, response):
+    labels = hf_sentiment_query(prompt)
+    for label in labels:
+        if label['label'] == 'LABEL_2':
+            return label['score']
+    return None
+
+
+def hf_response_neutral_sentiment(prompt, response):
+    labels = hf_sentiment_query(response)
+    for label in labels:
+        if label['label'] == 'LABEL_1':
+            return label['score']
+    return None
+
+
+def hf_prompt_neutral_sentiment(prompt, response):
+    labels = hf_sentiment_query(prompt)
+    for label in labels:
+        if label['label'] == 'LABEL_1':
+            return label['score']
+    return None
+
+
+def hf_response_negative_sentiment(prompt, response):
+    labels = hf_sentiment_query(response)
+    for label in labels:
+        if label['label'] == 'LABEL_0':
+            return label['score']
+    return None
+
+
+def hf_prompt_negative_sentiment(prompt, response):
+    labels = hf_sentiment_query(prompt)
+    for label in labels:
+        if label['label'] == 'LABEL_0':
+            return label['score']
+    return None
+
+
+def hf_response_toxicicity(prompt, response):
+    labels = hf_toxic_query(response)
+    for label in labels:
+        if label['label'] == 'toxic':
+            return label['score']
+    return None
+
+
+def hf_prompt_toxicicity(prompt, response):
+    labels = hf_toxic_query(prompt)
+    for label in labels:
+        if label['label'] == 'toxic':
+            return label['score']
+    return None
+
+
 FEEDBACK_FUNCTIONS = {
-    'relevance': relevance_function,
-    'sentiment': sentiment_function,
+    'openai-gpt-3.5-turbo-relevance': openai_relevance_function,
+    'openai-text-davinci-002-response-sentiment-positive':
+    opeani_response_sentiment_function,
+    'openai-text-davinci-002-prompt-sentiment-positive':
+    opeani_prompt_sentiment_function,
+    'huggingface-twitter-roberta-response-sentiment-positive':
+    hf_response_positive_sentiment,
+    'huggingface-twitter-roberta-prompt-sentiment-positive':
+    hf_prompt_positive_sentiment,
+    'huggingface-twitter-roberta-response-sentiment-neutral':
+    hf_response_neutral_sentiment,
+    'huggingface-twitter-roberta-prompt-sentiment-neutral':
+    hf_prompt_neutral_sentiment,
+    'huggingface-twitter-roberta-response-sentiment-negative':
+    hf_response_negative_sentiment,
+    'huggingface-twitter-roberta-prompt-sentiment-negative':
+    hf_prompt_negative_sentiment,
+    'huggingface-response-toxic': hf_response_toxicicity,
+    'huggingface-prompt-toxic': hf_prompt_toxicicity
 }
