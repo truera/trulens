@@ -18,7 +18,8 @@ function_choice = st.selectbox(
     list(tru_feedback.FEEDBACK_FUNCTIONS.keys()))
 
 dataset_choice = st.selectbox(
-    'What dataset do you want to use for benchmarking?', ['imdb'])
+    'What dataset do you want to use for benchmarking?',
+    ['imdb (binary sentiment)'])
 
 num_samples = st.selectbox('How many samples do you want to test?',
                            [1, 10, 50, 100, 1000])
@@ -31,7 +32,11 @@ st.write('You selected to benchmark :', function_choice,
 
 
 def load_data(dataset_choice):
-    data = load_dataset(dataset_choice)
+    if dataset_choice == 'imdb (binary sentiment)':
+        dataset_choice_clean = 'imdb'
+    else:
+        dataset_choice_clean = dataset_choice
+    data = load_dataset(dataset_choice_clean)
     train = pd.DataFrame(data['train'])
     test = pd.DataFrame(data['test'])
     data = train.append(test)
