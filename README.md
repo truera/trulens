@@ -19,6 +19,7 @@ You can then run:
 
 `streamlit run feedback_viewer.py`
 
+`streamlit run benchmark_streamlit.py`
 # Contents
 
 - `requirements.txt` - pip requirements
