@@ -18,3 +18,13 @@ You can then run:
 `streamlit run gpt3_streamlit.py`
 
 `streamlit run feedback_viewer.py`
+
+# Contents
+
+- requirements.txt - pip requirements
+- Makefile - targets for useful things
+- slackbot.py - slack bot implementing TruBot .
+- secrets.py - various API keys .
+- webscrape - folder for storing cached web scape metrials used for creating a document database for bot.
+- webindex.ipynb - web scraper and document index uploader (to pinecone) .
+- piotr-workshop.ipynb - unsorted things Piotr is trying out .

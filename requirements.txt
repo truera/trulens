@@ -1,0 +1,17 @@
+# slack bot and its indexing requirements:
+sentencepiece
+git+https://github.com/huggingface/transformers
+pyllama
+tokenizers
+protobuf
+accelerate
+langchain
+openai
+pinecone-client
+tiktoken
+slack_bolt
+requests
+beautifulsoup4
+unstructured
+pypdf
+pdfminer.six
