@@ -1,9 +1,9 @@
 import re
-from pathlib import Path
-from urllib.parse import urlparse
 
+import cohere
 import openai
 import requests
+from cohere.responses.classify import Example
 
 from keys import HUGGINGFACE_HEADERS
 
@@ -100,7 +100,10 @@ def hf_response_positive_sentiment(prompt, response):
     labels = hf_sentiment_query(response)
     for label in labels:
         if label['label'] == 'LABEL_2':
-            return label['score']
+            if label['score'] >= 0.5:
+                return 1
+            else:
+                return 0
     return None
 
 
@@ -108,7 +111,10 @@ def hf_prompt_positive_sentiment(prompt, response):
     labels = hf_sentiment_query(prompt)
     for label in labels:
         if label['label'] == 'LABEL_2':
-            return label['score']
+            if label['score'] >= 0.5:
+                return 1
+            else:
+                return 0
     return None
 
 
@@ -116,7 +122,10 @@ def hf_response_neutral_sentiment(prompt, response):
     labels = hf_sentiment_query(response)
     for label in labels:
         if label['label'] == 'LABEL_1':
-            return label['score']
+            if label['score'] >= 0.5:
+                return 1
+            else:
+                return 0
     return None
 
 
@@ -124,7 +133,10 @@ def hf_prompt_neutral_sentiment(prompt, response):
     labels = hf_sentiment_query(prompt)
     for label in labels:
         if label['label'] == 'LABEL_1':
-            return label['score']
+            if label['score'] >= 0.5:
+                return 1
+            else:
+                return 0
     return None
 
 
@@ -132,7 +144,10 @@ def hf_response_negative_sentiment(prompt, response):
     labels = hf_sentiment_query(response)
     for label in labels:
         if label['label'] == 'LABEL_0':
-            return label['score']
+            if label['score'] >= 0.5:
+                return 1
+            else:
+                return 0
     return None
 
 
@@ -140,7 +155,10 @@ def hf_prompt_negative_sentiment(prompt, response):
     labels = hf_sentiment_query(prompt)
     for label in labels:
         if label['label'] == 'LABEL_0':
-            return label['score']
+            if label['score'] >= 0.5:
+                return 1
+            else:
+                return 0
     return None
 
 
@@ -148,7 +166,10 @@ def hf_response_toxicicity(prompt, response):
     labels = hf_toxic_query(response)
     for label in labels:
         if label['label'] == 'toxic':
-            return label['score']
+            if label['score'] >= 0.5:
+                return 1
+            else:
+                return 0
     return None
 
 
@@ -156,8 +177,53 @@ def hf_prompt_toxicicity(prompt, response):
     labels = hf_toxic_query(prompt)
     for label in labels:
         if label['label'] == 'toxic':
-            return label['score']
+            if label['score'] >= 0.5:
+                return 1
+            else:
+                return 0
     return None
+
+
+# cohere
+
+import dotenv
+
+config = dotenv.dotenv_values(".env")
+
+cohere.api_key = config['COHERE_API_KEY']
+
+co = cohere.Client(cohere.api_key)
+
+examples = [
+    Example("The order came 5 days early", "positive"),
+    Example("The item exceeded my expectations", "positive"),
+    Example("The package was damaged", "negative"),
+    Example("The order is 5 days late", "negative"),
+    Example("The item\'s material feels low quality", "negative"),
+    Example("I used the product this morning", "neutral"),
+    Example("The product arrived yesterday", "neutral"),
+]
+
+
+def cohere_response_sentiment(prompt, response):
+    sentiment = co.classify(model='large',
+                            inputs=[response],
+                            examples=examples)[0].prediction
+
+    if sentiment == "positive":
+        return 1
+    else:
+        return 0
+
+
+def cohere_prompt_sentiment(prompt, response):
+    sentiment = co.classify(model='large', inputs=[prompt],
+                            examples=examples)[0].prediction
+
+    if sentiment == "positive":
+        return 1
+    else:
+        return 0
 
 
 FEEDBACK_FUNCTIONS = {
@@ -179,5 +245,7 @@ FEEDBACK_FUNCTIONS = {
     'huggingface-twitter-roberta-prompt-sentiment-negative':
     hf_prompt_negative_sentiment,
     'huggingface-response-toxic': hf_response_toxicicity,
-    'huggingface-prompt-toxic': hf_prompt_toxicicity
+    'huggingface-prompt-toxic': hf_prompt_toxicicity,
+    'cohere-response-sentiment': cohere_response_sentiment,
+    'cohere-prompt-sentiment': cohere_prompt_sentiment
 }
