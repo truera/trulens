@@ -27,7 +27,7 @@ def relevance_function(prompt, response):
 def sentiment_function(prompt, response):
     model_engine = "text-davinci-002"
     prompt = (
-        f"Please classify the sentiment of the following text: \"{response}\".\n"
+        f"Please classify the sentiment of the following text: \"{response}\" as one of the following:\n"
         "Positive\n"
         "Negative\n"
         "Classify the sentiment:")
