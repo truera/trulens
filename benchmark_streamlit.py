@@ -50,7 +50,7 @@ def load_data(dataset_choice):
     data = load_dataset(dataset_choice_clean)
     train = pd.DataFrame(data['train'])
     test = pd.DataFrame(data['test'])
-    data = train.append(test)
+    data = pd.concat([train, test])
     return data
 
 
