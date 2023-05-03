@@ -1,9 +1,13 @@
+import os
+import zipfile
+
 import cohere
 import dotenv
 import openai
 import pandas as pd
 import streamlit as st
 from datasets import load_dataset
+from kaggle.api.kaggle_api_extended import KaggleApi
 
 import tru_feedback
 
@@ -12,9 +16,14 @@ config = dotenv.dotenv_values(".env")
 # Set OpenAI API key
 openai.api_key = config['OPENAI_API_KEY']
 config = dotenv.dotenv_values(".env")
-cohere.api_key = config['COHERE_API_KEY']
 
+# Set cohere API key
+cohere.api_key = config['COHERE_API_KEY']
 co = cohere.Client(cohere.api_key)
+
+# Set Kaggle API key
+os.environ['KAGGLE_USERNAME'] = config['KAGGLE_USERNAME']
+os.environ['KAGGLE_KEY'] = config['KAGGLE_KEY']
 
 # Set up Streamlit app
 st.title("Feedback Function Benchmarking")
@@ -24,7 +33,7 @@ function_choice = st.selectbox(
 
 dataset_choice = st.selectbox(
     'What dataset do you want to use for benchmarking?',
-    ['imdb (binary sentiment)', 'provide my own'])
+    ['imdb (binary sentiment)', 'jigsaw (binary toxicity)', 'provide my own'])
 
 if dataset_choice == 'provide my own':
     uploaded_file = st.file_uploader(
@@ -44,13 +53,25 @@ st.write('You selected to benchmark :', function_choice,
 
 def load_data(dataset_choice):
     if dataset_choice == 'imdb (binary sentiment)':
-        dataset_choice_clean = 'imdb'
-    else:
-        dataset_choice_clean = dataset_choice
-    data = load_dataset(dataset_choice_clean)
-    train = pd.DataFrame(data['train'])
-    test = pd.DataFrame(data['test'])
-    data = pd.concat([train, test])
+        data = load_dataset('imdb')
+        train = pd.DataFrame(data['train'])
+        test = pd.DataFrame(data['test'])
+        data = pd.concat([train, test])
+    elif dataset_choice == 'jigsaw (binary toxicity)':
+        kaggle_api = KaggleApi()
+        kaggle_api.authenticate()
+
+        kaggle_api.dataset_download_files(
+            'julian3833/jigsaw-unintended-bias-in-toxicity-classification')
+        with zipfile.ZipFile(
+                'jigsaw-unintended-bias-in-toxicity-classification.zip') as z:
+            with z.open('all_data.csv') as f:
+                data = pd.read_csv(f, header=0, sep=',', quotechar='"')[[
+                    'comment_text', 'toxicity'
+                ]].rename(columns={'comment_text': 'text'})
+
+        data['label'] = data['toxicity'] >= 0.5
+        data['label'] = data['label'].astype(int)
     return data
 
 
