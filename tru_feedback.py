@@ -89,9 +89,10 @@ TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-com
 def hf_response_positive_sentiment(prompt, response):
     max_length = 512
     truncated_text = response[:max_length]
+    payload = {"inputs": truncated_text}
     hf_response = requests.post(SENTIMENT_API_URL,
                                 headers=HUGGINGFACE_HEADERS,
-                                json=truncated_text).json()[0]
+                                json=payload).json()[0]
     for label in hf_response:
         if label['label'] == 'LABEL_2':
             if label['score'] >= 0.5:
@@ -103,9 +104,10 @@ def hf_response_positive_sentiment(prompt, response):
 def hf_prompt_positive_sentiment(prompt, response):
     max_length = 512
     truncated_text = prompt[:max_length]
+    payload = {"inputs": truncated_text}
     hf_response = requests.post(SENTIMENT_API_URL,
                                 headers=HUGGINGFACE_HEADERS,
-                                json=truncated_text).json()[0]
+                                json=payload).json()[0]
     for label in hf_response:
         if label['label'] == 'LABEL_2':
             if label['score'] >= 0.5:
@@ -117,9 +119,10 @@ def hf_prompt_positive_sentiment(prompt, response):
 def hf_response_neutral_sentiment(prompt, response):
     max_length = 512
     truncated_text = response[:max_length]
+    payload = {"inputs": truncated_text}
     hf_response = requests.post(SENTIMENT_API_URL,
                                 headers=HUGGINGFACE_HEADERS,
-                                json=truncated_text).json()[0]
+                                json=payload).json()[0]
     for label in hf_response:
         if label['label'] == 'LABEL_1':
             if label['score'] >= 0.5:
@@ -131,9 +134,10 @@ def hf_response_neutral_sentiment(prompt, response):
 def hf_prompt_neutral_sentiment(prompt, response):
     max_length = 512
     truncated_text = prompt[:max_length]
+    payload = {"inputs": truncated_text}
     hf_response = requests.post(SENTIMENT_API_URL,
                                 headers=HUGGINGFACE_HEADERS,
-                                json=truncated_text).json()[0]
+                                json=payload).json()[0]
     for label in hf_response:
         if label['label'] == 'LABEL_1':
             if label['score'] >= 0.5:
@@ -145,9 +149,10 @@ def hf_prompt_neutral_sentiment(prompt, response):
 def hf_response_negative_sentiment(prompt, response):
     max_length = 512
     truncated_text = response[:max_length]
+    payload = {"inputs": truncated_text}
     hf_response = requests.post(SENTIMENT_API_URL,
                                 headers=HUGGINGFACE_HEADERS,
-                                json=truncated_text).json()[0]
+                                json=payload).json()[0]
     for label in hf_response:
         if label['label'] == 'LABEL_0':
             if label['score'] >= 0.5:
@@ -159,9 +164,10 @@ def hf_response_negative_sentiment(prompt, response):
 def hf_prompt_negative_sentiment(prompt, response):
     max_length = 512
     truncated_text = prompt[:max_length]
+    payload = {"inputs": truncated_text}
     hf_response = requests.post(SENTIMENT_API_URL,
                                 headers=HUGGINGFACE_HEADERS,
-                                json=truncated_text).json()[0]
+                                json=payload).json()[0]
     for label in hf_response:
         if label['label'] == 'LABEL_0':
             if label['score'] >= 0.5:
@@ -173,9 +179,10 @@ def hf_prompt_negative_sentiment(prompt, response):
 def hf_response_toxicicity(prompt, response):
     max_length = 512
     truncated_text = response[:max_length]
-    hf_response = requests.post(TOXIC_API_URL,
+    payload = {"inputs": truncated_text}
+    hf_response = requests.post(SENTIMENT_API_URL,
                                 headers=HUGGINGFACE_HEADERS,
-                                json=truncated_text).json()[0]
+                                json=payload).json()[0]
     for label in hf_response:
         if label['label'] == 'toxic':
             if label['score'] >= 0.5:
@@ -187,9 +194,10 @@ def hf_response_toxicicity(prompt, response):
 def hf_prompt_toxicicity(prompt, response):
     max_length = 512
     truncated_text = prompt[:max_length]
-    hf_response = requests.post(TOXIC_API_URL,
+    payload = {"inputs": truncated_text}
+    hf_response = requests.post(SENTIMENT_API_URL,
                                 headers=HUGGINGFACE_HEADERS,
-                                json=truncated_text).json()[0]
+                                json=payload).json()[0]
     for label in hf_response:
         if label['label'] == 'toxic':
             if label['score'] >= 0.5:
