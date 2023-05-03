@@ -1,6 +1,7 @@
 import re
 
 import cohere
+import dotenv
 import openai
 import requests
 from cohere.responses.classify import Example
@@ -85,108 +86,119 @@ SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twit
 TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
 
 
-def query(payload, url):
-    response = requests.post(url, headers=HUGGINGFACE_HEADERS, json=payload)
-    return response.json()
-
-
-# These queries via huggingface are free but may need to wait for models to load.
-
-hf_sentiment_query = lambda p: query(p, SENTIMENT_API_URL)[0]
-hf_toxic_query = lambda p: query(p, TOXIC_API_URL)[0]
-
-
 def hf_response_positive_sentiment(prompt, response):
-    labels = hf_sentiment_query(response)
-    for label in labels:
+    max_length = 512
+    truncated_text = response[:max_length]
+    hf_response = requests.post(SENTIMENT_API_URL,
+                                headers=HUGGINGFACE_HEADERS,
+                                json=truncated_text).json()[0]
+    for label in hf_response:
         if label['label'] == 'LABEL_2':
             if label['score'] >= 0.5:
                 return 1
             else:
                 return 0
-    return None
 
 
 def hf_prompt_positive_sentiment(prompt, response):
-    labels = hf_sentiment_query(prompt)
-    for label in labels:
+    max_length = 512
+    truncated_text = prompt[:max_length]
+    hf_response = requests.post(SENTIMENT_API_URL,
+                                headers=HUGGINGFACE_HEADERS,
+                                json=truncated_text).json()[0]
+    for label in hf_response:
         if label['label'] == 'LABEL_2':
             if label['score'] >= 0.5:
                 return 1
             else:
                 return 0
-    return None
 
 
 def hf_response_neutral_sentiment(prompt, response):
-    labels = hf_sentiment_query(response)
-    for label in labels:
+    max_length = 512
+    truncated_text = response[:max_length]
+    hf_response = requests.post(SENTIMENT_API_URL,
+                                headers=HUGGINGFACE_HEADERS,
+                                json=truncated_text).json()[0]
+    for label in hf_response:
         if label['label'] == 'LABEL_1':
             if label['score'] >= 0.5:
                 return 1
             else:
                 return 0
-    return None
 
 
 def hf_prompt_neutral_sentiment(prompt, response):
-    labels = hf_sentiment_query(prompt)
-    for label in labels:
+    max_length = 512
+    truncated_text = prompt[:max_length]
+    hf_response = requests.post(SENTIMENT_API_URL,
+                                headers=HUGGINGFACE_HEADERS,
+                                json=truncated_text).json()[0]
+    for label in hf_response:
         if label['label'] == 'LABEL_1':
             if label['score'] >= 0.5:
                 return 1
             else:
                 return 0
-    return None
 
 
 def hf_response_negative_sentiment(prompt, response):
-    labels = hf_sentiment_query(response)
-    for label in labels:
+    max_length = 512
+    truncated_text = response[:max_length]
+    hf_response = requests.post(SENTIMENT_API_URL,
+                                headers=HUGGINGFACE_HEADERS,
+                                json=truncated_text).json()[0]
+    for label in hf_response:
         if label['label'] == 'LABEL_0':
             if label['score'] >= 0.5:
                 return 1
             else:
                 return 0
-    return None
 
 
 def hf_prompt_negative_sentiment(prompt, response):
-    labels = hf_sentiment_query(prompt)
-    for label in labels:
+    max_length = 512
+    truncated_text = prompt[:max_length]
+    hf_response = requests.post(SENTIMENT_API_URL,
+                                headers=HUGGINGFACE_HEADERS,
+                                json=truncated_text).json()[0]
+    for label in hf_response:
         if label['label'] == 'LABEL_0':
             if label['score'] >= 0.5:
                 return 1
             else:
                 return 0
-    return None
 
 
 def hf_response_toxicicity(prompt, response):
-    labels = hf_toxic_query(response)
-    for label in labels:
+    max_length = 512
+    truncated_text = response[:max_length]
+    hf_response = requests.post(TOXIC_API_URL,
+                                headers=HUGGINGFACE_HEADERS,
+                                json=truncated_text).json()[0]
+    for label in hf_response:
         if label['label'] == 'toxic':
             if label['score'] >= 0.5:
                 return 1
             else:
                 return 0
-    return None
 
 
 def hf_prompt_toxicicity(prompt, response):
-    labels = hf_toxic_query(prompt)
-    for label in labels:
+    max_length = 512
+    truncated_text = prompt[:max_length]
+    hf_response = requests.post(TOXIC_API_URL,
+                                headers=HUGGINGFACE_HEADERS,
+                                json=truncated_text).json()[0]
+    for label in hf_response:
         if label['label'] == 'toxic':
             if label['score'] >= 0.5:
                 return 1
             else:
                 return 0
-    return None
 
 
 # cohere
-
-import dotenv
 
 config = dotenv.dotenv_values(".env")
 

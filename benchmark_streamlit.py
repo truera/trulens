@@ -83,5 +83,4 @@ else:
     st.write(function_choice, 'scored: ', '{:.1%}'.format(score),
              'on the benchmark: ', dataset_choice)
 
-    if st.button('See Examples'):
-        st.write(samples_with_feedback)
+    st.write(samples_with_feedback)
