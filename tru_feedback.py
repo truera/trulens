@@ -214,7 +214,7 @@ cohere.api_key = config['COHERE_API_KEY']
 
 co = cohere.Client(cohere.api_key)
 
-examples = [
+cohere_sentiment_examples = [
     Example("The order came 5 days early", "positive"),
     Example("The item exceeded my expectations", "positive"),
     Example("The package was damaged", "negative"),
@@ -228,7 +228,7 @@ examples = [
 def cohere_response_sentiment(prompt, response):
     sentiment = co.classify(model='large',
                             inputs=[response],
-                            examples=examples)[0].prediction
+                            examples=cohere_sentiment_examples)[0].prediction
 
     if sentiment == "positive":
         return 1
@@ -237,10 +237,38 @@ def cohere_response_sentiment(prompt, response):
 
 
 def cohere_prompt_sentiment(prompt, response):
-    sentiment = co.classify(model='large', inputs=[prompt],
-                            examples=examples)[0].prediction
+    sentiment = co.classify(model='large',
+                            inputs=[prompt],
+                            examples=cohere_sentiment_examples)[0].prediction
 
     if sentiment == "positive":
+        return 1
+    else:
+        return 0
+
+
+cohere_disinfo_examples = [
+    Example(
+        "Bud Light Official SALES REPORT Just Released ′ 50% DROP In Sales ′ Total COLLAPSE ′ Bankruptcy?",
+        "disinformation"),
+    Example(
+        "The Centers for Disease Control and Prevention quietly confirmed that at least 118,000 children and young adults have “died suddenly” in the U.S. since the COVID-19 vaccines rolled out,",
+        "disinformation"),
+    Example(
+        "Silicon Valley Bank collapses, in biggest failure since financial crisis",
+        "real"),
+    Example(
+        "Biden admin says Alabama health officials didn’t address sewage system failures disproportionately affecting Black residents",
+        "real")
+]
+
+
+def cohere_response_disinformation(prompt, response):
+    disinfo = co.classify(model='large',
+                          inputs=[response],
+                          examples=cohere_disinfo_examples)[0].prediction
+
+    if disinfo == "disinformation":
         return 1
     else:
         return 0
@@ -267,5 +295,6 @@ FEEDBACK_FUNCTIONS = {
     'huggingface-response-toxic': hf_response_toxicicity,
     'huggingface-prompt-toxic': hf_prompt_toxicicity,
     'cohere-response-sentiment': cohere_response_sentiment,
-    'cohere-prompt-sentiment': cohere_prompt_sentiment
+    'cohere-prompt-sentiment': cohere_prompt_sentiment,
+    'cohere-response-disinformation': cohere_response_disinformation
 }
