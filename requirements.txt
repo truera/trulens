@@ -21,3 +21,4 @@ streamlit
 python-dotenv
 datasets
 cohere
+kaggle
