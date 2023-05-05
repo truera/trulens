@@ -1,5 +1,7 @@
 # from llama.hf import LLaMATokenizer
 
+import pytest
+import pinecone
 import torch
 from langchain import LLMChain, PromptTemplate
 from langchain.chains import (ConversationalRetrievalChain,
@@ -9,8 +11,9 @@ from langchain.llms import HuggingFacePipeline
 from langchain.vectorstores import Pinecone
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
-from keys import *
+from keys import PINECONE_API_KEY, PINECONE_ENV
 from tru_chain import TruChain
+
 
 class TestTruChain():
 
@@ -18,6 +21,9 @@ class TestTruChain():
         print("setup")
 
         self.llm_model_id = "gpt2"
+        # This model is pretty bad but using it for tests because it is free and
+        # relatively small.
+
         # model_id = "decapoda-research/llama-7b-hf"
         # model_id = "decapoda-research/llama-13b-hf"
 
@@ -40,7 +46,10 @@ class TestTruChain():
         self.llm = HuggingFacePipeline(pipeline=self.pipe)
 
     def test_qa_prompt(self):
+        # Test of a small q/a chain using a prompt and a single call to an llm.
+
         # llm = OpenAI()
+
         template = """Q: {question} A:"""
         prompt = PromptTemplate(template=template,
                                 input_variables=["question"])
@@ -48,19 +57,29 @@ class TestTruChain():
 
         tru_chain = TruChain(chain=llm_chain)
 
+        assert tru_chain.model is not None
+
         tru_chain.run(dict(question="How are you?"))
         tru_chain.run(dict(question="How are you today?"))
 
         assert len(tru_chain.records) == 2
 
-        assert tru_chain.model is not None
-
+    @pytest.mark.slow
     def test_qa_db(self):
+        # Test a q/a chain that uses a vector store to look up context to include in
+        # llm prompt.
+
+        # WARNING: this test incurs calls to pinecone and openai APIs and may cost money.
+
         index_name = "llmdemo"
 
         embedding = OpenAIEmbeddings(
             model='text-embedding-ada-002')  # 1536 dims
 
+        pinecone.init(
+            api_key=PINECONE_API_KEY,  # find at app.pinecone.io
+            environment=PINECONE_ENV  # next to api key in console
+        )
         docsearch = Pinecone.from_existing_index(index_name=index_name,
                                                  embedding=embedding)
 
@@ -71,8 +90,16 @@ class TestTruChain():
             llm=self.llm, retriever=retriever, return_source_documents=True)
 
         tru_chain = TruChain(chain)
+        assert tru_chain.model is not None
+
+        tru_chain(dict(question="How do I add a model?", chat_history=[]))
+
+        assert len(tru_chain.records) == 1
 
     def test_sequential(self):
+        # Test of a sequential chain that contains the same llm twice with
+        # different prompts.
+
         template = """Q: {question} A:"""
         prompt = PromptTemplate(template=template,
                                 input_variables=["question"])
@@ -90,20 +117,20 @@ class TestTruChain():
             question=
             "What is the average air speed velocity of a laden swallow?")
 
-        tru_chain_2 = TruChain(seq_chain)
+        tru_chain = TruChain(seq_chain)
+        assert tru_chain.model is not None
 
         # This run should not be recorded.
         seq_chain.run(
             question=
             "What is the average air speed velocity of a laden swallow? again")
-        
+
         # These two should.
-        tru_chain_2.run(
+        tru_chain.run(
             question=
             "What is the average air speed velocity of a laden swallow?")
-        tru_chain_2.run(
+        tru_chain.run(
             question=
             "What is the average air speed velocity of a laden swallow?")
 
-        assert len(tru_chain_2.records) == 2
-        assert tru_chain_2.model is not None
+        assert len(tru_chain.records) == 2

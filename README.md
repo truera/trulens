@@ -21,6 +21,7 @@ You can then run:
 
 `streamlit run benchmark_streamlit.py` - benchmarking application for feedback functions against static datasets.
 # Additional Contents
+
 - `tru.py` - add_data implementation for collecting feedback
 - `tru_feedback.py` - implementation of feedback functions
 - `requirements.txt` - pip requirements
