@@ -30,3 +30,5 @@ You can then run:
 - `webscrape` - folder for storing cached web scape metrials used for creating a document database for bot.
 - `webindex.ipynb` - web scraper and document index uploader (to pinecone) .
 - `piotr-workshop.ipynb` - unsorted things Piotr is trying out .
+- `tru_chain.py` -- langchain.Chain wrapper .
+- `test_tru_chain.py` -- examples/tests for wrapper.
