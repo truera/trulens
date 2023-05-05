@@ -17,7 +17,7 @@ from tru_chain import TruChain
 
 class TestTruChain():
 
-    def setup(self):
+    def setup_method(self):
         print("setup")
 
         self.llm_model_id = "gpt2"
@@ -64,7 +64,7 @@ class TestTruChain():
 
         assert len(tru_chain.records) == 2
 
-    @pytest.mark.slow
+    @pytest.mark.nonfree
     def test_qa_db(self):
         # Test a q/a chain that uses a vector store to look up context to include in
         # llm prompt.
