@@ -20,3 +20,4 @@ pdfminer.six
 streamlit
 python-dotenv
 datasets
+cohere
