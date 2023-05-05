@@ -3,6 +3,7 @@ import os
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION']='python'
 
 import logging
+import dotenv
 from keys import (PINECONE_API_KEY, PINECONE_ENV, SLACK_SIGNING_SECRET,
                      SLACK_TOKEN)
 

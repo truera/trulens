@@ -1,6 +1,5 @@
 # from llama.hf import LLaMATokenizer
 
-import pytest
 import torch
 from langchain import LLMChain, PromptTemplate
 from langchain.chains import (ConversationalRetrievalChain,
@@ -10,11 +9,14 @@ from langchain.llms import HuggingFacePipeline
 from langchain.vectorstores import Pinecone
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
+from keys import *
 from tru_chain import TruChain
 
-class TruChainTests():
+class TestTruChain():
 
-    def setUp(self):
+    def setup(self):
+        print("setup")
+
         self.llm_model_id = "gpt2"
         # model_id = "decapoda-research/llama-7b-hf"
         # model_id = "decapoda-research/llama-13b-hf"

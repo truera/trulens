@@ -246,7 +246,7 @@ class TruChain(Chain):
         # .
         for cp in [c]:
             # All of mro() may need instrumentation here if some subchains call
-            # superchains, and we want to capture the intermediate steps
+            # superchains, and we want to capture the intermediate steps.
 
             if "langchain" not in str(cp):
                 continue
