@@ -15,6 +15,8 @@ beautifulsoup4
 unstructured
 pypdf
 pdfminer.six
+
+# other requirements:
 streamlit
 python-dotenv
 datasets
