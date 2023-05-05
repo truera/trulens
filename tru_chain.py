@@ -3,17 +3,33 @@ from dataclasses import dataclass, replace
 from datetime import datetime
 from inspect import BoundArguments, signature
 from typing import Any, Dict, List, Sequence, Tuple, Union
+import pydantic
 
 from langchain.chains.base import Chain
 
 @dataclass
 class ChainCall:
+    """
+    Record of the execution of a single chain.
+    """
+
     input: Dict
     output: Any = None
     error: BaseException = None
 
     start_time: datetime = None
     end_time: datetime = None
+
+@dataclass
+class ChainDef:
+    """
+    Chain definition. May not need this in the future once chains become
+    serializable.
+    """
+
+    cls: str
+    module: str
+    fields: Dict[str, Any] = None
 
 class TruChain(Chain):
     """
@@ -97,12 +113,20 @@ class TruChain(Chain):
     def __model(self, obj, address, conf=None) -> Dict:
         conf = conf or dict()
 
-        conf['class'] = obj.__class__.__name__
-        conf['module'] = obj.__class__.__module__
+        cdef = ChainDef(cls = obj.__class__.__name__, module=obj.__class__.__module__)
 
-        if hasattr(obj, "dict"): # pydantic.BaseModel subclasses like Chain
+        if isinstance(obj, Chain): # like Chain
+            subdefs = dict()
 
-            conf['fields'] = obj.dict() # Recursively produces dicts here.
+            for f in obj.__fields__:
+                v = getattr(obj, f)
+
+                if isinstance(v, Chain):
+                    self.__model(v, address=address + (f, ), conf=subdefs)
+
+            cdef = replace(cdef, fields=subdefs)
+
+            # conf['fields'] = obj.dict() # Recursively produces dicts here.
 
         else:
             # For non pydantic objects, traverse their structure and capture any
@@ -137,6 +161,8 @@ class TruChain(Chain):
 
                 else:
                     print(f"WARNING: key {k} of {obj} address {address} not captured in model definition.")
+
+        conf[self._address_hashable(address)] = cdef
 
         return conf
 
