@@ -193,28 +193,6 @@ class TruChain(Chain):
     def output_keys(self) -> List[str]:
         return self.chain.output_keys
 
-    def _get_local_in_call_stack(self,
-                                 key: str,
-                                 func: Callable,
-                                 offset: int = 1) -> Optional[Any]:
-        """
-        Get the value of the local variable named `key` in the stack at the
-        nearest frame executing `func`. Returns None if `func` is not in call
-        stack. Raises RuntimeError if `func` is in call stack but does not have
-        `key` in its locals.
-        """
-
-        for fi in stack()[offset + 1:]:  # + 1 to skip this method itself
-            if id(fi.frame.f_code) == id(func.__code__):
-                locs = fi.frame.f_locals
-                if key in locs:
-                    return locs[key]
-                else:
-                    raise RuntimeError(
-                        f"No local named {key} in {func} found.")
-
-        return None
-
     # Chain requirement
     def _call(self, *args, **kwargs) -> Any:
         """
@@ -249,6 +227,28 @@ class TruChain(Chain):
             return ret
         else:
             raise error
+
+    def _get_local_in_call_stack(self,
+                                 key: str,
+                                 func: Callable,
+                                 offset: int = 1) -> Optional[Any]:
+        """
+        Get the value of the local variable named `key` in the stack at the
+        nearest frame executing `func`. Returns None if `func` is not in call
+        stack. Raises RuntimeError if `func` is in call stack but does not have
+        `key` in its locals.
+        """
+
+        for fi in stack()[offset + 1:]:  # + 1 to skip this method itself
+            if id(fi.frame.f_code) == id(func.__code__):
+                locs = fi.frame.f_locals
+                if key in locs:
+                    return locs[key]
+                else:
+                    raise RuntimeError(
+                        f"No local named {key} in {func} found.")
+
+        return None
 
     def _select(self, select: Union[Selection, Sequence[Selection]]):
         ret = []
