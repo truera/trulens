@@ -21,16 +21,18 @@ Address = Tuple[Union[Any, str, int], ...]
 from dataclasses import dataclass
 from typing import Tuple
 
+
 @dataclass
 class Selection():
-    model: Address = () # root chain, the argument to TruChain.__init__
+    model: Address = ()  # root chain, the argument to TruChain.__init__
 
-    param: Address = None # model parameter
+    param: Address = None  # model parameter
 
-    record: Address = None 
+    record: Address = None
 
-@dataclass
-class ChainCall:
+
+# @dataclass
+class ChainCall(pydantic.BaseModel):
     """
     Record of the execution of a single chain.
     """
@@ -39,22 +41,22 @@ class ChainCall:
     input: Dict[str, Any]
 
     # output if successful call
-    output: Any = None
+    output: Optional[Any] = None
 
-    # exception if not successful
-    error: BaseException = None
+    # exception text if not successful
+    error: Optional[str] = None
 
-    stack: List[str] = None
+    stack: Optional[List[Address]] = None
 
     # runtime info
-    start_time: datetime = None
-    end_time: datetime = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
 
     # process id for debugging multiprocessing
-    pid: int = None
+    pid: Optional[int] = None
 
     # thread id for debuggin threading
-    tid: int = None
+    tid: Optional[int] = None
 
     def __str__(self, tab=""):
         sub_tab = tab + "  "
@@ -75,8 +77,9 @@ class ChainCall:
         return str(self)
 
 
-@dataclass
-class ObjDef:
+# TODO: remove all this, use langchain.dict() and langchain.chains.loading.load_chain_from_config 
+# @dataclass
+class ObjDef(pydantic.BaseModel):
     """
     Chain definition. May not need this in the future once chains and their
     dependencies become more consistently serializable.
@@ -89,19 +92,19 @@ class ObjDef:
     module: str
 
     # value for basic objects that do not need serialization
-    value: Any = None
+    value: Optional[Any] = None
 
     # serialization for objects that can be serialized
-    dump: bytes = None
+    dump: Optional[bytes] = None
 
     # id for debugging scenarios where the same chain is included in a superchain more than once
     ident: int = -1
 
     # address of the object for referring to it even when we don't have the live object
-    address: Address = None
+    address: Optional[Address] = None
 
     # fields for objects that expose fields, i.e. pydantic.BaseModel which langchain.Chain uses.
-    fields: Dict[str, Any] = None
+    fields: Optional[Dict[str, Any]] = None
 
     def __str__(self, tab=""):
         sub_tab = tab + "  "
@@ -181,7 +184,7 @@ class TruChain(Chain):
 
         self._instrument(self.chain, ())
         self.model = self._current_model()
-        self.model_dict = asdict(self.model)
+        self.model_dict = self.model
 
     # Chain requirement
     @property
@@ -215,7 +218,8 @@ class TruChain(Chain):
         try:
             ret = self.chain._call(*args, **kwargs)
         except BaseException as e:
-            error = e
+            error = str(e)
+            print(f"WARNING: {e}")
 
         self.recording = False
 
@@ -267,26 +271,28 @@ class TruChain(Chain):
                 if s.param is not None:
                     assert s.record is None, "Selection wants a model parameter and a record at the same time. Provide these as separate Selection arguments to _select instead."
 
-                    temp = self._get_obj_at_address(s.model + s.param, obj = self)
+                    temp = self._get_obj_at_address(s.model + s.param,
+                                                    obj=self)
 
                 elif s.record is not None:
                     if s.model in record:
                         temp = record[s.model]
 
-                        temp = self._get_obj_at_address(s.record, obj = record)
+                        temp = self._get_obj_at_address(s.record, obj=record)
 
                     else:
                         temp = None
 
                 else:
-                    raise ValueError("Selection selected neither a model parameter nor a record field.")
+                    raise ValueError(
+                        "Selection selected neither a model parameter nor a record field."
+                    )
 
                 row = row + (temp, )
 
             ret.append(row)
 
         return ret
-
 
     def _get_obj_at_address(self, address: Address, obj=None):
         obj = obj or self.chain
@@ -351,11 +357,11 @@ class TruChain(Chain):
         # if obj_id in indexed:
         #     return indexed[obj_id]
 
-        cdef = ObjDef(cls=obj.__class__.__name__,
-                      module=obj.__class__.__module__,
-                      address=self._address_hashable(address),
-                      ident=obj_id)
-        
+        cdef = dict(cls=obj.__class__.__name__,
+                    module=obj.__class__.__module__,
+                    address=self._address_hashable(address),
+                    ident=obj_id)
+
         indexed[obj_id] = cdef
 
         if isinstance(obj, pydantic.BaseModel):
@@ -368,9 +374,11 @@ class TruChain(Chain):
                     continue
                 # print(f, obj_id, id(v))
 
-                subdefs[f] = self.__model(v, address=address + (f, ), indexed=indexed)
+                subdefs[f] = self.__model(v,
+                                          address=address + (f, ),
+                                          indexed=indexed)
 
-            cdef = replace(cdef, fields=subdefs)
+            cdef['fields'] = subdefs
 
             indexed[obj_id] = cdef
 
@@ -384,19 +392,23 @@ class TruChain(Chain):
                 if id(sobj) in indexed:
                     continue
 
-                subdefs.append(self.__model(sobj, address + (i, ), indexed=indexed))
+                subdefs.append(
+                    self.__model(sobj, address + (i, ), indexed=indexed))
 
-            cdef = replace(cdef, value=subdefs)
+            cdef['value'] = subdefs
 
             indexed[obj_id] = cdef
 
             return subdefs
 
-        else: # not isinstance(obj, pydantic.BaseModel):
-            cdef = replace(cdef, value=obj)
+        else:  # not isinstance(obj, pydantic.BaseModel):
+            cdef['value'] = obj
+
             return cdef
 
-        
+    @property
+    def _chain_type(self):
+        return "TruChain"
 
     def _instrument_chain_type(self, chain, prop):
         """
@@ -494,7 +506,7 @@ class TruChain(Chain):
                     k: v
                     for k, v in bindings.arguments.items() if k != "self"
                 }
-                row = ChainCall(input=nonself,
+                row_args = dict(input=nonself,
                                 start_time=start_time,
                                 end_time=end_time,
                                 pid=os.getpid(),
@@ -502,11 +514,11 @@ class TruChain(Chain):
                                 stack=chain_stack)
 
                 if error is not None:
-                    row = replace(row, error=error)
+                    row_args['error'] = error
                 else:
-                    row = replace(row, output=ret)
+                    row_args['output'] = ret
 
-                record[key].append(row)
+                record[key].append(ChainCall(**row_args))
 
                 if error is not None:
                     raise error
