@@ -15,7 +15,9 @@ beautifulsoup4
 unstructured
 pypdf
 pdfminer.six
-
+# TruChain requirements:
+tinydb
+pydantic
 # other requirements:
 streamlit
 python-dotenv
