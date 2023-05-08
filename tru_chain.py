@@ -1,13 +1,17 @@
+import json
 import os
+import threading as th
 from collections import defaultdict
-from dataclasses import dataclass, replace, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from inspect import BoundArguments, signature, stack
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
-import threading as th
-import multiprocessing as mp
-import pydantic
 from pprint import PrettyPrinter
+from types import NoneType
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+# from tinydb import TinyDB, Query
+import tinydb
+
+import pydantic
 
 pp = PrettyPrinter()
 
@@ -18,8 +22,97 @@ from langchain.chains.base import Chain
 # app).
 Address = Tuple[Union[Any, str, int], ...]
 
-from dataclasses import dataclass
+# from dataclasses import dataclass
 from typing import Tuple
+"""
+class MaybeJSONDecoder(json.JSONDecoder):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.decoded = dict()
+
+    def _build(self, struct):
+        print(f"building {struct}")
+        if isinstance(struct, Dict) and "_pydantic" in struct:
+            metadata = struct['_pydantic']
+            print(f"metadata={metadata}")
+
+            data = {k: self._build(v) for k, v in struct.items() if k != "_pydantic"}
+
+            print(data)
+
+            mod = __import__(metadata['module'])
+            cls = getattr(mod, metadata['class'])
+            return cls.parse_obj(data)
+
+        elif isinstance(struct, Dict):
+            data = {k: self._build(v) for k, v in struct.items()}
+            return data
+
+        return struct
+
+    def decode(self, s):
+        struct = super().decode(s)
+
+        return self._build(struct)
+
+
+class MaybeJSONEncoder(json.JSONEncoder):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.encoded = dict()
+
+    # @staticmethod
+    def default(self, obj):
+        if isinstance(obj, (str, int, float, bool, NoneType)):
+            return obj
+        
+        obj_id = id(obj)
+        # print(obj_id)
+
+        if obj_id in self.encoded:
+            return self.encoded[obj_id]#{'_ref': obj_id}
+
+        self.encoded[obj_id] = {'_ref': obj_id}
+
+        metadata = {
+                'class': obj.__class__.__name__,
+                'module': obj.__class__.__module__,
+                'id': id(obj)
+            }
+
+        src = dict()
+
+        print(f"defaulting {type(obj)}")
+
+        if isinstance(obj, pydantic.BaseModel):
+            try:
+                src = obj.dict(models_as_dict=False)
+            except BaseException as e:
+                metadata['error'] = str(e)
+                
+            src['_pydantic'] = metadata
+            self.encoded[obj_id] = src
+
+            return src
+
+        elif isinstance(obj, dict):
+            return {k: self.default(v) for k, v in obj.items()}
+        
+        elif isinstance(obj, list):
+            return [self.default(v) for v in obj]
+
+        else:
+            return {
+                '_nonserial': metadata
+            }
+    
+    # @staticmethod
+    def encode(self, obj):
+        print(f"encoding {obj}")
+        obj = self.default(obj)
+        return super().encode(obj)
+"""
 
 
 @dataclass
@@ -46,7 +139,7 @@ class ChainCall(pydantic.BaseModel):
     # exception text if not successful
     error: Optional[str] = None
 
-    stack: Optional[List[Address]] = None
+    stack: Optional[List[str]] = None
 
     # runtime info
     start_time: Optional[datetime] = None
@@ -77,7 +170,7 @@ class ChainCall(pydantic.BaseModel):
         return str(self)
 
 
-# TODO: remove all this, use langchain.dict() and langchain.chains.loading.load_chain_from_config 
+# TODO: remove all this, use langchain.dict() and langchain.chains.loading.load_chain_from_config
 # @dataclass
 class ObjDef(pydantic.BaseModel):
     """
@@ -101,7 +194,7 @@ class ObjDef(pydantic.BaseModel):
     ident: int = -1
 
     # address of the object for referring to it even when we don't have the live object
-    address: Optional[Address] = None
+    address: Optional[str] = None
 
     # fields for objects that expose fields, i.e. pydantic.BaseModel which langchain.Chain uses.
     fields: Optional[Dict[str, Any]] = None
@@ -159,18 +252,33 @@ class TruChain(Chain):
     recording: bool = False
 
     # Store records here.
-    records: List[Dict[Address, List[ChainCall]]] = []
+    # records: List[Dict[Address, List[ChainCall]]] = []
+
+    db: tinydb.TinyDB = None
+    records: tinydb.table.Table = None
+    models: tinydb.table.Table = None
 
     # Store records as dicts here.
     # record_dicts: List[Dict[Address, List[ChainCall]]] = []
 
     # Store model definition here.
-    model: ObjDef = None
+    model: Dict = None
 
     # Store model definition as a dictionary for remote apps.
-    model_dict: Dict = None
+    # model_dict: Dict = None
+    """
+    class Config:
+        encoder = MaybeJSONEncoder()
+        decoder = MaybeJSONDecoder()
 
-    def __init__(self, chain: Chain):
+        def json_dumps(o, default):
+            return TruChain.Config.encoder.encode(o)
+        
+        def json_loads(s):
+            return TruChain.Config.decoder.decode(s)
+    """
+
+    def __init__(self, chain: Chain, db: tinydb.TinyDB = None):
         """
         Wrap a chain for monitoring.
 
@@ -183,8 +291,15 @@ class TruChain(Chain):
         self.chain = chain
 
         self._instrument(self.chain, ())
-        self.model = self._current_model()
-        self.model_dict = self.model
+
+        self.db = db or tinydb.TinyDB("truchain.tinydb.json")
+
+        self.records = self.db.table("records")
+        self.models = self.db.table("models")
+
+        self.model = self.dict()
+
+        self.models.insert(self.model)
 
     # Chain requirement
     @property
@@ -226,6 +341,7 @@ class TruChain(Chain):
         assert len(record) > 0, "No information recorded in call."
 
         self.records.append(record)
+        self.table_records.insert(dict(record))
 
         if error is None:
             return ret
@@ -269,7 +385,10 @@ class TruChain(Chain):
 
             for s in select:
                 if s.param is not None:
-                    assert s.record is None, "Selection wants a model parameter and a record at the same time. Provide these as separate Selection arguments to _select instead."
+                    assert s.record is None, (
+                        "Selection wants a model parameter and a record at the same time. "
+                        "Provide these as separate Selection arguments to _select instead."
+                    )
 
                     temp = self._get_obj_at_address(s.model + s.param,
                                                     obj=self)
@@ -330,7 +449,7 @@ class TruChain(Chain):
             )
 
     @staticmethod
-    def _address_hashable(address: Address) -> Address:
+    def _address_hashable(address: Address) -> str:#Address:
         ret = ()
 
         for part in address:
@@ -339,72 +458,7 @@ class TruChain(Chain):
             else:
                 ret += (part.__class__.__name__, )
 
-        return ret
-
-    def _current_model(self) -> Dict:
-        return self.__model(self.chain, address=())
-
-    def __model(self, obj, address, indexed: Dict = None) -> Any:
-        if isinstance(obj, str):
-            return obj
-        elif isinstance(obj, int):
-            return obj
-
-        indexed = indexed or dict()
-
-        obj_id = id(obj)
-
-        # if obj_id in indexed:
-        #     return indexed[obj_id]
-
-        cdef = dict(cls=obj.__class__.__name__,
-                    module=obj.__class__.__module__,
-                    address=self._address_hashable(address),
-                    ident=obj_id)
-
-        indexed[obj_id] = cdef
-
-        if isinstance(obj, pydantic.BaseModel):
-            subdefs = dict()
-
-            for f in obj.__fields__:  # pdantic.BaseModel
-                v = getattr(obj, f)
-
-                if id(v) in indexed:
-                    continue
-                # print(f, obj_id, id(v))
-
-                subdefs[f] = self.__model(v,
-                                          address=address + (f, ),
-                                          indexed=indexed)
-
-            cdef['fields'] = subdefs
-
-            indexed[obj_id] = cdef
-
-            return cdef
-
-        elif isinstance(obj, Sequence):
-            subdefs = []
-
-            for i, sobj in enumerate(obj):
-                # print(i, obj_id, id(sobj))
-                if id(sobj) in indexed:
-                    continue
-
-                subdefs.append(
-                    self.__model(sobj, address + (i, ), indexed=indexed))
-
-            cdef['value'] = subdefs
-
-            indexed[obj_id] = cdef
-
-            return subdefs
-
-        else:  # not isinstance(obj, pydantic.BaseModel):
-            cdef['value'] = obj
-
-            return cdef
+        return ".".join(ret)
 
     @property
     def _chain_type(self):
@@ -488,7 +542,7 @@ class TruChain(Chain):
                 chain_stack = self._get_local_in_call_stack(
                     key="chain_stack", func=wrapper, offset=1) or []
                 chain_stack = chain_stack + [key]  # args[0] is self
-                #chain_stack = []
+                # chain_stack = []
 
                 try:
                     # Using sig bind here so we can produce a list of key-value
@@ -507,8 +561,8 @@ class TruChain(Chain):
                     for k, v in bindings.arguments.items() if k != "self"
                 }
                 row_args = dict(input=nonself,
-                                start_time=start_time,
-                                end_time=end_time,
+                                start_time=str(start_time),
+                                end_time=str(end_time),
                                 pid=os.getpid(),
                                 tid=th.get_native_id(),
                                 stack=chain_stack)
@@ -518,7 +572,8 @@ class TruChain(Chain):
                 else:
                     row_args['output'] = ret
 
-                record[key].append(ChainCall(**row_args))
+                #record[key].append(ChainCall(**row_args).dict())
+                record[key].append(row_args)
 
                 if error is not None:
                     raise error
