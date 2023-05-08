@@ -57,7 +57,7 @@ class TestTruChain():
 
         tru_chain = TruChain(chain=llm_chain)
 
-        assert tru_chain.model is not None
+        assert tru_chain._model is not None
 
         tru_chain.run(dict(question="How are you?"))
         tru_chain.run(dict(question="How are you today?"))
@@ -90,7 +90,7 @@ class TestTruChain():
             llm=self.llm, retriever=retriever, return_source_documents=True)
 
         tru_chain = TruChain(chain)
-        assert tru_chain.model is not None
+        assert tru_chain._model is not None
 
         tru_chain(dict(question="How do I add a model?", chat_history=[]))
 
@@ -118,7 +118,7 @@ class TestTruChain():
             "What is the average air speed velocity of a laden swallow?")
 
         tru_chain = TruChain(seq_chain)
-        assert tru_chain.model is not None
+        assert tru_chain._model is not None
 
         # This run should not be recorded.
         seq_chain.run(
