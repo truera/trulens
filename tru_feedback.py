@@ -8,6 +8,78 @@ from cohere.responses.classify import Example
 
 from keys import HUGGINGFACE_HEADERS
 
+# openai
+
+
+def openai_moderation_response_hate(prompt, response):
+    openai_response = openai.Moderation.create(input=response)
+    return int(openai_response["results"][0]["categories"]["hate"])
+
+
+def openai_moderation_prompt_hate(prompt, response):
+    openai_response = openai.Moderation.create(input=prompt)
+    return int(openai_response["results"][0]["categories"]["hate/threat"])
+
+
+def openai_moderation_response_hatethreatening(prompt, response):
+    openai_response = openai.Moderation.create(input=response)
+    return int(openai_response["results"][0]["categories"]["hate/threatening"])
+
+
+def openai_moderation_prompt_hatethreatening(prompt, response):
+    openai_response = openai.Moderation.create(input=prompt)
+    return int(openai_response["results"][0]["categories"]["hate/threatening"])
+
+
+def openai_moderation_response_selfharm(prompt, response):
+    openai_response = openai.Moderation.create(input=response)
+    return int(openai_response["results"][0]["categories"]["self-harm"])
+
+
+def openai_moderation_prompt_selfharm(prompt, response):
+    openai_response = openai.Moderation.create(input=prompt)
+    return int(openai_response["results"][0]["categories"]["self-harm"])
+
+
+def openai_moderation_response_sexual(prompt, response):
+    openai_response = openai.Moderation.create(input=response)
+    return int(openai_response["results"][0]["categories"]["sexual"])
+
+
+def openai_moderation_prompt_sexual(prompt, response):
+    openai_response = openai.Moderation.create(input=prompt)
+    return int(openai_response["results"][0]["categories"]["sexual"])
+
+
+def openai_moderation_response_sexualminors(prompt, response):
+    openai_response = openai.Moderation.create(input=response)
+    return int(openai_response["results"][0]["categories"]["sexual/minors"])
+
+
+def openai_moderation_prompt_sexualminors(prompt, response):
+    openai_response = openai.Moderation.create(input=prompt)
+    return int(openai_response["results"][0]["categories"]["sexual/minors"])
+
+
+def openai_moderation_response_violence(prompt, response):
+    openai_response = openai.Moderation.create(input=response)
+    return int(openai_response["results"][0]["categories"]["violence"])
+
+
+def openai_moderation_prompt_violence(prompt, response):
+    openai_response = openai.Moderation.create(input=prompt)
+    return int(openai_response["results"][0]["categories"]["violence"])
+
+
+def openai_moderation_response_violencegraphic(prompt, response):
+    openai_response = openai.Moderation.create(input=response)
+    return int(openai_response["results"][0]["categories"]["violence/graphic"])
+
+
+def openai_moderation_prompt_violencegraphic(prompt, response):
+    openai_response = openai.Moderation.create(input=prompt)
+    return int(openai_response["results"][0]["categories"]["violence/graphic"])
+
 
 def openai_relevance_function(prompt, response):
     return re.search(
@@ -274,8 +346,38 @@ def cohere_response_disinformation(prompt, response):
         return 0
 
 
+def cohere_prompt_disinformation(prompt, response):
+    disinfo = co.classify(model='large',
+                          inputs=[prompt],
+                          examples=cohere_disinfo_examples)[0].prediction
+
+    if disinfo == "disinformation":
+        return 1
+    else:
+        return 0
+
+
 FEEDBACK_FUNCTIONS = {
-    'openai-gpt-3.5-turbo-relevance': openai_relevance_function,
+    'openai-moderation-response-hate': openai_moderation_response_hate,
+    'openai_moderation-prompt-hate': openai_moderation_prompt_hate,
+    'openai_moderation-response-hatethreatening':
+    openai_moderation_response_hatethreatening,
+    'openai_moderation-prompt-hatethreatening':
+    openai_moderation_prompt_hatethreatening,
+    'openai-moderation-response-selfharm': openai_moderation_response_selfharm,
+    'openai_moderation-prompt-selfharm': openai_moderation_prompt_selfharm,
+    'openai-moderation-response-sexual': openai_moderation_response_sexual,
+    'openai_moderation-prompt-sexual': openai_moderation_prompt_sexual,
+    'openai-moderation-response-sexualminors':
+    openai_moderation_response_sexualminors,
+    'openai_moderation-prompt-sexualminors':
+    openai_moderation_prompt_sexualminors,
+    'openai-moderation-response-violence': openai_moderation_response_violence,
+    'openai_moderation-prompt-violence': openai_moderation_prompt_violence,
+    'openai-moderation-response-violencegraphic':
+    openai_moderation_response_violencegraphic,
+    'openai_moderation-prompt-violencegraphic':
+    openai_moderation_prompt_violencegraphic,
     'openai-text-davinci-002-response-sentiment-positive':
     opeani_response_sentiment_function,
     'openai-text-davinci-002-prompt-sentiment-positive':
@@ -296,5 +398,6 @@ FEEDBACK_FUNCTIONS = {
     'huggingface-prompt-toxic': hf_prompt_toxicicity,
     'cohere-response-sentiment': cohere_response_sentiment,
     'cohere-prompt-sentiment': cohere_prompt_sentiment,
-    'cohere-response-disinformation': cohere_response_disinformation
+    'cohere-response-disinformation': cohere_response_disinformation,
+    'cohere-prompt-disinformation': cohere_prompt_disinformation
 }

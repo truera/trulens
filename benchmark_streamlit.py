@@ -32,8 +32,10 @@ function_choice = st.selectbox(
     list(tru_feedback.FEEDBACK_FUNCTIONS.keys()))
 
 dataset_choice = st.selectbox(
-    'What dataset do you want to use for benchmarking?',
-    ['imdb (binary sentiment)', 'jigsaw (binary toxicity)', 'provide my own'])
+    'What dataset do you want to use for benchmarking?', [
+        'imdb (binary sentiment)', 'jigsaw (binary toxicity)',
+        'fake news (binary)', 'provide my own'
+    ])
 
 if dataset_choice == 'provide my own':
     uploaded_file = st.file_uploader(
@@ -72,6 +74,27 @@ def load_data(dataset_choice):
 
         data['label'] = data['toxicity'] >= 0.5
         data['label'] = data['label'].astype(int)
+    elif dataset_choice == 'fake news (binary)':
+        kaggle_api = KaggleApi()
+        kaggle_api.authenticate()
+
+        kaggle_api.dataset_download_files(
+            'clmentbisaillon/fake-and-real-news-dataset')
+        with zipfile.ZipFile('fake-and-real-news-dataset.zip') as z:
+            with z.open('True.csv') as f:
+                realdata = pd.read_csv(f, header=0, sep=',',
+                                       quotechar='"')[['title', 'text']]
+                realdata['label'] = 0
+                realdata = pd.DataFrame(realdata)
+            with z.open('Fake.csv') as f:
+                fakedata = pd.read_csv(f, header=0, sep=',',
+                                       quotechar='"')[['title', 'text']]
+                fakedata['label'] = 1
+                fakedata = pd.DataFrame(fakedata)
+            data = pd.concat([realdata, fakedata])
+            data[
+                'text'] = 'title: ' + data['title'] + '; text: ' + data['text']
+
     return data
 
 
