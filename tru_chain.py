@@ -8,10 +8,11 @@ from inspect import BoundArguments, signature, stack
 from pprint import PrettyPrinter
 from types import NoneType
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
-# from tinydb import TinyDB, Query
-import tinydb
+from tinydb import TinyDB, Query
+from tinydb.table import Table
 
-import pydantic
+
+from pydantic import Field, BaseModel
 
 pp = PrettyPrinter()
 
@@ -24,198 +25,61 @@ Address = Tuple[Union[Any, str, int], ...]
 
 # from dataclasses import dataclass
 from typing import Tuple
-"""
-class MaybeJSONDecoder(json.JSONDecoder):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.decoded = dict()
 
-    def _build(self, struct):
-        print(f"building {struct}")
-        if isinstance(struct, Dict) and "_pydantic" in struct:
-            metadata = struct['_pydantic']
-            print(f"metadata={metadata}")
+# Records of a chain run are dictionaries with these keys:
+#
+# - 'input': Dict[str, Any] -- chain input.
+# - 'output': Any -- output for calls that succeed.
+# - 'error': str -- exception text if not successful.
+# - 'start_time': datetime
+# - 'end_time': datetime -- runtime info.
+# - 'pid': int -- process id for debugging multiprocessing.
+# - 'tid': int -- thread id for debuggin threading.
 
-            data = {k: self._build(v) for k, v in struct.items() if k != "_pydantic"}
+import pandas as pd
 
-            print(data)
+Record = Query()
 
-            mod = __import__(metadata['module'])
-            cls = getattr(mod, metadata['class'])
-            return cls.parse_obj(data)
+def select(table: Table, fields: List[Record], where: Optional[Record] = None) -> pd.DataFrame:
+    rows = []
 
-        elif isinstance(struct, Dict):
-            data = {k: self._build(v) for k, v in struct.items()}
-            return data
+    if where is not None:
+        table_rows = table.search(where)
+    else:
+        table_rows = table.all()
 
-        return struct
+    for row in table_rows:
+        vals = [project(address=f, obj=row) for f in fields]
+        rows.append(vals)
 
-    def decode(self, s):
-        struct = super().decode(s)
+    return pd.DataFrame(rows, columns=fields)
 
-        return self._build(struct)
+def project(query: Record, obj: Any):
+    return _project(query._path, obj)
 
-
-class MaybeJSONEncoder(json.JSONEncoder):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.encoded = dict()
-
-    # @staticmethod
-    def default(self, obj):
-        if isinstance(obj, (str, int, float, bool, NoneType)):
-            return obj
-        
-        obj_id = id(obj)
-        # print(obj_id)
-
-        if obj_id in self.encoded:
-            return self.encoded[obj_id]#{'_ref': obj_id}
-
-        self.encoded[obj_id] = {'_ref': obj_id}
-
-        metadata = {
-                'class': obj.__class__.__name__,
-                'module': obj.__class__.__module__,
-                'id': id(obj)
-            }
-
-        src = dict()
-
-        print(f"defaulting {type(obj)}")
-
-        if isinstance(obj, pydantic.BaseModel):
-            try:
-                src = obj.dict(models_as_dict=False)
-            except BaseException as e:
-                metadata['error'] = str(e)
-                
-            src['_pydantic'] = metadata
-            self.encoded[obj_id] = src
-
-            return src
-
-        elif isinstance(obj, dict):
-            return {k: self.default(v) for k, v in obj.items()}
-        
-        elif isinstance(obj, list):
-            return [self.default(v) for v in obj]
-
-        else:
-            return {
-                '_nonserial': metadata
-            }
+def _project(path: List, obj: Any):
+    if len(path) == 0:
+        return obj
     
-    # @staticmethod
-    def encode(self, obj):
-        print(f"encoding {obj}")
-        obj = self.default(obj)
-        return super().encode(obj)
-"""
+    first = [0]
+    if len(path) > 1:
+        rest = path[1:]
+    else:
+        rest = ()
 
-
-@dataclass
-class Selection():
-    model: Address = ()  # root chain, the argument to TruChain.__init__
-
-    param: Address = None  # model parameter
-
-    record: Address = None
-
-
-# @dataclass
-class ChainCall(pydantic.BaseModel):
-    """
-    Record of the execution of a single chain.
-    """
-
-    # inputs
-    input: Dict[str, Any]
-
-    # output if successful call
-    output: Optional[Any] = None
-
-    # exception text if not successful
-    error: Optional[str] = None
-
-    stack: Optional[List[str]] = None
-
-    # runtime info
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-
-    # process id for debugging multiprocessing
-    pid: Optional[int] = None
-
-    # thread id for debuggin threading
-    tid: Optional[int] = None
-
-    def __str__(self, tab=""):
-        sub_tab = tab + "  "
-        ret = f"{self.pid}/{self.tid} {self.start_time} - {self.end_time}\n"
-        ret += f"{tab}input:\n"
-        ret += f"{sub_tab}{pp.pformat(self.input)}"
-        if self.output is not None:
-            ret += f"\n{tab}output:\n"
-            ret += f"{sub_tab}{pp.pformat(self.output)}"
-
-        if self.stack is not None:
-            ret += f"\n{tab}chain call stack:\n"
-            ret += f"{sub_tab}{pp.pformat(self.stack)}"
-
-        return ret
-
-    def __repr__(self):
-        return str(self)
-
-
-# TODO: remove all this, use langchain.dict() and langchain.chains.loading.load_chain_from_config
-# @dataclass
-class ObjDef(pydantic.BaseModel):
-    """
-    Chain definition. May not need this in the future once chains and their
-    dependencies become more consistently serializable.
-    """
-
-    # class name
-    cls: str
-
-    # module name
-    module: str
-
-    # value for basic objects that do not need serialization
-    value: Optional[Any] = None
-
-    # serialization for objects that can be serialized
-    dump: Optional[bytes] = None
-
-    # id for debugging scenarios where the same chain is included in a superchain more than once
-    ident: int = -1
-
-    # address of the object for referring to it even when we don't have the live object
-    address: Optional[str] = None
-
-    # fields for objects that expose fields, i.e. pydantic.BaseModel which langchain.Chain uses.
-    fields: Optional[Dict[str, Any]] = None
-
-    def __str__(self, tab=""):
-        sub_tab = tab + "  "
-        ret = f"{self.module}.{self.cls} (at {self.address}, loaded at {self.ident})"
-        if self.value is not None:
-            ret += f" = {self.value}"
-        if self.fields is not None:
-            for f, v in self.fields.items():
-                if isinstance(v, ObjDef):
-                    ret += f"\n{sub_tab}{f}: {v.__str__(sub_tab)}"
-                else:
-                    ret += f"\n{sub_tab}{f} = {pp.pformat(v)}"
-
-        return ret
-
-    def __repr__(self):
-        return str(self)
-
+    if isinstance(first, str):
+        if not isinstance(obj, Dict) or first not in obj:
+            return None    
+        
+        return _project(rest, obj[first])
+    
+    elif isinstance(first, int):
+        if not isinstance(obj, Sequence) or first >= len(obj):
+            return None
+        
+        return _project(rest, obj[first])
+    else:
+        raise RuntimeError(f"Don't know how to locate element with key of type {first}")
 
 class TruChain(Chain):
     """
@@ -249,36 +113,17 @@ class TruChain(Chain):
     # Flag of whether the chain is currently recording records. This is set
     # automatically but is imperfect in threaded situations. The second check
     # for recording is based on the call stack, see _call.
-    recording: bool = False
+    recording: Optional[bool] = Field(exclude=True)
 
-    # Store records here.
-    # records: List[Dict[Address, List[ChainCall]]] = []
+    # Store records here. "exclude=True" means that these fields will not be
+    # included in the json/dict dump.
+    records: Optional[List[Dict[Address, List[Dict]]]] = Field(exclude=True)
 
-    db: tinydb.TinyDB = None
-    records: tinydb.table.Table = None
-    models: tinydb.table.Table = None
+    # TinyDB json database to write records to. Need to call _flush_records for
+    # this though.
+    db: Optional[tinydb.TinyDB] = Field(exclude=True)
 
-    # Store records as dicts here.
-    # record_dicts: List[Dict[Address, List[ChainCall]]] = []
-
-    # Store model definition here.
-    model: Dict = None
-
-    # Store model definition as a dictionary for remote apps.
-    # model_dict: Dict = None
-    """
-    class Config:
-        encoder = MaybeJSONEncoder()
-        decoder = MaybeJSONDecoder()
-
-        def json_dumps(o, default):
-            return TruChain.Config.encoder.encode(o)
-        
-        def json_loads(s):
-            return TruChain.Config.decoder.decode(s)
-    """
-
-    def __init__(self, chain: Chain, db: tinydb.TinyDB = None):
+    def __init__(self, chain: Chain, db: Optional[tinydb.TinyDB] = None):
         """
         Wrap a chain for monitoring.
 
@@ -290,16 +135,32 @@ class TruChain(Chain):
 
         self.chain = chain
 
-        self._instrument(self.chain, ())
+        self._instrument(self.chain, ("chain",))
+        self.recording = False
+        self.records = []
 
-        self.db = db or tinydb.TinyDB("truchain.tinydb.json")
+        self.db = db
 
-        self.records = self.db.table("records")
-        self.models = self.db.table("models")
+    @property
+    def _model(self):
+        return self.dict()
 
-        self.model = self.dict()
+    def _flush_records(self, db: Optional[tinydb.TinyDB] = None):
+        # TODO: locks
+        
+        # NOTE: TinyDB is annoyingly false.
+        db = db if db is not None else self.db
 
-        self.models.insert(self.model)
+        table = db.table("records")
+        to_flush = self.records
+        self.records = []
+        for record in to_flush:
+            table.insert(record)
+
+    # Chain requirement
+    @property
+    def _chain_type(self):
+        return "TruChain"
 
     # Chain requirement
     @property
@@ -324,9 +185,6 @@ class TruChain(Chain):
         # should work with threads.
         record = defaultdict(list)
 
-        # Wrapped calls will look this up as well.
-        # chain_stack = list()
-
         ret = None
         error = None
 
@@ -340,8 +198,12 @@ class TruChain(Chain):
 
         assert len(record) > 0, "No information recorded in call."
 
-        self.records.append(record)
-        self.table_records.insert(dict(record))
+        model = self.dict()
+        for addr, calls in record.items():
+            obj = project(addr, model)
+            obj.update(dict(_call=calls))
+
+        self.records.append(model)
 
         if error is None:
             return ret
@@ -369,101 +231,7 @@ class TruChain(Chain):
                         f"No local named {key} in {func} found.")
 
         return None
-
-    def _select(self, select: Union[Selection, Sequence[Selection]]):
-        ret = []
-
-        if isinstance(select, Selection):
-            select = [select]
-
-        for record in self.records:
-            row = ()
-
-            #rdict = asdict(record)
-            record = {k: [asdict(vv) for vv in v] for k, v in record.items()}
-            print(record)
-
-            for s in select:
-                if s.param is not None:
-                    assert s.record is None, (
-                        "Selection wants a model parameter and a record at the same time. "
-                        "Provide these as separate Selection arguments to _select instead."
-                    )
-
-                    temp = self._get_obj_at_address(s.model + s.param,
-                                                    obj=self)
-
-                elif s.record is not None:
-                    if s.model in record:
-                        temp = record[s.model]
-
-                        temp = self._get_obj_at_address(s.record, obj=record)
-
-                    else:
-                        temp = None
-
-                else:
-                    raise ValueError(
-                        "Selection selected neither a model parameter nor a record field."
-                    )
-
-                row = row + (temp, )
-
-            ret.append(row)
-
-        return ret
-
-    def _get_obj_at_address(self, address: Address, obj=None):
-        obj = obj or self.chain
-
-        if len(address) == 0:
-            return obj
-
-        first = address[0]
-        if len(address) > 1:
-            rest = address[1:]
-        else:
-            rest = ()
-
-        if isinstance(first, str):
-            assert hasattr(
-                obj, "__fields__"
-            ), f"pydantic.BaseModel expected but was {type(obj).mro()}"
-            assert first in obj.__fields__, f"Object has no field '{first}', it has {list(obj.__fields__.keys())}."
-
-            return self._get_obj_at_address(rest, getattr(obj, first))
-
-        elif isinstance(first, int):
-            assert isinstance(
-                obj, Sequence), f"Sequence expected but was {type(obj)}."
-
-            assert len(
-                obj
-            ) > first, f"Index {first} beyond sequence lenght {len(obj)}."
-
-            return self._get_obj_at_address(rest, obj[first])
-
-        else:
-            raise RuntimeError(
-                f"Don't know how to retrieve object at address {address} relative to {obj}."
-            )
-
-    @staticmethod
-    def _address_hashable(address: Address) -> str:#Address:
-        ret = ()
-
-        for part in address:
-            if isinstance(part, (str, int)):
-                ret += (part, )
-            else:
-                ret += (part.__class__.__name__, )
-
-        return ".".join(ret)
-
-    @property
-    def _chain_type(self):
-        return "TruChain"
-
+    
     def _instrument_chain_type(self, chain, prop):
         """
         Instrument the Chain class's method _chain_type which is presently used
@@ -538,11 +306,10 @@ class TruChain(Chain):
 
                 start_time = datetime.now()
 
-                key = self._address_hashable(address)
+                # key = self._address_hashable(address)
                 chain_stack = self._get_local_in_call_stack(
                     key="chain_stack", func=wrapper, offset=1) or []
-                chain_stack = chain_stack + [key]  # args[0] is self
-                # chain_stack = []
+                chain_stack = chain_stack + [address]  # args[0] is self
 
                 try:
                     # Using sig bind here so we can produce a list of key-value
@@ -565,15 +332,15 @@ class TruChain(Chain):
                                 end_time=str(end_time),
                                 pid=os.getpid(),
                                 tid=th.get_native_id(),
-                                stack=chain_stack)
+                                chain_stack=chain_stack
+                                )
 
                 if error is not None:
                     row_args['error'] = error
                 else:
                     row_args['output'] = ret
 
-                #record[key].append(ChainCall(**row_args).dict())
-                record[key].append(row_args)
+                record[address].append(row_args)
 
                 if error is not None:
                     raise error
@@ -623,7 +390,7 @@ class TruChain(Chain):
                         self._instrument_chain_type(chain=chain, prop=prop))
 
         # Not using chain.dict() here as that recursively converts subchains to
-        # dicts but we want to capture their class information here.
+        # dicts but we want to traverse the instantiations here.
         for k in chain.__fields__:
             # NOTE(piotrm): may be better to use inspect.getmembers_static .
             v = getattr(chain, k)
