@@ -123,14 +123,14 @@ class TestTruChain():
         # This run should not be recorded.
         seq_chain.run(
             question=
-            "What is the average air speed velocity of a laden swallow? again")
+            "What is the average air speed velocity of a laden swallow?")
 
         # These two should.
         tru_chain.run(
             question=
-            "What is the average air speed velocity of a laden swallow?")
+            "What is the average air speed velocity of a laden european swallow?")
         tru_chain.run(
             question=
-            "What is the average air speed velocity of a laden swallow?")
+            "What is the average air speed velocity of a laden african swallow?")
 
         assert len(tru_chain.records) == 2
