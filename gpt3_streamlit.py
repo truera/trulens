@@ -63,10 +63,15 @@ if user_input:
         )
 
     tru.add_data(
-        'chat_model', prompt_input, 'None', gpt3_response, '',
-        {'thumbs_up': thumbs_up}, [
-            'openai-gpt-3.5-turbo-relevance',
-            'openai-text-davinci-002-response-sentiment-positive',
-            'huggingface-twitter-roberta-response-sentiment-positive'
-        ]
+        'chat_model',
+        prompt_input,
+        'None',
+        gpt3_response,
+        '', {
+            'thumbs_up': thumbs_up,
+            'thumbs_down': thumbs_down
+        }, ["selfharm", "hate"],
+        evaluation_choice="prompt",
+        provider="openai",
+        model_engine="moderation"
     )
