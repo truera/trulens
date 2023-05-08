@@ -146,24 +146,26 @@ TinyDB can be provided to `_flush_records`.
 Note that `tc.select` operates on a TinyDB and flushes records to it first.
 """
 
-import os
-import threading as th
 from collections import defaultdict
 from datetime import datetime
-from inspect import BoundArguments, signature, stack
+from inspect import BoundArguments
+from inspect import signature
+from inspect import stack
+import os
+import threading as th
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
-import pandas as pd
 from langchain.chains.base import Chain
+import pandas as pd
 from pydantic import Field
-from tinydb import Query, TinyDB
+from tinydb import Query
+from tinydb import TinyDB
 from tinydb.table import Table
 
 # Addresses of chains or their contents. This is used to refer chains/parameters
 # even in cases where the live object is not in memory (i.e. on some remote
 # app).
 Path = Tuple[Union[str, int], ...]
-
 
 # Records of a chain run are dictionaries with these keys:
 #
@@ -206,9 +208,11 @@ def _query_str(query: Query):
     return "Record" + render(query._path)
 
 
-def _select(table: Table,
-            queries: List[Query],
-            where: Optional[Query] = None) -> pd.DataFrame:
+def _select(
+    table: Table,
+    queries: List[Query],
+    where: Optional[Query] = None
+) -> pd.DataFrame:
     rows = []
 
     if where is not None:
@@ -250,7 +254,8 @@ def _project(path: List, obj: Any):
         return _project(path=rest, obj=obj[first])
     else:
         raise RuntimeError(
-            f"Don't know how to locate element with key of type {first}")
+            f"Don't know how to locate element with key of type {first}"
+        )
 
 
 class TruChain(Chain):
@@ -297,10 +302,12 @@ class TruChain(Chain):
     def _model(self):
         return self.dict()
 
-    def select(self,
-               *query: Tuple[Query],
-               where: Optional[Query] = None,
-               table: Optional[Table] = None):
+    def select(
+        self,
+        *query: Tuple[Query],
+        where: Optional[Query] = None,
+        table: Optional[Table] = None
+    ):
         self._flush_records()
 
         if isinstance(query, Query):
@@ -382,10 +389,9 @@ class TruChain(Chain):
         else:
             raise error
 
-    def _get_local_in_call_stack(self,
-                                 key: str,
-                                 func: Callable,
-                                 offset: int = 1) -> Optional[Any]:
+    def _get_local_in_call_stack(
+        self, key: str, func: Callable, offset: int = 1
+    ) -> Optional[Any]:
         """
         Get the value of the local variable named `key` in the stack at the
         nearest frame executing `func`. Returns None if `func` is not in call
@@ -399,8 +405,7 @@ class TruChain(Chain):
                 if key in locs:
                     return locs[key]
                 else:
-                    raise RuntimeError(
-                        f"No local named {key} in {func} found.")
+                    raise RuntimeError(f"No local named {key} in {func} found.")
 
         return None
 
@@ -464,8 +469,9 @@ class TruChain(Chain):
             # Look up whether TruChain._call was called earlier in the stack and
             # "record" variable was defined there. Will use that for recording
             # the wrapped call.
-            record = self._get_local_in_call_stack(key="record",
-                                                   func=TruChain._call)
+            record = self._get_local_in_call_stack(
+                key="record", func=TruChain._call
+            )
 
             if record is None:
                 return func(*args, **kwargs)
@@ -479,7 +485,8 @@ class TruChain(Chain):
                 start_time = datetime.now()
 
                 chain_stack = self._get_local_in_call_stack(
-                    key="chain_stack", func=wrapper, offset=1) or []
+                    key="chain_stack", func=wrapper, offset=1
+                ) or []
                 chain_stack = chain_stack + [query._path]
 
                 try:
@@ -495,15 +502,16 @@ class TruChain(Chain):
 
                 # Don't include self in the recorded arguments.
                 nonself = {
-                    k: v
-                    for k, v in bindings.arguments.items() if k != "self"
+                    k: v for k, v in bindings.arguments.items() if k != "self"
                 }
-                row_args = dict(input=nonself,
-                                start_time=str(start_time),
-                                end_time=str(end_time),
-                                pid=os.getpid(),
-                                tid=th.get_native_id(),
-                                chain_stack=chain_stack)
+                row_args = dict(
+                    input=nonself,
+                    start_time=str(start_time),
+                    end_time=str(end_time),
+                    pid=os.getpid(),
+                    tid=th.get_native_id(),
+                    chain_stack=chain_stack
+                )
 
                 if error is not None:
                     row_args['error'] = error
@@ -562,12 +570,15 @@ class TruChain(Chain):
 
                 setattr(
                     cp, "_call",
-                    self._instrument_method(query=query, func=original_fun))
+                    self._instrument_method(query=query, func=original_fun)
+                )
 
             if hasattr(cp, "_chain_type"):
                 prop = getattr(cp, "_chain_type")
-                setattr(cp, "_chain_type",
-                        self._instrument_chain_type(chain=chain, prop=prop))
+                setattr(
+                    cp, "_chain_type",
+                    self._instrument_chain_type(chain=chain, prop=prop)
+                )
 
         # Not using chain.dict() here as that recursively converts subchains to
         # dicts but we want to traverse the instantiations here.

@@ -4,16 +4,18 @@ os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 import logging
 
-import pinecone
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
 from langchain.vectorstores import Pinecone
+import pinecone
 from slack_bolt import App
 from slack_sdk import WebClient
 
-from keys import (PINECONE_API_KEY, PINECONE_ENV, SLACK_SIGNING_SECRET,
-                  SLACK_TOKEN)
+from keys import PINECONE_API_KEY
+from keys import PINECONE_ENV
+from keys import SLACK_SIGNING_SECRET
+from keys import SLACK_TOKEN
 
 PORT = 3000
 
@@ -28,16 +30,16 @@ index_name = "llmdemo"
 
 embedding = OpenAIEmbeddings(model='text-embedding-ada-002')  # 1536 dims
 
-docsearch = Pinecone.from_existing_index(index_name=index_name,
-                                         embedding=embedding)
+docsearch = Pinecone.from_existing_index(
+    index_name=index_name, embedding=embedding
+)
 
 llm = OpenAI(temperature=0, max_tokens=128)
 
 retriever = docsearch.as_retriever()
-chain = ConversationalRetrievalChain.from_llm(llm=llm,
-                                              retriever=retriever,
-                                              verbose=True,
-                                              return_source_documents=True)
+chain = ConversationalRetrievalChain.from_llm(
+    llm=llm, retriever=retriever, verbose=True, return_source_documents=True
+)
 
 
 def get_answer(question):
@@ -65,9 +67,9 @@ def answer_message(client, body, logger):
     channel = body['event']['channel']
     ts = body['event']['ts']
 
-    client.chat_postMessage(channel=channel,
-                            thread_ts=ts,
-                            text=f"Give me a minute.")
+    client.chat_postMessage(
+        channel=channel, thread_ts=ts, text=f"Give me a minute."
+    )
 
     res = get_answer(message)
 
@@ -98,21 +100,26 @@ def update_home_tab(client, event, logger):
             # the view object that appears in the app home
             view={
                 "type":
-                "home",
+                    "home",
                 "callback_id":
-                "home_view",
+                    "home_view",
 
                 # body of the view
-                "blocks": [{
-                    "type": "section",
-                    "text": {
-                        "type":
-                        "mrkdwn",
-                        "text":
-                        "*I'm here to answer questions and test feedback functions.* :tada:"
-                    }
-                }]
-            })
+                "blocks":
+                    [
+                        {
+                            "type": "section",
+                            "text":
+                                {
+                                    "type":
+                                        "mrkdwn",
+                                    "text":
+                                        "*I'm here to answer questions and test feedback functions.* :tada:"
+                                }
+                        }
+                    ]
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error publishing home tab: {e}")

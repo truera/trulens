@@ -1,17 +1,21 @@
 # from llama.hf import LLaMATokenizer
 
-import pytest
-import pinecone
-import torch
-from langchain import LLMChain, PromptTemplate
-from langchain.chains import (ConversationalRetrievalChain,
-                              SimpleSequentialChain)
+from langchain import LLMChain
+from langchain import PromptTemplate
+from langchain.chains import ConversationalRetrievalChain
+from langchain.chains import SimpleSequentialChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import HuggingFacePipeline
 from langchain.vectorstores import Pinecone
-from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import pinecone
+import pytest
+import torch
+from transformers import AutoModelForCausalLM
+from transformers import AutoTokenizer
+from transformers import pipeline
 
-from keys import PINECONE_API_KEY, PINECONE_ENV
+from keys import PINECONE_API_KEY
+from keys import PINECONE_ENV
 from tru_chain import TruChain
 
 
@@ -31,17 +35,21 @@ class TestTruChain():
             self.llm_model_id,
             device_map='auto',
             torch_dtype=torch.float16,
-            local_files_only=True)
+            local_files_only=True
+        )
 
-        self.tokenizer = AutoTokenizer.from_pretrained(self.llm_model_id,
-                                                       local_files_only=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.llm_model_id, local_files_only=True
+        )
 
-        self.pipe = pipeline("text-generation",
-                             model=self.model,
-                             tokenizer=self.tokenizer,
-                             max_new_tokens=16,
-                             device_map="auto",
-                             early_stopping=True)
+        self.pipe = pipeline(
+            "text-generation",
+            model=self.model,
+            tokenizer=self.tokenizer,
+            max_new_tokens=16,
+            device_map="auto",
+            early_stopping=True
+        )
 
         self.llm = HuggingFacePipeline(pipeline=self.pipe)
 
@@ -51,8 +59,7 @@ class TestTruChain():
         # llm = OpenAI()
 
         template = """Q: {question} A:"""
-        prompt = PromptTemplate(template=template,
-                                input_variables=["question"])
+        prompt = PromptTemplate(template=template, input_variables=["question"])
         llm_chain = LLMChain(prompt=prompt, llm=self.llm)
 
         tru_chain = TruChain(chain=llm_chain)
@@ -74,20 +81,23 @@ class TestTruChain():
         index_name = "llmdemo"
 
         embedding = OpenAIEmbeddings(
-            model='text-embedding-ada-002')  # 1536 dims
+            model='text-embedding-ada-002'
+        )  # 1536 dims
 
         pinecone.init(
             api_key=PINECONE_API_KEY,  # find at app.pinecone.io
             environment=PINECONE_ENV  # next to api key in console
         )
-        docsearch = Pinecone.from_existing_index(index_name=index_name,
-                                                 embedding=embedding)
+        docsearch = Pinecone.from_existing_index(
+            index_name=index_name, embedding=embedding
+        )
 
         # llm = OpenAI(temperature=0,max_tokens=128)
 
         retriever = docsearch.as_retriever()
         chain = ConversationalRetrievalChain.from_llm(
-            llm=self.llm, retriever=retriever, return_source_documents=True)
+            llm=self.llm, retriever=retriever, return_source_documents=True
+        )
 
         tru_chain = TruChain(chain)
         assert tru_chain._model is not None
@@ -101,36 +111,40 @@ class TestTruChain():
         # different prompts.
 
         template = """Q: {question} A:"""
-        prompt = PromptTemplate(template=template,
-                                input_variables=["question"])
+        prompt = PromptTemplate(template=template, input_variables=["question"])
         llm_chain = LLMChain(prompt=prompt, llm=self.llm)
 
         template_2 = """Reverse this sentence: {sentence}."""
-        prompt_2 = PromptTemplate(template=template_2,
-                                  input_variables=["sentence"])
+        prompt_2 = PromptTemplate(
+            template=template_2, input_variables=["sentence"]
+        )
         llm_chain_2 = LLMChain(prompt=prompt_2, llm=self.llm)
 
-        seq_chain = SimpleSequentialChain(chains=[llm_chain, llm_chain_2],
-                                          input_key="question",
-                                          output_key="answer")
+        seq_chain = SimpleSequentialChain(
+            chains=[llm_chain, llm_chain_2],
+            input_key="question",
+            output_key="answer"
+        )
         seq_chain.run(
-            question=
-            "What is the average air speed velocity of a laden swallow?")
+            question="What is the average air speed velocity of a laden swallow?"
+        )
 
         tru_chain = TruChain(seq_chain)
         assert tru_chain._model is not None
 
         # This run should not be recorded.
         seq_chain.run(
-            question=
-            "What is the average air speed velocity of a laden swallow?")
+            question="What is the average air speed velocity of a laden swallow?"
+        )
 
         # These two should.
         tru_chain.run(
             question=
-            "What is the average air speed velocity of a laden european swallow?")
+            "What is the average air speed velocity of a laden european swallow?"
+        )
         tru_chain.run(
             question=
-            "What is the average air speed velocity of a laden african swallow?")
+            "What is the average air speed velocity of a laden african swallow?"
+        )
 
         assert len(tru_chain.records) == 2

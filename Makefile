@@ -7,3 +7,6 @@ slackbot:
 
 test:
 	$(CONDA); python -m pytest -s test_tru_chain.py
+
+format:
+	$(CONDA); bash format.sh

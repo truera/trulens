@@ -2,12 +2,12 @@ import os
 import zipfile
 
 import cohere
+from datasets import load_dataset
 import dotenv
+from kaggle.api.kaggle_api_extended import KaggleApi
 import openai
 import pandas as pd
 import streamlit as st
-from datasets import load_dataset
-from kaggle.api.kaggle_api_extended import KaggleApi
 
 import tru_feedback
 
@@ -29,26 +29,32 @@ os.environ['KAGGLE_KEY'] = config['KAGGLE_KEY']
 st.title("Feedback Function Benchmarking")
 function_choice = st.selectbox(
     'What feedback function do you want to benchmark?',
-    list(tru_feedback.FEEDBACK_FUNCTIONS.keys()))
+    list(tru_feedback.FEEDBACK_FUNCTIONS.keys())
+)
 
 dataset_choice = st.selectbox(
     'What dataset do you want to use for benchmarking?', [
         'imdb (binary sentiment)', 'jigsaw (binary toxicity)',
         'fake news (binary)', 'provide my own'
-    ])
+    ]
+)
 
 if dataset_choice == 'provide my own':
     uploaded_file = st.file_uploader(
-        "Choose a CSV file. Must have the columns: ['text','label'].")
+        "Choose a CSV file. Must have the columns: ['text','label']."
+    )
     if uploaded_file is not None:
         provided_data = pd.read_csv(uploaded_file)
 
-num_samples = st.selectbox('How many samples do you want to test?',
-                           [1, 10, 50, 100, 1000])
+num_samples = st.selectbox(
+    'How many samples do you want to test?', [1, 10, 50, 100, 1000]
+)
 
-st.write('You selected to benchmark :', function_choice,
-         'on the benchmarking dataset: ', dataset_choice, ' with ',
-         num_samples, ' samples')
+st.write(
+    'You selected to benchmark :', function_choice,
+    'on the benchmarking dataset: ', dataset_choice, ' with ', num_samples,
+    ' samples'
+)
 
 # load and sample benchmarking data
 
@@ -64,9 +70,11 @@ def load_data(dataset_choice):
         kaggle_api.authenticate()
 
         kaggle_api.dataset_download_files(
-            'julian3833/jigsaw-unintended-bias-in-toxicity-classification')
+            'julian3833/jigsaw-unintended-bias-in-toxicity-classification'
+        )
         with zipfile.ZipFile(
-                'jigsaw-unintended-bias-in-toxicity-classification.zip') as z:
+            'jigsaw-unintended-bias-in-toxicity-classification.zip'
+        ) as z:
             with z.open('all_data.csv') as f:
                 data = pd.read_csv(f, header=0, sep=',', quotechar='"')[[
                     'comment_text', 'toxicity'
@@ -79,7 +87,8 @@ def load_data(dataset_choice):
         kaggle_api.authenticate()
 
         kaggle_api.dataset_download_files(
-            'clmentbisaillon/fake-and-real-news-dataset')
+            'clmentbisaillon/fake-and-real-news-dataset'
+        )
         with zipfile.ZipFile('fake-and-real-news-dataset.zip') as z:
             with z.open('True.csv') as f:
                 realdata = pd.read_csv(f, header=0, sep=',',
@@ -92,8 +101,7 @@ def load_data(dataset_choice):
                 fakedata['label'] = 1
                 fakedata = pd.DataFrame(fakedata)
             data = pd.concat([realdata, fakedata])
-            data[
-                'text'] = 'title: ' + data['title'] + '; text: ' + data['text']
+            data['text'] = 'title: ' + data['title'] + '; text: ' + data['text']
 
     return data
 
@@ -117,14 +125,17 @@ else:
     samples_with_feedback = samples.copy()
 
     samples_with_feedback['feedback'] = samples_with_feedback['text'].apply(
-        lambda x: tru_feedback.FEEDBACK_FUNCTIONS[function_choice]('', x))
+        lambda x: tru_feedback.FEEDBACK_FUNCTIONS[function_choice]('', x)
+    )
 
     samples_with_feedback['correct'] = samples_with_feedback[
         'label'] == samples_with_feedback['feedback']
 
     score = samples_with_feedback['correct'].sum() / len(samples_with_feedback)
 
-    st.write(function_choice, 'scored: ', '{:.1%}'.format(score),
-             'on the benchmark: ', dataset_choice)
+    st.write(
+        function_choice, 'scored: ', '{:.1%}'.format(score),
+        'on the benchmark: ', dataset_choice
+    )
 
     st.write(samples_with_feedback)

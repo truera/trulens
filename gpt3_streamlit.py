@@ -19,15 +19,18 @@ prompt = "Please help me with "
 def generate_response(prompt, model_engine):
     return openai.ChatCompletion.create(
         model=model_engine,
-        messages=[{
-            "role":
-            "system",
-            "content":
-            "You are a helpful assistant that provides concise and relevant background information and context so that outsiders can easily understand."
-        }, {
-            "role": "user",
-            "content": prompt
-        }])["choices"][0]["message"]["content"]
+        messages=[
+            {
+                "role":
+                    "system",
+                "content":
+                    "You are a helpful assistant that provides concise and relevant background information and context so that outsiders can easily understand."
+            }, {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )["choices"][0]["message"]["content"]
 
 
 # Set up Streamlit app
@@ -59,9 +62,11 @@ if user_input:
             "We're sorry we couldn't be more helpful. Please try again with a different question."
         )
 
-    tru.add_data('chat_model', prompt_input, 'None', gpt3_response, '',
-                 {'thumbs_up': thumbs_up}, [
-                     'openai-gpt-3.5-turbo-relevance',
-                     'openai-text-davinci-002-response-sentiment-positive',
-                     'huggingface-twitter-roberta-response-sentiment-positive'
-                 ])
+    tru.add_data(
+        'chat_model', prompt_input, 'None', gpt3_response, '',
+        {'thumbs_up': thumbs_up}, [
+            'openai-gpt-3.5-turbo-relevance',
+            'openai-text-davinci-002-response-sentiment-positive',
+            'huggingface-twitter-roberta-response-sentiment-positive'
+        ]
+    )
