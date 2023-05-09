@@ -17,7 +17,7 @@ from transformers import pipeline
 from keys import PINECONE_API_KEY
 from keys import PINECONE_ENV
 from tru_chain import TruChain
-
+from langchain.memory import ConversationBufferWindowMemory
 
 class TestTruChain():
 
@@ -64,7 +64,29 @@ class TestTruChain():
 
         tru_chain = TruChain(chain=llm_chain)
 
-        assert tru_chain._model is not None
+        assert tru_chain.model is not None
+
+        tru_chain.run(dict(question="How are you?"))
+        tru_chain.run(dict(question="How are you today?"))
+
+        assert len(tru_chain.records) == 2
+
+    def test_qa_prompt_with_memory(self):
+        # Test of a small q/a chain using a prompt and a single call to an llm.
+        # Also has memory.
+
+        # llm = OpenAI()
+
+        template = """Q: {question} A:"""
+        prompt = PromptTemplate(template=template, input_variables=["question"])
+
+        memory = ConversationBufferWindowMemory(k=2)
+
+        llm_chain = LLMChain(prompt=prompt, llm=self.llm, memory=memory)
+
+        tru_chain = TruChain(chain=llm_chain)
+
+        assert tru_chain.model is not None
 
         tru_chain.run(dict(question="How are you?"))
         tru_chain.run(dict(question="How are you today?"))
@@ -100,8 +122,7 @@ class TestTruChain():
         )
 
         tru_chain = TruChain(chain)
-        assert tru_chain._model is not None
-
+        assert tru_chain.model is not None
         tru_chain(dict(question="How do I add a model?", chat_history=[]))
 
         assert len(tru_chain.records) == 1
@@ -130,7 +151,7 @@ class TestTruChain():
         )
 
         tru_chain = TruChain(seq_chain)
-        assert tru_chain._model is not None
+        assert tru_chain.model is not None
 
         # This run should not be recorded.
         seq_chain.run(

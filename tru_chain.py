@@ -31,7 +31,7 @@
 
 ```python
 
-    tc._model
+    tc.model
 
 ```
 
@@ -135,13 +135,13 @@ Output (pd.DataFrame):
 
 ```python
 
-    tc._flush_records()
+    tc.flush_records()
 
 ```
 
 This will result in `tc.records` being empty. All of the records that get
 inserted into TinyDB specified at `TruChain` construction. Alternatively a
-TinyDB can be provided to `_flush_records`.
+TinyDB can be provided to `flush_records`.
 
 Note that `tc.select` operates on a TinyDB and flushes records to it first.
 """
@@ -157,7 +157,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from langchain.chains.base import Chain
 import pandas as pd
-from pydantic import Field
+from pydantic import Field, BaseModel
 from tinydb import Query
 from tinydb import TinyDB
 from tinydb.table import Table
@@ -275,11 +275,11 @@ class TruChain(Chain):
     # included in the json/dict dump.
     records: Optional[List[Dict[Any, List[Dict]]]] = Field(exclude=True)
 
-    # TinyDB json database to write records to. Need to call _flush_records for
+    # TinyDB json database to write records to. Need to call flush_records for
     # this though.
     db: Optional[TinyDB] = Field(exclude=True)
 
-    def __init__(self, chain: Chain, db: Optional[TinyDB] = None):
+    def __init__(self, chain: Chain, verbose: bool = False, db: Optional[TinyDB] = None):
         """
         Wrap a chain for monitoring.
 
@@ -288,18 +288,18 @@ class TruChain(Chain):
         - db: Optional[TinyDB] -- TinyDB database for storing records.
         """
 
-        Chain.__init__(self)
+        Chain.__init__(self, verbose=verbose)
 
         self.chain = chain
 
-        self._instrument(chain=self.chain, query=Record.chain)
+        self._instrument(obj=self.chain, query=Record.chain)
         self.recording = False
         self.records = []
 
         self.db = db
 
     @property
-    def _model(self):
+    def model(self):
         return self.dict()
 
     def select(
@@ -308,7 +308,7 @@ class TruChain(Chain):
         where: Optional[Query] = None,
         table: Optional[Table] = None
     ):
-        self._flush_records()
+        self.flush_records()
 
         if isinstance(query, Query):
             queries = [query]
@@ -319,7 +319,7 @@ class TruChain(Chain):
 
         return _select(table, queries, where)
 
-    def _flush_records(self, db: Optional[TinyDB] = None):
+    def flush_records(self, db: Optional[TinyDB] = None):
         # TODO: locks
 
         # NOTE: TinyDB is annoyingly false.
@@ -378,7 +378,7 @@ class TruChain(Chain):
             obj = _project(path=path, obj=model)
             if obj is None:
                 print(f"WARNING: Cannot locate {path} in model.")
-                model['_call_not_found_in_model'] = calls
+                model['_call_not_found_inmodel'] = calls
             else:
                 obj.update(dict(_call=calls))
 
@@ -409,7 +409,32 @@ class TruChain(Chain):
 
         return None
 
-    def _instrument_chain_type(self, chain, prop):
+    def _instrument_dict(self, cls, obj: Any):
+        """
+        Replacement for langchain's dict method to one that does not fail under
+        non-serialization situations.
+        """
+
+        if obj.memory is not None:
+            print(f"WARNING: will not be able to serialize object of type {cls} because it has memory.")
+
+        def safe_dict(s, **kwargs: Any) -> Dict:
+            """Return dictionary representation of chain."""
+
+            #if s.memory is not None:
+            # continue anyway
+            # raise ValueError("Saving of memory is not yet supported.")
+
+            _dict = super(cls, s).dict()
+            _dict["_type"] = s._chain_type
+
+            return _dict
+
+        safe_dict._instrumented = getattr(cls, "dict")
+
+        return safe_dict
+
+    def _instrument_chain_type(self, obj, prop):
         """
         Instrument the Chain class's method _chain_type which is presently used
         to control model saving. Override the exception behaviour. Note that
@@ -430,8 +455,8 @@ class TruChain(Chain):
             except NotImplementedError as e:
 
                 ret = dict(error=str(e))
-                ret['class'] = chain.__class__.__name__
-                ret['module'] = chain.__class__.__module__
+                ret['class'] = obj.__class__.__name__
+                ret['module'] = obj.__class__.__module__
 
                 return ret
 
@@ -544,57 +569,72 @@ class TruChain(Chain):
 
         return wrapper
 
-    def _instrument(self, chain, query: Query):
+    def _instrument(self, obj, query: Query):
         if self.verbose:
-            print(f"instrumenting {query._path} {chain.__class__.__name__}")
+            print(f"instrumenting {query._path} {obj.__class__.__name__}")
 
-        c = chain.__class__
+        cls = obj.__class__
 
         # NOTE: We cannot instrument chain directly and have to instead
         # instrument its class. The pydantic BaseModel does not allow instance
         # attributes that are not fields:
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
-        for cp in [c]:
+        for base in cls.mro():
             # All of mro() may need instrumentation here if some subchains call
             # superchains, and we want to capture the intermediate steps.
 
-            if "langchain" not in str(cp):
+            if not base.__module__.startswith("langchain."):
                 continue
 
-            if hasattr(cp, "_call"):
-                original_fun = getattr(cp, "_call")
+            if hasattr(base, "_call"):
+                original_fun = getattr(base, "_call")
 
                 if self.verbose:
-                    print(f"instrumented {cp}._call")
+                    print(f"instrumenting {base}._call")
 
                 setattr(
-                    cp, "_call",
+                    base, "_call",
                     self._instrument_method(query=query, func=original_fun)
                 )
 
-            if hasattr(cp, "_chain_type"):
-                prop = getattr(cp, "_chain_type")
+            if hasattr(base, "_chain_type"):
+                if self.verbose:
+                    print(f"instrumenting {base}._chain_type")
+
+
+                prop = getattr(base, "_chain_type")
                 setattr(
-                    cp, "_chain_type",
-                    self._instrument_chain_type(chain=chain, prop=prop)
+                    base, "_chain_type",
+                    self._instrument_chain_type(obj=obj, prop=prop)
                 )
+
+            if isinstance(obj, Chain):
+                if self.verbose:
+                    print(f"instrumenting {base}.dict")
+
+                setattr(base, "dict", self._instrument_dict(cls=base, obj=obj))
 
         # Not using chain.dict() here as that recursively converts subchains to
         # dicts but we want to traverse the instantiations here.
-        for k in chain.__fields__:
-            # NOTE(piotrm): may be better to use inspect.getmembers_static .
-            v = getattr(chain, k)
+        if isinstance(obj, BaseModel):
 
-            if isinstance(v, str):
-                pass
+            for k in obj.__fields__:
+                # NOTE(piotrm): may be better to use inspect.getmembers_static .
+                v = getattr(obj, k)
 
-            elif isinstance(v, Chain):
-                self._instrument(chain=v, query=query[k])
+                if isinstance(v, str):
+                    pass
 
-            elif isinstance(v, Sequence):
-                for i, sv in enumerate(v):
-                    if isinstance(sv, Chain):
-                        self._instrument(chain=sv, query=query[k][i])
+                elif v.__class__.__module__.startswith("langchain."):
+                    self._instrument(obj=v, query=query[k])
 
-            # TODO: check if we want to instrument anything not accessible through __fields__ .
+                elif isinstance(v, Sequence):
+                    for i, sv in enumerate(v):
+                        if isinstance(sv, Chain):
+                            self._instrument(obj=sv, query=query[k][i])
+
+                # TODO: check if we want to instrument anything not accessible through __fields__ .
+        else:
+
+            print(f"WARNING: do not know how to instrument {obj}")
