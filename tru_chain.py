@@ -275,11 +275,20 @@ class TruChain(Chain):
     # included in the json/dict dump.
     records: Optional[List[Dict[Any, List[Dict]]]] = Field(exclude=True)
 
+    # Flush records to db (if given) after each record is produced.
+    auto_flush: Optional[bool] = Field(exclude=True)
+
     # TinyDB json database to write records to. Need to call flush_records for
     # this though.
     db: Optional[TinyDB] = Field(exclude=True)
 
-    def __init__(self, chain: Chain, verbose: bool = False, db: Optional[TinyDB] = None):
+    def __init__(
+        self,
+        chain: Chain,
+        verbose: bool = False,
+        db: Optional[TinyDB] = None,
+        auto_flush: Optional[bool] = True
+    ):
         """
         Wrap a chain for monitoring.
 
@@ -297,6 +306,7 @@ class TruChain(Chain):
         self.records = []
 
         self.db = db
+        self.auto_flush = auto_flush
 
     @property
     def model(self):
@@ -327,6 +337,9 @@ class TruChain(Chain):
 
         table = db.table("records")
         to_flush = self.records
+
+        print(f"Writing {len(to_flush)} record(s) to {db} table {table}.")
+
         self.records = []
         for record in to_flush:
             table.insert(record)
@@ -346,11 +359,15 @@ class TruChain(Chain):
     def output_keys(self) -> List[str]:
         return self.chain.output_keys
 
-    # Chain requirement
-    def _call(self, *args, **kwargs) -> Any:
+    # langchain.chains.base.py:Chain
+    # We need to override this because we defined TruChain as a Chain and the default
+    # behaviour from the parent is not the same as the behaviour of the wrapped chain.
+    def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         """
-        Wrapped call to self.chain._call with instrumentation.
+        Wrapped call to self.chain.__call__ with instrumentation.
         """
+
+        print("Calling wrapped chain.")
 
         # Mark us as recording calls. Should be sufficient for non-threaded cases.
         self.recording = True
@@ -363,7 +380,7 @@ class TruChain(Chain):
         error = None
 
         try:
-            ret = self.chain._call(*args, **kwargs)
+            ret = self.chain.__call__(*args, **kwargs)
 
         except BaseException as e:
             error = str(e)
@@ -384,10 +401,18 @@ class TruChain(Chain):
 
         self.records.append(model)
 
+        if self.db is not None and self.auto_flush:
+            self.flush_records()
+
         if error is None:
             return ret
         else:
             raise error
+
+    # Chain requirement
+    # TODO(piotrm): figure out whether the combination of _call and __call__ is working right.
+    def _call(self, *args, **kwargs) -> Any:
+        return self.chain._call(*args, **kwargs)
 
     def _get_local_in_call_stack(
         self, key: str, func: Callable, offset: int = 1
@@ -416,17 +441,23 @@ class TruChain(Chain):
         """
 
         if obj.memory is not None:
-            print(f"WARNING: will not be able to serialize object of type {cls} because it has memory.")
+            print(
+                f"WARNING: will not be able to serialize object of type {cls} because it has memory."
+            )
 
-        def safe_dict(s, **kwargs: Any) -> Dict:
-            """Return dictionary representation of chain."""
+        def safe_dict(s, json: bool = True, **kwargs: Any) -> Dict:
+            """
+            Return dictionary representation `s`. If `json` is set, will make sure output can be serialized.
+            """
 
             #if s.memory is not None:
             # continue anyway
             # raise ValueError("Saving of memory is not yet supported.")
 
-            _dict = super(cls, s).dict()
+            _dict = super(cls, s).dict(**kwargs)
             _dict["_type"] = s._chain_type
+
+            # TODO: json
 
             return _dict
 
@@ -495,7 +526,7 @@ class TruChain(Chain):
             # "record" variable was defined there. Will use that for recording
             # the wrapped call.
             record = self._get_local_in_call_stack(
-                key="record", func=TruChain._call
+                key="record", func=TruChain.__call__
             )
 
             if record is None:
@@ -601,7 +632,6 @@ class TruChain(Chain):
             if hasattr(base, "_chain_type"):
                 if self.verbose:
                     print(f"instrumenting {base}._chain_type")
-
 
                 prop = getattr(base, "_chain_type")
                 setattr(

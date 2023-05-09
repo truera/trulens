@@ -1,9 +1,13 @@
 import os
+from pprint import PrettyPrinter
+
+from tru_chain import TruChain
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 import logging
 
+from langchain.memory import ConversationSummaryBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
@@ -11,13 +15,17 @@ from langchain.vectorstores import Pinecone
 import pinecone
 from slack_bolt import App
 from slack_sdk import WebClient
+from tinydb import TinyDB
 
 from keys import PINECONE_API_KEY
 from keys import PINECONE_ENV
 from keys import SLACK_SIGNING_SECRET
 from keys import SLACK_TOKEN
 
+pp = PrettyPrinter()
+
 PORT = 3000
+verb = True
 
 # create a conversational chain with relevant models and vector store
 
@@ -37,15 +45,49 @@ docsearch = Pinecone.from_existing_index(
 llm = OpenAI(temperature=0, max_tokens=128)
 
 retriever = docsearch.as_retriever()
-chain = ConversationalRetrievalChain.from_llm(
-    llm=llm, retriever=retriever, verbose=True, return_source_documents=True
-)
+
+# Give default for json.dump to prevent failures for non-json serializable objects.
+db = TinyDB("slackbot.records.json", default=lambda o: f"NON-SERIALIZED OBJECT: {o}")
+
+convos = dict()
 
 
-def get_answer(question):
+def get_convo(cid):
+    if cid in convos:
+        return convos[cid]
+
+    pp.pprint("Starting a new conversation.")
+
+    memory = ConversationSummaryBufferMemory(
+        max_token_limit=650,
+        llm=llm,
+        memory_key="chat_history",
+        output_key='answer'
+    )
+
+    chain = ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        retriever=retriever,
+        verbose=verb,
+        return_source_documents=True,
+        memory=memory,
+        get_chat_history=lambda h: h
+    )
+
+    tc = TruChain(chain, db=db, auto_flush=True)
+
+    convos[cid] = tc
+
+    return tc
+
+
+def get_answer(chain, question):
     out = chain(dict(question=question, chat_history=[]))
 
-    result = out['answer'] + "\nSources:\n"
+    result = out['answer']
+
+    result_sources = "Sources:\n"
+
     sources = out['source_documents']
 
     temp = set()
@@ -53,13 +95,15 @@ def get_answer(question):
     for doc in sources:
         src = doc.metadata['source']
         if src not in temp:
-            result += "- " + doc.metadata['source'] + "\n"
+            result_sources += " - " + doc.metadata['source'] + "\n"
             temp.add(src)
 
-    return result
+    return result, result_sources
 
 
 def answer_message(client, body, logger):
+    pp.pprint(body)
+
     message = body['event']['text']
 
     # user = body['event']['user']
@@ -67,13 +111,25 @@ def answer_message(client, body, logger):
     channel = body['event']['channel']
     ts = body['event']['ts']
 
+    channel = body['event']['channel']
+
+    # client.chat_postMessage(
+    #     channel=channel, thread_ts=ts, text=f"Give me a minute."
+    # )
+
+    convo = get_convo(channel)
+
+    res, res_sources = get_answer(convo, message)
+
     client.chat_postMessage(
-        channel=channel, thread_ts=ts, text=f"Give me a minute."
+        channel=channel,
+        thread_ts=ts,
+        text=str(res) + "\n" + str(res_sources),
+        blocks=[
+            dict(type="section", text=dict(type='mrkdwn', text=str(res))),
+            dict(type="context", elements=[dict(type='mrkdwn', text=str(res_sources))])
+        ]
     )
-
-    res = get_answer(message)
-
-    client.chat_postMessage(channel=channel, thread_ts=ts, text=str(res))
 
     logger.info(body)
 
