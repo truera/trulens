@@ -6,17 +6,10 @@ import dotenv
 import openai
 import requests
 
-from feedback_prompts import COHERE_DISINFORMATION_EXAMPLES
-from feedback_prompts import COHERE_SENTIMENT_EXAMPLES
-from feedback_prompts import RELEVANCE_CONTENT_PROMPT
-from feedback_prompts import RELEVANCE_SYSTEM_PROMPT
-from feedback_prompts import SENTIMENT_PROMPT
-from keys import HUGGINGFACE_HEADERS
-
-config = dotenv.dotenv_values(".env")
+import feedback_prompts
+from keys import *
 
 # openai
-openai.api_key = config['OPENAI_API_KEY']
 
 
 def openai_moderation_hate(prompt, response, evaluation_choice):
@@ -83,22 +76,28 @@ def openai_moderation_violencegraphic(prompt, response, evaluation_choice):
 
 
 def openai_relevance_function(prompt, response, model_engine):
-    return re.search(
-        '[1-10]+',
-        openai.ChatCompletion.create(
-            model=model_engine,
-            temperature=0.5,
-            messages=[
-                {
-                    "role": "system",
-                    "content": RELEVANCE_SYSTEM_PROMPT + prompt
-                }, {
-                    "role": "user",
-                    "content": RELEVANCE_CONTENT_PROMPT + response
-                }
-            ]
-        )["choices"][0]["message"]["content"]
-    ).group()
+    return int(
+        re.search(
+            '[1-10]+',
+            openai.ChatCompletion.create(
+                model=model_engine,
+                temperature=0.5,
+                messages=[
+                    {
+                        "role":
+                            "system",
+                        "content":
+                            feedback_prompts.RELEVANCE_SYSTEM_PROMPT + prompt
+                    }, {
+                        "role":
+                            "user",
+                        "content":
+                            feedback_prompts.RELEVANCE_CONTENT_PROMPT + response
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+        ).group()
+    )
 
 
 def openai_sentiment_function(
@@ -109,21 +108,24 @@ def openai_sentiment_function(
     if evaluation_choice == "response":
         input = response
 
-    response = openai.Completion.create(
-        engine=model_engine,
-        prompt=SENTIMENT_PROMPT,
-        max_tokens=1,
-        n=1,
-        stop=None,
-        temperature=0.1,
+    return int(
+        re.search(
+            '[1-10]+',
+            openai.ChatCompletion.create(
+                model=model_engine,
+                temperature=0.5,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": feedback_prompts.SENTIMENT_SYSTEM_PROMPT
+                    }, {
+                        "role": "user",
+                        "content": input
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+        ).group()
     )
-
-    sentiment = response.choices[0].text.strip().lower()
-
-    if sentiment == "positive":
-        return 1
-    else:
-        return 0
 
 
 # huggingface
@@ -201,14 +203,13 @@ def cohere_sentiment(prompt, response, evaluation_choice, model_engine):
         input = prompt
     if evaluation_choice == "response":
         input = response
-    sentiment = co.classify(
-        model=model_engine, inputs=[input], examples=COHERE_SENTIMENT_EXAMPLES
-    )[0].prediction
-
-    if sentiment == "positive":
-        return 1
-    else:
-        return 0
+    return int(
+        co.classify(
+            model=model_engine,
+            inputs=[input],
+            examples=feedback_prompts.COHERE_SENTIMENT_EXAMPLES
+        )[0].prediction
+    )
 
 
 def cohere_disinformation(prompt, response, evaluation_choice):
@@ -216,14 +217,13 @@ def cohere_disinformation(prompt, response, evaluation_choice):
         input = prompt
     if evaluation_choice == "response":
         input = response
-    disinfo = co.classify(
-        model='large', inputs=[input], examples=COHERE_DISINFORMATION_EXAMPLES
-    )[0].prediction
-
-    if disinfo == "disinformation":
-        return 1
-    else:
-        return 0
+    return int(
+        co.classify(
+            model='large',
+            inputs=[input],
+            examples=feedback_prompts.COHERE_DISINFORMATION_EXAMPLES
+        )[0].prediction
+    )
 
 
 def sentimentpositive(
