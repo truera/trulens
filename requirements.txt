@@ -24,3 +24,4 @@ python-dotenv
 datasets
 cohere
 kaggle
+watchdog

@@ -8,12 +8,15 @@ db_name = 'llm_quality.db'
 
 def add_data(
     model_id,
-    request,
+    prompt,
     template,
     response,
     tags,
     feedback,
     feedback_functions,
+    evaluation_choice,
+    provider,
+    model_engine,
     ts=None
 ):
     conn = sqlite3.connect(db_name)
@@ -27,7 +30,8 @@ def add_data(
 
     # Run feedback functions
     eval = {
-        f: tru_feedback.FEEDBACK_FUNCTIONS[f](request, response)
+        f: tru_feedback.FEEDBACK_FUNCTIONS[f]
+        (prompt, response, evaluation_choice, provider, model_engine)
         for f in feedback_functions
     }
     feedback_str = str(feedback)
@@ -38,7 +42,7 @@ def add_data(
     # Save the function call to the database
     c.execute(
         "INSERT INTO llm_calls VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (
-            model_id, request, template, response, tags, feedback_str, eval_str,
+            model_id, prompt, template, response, tags, feedback_str, eval_str,
             ts
         )
     )
