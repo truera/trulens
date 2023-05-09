@@ -83,7 +83,7 @@ def get_convo(cid):
 
 
 def get_answer(chain, question):
-    out = chain(dict(question=question, chat_history=[]))
+    out = chain(dict(question=question))
 
     result = out['answer']
 
@@ -111,20 +111,28 @@ def get_answer(chain, question):
 def answer_message(client, body, logger):
     pp.pprint(body)
 
+    user = body['event']['user']
     message = body['event']['text']
-
-    # user = body['event']['user']
-
     channel = body['event']['channel']
     ts = body['event']['ts']
 
-    channel = body['event']['channel']
+    
 
-    # client.chat_postMessage(
-    #     channel=channel, thread_ts=ts, text=f"Give me a minute."
-    # )
+    if "thread_ts" in body['event']:
+        client.chat_postMessage(
+            channel=channel, thread_ts=ts, text=f"Looking..."
+        )
 
-    convo = get_convo(channel)
+        convo_id = body['event']['thread_ts']
+
+    else:
+        client.chat_postMessage(
+            channel=channel, thread_ts=ts, text=f"Hi {user}. Let me check that for you..."
+        )
+
+        convo_id = ts
+
+    convo = get_convo(convo_id)
 
     res, res_sources = get_answer(convo, message)
 
@@ -137,6 +145,9 @@ def answer_message(client, body, logger):
             dict(type="context", elements=[dict(type='mrkdwn', text=str(res_sources))])
         ]
     )
+
+    pp.pprint(res)
+    pp.pprint(res_sources)
 
     logger.info(body)
 
