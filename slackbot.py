@@ -71,7 +71,8 @@ def get_convo(cid):
         verbose=verb,
         return_source_documents=True,
         memory=memory,
-        get_chat_history=lambda h: h
+        get_chat_history=lambda h: h,
+        max_tokens_limit=4096
     )
 
     tc = TruChain(chain, db=db, auto_flush=True)
@@ -95,7 +96,13 @@ def get_answer(chain, question):
     for doc in sources:
         src = doc.metadata['source']
         if src not in temp:
-            result_sources += " - " + doc.metadata['source'] + "\n"
+            result_sources += " - " + doc.metadata['source']
+            if 'page' in doc.metadata:
+                result_sources += f" (page {int(doc.metadata['page'])})\n"
+            else:
+                result_sources += "\n"
+
+
             temp.add(src)
 
     return result, result_sources
