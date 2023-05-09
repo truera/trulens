@@ -6,9 +6,17 @@ import dotenv
 import openai
 import requests
 
+from feedback_prompts import COHERE_DISINFORMATION_EXAMPLES
+from feedback_prompts import COHERE_SENTIMENT_EXAMPLES
+from feedback_prompts import RELEVANCE_CONTENT_PROMPT
+from feedback_prompts import RELEVANCE_SYSTEM_PROMPT
+from feedback_prompts import SENTIMENT_PROMPT
 from keys import HUGGINGFACE_HEADERS
 
+config = dotenv.dotenv_values(".env")
+
 # openai
+openai.api_key = config['OPENAI_API_KEY']
 
 
 def openai_moderation_hate(prompt, response, evaluation_choice):
@@ -82,18 +90,11 @@ def openai_relevance_function(prompt, response, model_engine):
             temperature=0.5,
             messages=[
                 {
-                    "role":
-                        "system",
-                    "content":
-                        "You are a relevance classifier, providing the relevance to this text: "
-                        + prompt +
-                        " Provide all responses only as a number from 1 to 10. Never elaborate."
+                    "role": "system",
+                    "content": RELEVANCE_SYSTEM_PROMPT + prompt
                 }, {
-                    "role":
-                        "user",
-                    "content":
-                        "Rate the relevance of the following piece of text:" +
-                        response
+                    "role": "user",
+                    "content": RELEVANCE_CONTENT_PROMPT + response
                 }
             ]
         )["choices"][0]["message"]["content"]
@@ -107,17 +108,10 @@ def openai_sentiment_function(
         input = prompt
     if evaluation_choice == "response":
         input = response
-    model_engine = model_engine
-    model_prompt = (
-        f"Please classify the sentiment of the following text: \"{input}\" as one of the following:\n"
-        "Positive\n"
-        "Negative\n"
-        "Classify the sentiment:"
-    )
 
     response = openai.Completion.create(
         engine=model_engine,
-        prompt=model_prompt,
+        prompt=SENTIMENT_PROMPT,
         max_tokens=1,
         n=1,
         stop=None,
@@ -132,7 +126,7 @@ def openai_sentiment_function(
         return 0
 
 
-# huggingface end points
+# huggingface
 
 SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
 TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
@@ -197,21 +191,9 @@ def huggingface_toxicity(prompt, response, evaluation_choice):
 
 # cohere
 
-config = dotenv.dotenv_values(".env")
-
 cohere.api_key = config['COHERE_API_KEY']
 
 co = cohere.Client(cohere.api_key)
-
-cohere_sentiment_examples = [
-    Example("The order came 5 days early", "positive"),
-    Example("The item exceeded my expectations", "positive"),
-    Example("The package was damaged", "negative"),
-    Example("The order is 5 days late", "negative"),
-    Example("The item\'s material feels low quality", "negative"),
-    Example("I used the product this morning", "neutral"),
-    Example("The product arrived yesterday", "neutral"),
-]
 
 
 def cohere_sentiment(prompt, response, evaluation_choice, model_engine):
@@ -220,7 +202,7 @@ def cohere_sentiment(prompt, response, evaluation_choice, model_engine):
     if evaluation_choice == "response":
         input = response
     sentiment = co.classify(
-        model=model_engine, inputs=[input], examples=cohere_sentiment_examples
+        model=model_engine, inputs=[input], examples=COHERE_SENTIMENT_EXAMPLES
     )[0].prediction
 
     if sentiment == "positive":
@@ -229,33 +211,13 @@ def cohere_sentiment(prompt, response, evaluation_choice, model_engine):
         return 0
 
 
-cohere_disinfo_examples = [
-    Example(
-        "Bud Light Official SALES REPORT Just Released ′ 50% DROP In Sales ′ Total COLLAPSE ′ Bankruptcy?",
-        "disinformation"
-    ),
-    Example(
-        "The Centers for Disease Control and Prevention quietly confirmed that at least 118,000 children and young adults have “died suddenly” in the U.S. since the COVID-19 vaccines rolled out,",
-        "disinformation"
-    ),
-    Example(
-        "Silicon Valley Bank collapses, in biggest failure since financial crisis",
-        "real"
-    ),
-    Example(
-        "Biden admin says Alabama health officials didn’t address sewage system failures disproportionately affecting Black residents",
-        "real"
-    )
-]
-
-
 def cohere_disinformation(prompt, response, evaluation_choice):
     if evaluation_choice == "prompt":
         input = prompt
     if evaluation_choice == "response":
         input = response
     disinfo = co.classify(
-        model='large', inputs=[input], examples=cohere_disinfo_examples
+        model='large', inputs=[input], examples=COHERE_DISINFORMATION_EXAMPLES
     )[0].prediction
 
     if disinfo == "disinformation":
@@ -272,7 +234,9 @@ def sentimentpositive(
             prompt, response, evaluation_choice, model_engine
         )
     elif provider == "huggingface":
-        return hf_positive_sentiment(prompt, response, evaluation_choice)
+        return huggingface_positive_sentiment(
+            prompt, response, evaluation_choice
+        )
     elif provider == "cohere":
         return cohere_sentiment(
             prompt, response, evaluation_choice, model_engine="large"
