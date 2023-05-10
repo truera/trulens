@@ -3,6 +3,8 @@ from pprint import PrettyPrinter
 from typing import Dict, Tuple
 
 from tru_chain import TruChain
+from tru_db import Record
+from tru_db import TruDB
 from tru_db import TruTinyDB
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
@@ -83,11 +85,18 @@ def get_or_make_chain(cid: str) -> TruChain:
         max_tokens_limit=4096
     )
 
-    tc = TruChain(chain, db=db)
+    tc = TruChain(chain)
 
     convos[cid] = tc
 
     return tc
+
+
+# Create one chain to insert model definition to db.
+dummy_chain = get_or_make_chain("dummy")
+model = dummy_chain.model
+model_name = dummy_chain.model_name
+db.insert_model(model_name=model_name, model=model)
 
 
 def get_answer(chain: TruChain, question: str) -> Tuple[str, str]:
@@ -96,7 +105,11 @@ def get_answer(chain: TruChain, question: str) -> Tuple[str, str]:
     sources elaboration text.
     """
 
-    out = chain(dict(question=question))
+    record = chain(dict(question=question))
+
+    db.insert_record(model_name=model_name, record=record)
+
+    out = TruDB.project(query=Record.chain._call.rets, obj=record)
 
     result = out['answer']
 

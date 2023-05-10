@@ -3,7 +3,7 @@
 
 ## Limitations
 
-- Likely not thread safe.
+- Uncertain thread safety.
 
 - If the same wrapped sub-chain is called multiple times within a single call to
   the root chain, the record of this execution will not be exact with regards to
@@ -22,8 +22,7 @@
 
 ```python
 
-    db = TruTinyDB("db.json")
-    tc = TruChain(t.llm_chain, db=db)
+    tc = TruChain(t.llm_chain)
 
 ```
 
@@ -63,20 +62,12 @@ Output:
 
 ```python
 
-    tc("hello there")
-    tc("hello there general kanobi")
+    rec1: dict = tc("hello there")
+    rec2: dict = tc("hello there general kanobi")
 
 ```
 
-- Retrieve the records of the above executions:
-
-```python
-
-    tc.records
-
-```
-
-Output (the ... are the same as in the above model parameter dictionary):
+OUTDATED: Output (the ... are the same as in the above model parameter dictionary):
 
 ```json
 
@@ -103,12 +94,12 @@ Output (the ... are the same as in the above model parameter dictionary):
 
   ```
 
-- Query aspects of those records via TinyDB-like queries, producing a structured
+- OUTDATED: Query aspects of those records via TinyDB-like queries, producing a structured
   pandas.DataFrame:
 
 ```python
 
-    tc.db.select(
+    db.select(
         Record.chain.prompt.template,
         Record.chain._call.args.inputs.question,
         Record.chain._call.rets.text,
@@ -124,20 +115,6 @@ Output (pd.DataFrame):
     DATA FRAME HERE
 
 ```
-
-- Write out records to TinyDB:
-
-```python
-
-    tc.flush_records()
-
-```
-
-This will result in `tc.records` being empty. All of the records that get
-inserted into TinyDB specified at `TruChain` construction. Alternatively a
-TinyDB can be provided to `flush_records`.
-
-Note that `tc.db.select` operates on flushed records.
 """
 
 from collections import defaultdict
@@ -154,10 +131,10 @@ from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
 
+from tru_db import model_name_of_model
 from tru_db import Query
 from tru_db import Record
 from tru_db import TruDB
-from tru_db import TruTinyDB
 
 # Addresses of chains or their contents. This is used to refer chains/parameters
 # even in cases where the live object is not in memory (i.e. on some remote
@@ -176,8 +153,6 @@ Path = Tuple[Union[str, int], ...]
 # - 'chain_stack': List[Path] -- call stack of chain runs. Elements address
 #   chains.
 
-RECORDS_QUEUE_MAX_SIZE = 1024
-
 
 class TruChain(Chain):
     """
@@ -195,31 +170,20 @@ class TruChain(Chain):
     # for recording is based on the call stack, see _call.
     recording: Optional[bool] = Field(exclude=True)
 
-    # Store records here. "exclude=True" means that these fields will not be
-    # included in the json/dict dump.
-    records: Optional[Queue[Dict[Any, List[Dict]]]] = Field(exclude=True)
-
-    # Flush records to db (if given) after each record is produced.
-    auto_flush: Optional[bool] = Field(exclude=True)
-
-    # TinyDB json database to write records to. Need to call flush_records for
-    # this though.
-    db: Optional[TruDB] = Field(exclude=True)
-
     def __init__(
         self,
         chain: Chain,
         model_name: Optional[str] = None,
         verbose: bool = False,
-        db: Optional[TruDB] = None,
-        auto_flush: Optional[bool] = True
     ):
         """
         Wrap a chain for monitoring.
 
         Arguments:
+        
         - chain: Chain -- the chain to wrap.
-        - db: Optional[TinyDB] -- TinyDB database for storing records.
+        - model_name: Optional[str] -- model name or index. If not given, the
+          name is constructed from wrapped model parameters.
         """
 
         Chain.__init__(self, verbose=verbose)
@@ -228,36 +192,15 @@ class TruChain(Chain):
 
         self._instrument(obj=self.chain, query=Record.chain)
         self.recording = False
-        self.records = Queue(maxsize=RECORDS_QUEUE_MAX_SIZE)
-
-        if db is None:
-            db = TruTinyDB()  # non-persistent model db by default
-
-        self.db = db
-        self.auto_flush = auto_flush
 
         model = self.model
 
         # Track model. This will produce a name if not provided.
-        self.model_name = self.db.insert_model(
-            model_name=model_name, model=model
-        )
+        self.model_name = model_name or model_name_of_model(model)
 
     @property
     def model(self):
         return self.dict()
-
-    def flush_records(self):
-        # TODO: locks?
-
-        count = 0
-
-        while not self.records.empty():
-            record = self.records.get()
-            self.db.insert_record(model_name=self.model_name, record=record)
-            count += 1
-
-        print(f"Wrote {count} record(s) to {self.db}.")
 
     # Chain requirement
     @property
@@ -305,22 +248,17 @@ class TruChain(Chain):
 
         assert len(record) > 0, "No information recorded in call."
 
-        model = self.dict()
+        ret_record = self.model
         for path, calls in record.items():
-            obj = TruDB._project(path=path, obj=model)
+            obj = TruDB._project(path=path, obj=ret_record)
             if obj is None:
                 print(f"WARNING: Cannot locate {path} in model.")
-                model['_call_not_found_inmodel'] = calls
+                record['_call_not_found_inmodel'] = calls
             else:
                 obj.update(dict(_call=calls))
 
-        self.records.put(model)
-
-        if self.auto_flush or self.records.qsize() >= self.records.maxsize // 2:
-            self.flush_records()
-
         if error is None:
-            return ret
+            return ret_record
         else:
             raise error
 

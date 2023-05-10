@@ -228,7 +228,13 @@ class TruTinyDB(TruDB):
     ) -> str:
         model_name = model_name or model_name_of_model(model)
 
-        self.models.update(Document(doc_id=model_name, value=model))
+        if self.models.contains(doc_id=model_name):
+            print(
+                f"WARNING: model {model_name} already exists in {self.models}."
+            )
+            self.models.update(Document(doc_id=model_name, value=model))
+        else:
+            self.models.insert(Document(doc_id=model_name, value=model))
 
         return model_name
 
