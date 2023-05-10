@@ -18,8 +18,6 @@ You can then run:
 `streamlit run gpt3_streamlit.py` - template app where llm is called and feedback is logged.
 
 `streamlit run feedback_viewer.py` - dashboard for feedback
-
-`streamlit run benchmark_streamlit.py` - benchmarking application for feedback functions against static datasets.
 # Additional Contents
 
 - `tru.py` - add_data implementation for collecting feedback
