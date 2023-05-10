@@ -105,7 +105,10 @@ def benchmark_on_data(
         )
     else:
         raise ValueError(f"Unrecognized feedback_function_name. Please use one of {list(tru_feedback.FEEDBACK_FUNCTIONS.keys())} ")
-    data['feedback'] = data['text'].apply(lambda x: feedback_function('', x))
+    if 'prompt' in data and 'response' in data:
+        data['feedback'] = data.apply(lambda x: feedback_function(x['prompt'], x['response']), axis=1)
+    else:
+        data['feedback'] = data['text'].apply(lambda x: feedback_function('', x))
 
     data['correct'] = data['label'] == data['feedback']
 
@@ -126,12 +129,15 @@ def rate_limited_benchmark_on_data(
         feedback_function_name, provider, model_engine, rate_limit,
         evaluation_choice
     )
-    data['feedback'] = data['text'].apply(
-        lambda x: rate_limited_feedback_function(
-            prompt='',
-            response=x,
+    if 'prompt' in data and 'response' in data:
+        data['feedback'] = data.apply(lambda x: rate_limited_feedback_function(x['prompt'], x['response']), axis=1)
+    else:
+        data['feedback'] = data['text'].apply(
+            lambda x: rate_limited_feedback_function(
+                prompt='',
+                response=x,
+            )
         )
-    )
 
     data['correct'] = data['label'] == data['feedback']
 

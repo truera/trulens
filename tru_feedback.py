@@ -11,7 +11,11 @@ from keys import *
 
 # openai
 
-
+def _re_1_10_rating(str_val):
+    matches = re.search('[1-10]+',str_val)
+    if not matches:
+        return -1
+    return int(matches.group())
 def openai_moderation_hate(prompt, response, evaluation_choice):
     if evaluation_choice == "prompt":
         input = prompt
@@ -77,9 +81,7 @@ def openai_moderation_violencegraphic(prompt, response, evaluation_choice):
 
 def openai_relevance(prompt, response, model_engine):
 
-    return int(
-        re.search(
-            '[1-10]+',
+    return _re_1_10_rating(
             openai.ChatCompletion.create(
                 model=model_engine,
                 temperature=0.5,
@@ -97,8 +99,7 @@ def openai_relevance(prompt, response, model_engine):
                     }
                 ]
             )["choices"][0]["message"]["content"]
-        ).group()
-    )
+         )
 
 
 def openai_sentiment_function(
@@ -133,7 +134,7 @@ def openai_sentiment_function(
 
 SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
 TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
-
+CHAT_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-3B"
 
 def huggingface_positive_sentiment(prompt, response, evaluation_choice):
     if evaluation_choice == "prompt":
@@ -162,9 +163,7 @@ def huggingface_negative_sentiment(prompt, response, evaluation_choice):
     max_length = 500
     truncated_text = input[:max_length]
     payload = {"inputs": truncated_text}
-    hf_response = requests.post(
-        SENTIMENT_API_URL, headers=HUGGINGFACE_HEADERS, json=payload
-    ).json()[0]
+    hf_response = requests.post(SENTIMENT_API_URL, headers=HUGGINGFACE_HEADERS, json=payload).json()[0]
     for label in hf_response:
         if label['label'] == 'LABEL_0':
             if label['score'] >= 0.5:
@@ -225,6 +224,48 @@ def cohere_disinformation(prompt, response, evaluation_choice):
             examples=feedback_prompts.COHERE_DISINFORMATION_EXAMPLES
         )[0].prediction
     )
+
+def _get_answer_agreement(prompt, response, check_response, model_engine):
+    oai_chat_response = openai.ChatCompletion.create(
+                model=model_engine,
+                temperature=0.5,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": feedback_prompts.AGREEMENT_SYSTEM_PROMPT % (prompt, response)
+                    }, {
+                        "role": "user",
+                        "content": check_response
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+    return oai_chat_response
+def get_factagreement(prompt, response, model_engine):
+    if not prompt or prompt == "":
+        prompt = f"Finish this thought: {response[:int(len(response)*4.0/5.0)]}"
+    payload = {"text": prompt}
+    hf_response = requests.post(CHAT_API_URL, headers=HUGGINGFACE_HEADERS, json=payload).json()['generated_text']
+    
+    # Attempt an honest bot
+    oai_chat_response = openai.ChatCompletion.create(
+                model=model_engine,
+                temperature=0.5,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": feedback_prompts.CORRECT_SYSTEM_PROMPT
+                    }, {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+    
+    oai_similarity_response_1 = _get_answer_agreement(prompt, response, hf_response, model_engine)
+    oai_similarity_response_2 = _get_answer_agreement(prompt, response, oai_chat_response, model_engine)
+
+    #print(f"Prompt: {prompt}\n\nResponse: {response}\n\nHFResp: {hf_response}\n\nOAIResp: {oai_chat_response}\n\nAgree1: {oai_similarity_response_1}\n\nAgree2: {oai_similarity_response_2}\n\n")
+    return (_re_1_10_rating(oai_similarity_response_1)+_re_1_10_rating(oai_similarity_response_2))/2
 
 
 def get_sentimentpositive_function(provider, model_engine, evaluation_choice):
@@ -371,6 +412,11 @@ def get_disinformation_function(provider, model_engine, evaluation_choice):
         prompt, response, evaluation_choice
     )
 
+def get_factagreement_function(provider, model_engine, evaluation_choice):
+    return lambda prompt, response: get_factagreement(
+        prompt, response, model_engine
+    )
+
 
 FEEDBACK_FUNCTIONS = {
     'sentiment-positive': get_sentimentpositive_function,
@@ -384,4 +430,5 @@ FEEDBACK_FUNCTIONS = {
     'violencegraphic': get_violencegraphic_function,
     'toxicity': get_toxicity_function,
     'disinformation': get_disinformation_function,
+    'factagreement': get_factagreement_function,
 }
