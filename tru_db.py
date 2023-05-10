@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from merkle_json import MerkleJson
 import pandas as pd
 from tinydb import Query as TinyQuery
-from tinydb.queries import QueryInstance as TinyQueryInstance
 from tinydb import TinyDB
+from tinydb.queries import QueryInstance as TinyQueryInstance
 from tinydb.storages import MemoryStorage
 from tinydb.table import Document
 from tinydb.table import Table
@@ -37,7 +37,8 @@ def json_default(obj: Any) -> str:
 
 Query = TinyQuery  # for typing
 Record = Query()  # for constructing
-Condition = TinyQueryInstance # type of conditions, constructed from query/record like `Record.chain != None``
+Condition = TinyQueryInstance  # type of conditions, constructed from query/record like `Record.chain != None``
+
 
 class TruDB(abc.ABC):
 
@@ -141,9 +142,7 @@ class TruTinyDB(TruDB):
         else:
             self.filename = None
             print("WARNING: db is memory-only. It will not persist.")
-            self.db: TinyDB = TinyDB(
-                storage=MemoryStorage
-            )
+            self.db: TinyDB = TinyDB(storage=MemoryStorage)
 
         self.records: Table = self.db.table("records")
         self.records.document_id_class = int

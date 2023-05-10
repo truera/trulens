@@ -1,5 +1,6 @@
 import os
 from pprint import PrettyPrinter
+from typing import Dict, Tuple
 
 from tru_chain import TruChain
 from tru_db import TruTinyDB
@@ -29,29 +30,37 @@ verb = True
 
 # create a conversational chain with relevant models and vector store
 
-# initialize pinecone
+# Embedding needed for Pinecone vector db.
+embedding = OpenAIEmbeddings(model='text-embedding-ada-002')  # 1536 dims
+
+# Pinecone configuration.
 pinecone.init(
     api_key=PINECONE_API_KEY,  # find at app.pinecone.io
     environment=PINECONE_ENV  # next to api key in console
 )
 index_name = "llmdemo"
-
-embedding = OpenAIEmbeddings(model='text-embedding-ada-002')  # 1536 dims
-
 docsearch = Pinecone.from_existing_index(
     index_name=index_name, embedding=embedding
 )
-
-llm = OpenAI(temperature=0, max_tokens=128)
-
 retriever = docsearch.as_retriever()
 
-convos = dict()
+# LLM for completing prompts, and other tasks.
+llm = OpenAI(temperature=0, max_tokens=128)
 
+# Cache of conversations. Keys are SlackAPI conversation ids (channel ids or
+# otherwise) and values are TruChain to handle that conversation.
+convos: Dict[str, TruChain] = dict()
+
+# DB to save models and records.
 db = TruTinyDB("slackbot.json")
 
 
-def get_convo(cid):
+def get_or_make_chain(cid: str) -> TruChain:
+    """
+    Create a new chain for the given conversation id `cid` or return an existing
+    one. Return the new or existing chain.
+    """
+
     if cid in convos:
         return convos[cid]
 
@@ -81,7 +90,12 @@ def get_convo(cid):
     return tc
 
 
-def get_answer(chain, question):
+def get_answer(chain: TruChain, question: str) -> Tuple[str, str]:
+    """
+    Use the given `chain` to respond to `question`. Return the answer text and
+    sources elaboration text.
+    """
+
     out = chain(dict(question=question))
 
     result = out['answer']
@@ -106,7 +120,11 @@ def get_answer(chain, question):
     return result, result_sources
 
 
-def answer_message(client, body, logger):
+def answer_message(client, body: dict, logger):
+    """
+    SlackAPI handler of message received.
+    """
+
     pp.pprint(body)
 
     user = body['event']['user']
@@ -130,9 +148,9 @@ def answer_message(client, body, logger):
 
         convo_id = ts
 
-    convo = get_convo(convo_id)
+    chain = get_or_make_chain(convo_id)
 
-    res, res_sources = get_answer(convo, message)
+    res, res_sources = get_answer(chain, message)
 
     client.chat_postMessage(
         channel=channel,
@@ -153,8 +171,8 @@ def answer_message(client, body, logger):
     logger.info(body)
 
 
-# WebClient instantiates a client that can call API methods
-# When using Bolt, you can use either `app.client` or the `client` passed to listeners.
+# WebClient instantiates a client that can call API methods When using Bolt, you
+# can use either `app.client` or the `client` passed to listeners.
 client = WebClient(token=SLACK_TOKEN)
 logger = logging.getLogger(__name__)
 
@@ -189,7 +207,7 @@ def update_home_tab(client, event, logger):
                                     "type":
                                         "mrkdwn",
                                     "text":
-                                        "*I'm here to answer questions and test feedback functions.* :tada:"
+                                        "*I'm here to answer questions and test feedback functions.* :tada: Note that all of my conversations and thinking are recorded."
                                 }
                         }
                     ]
@@ -202,11 +220,18 @@ def update_home_tab(client, event, logger):
 
 @app.event("message")
 def handle_message_events(body, logger):
+    """
+    Handle direct messages to the bot.
+    """
+
     answer_message(client, body, logger)
 
 
 @app.event("app_mention")
 def handle_app_mention_events(body, logger):
+    """
+    Handle messages that mention the bot.
+    """
     answer_message(client, body, logger)
 
 
