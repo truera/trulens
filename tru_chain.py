@@ -22,7 +22,7 @@
 
 ```python
 
-    db = TinyDB("db.json")
+    db = TruTinyDB("db.json")
     tc = TruChain(t.llm_chain, db=db)
 
 ```
@@ -108,7 +108,7 @@ Output (the ... are the same as in the above model parameter dictionary):
 
 ```python
 
-    tc.select(
+    tc.db.select(
         Record.chain.prompt.template,
         Record.chain._call.input.inputs.question,
         Record.chain._call.output.text,
@@ -143,27 +143,23 @@ This will result in `tc.records` being empty. All of the records that get
 inserted into TinyDB specified at `TruChain` construction. Alternatively a
 TinyDB can be provided to `flush_records`.
 
-Note that `tc.select` operates on a TinyDB and flushes records to it first.
+Note that `tc.db.select` operates on flushed records.
 """
 
-import abc
 from collections import defaultdict
 from datetime import datetime
 from inspect import BoundArguments
 from inspect import signature
 from inspect import stack
-import json
 import os
+from queue import Queue
 import threading as th
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from langchain.chains.base import Chain
-import pandas as pd
 from pydantic import Field, BaseModel
-from tinydb import Query
-from tinydb import TinyDB
-from tinydb.table import Table, Document
-from tru_db import TruDB, TruTinyDB
+
+from tru_db import TruDB, TruTinyDB, Record, Query
 
 # Addresses of chains or their contents. This is used to refer chains/parameters
 # even in cases where the live object is not in memory (i.e. on some remote
@@ -182,83 +178,8 @@ Path = Tuple[Union[str, int], ...]
 # - 'chain_stack': List[Path] -- call stack of chain runs. Elements address
 #   chains.
 
-# TinyDB queries for looking up parts of records/models and/or filtering on
-# those parts. See _select.
-Record = Query()
 
-def _query_str(query: Query):
-
-    def render(ks):
-        if len(ks) == 0:
-            return ""
-
-        first = ks[0]
-        if len(ks) > 1:
-            rest = ks[1:]
-        else:
-            rest = ()
-
-        if isinstance(first, str):
-            return f".{first}{render(rest)}"
-        elif isinstance(first, int):
-            return f"[{first}]{render(rest)}"
-        else:
-            RuntimeError(
-                f"Don't know how to render path element {first} of type {type(first)}."
-            )
-
-    return "Record" + render(query._path)
-
-
-def _select(
-    table: Table,
-    queries: List[Query],
-    where: Optional[Query] = None
-) -> pd.DataFrame:
-    rows = []
-
-    if where is not None:
-        table_rows = table.search(where)
-    else:
-        table_rows = table.all()
-
-    for row in table_rows:
-        vals = [project(query=q, obj=row) for q in queries]
-        rows.append(vals)
-
-    return pd.DataFrame(rows, columns=map(_query_str, queries))
-
-
-def project(query: Query, obj: Any):
-    return _project(query._path, obj)
-
-
-def _project(path: List, obj: Any):
-    if len(path) == 0:
-        return obj
-
-    first = path[0]
-    if len(path) > 1:
-        rest = path[1:]
-    else:
-        rest = ()
-
-    if isinstance(first, str):
-        if not isinstance(obj, Dict) or first not in obj:
-            return None
-
-        return _project(path=rest, obj=obj[first])
-
-    elif isinstance(first, int):
-        if not isinstance(obj, Sequence) or first >= len(obj):
-            return None
-
-        return _project(path=rest, obj=obj[first])
-    else:
-        raise RuntimeError(
-            f"Don't know how to locate element with key of type {first}"
-        )
-
+RECORDS_QUEUE_MAX_SIZE = 1024
 
 class TruChain(Chain):
     """
@@ -278,7 +199,7 @@ class TruChain(Chain):
 
     # Store records here. "exclude=True" means that these fields will not be
     # included in the json/dict dump.
-    records: Optional[List[Dict[Any, List[Dict]]]] = Field(exclude=True)
+    records: Optional[Queue[Dict[Any, List[Dict]]]] = Field(exclude=True)
 
     # Flush records to db (if given) after each record is produced.
     auto_flush: Optional[bool] = Field(exclude=True)
@@ -309,17 +230,16 @@ class TruChain(Chain):
 
         self._instrument(obj=self.chain, query=Record.chain)
         self.recording = False
-        self.records = []
+        self.records = Queue(maxsize=RECORDS_QUEUE_MAX_SIZE)
 
         if db is None:
-            print("Using default DB at db.json .")
-            db = TruTinyDB(filename="db.json")
+            db = TruTinyDB() # non-persistent model db by default
 
         self.db = db
         self.auto_flush = auto_flush
 
         model = self.model
-        
+
         # Track model. This will produce a name if not provided.
         self.model_name = self.db.insert_model(model_name=model_name, model=model)
 
@@ -327,33 +247,17 @@ class TruChain(Chain):
     def model(self):
         return self.dict()
 
-    def select(
-        self,
-        *query: Tuple[Query],
-        where: Optional[Query] = None,
-        table: Optional[Table] = None
-    ):
-        self.flush_records()
-
-        if isinstance(query, Query):
-            queries = [query]
-        else:
-            queries = query
-
-        table = table if table is not None else self.db.table("records")
-
-        return _select(table, queries, where)
-
     def flush_records(self):
-        # TODO: locks
+        # TODO: locks?
 
-        to_flush = self.records
+        count = 0
 
-        print(f"Writing {len(to_flush)} record(s) to {self.db}.")
-
-        self.records = []
-        for record in to_flush:
+        while not self.records.empty():
+            record = self.records.get()
             self.db.insert_record(model_name = self.model_name, record = record)
+            count += 1
+
+        print(f"Wrote {count} record(s) to {self.db}.")
 
     # Chain requirement
     @property
@@ -403,16 +307,16 @@ class TruChain(Chain):
 
         model = self.dict()
         for path, calls in record.items():
-            obj = _project(path=path, obj=model)
+            obj = TruDB._project(path=path, obj=model)
             if obj is None:
                 print(f"WARNING: Cannot locate {path} in model.")
                 model['_call_not_found_inmodel'] = calls
             else:
                 obj.update(dict(_call=calls))
 
-        self.records.append(model)
+        self.records.put(model)
 
-        if self.db is not None and self.auto_flush:
+        if self.auto_flush or self.records.qsize() >= self.records.maxsize // 2:
             self.flush_records()
 
         if error is None:

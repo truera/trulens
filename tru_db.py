@@ -1,12 +1,17 @@
 import abc
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from merkle_json import MerkleJson
 from tinydb import TinyDB
 from tinydb.table import Document
 from tinydb.table import Table
+from tinydb import Query as TinyQuery
+from tinydb import TinyDB
+from tinydb.table import Table, Document
+from tinydb.storages import MemoryStorage
+import pandas as pd
 
 mj = MerkleJson()
 
@@ -30,8 +35,21 @@ def json_default(obj: Any) -> str:
 
     return f"NON-SERIALIZED OBJECT: type={type(obj)}"
 
+Query = TinyQuery # for typing
+Record = Query()  # for constructing
 
 class TruDB(abc.ABC):
+    
+    # Use TinyDB queries for looking up parts of records/models and/or filtering
+    # on those parts.
+    
+    @abc.abstractmethod
+    def select(
+        self,
+        *query: Tuple[Query],
+        where: Optional[Query] = None
+    ) -> pd.DataFrame:
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def insert_record(self, model_name: str, record: dict) -> int:
@@ -42,6 +60,7 @@ class TruDB(abc.ABC):
 
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def insert_model(self, model_name: str, model: dict) -> str:
         """
         Insert a new `model` into db under the given `model_name`. If name not
@@ -50,13 +69,73 @@ class TruDB(abc.ABC):
 
         raise NotImplementedError()
 
+    @staticmethod
+    def _query_str(query: Query):
+
+        def render(ks):
+            if len(ks) == 0:
+                return ""
+
+            first = ks[0]
+            if len(ks) > 1:
+                rest = ks[1:]
+            else:
+                rest = ()
+
+            if isinstance(first, str):
+                return f".{first}{render(rest)}"
+            elif isinstance(first, int):
+                return f"[{first}]{render(rest)}"
+            else:
+                RuntimeError(
+                    f"Don't know how to render path element {first} of type {type(first)}."
+                )
+
+        return "Record" + render(query._path)
+
+    @staticmethod
+    def project(query: Query, obj: Any):
+        return TruDB._project(query._path, obj)
+
+    @staticmethod
+    def _project(path: List, obj: Any):
+        if len(path) == 0:
+            return obj
+
+        first = path[0]
+        if len(path) > 1:
+            rest = path[1:]
+        else:
+            rest = ()
+
+        if isinstance(first, str):
+            if not isinstance(obj, Dict) or first not in obj:
+                return None
+
+            return TruDB._project(path=rest, obj=obj[first])
+
+        elif isinstance(first, int):
+            if not isinstance(obj, Sequence) or first >= len(obj):
+                return None
+
+            return TruDB._project(path=rest, obj=obj[first])
+        else:
+            raise RuntimeError(
+                f"Don't know how to locate element with key of type {first}"
+            )
+
 
 class TruTinyDB(TruDB):
 
-    def __init__(self, filename: Path):
-        self.filename = Path(filename)
-
-        self.db: TinyDB = TinyDB(filename, indent=4, default=json_default)
+    def __init__(self, filename: Optional[Path] = None):
+        
+        if filename is not None:
+            self.filename = Path(filename)
+            self.db: TinyDB = TinyDB(filename, indent=4, default=json_default)
+        else:
+            self.filename = None
+            print("WARNING: db is memory-only. It will not persist.")
+            self.db: TinyDB = TinyDB(storage=MemoryStorage)
 
         self.records: Table = self.db.table("records")
         self.records.document_id_class = int
@@ -64,10 +143,12 @@ class TruTinyDB(TruDB):
         self.models: Table = self.db.table("models")
         self.models.document_id_class = str
 
+    # TruDB requirement
     def insert_record(self, model_name: str, record: dict) -> int:
         record['model_name'] = model_name
         return self.records.insert(record)
 
+    # TruDB requirement
     def insert_model(
         self, model: dict, model_name: Optional[str] = None
     ) -> str:
@@ -75,12 +156,50 @@ class TruTinyDB(TruDB):
         self.models.insert(Document(doc_id=model_name, value=model))
         return model_name
 
+    # TruDB requirement
+    def select(
+        self,
+        *query: Tuple[Query],
+        where: Optional[Query] = None
+    ):
+        self.flush_records()
+
+        if isinstance(query, Query):
+            queries = [query]
+        else:
+            queries = query
+
+        return self._select(table=self.records, queries=queries, where=where)
+
+    @staticmethod
+    def _select(
+        table: Table,
+        queries: List[Query],
+        where: Optional[Query] = None
+    ) -> pd.DataFrame:
+        rows = []
+
+        if where is not None:
+            table_rows = table.search(where)
+        else:
+            table_rows = table.all()
+
+        for row in table_rows:
+            vals = [TruDB.project(query=q, obj=row) for q in queries]
+            rows.append(vals)
+
+        return pd.DataFrame(rows, columns=map(TruDB._query_str, queries))
+
 
 class TruSQL(TruDB):
 
     def __init__(self):
-        pass
 
+        # TODO(shayak)
+
+        ...
+
+    # TruDB requirement
     def insert_record(self, model_name: str, record: dict) -> int:
         record['model_name'] = model_name
         record_str = json.dumps(record, default=json_default)
@@ -89,6 +208,7 @@ class TruSQL(TruDB):
 
         return 42  # record_id
 
+    # TruDB requirement
     def insert_model(
         self, model: dict, model_name: Optional[str] = None
     ) -> str:
@@ -98,3 +218,21 @@ class TruSQL(TruDB):
         # TODO(shayak)
 
         return model_name
+
+    def select(
+        self,
+        *query: Tuple[Query],
+        where: Optional[Query] = None,
+        table: Optional[Table] = None
+    ) -> pd.DataFrame:
+        
+        # get the record json dumps from sql
+        record_strs = ...  # TODO(shayak)
+
+        records: Sequence[Dict] = map(json.loads, record_strs)
+
+        db = TruTinyDB()
+        for record in records:
+            db.insert_record(model_name=record['model_name'], record=record)
+
+        return db.select(*query, where, table)

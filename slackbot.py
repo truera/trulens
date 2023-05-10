@@ -16,7 +16,6 @@ from langchain.vectorstores import Pinecone
 import pinecone
 from slack_bolt import App
 from slack_sdk import WebClient
-from tinydb import TinyDB
 
 from keys import PINECONE_API_KEY
 from keys import PINECONE_ENV
