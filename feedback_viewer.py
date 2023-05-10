@@ -13,8 +13,10 @@ st.title("Feedback Viewer")
 
 
 # Define function to show table contents
-def show_table_contents(table_name):
-    c.execute(f"SELECT * FROM {table_name}")
+def show_table_contents(logging_table_name, feedback_table_name):
+    c.execute(
+        f"SELECT l.*, f.feedback_functions FROM {logging_table_name} l LEFT JOIN {feedback_table_name} f on l.record_id = f.record_id"
+    )
     rows = c.fetchall()
     if len(rows) == 0:
         st.write("Table is empty.")
@@ -25,6 +27,7 @@ def show_table_contents(table_name):
         st.dataframe(df)
 
 
-table_name = "llm_calls"
+logging_table_name = "llm_calls"
+feedback_table_name = "llm_feedback_functions"
 
-show_table_contents(table_name)
+show_table_contents(logging_table_name, feedback_table_name)
