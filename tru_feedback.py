@@ -387,6 +387,6 @@ FEEDBACK_FUNCTIONS = {
     'sexualminors': get_sexualminors_function,
     'violence': get_violence_function,
     'violencegraphic': get_violencegraphic_function,
-    'toxicicity': get_toxicity_function,
+    'toxicity': get_toxicity_function,
     'disinformation': get_disinformation_function,
 }
