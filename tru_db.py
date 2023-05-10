@@ -4,14 +4,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from merkle_json import MerkleJson
-from tinydb import TinyDB
-from tinydb.table import Document
-from tinydb.table import Table
+import pandas as pd
 from tinydb import Query as TinyQuery
 from tinydb import TinyDB
-from tinydb.table import Table, Document
 from tinydb.storages import MemoryStorage
-import pandas as pd
+from tinydb.table import Document
+from tinydb.table import Table
 
 mj = MerkleJson()
 
@@ -35,14 +33,16 @@ def json_default(obj: Any) -> str:
 
     return f"NON-SERIALIZED OBJECT: type={type(obj)}"
 
-Query = TinyQuery # for typing
+
+Query = TinyQuery  # for typing
 Record = Query()  # for constructing
 
+
 class TruDB(abc.ABC):
-    
+
     # Use TinyDB queries for looking up parts of records/models and/or filtering
     # on those parts.
-    
+
     @abc.abstractmethod
     def select(
         self,
@@ -128,14 +128,16 @@ class TruDB(abc.ABC):
 class TruTinyDB(TruDB):
 
     def __init__(self, filename: Optional[Path] = None):
-        
+
         if filename is not None:
             self.filename = Path(filename)
             self.db: TinyDB = TinyDB(filename, indent=4, default=json_default)
         else:
             self.filename = None
             print("WARNING: db is memory-only. It will not persist.")
-            self.db: TinyDB = TinyDB(storage=MemoryStorage)
+            self.db: TinyDB = TinyDB(
+                storage=MemoryStorage, indent=4, default=json_default
+            )
 
         self.records: Table = self.db.table("records")
         self.records.document_id_class = int
@@ -157,11 +159,7 @@ class TruTinyDB(TruDB):
         return model_name
 
     # TruDB requirement
-    def select(
-        self,
-        *query: Tuple[Query],
-        where: Optional[Query] = None
-    ):
+    def select(self, *query: Tuple[Query], where: Optional[Query] = None):
         self.flush_records()
 
         if isinstance(query, Query):
@@ -225,13 +223,13 @@ class TruSQL(TruDB):
         where: Optional[Query] = None,
         table: Optional[Table] = None
     ) -> pd.DataFrame:
-        
+
         # get the record json dumps from sql
         record_strs = ...  # TODO(shayak)
 
         records: Sequence[Dict] = map(json.loads, record_strs)
 
-        db = TruTinyDB()
+        db = TruTinyDB()  # in-memory db if filename not provided
         for record in records:
             db.insert_record(model_name=record['model_name'], record=record)
 

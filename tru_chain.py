@@ -157,9 +157,13 @@ import threading as th
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from langchain.chains.base import Chain
-from pydantic import Field, BaseModel
+from pydantic import BaseModel
+from pydantic import Field
 
-from tru_db import TruDB, TruTinyDB, Record, Query
+from tru_db import Query
+from tru_db import Record
+from tru_db import TruDB
+from tru_db import TruTinyDB
 
 # Addresses of chains or their contents. This is used to refer chains/parameters
 # even in cases where the live object is not in memory (i.e. on some remote
@@ -178,8 +182,8 @@ Path = Tuple[Union[str, int], ...]
 # - 'chain_stack': List[Path] -- call stack of chain runs. Elements address
 #   chains.
 
-
 RECORDS_QUEUE_MAX_SIZE = 1024
+
 
 class TruChain(Chain):
     """
@@ -233,7 +237,7 @@ class TruChain(Chain):
         self.records = Queue(maxsize=RECORDS_QUEUE_MAX_SIZE)
 
         if db is None:
-            db = TruTinyDB() # non-persistent model db by default
+            db = TruTinyDB()  # non-persistent model db by default
 
         self.db = db
         self.auto_flush = auto_flush
@@ -241,7 +245,9 @@ class TruChain(Chain):
         model = self.model
 
         # Track model. This will produce a name if not provided.
-        self.model_name = self.db.insert_model(model_name=model_name, model=model)
+        self.model_name = self.db.insert_model(
+            model_name=model_name, model=model
+        )
 
     @property
     def model(self):
@@ -254,7 +260,7 @@ class TruChain(Chain):
 
         while not self.records.empty():
             record = self.records.get()
-            self.db.insert_record(model_name = self.model_name, record = record)
+            self.db.insert_record(model_name=self.model_name, record=record)
             count += 1
 
         print(f"Wrote {count} record(s) to {self.db}.")

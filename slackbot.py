@@ -8,10 +8,10 @@ os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 import logging
 
-from langchain.memory import ConversationSummaryBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
+from langchain.memory import ConversationSummaryBufferMemory
 from langchain.vectorstores import Pinecone
 import pinecone
 from slack_bolt import App
@@ -49,6 +49,7 @@ retriever = docsearch.as_retriever()
 convos = dict()
 
 db = TruTinyDB("slackbot.json")
+
 
 def get_convo(cid):
     if cid in convos:
@@ -100,7 +101,6 @@ def get_answer(chain, question):
             else:
                 result_sources += "\n"
 
-
             temp.add(src)
 
     return result, result_sources
@@ -114,8 +114,6 @@ def answer_message(client, body, logger):
     channel = body['event']['channel']
     ts = body['event']['ts']
 
-    
-
     if "thread_ts" in body['event']:
         client.chat_postMessage(
             channel=channel, thread_ts=ts, text=f"Looking..."
@@ -125,7 +123,9 @@ def answer_message(client, body, logger):
 
     else:
         client.chat_postMessage(
-            channel=channel, thread_ts=ts, text=f"Hi {user}. Let me check that for you..."
+            channel=channel,
+            thread_ts=ts,
+            text=f"Hi {user}. Let me check that for you..."
         )
 
         convo_id = ts
@@ -140,7 +140,10 @@ def answer_message(client, body, logger):
         text=str(res) + "\n" + str(res_sources),
         blocks=[
             dict(type="section", text=dict(type='mrkdwn', text=str(res))),
-            dict(type="context", elements=[dict(type='mrkdwn', text=str(res_sources))])
+            dict(
+                type="context",
+                elements=[dict(type='mrkdwn', text=str(res_sources))]
+            )
         ]
     )
 

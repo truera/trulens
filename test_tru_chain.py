@@ -6,6 +6,7 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.chains import SimpleSequentialChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import HuggingFacePipeline
+from langchain.memory import ConversationBufferWindowMemory
 from langchain.vectorstores import Pinecone
 import pinecone
 import pytest
@@ -17,7 +18,7 @@ from transformers import pipeline
 from keys import PINECONE_API_KEY
 from keys import PINECONE_ENV
 from tru_chain import TruChain
-from langchain.memory import ConversationBufferWindowMemory
+
 
 class TestTruChain():
 
