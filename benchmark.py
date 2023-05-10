@@ -1,3 +1,4 @@
+import time
 import zipfile
 
 from datasets import load_dataset
@@ -58,6 +59,23 @@ def sample_data(data, num_samples):
     return data.sample(num_samples)
 
 
+def rate_limited_feedback(feedback_function, rate_limit, *args, **kwargs):
+    rate_limit = rate_limit
+    interval = 60 / rate_limit
+    elapsed_time = time.time() - rate_limited_feedback.last_call_time
+
+    if elapsed_time < interval:
+        time.sleep(interval - elapsed_time)
+
+    result = tru_feedback.FEEDBACK_FUNCTIONS[feedback_function](*args, **kwargs)
+    rate_limited_feedback.last_call_time = time.time()
+
+    return result
+
+
+rate_limited_feedback.last_call_time = time.time()
+
+
 def benchmark_on_data(
     data, feedback_function, evaluation_choice, provider, model_engine
 ):
@@ -65,6 +83,33 @@ def benchmark_on_data(
         lambda x: tru_feedback.FEEDBACK_FUNCTIONS[feedback_function](
             '',
             x,
+            evaluation_choice=evaluation_choice,
+            provider=provider,
+            model_engine=model_engine
+        )
+    )
+
+    data['correct'] = data['label'] == data['feedback']
+
+    score = data['correct'].sum() / len(data)
+
+    print(
+        feedback_function, 'scored: ', '{:.1%}'.format(score),
+        'on the benchmark: ', "imdb"
+    )
+    return data
+
+
+def rate_limited_benchmark_on_data(
+    data, feedback_function, rate_limit, evaluation_choice, provider,
+    model_engine
+):
+    data['feedback'] = data['text'].apply(
+        lambda x: rate_limited_feedback(
+            feedback_function,
+            rate_limit,
+            prompt='',
+            response=x,
             evaluation_choice=evaluation_choice,
             provider=provider,
             model_engine=model_engine
