@@ -160,7 +160,9 @@ class TruTinyDB(TruDB):
         self, model: dict, model_name: Optional[str] = None
     ) -> str:
         model_name = model_name or model_name_of_model(model)
-        self.models.insert(Document(doc_id=model_name, value=model))
+
+        self.models.update(Document(doc_id=model_name, value=model))
+
         return model_name
 
     # TruDB requirement
