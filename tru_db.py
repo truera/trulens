@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from merkle_json import MerkleJson
 import pandas as pd
 from tinydb import Query as TinyQuery
+from tinydb.queries import QueryInstance as TinyQueryInstance
 from tinydb import TinyDB
 from tinydb.storages import MemoryStorage
 from tinydb.table import Document
@@ -36,7 +37,7 @@ def json_default(obj: Any) -> str:
 
 Query = TinyQuery  # for typing
 Record = Query()  # for constructing
-
+Condition = TinyQueryInstance # type of conditions, constructed from query/record like `Record.chain != None``
 
 class TruDB(abc.ABC):
 
@@ -47,8 +48,13 @@ class TruDB(abc.ABC):
     def select(
         self,
         *query: Tuple[Query],
-        where: Optional[Query] = None
+        where: Optional[Condition] = None
     ) -> pd.DataFrame:
+        """
+        Select `query` fields from the records database, filtering documents
+        that do not match the `where` condition.
+        """
+
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -136,7 +142,7 @@ class TruTinyDB(TruDB):
             self.filename = None
             print("WARNING: db is memory-only. It will not persist.")
             self.db: TinyDB = TinyDB(
-                storage=MemoryStorage, indent=4, default=json_default
+                storage=MemoryStorage
             )
 
         self.records: Table = self.db.table("records")
@@ -160,8 +166,6 @@ class TruTinyDB(TruDB):
 
     # TruDB requirement
     def select(self, *query: Tuple[Query], where: Optional[Query] = None):
-        self.flush_records()
-
         if isinstance(query, Query):
             queries = [query]
         else:
@@ -173,7 +177,7 @@ class TruTinyDB(TruDB):
     def _select(
         table: Table,
         queries: List[Query],
-        where: Optional[Query] = None
+        where: Optional[Condition] = None
     ) -> pd.DataFrame:
         rows = []
 
@@ -217,11 +221,11 @@ class TruSQL(TruDB):
 
         return model_name
 
+    # TruDB requirement
     def select(
         self,
         *query: Tuple[Query],
-        where: Optional[Query] = None,
-        table: Optional[Table] = None
+        where: Optional[Condition] = None
     ) -> pd.DataFrame:
 
         # get the record json dumps from sql
@@ -233,4 +237,4 @@ class TruSQL(TruDB):
         for record in records:
             db.insert_record(model_name=record['model_name'], record=record)
 
-        return db.select(*query, where, table)
+        return db.select(*query, where)
