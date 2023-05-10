@@ -110,8 +110,8 @@ Output (the ... are the same as in the above model parameter dictionary):
 
     tc.db.select(
         Record.chain.prompt.template,
-        Record.chain._call.input.inputs.question,
-        Record.chain._call.output.text,
+        Record.chain._call.args.inputs.question,
+        Record.chain._call.rets.text,
         where = Record.chain._call.output.text != None
     )
 
@@ -121,13 +121,7 @@ Output (pd.DataFrame):
 
 ```
 
-  Record.chain.prompt.template Record.chain._call.input.inputs.question  \
-0             Q: {question} A:                              hello there   
-1             Q: {question} A:               hello there general kanobi   
-
-                      Record.chain._call.output.text  
-0   welcome and thanks for reading my reply A: ju...  
-1   I have heard your story with the girl. Koshun... 
+    DATA FRAME HERE
 
 ```
 
@@ -172,8 +166,8 @@ Path = Tuple[Union[str, int], ...]
 
 # Records of a chain run are dictionaries with these keys:
 #
-# - 'input': Dict[str, Any] -- chain input.
-# - 'output': Any -- output for calls that succeed.
+# - 'args': Dict[str, Any] -- chain __call__ input args.
+# - 'rets': Dict[str, Any] -- chain __call__ return dict for calls that succeed.
 # - 'error': str -- exception text if not successful.
 # - 'start_time': datetime
 # - 'end_time': datetime -- runtime info.
@@ -484,7 +478,7 @@ class TruChain(Chain):
                     if k != "self"
                 }
                 row_args = dict(
-                    input=nonself,
+                    args=nonself,
                     start_time=str(start_time),
                     end_time=str(end_time),
                     pid=os.getpid(),
@@ -495,7 +489,7 @@ class TruChain(Chain):
                 if error is not None:
                     row_args['error'] = error
                 else:
-                    row_args['output'] = ret
+                    row_args['rets'] = ret
 
                 # If there already is a call recorded at the same path, turn the calls into a list.
                 if query._path in record:

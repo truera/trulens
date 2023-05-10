@@ -276,6 +276,14 @@ class TruSQL(TruDB):
 
         # TODO(shayak)
 
+        # Main chain input and output are these but these may be dicts or
+        # otherwise, depending on the wrapped chain.
+        overall_inputs: Union[
+            Dict[str, Any],
+            Any] = self.project(Record.chain._call.args.inputs, record)
+        overall_outputs: Dict[
+            str, Any] = self.project(Record.chain.call.rets, record)
+
         return 42  # record_id
 
     # TruDB requirement
