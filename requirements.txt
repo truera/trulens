@@ -18,6 +18,7 @@ pdfminer.six
 # TruChain requirements:
 tinydb
 pydantic
+merkle_json
 # other requirements:
 streamlit
 python-dotenv

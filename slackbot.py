@@ -2,6 +2,7 @@ import os
 from pprint import PrettyPrinter
 
 from tru_chain import TruChain
+from tru_db import TruTinyDB
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
@@ -46,11 +47,9 @@ llm = OpenAI(temperature=0, max_tokens=128)
 
 retriever = docsearch.as_retriever()
 
-# Give default for json.dump to prevent failures for non-json serializable objects.
-db = TinyDB("slackbot.records.json", default=lambda o: f"NON-SERIALIZED OBJECT: {o}")
-
 convos = dict()
 
+db = TruTinyDB("slackbot.json")
 
 def get_convo(cid):
     if cid in convos:
@@ -75,7 +74,7 @@ def get_convo(cid):
         max_tokens_limit=4096
     )
 
-    tc = TruChain(chain, db=db, auto_flush=True)
+    tc = TruChain(chain, db=db)
 
     convos[cid] = tc
 

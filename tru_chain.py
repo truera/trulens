@@ -146,11 +146,13 @@ TinyDB can be provided to `flush_records`.
 Note that `tc.select` operates on a TinyDB and flushes records to it first.
 """
 
+import abc
 from collections import defaultdict
 from datetime import datetime
 from inspect import BoundArguments
 from inspect import signature
 from inspect import stack
+import json
 import os
 import threading as th
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
@@ -160,7 +162,8 @@ import pandas as pd
 from pydantic import Field, BaseModel
 from tinydb import Query
 from tinydb import TinyDB
-from tinydb.table import Table
+from tinydb.table import Table, Document
+from tru_db import TruDB, TruTinyDB
 
 # Addresses of chains or their contents. This is used to refer chains/parameters
 # even in cases where the live object is not in memory (i.e. on some remote
@@ -182,7 +185,6 @@ Path = Tuple[Union[str, int], ...]
 # TinyDB queries for looking up parts of records/models and/or filtering on
 # those parts. See _select.
 Record = Query()
-
 
 def _query_str(query: Query):
 
@@ -266,6 +268,9 @@ class TruChain(Chain):
     # The wrapped/instrumented chain.
     chain: Chain = None
 
+    # Model name. Will be a hash of model configuration if not provided.
+    model_name: Optional[str] = None
+
     # Flag of whether the chain is currently recording records. This is set
     # automatically but is imperfect in threaded situations. The second check
     # for recording is based on the call stack, see _call.
@@ -280,13 +285,14 @@ class TruChain(Chain):
 
     # TinyDB json database to write records to. Need to call flush_records for
     # this though.
-    db: Optional[TinyDB] = Field(exclude=True)
+    db: Optional[TruDB] = Field(exclude=True)
 
     def __init__(
         self,
         chain: Chain,
+        model_name: Optional[str] = None,
         verbose: bool = False,
-        db: Optional[TinyDB] = None,
+        db: Optional[TruDB] = None,
         auto_flush: Optional[bool] = True
     ):
         """
@@ -305,8 +311,17 @@ class TruChain(Chain):
         self.recording = False
         self.records = []
 
+        if db is None:
+            print("Using default DB at db.json .")
+            db = TruTinyDB(filename="db.json")
+
         self.db = db
         self.auto_flush = auto_flush
+
+        model = self.model
+        
+        # Track model. This will produce a name if not provided.
+        self.model_name = self.db.insert_model(model_name=model_name, model=model)
 
     @property
     def model(self):
@@ -329,20 +344,16 @@ class TruChain(Chain):
 
         return _select(table, queries, where)
 
-    def flush_records(self, db: Optional[TinyDB] = None):
+    def flush_records(self):
         # TODO: locks
 
-        # NOTE: TinyDB is annoyingly false.
-        db = db if db is not None else self.db
-
-        table = db.table("records")
         to_flush = self.records
 
-        print(f"Writing {len(to_flush)} record(s) to {db} table {table}.")
+        print(f"Writing {len(to_flush)} record(s) to {self.db}.")
 
         self.records = []
         for record in to_flush:
-            table.insert(record)
+            self.db.insert_record(model_name = self.model_name, record = record)
 
     # Chain requirement
     @property
