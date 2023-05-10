@@ -75,13 +75,16 @@ def get_rate_limited_feedback_function(
         if elapsed_time < interval:
             time.sleep(interval - elapsed_time)
 
-        feedback_function = tru_feedback.FEEDBACK_FUNCTIONS[
-            feedback_function_name](
-                provider=provider,
-                model_engine=model_engine,
-                evaluation_choice=evaluation_choice,
-                **kwargs
-            )
+        if feedback_function_name in tru_feedback.FEEDBACK_FUNCTIONS:
+            feedback_function = tru_feedback.FEEDBACK_FUNCTIONS[
+                feedback_function_name](
+                    provider=provider,
+                    model_engine=model_engine,
+                    evaluation_choice=evaluation_choice,
+                    **kwargs
+                )
+        else:
+            raise ValueError(f"Unrecognized feedback_function_name. Please use one of {list(tru_feedback.FEEDBACK_FUNCTIONS.keys())} ")
 
         result = feedback_function(prompt=prompt, response=response, **kwargs)
         last_call_time = time.time()
@@ -92,14 +95,16 @@ def get_rate_limited_feedback_function(
 
 
 def benchmark_on_data(
-    data, feedback_function, evaluation_choice, provider, model_engine
+    data, feedback_function_name, evaluation_choice, provider, model_engine
 ):
-
-    feedback_function = tru_feedback.FEEDBACK_FUNCTIONS[feedback_function](
-        evaluation_choice=evaluation_choice,
-        provider=provider,
-        model_engine=model_engine
-    )
+    if feedback_function_name in tru_feedback.FEEDBACK_FUNCTIONS:
+        feedback_function = tru_feedback.FEEDBACK_FUNCTIONS[feedback_function_name](
+            evaluation_choice=evaluation_choice,
+            provider=provider,
+            model_engine=model_engine
+        )
+    else:
+        raise ValueError(f"Unrecognized feedback_function_name. Please use one of {list(tru_feedback.FEEDBACK_FUNCTIONS.keys())} ")
     data['feedback'] = data['text'].apply(lambda x: feedback_function('', x))
 
     data['correct'] = data['label'] == data['feedback']

@@ -75,7 +75,8 @@ def openai_moderation_violencegraphic(prompt, response, evaluation_choice):
     return int(openai_response["results"][0]["categories"]["violence/graphic"])
 
 
-def openai_relevance_function(prompt, response, model_engine):
+def openai_relevance(prompt, response, model_engine):
+
     return int(
         re.search(
             '[1-10]+',
@@ -258,123 +259,117 @@ def get_sentimentpositive_function(provider, model_engine, evaluation_choice):
         return cohere_sentimentpositive_feedback_function
 
     else:
-        raise NotImplementedError("Invalid provider or model engine specified.")
+        raise NotImplementedError("Invalid provider specified. sentiment feedback function is only supported for `provider` as `openai`, `huggingface`, or `cohere`")
 
 
 def get_relevance_function(provider, model_engine, evaluation_choice):
-    if provider == "openai":
+    if provider != "openai":
+        print("relevance feedback function only has one provider. Defaulting to `provider=openai`")
 
-        def openai_relevance_function(prompt, response):
-            return openai_relevance_function(
-                prompt, response, evaluation_choice, model_engine
-            )
 
-        return openai_relevance_function
+    def openai_relevance_function(prompt, response):
+        return openai_relevance(
+            prompt, response, model_engine
+        )
+
+    return openai_relevance_function
 
 
 def get_hate_function(provider, model_engine, evaluation_choice):
-    if provider == "openai" and model_engine == "moderation":
+    if provider != "openai":
+        print("hate feedback function only has one provider. Defaulting to `provider=openai`")
 
-        def openai_hate_function(prompt, response):
-            return openai_moderation_hate(prompt, response, evaluation_choice)
+    def openai_hate_function(prompt, response):
+        return openai_moderation_hate(prompt, response, evaluation_choice)
 
-        return openai_hate_function
-    else:
-        raise NotImplementedError("Invalid provider or model engine specified.")
-
+    return openai_hate_function
+   
 
 def get_hatethreatening_function(provider, model_engine, evaluation_choice):
-    if provider == "openai" and model_engine == "moderation":
+    if provider != "openai":
+        print("hatethreatening feedback function only has one provider. Defaulting to `provider=openai`")
 
-        def openai_hatethreatening_function(prompt, response):
-            return openai_moderation_hatethreatening(
-                prompt, response, evaluation_choice
-            )
+    def openai_hatethreatening_function(prompt, response):
+        return openai_moderation_hatethreatening(
+            prompt, response, evaluation_choice
+        )
 
-        return openai_hatethreatening_function
-    else:
-        raise NotImplementedError("Invalid provider or model engine specified.")
-
+    return openai_hatethreatening_function
+    
 
 def get_selfharm_function(provider, model_engine, evaluation_choice):
-    if provider == "openai" and model_engine == "moderation":
+    if provider != "openai":
+        print("selfharm feedback function only has one provider. Defaulting to `provider=openai`")
 
-        def openai_selfharm_function(prompt, response):
-            return openai_moderation_selfharm(
-                prompt, response, evaluation_choice
-            )
+    def openai_selfharm_function(prompt, response):
+        return openai_moderation_selfharm(
+            prompt, response, evaluation_choice
+        )
 
-        return openai_selfharm_function
-    else:
-        raise NotImplementedError("Invalid provider or model engine specified.")
-
+    return openai_selfharm_function
+    
 
 def get_sexual_function(provider, model_engine, evaluation_choice):
-    if provider == "openai" and model_engine == "moderation":
+    if provider != "openai":
+        print("sexual feedback function only has one provider. Defaulting to `provider=openai`")
 
-        def openai_sexual_function(prompt, response):
-            return openai_moderation_sexual(prompt, response, evaluation_choice)
+    def openai_sexual_function(prompt, response):
+        return openai_moderation_sexual(prompt, response, evaluation_choice)
 
-        return openai_sexual_function
-    else:
-        raise NotImplementedError("Invalid provider or model engine specified.")
+    return openai_sexual_function
 
 
 def get_sexualminors_function(provider, model_engine, evaluation_choice):
-    if provider == "openai" and model_engine == "moderation":
+    if provider != "openai":
+        print("sexualminors feedback function only has one provider. Defaulting to `provider=openai`")
+    
+    def openai_sexualminors_function(prompt, response):
+        return openai_moderation_sexual(prompt, response, evaluation_choice)
 
-        def openai_sexualminors_function(prompt, response):
-            return openai_moderation_sexual(prompt, response, evaluation_choice)
-
-        return openai_sexualminors_function
-    else:
-        raise NotImplementedError("Invalid provider or model engine specified.")
-
+    return openai_sexualminors_function
+   
 
 def get_violence_function(provider, model_engine, evaluation_choice):
-    if provider == "openai" and model_engine == "moderation":
+    if provider != "openai":
+        print("violence feedback function only has one provider. Defaulting to `provider=openai`")
 
-        def openai_violence_function(prompt, response):
-            return openai_moderation_violence(
-                prompt, response, evaluation_choice
-            )
-
-        return openai_violence_function
-    else:
-        raise NotImplementedError("Invalid provider or model engine specified.")
-
-
-def get_violencegraphic_function(provider, model_engine, evaluation_choice):
-    if provider == "openai" and model_engine == "moderation":
-
-        def openai_violencegraphic_function(prompt, response):
-            return openai_moderation_violencegraphic(
-                prompt, response, evaluation_choice
-            )
-
-        return openai_violencegraphic_function
-    else:
-        raise NotImplementedError("Invalid provider or model engine specified.")
-
-
-def get_toxicity_function(provider, model_engine, evaluation_choice):
-    if provider == "huggingface":
-
-        def huggingface_toxicity_function(prompt, response):
-            return huggingface_toxicity(prompt, response, evaluation_choice)
-
-        return huggingface_toxicity_function
-    else:
-        raise NotImplementedError("Invalid provider or model engine specified.")
-
-
-def get_disinformation_function(provider, model_engine, evaluation_choice):
-    if provider == "cohere":
-        return lambda prompt, response: cohere_disinformation(
+    def openai_violence_function(prompt, response):
+        return openai_moderation_violence(
             prompt, response, evaluation_choice
         )
-    else:
-        raise NotImplementedError("Invalid provider or model engine specified.")
+
+    return openai_violence_function
+   
+
+def get_violencegraphic_function(provider, model_engine, evaluation_choice):
+    if provider != "openai":
+        print("violencegraphic feedback function only has one provider. Defaulting to `provider=openai`")
+
+    def openai_violencegraphic_function(prompt, response):
+        return openai_moderation_violencegraphic(
+            prompt, response, evaluation_choice
+        )
+
+    return openai_violencegraphic_function
+    
+
+def get_toxicity_function(provider, model_engine, evaluation_choice):
+    if provider != "huggingface":
+        print("toxicity feedback function only has one provider. Defaulting to `provider=huggingface`")
+
+    def huggingface_toxicity_function(prompt, response):
+        return huggingface_toxicity(prompt, response, evaluation_choice)
+
+    return huggingface_toxicity_function
+    
+
+def get_disinformation_function(provider, model_engine, evaluation_choice):
+    if provider != "cohere":
+        print("disinformation feedback function only has one provider. Defaulting to `provider=cohere`")
+
+    return lambda prompt, response: cohere_disinformation(
+        prompt, response, evaluation_choice
+    )
 
 
 FEEDBACK_FUNCTIONS = {
