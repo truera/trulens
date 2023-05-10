@@ -57,15 +57,15 @@ def run_feedback_function(prompt, response, feedback_functions):
 def add_feedback(record_id, eval_str):
     conn = sqlite3.connect(db_name)
     c = conn.cursor()
-
-    # Save the function call to the database
+    # Create table if it does not exist
     c.execute(
-        """
-        UPDATE llm_calls
-        SET feedback = ?
-        WHERE record_id = ?
-        """,
-        (eval_str, record_id),
+        '''CREATE TABLE IF NOT EXISTS llm_feedback_functions
+                    (record_id TEXT, feedback_functions)'''
+    )
+
+    c.execute(
+        "INSERT INTO llm_feedback_functions VALUES (?, ?)",
+        (record_id, eval_str)
     )
 
     # Commit changes and close the connection
