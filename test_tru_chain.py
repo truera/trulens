@@ -70,7 +70,7 @@ class TestTruChain():
         tru_chain.run(dict(question="How are you?"))
         tru_chain.run(dict(question="How are you today?"))
 
-        assert len(tru_chain.records) == 2
+        assert len(tru_chain.db.select()) == 2
 
     def test_qa_prompt_with_memory(self):
         # Test of a small q/a chain using a prompt and a single call to an llm.
@@ -92,7 +92,7 @@ class TestTruChain():
         tru_chain.run(dict(question="How are you?"))
         tru_chain.run(dict(question="How are you today?"))
 
-        assert len(tru_chain.records) == 2
+        assert len(tru_chain.db.select()) == 2
 
     @pytest.mark.nonfree
     def test_qa_db(self):
@@ -126,7 +126,7 @@ class TestTruChain():
         assert tru_chain.model is not None
         tru_chain(dict(question="How do I add a model?", chat_history=[]))
 
-        assert len(tru_chain.records) == 1
+        assert len(tru_chain.db.select()) == 1
 
     def test_sequential(self):
         # Test of a sequential chain that contains the same llm twice with
@@ -169,4 +169,4 @@ class TestTruChain():
             "What is the average air speed velocity of a laden african swallow?"
         )
 
-        assert len(tru_chain.records) == 2
+        assert len(tru_chain.db.select()) == 2

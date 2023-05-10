@@ -479,7 +479,9 @@ class TruChain(Chain):
 
                 # Don't include self in the recorded arguments.
                 nonself = {
-                    k: v for k, v in bindings.arguments.items() if k != "self"
+                    k: TruDB.dictify(v)
+                    for k, v in bindings.arguments.items()
+                    if k != "self"
                 }
                 row_args = dict(
                     input=nonself,

@@ -1,10 +1,13 @@
 import abc
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from types import NoneType
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
+import langchain
 from merkle_json import MerkleJson
 import pandas as pd
+import pydantic
 from tinydb import Query as TinyQuery
 from tinydb import TinyDB
 from tinydb.queries import QueryInstance as TinyQueryInstance
@@ -29,15 +32,23 @@ def json_default(obj: Any) -> str:
     Produce a representation of an object which cannot be json-serialized.
     """
 
+    if isinstance(obj, pydantic.BaseModel):  #langchain.schema.Document):
+        return json.dumps(obj.dict())
+
     # Intentionally not including much in this indicator to make sure the model
     # hashing procedure does not get randomized due to something here.
 
     return f"NON-SERIALIZED OBJECT: type={type(obj)}"
 
 
-Query = TinyQuery  # for typing
-Record = Query()  # for constructing
-Condition = TinyQueryInstance  # type of conditions, constructed from query/record like `Record.chain != None``
+# Typing for type hints.
+Query = TinyQuery
+
+# Instance for constructing queries like `Record.chain.llm`.
+Record = Query()
+
+# Type of conditions, constructed from query/record like `Record.chain != None`.
+Condition = TinyQueryInstance
 
 
 class TruDB(abc.ABC):
@@ -75,6 +86,62 @@ class TruDB(abc.ABC):
         """
 
         raise NotImplementedError()
+
+    @staticmethod
+    def dictify(obj: Any) -> Union[str, int, float, NoneType, List, Dict]:
+        """
+        Convert the given object into types that can be serialized in json.
+        """
+
+        if isinstance(obj, (str, int, float, NoneType)):
+            return obj
+
+        elif isinstance(obj, Dict):
+            return {k: TruDB.dictify(v) for k, v in obj.items()}
+
+        elif isinstance(obj, Sequence):
+            return [TruDB.dictify(v) for v in obj]
+
+        elif isinstance(obj, pydantic.BaseModel):
+            return TruDB.dictify(obj.dict())
+
+        else:
+            raise RuntimeError(
+                f"Don't know how to dictify an object of type {type(obj)}."
+            )
+
+    @staticmethod
+    def leaf_queries(obj: Any, query: Query = None) -> Iterable[Query]:
+        """
+        Get all queries for the given object that select all of its leaf values.
+        """
+
+        query = query or Record
+
+        if isinstance(obj, (str, int, float, NoneType)):
+            yield query
+
+        elif isinstance(obj, Dict):
+            for k, v in obj.items():
+                sub_query = query[k]
+                for res in TruDB.leaf_queries(obj[k], sub_query):
+                    yield res
+
+        elif isinstance(obj, Sequence):
+            for i, v in enumerate(obj):
+                sub_query = query[i]
+                for res in TruDB.leaf_queries(obj[i], sub_query):
+                    yield res
+
+        else:
+            yield query
+
+    @staticmethod
+    def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
+        for q in TruDB.leaf_queries(obj):
+            path_str = TruDB._query_str(q)
+            val = TruDB.project(q, obj)
+            yield (path_str, val)
 
     @staticmethod
     def _query_str(query: Query):
@@ -166,7 +233,7 @@ class TruTinyDB(TruDB):
         return model_name
 
     # TruDB requirement
-    def select(self, *query: Tuple[Query], where: Optional[Query] = None):
+    def select(self, *query: Tuple[Query], where: Optional[Condition] = None):
         if isinstance(query, Query):
             queries = [query]
         else:
