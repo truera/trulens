@@ -59,35 +59,48 @@ def sample_data(data, num_samples):
     return data.sample(num_samples)
 
 
-def rate_limited_feedback(feedback_function, rate_limit, *args, **kwargs):
+def get_rate_limited_feedback_function(
+    feedback_function_name, provider, model_engine, rate_limit,
+    evaluation_choice
+):
     rate_limit = rate_limit
     interval = 60 / rate_limit
-    elapsed_time = time.time() - rate_limited_feedback.last_call_time
+    last_call_time = time.time()
 
-    if elapsed_time < interval:
-        time.sleep(interval - elapsed_time)
+    def rate_limited_feedback(prompt='', response='', **kwargs):
+        nonlocal last_call_time
 
-    result = tru_feedback.FEEDBACK_FUNCTIONS[feedback_function](*args, **kwargs)
-    rate_limited_feedback.last_call_time = time.time()
+        elapsed_time = time.time() - last_call_time
 
-    return result
+        if elapsed_time < interval:
+            time.sleep(interval - elapsed_time)
 
+        feedback_function = tru_feedback.FEEDBACK_FUNCTIONS[
+            feedback_function_name](
+                provider=provider,
+                model_engine=model_engine,
+                evaluation_choice=evaluation_choice,
+                **kwargs
+            )
 
-rate_limited_feedback.last_call_time = time.time()
+        result = feedback_function(prompt=prompt, response=response, **kwargs)
+        last_call_time = time.time()
+
+        return result
+
+    return rate_limited_feedback
 
 
 def benchmark_on_data(
     data, feedback_function, evaluation_choice, provider, model_engine
 ):
-    data['feedback'] = data['text'].apply(
-        lambda x: tru_feedback.FEEDBACK_FUNCTIONS[feedback_function](
-            '',
-            x,
-            evaluation_choice=evaluation_choice,
-            provider=provider,
-            model_engine=model_engine
-        )
+
+    feedback_function = tru_feedback.FEEDBACK_FUNCTIONS[feedback_function](
+        evaluation_choice=evaluation_choice,
+        provider=provider,
+        model_engine=model_engine
     )
+    data['feedback'] = data['text'].apply(lambda x: feedback_function('', x))
 
     data['correct'] = data['label'] == data['feedback']
 
@@ -101,18 +114,17 @@ def benchmark_on_data(
 
 
 def rate_limited_benchmark_on_data(
-    data, feedback_function, rate_limit, evaluation_choice, provider,
+    data, feedback_function_name, rate_limit, evaluation_choice, provider,
     model_engine
 ):
+    rate_limited_feedback_function = get_rate_limited_feedback_function(
+        feedback_function_name, provider, model_engine, rate_limit,
+        evaluation_choice
+    )
     data['feedback'] = data['text'].apply(
-        lambda x: rate_limited_feedback(
-            feedback_function,
-            rate_limit,
+        lambda x: rate_limited_feedback_function(
             prompt='',
             response=x,
-            evaluation_choice=evaluation_choice,
-            provider=provider,
-            model_engine=model_engine
         )
     )
 
@@ -121,7 +133,7 @@ def rate_limited_benchmark_on_data(
     score = data['correct'].sum() / len(data)
 
     print(
-        feedback_function, 'scored: ', '{:.1%}'.format(score),
+        feedback_function_name, 'scored: ', '{:.1%}'.format(score),
         'on the benchmark: ', "imdb"
     )
     return data

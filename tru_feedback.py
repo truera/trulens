@@ -226,135 +226,167 @@ def cohere_disinformation(prompt, response, evaluation_choice):
     )
 
 
-def sentimentpositive(
-    prompt, response, evaluation_choice, provider, model_engine
-):
+def get_sentimentpositive_function(provider, model_engine, evaluation_choice):
     if provider == "openai":
-        return openai_sentiment_function(
-            prompt, response, evaluation_choice, model_engine
-        )
+
+        def openai_sentimentpositive_feedback_function(prompt, response):
+            feedback_function = openai_sentiment_function(
+                prompt, response, evaluation_choice, model_engine
+            )
+            return feedback_function
+
+        return openai_sentimentpositive_feedback_function
+
     elif provider == "huggingface":
-        return huggingface_positive_sentiment(
-            prompt, response, evaluation_choice
-        )
+
+        def huggingface_sentimentpositive_feedback_function(prompt, response):
+            feedback_function = huggingface_positive_sentiment(
+                prompt, response, evaluation_choice
+            )
+            return feedback_function
+
+        return huggingface_sentimentpositive_feedback_function
+
     elif provider == "cohere":
-        return cohere_sentiment(
-            prompt, response, evaluation_choice, model_engine="large"
-        )
+
+        def cohere_sentimentpositive_feedback_function(prompt, response):
+            feedback_function = cohere_sentiment(
+                prompt, response, evaluation_choice, model_engine
+            )
+            return feedback_function
+
+        return cohere_sentimentpositive_feedback_function
+
+    else:
+        raise NotImplementedError("Invalid provider or model engine specified.")
 
 
-def relevance(prompt, response, evaluation_choice, provider, model_engine):
+def get_relevance_function(provider, model_engine, evaluation_choice):
     if provider == "openai":
-        return openai_relevance_function(
-            prompt, response, evaluation_choice, model_engine
-        )
+
+        def openai_relevance_function(prompt, response):
+            return openai_relevance_function(
+                prompt, response, evaluation_choice, model_engine
+            )
+
+        return openai_relevance_function
 
 
-def hate(prompt, response, evaluation_choice, provider, model_engine):
+def get_hate_function(provider, model_engine, evaluation_choice):
     if provider == "openai" and model_engine == "moderation":
-        return openai_moderation_hate(prompt, response, evaluation_choice)
+
+        def openai_hate_function(prompt, response):
+            return openai_moderation_hate(prompt, response, evaluation_choice)
+
+        return openai_hate_function
+    else:
+        raise NotImplementedError("Invalid provider or model engine specified.")
 
 
-def hatethreatening(
-    prompt, response, evaluation_choice, provider, model_engine
-):
+def get_hatethreatening_function(provider, model_engine, evaluation_choice):
     if provider == "openai" and model_engine == "moderation":
-        return openai_moderation_hatethreatening(
-            prompt, response, evaluation_choice
-        )
+
+        def openai_hatethreatening_function(prompt, response):
+            return openai_moderation_hatethreatening(
+                prompt, response, evaluation_choice
+            )
+
+        return openai_hatethreatening_function
+    else:
+        raise NotImplementedError("Invalid provider or model engine specified.")
 
 
-def selfharm(
-    prompt,
-    response,
-    evaluation_choice,
-    provider,
-    model_engine,
-):
+def get_selfharm_function(provider, model_engine, evaluation_choice):
     if provider == "openai" and model_engine == "moderation":
-        return openai_moderation_selfharm(prompt, response, evaluation_choice)
+
+        def openai_selfharm_function(prompt, response):
+            return openai_moderation_selfharm(
+                prompt, response, evaluation_choice
+            )
+
+        return openai_selfharm_function
+    else:
+        raise NotImplementedError("Invalid provider or model engine specified.")
 
 
-def sexual(
-    prompt,
-    response,
-    evaluation_choice,
-    provider,
-    model_engine,
-):
+def get_sexual_function(provider, model_engine, evaluation_choice):
     if provider == "openai" and model_engine == "moderation":
-        return openai_moderation_sexual(prompt, response, evaluation_choice)
+
+        def openai_sexual_function(prompt, response):
+            return openai_moderation_sexual(prompt, response, evaluation_choice)
+
+        return openai_sexual_function
+    else:
+        raise NotImplementedError("Invalid provider or model engine specified.")
 
 
-def sexualminors(
-    prompt,
-    response,
-    evaluation_choice,
-    provider,
-    model_engine,
-):
+def get_sexualminors_function(provider, model_engine, evaluation_choice):
     if provider == "openai" and model_engine == "moderation":
-        return openai_moderation_sexualminors(
-            prompt, response, evaluation_choice
-        )
+
+        def openai_sexualminors_function(prompt, response):
+            return openai_moderation_sexual(prompt, response, evaluation_choice)
+
+        return openai_sexualminors_function
+    else:
+        raise NotImplementedError("Invalid provider or model engine specified.")
 
 
-def violence(
-    prompt,
-    response,
-    evaluation_choice,
-    provider,
-    model_engine,
-):
+def get_violence_function(provider, model_engine, evaluation_choice):
     if provider == "openai" and model_engine == "moderation":
-        return openai_moderation_violence(prompt, response, evaluation_choice)
+
+        def openai_violence_function(prompt, response):
+            return openai_moderation_violence(
+                prompt, response, evaluation_choice
+            )
+
+        return openai_violence_function
+    else:
+        raise NotImplementedError("Invalid provider or model engine specified.")
 
 
-def violencegraphic(
-    prompt,
-    response,
-    evaluation_choice,
-    provider,
-    model_engine,
-):
+def get_violencegraphic_function(provider, model_engine, evaluation_choice):
     if provider == "openai" and model_engine == "moderation":
-        return openai_moderation_violencegraphic(
-            prompt, response, evaluation_choice
-        )
+
+        def openai_violencegraphic_function(prompt, response):
+            return openai_moderation_violencegraphic(
+                prompt, response, evaluation_choice
+            )
+
+        return openai_violencegraphic_function
+    else:
+        raise NotImplementedError("Invalid provider or model engine specified.")
 
 
-def toxicity(
-    prompt,
-    response,
-    evaluation_choice,
-    provider,
-    model_engine,
-):
+def get_toxicity_function(provider, model_engine, evaluation_choice):
     if provider == "huggingface":
-        return huggingface_toxicity(prompt, response, evaluation_choice)
+
+        def huggingface_toxicity_function(prompt, response):
+            return huggingface_toxicity(prompt, response, evaluation_choice)
+
+        return huggingface_toxicity_function
+    else:
+        raise NotImplementedError("Invalid provider or model engine specified.")
 
 
-def disinformation(
-    prompt,
-    response,
-    evaluation_choice,
-    provider,
-    model_engine,
-):
+def get_disinformation_function(provider, model_engine, evaluation_choice):
     if provider == "cohere":
-        return cohere_disinformation(prompt, response, evaluation_choice)
+        return lambda prompt, response: cohere_disinformation(
+            prompt, response, evaluation_choice
+        )
+    else:
+        raise NotImplementedError("Invalid provider or model engine specified.")
 
 
 FEEDBACK_FUNCTIONS = {
-    'sentiment-positive': sentimentpositive,
-    'relevance': relevance,
-    'hate': hate,
-    'hatethreatening': hatethreatening,
-    'selfharm': selfharm,
-    'sexual': sexual,
-    'sexualminors': sexualminors,
-    'violence': violence,
-    'violencegraphic': violencegraphic,
-    'toxicicity': toxicity,
-    'disinformation': disinformation,
+    'sentiment-positive': get_sentimentpositive_function,
+    'relevance': get_relevance_function,
+    'hate': get_hate_function,
+    'hatethreatening': get_hatethreatening_function,
+    'selfharm': get_selfharm_function,
+    'sexual': get_sexual_function,
+    'sexualminors': get_sexualminors_function,
+    'violence': get_violence_function,
+    'violencegraphic': get_violencegraphic_function,
+    'toxicicity': get_toxicity_function,
+    'disinformation': get_disinformation_function,
 }

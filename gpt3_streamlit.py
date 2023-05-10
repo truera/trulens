@@ -3,6 +3,7 @@ import openai
 import streamlit as st
 
 import tru
+import tru_feedback
 
 config = dotenv.dotenv_values(".env")
 
@@ -62,16 +63,23 @@ if user_input:
             "We're sorry we couldn't be more helpful. Please try again with a different question."
         )
 
-    tru.add_data(
-        'chat_model',
-        prompt_input,
-        'None',
-        gpt3_response,
-        '', {
+    record_id = tru.add_data(
+        'chat_model', prompt_input, 'None', gpt3_response, '', {
             'thumbs_up': thumbs_up,
             'thumbs_down': thumbs_down
-        }, ["selfharm", "hate"],
-        evaluation_choice="prompt",
-        provider="openai",
-        model_engine="moderation"
+        }
     )
+
+    # Run feedback function and get value
+    feedback = tru.run_feedback_function(
+        prompt_input, gpt3_response, [
+            tru_feedback.FEEDBACK_FUNCTIONS['hate'](
+                evaluation_choice='response',
+                provider='openai',
+                model_engine='moderation'
+            )
+        ]
+    )
+
+    # Add value to database
+    tru.add_feedback(record_id, feedback)

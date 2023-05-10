@@ -13,10 +13,7 @@ def add_data(
     response,
     tags,
     feedback,
-    feedback_functions,
-    evaluation_choice,
-    provider,
-    model_engine,
+    prompt_id=None,
     ts=None
 ):
     conn = sqlite3.connect(db_name)
@@ -25,26 +22,50 @@ def add_data(
     # Create table if it does not exist
     c.execute(
         '''CREATE TABLE IF NOT EXISTS llm_calls
-                    (id TEXT, request TEXT, template TEXT, response TEXT, tags TEXT, feedback TEXT, feedback_functions TEXT, ts INTEGER)'''
+                    (record_id TEXT, model_id TEXT, prompt_id TEXT, prompt TEXT, template TEXT, response TEXT, tags TEXT, feedback TEXT, ts INTEGER)'''
     )
-
-    # Run feedback functions
-    eval = {
-        f: tru_feedback.FEEDBACK_FUNCTIONS[f]
-        (prompt, response, evaluation_choice, provider, model_engine)
-        for f in feedback_functions
-    }
     feedback_str = str(feedback)
-    eval_str = str(eval)
     if not ts:
         ts = datetime.now()
 
+    record_id = f'{model_id}_{prompt_id}_{ts}'
+    c.execute(
+        "INSERT INTO llm_calls VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+            record_id, model_id, prompt_id, prompt, template, response, tags,
+            feedback_str, ts
+        )
+    )
+    # Commit changes and close the connection
+    conn.commit()
+    conn.close()
+
+    return record_id
+
+
+def run_feedback_function(prompt, response, feedback_functions):
+
+    # Run feedback functions
+    eval = {}
+    for f in feedback_functions:
+        eval[f.__name__] = f(prompt, response)
+
+    eval_str = str(eval)
+
+    return eval_str
+
+
+def add_feedback(record_id, eval_str):
+    conn = sqlite3.connect(db_name)
+    c = conn.cursor()
+
     # Save the function call to the database
     c.execute(
-        "INSERT INTO llm_calls VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (
-            model_id, prompt, template, response, tags, feedback_str, eval_str,
-            ts
-        )
+        """
+        UPDATE llm_calls
+        SET feedback = ?
+        WHERE record_id = ?
+        """,
+        (eval_str, record_id),
     )
 
     # Commit changes and close the connection
