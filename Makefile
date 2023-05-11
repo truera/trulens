@@ -10,3 +10,6 @@ test:
 
 format:
 	$(CONDA); bash format.sh
+
+lab:
+	$(CONDA); jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
