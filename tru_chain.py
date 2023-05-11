@@ -217,6 +217,34 @@ class TruChain(Chain):
     def output_keys(self) -> List[str]:
         return self.chain.output_keys
 
+    # def _run(self, *args: Any, callbacks: Callbacks = None, **kwargs: Any) -> str:
+        # TODO (piotrm): Need to figure out what to return here.
+        """Run the chain as text in, text out or multiple variables, text out."""
+        """if len(self.output_keys) != 1:
+            raise ValueError(
+                f"`run` not supported when there is not exactly "
+                f"one output key. Got {self.output_keys}."
+            )
+
+        if args and not kwargs:
+            if len(args) != 1:
+                raise ValueError("`run` supports only one positional argument.")
+            return self(args[0], callbacks=callbacks)# [self.output_keys[0]]
+
+        if kwargs and not args:
+            return self(kwargs, callbacks=callbacks)# [self.output_keys[0]]
+
+        if not kwargs and not args:
+            raise ValueError(
+                "`run` supported with either positional arguments or keyword arguments,"
+                " but none were provided."
+            )
+
+        raise ValueError(
+            f"`run` supported with either positional arguments or keyword arguments"
+            f" but not both. Got args: {args} and kwargs: {kwargs}."
+        )"""
+
     # langchain.chains.base.py:Chain
     # We need to override this because we defined TruChain as a Chain and the default
     # behaviour from the parent is not the same as the behaviour of the wrapped chain.
@@ -241,7 +269,7 @@ class TruChain(Chain):
             ret = self.chain.__call__(*args, **kwargs)
 
         except BaseException as e:
-            error = str(e)
+            error = e
             print(f"WARNING: {e}")
 
         self.recording = False
@@ -318,9 +346,9 @@ class TruChain(Chain):
 
         return safe_dict
 
-    def _instrument_chain_type(self, obj, prop):
+    def _instrument_type_method(self, obj, prop):
         """
-        Instrument the Chain class's method _chain_type which is presently used
+        Instrument the Langchain class's method _*_type which is presently used
         to control model saving. Override the exception behaviour. Note that
         _chain_type is defined as a property in langchain.
         """
@@ -330,7 +358,7 @@ class TruChain(Chain):
         if hasattr(prop.fget, "_instrumented"):
             prop = prop.fget._instrumented
 
-        def safe_chain_type(s) -> Union[str, Dict]:
+        def safe_type(s) -> Union[str, Dict]:
             # self should be chain
             try:
                 ret = prop.fget(s)
@@ -344,8 +372,8 @@ class TruChain(Chain):
 
                 return ret
 
-        safe_chain_type._instrumented = prop
-        new_prop = property(fget=safe_chain_type)
+        safe_type._instrumented = prop
+        new_prop = property(fget=safe_type)
 
         return new_prop
 
@@ -486,6 +514,7 @@ class TruChain(Chain):
                     self._instrument_method(query=query, func=original_fun)
                 )
 
+            
             if hasattr(base, "_chain_type"):
                 if self.verbose:
                     print(f"instrumenting {base}._chain_type")
@@ -493,7 +522,17 @@ class TruChain(Chain):
                 prop = getattr(base, "_chain_type")
                 setattr(
                     base, "_chain_type",
-                    self._instrument_chain_type(obj=obj, prop=prop)
+                    self._instrument_type_method(obj=obj, prop=prop)
+                )
+
+            if hasattr(base, "_prompt_type"):
+                if self.verbose:
+                    print(f"instrumenting {base}._chain_prompt")
+
+                prop = getattr(base, "_prompt_type")
+                setattr(
+                    base, "_prompt_type",
+                    self._instrument_type_method(obj=obj, prop=prop)
                 )
 
             if isinstance(obj, Chain):

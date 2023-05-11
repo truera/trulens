@@ -1,4 +1,5 @@
 import dotenv
+from langchain.callbacks import get_openai_callback
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
@@ -32,7 +33,7 @@ def generate_response(prompt, model_name):
 
     chain = LLMChain(llm=chat, prompt=chat_prompt_template)
     tc = tru_chain.TruChain(chain)
-    return tc.run(prompt)
+    return tc(prompt)
 
 
 # Set up Streamlit app
@@ -42,7 +43,11 @@ user_input = st.text_input("What do you need help with?")
 if user_input:
     # Generate GPT-3 response
     prompt_input = user_input
-    gpt3_response, record = generate_response(prompt_input, model_engine)
+    # add context manager to capture tokens and cost of the chain
+    with get_openai_callback() as cb:
+        gpt3_response, record = generate_response(prompt_input, model_engine)
+        total_tokens = cb.total_tokens
+        total_cost = cb.total_cost
 
     # Display response
     st.write("Here's some help for you:")
@@ -65,7 +70,13 @@ if user_input:
         )
 
     record_id = tru.add_data(
-        'chat_model_v2', prompt_input, gpt3_response, record, ''
+        'chat_model',
+        prompt_input,
+        gpt3_response,
+        record,
+        '',
+        total_tokens=total_tokens,
+        total_cost=total_cost
     )
 
     # Run feedback function and get value
