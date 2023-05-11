@@ -10,6 +10,7 @@ import streamlit as st
 from keys import *
 import tru
 import tru_feedback
+import tru_chain
 
 # Set up GPT-3 model
 model_engine = "gpt-3.5-turbo"
@@ -30,7 +31,8 @@ def generate_response(prompt, model_name):
     chat = ChatOpenAI(model_name=model_name, temperature=0.9)
 
     chain = LLMChain(llm=chat, prompt=chat_prompt_template)
-    return chain.run(prompt)
+    tc = tru_chain.TruChain(chain)
+    return tc.run(prompt)
 
 
 # Set up Streamlit app
@@ -40,7 +42,7 @@ user_input = st.text_input("What do you need help with?")
 if user_input:
     # Generate GPT-3 response
     prompt_input = user_input
-    gpt3_response = generate_response(prompt_input, model_engine)
+    gpt3_response, record = generate_response(prompt_input, model_engine)
 
     # Display response
     st.write("Here's some help for you:")
@@ -63,7 +65,7 @@ if user_input:
         )
 
     record_id = tru.add_data(
-        'chat_model', prompt_input, gpt3_response, None, ''
+        'chat_model_v2', prompt_input, gpt3_response, record, ''
     )
 
     # Run feedback function and get value
