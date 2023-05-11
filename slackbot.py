@@ -40,9 +40,8 @@ pinecone.init(
     api_key=PINECONE_API_KEY,  # find at app.pinecone.io
     environment=PINECONE_ENV  # next to api key in console
 )
-index_name = "llmdemo"
 docsearch = Pinecone.from_existing_index(
-    index_name=index_name, embedding=embedding
+    index_name="llmdemo", embedding=embedding
 )
 retriever = docsearch.as_retriever()
 
@@ -55,7 +54,22 @@ convos: Dict[str, TruChain] = dict()
 
 # DB to save models and records.
 db = TruTinyDB("slackbot.json")
+memory = ConversationSummaryBufferMemory(
+    max_token_limit=650,
+    llm=llm,
+    memory_key="chat_history",
+    output_key='answer'
+    )
 
+chain = ConversationalRetrievalChain.from_llm(
+    llm=llm,
+    retriever=retriever,
+    verbose=verb,
+    return_source_documents=True,
+    memory=memory,
+    get_chat_history=lambda h: h,
+    max_tokens_limit=4096
+)
 
 def get_or_make_chain(cid: str) -> TruChain:
     """
@@ -156,7 +170,7 @@ def answer_message(client, body: dict, logger):
         client.chat_postMessage(
             channel=channel,
             thread_ts=ts,
-            text=f"Hi {user}. Let me check that for you..."
+            text=f"Hi. Let me check that for you..."
         )
 
         convo_id = ts
