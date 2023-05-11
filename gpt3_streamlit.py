@@ -64,16 +64,13 @@ if user_input:
         )
 
     record_id = tru.add_data(
-        'chat_model', prompt_input, 'None', gpt3_response, '', {
-            'thumbs_up': thumbs_up,
-            'thumbs_down': thumbs_down
-        }
+        'chat_model', prompt_input, gpt3_response, None, ''
     )
 
     # Run feedback function and get value
     feedback = tru.run_feedback_function(
         prompt_input, gpt3_response, [
-            tru_feedback.FEEDBACK_FUNCTIONS['hate'](
+            tru_feedback.get_hate_function(
                 evaluation_choice='response',
                 provider='openai',
                 model_engine='moderation'

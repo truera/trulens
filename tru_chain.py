@@ -220,7 +220,7 @@ class TruChain(Chain):
     # langchain.chains.base.py:Chain
     # We need to override this because we defined TruChain as a Chain and the default
     # behaviour from the parent is not the same as the behaviour of the wrapped chain.
-    def __call__(self, *args, **kwargs) -> Dict[str, Any]:
+    def __call__(self, *args, **kwargs): #-> Dict[str, Any]: TODO(piotrm): fix type
         """
         Wrapped call to self.chain.__call__ with instrumentation.
         """
@@ -258,7 +258,7 @@ class TruChain(Chain):
                 obj.update(dict(_call=calls))
 
         if error is None:
-            return ret_record
+            return ret, ret_record
         else:
             raise error
 

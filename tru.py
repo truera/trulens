@@ -1,75 +1,45 @@
 from datetime import datetime
 import sqlite3
+from typing import Callable, List
+import pandas as pd
 
-import tru_feedback
+from tru_db import LocalModelStore
 
-db_name = 'llm_quality.db'
+
+lms = LocalModelStore()
 
 
 def add_data(
-    model_id,
-    prompt,
-    template,
-    response,
-    tags,
-    feedback,
-    prompt_id=None,
-    ts=None
+    model_id: str,
+    prompt: str,
+    response: str,
+    details: str = None,
+    tags: str = None,
+    ts: int = None
 ):
-    conn = sqlite3.connect(db_name)
-    c = conn.cursor()
-
-    # Create table if it does not exist
-    c.execute(
-        '''CREATE TABLE IF NOT EXISTS llm_calls
-                    (record_id TEXT, model_id TEXT, prompt_id TEXT, prompt TEXT, template TEXT, response TEXT, tags TEXT, feedback TEXT, ts INTEGER)'''
-    )
-    feedback_str = str(feedback)
     if not ts:
         ts = datetime.now()
 
-    record_id = f'{model_id}_{prompt_id}_{ts}'
-    c.execute(
-        "INSERT INTO llm_calls VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (
-            record_id, model_id, prompt_id, prompt, template, response, tags,
-            feedback_str, ts
-        )
-    )
-    # Commit changes and close the connection
-    conn.commit()
-    conn.close()
-
+    record_id = lms.insert_record(model_id, prompt, response, details, ts, tags)
     return record_id
 
 
-def run_feedback_function(prompt, response, feedback_functions):
+def run_feedback_function(prompt: str, response: str, feedback_functions: Callable[[str, str], str]):
 
     # Run feedback functions
     eval = {}
     for f in feedback_functions:
         eval[f.__name__] = f(prompt, response)
-
-    eval_str = str(eval)
-
-    return eval_str
+    return eval
 
 
-def add_feedback(record_id, eval_str):
-    conn = sqlite3.connect(db_name)
-    c = conn.cursor()
-    # Create table if it does not exist
-    c.execute(
-        '''CREATE TABLE IF NOT EXISTS llm_feedback_functions
-                    (record_id TEXT, feedback_functions)'''
-    )
+def add_feedback(record_id: str, eval: dict):
+    lms.insert_feedback(record_id, eval)
 
-    c.execute(
-        "INSERT INTO llm_feedback_functions VALUES (?, ?)",
-        (record_id, eval_str)
-    )
 
-    # Commit changes and close the connection
-    conn.commit()
-    conn.close()
+def get_model(model_id):
+    return lms.get_model(model_id)
 
-    return False
+def get_records_and_feedback(model_ids: List[str]):
+    df_records, df_feedback = lms.get_records_and_feedback(model_ids)
+    return df_records, df_feedback

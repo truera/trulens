@@ -1,7 +1,6 @@
 import abc
 import json
 from pathlib import Path
-from types import NoneType
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import langchain
@@ -14,8 +13,12 @@ from tinydb.queries import QueryInstance as TinyQueryInstance
 from tinydb.storages import MemoryStorage
 from tinydb.table import Document
 from tinydb.table import Table
+import sqlite3
+import uuid
+import pandas as pd
 
 mj = MerkleJson()
+NoneType = type(None)
 
 
 def model_name_of_model(model: dict):
@@ -70,7 +73,7 @@ class TruDB(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_record(self, model_name: str, record: dict) -> int:
+    def insert_record(self, model_name: str, record: dict, *args, **kwargs) -> int:
         """
         Insert a new `record` into db, indicating its `model` as well. Return
         record id.
@@ -267,30 +270,60 @@ class TruTinyDB(TruDB):
         return pd.DataFrame(rows, columns=map(TruDB._query_str, queries))
 
 
-class TruSQL(TruDB):
+class LocalModelStore(TruDB):
+   
+    def __init__(self, db_name: Optional[Path] = 'llm_quality.db'):
+        self.db_name = db_name
+        conn, c = self._connect()
 
-    def __init__(self):
+        # Create table if it does not exist
+        c.execute(
+            '''CREATE TABLE IF NOT EXISTS records
+                        (record_id TEXT PRIMARY KEY, model_id TEXT, input TEXT, output TEXT, details TEXT, tags TEXT, ts INTEGER)'''
+        )
+        #TODO(Shayak): Make this not be a primary key and allow multiple rows on the same text
+        c.execute(
+        '''CREATE TABLE IF NOT EXISTS feedback
+                    (record_id TEXT PRIMARY KEY, feedback TEXT)''' 
+        )
+        c.execute(
+        '''CREATE TABLE IF NOT EXISTS models
+                    (model_id TEXT PRIMARY KEY, model TEXT)'''
+        )
+        self._close(conn)
 
-        # TODO(shayak)
-
-        ...
+    def _connect(self):
+        conn = sqlite3.connect(self.db_name)
+        c = conn.cursor()
+        return conn, c
+    
+    def _close(self, conn):
+        conn.commit()
+        conn.close()
+        
 
     # TruDB requirement
-    def insert_record(self, model_name: str, record: dict) -> int:
-        record['model_name'] = model_name
+    def insert_record(self, model_name: str, input: str, output: str, record: dict, ts: int, tags:str) -> int:
+        conn, c = self._connect()
         record_str = json.dumps(record, default=json_default)
+        record_id = str(uuid.uuid4())
 
-        # TODO(shayak)
 
         # Main chain input and output are these but these may be dicts or
         # otherwise, depending on the wrapped chain.
-        overall_inputs: Union[
-            Dict[str, Any],
-            Any] = self.project(Record.chain._call.args.inputs, record)
-        overall_outputs: Dict[
-            str, Any] = self.project(Record.chain.call.rets, record)
-
-        return 42  # record_id
+        # overall_inputs: Union[
+        #     Dict[str, Any],
+        #     Any] = self.project(Record.chain._call.args.inputs, record)
+        # overall_outputs: Dict[
+        #     str, Any] = self.project(Record.chain.call.rets, record)
+        
+        c.execute(
+            "INSERT INTO records VALUES (?, ?, ?, ?, ?, ?, ?)", (
+                record_id, model_name, input, output, record_str, tags, ts
+            )
+        )
+        self._close(conn)
+        return record_id  # record_id
 
     # TruDB requirement
     def insert_model(
@@ -298,10 +331,24 @@ class TruSQL(TruDB):
     ) -> str:
         model_name = model_name or model_name_of_model(model)
         model_str = json.dumps(model, default=json_default)
-
-        # TODO(shayak)
-
+        conn, c = self._connect()
+        c.execute(
+            "INSERT INTO models VALUES (?, ?)", (
+                model_name, model_str
+            )
+        )
+        self._close(conn)
         return model_name
+    
+    def insert_feedback(self, record_id: str, feedback: dict):
+        feedback_str = str(feedback)
+        conn, c = self._connect()
+        c.execute(
+            "INSERT INTO feedback VALUES (?, ?)", (
+                record_id, feedback_str
+            )
+        )
+        self._close(conn)
 
     # TruDB requirement
     def select(
@@ -320,3 +367,33 @@ class TruSQL(TruDB):
             db.insert_record(model_name=record['model_name'], record=record)
 
         return db.select(*query, where)
+    
+
+    def get_model(self, model_id: str):
+        conn, c = self._connect()
+        c.execute("SELECT model FROM records WHERE model_id=?", (model_id,))
+        result = c.fetchone()
+        conn.close()
+
+
+    def get_records_and_feedback(self, model_ids: List[str]):
+        conn, c = self._connect()
+        query = "SELECT l.*, f.feedback FROM records l LEFT JOIN feedback f on l.record_id = f.record_id"
+        if len(model_ids) > 0:
+            model_id_list = ', '.join('?' * len(model_ids))
+            query = query + f" WHERE model_id IN ({model_id_list})"
+        c.execute(query)
+        rows = c.fetchall()
+        conn.close()
+        df = pd.DataFrame(
+            rows, columns=[description[0] for description in c.description]
+        )
+        def str_dict_to_series(str_dict):
+            if not str_dict:
+                str_dict = "{}"
+            dict_obj = eval(str_dict)
+            return pd.Series(dict_obj)
+
+        # Apply the function to the 'data' column to convert it into separate columns
+        df_feedback = df['feedback'].apply(str_dict_to_series)
+        return df, df_feedback
