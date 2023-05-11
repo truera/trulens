@@ -1,7 +1,9 @@
 import abc
 import json
 from pathlib import Path
+import sqlite3
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+import uuid
 
 import langchain
 from merkle_json import MerkleJson
@@ -13,9 +15,6 @@ from tinydb.queries import QueryInstance as TinyQueryInstance
 from tinydb.storages import MemoryStorage
 from tinydb.table import Document
 from tinydb.table import Table
-import sqlite3
-import uuid
-import pandas as pd
 
 mj = MerkleJson()
 NoneType = type(None)
@@ -73,7 +72,9 @@ class TruDB(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_record(self, model_name: str, record: dict, *args, **kwargs) -> int:
+    def insert_record(
+        self, model_name: str, record: dict, *args, **kwargs
+    ) -> int:
         """
         Insert a new `record` into db, indicating its `model` as well. Return
         record id.
@@ -271,7 +272,7 @@ class TruTinyDB(TruDB):
 
 
 class LocalModelStore(TruDB):
-   
+
     def __init__(self, db_name: Optional[Path] = 'llm_quality.db'):
         self.db_name = db_name
         conn, c = self._connect()
@@ -279,15 +280,15 @@ class LocalModelStore(TruDB):
         # Create table if it does not exist
         c.execute(
             '''CREATE TABLE IF NOT EXISTS records
-                        (record_id TEXT PRIMARY KEY, model_id TEXT, input TEXT, output TEXT, details TEXT, tags TEXT, ts INTEGER)'''
+                        (record_id TEXT PRIMARY KEY, model_id TEXT, input TEXT, output TEXT, details TEXT, tags TEXT, ts INTEGER, total_tokens INTEGER, total_cost REAL)'''
         )
         #TODO(Shayak): Make this not be a primary key and allow multiple rows on the same text
         c.execute(
-        '''CREATE TABLE IF NOT EXISTS feedback
-                    (record_id TEXT PRIMARY KEY, feedback TEXT)''' 
+            '''CREATE TABLE IF NOT EXISTS feedback
+                    (record_id TEXT PRIMARY KEY, feedback TEXT)'''
         )
         c.execute(
-        '''CREATE TABLE IF NOT EXISTS models
+            '''CREATE TABLE IF NOT EXISTS models
                     (model_id TEXT PRIMARY KEY, model TEXT)'''
         )
         self._close(conn)
@@ -296,18 +297,19 @@ class LocalModelStore(TruDB):
         conn = sqlite3.connect(self.db_name)
         c = conn.cursor()
         return conn, c
-    
+
     def _close(self, conn):
         conn.commit()
         conn.close()
-        
 
     # TruDB requirement
-    def insert_record(self, model_name: str, input: str, output: str, record: dict, ts: int, tags:str) -> int:
+    def insert_record(
+        self, model_name: str, input: str, output: str, record: dict, ts: int,
+        tags: str, total_tokens: int, total_cost: float
+    ) -> int:
         conn, c = self._connect()
         record_str = json.dumps(record, default=json_default)
         record_id = str(uuid.uuid4())
-
 
         # Main chain input and output are these but these may be dicts or
         # otherwise, depending on the wrapped chain.
@@ -316,10 +318,11 @@ class LocalModelStore(TruDB):
         #     Any] = self.project(Record.chain._call.args.inputs, record)
         # overall_outputs: Dict[
         #     str, Any] = self.project(Record.chain.call.rets, record)
-        
+
         c.execute(
-            "INSERT INTO records VALUES (?, ?, ?, ?, ?, ?, ?)", (
-                record_id, model_name, input, output, record_str, tags, ts
+            "INSERT INTO records VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+                record_id, model_name, input, output, record_str, tags, ts,
+                total_tokens, total_cost
             )
         )
         self._close(conn)
@@ -332,21 +335,15 @@ class LocalModelStore(TruDB):
         model_name = model_name or model_name_of_model(model)
         model_str = json.dumps(model, default=json_default)
         conn, c = self._connect()
-        c.execute(
-            "INSERT INTO models VALUES (?, ?)", (
-                model_name, model_str
-            )
-        )
+        c.execute("INSERT INTO models VALUES (?, ?)", (model_name, model_str))
         self._close(conn)
         return model_name
-    
+
     def insert_feedback(self, record_id: str, feedback: dict):
         feedback_str = str(feedback)
         conn, c = self._connect()
         c.execute(
-            "INSERT INTO feedback VALUES (?, ?)", (
-                record_id, feedback_str
-            )
+            "INSERT INTO feedback VALUES (?, ?)", (record_id, feedback_str)
         )
         self._close(conn)
 
@@ -367,14 +364,12 @@ class LocalModelStore(TruDB):
             db.insert_record(model_name=record['model_name'], record=record)
 
         return db.select(*query, where)
-    
 
     def get_model(self, model_id: str):
         conn, c = self._connect()
         c.execute("SELECT model FROM records WHERE model_id=?", (model_id,))
         result = c.fetchone()
         conn.close()
-
 
     def get_records_and_feedback(self, model_ids: List[str]):
         # This returns all models if the list of model_ids is empty
@@ -389,6 +384,7 @@ class LocalModelStore(TruDB):
         df = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
+
         def str_dict_to_series(str_dict):
             if not str_dict:
                 str_dict = "{}"
