@@ -377,6 +377,7 @@ class LocalModelStore(TruDB):
 
 
     def get_records_and_feedback(self, model_ids: List[str]):
+        # This returns all models if the list of model_ids is empty
         conn, c = self._connect()
         query = "SELECT l.*, f.feedback FROM records l LEFT JOIN feedback f on l.record_id = f.record_id"
         if len(model_ids) > 0:

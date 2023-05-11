@@ -21,6 +21,7 @@ pydantic
 merkle_json
 # other requirements:
 streamlit
+streamlit-aggrid
 python-dotenv
 datasets
 cohere

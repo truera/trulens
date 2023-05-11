@@ -1,45 +1,31 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import model_store 
-
-# import sqlite3
-
-# class ModelDataStore:
-#     def __init__(self):
-#         # Set up SQLite database connection
-#         conn = sqlite3.connect("llm_quality.db")
-#         self.c = conn.cursor()
-
-#     def get_all_data(self):
-#         table_name = "llm_calls"
-#         self.c.execute(f"SELECT * FROM {table_name}")
-#         rows = self.c.fetchall()
-#         if len(rows) == 0:
-#             df = pd.DataFrame()
-#         else:
-#             df = pd.DataFrame(
-#                 rows, columns=[description[0] for description in self.c.description]
-#             )
-#         #st.dataframe(df)
-#         return df
-#         #show_table_contents(table_name)
+import tru_db
+from st_aggrid import AgGrid
+from st_aggrid.grid_options_builder import GridOptionsBuilder
 
 
-# Create a sample dataframe
-data = {'Name': ['Chain A', 'Chain B', 'Chain C', 'Chain D', 'Chain E'],
-        'Model Type': ['Type 1', 'Type 2', 'Type 3', 'Type 4', 'Type 5'],
-        'Date': ['2022-01-01', '2022-01-02', '2022-01-03', '2022-01-04', '2022-01-05']}
-df = pd.DataFrame(data)
+
+lms = tru_db.LocalModelStore()
+df, df_feedback = lms.get_records_and_feedback([])
 
 if 'chain' in st.session_state:
-    chain_id = st.session_state.chain
+    model = st.session_state.chain
 else:
-    chain_id = 0
+    model = None
 
-options = st.multiselect(
-    'What are your favorite colors',
-    ['Chain A', 'Chain B', 'Chain C', 'Chain D', 'Chain E'])
+    models = list(df.model_id.unique())
+
+    
+options = st.multiselect('Choose a model', models, default = model)
+
+# col0, col1, col2, col3 = st.columns(4)
+# model_df = df.loc[df.model_id.isin(options)]
+# col0.metric("Name", model)
+# col1.metric("Records", len(model_df))
+# col2.metric("Cost", "$0.43")
+# col3.metric("Feedback Results", len(df_feedback.columns))
 
 if (len(options) == 0):
     st.header("All Chains")
@@ -79,8 +65,14 @@ with tab1:
                         st.text(tests[row_num*cols+col_num])
                         st.bar_chart(np.random.randn(10, 3))
 
-mds = model_store.ModelDataStore()
+#mds = model_store.ModelDataStore()
 
 with tab2:
-    st.dataframe(mds.get_all_data())
+    gb = GridOptionsBuilder.from_dataframe(df)
+
+    gb.configure_pagination()
+    gb.configure_side_bar()
+    #gb.configure_default_column(groupable=True, value=True, enableRowGroup=True, aggFunc="sum", editable=True)
+    gridOptions = gb.build()
+    data = AgGrid(df, gridOptions=gridOptions)
 
