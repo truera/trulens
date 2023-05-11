@@ -1,3 +1,5 @@
+import ast
+
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -27,11 +29,26 @@ def app():
         col0, col1, col2, col3, col4, col5 = st.columns(6)
         model_df = df.loc[df.model_id == model]
 
+        # Get the average feedback results
+        totals = {}
+        df['feedback'] = df['feedback'].apply(lambda x: ast.literal_eval(x))
+        for row in df['feedback']:
+            for key in row.keys():
+                if key in totals:
+                    totals[key] += row[key]
+                else:
+                    # If the key doesn't exist, add it to the totals dictionary
+                    totals[key] = row[key]
+        num_rows = len(df)
+        average_feedback = str(
+            {key: totals[key] / num_rows for key in totals.keys()}
+        )
+
         col0.metric("Name", model)
         col1.metric("Records", len(model_df))
         col2.metric("Cost", sum(df.total_cost))
         col3.metric("Tokens", sum(df.total_tokens))
-        col4.metric("Feedback Results", len(df_feedback.columns))
+        col4.metric("Average Feedback", average_feedback)
     with col5:
         if st.button('Select Chain', key=f"model-selector-{model}"):
             st.session_state.chain = model
