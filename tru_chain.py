@@ -372,8 +372,10 @@ class TruChain(Chain):
             # If not within TruChain._call, call the wrapped function without
             # any recording. This check is not perfect in threaded situations so
             # the next call stack-based lookup handles the rarer cases.
-            if not self.recording:
-                return func(*args, **kwargs)
+
+            # NOTE(piotrm): Disabling this for now as it is not thread safe.
+            #if not self.recording:
+            #    return func(*args, **kwargs)
 
             # Look up whether TruChain._call was called earlier in the stack and
             # "record" variable was defined there. Will use that for recording

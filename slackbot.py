@@ -1,6 +1,6 @@
 import os
 from pprint import PrettyPrinter
-from typing import Dict, Tuple
+from typing import Dict, Set, Tuple
 
 from tru_chain import TruChain
 from tru_db import Record
@@ -32,26 +32,19 @@ verb = True
 
 # create a conversational chain with relevant models and vector store
 
-# Embedding needed for Pinecone vector db.
-embedding = OpenAIEmbeddings(model='text-embedding-ada-002')  # 1536 dims
-
 # Pinecone configuration.
 pinecone.init(
     api_key=PINECONE_API_KEY,  # find at app.pinecone.io
     environment=PINECONE_ENV  # next to api key in console
 )
-index_name = "llmdemo"
-docsearch = Pinecone.from_existing_index(
-    index_name=index_name, embedding=embedding
-)
-retriever = docsearch.as_retriever()
-
-# LLM for completing prompts, and other tasks.
-llm = OpenAI(temperature=0, max_tokens=128)
 
 # Cache of conversations. Keys are SlackAPI conversation ids (channel ids or
 # otherwise) and values are TruChain to handle that conversation.
 convos: Dict[str, TruChain] = dict()
+
+# Keep track of timestamps of messages already handled. Sometimes the same
+# message gets received more than once if there is a network hickup.
+handled_ts: Set[Tuple[str, str]] = set()
 
 # DB to save models and records.
 db = TruTinyDB("slackbot.json")
@@ -63,10 +56,24 @@ def get_or_make_chain(cid: str) -> TruChain:
     one. Return the new or existing chain.
     """
 
+    # NOTE(piotrm): Unsure about the thread safety of the various components so
+    # making new ones for each conversation.
+
     if cid in convos:
         return convos[cid]
 
     pp.pprint("Starting a new conversation.")
+
+    # Embedding needed for Pinecone vector db.
+    embedding = OpenAIEmbeddings(model='text-embedding-ada-002')  # 1536 dims
+
+    docsearch = Pinecone.from_existing_index(
+        index_name="llmdemo", embedding=embedding
+    )
+    retriever = docsearch.as_retriever()
+
+    # LLM for completing prompts, and other tasks.
+    llm = OpenAI(temperature=0, max_tokens=128)
 
     memory = ConversationSummaryBufferMemory(
         max_token_limit=650,
@@ -140,10 +147,17 @@ def answer_message(client, body: dict, logger):
 
     pp.pprint(body)
 
+    ts = body['event']['ts']
     user = body['event']['user']
+
+    if (ts, user) in handled_ts:
+        print(f"WARNING: I already handled message with ts={ts}, user={user} .")
+        return
+    else:
+        handled_ts.add((ts, user))
+
     message = body['event']['text']
     channel = body['event']['channel']
-    ts = body['event']['ts']
 
     if "thread_ts" in body['event']:
         client.chat_postMessage(
@@ -156,7 +170,7 @@ def answer_message(client, body: dict, logger):
         client.chat_postMessage(
             channel=channel,
             thread_ts=ts,
-            text=f"Hi {user}. Let me check that for you..."
+            text=f"Hi. Let me check that for you..."
         )
 
         convo_id = ts
@@ -245,6 +259,7 @@ def handle_app_mention_events(body, logger):
     """
     Handle messages that mention the bot.
     """
+
     answer_message(client, body, logger)
 
 
