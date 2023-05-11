@@ -1,37 +1,36 @@
 import dotenv
-import openai
+from langchain.chains import LLMChain
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import PromptTemplate
+from langchain.prompts.chat import ChatPromptTemplate
+from langchain.prompts.chat import HumanMessagePromptTemplate
+#mport openai
 import streamlit as st
 
+from keys import *
 import tru
 import tru_feedback
 
-config = dotenv.dotenv_values(".env")
-
-# Set OpenAI API key
-openai.api_key = config['OPENAI_API_KEY']
-
 # Set up GPT-3 model
 model_engine = "gpt-3.5-turbo"
-prompt = "Please help me with "
 
 
 # Define function to generate GPT-3 response
 @st.cache_data
-def generate_response(prompt, model_engine):
-    return openai.ChatCompletion.create(
-        model=model_engine,
-        messages=[
-            {
-                "role":
-                    "system",
-                "content":
-                    "You are a helpful assistant that provides concise and relevant background information and context so that outsiders can easily understand."
-            }, {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    )["choices"][0]["message"]["content"]
+def generate_response(prompt, model_name):
+    full_prompt = HumanMessagePromptTemplate(
+        prompt=PromptTemplate(
+            template=
+            "Provide a helpful response with relevant background information for the following: {prompt}",
+            input_variables=["prompt"],
+        )
+    )
+    chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
+
+    chat = ChatOpenAI(model_name=model_name, temperature=0.9)
+
+    chain = LLMChain(llm=chat, prompt=chat_prompt_template)
+    return chain.run(prompt)
 
 
 # Set up Streamlit app
