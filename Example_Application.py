@@ -69,11 +69,11 @@ if user_input:
         )
 
     record_id = tru.add_data(
-        'chat_model',
-        prompt_input,
-        gpt3_response['text'],
-        record,
-        '',
+        chain_id='Chain1_ChatApplication',
+        prompt=prompt_input,
+        response=gpt3_response['text'],
+        details=record,
+        tags='dev',
         total_tokens=total_tokens,
         total_cost=total_cost
     )
@@ -126,11 +126,11 @@ if st.button('Batch queries into the app'):
         st.write(gpt3_response['text'])
 
         record_id = tru.add_data(
-            'Chain1_ChatApplication',
-            prompt_input,
-            gpt3_response['text'],
-            record,
-            '',
+            chain_id='Chain1_ChatApplication',
+            prompt=prompt_input,
+            response=gpt3_response['text'],
+            details=record,
+            tags='dev',
             total_tokens=total_tokens,
             total_cost=total_cost
         )
