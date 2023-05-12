@@ -5,16 +5,15 @@ from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
-#mport openai
 import streamlit as st
 
 from keys import *
 import tru
-import tru_feedback
 import tru_chain
+import tru_feedback
 
 # Set up GPT-3 model
-model_engine = "gpt-3.5-turbo"
+model_name = "gpt-3.5-turbo"
 
 
 # Define function to generate GPT-3 response
@@ -45,13 +44,13 @@ if user_input:
     prompt_input = user_input
     # add context manager to capture tokens and cost of the chain
     with get_openai_callback() as cb:
-        gpt3_response, record = generate_response(prompt_input, model_engine)
+        gpt3_response, record = generate_response(prompt_input, model_name)
         total_tokens = cb.total_tokens
         total_cost = cb.total_cost
 
     # Display response
     st.write("Here's some help for you:")
-    st.write(gpt3_response["text"])
+    st.write(gpt3_response['text'])
 
     # Allow user to rate the response with emojis
     col1, col2 = st.columns(2)
@@ -72,8 +71,8 @@ if user_input:
     record_id = tru.add_data(
         'chat_model',
         prompt_input,
-        gpt3_response["text"],
-        record,
+        gpt3_response['text'],
+        str(record),
         '',
         total_tokens=total_tokens,
         total_cost=total_cost
@@ -83,12 +82,70 @@ if user_input:
     feedback = tru.run_feedback_function(
         prompt_input, gpt3_response["text"], [
             tru_feedback.get_hate_function(
-                evaluation_choice='response',
+                evaluation_choice='prompt',
                 provider='openai',
                 model_engine='moderation'
+            ),
+            tru_feedback.get_factagreement_function(
+                evaluation_choice='both',
+                provider='openai',
+                model_engine='gpt-3.5-turbo'
             )
         ]
     )
 
     # Add value to database
     tru.add_feedback(record_id, feedback)
+
+if st.button('Batch queries into the app'):
+    batch_inputs = [
+        'How do I adopt a dog?', 'How do I create a sqlite database?',
+        'Who will be the next president of the united states?',
+        'I hate people wearing blue hats', 'Teach me how to paint',
+        'How do I get a promotion?'
+    ]
+    batch_inputs = [str(item) for item in batch_inputs]
+
+    for batch_input in batch_inputs:
+        # Generate GPT-3 response
+        prompt_input = batch_input
+        # add context manager to capture tokens and cost of the chain
+        with get_openai_callback() as cb:
+            gpt3_response, record = generate_response(prompt_input, model_name)
+            total_tokens = cb.total_tokens
+            total_cost = cb.total_cost
+
+        # Display response
+        st.write(batch_input)
+        st.write("Here's some help for you:")
+        st.write(gpt3_response['text'])
+
+        record_id = tru.add_data(
+            'chat_model',
+            prompt_input,
+            gpt3_response['text'],
+            str(record),
+            '',
+            '',
+            total_tokens=total_tokens,
+            total_cost=total_cost
+        )
+
+        # Run feedback function and get value
+        feedback = tru.run_feedback_function(
+            prompt_input, gpt3_response, [
+                tru_feedback.get_hate_function(
+                    evaluation_choice='prompt',
+                    provider='openai',
+                    model_engine='moderation'
+                ),
+                tru_feedback.get_factagreement_function(
+                    evaluation_choice='both',
+                    provider='openai',
+                    model_engine='gpt-3.5-turbo'
+                )
+            ]
+        )
+
+        # Add value to database
+        tru.add_feedback(record_id, feedback)

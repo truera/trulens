@@ -127,6 +127,9 @@ from queue import Queue
 import threading as th
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
+import langchain
+
+langchain.verbose = False
 from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
@@ -217,7 +220,7 @@ class TruChain(Chain):
     def output_keys(self) -> List[str]:
         return self.chain.output_keys
 
-    # def _run(self, *args: Any, callbacks: Callbacks = None, **kwargs: Any) -> str:
+        # def _run(self, *args: Any, callbacks: Callbacks = None, **kwargs: Any) -> str:
         # TODO (piotrm): Need to figure out what to return here.
         """Run the chain as text in, text out or multiple variables, text out."""
         """if len(self.output_keys) != 1:
@@ -248,7 +251,9 @@ class TruChain(Chain):
     # langchain.chains.base.py:Chain
     # We need to override this because we defined TruChain as a Chain and the default
     # behaviour from the parent is not the same as the behaviour of the wrapped chain.
-    def __call__(self, *args, **kwargs): #-> Dict[str, Any]: TODO(piotrm): fix type
+    def __call__(
+        self, *args, **kwargs
+    ):  #-> Dict[str, Any]: TODO(piotrm): fix type
         """
         Wrapped call to self.chain.__call__ with instrumentation.
         """
@@ -514,7 +519,6 @@ class TruChain(Chain):
                     self._instrument_method(query=query, func=original_fun)
                 )
 
-            
             if hasattr(base, "_chain_type"):
                 if self.verbose:
                     print(f"instrumenting {base}._chain_type")
