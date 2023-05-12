@@ -38,19 +38,22 @@ def app():
             5 + len(df_feedback.columns)
         )
         model_df = df.loc[df.chain_id == model]
+        model_df_feedback = df_feedback.loc[df.chain_id == model]
 
         col0.metric("Name", model)
         col1.metric("Records", len(model_df))
-        col2.metric("Cost", round(sum(df.total_cost), 5))
-        col3.metric("Tokens", sum(df.total_tokens))
+        col2.metric("Cost", round(sum(model_df.total_cost), 5))
+        col3.metric("Tokens", sum(model_df.total_tokens))
 
         for i, col_name in enumerate(df_feedback.columns):
             if i < len(feedback_cols):
                 feedback_cols[i].metric(
-                    col_name, round(df_feedback[col_name].mean(), 2)
+                    col_name, round(model_df_feedback[col_name].mean(), 2)
                 )
             else:
-                st.metric(col_name, df_feedback[col_name].mean())
+                st.metric(
+                    col_name, round(model_df_feedback[col_name].mean(), 2)
+                )
 
         with col99:
             if st.button('Select Chain', key=f"model-selector-{model}"):
