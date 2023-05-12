@@ -29,7 +29,7 @@ else:
 
     models = list(df.chain_id.unique())
 
-    options = st.multiselect('Choose a model', models, default=model)
+    options = st.multiselect('Choose a chain', models, default=model)
 
     model_df = df.loc[df.chain_id.isin(options)]
     model_df_feedback = df_feedback.loc[df.chain_id.isin(options)]
