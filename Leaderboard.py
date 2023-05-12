@@ -32,7 +32,7 @@ def app():
     if df.empty:
         st.write("No records yet...")
     models = list(df.chain_id.unique())
-
+    st.markdown("""---""")
     for model in models:
         col0, col1, col2, col3, *feedback_cols, col99 = st.columns(
             5 + len(df_feedback.columns)
@@ -59,6 +59,8 @@ def app():
             if st.button('Select Chain', key=f"model-selector-{model}"):
                 st.session_state.chain = model
                 switch_page('Evaluations')
+
+        st.markdown("""---""")
 
 
 # Define the main function to run the app
