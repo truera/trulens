@@ -1,13 +1,20 @@
 import ast
+import os
 
 import numpy as np
 import pandas as pd
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 
+st.runtime.legacy_caching.clear_cache()
+
 import tru_db
 
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="Leaderboard", layout="wide")
+
+from ux.add_logo import add_logo
+
+add_logo()
 
 #import model_store
 
@@ -21,13 +28,12 @@ lms = tru_db.LocalModelStore()
 def app():
     # Set the title and subtitle of the app
     st.title('Model Leaderboard')
-    #st.subheader('First Page')
     df, df_feedback = lms.get_records_and_feedback([])
-    models = list(df.model_id.unique())
+    models = list(df.chain_id.unique())
 
     for model in models:
         col0, col1, col2, col3, col4, col5 = st.columns(6)
-        model_df = df.loc[df.model_id == model]
+        model_df = df.loc[df.chain_id == model]
 
         # Get the average feedback results
         totals = {}
@@ -43,7 +49,7 @@ def app():
         # average_feedback = str(
         #     {key: totals[key] / num_rows for key in totals.keys()}
         # )
-        average_feedback = "" #TODO(josh)
+        average_feedback = ""  #TODO(josh)
 
         col0.metric("Name", model)
         col1.metric("Records", len(model_df))
@@ -53,7 +59,7 @@ def app():
     with col5:
         if st.button('Select Chain', key=f"model-selector-{model}"):
             st.session_state.chain = model
-            switch_page('Chain')
+            switch_page('Evaluations')
 
 
 # Define the main function to run the app

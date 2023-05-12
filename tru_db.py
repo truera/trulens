@@ -280,7 +280,7 @@ class LocalModelStore(TruDB):
         # Create table if it does not exist
         c.execute(
             '''CREATE TABLE IF NOT EXISTS records
-                        (record_id TEXT PRIMARY KEY, model_id TEXT, input TEXT, output TEXT, details TEXT, tags TEXT, ts INTEGER, total_tokens INTEGER, total_cost REAL)'''
+                        (record_id TEXT PRIMARY KEY, chain_id TEXT, input TEXT, output TEXT, details TEXT, tags TEXT, ts INTEGER, total_tokens INTEGER, total_cost REAL)'''
         )
         #TODO(Shayak): Make this not be a primary key and allow multiple rows on the same text
         c.execute(
@@ -289,7 +289,7 @@ class LocalModelStore(TruDB):
         )
         c.execute(
             '''CREATE TABLE IF NOT EXISTS models
-                    (model_id TEXT PRIMARY KEY, model TEXT)'''
+                    (chain_id TEXT PRIMARY KEY, model TEXT)'''
         )
         self._close(conn)
 
@@ -365,19 +365,19 @@ class LocalModelStore(TruDB):
 
         return db.select(*query, where)
 
-    def get_model(self, model_id: str):
+    def get_model(self, chain_id: str):
         conn, c = self._connect()
-        c.execute("SELECT model FROM records WHERE model_id=?", (model_id,))
+        c.execute("SELECT model FROM records WHERE chain_id=?", (chain_id,))
         result = c.fetchone()
         conn.close()
 
-    def get_records_and_feedback(self, model_ids: List[str]):
-        # This returns all models if the list of model_ids is empty
+    def get_records_and_feedback(self, chain_ids: List[str]):
+        # This returns all models if the list of chain_ids is empty
         conn, c = self._connect()
         query = "SELECT l.*, f.feedback FROM records l LEFT JOIN feedback f on l.record_id = f.record_id"
-        if len(model_ids) > 0:
-            model_id_list = ', '.join('?' * len(model_ids))
-            query = query + f" WHERE model_id IN ({model_id_list})"
+        if len(chain_ids) > 0:
+            chain_id_list = ', '.join('?' * len(chain_ids))
+            query = query + f" WHERE model_id IN ({chain_id_list})"
         c.execute(query)
         rows = c.fetchall()
         conn.close()

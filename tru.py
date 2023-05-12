@@ -1,7 +1,7 @@
 from datetime import datetime
+import json
 import sqlite3
 from typing import Callable, List
-import json
 
 import pandas as pd
 
@@ -11,7 +11,7 @@ lms = LocalModelStore()
 
 
 def add_data(
-    model_id: str,
+    chain_id: str,
     prompt: str,
     response: str,
     details: str = None,
@@ -22,12 +22,15 @@ def add_data(
 ):
     if not ts:
         ts = datetime.now()
-    
+
     def to_json(details):
-        return json.dumps(details,  default=lambda o: f"<{o.__class__.__name__}>")
+        return json.dumps(
+            details, default=lambda o: f"<{o.__class__.__name__}>"
+        )
 
     record_id = lms.insert_record(
-        model_id, prompt, response, to_json(details), ts, tags, total_tokens, total_cost
+        chain_id, prompt, response, to_json(details), ts, tags, total_tokens,
+        total_cost
     )
     return record_id
 
@@ -47,10 +50,10 @@ def add_feedback(record_id: str, eval: dict):
     lms.insert_feedback(record_id, eval)
 
 
-def get_model(model_id):
-    return lms.get_model(model_id)
+def get_model(chain_id):
+    return lms.get_model(chain_id)
 
 
-def get_records_and_feedback(model_ids: List[str]):
-    df_records, df_feedback = lms.get_records_and_feedback(model_ids)
+def get_records_and_feedback(chain_ids: List[str]):
+    df_records, df_feedback = lms.get_records_and_feedback(chain_ids)
     return df_records, df_feedback
