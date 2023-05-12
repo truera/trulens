@@ -32,34 +32,28 @@ def app():
     models = list(df.chain_id.unique())
 
     for model in models:
-        col0, col1, col2, col3, col4, col5 = st.columns(6)
+        col0, col1, col2, col3, *feedback_cols, col99 = st.columns(
+            5 + len(df_feedback.columns)
+        )
         model_df = df.loc[df.chain_id == model]
-
-        # Get the average feedback results
-        totals = {}
-        # df['feedback'] = df['feedback'].apply(lambda x: ast.literal_eval(x))
-        # for row in df['feedback']:
-        #     for key in row.keys():
-        #         if key in totals:
-        #             totals[key] += row[key]
-        #         else:
-        #             # If the key doesn't exist, add it to the totals dictionary
-        #             totals[key] = row[key]
-        # num_rows = len(df)
-        # average_feedback = str(
-        #     {key: totals[key] / num_rows for key in totals.keys()}
-        # )
-        average_feedback = ""  #TODO(josh)
 
         col0.metric("Name", model)
         col1.metric("Records", len(model_df))
         col2.metric("Cost", sum(df.total_cost))
         col3.metric("Tokens", sum(df.total_tokens))
-        col4.metric("Average Feedback", average_feedback)
-    with col5:
-        if st.button('Select Chain', key=f"model-selector-{model}"):
-            st.session_state.chain = model
-            switch_page('Evaluations')
+
+        for i, col_name in enumerate(df_feedback.columns):
+            if i < len(feedback_cols):
+                feedback_cols[i].metric(
+                    col_name, round(df_feedback[col_name].mean(), 2)
+                )
+            else:
+                st.metric(col_name, df_feedback[col_name].mean())
+
+        with col99:
+            if st.button('Select Chain', key=f"model-selector-{model}"):
+                st.session_state.chain = model
+                switch_page('Evaluations')
 
 
 # Define the main function to run the app
