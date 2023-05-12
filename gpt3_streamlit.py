@@ -72,8 +72,8 @@ if user_input:
         'chat_model',
         prompt_input,
         gpt3_response['text'],
-        '',
         str(record),
+        '',
         '',
         total_tokens=total_tokens,
         total_cost=total_cost
@@ -125,8 +125,8 @@ if st.button('Batch queries into the app'):
             'chat_model',
             prompt_input,
             gpt3_response['text'],
-            '',
             str(record),
+            '',
             '',
             total_tokens=total_tokens,
             total_cost=total_cost
