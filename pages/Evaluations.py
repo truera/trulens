@@ -29,15 +29,17 @@ else:
 
     models = list(df.chain_id.unique())
 
-    options = st.multiselect('Filter chains', models, default=model)
+    options = st.multiselect('Filter Chains', models, default=model)
 
     model_df = df.loc[df.chain_id.isin(options)]
     model_df_feedback = df_feedback.loc[df.chain_id.isin(options)]
 
     if (len(options) == 0):
         st.header("All Chains")
-    else:
+    elif (len(options) == 1):
         st.header(options[0])
+    else:
+        st.header("Multiple Chains Selected")
 
     tab1, tab2 = st.tabs(["Records", "Feedback Functions"])
 
