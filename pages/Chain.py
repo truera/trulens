@@ -4,6 +4,9 @@ import numpy as np
 import tru_db
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
+from st_aggrid.shared import GridUpdateMode
+import json
+import ast
 
 
 
@@ -58,7 +61,17 @@ with tab2:
 
     gb.configure_pagination()
     gb.configure_side_bar()
+    gb.configure_selection(selection_mode="single", use_checkbox=False)
+
     #gb.configure_default_column(groupable=True, value=True, enableRowGroup=True, aggFunc="sum", editable=True)
     gridOptions = gb.build()
-    data = AgGrid(df, gridOptions=gridOptions)
+    data = AgGrid(df, gridOptions=gridOptions, update_mode=GridUpdateMode.SELECTION_CHANGED)
+
+    selected_rows = data['selected_rows']
+    selected_rows = pd.DataFrame(selected_rows)
+
+    if len(selected_rows) != 0:
+        details = selected_rows['details'][0]
+        #print(details)
+        st.json(json.loads(details))
 

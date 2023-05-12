@@ -72,7 +72,7 @@ if user_input:
         'chat_model',
         prompt_input,
         gpt3_response['text'],
-        str(record),
+        record,
         '',
         total_tokens=total_tokens,
         total_cost=total_cost
@@ -124,8 +124,7 @@ if st.button('Batch queries into the app'):
             'chat_model',
             prompt_input,
             gpt3_response['text'],
-            str(record),
-            '',
+            record,
             '',
             total_tokens=total_tokens,
             total_cost=total_cost
@@ -140,9 +139,9 @@ if st.button('Batch queries into the app'):
                     model_engine='moderation'
                 ),
                 tru_feedback.get_factagreement_function(
-                    evaluation_choice='both',
-                    provider='openai',
-                    model_engine='gpt-3.5-turbo'
+                   evaluation_choice='both',
+                   provider='openai',
+                   model_engine='gpt-3.5-turbo'
                 )
             ]
         )
