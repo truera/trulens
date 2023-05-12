@@ -11,6 +11,10 @@ import streamlit as st
 import tru_db
 from ux.add_logo import add_logo
 
+st.set_page_config(page_title="Evaluations", layout="wide")
+
+st.title("Evaluations")
+
 st.runtime.legacy_caching.clear_cache()
 
 add_logo()
