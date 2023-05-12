@@ -27,7 +27,7 @@ lms = tru_db.LocalModelStore()
 
 def app():
     # Set the title and subtitle of the app
-    st.title('Model Leaderboard')
+    st.title('Chain Leaderboard')
     df, df_feedback = lms.get_records_and_feedback([])
     if df.empty:
         st.write("No records yet...")

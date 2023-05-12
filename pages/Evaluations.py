@@ -34,25 +34,6 @@ else:
     model_df = df.loc[df.chain_id.isin(options)]
     model_df_feedback = df_feedback.loc[df.chain_id.isin(options)]
 
-    for model in models:
-        col0, col1, col2, col3, *feedback_cols = st.columns(
-            5 + len(df_feedback.columns)
-        )
-        model_df = df.loc[df.chain_id == model]
-
-        col0.metric("Name", model)
-        col1.metric("Records", len(model_df))
-        col2.metric("Cost", round(sum(df.total_cost), 5))
-        col3.metric("Tokens", sum(df.total_tokens))
-
-        for i, col_name in enumerate(df_feedback.columns):
-            if i < len(feedback_cols):
-                feedback_cols[i].metric(
-                    col_name, round(df_feedback[col_name].mean(), 2)
-                )
-            else:
-                st.metric(col_name, df_feedback[col_name].mean())
-
     if (len(options) == 0):
         st.header("All Chains")
     else:
