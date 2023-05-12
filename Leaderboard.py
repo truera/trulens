@@ -39,7 +39,7 @@ def app():
 
         col0.metric("Name", model)
         col1.metric("Records", len(model_df))
-        col2.metric("Cost", sum(df.total_cost))
+        col2.metric("Cost", round(sum(df.total_cost), 5))
         col3.metric("Tokens", sum(df.total_tokens))
 
         for i, col_name in enumerate(df_feedback.columns):
