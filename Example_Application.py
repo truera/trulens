@@ -126,7 +126,7 @@ if st.button('Batch queries into the app'):
         st.write(gpt3_response['text'])
 
         record_id = tru.add_data(
-            'chat_model',
+            'Chain1_ChatApplication',
             prompt_input,
             gpt3_response['text'],
             record,
