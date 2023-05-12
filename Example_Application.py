@@ -86,7 +86,12 @@ if user_input:
                 provider='openai',
                 model_engine='moderation'
             ),
-            tru_feedback.get_factagreement_function(
+            tru_feedback.get_sentimentpositive_function(
+                evaluation_choice='response',
+                provider='openai',
+                model_engine='gpt-3.5-turbo'
+            ),
+            tru_feedback.get_relevance_function(
                 evaluation_choice='both',
                 provider='openai',
                 model_engine='gpt-3.5-turbo'
@@ -132,16 +137,21 @@ if st.button('Batch queries into the app'):
 
         # Run feedback function and get value
         feedback = tru.run_feedback_function(
-            prompt_input, gpt3_response, [
+            prompt_input, gpt3_response['text'], [
                 tru_feedback.get_hate_function(
                     evaluation_choice='prompt',
                     provider='openai',
                     model_engine='moderation'
                 ),
-                tru_feedback.get_factagreement_function(
-                   evaluation_choice='both',
-                   provider='openai',
-                   model_engine='gpt-3.5-turbo'
+                tru_feedback.get_sentimentpositive_function(
+                    evaluation_choice='response',
+                    provider='openai',
+                    model_engine='gpt-3.5-turbo'
+                ),
+                tru_feedback.get_relevance_function(
+                    evaluation_choice='both',
+                    provider='openai',
+                    model_engine='gpt-3.5-turbo'
                 )
             ]
         )

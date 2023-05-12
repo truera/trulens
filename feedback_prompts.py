@@ -1,10 +1,10 @@
 from cohere.responses.classify import Example
 
 RELEVANCE_SYSTEM_PROMPT = f"You are a relevance classifier, providing the relevance of a given response to a particular prompt. \n"
-"Provide all responses only as a number from 1 to 10 where 1 is the least relevant and 10 is the most. \n"
+"Provide all responses only as a number from 1 to 10 where 1 is the least relevant and 10 is the most. Always respond with an integer between 1 and 10. \n"
 "Never elaborate. The prompt is: "
 
-RELEVANCE_CONTENT_PROMPT = f"For that prompt, how relevant is: "
+RELEVANCE_CONTENT_PROMPT = f"For that prompt, how relevant is this response on the scale between 1 and 10: "
 
 SENTIMENT_SYSTEM_PROMPT = f"Please classify the sentiment of the following text as 1 if positive or 0 if not positive. Respond with only a '1' or '0', nothing more."
 
@@ -73,5 +73,5 @@ that should be answered with:
 
 {%s}
 
-When you answer, start with a number from 1 to 10 based on if it matches that answer (10 being the highest match) and why.
+When you answer, Answer only with an integer from 1 to 10.
 """
