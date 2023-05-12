@@ -51,7 +51,7 @@ if user_input:
 
     # Display response
     st.write("Here's some help for you:")
-    st.write(gpt3_response)
+    st.write(gpt3_response["text"])
 
     # Allow user to rate the response with emojis
     col1, col2 = st.columns(2)
@@ -72,7 +72,7 @@ if user_input:
     record_id = tru.add_data(
         'chat_model',
         prompt_input,
-        gpt3_response,
+        gpt3_response["text"],
         record,
         '',
         total_tokens=total_tokens,
@@ -81,7 +81,7 @@ if user_input:
 
     # Run feedback function and get value
     feedback = tru.run_feedback_function(
-        prompt_input, gpt3_response, [
+        prompt_input, gpt3_response["text"], [
             tru_feedback.get_hate_function(
                 evaluation_choice='response',
                 provider='openai',

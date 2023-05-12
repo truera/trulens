@@ -31,18 +31,19 @@ def app():
 
         # Get the average feedback results
         totals = {}
-        df['feedback'] = df['feedback'].apply(lambda x: ast.literal_eval(x))
-        for row in df['feedback']:
-            for key in row.keys():
-                if key in totals:
-                    totals[key] += row[key]
-                else:
-                    # If the key doesn't exist, add it to the totals dictionary
-                    totals[key] = row[key]
-        num_rows = len(df)
-        average_feedback = str(
-            {key: totals[key] / num_rows for key in totals.keys()}
-        )
+        # df['feedback'] = df['feedback'].apply(lambda x: ast.literal_eval(x))
+        # for row in df['feedback']:
+        #     for key in row.keys():
+        #         if key in totals:
+        #             totals[key] += row[key]
+        #         else:
+        #             # If the key doesn't exist, add it to the totals dictionary
+        #             totals[key] = row[key]
+        # num_rows = len(df)
+        # average_feedback = str(
+        #     {key: totals[key] / num_rows for key in totals.keys()}
+        # )
+        average_feedback = "" #TODO(josh)
 
         col0.metric("Name", model)
         col1.metric("Records", len(model_df))

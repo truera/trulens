@@ -23,7 +23,7 @@ def add_data(
         ts = datetime.now()
 
     record_id = lms.insert_record(
-        model_id, prompt, response, details, ts, tags, total_tokens, total_cost
+        model_id, prompt, response, str(details), ts, tags, total_tokens, total_cost
     )
     return record_id
 
