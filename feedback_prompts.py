@@ -4,9 +4,9 @@ RELEVANCE_SYSTEM_PROMPT = f"You are a relevance classifier, providing the releva
 "Provide all responses only as a number from 1 to 10 where 1 is the least relevant and 10 is the most. \n"
 "Never elaborate. The prompt is: "
 
-RELEVANCE_CONTENT_PROMPT = "For that prompt, how relevant is: "
+RELEVANCE_CONTENT_PROMPT = f"For that prompt, how relevant is: "
 
-SENTIMENT_SYSTEM_PROMPT = "Please classify the sentiment of the following text as 1 if positive or 0 if not positive. Respond with only a '1' or '0', nothing more."
+SENTIMENT_SYSTEM_PROMPT = f"Please classify the sentiment of the following text as 1 if positive or 0 if not positive. Respond with only a '1' or '0', nothing more."
 
 COHERE_SENTIMENT_EXAMPLES = [
     Example("The order came 5 days early", "1"),
@@ -26,7 +26,7 @@ COHERE_SENTIMENT_EXAMPLES = [
     Example("I had an amazing meal at the new restaurant in town", "1"),
     Example("The pizza is good, but the staff is horrible to us", "0"),
     Example("The package was damaged", "0"),
-    Example("I\'m feeling really sick and can\'t seem to shake it off","0"),
+    Example("I\'m feeling really sick and can\'t seem to shake it off", "0"),
     Example("I got into a car accident and my car is completely totaled.", "0"),
     Example(
         "My boss gave me a bad performance review and I might get fired", "0"
@@ -75,4 +75,3 @@ that should be answered with:
 
 When you answer, start with a number from 1 to 10 based on if it matches that answer (10 being the highest match) and why.
 """
-
