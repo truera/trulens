@@ -66,6 +66,7 @@ else:
 
         selected_rows = data['selected_rows']
         selected_rows = pd.DataFrame(selected_rows)
+        st.write("Hint: select a row to display chain metadata")
 
         if len(selected_rows) != 0:
             details = selected_rows['details'][0]
