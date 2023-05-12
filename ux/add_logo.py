@@ -4,16 +4,16 @@ import streamlit as st
 
 
 def add_logo():
-    logo = open("trulens_logo.png", "rb").read()
+    logo = open("trulens_logo.svg", "rb").read()
     logo_encoded = base64.b64encode(logo).decode()
     st.markdown(
         f"""
         <style>
             [data-testid="stSidebarNav"] {{
-                background-image: url('data:image/png;base64,{logo_encoded}');
+                background-image: url('data:image/svg+xml;base64,{logo_encoded}');
                 background-repeat: no-repeat;
                 background-size: 300px auto;
-                padding-top: 250px;
+                padding-top: 50px;
                 background-position: 20px 20px;
             }}
             [data-testid="stSidebarNav"]::before {{
