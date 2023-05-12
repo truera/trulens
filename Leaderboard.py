@@ -29,6 +29,8 @@ def app():
     # Set the title and subtitle of the app
     st.title('Model Leaderboard')
     df, df_feedback = lms.get_records_and_feedback([])
+    if df.empty:
+        st.write("No records yet...")
     models = list(df.chain_id.unique())
 
     for model in models:
