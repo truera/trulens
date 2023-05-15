@@ -5,10 +5,14 @@ from typing import Callable, List
 
 import pandas as pd
 
-from tru_db import LocalModelStore
+from tru_db import LocaSQLite, json_default
 
-lms = LocalModelStore()
+lms = LocaSQLite()
 
+def to_json(details):
+    return json.dumps(
+        details, default=json_default
+    )
 
 def add_data(
     chain_id: str,
@@ -23,17 +27,11 @@ def add_data(
     if not ts:
         ts = datetime.now()
 
-    def to_json(details):
-        return json.dumps(
-            details, default=lambda o: f"<{o.__class__.__name__}>"
-        )
-
     record_id = lms.insert_record(
         chain_id, prompt, response, to_json(details), ts, tags, total_tokens,
         total_cost
     )
     return record_id
-
 
 def run_feedback_function(
     prompt: str, response: str, feedback_functions: Callable[[str, str], str]
@@ -49,10 +47,8 @@ def run_feedback_function(
 def add_feedback(record_id: str, eval: dict):
     lms.insert_feedback(record_id, eval)
 
-
 def get_model(chain_id):
     return lms.get_model(chain_id)
-
 
 def get_records_and_feedback(chain_ids: List[str]):
     df_records, df_feedback = lms.get_records_and_feedback(chain_ids)

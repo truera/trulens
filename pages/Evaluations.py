@@ -19,7 +19,7 @@ st.runtime.legacy_caching.clear_cache()
 
 add_logo()
 
-lms = tru_db.LocalModelStore()
+lms = tru_db.LocaSQLite()
 df, df_feedback = lms.get_records_and_feedback([])
 
 if df.empty:

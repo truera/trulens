@@ -13,3 +13,9 @@ format:
 
 lab:
 	$(CONDA); jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
+
+example_app:
+	$(CONDA); streamlit run Example_Application.py
+
+leaderboard:
+	$(CONDA); streamlit run Leaderboard.py

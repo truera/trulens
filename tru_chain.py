@@ -134,7 +134,7 @@ from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
 
-from tru_db import model_name_of_model
+from tru_db import obj_id_of_obj
 from tru_db import Query
 from tru_db import Record
 from tru_db import TruDB
@@ -199,7 +199,7 @@ class TruChain(Chain):
         model = self.model
 
         # Track model. This will produce a name if not provided.
-        self.model_name = model_name or model_name_of_model(model)
+        self.model_name = model_name or obj_id_of_obj(obj=model, prefix="model")
 
     @property
     def model(self):
