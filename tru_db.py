@@ -20,13 +20,17 @@ mj = MerkleJson()
 NoneType = type(None)
 
 
-def model_name_of_model(model: dict):
+def obj_id_of_obj(obj: dict, prefix="obj"):
     """
-    Create a model name from model definition. Should produce the same name if
-    definition stays the same.
+    Create an id from a json-able structure/definition. Should produce the same
+    name if definition stays the same.
     """
 
-    return f"model_hash_{mj.hash(model)}"
+    return f"{prefix}_hash_{mj.hash(obj)}"
+
+
+def json_str_of_obj(obj: Any) -> str:
+    return json.dumps(obj, default=json_default)
 
 
 def json_default(obj: Any) -> str:
@@ -74,7 +78,7 @@ class TruDB(abc.ABC):
     @abc.abstractmethod
     def insert_record(
         self, model_name: str, record: dict, *args, **kwargs
-    ) -> int:
+    ) -> str:
         """
         Insert a new `record` into db, indicating its `model` as well. Return
         record id.
@@ -89,6 +93,14 @@ class TruDB(abc.ABC):
         provided, generate a name from model definition. Return the name.
         """
 
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def insert_feedback(self, record_id: str, feedback: dict) -> str:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_records_and_feedback(self, chain_ids: List[str]) -> Tuple[pd.DataFrame, pd.DataFrame]:
         raise NotImplementedError()
 
     @staticmethod
@@ -203,7 +215,7 @@ class TruDB(abc.ABC):
             )
 
 
-class TruTinyDB(TruDB):
+class LocalTinyDB(TruDB):
 
     def __init__(self, filename: Optional[Path] = None):
 
@@ -216,10 +228,13 @@ class TruTinyDB(TruDB):
             self.db: TinyDB = TinyDB(storage=MemoryStorage)
 
         self.records: Table = self.db.table("records")
-        self.records.document_id_class = int
+        self.records.document_id_class = str
 
         self.models: Table = self.db.table("models")
         self.models.document_id_class = str
+
+        self.feedbacks: Table = self.db.table("feedbacks")
+        self.feedbacks.document_id_class = (str, str) # record_id, feedback_id
 
     # TruDB requirement
     def insert_record(self, model_name: str, record: dict) -> int:
@@ -230,7 +245,7 @@ class TruTinyDB(TruDB):
     def insert_model(
         self, model: dict, model_name: Optional[str] = None
     ) -> str:
-        model_name = model_name or model_name_of_model(model)
+        model_name = model_name or obj_id_of_obj(obj=model, prefix="model")
 
         if self.models.contains(doc_id=model_name):
             print(
@@ -241,6 +256,17 @@ class TruTinyDB(TruDB):
             self.models.insert(Document(doc_id=model_name, value=model))
 
         return model_name
+
+    # TruDB requirement
+    def insert_feedback(self, record_id: str, feedback: dict) -> str:
+        # feedback_str = json.dumps(feedback, default=json_default)
+        feedback_id = obj_id_of_obj(obj=feedback, prefix="feedback")
+
+        self.feedbacks.insert(Document(doc_id=(record_id, feedback_id), value=feedback))
+
+    # TruDB requirement
+    def get_records_and_feedback(self, chain_ids: List[str]) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        raise NotImplementedError()
 
     # TruDB requirement
     def select(self, *query: Tuple[Query], where: Optional[Condition] = None):
@@ -271,10 +297,10 @@ class TruTinyDB(TruDB):
         return pd.DataFrame(rows, columns=map(TruDB._query_str, queries))
 
 
-class LocalModelStore(TruDB):
+class LocaSQLite(TruDB):
 
-    def __init__(self, db_name: Optional[Path] = 'llm_quality.db'):
-        self.db_name = db_name
+    def __init__(self, filename: Optional[Path] = 'llm_quality.db'):
+        self.filename = filename
         conn, c = self._connect()
 
         # Create table if it does not exist
@@ -294,7 +320,7 @@ class LocalModelStore(TruDB):
         self._close(conn)
 
     def _connect(self):
-        conn = sqlite3.connect(self.db_name)
+        conn = sqlite3.connect(self.filename)
         c = conn.cursor()
         return conn, c
 
@@ -332,15 +358,18 @@ class LocalModelStore(TruDB):
     def insert_model(
         self, model: dict, model_name: Optional[str] = None
     ) -> str:
-        model_name = model_name or model_name_of_model(model)
-        model_str = json.dumps(model, default=json_default)
+        model_name = model_name or obj_id_of_obj(obj=model, prefix="model")
+        model_str = json_str_of_obj(model)
+
         conn, c = self._connect()
         c.execute("INSERT INTO models VALUES (?, ?)", (model_name, model_str))
         self._close(conn)
+
         return model_name
 
     def insert_feedback(self, record_id: str, feedback: dict):
-        feedback_str = str(feedback)
+        feedback_str = json_str_of_obj(feedback)
+
         conn, c = self._connect()
         c.execute(
             "INSERT INTO feedback VALUES (?, ?)", (record_id, feedback_str)
@@ -359,7 +388,7 @@ class LocalModelStore(TruDB):
 
         records: Sequence[Dict] = map(json.loads, record_strs)
 
-        db = TruTinyDB()  # in-memory db if filename not provided
+        db = LocalTinyDB()  # in-memory db if filename not provided
         for record in records:
             db.insert_record(model_name=record['model_name'], record=record)
 
@@ -371,16 +400,20 @@ class LocalModelStore(TruDB):
         result = c.fetchone()
         conn.close()
 
+        return result
+
     def get_records_and_feedback(self, chain_ids: List[str]):
         # This returns all models if the list of chain_ids is empty
         conn, c = self._connect()
         query = "SELECT l.*, f.feedback FROM records l LEFT JOIN feedback f on l.record_id = f.record_id"
+        
         if len(chain_ids) > 0:
             chain_id_list = ', '.join('?' * len(chain_ids))
             query = query + f" WHERE model_id IN ({chain_id_list})"
         c.execute(query)
         rows = c.fetchall()
         conn.close()
+
         df = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
@@ -393,4 +426,5 @@ class LocalModelStore(TruDB):
 
         # Apply the function to the 'data' column to convert it into separate columns
         df_feedback = df['feedback'].apply(str_dict_to_series)
+
         return df, df_feedback

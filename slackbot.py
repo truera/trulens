@@ -5,7 +5,7 @@ from typing import Dict, Set, Tuple
 from tru_chain import TruChain
 from tru_db import Record
 from tru_db import TruDB
-from tru_db import TruTinyDB
+from tru_db import LocalTinyDB
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
@@ -47,7 +47,7 @@ convos: Dict[str, TruChain] = dict()
 handled_ts: Set[Tuple[str, str]] = set()
 
 # DB to save models and records.
-db = TruTinyDB("slackbot.json")
+db = LocalTinyDB("slackbot.json")
 
 
 def get_or_make_chain(cid: str) -> TruChain:
@@ -112,17 +112,16 @@ def get_answer(chain: TruChain, question: str) -> Tuple[str, str]:
     sources elaboration text.
     """
 
-    record = chain(dict(question=question))
+    outs, record = chain(dict(question=question))
 
     db.insert_record(model_name=model_name, record=record)
 
-    out = TruDB.project(query=Record.chain._call.rets, obj=record)
+    # out = TruDB.project(query=Record.chain._call.rets, obj=record)
 
-    result = out['answer']
+    result = outs['answer']
+    sources = outs['source_documents']
 
     result_sources = "Sources:\n"
-
-    sources = out['source_documents']
 
     temp = set()
 

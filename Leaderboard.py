@@ -22,17 +22,20 @@ add_logo()
 #def get_model_store():
 #    return model_store.ModelDataStore()
 
-lms = tru_db.LocalModelStore()
+lms = tru_db.LocaSQLite()
 
 
 def app():
     # Set the title and subtitle of the app
     st.title('Chain Leaderboard')
     df, df_feedback = lms.get_records_and_feedback([])
+
     if df.empty:
         st.write("No records yet...")
+
     models = list(df.chain_id.unique())
     st.markdown("""---""")
+
     for model in models:
         col0, col1, col2, col3, *feedback_cols, col99 = st.columns(
             5 + len(df_feedback.columns)
@@ -46,6 +49,7 @@ def app():
         col3.metric("Tokens", sum(model_df.total_tokens))
 
         for i, col_name in enumerate(df_feedback.columns):
+            
             if i < len(feedback_cols):
                 feedback_cols[i].metric(
                     col_name, round(model_df_feedback[col_name].mean(), 2)

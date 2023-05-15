@@ -8,7 +8,7 @@ import tru
 
 st.set_page_config(layout="wide")
 
-lms = tru.LocalModelStore()
+lms = tru.LocaSQLite()
 
 df, df_feedback = lms.get_records_and_feedback([])
 st.dataframe(df)
