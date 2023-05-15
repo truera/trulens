@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Run target's commands in the same shell.
 .ONESHELL:
 
@@ -71,3 +72,26 @@ upload:
 	python setup.py bdist_wheel
 	# Uploads .whl file to PyPi
 	twine upload -u truera -p $$temp dist/*.whl
+=======
+SHELL := /bin/bash
+CONDA_ENV := demo3
+CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate $(CONDA_ENV)
+
+slackbot:
+	$(CONDA); (python -u slackbot.py 1>&2 > slackbot.log)
+
+test:
+	$(CONDA); python -m pytest -s test_tru_chain.py
+
+format:
+	$(CONDA); bash format.sh
+
+lab:
+	$(CONDA); jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
+
+example_app:
+	$(CONDA); streamlit run Example_Application.py
+
+leaderboard:
+	$(CONDA); streamlit run Leaderboard.py
+>>>>>>> merge-from

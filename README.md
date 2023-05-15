@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Welcome to TruLens!
 
 ![TruLens](https://www.trulens.org/Assets/image/Neural_Network_Explainability.png)
@@ -99,3 +100,14 @@ To communicate with other trulens developers, join our [Slack](https://join.slac
 
 To cite this repository:
 `curl -LH "Accept: application/x-bibtex" https://doi.org/10.5281/zenodo.4495856`
+=======
+Initialize feedback database before running apps by running:
+
+`python init_sqlite_db.py`
+
+You can then run:
+
+`streamlit run Example_Application.py` - Template app where llm is called and feedback is logged.
+
+`streamlit run Leaderboard.py` - Run the application.
+>>>>>>> merge-from

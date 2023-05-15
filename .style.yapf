@@ -1,4 +1,8 @@
 [style]
 based_on_style = google
+<<<<<<< HEAD
 DEDENT_CLOSING_BRACKETS=true
 SPLIT_BEFORE_FIRST_ARGUMENT=true
+=======
+DEDENT_CLOSING_BRACKETS=True
+>>>>>>> merge-from
