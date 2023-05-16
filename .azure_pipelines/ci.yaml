@@ -15,43 +15,43 @@ jobs:
       matrix:
         py37_tf1_keras:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "tests/keras/requirements_tfv1.txt"
-          testSubdirectory: "tests/keras"
+          requirementsFile: "trulens_explain/tests/keras/requirements_tfv1.txt"
+          testSubdirectory: "trulens_explain/tests/keras"
 
         py37_tf1_tf_keras:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "tests/tf_keras/requirements_tfv1.txt"
-          testSubdirectory: "tests/tf_keras"
+          requirementsFile: "trulens_explain/tests/tf_keras/requirements_tfv1.txt"
+          testSubdirectory: "trulens_explain/tests/tf_keras"
 
         py37_pytorch:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "tests/pytorch/requirements.txt"
-          testSubdirectory: "tests/pytorch"
+          requirementsFile: "trulens_explain/tests/pytorch/requirements.txt"
+          testSubdirectory: "trulens_explain/tests/pytorch"
 
         py37_tf1:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "tests/tf/requirements.txt"
-          testSubdirectory: "tests/tf"
+          requirementsFile: "trulens_explain/tests/tf/requirements.txt"
+          testSubdirectory: "trulens_explain/tests/tf"
 
         py37_tf2:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "tests/tf2/requirements.txt"
-          testSubdirectory: "tests/tf2"
+          requirementsFile: "trulens_explain/tests/tf2/requirements.txt"
+          testSubdirectory: "trulens_explain/tests/tf2"
 
         py37_tf2_non_eager:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "tests/tf2/requirements.txt"
-          testSubdirectory: "tests/tf2_non_eager"
+          requirementsFile: "trulens_explain/tests/tf2/requirements.txt"
+          testSubdirectory: "trulens_explain/tests/tf2_non_eager"
 
         py3_10_notebooks:
           condaEnvFileSuffix: "python3_10"
-          requirementsFile: "tests/notebooks/requirements.txt"
-          testSubdirectory: "tests/notebooks"
+          requirementsFile: "trulens_explain/tests/notebooks/requirements.txt"
+          testSubdirectory: "trulens_explain/tests/notebooks"
 
         py3_10_notebooks_latest:
           condaEnvFileSuffix: "python3_10"
-          requirementsFile: "tests/notebooks/requirements_latest.txt"
-          testSubdirectory: "tests/notebooks"
+          requirementsFile: "trulens_explain/tests/notebooks/requirements_latest.txt"
+          testSubdirectory: "trulens_explain/tests/notebooks"
 
     steps:
       - checkout: self
@@ -61,7 +61,7 @@ jobs:
       - bash: |
           set -e
           CONDA_FILENAME=$(condaEnvFileSuffix)
-          CONDA_YAML="tools/conda_${CONDA_FILENAME}.yaml"
+          CONDA_YAML="trulens_explain/tools/conda_${CONDA_FILENAME}.yaml"
           echo $CONDA
           conda env create --force --quiet --file $CONDA_YAML
           conda init bash
