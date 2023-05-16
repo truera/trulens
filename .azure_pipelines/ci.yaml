@@ -15,43 +15,43 @@ jobs:
       matrix:
         py37_tf1_keras:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "trulens_explain/tests/keras/requirements_tfv1.txt"
-          testSubdirectory: "trulens_explain/tests/keras"
+          requirementsFile: "tests/keras/requirements_tfv1.txt"
+          testSubdirectory: "tests/keras"
 
         py37_tf1_tf_keras:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "trulens_explain/tests/tf_keras/requirements_tfv1.txt"
-          testSubdirectory: "trulens_explain/tests/tf_keras"
+          requirementsFile: "tests/tf_keras/requirements_tfv1.txt"
+          testSubdirectory: "tests/tf_keras"
 
         py37_pytorch:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "trulens_explain/tests/pytorch/requirements.txt"
-          testSubdirectory: "trulens_explain/tests/pytorch"
+          requirementsFile: "tests/pytorch/requirements.txt"
+          testSubdirectory: "tests/pytorch"
 
         py37_tf1:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "trulens_explain/tests/tf/requirements.txt"
-          testSubdirectory: "trulens_explain/tests/tf"
+          requirementsFile: "tests/tf/requirements.txt"
+          testSubdirectory: "tests/tf"
 
         py37_tf2:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "trulens_explain/tests/tf2/requirements.txt"
-          testSubdirectory: "trulens_explain/tests/tf2"
+          requirementsFile: "tests/tf2/requirements.txt"
+          testSubdirectory: "tests/tf2"
 
         py37_tf2_non_eager:
           condaEnvFileSuffix: "python37"
-          requirementsFile: "trulens_explain/tests/tf2/requirements.txt"
-          testSubdirectory: "trulens_explain/tests/tf2_non_eager"
+          requirementsFile: "tests/tf2/requirements.txt"
+          testSubdirectory: "tests/tf2_non_eager"
 
         py3_10_notebooks:
           condaEnvFileSuffix: "python3_10"
-          requirementsFile: "trulens_explain/tests/notebooks/requirements.txt"
-          testSubdirectory: "trulens_explain/tests/notebooks"
+          requirementsFile: "tests/notebooks/requirements.txt"
+          testSubdirectory: "tests/notebooks"
 
         py3_10_notebooks_latest:
           condaEnvFileSuffix: "python3_10"
-          requirementsFile: "trulens_explain/tests/notebooks/requirements_latest.txt"
-          testSubdirectory: "trulens_explain/tests/notebooks"
+          requirementsFile: "tests/notebooks/requirements_latest.txt"
+          testSubdirectory: "tests/notebooks"
 
     steps:
       - checkout: self
@@ -76,6 +76,7 @@ jobs:
           source activate $(condaEnvFileSuffix)
           pip install pyzmq!=24.0.0 # CI/CD Broken on this version
           pip install ipykernel
+          cd ./trulens_explain
           pip install -r $(requirementsFile)
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name "$(condaEnvFileSuffix)"
         displayName: Install pip package
@@ -96,5 +97,6 @@ jobs:
       - bash: |
           source activate $(condaEnvFileSuffix)
           pip install pytest==7.0.1 pytest-azurepipelines
+          cd ./trulens_explain
           python -m pytest $(testSubdirectory)
         displayName: Run unit tests
