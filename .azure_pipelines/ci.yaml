@@ -61,7 +61,7 @@ jobs:
       - bash: |
           set -e
           CONDA_FILENAME=$(condaEnvFileSuffix)
-          CONDA_YAML="tools/conda_${CONDA_FILENAME}.yaml"
+          CONDA_YAML="trulens_explain/tools/conda_${CONDA_FILENAME}.yaml"
           echo $CONDA
           conda env create --force --quiet --file $CONDA_YAML
           conda init bash
@@ -76,6 +76,7 @@ jobs:
           source activate $(condaEnvFileSuffix)
           pip install pyzmq!=24.0.0 # CI/CD Broken on this version
           pip install ipykernel
+          cd ./trulens_explain
           pip install -r $(requirementsFile)
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name "$(condaEnvFileSuffix)"
         displayName: Install pip package
@@ -96,5 +97,6 @@ jobs:
       - bash: |
           source activate $(condaEnvFileSuffix)
           pip install pytest==7.0.1 pytest-azurepipelines
+          cd ./trulens_explain
           python -m pytest $(testSubdirectory)
         displayName: Run unit tests
