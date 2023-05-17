@@ -10,10 +10,12 @@ from langchain.memory import ConversationSummaryBufferMemory
 from langchain.vectorstores import Pinecone
 import pinecone
 import streamlit as st
+import numpy as np
 
 from trulens_evalchain import tru
 from trulens_evalchain import tru_chain
 from trulens_evalchain import tru_feedback
+from trulens_evalchain.tru_feedback import Feedback
 from trulens_evalchain.keys import *
 from trulens_evalchain.keys import PINECONE_API_KEY
 from trulens_evalchain.keys import PINECONE_ENV
@@ -33,13 +35,19 @@ pinecone.init(
 
 identity = lambda h: h
 
-
 hugs = tru_feedback.Huggingface()
 openai = tru_feedback.OpenAI()
-f_lang_match = tru_feedback.Feedback(hugs.language_match).on(text1="prompt", text2="response")
-f_qs_relevance = tru_feedback.Feedback(openai.qs_relevance) \
-    .on(question="input", statement=Record.chain.combine_docs_chain._call.args.inputs.input_documents) \
-    .on_multiple(multiarg="statement", each_query=Record.page_content)
+
+f_lang_match = Feedback(hugs.language_match).on(
+    text1="prompt", text2="response"
+)
+
+f_qs_relevance = Feedback(openai.qs_relevance).on(
+    question="input",
+    statement=Record.chain.combine_docs_chain._call.args.inputs.input_documents
+).on_multiple(
+    multiarg="statement", each_query=Record.page_content, agg=np.min
+)
 
 
 # @st.cache_data
@@ -118,10 +126,12 @@ if user_input:
         total_cost=total_cost
     )
 
-    # Run feedback function and get value    
-    feedbacks = tru.run_feedback_functions(chain=chain, record=record, feedback_functions=[f_lang_match, f_qs_relevance])
-
+    # Run feedback function and get value
+    feedbacks = tru.run_feedback_functions(
+        chain=chain,
+        record=record,
+        feedback_functions=[f_lang_match, f_qs_relevance]
+    )
 
     # Add value to database
     tru.add_feedback(record_id, feedbacks)
-    

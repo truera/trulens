@@ -105,7 +105,7 @@ class Feedback():
         self.imp = imp
         self.selectors = selectors
 
-    def on_multiple(self, multiarg: str, each_query: Optional[Query] = None) -> 'Feedback':
+    def on_multiple(self, multiarg: str, each_query: Optional[Query] = None, agg: Callable = np.mean) -> 'Feedback':
         """
         Create a variant of `self` whose implementation will accept multiple
         values for argument `multiarg`, aggregating feedback results for each.
@@ -145,7 +145,7 @@ class Feedback():
 
             rets = np.array(rets)
 
-            return rets.mean()
+            return agg(rets)
 
         wrapped_imp.__name__ = self.imp.__name__
 

@@ -128,47 +128,50 @@ else:
         if len(selected_rows) != 0:
             details = selected_rows['details'][0]
             details_json = json.loads(json.loads(details))
-            st.header("LLM Details:")
-            llm_details_json = details_json["chain"]["llm"]
-            llm_cols = st.columns(len(details_json["chain"]["llm"].items()))
-            llm_keys = list(llm_details_json.keys())
-            llm_values = list(llm_details_json.values())
+            chain_json = details_json['chain']
+            if "llm" in chain_json:
+                st.header("LLM Details:")
+                llm_details_json = details_json["chain"]["llm"]
+                llm_cols = st.columns(len(details_json["chain"]["llm"].items()))
+                llm_keys = list(llm_details_json.keys())
+                llm_values = list(llm_details_json.values())
 
-            for i in range(len(llm_keys)):
-                with llm_cols[i]:
-                    st.metric(llm_keys[i], llm_values[i])
+                for i in range(len(llm_keys)):
+                    with llm_cols[i]:
+                        st.metric(llm_keys[i], llm_values[i])
 
-            st.header("Prompt Type Details:")
-            prompt_type_cols = st.columns(
-                len(details_json["chain"]["prompt"]["_type"].items())
-            )
-            prompt_types = details_json["chain"]["prompt"]["_type"]
-            prompt_type_keys = list(prompt_types.keys())
-            prompt_type_values = list(prompt_types.values())
+            if "prompt" in chain_json:
+                st.header("Prompt Type Details:")
+                prompt_type_cols = st.columns(
+                    len(details_json["chain"]["prompt"]["_type"].items())
+                )
+                prompt_types = details_json["chain"]["prompt"]["_type"]
+                prompt_type_keys = list(prompt_types.keys())
+                prompt_type_values = list(prompt_types.values())
 
-            for i in range(len(prompt_type_keys)):
-                with prompt_type_cols[i]:
-                    with st.expander(prompt_type_keys[i].capitalize(),
-                                     expanded=True):
-                        st.write(prompt_type_values[i])
+                for i in range(len(prompt_type_keys)):
+                    with prompt_type_cols[i]:
+                        with st.expander(prompt_type_keys[i].capitalize(),
+                                        expanded=True):
+                            st.write(prompt_type_values[i])
 
-            st.header("System Prompt Messages:")
-            prompt_messages_json = details_json["chain"]["prompt"]["messages"][
-                0]["prompt"]
-            prompt_messages_json = {
-                key: prompt_messages_json[key]
-                for key in prompt_messages_json
-                if key not in ["input_variables", "partial_variables"]
-            }
-            prompt_messages_cols = st.columns(len(prompt_messages_json.items()))
-            prompt_messages_keys = list(prompt_messages_json.keys())
-            prompt_messages_values = list(prompt_messages_json.values())
+                st.header("System Prompt Messages:")
+                prompt_messages_json = details_json["chain"]["prompt"]["messages"][
+                    0]["prompt"]
+                prompt_messages_json = {
+                    key: prompt_messages_json[key]
+                    for key in prompt_messages_json
+                    if key not in ["input_variables", "partial_variables"]
+                }
+                prompt_messages_cols = st.columns(len(prompt_messages_json.items()))
+                prompt_messages_keys = list(prompt_messages_json.keys())
+                prompt_messages_values = list(prompt_messages_json.values())
 
-            for i in range(len(prompt_messages_keys)):
-                with prompt_messages_cols[i]:
-                    with st.expander(prompt_messages_keys[i].capitalize(),
-                                     expanded=True):
-                        st.write(prompt_messages_values[i])
+                for i in range(len(prompt_messages_keys)):
+                    with prompt_messages_cols[i]:
+                        with st.expander(prompt_messages_keys[i].capitalize(),
+                                        expanded=True):
+                            st.write(prompt_messages_values[i])
 
             if st.button("Display full json"):
                 st.write(details_json)
