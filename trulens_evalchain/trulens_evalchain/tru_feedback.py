@@ -45,20 +45,14 @@ Question/Statement relevance that is evaluated on a sub-chain input which contai
 
 """
 
-import asyncio
-from queue import Queue
 import re
-from time import sleep
 from typing import Any, Callable, Dict, Optional, Sequence, Union
 
 import cohere
-from cohere.responses.classify import Example
-import dotenv
-from langchain.chains.base import Chain
+
 import numpy as np
 import openai
 import requests
-from tqdm.auto import tqdm
 
 from trulens_evalchain import feedback_prompts
 from trulens_evalchain import tru
@@ -134,7 +128,7 @@ class Feedback():
             rets = []
 
             # TODO: parallelize
-            
+
             for aval in multi:
                 # print(f"multiarg {multiarg} = {aval}")
 
