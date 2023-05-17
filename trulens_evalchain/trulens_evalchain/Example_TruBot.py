@@ -13,14 +13,17 @@ import streamlit as st
 
 from trulens_evalchain import tru
 from trulens_evalchain import tru_chain
+from trulens_evalchain import tru_feedback
 from trulens_evalchain.keys import *
 from trulens_evalchain.keys import PINECONE_API_KEY
 from trulens_evalchain.keys import PINECONE_ENV
+from trulens_evalchain.tru_db import Record
 
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
 
-chain_id = "TruBot_langprompt"
+# chain_id = "TruBot_langprompt"
+chain_id = "TruBot"
 
 # Pinecone configuration.
 pinecone.init(
@@ -29,6 +32,14 @@ pinecone.init(
 )
 
 identity = lambda h: h
+
+
+hugs = tru_feedback.Huggingface()
+openai = tru_feedback.OpenAI()
+f_lang_match = tru_feedback.Feedback(hugs.language_match).on(text1="prompt", text2="response")
+f_qs_relevance = tru_feedback.Feedback(openai.qs_relevance) \
+    .on(question="input", statement=Record.chain.combine_docs_chain._call.args.inputs.input_documents) \
+    .on_multiple(multiarg="statement", each_query=Record.page_content)
 
 
 # @st.cache_data
@@ -62,18 +73,19 @@ def generate_response(prompt):
     )
 
     # Language mismatch fix:
-    chain.combine_docs_chain.llm_chain.prompt.template = \
-        "Use the following pieces of context to answer the question at the end " \
-        "in the same language as the question. If you don't know the answer, " \
-        "just say that you don't know, don't try to make up an answer.\n\n" \
-        "{context}\n\n" \
-        "Question: {question}\n" \
-        "Helpful Answer: "
+    if "langprompt" in chain_id:
+        chain.combine_docs_chain.llm_chain.prompt.template = \
+            "Use the following pieces of context to answer the question at the end " \
+            "in the same language as the question. If you don't know the answer, " \
+            "just say that you don't know, don't try to make up an answer.\n\n" \
+            "{context}\n\n" \
+            "Question: {question}\n" \
+            "Helpful Answer: "
 
     # Trulens instrumentation.
     tc = tru_chain.TruChain(chain, chain_id=chain_id)
 
-    return tc(prompt)
+    return tc, tc(prompt)
 
 
 # Set up Streamlit app
@@ -86,7 +98,7 @@ if user_input:
     # add context manager to capture tokens and cost of the chain
 
     with get_openai_callback() as cb:
-        response, record = generate_response(prompt_input)
+        chain, (response, record) = generate_response(prompt_input)
         total_tokens = cb.total_tokens
         total_cost = cb.total_cost
 
@@ -106,28 +118,10 @@ if user_input:
         total_cost=total_cost
     )
 
-    # Run feedback function and get value
-    """
-    feedback = tru.run_feedback_function(
-        prompt_input, answer, [
-            tru_feedback.get_not_hate_function(
-                evaluation_choice='prompt',
-                provider='openai',
-                model_engine='moderation'
-            ),
-            tru_feedback.get_sentimentpositive_function(
-                evaluation_choice='response',
-                provider='openai',
-                model_engine='gpt-3.5-turbo'
-            ),
-            tru_feedback.get_relevance_function(
-                evaluation_choice='both',
-                provider='openai',
-                model_engine='gpt-3.5-turbo'
-            )
-        ]
-    )
+    # Run feedback function and get value    
+    feedbacks = tru.run_feedback_functions(chain=chain, record=record, feedback_functions=[f_lang_match, f_qs_relevance])
+
 
     # Add value to database
-    tru.add_feedback(record_id, feedback)
-    """
+    tru.add_feedback(record_id, feedbacks)
+    

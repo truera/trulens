@@ -32,5 +32,5 @@ MANIFEST
 imagenet_class_index.json
 imagenet_class_index.json.*
 
-.env
-.db
+*/.env
+*/.db

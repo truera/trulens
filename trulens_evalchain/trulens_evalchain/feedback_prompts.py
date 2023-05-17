@@ -4,9 +4,9 @@ QS_RELEVANCE = """You are a RELEVANCE classifier, providing the relevance of the
 Provide all responses only as a number from 1 to 10 where 1 is the least relevant and 10 is the most relevant.
 Never elaborate. 
 
-STATEMENT: {statement}
-
 QUESTION: {question}
+
+STATEMENT: {statement}
 
 RELEVANCE: """
 

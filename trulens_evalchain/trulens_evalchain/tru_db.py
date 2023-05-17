@@ -202,12 +202,14 @@ class TruDB(abc.ABC):
 
         if isinstance(first, str):
             if not isinstance(obj, Dict) or first not in obj:
+                print(f"WARNING: Cannot project {str(obj)[0:32]} with path {path}.")
                 return None
 
             return TruDB._project(path=rest, obj=obj[first])
 
         elif isinstance(first, int):
             if not isinstance(obj, Sequence) or first >= len(obj):
+                print(f"WARNING: Cannot project {str(obj)[0:32]} with path {path}.")
                 return None
 
             return TruDB._project(path=rest, obj=obj[first])
