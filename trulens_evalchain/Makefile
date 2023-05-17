@@ -19,5 +19,8 @@ lab:
 example_app:
 	$(CONDA); PYTHONPATH=. streamlit run trulens_evalchain/Example_Application.py
 
+example_trubot:
+	$(CONDA); PYTHONPATH=. streamlit run trulens_evalchain/Example_TruBot.py
+
 leaderboard:
 	$(CONDA); PYTHONPATH=. streamlit run trulens_evalchain/Leaderboard.py
