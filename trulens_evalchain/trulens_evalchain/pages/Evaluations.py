@@ -24,13 +24,12 @@ df, df_feedback = lms.get_records_and_feedback([])
 if df.empty:
     st.write("No records yet...")
 else:
+    chains = list(df.chain_id.unique())
 
     if 'Chains' in st.session_state:
         chain = st.session_state.chain
     else:
-        chain = None
-
-    chains = list(df.chain_id.unique())
+        chain = chains
 
     options = st.multiselect('Filter Chains', chains, default=chain)
 
@@ -90,12 +89,15 @@ else:
         gb.configure_column(
             'chain_id', header_name='Chain ID', maxWidth=100, pinned='left'
         )
-        gb.configure_column('input', header_name='User Input'
-                            #, minWidth=500
-                            )
-        gb.configure_column('output', header_name='Response',
-                            #minWidth=500
-                        )
+        gb.configure_column(
+            'input', header_name='User Input'
+            #, minWidth=500
+        )
+        gb.configure_column(
+            'output',
+            header_name='Response',
+            #minWidth=500
+        )
         gb.configure_column(
             'tags', header_name='Tags', minWidth=100, pinned='right'
         )
