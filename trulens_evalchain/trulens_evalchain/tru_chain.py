@@ -132,10 +132,10 @@ langchain.verbose = False
 from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
-from tru_db import obj_id_of_obj
-from tru_db import Query
-from tru_db import Record
-from tru_db import TruDB
+from trulens_evalchain.tru_db import obj_id_of_obj
+from trulens_evalchain.tru_db import Query
+from trulens_evalchain.tru_db import Record
+from trulens_evalchain.tru_db import TruDB
 
 # Addresses of chains or their contents. This is used to refer chains/parameters
 # even in cases where the live object is not in memory (i.e. on some remote
