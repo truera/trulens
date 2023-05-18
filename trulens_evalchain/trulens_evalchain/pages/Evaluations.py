@@ -133,11 +133,23 @@ else:
 
         selected_rows = data['selected_rows']
         selected_rows = pd.DataFrame(selected_rows)
-        st.write("Hint: select a row to display chain metadata")
+        
+        if len(selected_rows) == 0:
+            st.write("Hint: select a row to display chain metadata")
+            
+        else:
+            prompt = selected_rows['input'][0]
+            response = selected_rows['output'][0]
+            with st.expander("Question", expanded=True):
+                st.write(prompt)
 
-        if len(selected_rows) != 0:
+            with st.expander("Response", expanded=True):
+                st.write(response)
+
             details = selected_rows['details'][0]
             
+
+
             details_json = json.loads(details)
                 #json.loads(details))  # ???
 

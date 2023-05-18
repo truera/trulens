@@ -327,9 +327,10 @@ class TruChain(Chain):
         """
 
         if obj.memory is not None:
-            print(
-                f"WARNING: will not be able to serialize object of type {cls} because it has memory."
-            )
+            #print(
+            #    f"WARNING: will not be able to serialize object of type {cls} because it has memory."
+            #)
+            pass
 
         def safe_dict(s, json: bool = True, **kwargs: Any) -> Dict:
             """
@@ -563,4 +564,5 @@ class TruChain(Chain):
                 # TODO: check if we want to instrument anything not accessible through __fields__ .
         else:
 
-            print(f"WARNING: do not know how to instrument {obj}")
+            # print(f"WARNING: do not know how to instrument {obj}")
+            pass

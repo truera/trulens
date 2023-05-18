@@ -187,7 +187,7 @@ class Feedback():
 
         ins = self.extract_selection(chain=chain, record=record)
 
-        print(f"Will run {self.imp} on {ins}.")
+        # print(f"Will run {self.imp} on {ins}.")
 
         ret = self.imp(**ins)
 
@@ -217,14 +217,18 @@ class Feedback():
 
             elif v == "prompt" or v == "input":
                 if len(chain.input_keys) > 1:
-                    print("WARNING: chain has more than one input, guessing the first one is prompt.")
+                    #print("WARNING: chain has more than one input, guessing the first one is prompt.")
+                    pass
+
                 input_key = chain.input_keys[0]
 
                 q = Record.chain._call.args.inputs[input_key]
 
             elif v == "response" or v == "output":
                 if len(chain.output_keys) > 1:
-                    print("WARNING: chain has more than one ouput, guessing the first one is response.")
+                    # print("WARNING: chain has more than one ouput, guessing the first one is response.")
+                    pass
+
                 output_key = chain.output_keys[0]
 
                 q = Record.chain._call.rets[output_key]
@@ -232,15 +236,17 @@ class Feedback():
             else:
                 raise RuntimeError(f"Unhandled selection type {type(v)}.")
             
-            print(f"q={q._path}")
+            # print(f"q={q._path}")
 
             val = TruDB.project(query=q, obj=record)
             ret[k] = val
 
         return ret
 
+pat_1_10 = re.compile(r"\s*([1-9][0-9]*)\s*")
+
 def _re_1_10_rating(str_val):
-    matches = re.search(re.compile(r"([1-10]+)"), str_val)
+    matches = pat_1_10.fullmatch(str_val)
     if not matches:
         print(f"WARNING: 1-10 rating regex failed to match on: '{str_val}'")
         return -10 # so this will be reported as -1 after division by 10
@@ -315,16 +321,11 @@ class OpenAI():
         return _re_1_10_rating(
             tru.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
                 model=self.model_engine,
-                temperature=0.5,
+                temperature=0.0,
                 messages=[
                     {
                         "role": "system",
-                        "content": feedback_prompts.RELEVANCE_SYSTEM_PROMPT + prompt
-                    }, {
-                        "role":
-                            "user",
-                        "content":
-                            feedback_prompts.RELEVANCE_CONTENT_PROMPT + response
+                        "content": str.format(feedback_prompts.PR_RELEVANCE, prompt=prompt, response=response)
                     }
                 ]
             )["choices"][0]["message"]["content"])

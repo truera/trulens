@@ -18,7 +18,7 @@ from trulens_evalchain.tru_feedback import Feedback
 
 lms = LocalSQLite()
 
-thread_pool = ThreadPool(processes=4)
+thread_pool = ThreadPool(processes=8)
 
 class Endpoint():
     def __init__(self, name: str, rpm: float = 60, retries: int = 3, post_headers = None):
