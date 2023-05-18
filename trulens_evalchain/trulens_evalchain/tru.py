@@ -130,7 +130,7 @@ def add_data(
     chain_id: str,
     prompt: str,
     response: str,
-    details: str = None,
+    record: Dict = None,
     tags: str = None,
     ts: int = None,
     total_tokens: int = None,
@@ -140,7 +140,7 @@ def add_data(
         ts = datetime.now()
 
     record_id = lms.insert_record(
-        chain_id, prompt, response, to_json(details), ts, tags, total_tokens,
+        chain_id, prompt, response, record, ts, tags, total_tokens,
         total_cost
     )
     return record_id

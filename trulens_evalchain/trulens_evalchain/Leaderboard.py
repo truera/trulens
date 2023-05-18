@@ -1,3 +1,5 @@
+import math
+import numpy as np
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 
@@ -44,34 +46,41 @@ def app():
         col3.metric("Tokens", sum(model_df.total_tokens))
 
         for i, col_name in enumerate(df_feedback.columns):
+            mean = model_df_feedback[col_name].mean()
 
             if i < len(feedback_cols):
-                if round(model_df_feedback[col_name].mean()) < 0.5:
+                if math.isnan(mean):
+                    pass
+                
+                elif mean < 0.5:
                     feedback_cols[i].metric(
                         col_name,
-                        round(model_df_feedback[col_name].mean(), 2),
+                        round(mean, 2),
                         delta="Fail",
                         delta_color="inverse"
                     )
                 else:
                     feedback_cols[i].metric(
                         col_name,
-                        round(model_df_feedback[col_name].mean(), 2),
+                        round(mean, 2),
                         delta="Pass",
                         delta_color="normal"
                     )
             else:
-                if round(model_df_feedback[col_name].mean()) < 0.5:
+                if math.isnan(mean):
+                    pass
+
+                elif mean < 0.5:
                     feedback_cols[i].metric(
                         col_name,
-                        round(model_df_feedback[col_name].mean(), 2),
+                        round(mean, 2),
                         delta="Fail",
                         delta_color="inverse"
                     )
                 else:
                     feedback_cols[i].metric(
                         col_name,
-                        round(model_df_feedback[col_name].mean(), 2),
+                        round(mean, 2),
                         delta="Pass",
                         delta_color="normal"
                     )

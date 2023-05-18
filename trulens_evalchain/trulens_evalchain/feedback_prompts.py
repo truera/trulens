@@ -1,8 +1,8 @@
 from cohere.responses.classify import Example
 
-QS_RELEVANCE = """You are a RELEVANCE classifier, providing the relevance of the given statement to the given question.
-Provide all responses only as a number from 1 to 10 where 1 is the least relevant and 10 is the most relevant.
-Never elaborate. 
+QS_RELEVANCE = """You are a RELEVANCE classifier; providing the relevance of the given STATEMENT to the given QUESTION.
+Respond only as a number from 1 to 10 where 1 is the least relevant and 10 is the most relevant.
+Never elaborate.
 
 QUESTION: {question}
 

@@ -24,8 +24,9 @@ from trulens_evalchain.tru_db import Record
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
 
-# chain_id = "TruBot_langprompt"
 chain_id = "TruBot"
+# chain_id = "TruBot_langprompt"
+# chain_id = "TruBot_relevance"
 
 # Pinecone configuration.
 pinecone.init(
@@ -42,13 +43,16 @@ f_lang_match = Feedback(hugs.language_match).on(
     text1="prompt", text2="response"
 )
 
+f_qa_relevance = Feedback(openai.relevance).on(
+    prompt="input", response="output"
+)
+
 f_qs_relevance = Feedback(openai.qs_relevance).on(
     question="input",
     statement=Record.chain.combine_docs_chain._call.args.inputs.input_documents
 ).on_multiple(
     multiarg="statement", each_query=Record.page_content, agg=np.min
 )
-
 
 # @st.cache_data
 def generate_response(prompt):
@@ -83,22 +87,41 @@ def generate_response(prompt):
     # Language mismatch fix:
     if "langprompt" in chain_id:
         chain.combine_docs_chain.llm_chain.prompt.template = \
-            "Use the following pieces of context to answer the question at the end " \
+            "Use the following pieces of CONTEXT to answer the question at the end " \
             "in the same language as the question. If you don't know the answer, " \
-            "just say that you don't know, don't try to make up an answer.\n\n" \
-            "{context}\n\n" \
+            "just say that you don't know, don't try to make up an answer.\n" \
+            "\n" \
+            "CONTEXT: {context}\n" \
+            "\n" \
             "Question: {question}\n" \
             "Helpful Answer: "
+
+    elif "relevance" in chain_id:
+        # Contexts fix
+        chain.combine_docs_chain.llm_chain.prompt.template = \
+            "Use only the relevant contexts to answer the question at the end " \
+            ". Some pieces of context may not be relevant. If you don't know the answer, " \
+            "just say that you don't know, don't try to make up an answer.\n" \
+            "\n" \
+            "Contexts: \n" \
+            "{context}\n" \
+            "\n" \
+            "Question: {question}\n" \
+            "Helpful Answer: "
+
+        # space is important
+
+        chain.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
 
     # Trulens instrumentation.
     tc = tru_chain.TruChain(chain, chain_id=chain_id)
 
-    return tc, tc(prompt)
+    return tc, tc(dict(question=prompt))
 
 
 # Set up Streamlit app
 st.title("TruBot")
-user_input = st.text_input("Ask a question")
+user_input = st.text_input("Ask a question about TruEra")
 
 if user_input:
     # Generate GPT-3 response
@@ -113,14 +136,13 @@ if user_input:
     answer = response['answer']
 
     # Display response
-    st.write("Here's some help for you:")
     st.write(answer)
 
     record_id = tru.add_data(
         chain_id=chain_id,
         prompt=prompt_input,
         response=answer,
-        details=record,
+        record=record,
         tags='dev',
         total_tokens=total_tokens,
         total_cost=total_cost
@@ -130,7 +152,7 @@ if user_input:
     feedbacks = tru.run_feedback_functions(
         chain=chain,
         record=record,
-        feedback_functions=[f_lang_match, f_qs_relevance]
+        feedback_functions=[f_lang_match, f_qa_relevance, f_qs_relevance]
     )
 
     # Add value to database
