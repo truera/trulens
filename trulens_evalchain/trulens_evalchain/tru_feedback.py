@@ -48,8 +48,6 @@ Question/Statement relevance that is evaluated on a sub-chain input which contai
 import re
 from typing import Any, Callable, Dict, Optional, Sequence, Union
 
-import cohere
-
 import numpy as np
 import openai
 import requests
@@ -57,6 +55,7 @@ import requests
 from trulens_evalchain import feedback_prompts
 from trulens_evalchain import tru
 from trulens_evalchain.keys import *
+from trulens_evalchain.provider_apis import Endpoint
 from trulens_evalchain.tru_chain import TruChain
 from trulens_evalchain.tru_db import Record
 from trulens_evalchain.tru_db import TruDB
@@ -256,9 +255,10 @@ def _re_1_10_rating(str_val):
 class OpenAI():
     def __init__(self, model_engine: str =  "gpt-3.5-turbo"):
         self.model_engine = model_engine
+        self.endpoint_openai = Endpoint(name="openai", rpm=30)
 
     def _moderation(self, text: str):
-        return tru.endpoint_openai.run_me(lambda: openai.Moderation.create(input=text))
+        return self.endpoint_openai.run_me(lambda: openai.Moderation.create(input=text))
 
     def moderation_not_hate(self, text: str):
         openai_response = self._moderation(text)
@@ -304,7 +304,7 @@ class OpenAI():
 
     def qs_relevance(self, question: str, statement: str):
         return _re_1_10_rating(
-            tru.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
+            self.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
                 model=self.model_engine,
                 temperature=0.0,
                 messages=[
@@ -319,7 +319,7 @@ class OpenAI():
 
     def relevance(self, prompt: str, response: str):
         return _re_1_10_rating(
-            tru.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
+            self.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
                 model=self.model_engine,
                 temperature=0.0,
                 messages=[
@@ -337,7 +337,7 @@ class OpenAI():
     ):
     
         return _re_1_10_rating(
-            tru.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
+            self.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
                 model=self.model_engine,
                 temperature=0.5,
                 messages=[
@@ -359,7 +359,7 @@ def openai_moderation_not_hate(prompt, response, evaluation_choice):
     if evaluation_choice == "response":
         input = response
 
-    openai_response = tru.endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
 
     return 1 - float(openai_response["results"][0]["category_scores"]["hate"])
 
@@ -370,7 +370,7 @@ def openai_moderation_not_hatethreatening(prompt, response, evaluation_choice):
     if evaluation_choice == "response":
         input = response
 
-    openai_response = tru.endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
 
     return 1 - int(
         openai_response["results"][0]["category_scores"]["hate/threatening"]
@@ -382,7 +382,7 @@ def openai_moderation_not_selfharm(prompt, response, evaluation_choice):
         input = prompt
     if evaluation_choice == "response":
         input = response
-    openai_response = tru.endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
     return 1 - int(
         openai_response["results"][0]["category_scores"]["self-harm"]
     )
@@ -393,7 +393,7 @@ def openai_moderation_not_sexual(prompt, response, evaluation_choice):
         input = prompt
     if evaluation_choice == "response":
         input = response
-    openai_response = tru.endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
     return 1 - int(openai_response["results"][0]["category_scores"]["sexual"])
 
 
@@ -402,7 +402,7 @@ def openai_moderation_not_sexualminors(prompt, response, evaluation_choice):
         input = prompt
     if evaluation_choice == "response":
         input = response
-    openai_response = tru.endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
     return 1 - int(
         openai_response["results"][0]["category_scores"]["sexual/minors"]
     )
@@ -413,7 +413,7 @@ def openai_moderation_not_violence(prompt, response, evaluation_choice):
         input = prompt
     if evaluation_choice == "response":
         input = response
-    openai_response = tru.endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
     return 1 - int(openai_response["results"][0]["category_scores"]["violence"])
 
 
@@ -422,7 +422,7 @@ def openai_moderation_not_violencegraphic(prompt, response, evaluation_choice):
         input = prompt
     if evaluation_choice == "response":
         input = response
-    openai_response = tru.endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
     return 1 - int(
         openai_response["results"][0]["category_scores"]["violence/graphic"]
     )
@@ -431,7 +431,7 @@ def openai_moderation_not_violencegraphic(prompt, response, evaluation_choice):
 def openai_qs_relevance(question: str, statement: str, model_engine):
 
     return _re_1_10_rating(
-        tru.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
+        OpenAI().endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
             model=model_engine,
             temperature=0.0,
             messages=[
@@ -447,7 +447,7 @@ def openai_qs_relevance(question: str, statement: str, model_engine):
 def openai_relevance(prompt, response, model_engine):
 
     return _re_1_10_rating(
-        tru.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
+        OpenAI().endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
             model=model_engine,
             temperature=0.5,
             messages=[
@@ -474,7 +474,7 @@ def openai_sentiment_function(
         input = response
 
     return _re_1_10_rating(
-                tru.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
+                OpenAI().endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
                     model=model_engine,
                     temperature=0.5,
                     messages=[
@@ -501,7 +501,7 @@ class Huggingface():
     LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
 
     def __init__(self):
-        pass
+        self.endpoint_huggingface = Endpoint(name="huggingface", rpm=30, post_headers=get_huggingface_headers())
 
     def language_match(self, text1: str, text2: str) -> float:
         # TODO: parallelize
@@ -509,12 +509,12 @@ class Huggingface():
         max_length = 500
         truncated_text = text1[:max_length]
         payload = {"inputs": truncated_text}
-        hf_response = tru.endpoint_huggingface.post(url=Huggingface.LANGUAGE_API_URL, payload=payload)
+        hf_response = self.endpoint_huggingface.post(url=Huggingface.LANGUAGE_API_URL, payload=payload)
         scores1 = {r['label']: r['score'] for r in hf_response}
 
         truncated_text = text2[:max_length]
         payload = {"inputs": truncated_text}
-        hf_response = tru.endpoint_huggingface.post(url=Huggingface.LANGUAGE_API_URL, payload=payload)
+        hf_response = self.endpoint_huggingface.post(url=Huggingface.LANGUAGE_API_URL, payload=payload)
         scores2 = {r['label']: r['score'] for r in hf_response}
 
         langs = list(scores1.keys())
@@ -531,7 +531,7 @@ class Huggingface():
         truncated_text = text[:max_length]
         payload = {"inputs": truncated_text}
 
-        hf_response = tru.endpoint_huggingface.post(url=Huggingface.SENTIMENT_API_URL, payload=payload)
+        hf_response = self.endpoint_huggingface.post(url=Huggingface.SENTIMENT_API_URL, payload=payload)
 
         for label in hf_response:
             if label['label'] == 'LABEL_2':
@@ -541,12 +541,11 @@ class Huggingface():
         max_length = 500
         truncated_text = text[:max_length]
         payload = {"inputs": truncated_text}
-        hf_response = tru.endpoint_huggingface.post(url=Huggingface.TOXIC_API_URL, payload=payload)
+        hf_response = self.endpoint_huggingface.post(url=Huggingface.TOXIC_API_URL, payload=payload)
         
         for label in hf_response:
             if label['label'] == 'toxic':
                 return label['score']
-
 
 # old interface
 def huggingface_language_match(prompt, response, evaluation_choice=None) -> float:
@@ -554,8 +553,8 @@ def huggingface_language_match(prompt, response, evaluation_choice=None) -> floa
     truncated_text = prompt[:max_length]
     payload = {"inputs": truncated_text}
 
-    hf_response = tru.endpoint_huggingface.run_me(lambda: requests.post(
-        Huggingface.LANGUAGE_API_URL, headers=HUGGINGFACE_HEADERS, json=payload
+    hf_response = Huggingface().endpoint_huggingface.run_me(lambda: requests.post(
+        Huggingface.LANGUAGE_API_URL, headers=get_huggingface_headers(), json=payload
     ).json())
 
     if not (isinstance(hf_response, list) and len(hf_response) > 0):
@@ -568,8 +567,8 @@ def huggingface_language_match(prompt, response, evaluation_choice=None) -> floa
 
     truncated_text = response[:max_length]
     payload = {"inputs": truncated_text}
-    hf_response = tru.endpoint_huggingface.run_me(lambda: requests.post(
-        Huggingface.LANGUAGE_API_URL, headers=HUGGINGFACE_HEADERS, json=payload
+    hf_response = Huggingface().endpoint_huggingface.run_me(lambda: requests.post(
+        Huggingface.LANGUAGE_API_URL, headers=get_huggingface_headers(), json=payload
     ).json())
 
     if not (isinstance(hf_response, list) and len(hf_response) > 0):
@@ -595,8 +594,8 @@ def huggingface_positive_sentiment(prompt, response, evaluation_choice):
     max_length = 500
     truncated_text = input[:max_length]
     payload = {"inputs": truncated_text}
-    hf_response = tru.endpoint_huggingface.run_me(lambda: requests.post(
-        Huggingface.SENTIMENT_API_URL, headers=HUGGINGFACE_HEADERS, json=payload
+    hf_response = Huggingface().endpoint_huggingface.run_me(lambda: requests.post(
+        Huggingface.SENTIMENT_API_URL, headers=get_huggingface_headers(), json=payload
     ).json()[0])
 
     for label in hf_response:
@@ -612,20 +611,17 @@ def huggingface_not_toxic(prompt, response, evaluation_choice):
     max_length = 500
     truncated_text = input[:max_length]
     payload = {"inputs": truncated_text}
-    hf_response = tru.endpoint_huggingface.run_me(lambda: requests.post(
-        Huggingface.TOXIC_API_URL, headers=HUGGINGFACE_HEADERS, json=payload
+    hf_response = Huggingface().endpoint_huggingface.run_me(lambda: requests.post(
+        Huggingface.TOXIC_API_URL, headers=get_huggingface_headers(), json=payload
     ).json()[0])
     for label in hf_response:
         if label['label'] == 'toxic':
             return label['score']
 
-
 # cohere
-
-cohere.api_key = config['COHERE_API_KEY']
-
-co = cohere.Client(cohere.api_key)
-
+class Cohere():
+    def __init__(self):
+        Cohere().endpoint_cohere = Endpoint(name="cohere", rpm=30)
 
 def cohere_sentiment(prompt, response, evaluation_choice, model_engine):
     if evaluation_choice == "prompt":
@@ -633,7 +629,7 @@ def cohere_sentiment(prompt, response, evaluation_choice, model_engine):
     if evaluation_choice == "response":
         input = response
     return int(
-        tru.endpoint_cohere.run_me(lambda: co.classify(
+        Cohere().endpoint_cohere.run_me(lambda: get_cohere_agent().classify(
             model=model_engine,
             inputs=[input],
             examples=feedback_prompts.COHERE_SENTIMENT_EXAMPLES
@@ -647,7 +643,7 @@ def cohere_not_disinformation(prompt, response, evaluation_choice):
     if evaluation_choice == "response":
         input = response
     return int(
-        tru.endpoint_cohere.run_me(lambda: co.classify(
+        Cohere().endpoint_cohere.run_me(lambda: get_cohere_agent().classify(
             model='large',
             inputs=[input],
             examples=feedback_prompts.COHERE_NOT_DISINFORMATION_EXAMPLES
@@ -656,7 +652,7 @@ def cohere_not_disinformation(prompt, response, evaluation_choice):
 
 
 def _get_answer_agreement(prompt, response, check_response, model_engine):
-    oai_chat_response = tru.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
+    oai_chat_response = OpenAI().endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
         model=model_engine,
         temperature=0.5,
         messages=[
@@ -680,11 +676,12 @@ def openai_factagreement(prompt, response, model_engine):
         prompt = f"Finish this thought: {response[:int(len(response)*4.0/5.0)]}"
     payload = {"text": prompt}
     hf_response = requests.post(
-        Huggingface.CHAT_API_URL, headers=HUGGINGFACE_HEADERS, json=payload
+        Huggingface.CHAT_API_URL, headers=get_huggingface_headers(), json=payload
     ).json()['generated_text']
 
     # Attempt an honest bot
-    oai_chat_response = tru.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
+    
+    oai_chat_response = OpenAI().endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
         model=model_engine,
         temperature=0.5,
         messages=[
