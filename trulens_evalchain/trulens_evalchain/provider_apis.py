@@ -1,10 +1,13 @@
+from multiprocessing.pool import ThreadPool
 from queue import Queue
 
 from time import sleep
-from typing import Any
+from typing import Any, Sequence
 
 import requests
 from tqdm.auto import tqdm
+
+thread_pool = ThreadPool(processes=8)
 
 class Endpoint():
     def __init__(self, name: str, rpm: float = 60, retries: int = 3, post_headers = None):
