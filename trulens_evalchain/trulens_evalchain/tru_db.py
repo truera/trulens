@@ -2,7 +2,7 @@ import abc
 import json
 from pathlib import Path
 import sqlite3
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 import uuid
 
 import langchain
@@ -155,11 +155,104 @@ class TruDB(abc.ABC):
             yield query
 
     @staticmethod
+    def all_queries(obj: Any, query: Query = None) -> Iterable[Query]:
+        """
+        Get all queries for the given object.
+        """
+
+        query = query or Record
+
+        if isinstance(obj, (str, int, float, NoneType)):
+            yield query
+
+        elif isinstance(obj, pydantic.BaseModel):
+            yield query
+
+            for k in obj.__fields__:
+                v = getattr(obj, k)
+                sub_query = query[k]
+                for res in TruDB.all_queries(v, sub_query):
+                    yield res
+
+        elif isinstance(obj, Dict):
+            yield query
+
+            for k, v in obj.items():
+                sub_query = query[k]
+                for res in TruDB.all_queries(obj[k], sub_query):
+                    yield res
+
+        elif isinstance(obj, Sequence):
+            yield query
+
+            for i, v in enumerate(obj):
+                sub_query = query[i]
+                for res in TruDB.all_queries(obj[i], sub_query):
+                    yield res
+
+        else:
+            yield query
+
+
+    @staticmethod
+    def all_objects(obj: Any, query: Query = None) -> Iterable[Tuple[Query, Any]]:
+        """
+        Get all queries for the given object.
+        """
+
+        query = query or Record
+
+        if isinstance(obj, (str, int, float, NoneType)):
+            yield (query, obj)
+
+        elif isinstance(obj, pydantic.BaseModel):
+            yield (query, obj)
+
+            for k in obj.__fields__:
+                v = getattr(obj, k)
+                sub_query = query[k]
+                for res in TruDB.all_objects(v, sub_query):
+                    yield res
+
+        elif isinstance(obj, Dict):
+            yield (query, obj)
+
+            for k, v in obj.items():
+                sub_query = query[k]
+                for res in TruDB.all_objects(obj[k], sub_query):
+                    yield res
+
+        elif isinstance(obj, Sequence):
+            yield (query, obj)
+
+            for i, v in enumerate(obj):
+                sub_query = query[i]
+                for res in TruDB.all_objects(obj[i], sub_query):
+                    yield res
+
+        else:
+            yield (query, obj)
+
+
+    @staticmethod
     def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
         for q in TruDB.leaf_queries(obj):
             path_str = TruDB._query_str(q)
             val = TruDB.project(q, obj)
             yield (path_str, val)
+
+    @staticmethod
+    def matching_queries(obj: Any, match: Callable) -> Iterable[Query]:
+        for q in TruDB.all_queries(obj):
+            val = TruDB.project(q, obj)
+            if match(q, val):
+                yield q
+
+    @staticmethod
+    def matching_objects(obj: Any, match: Callable) -> Iterable[Tuple[Query, Any]]:
+        for q, val in TruDB.all_objects(obj):
+            if match(q, val):
+                yield (q, val)
 
     @staticmethod
     def _query_str(query: Query):
@@ -201,11 +294,21 @@ class TruDB(abc.ABC):
             rest = ()
 
         if isinstance(first, str):
-            if not isinstance(obj, Dict) or first not in obj:
-                print(f"WARNING: Cannot project {str(obj)[0:32]} with path {path}.")
+            if isinstance(obj, pydantic.BaseModel):
+                if not hasattr(obj, first):
+                    print(f"WARNING: Cannot project {str(obj)[0:32]} with path {path} because {first} is not an attribute here.")
+                    return None
+                return TruDB._project(path=rest, obj=getattr(obj, first))
+            
+            elif isinstance(obj, Dict):
+                if first not in obj:
+                    print(f"WARNING: Cannot project {str(obj)[0:32]} with path {path} because {first} is not a key here.")
+                    return None
+                return TruDB._project(path=rest, obj=obj[first])
+                
+            else:
+                print(f"WARNING: Cannot project {str(obj)[0:32]} with path {path} because object is not a dict or model.")
                 return None
-
-            return TruDB._project(path=rest, obj=obj[first])
 
         elif isinstance(first, int):
             if not isinstance(obj, Sequence) or first >= len(obj):
