@@ -1,3 +1,3 @@
 # Distributions of Interest
 
-::: trulens.nn.distributions
+::: trulens_explain.trulens.nn.distributions
