@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 from typing import Callable, List
+import subprocess
 
 import pandas as pd
 
@@ -70,3 +71,8 @@ def get_chain(chain_id):
 def get_records_and_feedback(chain_ids: List[str]):
     df_records, df_feedback = lms.get_records_and_feedback(chain_ids)
     return df_records, df_feedback
+
+
+def run_dashboard():
+    subprocess.Popen(["streamlit", "run", 'trulens_evalchain/Leaderboard.py'])
+    return None
