@@ -14,7 +14,6 @@ from trulens_evalchain.keys import *
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
 
-
 # Define function to generate GPT-3 response
 @st.cache_data
 def generate_response(prompt, model_name):
@@ -71,7 +70,7 @@ if user_input:
         chain_id='Chain1_ChatApplication',
         prompt=prompt_input,
         response=gpt3_response['text'],
-        details=record,
+        record=record,
         tags='dev',
         total_tokens=total_tokens,
         total_cost=total_cost
