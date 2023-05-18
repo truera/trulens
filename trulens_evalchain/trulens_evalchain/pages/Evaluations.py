@@ -129,14 +129,17 @@ else:
 
         if len(selected_rows) != 0:
             details = selected_rows['details'][0]
-            details_json = json.loads(json.loads(details)) # ???
+            details_json = json.loads(json.loads(details))  # ???
 
             chain_json = details_json['chain']
 
-            for query, llm_details_json in TruDB.matching_objects(details_json, match=lambda q, o: len(q._path) > 0 and "llm" == q._path[-1]):
+            for query, llm_details_json in TruDB.matching_objects(
+                    details_json,
+                    match=lambda q, o: len(q._path) > 0 and "llm" == q._path[-1]
+            ):
                 path_str = TruDB._query_str(query)
                 st.header(f"LLM ({path_str}) Details:")
-                
+
                 llm_cols = st.columns(len(llm_details_json.items()))
 
                 llm_keys = list(llm_details_json.keys())
@@ -151,13 +154,13 @@ else:
                         else:
                             st.metric(llm_keys[i], llm_values[i])
 
-            for query, prompt_details_json in TruDB.matching_objects(details_json, match=lambda q, o: len(q._path) > 0 and "prompt" == q._path[-1] and "_call" not in q._path):
+            for query, prompt_details_json in TruDB.matching_objects(
+                    details_json, match=lambda q, o: len(q._path) > 0 and
+                    "prompt" == q._path[-1] and "_call" not in q._path):
                 path_str = TruDB._query_str(query)
                 st.header(f"Prompt ({path_str}) Details:")
-        
-                prompt_type_cols = st.columns(
-                    len(prompt_details_json.items())
-                )
+
+                prompt_type_cols = st.columns(len(prompt_details_json.items()))
                 prompt_types = prompt_details_json
                 prompt_type_keys = list(prompt_types.keys())
                 prompt_type_values = list(prompt_types.values())
@@ -165,13 +168,12 @@ else:
                 for i in range(len(prompt_type_keys)):
                     with prompt_type_cols[i]:
                         with st.expander(prompt_type_keys[i].capitalize(),
-                                        expanded=True):
+                                         expanded=True):
                             st.write(prompt_type_values[i])
 
-                
             if st.button("Display full json"):
                 st.write(details_json)
-                
+
     with tab2:
         feedback = df_feedback.columns
         cols = 4
