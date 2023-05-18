@@ -2,7 +2,7 @@ import abc
 import json
 from pathlib import Path
 import sqlite3
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 import uuid
 
 import langchain
@@ -18,6 +18,28 @@ from tinydb.table import Table
 
 mj = MerkleJson()
 NoneType = type(None)
+
+
+def is_empty(obj):
+    try:
+        return len(obj) == 0
+    except Exception:
+        return False
+
+def is_noserio(obj):
+    return isinstance(obj, dict) and "_NON_SERIALIZED_OBJECT" in obj
+
+def noserio(obj, **extra: Dict) -> dict:
+    inner = {
+                "class": obj.__class__.__name__,
+                "module": obj.__class__.__module__,
+                "bases": list(map(lambda b: b.__name__, obj.__class__.__bases__))
+            }
+    inner.update(extra)
+
+    return {
+        '_NON_SERIALIZED_OBJECT': inner
+    }
 
 
 def obj_id_of_obj(obj: dict, prefix="obj"):
@@ -44,7 +66,7 @@ def json_default(obj: Any) -> str:
     # Intentionally not including much in this indicator to make sure the model
     # hashing procedure does not get randomized due to something here.
 
-    return f"NON-SERIALIZED OBJECT: type={type(obj)}"
+    return noserio(obj)
 
 
 # Typing for type hints.
@@ -96,7 +118,9 @@ class TruDB(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_feedback(self, chain_id: str, record_id: int, feedback: dict) -> str:
+    def insert_feedback(
+        self, chain_id: str, record_id: int, feedback: dict
+    ) -> str:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -106,27 +130,66 @@ class TruDB(abc.ABC):
         raise NotImplementedError()
 
     @staticmethod
-    def dictify(obj: Any) -> Union[str, int, float, NoneType, List, Dict]:
+    def dictify(obj: Any,
+                dicted=None) -> Union[str, int, float, NoneType, List, Dict]:
         """
         Convert the given object into types that can be serialized in json.
         """
 
+        dicted = dicted or dict()
+
         if isinstance(obj, (str, int, float, NoneType)):
+            # dicted[id(obj)] = obj
             return obj
 
-        elif isinstance(obj, Dict):
-            return {k: TruDB.dictify(v) for k, v in obj.items()}
+        if id(obj) in dicted:
+            return {'_CIRCULAR_REFERENCE': id(obj)}
+
+            # return dicted[id(obj)]
+
+        new_dicted = {k: v for k, v in dicted.items()}
+
+        if isinstance(obj, Dict):
+            temp = {}
+            new_dicted[id(obj)] = temp    
+            temp.update(
+                {k: TruDB.dictify(v, dicted=new_dicted) for k, v in obj.items()}
+            )
+            return temp
 
         elif isinstance(obj, Sequence):
-            return [TruDB.dictify(v) for v in obj]
+            temp = []
+            new_dicted[id(obj)] = temp
+            for x in (TruDB.dictify(v, dicted=new_dicted) for v in obj):
+                temp.append(x)
+            return temp
+
+        elif isinstance(obj, Set):
+            temp = []
+            new_dicted[id(obj)] = temp
+            for x in (TruDB.dictify(v, dicted=new_dicted) for v in obj):
+                temp.append(x)
+            return temp
 
         elif isinstance(obj, pydantic.BaseModel):
-            return TruDB.dictify(obj.dict())
+            temp = {}
+            new_dicted[id(obj)] = temp
+            temp.update(
+                {
+                    k: TruDB.dictify(getattr(obj, k), dicted=new_dicted)
+                    for k in obj.__fields__
+                }
+            )
+            return temp
 
         else:
-            raise RuntimeError(
-                f"Don't know how to dictify an object of type {type(obj)}."
-            )
+            #print(
+            #    f"WARNING: Don't know how to dictify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
+            #)
+            return noserio(obj)
+            #raise RuntimeError(
+            #    f"Don't know how to dictify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
+            #)
 
     @staticmethod
     def leaf_queries(obj: Any, query: Query = None) -> Iterable[Query]:
@@ -155,11 +218,104 @@ class TruDB(abc.ABC):
             yield query
 
     @staticmethod
+    def all_queries(obj: Any, query: Query = None) -> Iterable[Query]:
+        """
+        Get all queries for the given object.
+        """
+
+        query = query or Record
+
+        if isinstance(obj, (str, int, float, NoneType)):
+            yield query
+
+        elif isinstance(obj, pydantic.BaseModel):
+            yield query
+
+            for k in obj.__fields__:
+                v = getattr(obj, k)
+                sub_query = query[k]
+                for res in TruDB.all_queries(v, sub_query):
+                    yield res
+
+        elif isinstance(obj, Dict):
+            yield query
+
+            for k, v in obj.items():
+                sub_query = query[k]
+                for res in TruDB.all_queries(obj[k], sub_query):
+                    yield res
+
+        elif isinstance(obj, Sequence):
+            yield query
+
+            for i, v in enumerate(obj):
+                sub_query = query[i]
+                for res in TruDB.all_queries(obj[i], sub_query):
+                    yield res
+
+        else:
+            yield query
+
+    @staticmethod
+    def all_objects(obj: Any,
+                    query: Query = None) -> Iterable[Tuple[Query, Any]]:
+        """
+        Get all queries for the given object.
+        """
+
+        query = query or Record
+
+        if isinstance(obj, (str, int, float, NoneType)):
+            yield (query, obj)
+
+        elif isinstance(obj, pydantic.BaseModel):
+            yield (query, obj)
+
+            for k in obj.__fields__:
+                v = getattr(obj, k)
+                sub_query = query[k]
+                for res in TruDB.all_objects(v, sub_query):
+                    yield res
+
+        elif isinstance(obj, Dict):
+            yield (query, obj)
+
+            for k, v in obj.items():
+                sub_query = query[k]
+                for res in TruDB.all_objects(obj[k], sub_query):
+                    yield res
+
+        elif isinstance(obj, Sequence):
+            yield (query, obj)
+
+            for i, v in enumerate(obj):
+                sub_query = query[i]
+                for res in TruDB.all_objects(obj[i], sub_query):
+                    yield res
+
+        else:
+            yield (query, obj)
+
+    @staticmethod
     def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
         for q in TruDB.leaf_queries(obj):
             path_str = TruDB._query_str(q)
             val = TruDB.project(q, obj)
             yield (path_str, val)
+
+    @staticmethod
+    def matching_queries(obj: Any, match: Callable) -> Iterable[Query]:
+        for q in TruDB.all_queries(obj):
+            val = TruDB.project(q, obj)
+            if match(q, val):
+                yield q
+
+    @staticmethod
+    def matching_objects(obj: Any,
+                         match: Callable) -> Iterable[Tuple[Query, Any]]:
+        for q, val in TruDB.all_objects(obj):
+            if match(q, val):
+                yield (q, val)
 
     @staticmethod
     def _query_str(query: Query):
@@ -201,13 +357,33 @@ class TruDB(abc.ABC):
             rest = ()
 
         if isinstance(first, str):
-            if not isinstance(obj, Dict) or first not in obj:
-                return None
+            if isinstance(obj, pydantic.BaseModel):
+                if not hasattr(obj, first):
+                    print(
+                        f"WARNING: Cannot project {str(obj)[0:32]} with path {path} because {first} is not an attribute here."
+                    )
+                    return None
+                return TruDB._project(path=rest, obj=getattr(obj, first))
 
-            return TruDB._project(path=rest, obj=obj[first])
+            elif isinstance(obj, Dict):
+                if first not in obj:
+                    print(
+                        f"WARNING: Cannot project {str(obj)[0:32]} with path {path} because {first} is not a key here."
+                    )
+                    return None
+                return TruDB._project(path=rest, obj=obj[first])
+
+            else:
+                print(
+                    f"WARNING: Cannot project {str(obj)[0:32]} with path {path} because object is not a dict or model."
+                )
+                return None
 
         elif isinstance(first, int):
             if not isinstance(obj, Sequence) or first >= len(obj):
+                print(
+                    f"WARNING: Cannot project {str(obj)[0:32]} with path {path}."
+                )
                 return None
 
             return TruDB._project(path=rest, obj=obj[first])
@@ -247,15 +423,11 @@ class LocalTinyDB(TruDB):
         return self.records.insert(Document(doc_id=record_id, value=record))
 
     # TruDB requirement
-    def insert_chain(
-        self, chain: dict, chain_id: Optional[str] = None
-    ) -> str:
+    def insert_chain(self, chain: dict, chain_id: Optional[str] = None) -> str:
         chain_id = chain_id or obj_id_of_obj(obj=chain, prefix="chain")
 
         if self.chains.contains(doc_id=chain_id):
-            print(
-                f"WARNING: chain {chain_id} already exists in {self.chains}."
-            )
+            print(f"WARNING: chain {chain_id} already exists in {self.chains}.")
             self.chains.update(Document(doc_id=chain_id, value=chain))
         else:
             self.chains.insert(Document(doc_id=chain_id, value=chain))
@@ -263,26 +435,25 @@ class LocalTinyDB(TruDB):
         return chain_id
 
     # TruDB requirement
-    def insert_feedback(self, chain_id: str, record_id: int, feedback: dict) -> str:
+    def insert_feedback(
+        self, chain_id: str, record_id: int, feedback: dict
+    ) -> str:
         feedback['record_id'] = record_id
         feedback['chain_id'] = chain_id
         feedback_id = self.feedbacks._get_next_id()
         feedback['feedback_id'] = feedback_id
 
-        self.feedbacks.insert(
-            Document(doc_id=feedback_id, value=feedback)
-        )
+        self.feedbacks.insert(Document(doc_id=feedback_id, value=feedback))
 
     # TruDB requirement
     def get_records_and_feedback(
         self, chain_ids: List[str]
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        # This returns all models if the list of chain_ids is empty
-        # conn, c = self._connect()
-        # query = "SELECT l.*, f.feedback FROM records l LEFT JOIN feedback f on l.record_id = f.record_id"
-
+        
         queries = [Record.chain_id, Record.record_id, Record]
-        queries_records = queries + [Record.chain._call.args.inputs, Record.chain._call.rets]
+        queries_records = queries + [
+            Record.chain._call.args.inputs, Record.chain._call.rets
+        ]
         queries_feedbacks = queries + [Record.feedback_id]
 
         where = None
@@ -292,30 +463,20 @@ class LocalTinyDB(TruDB):
         df = self.select(*queries_records, where=where, table=self.records)
         df = df.rename(columns={'Record': 'record'})
 
-        df_feedback = self.select(*queries_feedbacks, where=where, table=self.feedbacks)
+        df_feedback = self.select(
+            *queries_feedbacks, where=where, table=self.feedbacks
+        )
         df_feedback = df_feedback.rename(columns={'Record': 'feedback'})
-        
-        #df = pd.DataFrame(
-        #    rows, columns=[description[0] for description in c.description]
-        #)
-
-        # Apply the function to the 'data' column to convert it into separate columns
-        """
-        for col in ['record',
-                    'feedback',
-                    'Record.chain._call.args.inputs', 
-                    'Record.chain._call.rets'
-                    ]:
-            if col in df_feedback.columns:
-                df_feedback[col] = df_feedback[col].apply(str_dict_to_series)
-            if col in df.columns:
-                df[col] = df[col].apply(str_dict_to_series)
-        """     
 
         return df, df_feedback
 
     # TruDB requirement
-    def select(self, *query: Tuple[Query], where: Optional[Condition] = None, table: Table = None):
+    def select(
+        self,
+        *query: Tuple[Query],
+        where: Optional[Condition] = None,
+        table: Table = None
+    ):
         if isinstance(query, Query):
             queries = [query]
         else:
@@ -398,8 +559,11 @@ class LocalSQLite(TruDB):
         self, chain_id: str, input: str, output: str, record: dict, ts: int,
         tags: str, total_tokens: int, total_cost: float
     ) -> int:
+        assert isinstance(record, Dict), f"Attempting to add a record that is not a dict, is {type(record)} instead."
+
         conn, c = self._connect()
-        record_str = json.dumps(record, default=json_default)
+        
+        record_str = json_str_of_obj(record)
         record_id = str(uuid.uuid4())
 
         # Main chain input and output are these but these may be dicts or
@@ -420,9 +584,7 @@ class LocalSQLite(TruDB):
         return record_id  # record_id
 
     # TruDB requirement
-    def insert_chain(
-        self, chain: dict, chain_id: Optional[str] = None
-    ) -> str:
+    def insert_chain(self, chain: dict, chain_id: Optional[str] = None) -> str:
         chain_id = chain_id or obj_id_of_obj(obj=chain, prefix="chain")
         chain_str = json_str_of_obj(chain)
 
@@ -475,7 +637,7 @@ class LocalSQLite(TruDB):
         if len(chain_ids) > 0:
             chain_id_list = ', '.join('?' * len(chain_ids))
             query = query + f" WHERE chain_id IN ({chain_id_list})"
-    
+
         c.execute(query)
         rows = c.fetchall()
         conn.close()

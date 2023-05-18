@@ -6,10 +6,13 @@ from trulens_evalchain.tru_chain import TruChain
 from trulens_evalchain.tru_db import Record
 from langchain.callbacks import get_openai_callback
 from trulens_evalchain import tru
+from trulens_evalchain.tru import thread_pool
 from trulens_evalchain.tru_db import TruDB
 from trulens_evalchain import tru_feedback
+from trulens_evalchain.tru_feedback import Feedback
 from trulens_evalchain.tru_db import LocalTinyDB, LocalSQLite
 from multiprocessing.pool import ThreadPool
+import numpy as np
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
@@ -51,14 +54,14 @@ convos: Dict[str, TruChain] = dict()
 handled_ts: Set[Tuple[str, str]] = set()
 
 # DB to save models and records.
-# db = LocalTinyDB("slackbot.json")
-db = LocalSQLite()#"slackbot.sql.db")
+db = LocalSQLite()
 
-# Thread pool to run feedback functions.
-pool = ThreadPool(2)
+ident = lambda h: h
+
+chain_ids = {0: "0/default", 1: "1/lang_prompt", 2: "2/relevance_prompt"}
 
 
-def get_or_make_chain(cid: str) -> TruChain:
+def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     """
     Create a new chain for the given conversation id `cid` or return an existing
     one. Return the new or existing chain.
@@ -70,7 +73,12 @@ def get_or_make_chain(cid: str) -> TruChain:
     if cid in convos:
         return convos[cid]
 
-    pp.pprint("Starting a new conversation.")
+    if selector not in chain_ids:
+        selector = 0
+
+    chain_id = chain_ids[selector]
+
+    pp.pprint(f"Starting a new conversation with {chain_id}.")
 
     # Embedding needed for Pinecone vector db.
     embedding = OpenAIEmbeddings(model='text-embedding-ada-002')  # 1536 dims
@@ -97,21 +105,49 @@ def get_or_make_chain(cid: str) -> TruChain:
         verbose=verb,
         return_source_documents=True,
         memory=memory,
-        get_chat_history=lambda h: h,
+        get_chat_history=ident,
         max_tokens_limit=4096
     )
 
-    # Language mismatch fix:
+    # Need to copy these otherwise various chains will feature templates that
+    # point to the same objects.
+    chain.combine_docs_chain.llm_chain.prompt = \
+        chain.combine_docs_chain.llm_chain.prompt.copy()
+    chain.combine_docs_chain.document_prompt = \
+        chain.combine_docs_chain.document_prompt.copy()
+
+    if "lang" in chain_id:
+        # Language mismatch fix:
+        chain.combine_docs_chain.llm_chain.prompt.template = \
+            "Use the following pieces of context to answer the question at the end " \
+            "in the same language as the question. If you don't know the answer, " \
+            "just say that you don't know, don't try to make up an answer.\n" \
+            "\n" \
+            "{context}\n" \
+            "\n" \
+            "Question: {question}\n" \
+            "Helpful Answer: "
+
+    elif "relevance" in chain_id:
+        # Contexts fix
+
+    # whitespace important in "Contexts! "
     chain.combine_docs_chain.llm_chain.prompt.template = \
-        "Use the following pieces of context to answer the question at the end " \
-        "in the same language as the question. If you don't know the answer, " \
-        "just say that you don't know, don't try to make up an answer.\n\n" \
-        "{context}\n\n" \
+        "Use only the relevant contexts to answer the question at the end " \
+        ". Some pieces of context may not be relevant. If you don't know the answer, " \
+        "just say that you don't know, don't try to make up an answer.\n" \
+        "\n" \
+        "Contexts: \n" \
+        "{context}\n" \
+        "\n" \
         "Question: {question}\n" \
         "Helpful Answer: "
 
+    # "\t" important here:
+    chain.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
+
     # Trulens instrumentation.
-    tc = TruChain(chain)
+    tc = TruChain(chain=chain, chain_id=chain_id)
 
     convos[cid] = tc
 
@@ -119,10 +155,30 @@ def get_or_make_chain(cid: str) -> TruChain:
 
 
 # Create one chain to insert model definition to db.
-dummy_chain = get_or_make_chain("dummy")
-chain_def = dummy_chain.chain_def
-chain_id = dummy_chain.chain_id
-db.insert_chain(chain_id=chain_id, chain=chain_def)
+# dummy_chain = get_or_make_chain("dummy")
+# chain_def = dummy_chain.chain_def
+# chain_id = dummy_chain.chain_id
+# db.insert_chain(chain_id=chain_id, chain=chain_def)
+
+# Construct feedback functions.
+
+hugs = tru_feedback.Huggingface()
+openai = tru_feedback.OpenAI()
+
+f_lang_match = Feedback(hugs.language_match).on(
+    text1="prompt", text2="response"
+)
+
+f_qa_relevance = Feedback(openai.relevance).on(
+    prompt="input", response="output"
+)
+
+f_qs_relevance = Feedback(openai.qs_relevance).on(
+    question="input",
+    statement=Record.chain.combine_docs_chain._call.args.inputs.input_documents
+).on_multiple(
+    multiarg="statement", each_query=Record.page_content, agg=np.min
+)
 
 
 def get_answer(chain: TruChain, question: str) -> Tuple[str, str]:
@@ -141,32 +197,26 @@ def get_answer(chain: TruChain, question: str) -> Tuple[str, str]:
     def log_and_feedback():
         # Log the interaction.
         record_id = tru.add_data(
-            chain_id='TruBot_langprompt',
+            chain_id=chain.chain_id,
             prompt=question,
             response=result,
-            details=record,
+            record=record,
             tags='dev',
             total_tokens=total_tokens,
             total_cost=total_cost
         )
 
-
-        # Run feedback function.
-        feedback = tru.run_feedback_function(
-            question, result,
-            [tru_feedback.get_language_match_function(provider='huggingface'), 
-             tru_feedback.get_sentimentpositive_function(
-            evaluation_choice='response',
-            provider='openai',
-            model_engine='gpt-3.5-turbo'
-            ),
-            ]
+        # Run feedback function and get value
+        feedbacks = tru.run_feedback_functions(
+            chain=chain,
+            record=record,
+            feedback_functions=[f_lang_match, f_qa_relevance, f_qs_relevance]
         )
 
-        # Log feedback.
-        tru.add_feedback(record_id, feedback)
+        # Add value to database
+        tru.add_feedback(record_id, feedbacks)
 
-    pool.apply_async(log_and_feedback)
+    thread_pool.apply_async(log_and_feedback)
 
     sources = outs['source_documents']
 
@@ -214,16 +264,36 @@ def answer_message(client, body: dict, logger):
 
         convo_id = body['event']['thread_ts']
 
-    else:
-        client.chat_postMessage(
-            channel=channel,
-            thread_ts=ts,
-            text=f"Hi. Let me check that for you..."
-        )
+        chain = get_or_make_chain(convo_id)
 
+    else:
         convo_id = ts
 
-    chain = get_or_make_chain(convo_id)
+        if len(message) >= 2 and message[0] == "s" and message[1] in [
+                "0", "1", "2", "3", "4", "5"
+        ]:
+            selector = int(message[1])
+            chain = get_or_make_chain(convo_id, selector=selector)
+
+            client.chat_postMessage(
+                channel=channel,
+                thread_ts=ts,
+                text=f"I will use chain {chain.chain_id} for this conversation."
+            )
+
+            if len(message) == 2:
+                return
+            else:
+                message = message[2:]
+
+        else:
+            chain = get_or_make_chain(convo_id)
+
+            client.chat_postMessage(
+                channel=channel,
+                thread_ts=ts,
+                text=f"Hi. Let me check that for you..."
+            )
 
     res, res_sources = get_answer(chain, message)
 

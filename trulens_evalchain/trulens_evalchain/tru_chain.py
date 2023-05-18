@@ -128,14 +128,16 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import langchain
 
+from trulens_evalchain.tru_db import noserio
+
 langchain.verbose = False
 from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
-from tru_db import obj_id_of_obj
-from tru_db import Query
-from tru_db import Record
-from tru_db import TruDB
+from trulens_evalchain.tru_db import obj_id_of_obj
+from trulens_evalchain.tru_db import Query
+from trulens_evalchain.tru_db import Record
+from trulens_evalchain.tru_db import TruDB
 
 # Addresses of chains or their contents. This is used to refer chains/parameters
 # even in cases where the live object is not in memory (i.e. on some remote
@@ -201,7 +203,7 @@ class TruChain(Chain):
 
     @property
     def chain_def(self):
-        return self.dict()
+        return TruDB.dictify(self) # not using self.dict()
 
     # Chain requirement
     @property
@@ -325,9 +327,10 @@ class TruChain(Chain):
         """
 
         if obj.memory is not None:
-            print(
-                f"WARNING: will not be able to serialize object of type {cls} because it has memory."
-            )
+            #print(
+            #    f"WARNING: will not be able to serialize object of type {cls} because it has memory."
+            #)
+            pass
 
         def safe_dict(s, json: bool = True, **kwargs: Any) -> Dict:
             """
@@ -369,11 +372,7 @@ class TruChain(Chain):
 
             except NotImplementedError as e:
 
-                ret = dict(error=str(e))
-                ret['class'] = obj.__class__.__name__
-                ret['module'] = obj.__class__.__module__
-
-                return ret
+                return noserio(obj, error=f"{e.__class__.__name__}='{str(e)}'")
 
         safe_type._instrumented = prop
         new_prop = property(fget=safe_type)
@@ -565,4 +564,5 @@ class TruChain(Chain):
                 # TODO: check if we want to instrument anything not accessible through __fields__ .
         else:
 
-            print(f"WARNING: do not know how to instrument {obj}")
+            # print(f"WARNING: do not know how to instrument {obj}")
+            pass
