@@ -1,4 +1,5 @@
 import math
+
 import numpy as np
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
@@ -42,8 +43,18 @@ def app():
 
         col0.metric("Name", model)
         col1.metric("Records", len(model_df))
-        col2.metric("Cost", round(sum(model_df.total_cost), 5))
-        col3.metric("Tokens", sum(model_df.total_tokens))
+        col2.metric(
+            "Cost",
+            round(
+                sum(cost for cost in model_df.total_cost if cost is not None), 5
+            )
+        )
+        col3.metric(
+            "Tokens",
+            sum(
+                tokens for tokens in model_df.total_tokens if tokens is not None
+            )
+        )
 
         for i, col_name in enumerate(df_feedback.columns):
             mean = model_df_feedback[col_name].mean()
@@ -51,7 +62,7 @@ def app():
             if i < len(feedback_cols):
                 if math.isnan(mean):
                     pass
-                
+
                 elif mean < 0.5:
                     feedback_cols[i].metric(
                         col_name,
