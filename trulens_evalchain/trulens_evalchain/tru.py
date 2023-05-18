@@ -1,20 +1,16 @@
 from datetime import datetime
 import json
-from multiprocessing.pool import ThreadPool
 
 import sqlite3
 
 from typing import Any, Callable, Dict, List, Sequence
 
-from trulens_evalchain.keys import get_huggingface_headers
 from trulens_evalchain.tru_db import json_default
 from trulens_evalchain.tru_db import LocalSQLite
 from trulens_evalchain.tru_chain import TruChain
 from trulens_evalchain.tru_feedback import Feedback
 
 lms = LocalSQLite()
-
-thread_pool = ThreadPool(processes=8)
 
 def init_db(db_name):
 
