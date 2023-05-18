@@ -12,7 +12,6 @@ lms = LocalSQLite()
 
 import sqlite3
 
-
 def init_db(db_name):
 
     # Connect to the database
@@ -33,17 +32,32 @@ def add_data(
     chain_id: str,
     prompt: str,
     response: str,
-    details: str = None,
+    record: Dict = None,
     tags: str = None,
     ts: int = None,
     total_tokens: int = None,
     total_cost: float = None
 ):
+    """_summary_
+
+    Args:
+        chain_id (str): _description_
+        prompt (str): _description_
+        response (str): _description_
+        details (str, optional): _description_. Defaults to None.
+        tags (str, optional): _description_. Defaults to None.
+        ts (int, optional): _description_. Defaults to None.
+        total_tokens (int, optional): _description_. Defaults to None.
+        total_cost (float, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
     if not ts:
         ts = datetime.now()
 
     record_id = lms.insert_record(
-        chain_id, prompt, response, to_json(details), ts, tags, total_tokens,
+        chain_id, prompt, response, record, ts, tags, total_tokens,
         total_cost
     )
     return record_id
@@ -58,6 +72,21 @@ def run_feedback_function(
     for f in feedback_functions:
         eval[f.__name__] = f(prompt, response)
     return eval
+
+
+def run_feedback_functions(
+    chain: TruChain,
+    record: Dict,
+    feedback_functions: Sequence[Feedback]
+):
+
+    # Run feedback functions
+    evals = {}
+    
+    for f in feedback_functions:
+        evals[f.name] = f.run(chain=chain, record=record)
+
+    return evals
 
 
 def add_feedback(record_id: str, eval: dict):

@@ -8,6 +8,7 @@ Will get you access to all of the vars defined in .env in wherever you put that 
 
 import os
 
+import cohere
 import dotenv
 
 config = dotenv.dotenv_values(".env")
@@ -19,6 +20,17 @@ for k, v in config.items():
     # set them into environment as well
     os.environ[k] = v
 
-HUGGINGFACE_HEADERS = {
-    "Authorization": f"Bearer {config['HUGGINGFACE_API_KEY']}"
-}
+global cohere_agent
+cohere_agent = None
+def get_cohere_agent():
+    global cohere_agent
+    if cohere_agent is None:
+        cohere.api_key = config['COHERE_API_KEY']
+        cohere_agent = cohere.Client(cohere.api_key)
+    return cohere_agent
+
+def get_huggingface_headers():
+    HUGGINGFACE_HEADERS = {
+        "Authorization": f"Bearer {config['HUGGINGFACE_API_KEY']}"
+    }
+    return HUGGINGFACE_HEADERS
