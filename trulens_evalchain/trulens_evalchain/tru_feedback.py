@@ -240,7 +240,7 @@ class Feedback():
         return ret
 
 def _re_1_10_rating(str_val):
-    matches = re.search(re.compile(r"[1-10]+"), str_val)
+    matches = re.search(re.compile(r"([1-10]+)"), str_val)
     if not matches:
         print(f"WARNING: 1-10 rating regex failed to match on: '{str_val}'")
         return -10 # so this will be reported as -1 after division by 10
