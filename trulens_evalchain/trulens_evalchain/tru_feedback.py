@@ -135,7 +135,7 @@ class Feedback():
                 if each_query is not None:
                     aval = TruDB.project(query=each_query, obj=aval)
             
-                print(f"multiarg {multiarg} = {aval}")
+                # print(f"multiarg {multiarg} = {aval}")
 
                 kwargs[multiarg] = aval
 
@@ -239,23 +239,13 @@ class Feedback():
 
         return ret
 
-
-def _group_or(res, default=-10): # so this will be reported as -1 after division by 10
-    """
-    Return re match group in res if exists or otherwise return default.
-    """
-    try:
-        return res.group()
-    except Exception:
-        return default
-
-
 def _re_1_10_rating(str_val):
-    matches = re.search('[1-10]+', str_val)
+    matches = re.search(re.compile(r"[1-10]+"), str_val)
     if not matches:
+        print(f"WARNING: 1-10 rating regex failed to match on: '{str_val}'")
         return -10 # so this will be reported as -1 after division by 10
     
-    return int(_group_or(matches))
+    return int(matches.group())
 
 class OpenAI():
     def __init__(self, model_engine: str =  "gpt-3.5-turbo"):
@@ -345,28 +335,21 @@ class OpenAI():
         self, text: str
     ):
     
-        return int(
-            _group_or(
-                re.search(
-                    '[1-10]+',
-                    tru.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
-                        model=self.model_engine,
-                        temperature=0.5,
-                        messages=[
-                            {
-                                "role": "system",
-                                "content": feedback_prompts.SENTIMENT_SYSTEM_PROMPT
-                            }, {
-                                "role": "user",
-                                "content": text
-                            }
-                        ]
-                    )["choices"][0]["message"]["content"]
-                )),
-                default=-1
-            )
-        )
-
+        return _re_1_10_rating(
+            tru.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
+                model=self.model_engine,
+                temperature=0.5,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": feedback_prompts.SENTIMENT_SYSTEM_PROMPT
+                    }, {
+                        "role": "user",
+                        "content": text
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+        ))
 
 # outdated interfaces
 def openai_moderation_not_hate(prompt, response, evaluation_choice):
@@ -489,10 +472,7 @@ def openai_sentiment_function(
     if evaluation_choice == "response":
         input = response
 
-    return int(
-        _group_or(
-            re.search(
-                '[1-10]+',
+    return _re_1_10_rating(
                 tru.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
                     model=model_engine,
                     temperature=0.5,
@@ -506,10 +486,8 @@ def openai_sentiment_function(
                         }
                     ]
                 )["choices"][0]["message"]["content"]
-            )),
-            default=-1
-        )
-    )
+            ))
+            
 
 
 # huggingface

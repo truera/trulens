@@ -150,7 +150,6 @@ else:
                 path_str = TruDB._query_str(query)
                 st.header(f"LLM ({path_str}) Details:")
 
-                
                 llm_kv = {k: v for k, v in llm_details_json.items() if (v is not None) and not is_empty(v) and not is_noserio(v)}
 
                 llm_cols = st.columns(len(llm_kv.items()))
