@@ -1,3 +1,0 @@
-# Slices
-
-::: trulens.nn.slices
