@@ -49,16 +49,12 @@ class Endpoint():
         return
 
     def post(self, url, payload) -> Any:
-        print("post", url, payload)
-
         extra = dict()
         if self.post_headers is not None:
             extra['headers'] = self.post_headers
 
         self.pace_me()
         ret = requests.post(url, json=payload, **extra)
-
-        print("post ret=", ret)
 
         j = ret.json()
 
@@ -86,8 +82,7 @@ class Endpoint():
         while retries > 0:
             try:
                 self.pace_me()
-                ret = thunk()
-                print(f"ret={ret}")
+                ret = thunk()                
                 return ret
             except Exception as e:
                 retries -= 1
