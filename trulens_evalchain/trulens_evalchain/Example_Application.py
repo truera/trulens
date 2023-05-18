@@ -70,7 +70,7 @@ if user_input:
         chain_id='Chain1_ChatApplication',
         prompt=prompt_input,
         response=gpt3_response['text'],
-        details=record,
+        record=record,
         tags='dev',
         total_tokens=total_tokens,
         total_cost=total_cost
