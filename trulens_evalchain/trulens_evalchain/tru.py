@@ -1,16 +1,16 @@
 from datetime import datetime
 import json
+from typing import Callable, List
+import subprocess
 
-import sqlite3
-
-from typing import Any, Callable, Dict, List, Sequence
+import pandas as pd
 
 from trulens_evalchain.tru_db import json_default
 from trulens_evalchain.tru_db import LocalSQLite
-from trulens_evalchain.tru_chain import TruChain
-from trulens_evalchain.tru_feedback import Feedback
 
 lms = LocalSQLite()
+
+import sqlite3
 
 def init_db(db_name):
 
@@ -100,3 +100,8 @@ def get_chain(chain_id):
 def get_records_and_feedback(chain_ids: List[str]):
     df_records, df_feedback = lms.get_records_and_feedback(chain_ids)
     return df_records, df_feedback
+
+
+def run_dashboard():
+    subprocess.Popen(["streamlit", "run", 'trulens_evalchain/Leaderboard.py'])
+    return None
