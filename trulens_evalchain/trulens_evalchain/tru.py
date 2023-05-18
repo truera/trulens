@@ -4,13 +4,14 @@ import sqlite3
 import subprocess
 from typing import Callable, Dict, List, Sequence
 
+import pkg_resources
+
 from trulens_evalchain.tru_chain import TruChain
 from trulens_evalchain.tru_db import json_default
 from trulens_evalchain.tru_db import LocalSQLite
 from trulens_evalchain.tru_feedback import Feedback
 
 lms = LocalSQLite()
-
 
 
 def init_db(db_name):
@@ -58,8 +59,7 @@ def add_data(
         ts = datetime.now()
 
     record_id = lms.insert_record(
-        chain_id, prompt, response, record, ts, tags, total_tokens,
-        total_cost
+        chain_id, prompt, response, record, ts, tags, total_tokens, total_cost
     )
     return record_id
 
@@ -76,14 +76,12 @@ def run_feedback_function(
 
 
 def run_feedback_functions(
-    chain: TruChain,
-    record: Dict,
-    feedback_functions: Sequence[Feedback]
+    chain: TruChain, record: Dict, feedback_functions: Sequence[Feedback]
 ):
 
     # Run feedback functions
     evals = {}
-    
+
     for f in feedback_functions:
         evals[f.name] = f.run(chain=chain, record=record)
 
@@ -104,5 +102,8 @@ def get_records_and_feedback(chain_ids: List[str]):
 
 
 def run_dashboard():
-    subprocess.Popen(["streamlit", "run", 'trulens_evalchain/Leaderboard.py'])
+    leaderboard_path = pkg_resources.resource_filename(
+        'trulens_evalchain', 'Leaderboard.py'
+    )
+    subprocess.Popen(["streamlit", "run", leaderboard_path])
     return None
