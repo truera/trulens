@@ -101,9 +101,9 @@ class Endpoint():
         
         thread_pool.apply_async(keep_pace)
 
-endpoint_openai = Endpoint(name="openai", rpm=30)
-endpoint_huggingface = Endpoint(name="huggingface", rpm=30, post_headers=HUGGINGFACE_HEADERS)
-endpoint_cohere = Endpoint(name="cohere", rpm=30)
+endpoint_openai = Endpoint(name="openai", rpm=60)
+endpoint_huggingface = Endpoint(name="huggingface", rpm=60, post_headers=HUGGINGFACE_HEADERS)
+endpoint_cohere = Endpoint(name="cohere", rpm=60)
 
 def init_db(db_name):
 

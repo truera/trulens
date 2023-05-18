@@ -131,19 +131,19 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     elif "relevance" in chain_id:
         # Contexts fix
 
-    # whitespace important in "Contexts! "
-    chain.combine_docs_chain.llm_chain.prompt.template = \
-        "Use only the relevant contexts to answer the question at the end " \
-        ". Some pieces of context may not be relevant. If you don't know the answer, " \
-        "just say that you don't know, don't try to make up an answer.\n" \
-        "\n" \
-        "Contexts: \n" \
-        "{context}\n" \
-        "\n" \
-        "Question: {question}\n" \
-        "Helpful Answer: "
+        # whitespace important in "Contexts! "
+        chain.combine_docs_chain.llm_chain.prompt.template = \
+            "Use only the relevant contexts to answer the question at the end " \
+            ". Some pieces of context may not be relevant. If you don't know the answer, " \
+            "just say that you don't know, don't try to make up an answer.\n" \
+            "\n" \
+            "Contexts: \n" \
+            "{context}\n" \
+            "\n" \
+            "Question: {question}\n" \
+            "Helpful Answer: "
 
-    # "\t" important here:
+        # "\t" important here:
     chain.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
 
     # Trulens instrumentation.
@@ -153,26 +153,22 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
 
     return tc
 
-
-# Create one chain to insert model definition to db.
-# dummy_chain = get_or_make_chain("dummy")
-# chain_def = dummy_chain.chain_def
-# chain_id = dummy_chain.chain_id
-# db.insert_chain(chain_id=chain_id, chain=chain_def)
-
 # Construct feedback functions.
 
 hugs = tru_feedback.Huggingface()
 openai = tru_feedback.OpenAI()
 
+# Language match between question/answer.
 f_lang_match = Feedback(hugs.language_match).on(
     text1="prompt", text2="response"
 )
 
+# Question/answer relevance between overall question and answer.
 f_qa_relevance = Feedback(openai.relevance).on(
     prompt="input", response="output"
 )
 
+# Question/statement relevance between question and each context chunk.
 f_qs_relevance = Feedback(openai.qs_relevance).on(
     question="input",
     statement=Record.chain.combine_docs_chain._call.args.inputs.input_documents
