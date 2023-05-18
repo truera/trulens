@@ -240,7 +240,7 @@ class Feedback():
         return ret
 
 
-def _group_or(res, default=-1):
+def _group_or(res, default=-10): # so this will be reported as -1 after division by 10
     """
     Return re match group in res if exists or otherwise return default.
     """
@@ -253,7 +253,8 @@ def _group_or(res, default=-1):
 def _re_1_10_rating(str_val):
     matches = re.search('[1-10]+', str_val)
     if not matches:
-        return -1
+        return -10 # so this will be reported as -1 after division by 10
+    
     return int(_group_or(matches))
 
 class OpenAI():

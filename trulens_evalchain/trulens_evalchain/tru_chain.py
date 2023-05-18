@@ -128,6 +128,8 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import langchain
 
+from trulens_evalchain.tru_db import noserio
+
 langchain.verbose = False
 from langchain.chains.base import Chain
 from pydantic import BaseModel
@@ -201,7 +203,7 @@ class TruChain(Chain):
 
     @property
     def chain_def(self):
-        return self.dict()
+        return TruDB.dictify(self) # not using self.dict()
 
     # Chain requirement
     @property
@@ -369,11 +371,7 @@ class TruChain(Chain):
 
             except NotImplementedError as e:
 
-                ret = dict(error=str(e))
-                ret['class'] = obj.__class__.__name__
-                ret['module'] = obj.__class__.__module__
-
-                return ret
+                return noserio(obj, error=f"{e.__class__.__name__}='{str(e)}'")
 
         safe_type._instrumented = prop
         new_prop = property(fget=safe_type)
