@@ -1,4 +1,5 @@
 import json
+from typing import Dict, List
 
 import pandas as pd
 from st_aggrid import AgGrid
@@ -6,6 +7,8 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
+from trulens_evalchain.tru_db import TruDB
+from trulens_evalchain.tru_db import is_noserio, is_empty
 from ux.add_logo import add_logo
 
 from trulens_evalchain import tru_db
@@ -23,6 +26,7 @@ df, df_feedback = lms.get_records_and_feedback([])
 
 if df.empty:
     st.write("No records yet...")
+
 else:
     chains = list(df.chain_id.unique())
 
@@ -33,24 +37,30 @@ else:
 
     options = st.multiselect('Filter Chains', chains, default=chain)
 
-    model_df = df.loc[df.chain_id.isin(options)]
-    model_df_feedback = df_feedback.loc[df.chain_id.isin(options)]
-
     if (len(options) == 0):
         st.header("All Chains")
+
+        model_df = df
+        model_df_feedback = df_feedback
     elif (len(options) == 1):
         st.header(options[0])
+
+        model_df = df[df.chain_id.isin(options)]
+        model_df_feedback = df_feedback[df.chain_id.isin(options)]
     else:
         st.header("Multiple Chains Selected")
+
+        model_df = df[df.chain_id.isin(options)]
+        model_df_feedback = df_feedback[df.chain_id.isin(options)]
 
     tab1, tab2 = st.tabs(["Records", "Feedback Functions"])
 
     #mds = model_store.ModelDataStore()
 
     with tab1:
-        evaluations_df = df.copy()
+        evaluations_df = model_df.copy()
         evaluations_df = evaluations_df.merge(
-            df_feedback, left_index=True, right_index=True
+            model_df_feedback, left_index=True, right_index=True
         )
         evaluations_df = evaluations_df[[
             'record_id',
@@ -123,55 +133,93 @@ else:
 
         selected_rows = data['selected_rows']
         selected_rows = pd.DataFrame(selected_rows)
-        st.write("Hint: select a row to display chain metadata")
+        
+        if len(selected_rows) == 0:
+            st.write("Hint: select a row to display chain metadata")
+            
+        else:
+            prompt = selected_rows['input'][0]
+            response = selected_rows['output'][0]
+            with st.expander("Question", expanded=True):
+                st.write(prompt)
 
-        if len(selected_rows) != 0:
+            with st.expander("Response", expanded=True):
+                st.write(response)
+
             details = selected_rows['details'][0]
-            details_json = json.loads(json.loads(details))
-            st.header("LLM Details:")
-            llm_details_json = details_json["chain"]["llm"]
-            llm_cols = st.columns(len(details_json["chain"]["llm"].items()))
-            llm_keys = list(llm_details_json.keys())
-            llm_values = list(llm_details_json.values())
+            
 
-            for i in range(len(llm_keys)):
-                with llm_cols[i]:
-                    st.metric(llm_keys[i], llm_values[i])
 
-            st.header("Prompt Type Details:")
-            prompt_type_cols = st.columns(
-                len(details_json["chain"]["prompt"]["_type"].items())
-            )
-            prompt_types = details_json["chain"]["prompt"]["_type"]
-            prompt_type_keys = list(prompt_types.keys())
-            prompt_type_values = list(prompt_types.values())
+            details_json = json.loads(details)
+                #json.loads(details))  # ???
 
-            for i in range(len(prompt_type_keys)):
-                with prompt_type_cols[i]:
-                    with st.expander(prompt_type_keys[i].capitalize(),
-                                     expanded=True):
-                        st.write(prompt_type_values[i])
+            chain_json = details_json['chain']
 
-            st.header("System Prompt Messages:")
-            prompt_messages_json = details_json["chain"]["prompt"]["messages"][
-                0]["prompt"]
-            prompt_messages_json = {
-                key: prompt_messages_json[key]
-                for key in prompt_messages_json
-                if key not in ["input_variables", "partial_variables"]
-            }
-            prompt_messages_cols = st.columns(len(prompt_messages_json.items()))
-            prompt_messages_keys = list(prompt_messages_json.keys())
-            prompt_messages_values = list(prompt_messages_json.values())
+            for query, llm_details_json in TruDB.matching_objects(
+                    details_json,
+                    match=lambda q, o: len(q._path) > 0 and "llm" == q._path[-1]
+            ):
+                path_str = TruDB._query_str(query)
+                st.header(f"LLM ({path_str}) Details:")
 
-            for i in range(len(prompt_messages_keys)):
-                with prompt_messages_cols[i]:
-                    with st.expander(prompt_messages_keys[i].capitalize(),
-                                     expanded=True):
-                        st.write(prompt_messages_values[i])
+                llm_kv = {k: v for k, v in llm_details_json.items() if (v is not None) and not is_empty(v) and not is_noserio(v)}
+
+                llm_cols = st.columns(len(llm_kv.items()))
+                llm_keys = list(llm_kv.keys())
+                llm_values = list(llm_kv.values())
+
+                for i in range(len(llm_keys)):
+
+                    with llm_cols[i]:
+                        if isinstance(llm_values[i], (Dict, List)):
+                            with st.expander(llm_keys[i].capitalize(), expanded=True):
+                                st.write(llm_values[i])
+                            
+                        else:
+                            st.metric(
+                                llm_keys[i].capitalize(),
+                                llm_values[i]
+                            )
+
+            for query, prompt_details_json in TruDB.matching_objects(
+                    details_json, match=lambda q, o: len(q._path) > 0 and
+                    "prompt" == q._path[-1] and "_call" not in q._path):
+                path_str = TruDB._query_str(query)
+                st.header(f"Prompt ({path_str}) Details:")
+
+                prompt_types = {k: v for k, v in prompt_details_json.items() if (v is not None) and not is_empty(v) and not is_noserio(v)}
+                prompt_type_cols = st.columns(len(prompt_types.items()))
+                prompt_type_keys = list(prompt_types.keys())
+                prompt_type_values = list(prompt_types.values())
+
+                for i in range(len(prompt_type_keys)):
+                    with prompt_type_cols[i]:
+                        val = prompt_type_values[i]
+                        if isinstance(val, (Dict, List)):
+                            with st.expander(
+                                prompt_type_keys[i].capitalize(),
+                                expanded=True
+                            ):
+                                st.write(val)
+                        else:
+                            if isinstance(val, str) and len(val) > 32:
+                                with st.expander(
+                                    prompt_type_keys[i].capitalize(),
+                                    expanded=True
+                                ):  
+                                    st.text(
+                                        prompt_type_values[i]
+                                    )
+                            else:
+                                st.metric(
+                                        prompt_type_keys[i].capitalize(),
+                                        prompt_type_values[i]
+                                )
 
             if st.button("Display full json"):
+
                 st.write(details_json)
+
     with tab2:
         feedback = df_feedback.columns
         cols = 4
@@ -185,5 +233,5 @@ else:
                         ind = row_num * cols + col_num
                         if ind < len(feedback):
                             st.text(feedback[ind])
-                            print(model_df_feedback[feedback[ind]])
+                            # print(model_df_feedback[feedback[ind]])
                             st.bar_chart(model_df_feedback[feedback[ind]])
