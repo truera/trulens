@@ -38,6 +38,21 @@ def add_data(
     total_tokens: int = None,
     total_cost: float = None
 ):
+    """_summary_
+
+    Args:
+        chain_id (str): _description_
+        prompt (str): _description_
+        response (str): _description_
+        details (str, optional): _description_. Defaults to None.
+        tags (str, optional): _description_. Defaults to None.
+        ts (int, optional): _description_. Defaults to None.
+        total_tokens (int, optional): _description_. Defaults to None.
+        total_cost (float, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
     if not ts:
         ts = datetime.now()
 
