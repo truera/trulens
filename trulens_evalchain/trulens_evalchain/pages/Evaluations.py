@@ -1,4 +1,5 @@
 import json
+from typing import Dict
 
 import pandas as pd
 from st_aggrid import AgGrid
@@ -6,6 +7,7 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
+from trulens_evalchain.tru_db import TruDB
 from ux.add_logo import add_logo
 
 from trulens_evalchain import tru_db
@@ -127,25 +129,36 @@ else:
 
         if len(selected_rows) != 0:
             details = selected_rows['details'][0]
-            details_json = json.loads(json.loads(details))
+            details_json = json.loads(json.loads(details)) # ???
+
             chain_json = details_json['chain']
-            if "llm" in chain_json:
-                st.header("LLM Details:")
-                llm_details_json = details_json["chain"]["llm"]
-                llm_cols = st.columns(len(details_json["chain"]["llm"].items()))
+
+            for query, llm_details_json in TruDB.matching_objects(details_json, match=lambda q, o: len(q._path) > 0 and "llm" == q._path[-1]):
+                path_str = TruDB._query_str(query)
+                st.header(f"LLM ({path_str}) Details:")
+                
+                llm_cols = st.columns(len(llm_details_json.items()))
+
                 llm_keys = list(llm_details_json.keys())
                 llm_values = list(llm_details_json.values())
 
                 for i in range(len(llm_keys)):
-                    with llm_cols[i]:
-                        st.metric(llm_keys[i], llm_values[i])
+                    print(llm_values[i])
 
-            if "prompt" in chain_json:
-                st.header("Prompt Type Details:")
+                    with llm_cols[i]:
+                        if isinstance(llm_values[i], Dict):
+                            st.write(llm_keys[i], llm_values[i])
+                        else:
+                            st.metric(llm_keys[i], llm_values[i])
+
+            for query, prompt_details_json in TruDB.matching_objects(details_json, match=lambda q, o: len(q._path) > 0 and "prompt" == q._path[-1] and "_call" not in q._path):
+                path_str = TruDB._query_str(query)
+                st.header(f"Prompt ({path_str}) Details:")
+        
                 prompt_type_cols = st.columns(
-                    len(details_json["chain"]["prompt"]["_type"].items())
+                    len(prompt_details_json.items())
                 )
-                prompt_types = details_json["chain"]["prompt"]["_type"]
+                prompt_types = prompt_details_json
                 prompt_type_keys = list(prompt_types.keys())
                 prompt_type_values = list(prompt_types.values())
 
@@ -155,26 +168,10 @@ else:
                                         expanded=True):
                             st.write(prompt_type_values[i])
 
-                st.header("System Prompt Messages:")
-                prompt_messages_json = details_json["chain"]["prompt"]["messages"][
-                    0]["prompt"]
-                prompt_messages_json = {
-                    key: prompt_messages_json[key]
-                    for key in prompt_messages_json
-                    if key not in ["input_variables", "partial_variables"]
-                }
-                prompt_messages_cols = st.columns(len(prompt_messages_json.items()))
-                prompt_messages_keys = list(prompt_messages_json.keys())
-                prompt_messages_values = list(prompt_messages_json.values())
-
-                for i in range(len(prompt_messages_keys)):
-                    with prompt_messages_cols[i]:
-                        with st.expander(prompt_messages_keys[i].capitalize(),
-                                        expanded=True):
-                            st.write(prompt_messages_values[i])
-
+                
             if st.button("Display full json"):
                 st.write(details_json)
+                
     with tab2:
         feedback = df_feedback.columns
         cols = 4
