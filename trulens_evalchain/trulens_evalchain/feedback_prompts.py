@@ -11,13 +11,17 @@ STATEMENT: {statement}
 RELEVANCE: """
 
 
-RELEVANCE_SYSTEM_PROMPT = f"You are a relevance classifier, providing the relevance of a given response to a particular prompt. \n"
-"Provide all responses only as a number from 1 to 10 where 1 is the least relevant and 10 is the most. Always respond with an integer between 1 and 10. \n"
-"Never elaborate. The prompt is: "
+PR_RELEVANCE = """
+You are a relevance classifier, providing the relevance of a given response to the given prompt.
+Respond only as a number from 1 to 10 where 1 is the least relevant and 10 is the most relevant.
+Never elaborate.
 
-RELEVANCE_CONTENT_PROMPT = f"For that prompt, how relevant is this response on the scale between 1 and 10: "
+Prompt: {prompt}
 
-SENTIMENT_SYSTEM_PROMPT = f"Please classify the sentiment of the following text as 1 if positive or 0 if not positive. Respond with only a '1' or '0', nothing more."
+Response: {response}
+
+Relevance: """
+
 
 COHERE_SENTIMENT_EXAMPLES = [
     Example("The order came 5 days early", "1"),

@@ -183,9 +183,9 @@ class TruDB(abc.ABC):
             return temp
 
         else:
-            print(
-                f"WARNING: Don't know how to dictify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
-            )
+            #print(
+            #    f"WARNING: Don't know how to dictify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
+            #)
             return noserio(obj)
             #raise RuntimeError(
             #    f"Don't know how to dictify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
@@ -449,10 +449,7 @@ class LocalTinyDB(TruDB):
     def get_records_and_feedback(
         self, chain_ids: List[str]
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        # This returns all models if the list of chain_ids is empty
-        # conn, c = self._connect()
-        # query = "SELECT l.*, f.feedback FROM records l LEFT JOIN feedback f on l.record_id = f.record_id"
-
+        
         queries = [Record.chain_id, Record.record_id, Record]
         queries_records = queries + [
             Record.chain._call.args.inputs, Record.chain._call.rets
@@ -470,23 +467,6 @@ class LocalTinyDB(TruDB):
             *queries_feedbacks, where=where, table=self.feedbacks
         )
         df_feedback = df_feedback.rename(columns={'Record': 'feedback'})
-
-        #df = pd.DataFrame(
-        #    rows, columns=[description[0] for description in c.description]
-        #)
-
-        # Apply the function to the 'data' column to convert it into separate columns
-        """
-        for col in ['record',
-                    'feedback',
-                    'Record.chain._call.args.inputs', 
-                    'Record.chain._call.rets'
-                    ]:
-            if col in df_feedback.columns:
-                df_feedback[col] = df_feedback[col].apply(str_dict_to_series)
-            if col in df.columns:
-                df[col] = df[col].apply(str_dict_to_series)
-        """
 
         return df, df_feedback
 
