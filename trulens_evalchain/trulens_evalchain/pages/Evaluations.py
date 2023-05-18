@@ -25,6 +25,7 @@ df, df_feedback = lms.get_records_and_feedback([])
 
 if df.empty:
     st.write("No records yet...")
+
 else:
     chains = list(df.chain_id.unique())
 
@@ -35,24 +36,30 @@ else:
 
     options = st.multiselect('Filter Chains', chains, default=chain)
 
-    model_df = df.loc[df.chain_id.isin(options)]
-    model_df_feedback = df_feedback.loc[df.chain_id.isin(options)]
-
     if (len(options) == 0):
         st.header("All Chains")
+
+        model_df = df
+        model_df_feedback = df_feedback
     elif (len(options) == 1):
         st.header(options[0])
+
+        model_df = df[df.chain_id.isin(options)]
+        model_df_feedback = df_feedback[df.chain_id.isin(options)]
     else:
         st.header("Multiple Chains Selected")
+
+        model_df = df[df.chain_id.isin(options)]
+        model_df_feedback = df_feedback[df.chain_id.isin(options)]
 
     tab1, tab2 = st.tabs(["Records", "Feedback Functions"])
 
     #mds = model_store.ModelDataStore()
 
     with tab1:
-        evaluations_df = df.copy()
+        evaluations_df = model_df.copy()
         evaluations_df = evaluations_df.merge(
-            df_feedback, left_index=True, right_index=True
+            model_df_feedback, left_index=True, right_index=True
         )
         evaluations_df = evaluations_df[[
             'record_id',
