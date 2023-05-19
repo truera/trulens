@@ -7,7 +7,7 @@ from st_aggrid.shared import GridUpdateMode
 import streamlit as st
 from ux.add_logo import add_logo
 
-from trulens_evalchain import tru_db
+from trulens_eval import tru_db
 
 st.set_page_config(page_title="Evaluations [generic]", layout="wide")
 

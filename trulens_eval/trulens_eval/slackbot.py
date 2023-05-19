@@ -6,15 +6,15 @@ from typing import Dict, Set, Tuple
 from langchain.callbacks import get_openai_callback
 import numpy as np
 
-from trulens_evalchain import tru
-from trulens_evalchain import tru_feedback
-from trulens_evalchain.tru import thread_pool
-from trulens_evalchain.tru_chain import TruChain
-from trulens_evalchain.tru_db import LocalSQLite
-from trulens_evalchain.tru_db import LocalTinyDB
-from trulens_evalchain.tru_db import Record
-from trulens_evalchain.tru_db import TruDB
-from trulens_evalchain.tru_feedback import Feedback
+from trulens_eval import tru
+from trulens_eval import tru_feedback
+from trulens_eval.tru import thread_pool
+from trulens_eval.tru_chain import TruChain
+from trulens_eval.tru_db import LocalSQLite
+from trulens_eval.tru_db import LocalTinyDB
+from trulens_eval.tru_db import Record
+from trulens_eval.tru_db import TruDB
+from trulens_eval.tru_feedback import Feedback
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
@@ -29,10 +29,10 @@ import pinecone
 from slack_bolt import App
 from slack_sdk import WebClient
 
-from trulens_evalchain.keys import PINECONE_API_KEY
-from trulens_evalchain.keys import PINECONE_ENV
-from trulens_evalchain.keys import SLACK_SIGNING_SECRET
-from trulens_evalchain.keys import SLACK_TOKEN
+from trulens_eval.keys import PINECONE_API_KEY
+from trulens_eval.keys import PINECONE_ENV
+from trulens_eval.keys import SLACK_SIGNING_SECRET
+from trulens_eval.keys import SLACK_TOKEN
 
 pp = PrettyPrinter()
 

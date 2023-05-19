@@ -5,7 +5,7 @@ from datasets import load_dataset
 from kaggle.api.kaggle_api_extended import KaggleApi
 import pandas as pd
 
-from trulens_evalchain import tru_feedback
+from trulens_eval import tru_feedback
 
 
 def load_data(dataset_choice):
