@@ -8,4 +8,4 @@ To quickly play around with the TruLens library, check out the following CoLab n
 
 
 ### Install & Use
-Check out the [Installation](https://truera.github.io/trulens/install/) instructions for information on how to install the library, use it, and contribute. 
+Check out the [Installation](https://truera.github.io/trulens/trulens_explain/install/) instructions for information on how to install the library, use it, and contribute. 
