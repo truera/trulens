@@ -35,7 +35,6 @@ from langchain.prompts.chat import HumanMessagePromptTemplate
 # imports from trulens to log and get feedback on chain
 from trulens_eval import tru
 from trulens_eval import tru_chain
-from trulens_eval.tru_feedback import Feedback, Huggingface
 from trulens_eval.keys import *
 ```
 
@@ -111,6 +110,8 @@ To get feedback on the quality of your LLM, you can use any of the provided feed
 
 To assess your LLM quality, you can provide the feedback functions to tru.run_feedback() in a list as shown below. Here we'll just add a simple language match checker.
 ```python
+from trulens_eval.tru_feedback import Feedback, Huggingface
+
 os.environ["HUGGINGFACE_API_KEY"] = "..."
 # initialize Huggingface class for feedback function generation
 hugs = Huggingface()
@@ -165,9 +166,9 @@ Sentiment is currently available to use with OpenAI, HuggingFace or Cohere as th
 * The HuggingFace sentiment feedback function returns a raw score from 0 to 1.
 * The Cohere sentiment feedback function uses the classification endpoint and a small set of examples stored in feedback_prompts.py to return either a 0 or a 1.
 
-### Fact Agreement
+### Model Agreement
 
-Fact agreement uses OpenAI and Huggingface to attempt an honest answer at your prompt, and then evaluates the aggreement of your LLM response to each on a scale from 1 to 10. The agreement with each honest bot is then averaged and scaled from 0 to 1.
+Model agreement uses OpenAI to attempt an honest answer at your prompt with system prompts for correctness, and then evaluates the aggreement of your LLM response to this model on a scale from 1 to 10. The agreement with each honest bot is then averaged and scaled from 0 to 1.
 
 ### Language Match
 
