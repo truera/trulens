@@ -82,6 +82,24 @@ record_id = tru.add_data(
 
 Following the request to your app, you can then evaluate LLM quality using feedback functions. This is completed in a sequential call to minimize latency for your application, and evaluations will also be logged to your local machine.
 
+## API Keys
+
+feedback functions call external APIs such as OpenAI or Huggingface. You can add keys by setting the environment variables. 
+
+### In Python
+
+```
+import os
+os.environ["OPENAI_API_KEY"] = "..."
+```
+### In Terminal
+
+```
+export OPENAI_API_KEY = "..."
+```
+
+## Adding Feedback Functions
+
 To get feedback on the quality of your LLM, you can use any of the provided feedback functions or add your own.
 
 To assess your LLM quality, you can provide the feedback functions to tru.run_feedback() in a list as shown below. Here we'll just add a simple language match checker.
@@ -141,7 +159,7 @@ Sentiment is currently available to use with OpenAI, HuggingFace or Cohere as th
 
 ### Fact Agreement
 
-Fact agreement uses OpenAI and Huggingface to attempt an honest answer at your prompt, and then evaluates the aggreement of your LLM response to each on a scale from 1 to 10. The agreement with heach honest bot is then averaged and scaled from 0 to 1.
+Fact agreement uses OpenAI and Huggingface to attempt an honest answer at your prompt, and then evaluates the aggreement of your LLM response to each on a scale from 1 to 10. The agreement with each honest bot is then averaged and scaled from 0 to 1.
 
 ### Language Match
 
