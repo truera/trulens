@@ -3,7 +3,7 @@ CONDA_ENV := demo3
 CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate $(CONDA_ENV)
 
 slackbot:
-	$(CONDA); (PYTHONPATH=. python -u trulens_evalchain/slackbot.py)
+	$(CONDA); (PYTHONPATH=. python -u trulens_eval/slackbot.py)
 	
 # 1>&2 > slackbot.log)
 
@@ -17,10 +17,10 @@ lab:
 	$(CONDA); jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
 example_app:
-	$(CONDA); PYTHONPATH=. streamlit run trulens_evalchain/Example_Application.py
+	$(CONDA); PYTHONPATH=. streamlit run trulens_eval/Example_Application.py
 
 example_trubot:
-	$(CONDA); PYTHONPATH=. streamlit run trulens_evalchain/Example_TruBot.py
+	$(CONDA); PYTHONPATH=. streamlit run trulens_eval/Example_TruBot.py
 
 leaderboard:
-	$(CONDA); PYTHONPATH=. streamlit run trulens_evalchain/Leaderboard.py
+	$(CONDA); PYTHONPATH=. streamlit run trulens_eval/Leaderboard.py
