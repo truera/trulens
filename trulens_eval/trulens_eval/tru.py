@@ -106,24 +106,8 @@ def run_dashboard():
     leaderboard_path = pkg_resources.resource_filename(
         'trulens_eval', 'Leaderboard.py'
     )
-    # Copy trulens_logo to the local directory
-    local_logo_path = 'trulens_logo.svg'
-    pkg_resources.resource_stream('trulens_eval', 'trulens_logo.svg')
-    with open(local_logo_path, 'wb') as logo_file:
-        logo_file.write(
-            pkg_resources.resource_string(
-                'trulens_eval', 'trulens_logo.svg'
-            )
-        )
-    # Copy trulens_logo to the local directory
-    local_logo_path = '.streamlit/config.toml'
-    pkg_resources.resource_stream('trulens_eval', '.streamlit/config.toml')
-    with open(local_logo_path, 'wb') as logo_file:
-        logo_file.write(
-            pkg_resources.resource_string(
-                'trulens_eval', '.streamlit/config.toml'
-            )
-        )
+    pkg_resources.resource_stream('trulens_evalchain', 'trulens_logo.svg')
+    pkg_resources.resource_stream('trulens_evalchain', '.streamlit/config.toml')
 
     subprocess.Popen(["streamlit", "run", leaderboard_path])
     return None
