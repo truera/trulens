@@ -101,7 +101,7 @@ class Feedback():
         """
         A Feedback function container.
 
-        Args:
+        Parameters:
         
         - imp: Optional[Callable] -- implementation of the feedback function.
         - selectors: Optional[Dict[str, Selection]] -- mapping of implementation
@@ -128,7 +128,7 @@ class Feedback():
         values for argument `multiarg`, aggregating feedback results for each.
         Optionally each input element is further projected with `each_query`.
 
-        Args:
+        Parameters:
 
         - multiarg: str -- implementation argument that expects multiple values.
         - each_query: Optional[Query] -- a query providing the path from each
@@ -281,7 +281,7 @@ class OpenAI():
     def __init__(self, model_engine: str = "gpt-3.5-turbo"):
         """A set of OpenAI Feedback Functions
 
-        Args:
+        Parameters:
             model_engine (str, optional): The specific model version. Defaults to "gpt-3.5-turbo".
         """
         self.model_engine = model_engine
@@ -294,9 +294,9 @@ class OpenAI():
 
     def moderation_not_hate(self, text: str) -> float:
         """Uses OpenAI's Moderation API.
-A function that checks if text is hate speech.
+        A function that checks if text is hate speech.
 
-        Args:
+        Parameters:
             text (str): Text to evaluate.
 
         Returns:
@@ -309,9 +309,9 @@ A function that checks if text is hate speech.
 
     def moderation_not_hatethreatening(self, text: str) -> float:
         """Uses OpenAI's Moderation API.
-A function that checks if text is threatening speech.
+        A function that checks if text is threatening speech.
 
-        Args:
+        Parameters:
             text (str): Text to evaluate.
 
         Returns:
@@ -325,9 +325,9 @@ A function that checks if text is threatening speech.
 
     def moderation_not_selfharm(self, text: str) -> float:
         """Uses OpenAI's Moderation API.
-A function that checks if text is about self harm.
+        A function that checks if text is about self harm.
 
-        Args:
+        Parameters:
             text (str): Text to evaluate.
 
         Returns:
@@ -341,9 +341,9 @@ A function that checks if text is about self harm.
 
     def moderation_not_sexual(self, text: str) -> float:
         """Uses OpenAI's Moderation API.
-A function that checks if text is sexual speech.
+        A function that checks if text is sexual speech.
 
-        Args:
+        Parameters:
             text (str): Text to evaluate.
 
         Returns:
@@ -357,9 +357,9 @@ A function that checks if text is sexual speech.
 
     def moderation_not_sexualminors(self, text: str) -> float:
         """Uses OpenAI's Moderation API.
-A function that checks if text is about sexual minors.
+        A function that checks if text is about sexual minors.
 
-        Args:
+        Parameters:
             text (str): Text to evaluate.
 
         Returns:
@@ -373,9 +373,9 @@ A function that checks if text is about sexual minors.
 
     def moderation_not_violence(self, text: str) -> float:
         """Uses OpenAI's Moderation API.
-A function that checks if text is about violence.
+        A function that checks if text is about violence.
 
-        Args:
+        Parameters:
             text (str): Text to evaluate.
 
         Returns:
@@ -389,9 +389,9 @@ A function that checks if text is about violence.
 
     def moderation_not_violencegraphic(self, text: str) -> float:
         """Uses OpenAI's Moderation API.
-A function that checks if text is about graphic violence.
+        A function that checks if text is about graphic violence.
 
-        Args:
+        Parameters:
             text (str): Text to evaluate.
 
         Returns:
@@ -405,9 +405,9 @@ A function that checks if text is about graphic violence.
 
     def qs_relevance(self, question: str, statement: str) -> float:
         """Uses OpenAI's Chat Completion Model.
-A function that completes a template to check the relevance of the statement to the question.
+        A function that completes a template to check the relevance of the statement to the question.
 
-        Args:
+        Parameters:
             question (str): A question being asked.
             statement (str): A statement to the question.
 
@@ -437,9 +437,9 @@ A function that completes a template to check the relevance of the statement to 
 
     def relevance(self, prompt: str, response: str) -> float:
         """Uses OpenAI's Chat Completion Model.
-A function that completes a template to check the relevance of the response to a prompt.
+        A function that completes a template to check the relevance of the response to a prompt.
 
-        Args:
+        Parameters:
             prompt (str): Text to evaluate.
 
         Returns:
@@ -468,9 +468,9 @@ A function that completes a template to check the relevance of the response to a
 
     def sentiment(self, text: str) -> float:
         """Uses OpenAI's Chat Completion Model.
-A function that completes a template to check the sentiment of some text.
+        A function that completes a template to check the sentiment of some text.
 
-        Args:
+        Parameters:
             text (str): A prompt to an agent.
             response (str): The agent's response to the prompt.
 
@@ -510,167 +510,31 @@ def openai_moderation_not_hate(prompt, response, evaluation_choice):
     return 1 - float(openai_response["results"][0]["category_scores"]["hate"])
 
 
-def openai_moderation_not_hatethreatening(prompt, response, evaluation_choice):
-    if evaluation_choice == "prompt":
-        input = prompt
-    if evaluation_choice == "response":
-        input = response
-
-    openai_response = OpenAI(
-    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
-
-    return 1 - int(
-        openai_response["results"][0]["category_scores"]["hate/threatening"]
-    )
-
-
-def openai_moderation_not_selfharm(prompt, response, evaluation_choice):
-    if evaluation_choice == "prompt":
-        input = prompt
-    if evaluation_choice == "response":
-        input = response
-    openai_response = OpenAI(
-    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
-    return 1 - int(
-        openai_response["results"][0]["category_scores"]["self-harm"]
-    )
-
-
-def openai_moderation_not_sexual(prompt, response, evaluation_choice):
-    if evaluation_choice == "prompt":
-        input = prompt
-    if evaluation_choice == "response":
-        input = response
-    openai_response = OpenAI(
-    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
-    return 1 - int(openai_response["results"][0]["category_scores"]["sexual"])
-
-
-def openai_moderation_not_sexualminors(prompt, response, evaluation_choice):
-    if evaluation_choice == "prompt":
-        input = prompt
-    if evaluation_choice == "response":
-        input = response
-    openai_response = OpenAI(
-    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
-    return 1 - int(
-        openai_response["results"][0]["category_scores"]["sexual/minors"]
-    )
-
-
-def openai_moderation_not_violence(prompt, response, evaluation_choice):
-    if evaluation_choice == "prompt":
-        input = prompt
-    if evaluation_choice == "response":
-        input = response
-    openai_response = OpenAI(
-    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
-    return 1 - int(openai_response["results"][0]["category_scores"]["violence"])
-
-
-def openai_moderation_not_violencegraphic(prompt, response, evaluation_choice):
-    if evaluation_choice == "prompt":
-        input = prompt
-    if evaluation_choice == "response":
-        input = response
-    openai_response = OpenAI(
-    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
-    return 1 - int(
-        openai_response["results"][0]["category_scores"]["violence/graphic"]
-    )
-
-
-def openai_qs_relevance(question: str, statement: str, model_engine):
-
-    return _re_1_10_rating(
-        OpenAI().endpoint_openai.run_me(
-            lambda: openai.ChatCompletion.create(
-                model=model_engine,
-                temperature=0.0,
-                messages=[
-                    {
-                        "role":
-                            "system",
-                        "content":
-                            str.format(
-                                feedback_prompts.QS_RELEVANCE,
-                                question=question,
-                                statement=statement
-                            )
-                    }
-                ]
-            )["choices"][0]["message"]["content"]
-        )
-    ) / 10
-
-
-def openai_relevance(prompt, response, model_engine):
-
-    return _re_1_10_rating(
-        OpenAI().endpoint_openai.run_me(
-            lambda: openai.ChatCompletion.create(
-                model=model_engine,
-                temperature=0.5,
-                messages=[
-                    {
-                        "role":
-                            "system",
-                        "content":
-                            feedback_prompts.RELEVANCE_SYSTEM_PROMPT + prompt
-                    }, {
-                        "role":
-                            "user",
-                        "content":
-                            feedback_prompts.RELEVANCE_CONTENT_PROMPT + response
-                    }
-                ]
-            )["choices"][0]["message"]["content"]
-        )
-    ) / 10
-
-
-def openai_sentiment_function(
-    prompt, response, evaluation_choice, model_engine
-):
-    if evaluation_choice == "prompt":
-        input = prompt
-    if evaluation_choice == "response":
-        input = response
-
-    return _re_1_10_rating(
-        OpenAI().endpoint_openai.run_me(
-            lambda: openai.ChatCompletion.create(
-                model=model_engine,
-                temperature=0.5,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": feedback_prompts.SENTIMENT_SYSTEM_PROMPT
-                    }, {
-                        "role": "user",
-                        "content": input
-                    }
-                ]
-            )["choices"][0]["message"]["content"]
-        )
-    )
-
-
-# huggingface
-
-
 class Huggingface():
+
     SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
     TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
     CHAT_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-3B"
     LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
 
     def __init__(self):
+        """A set of Huggingface Feedback Functions. Utilizes huggingface api-inference
+        """
         self.endpoint_huggingface = Endpoint(
             name="huggingface", rpm=30, post_headers=get_huggingface_headers()
         )
 
     def language_match(self, text1: str, text2: str) -> float:
+        """Uses Huggingface's papluca/xlm-roberta-base-language-detection model.
+        A function that uses language detection on `text1` and `text2` and calculates the probit difference on the language detected on text1.
+        The function is: `1.0 - (|probit_language_text1(text1) - probit_language_text1(text2))`
+        Parameters:
+            text1 (str): Text to evaluate.
+            text2 (str): Comparative text to evaluate.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "different languages" and 1 being "same languages".
+        """
         # TODO: parallelize
 
         max_length = 500
@@ -697,7 +561,15 @@ class Huggingface():
 
         return l1
 
-    def positive_sentiment(self, text: str):
+    def positive_sentiment(self, text: str) -> float:
+        """Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model.
+        A function that uses a sentiment classifier on `text`.
+        Parameters:
+            text (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "negative sentiment" and 1 being "positive sentiment".
+        """
         max_length = 500
         truncated_text = text[:max_length]
         payload = {"inputs": truncated_text}
@@ -710,7 +582,15 @@ class Huggingface():
             if label['label'] == 'LABEL_2':
                 return label['score']
 
-    def not_toxic(self, text: str):
+    def not_toxic(self, text: str) -> float:
+        """Uses Huggingface's martin-ha/toxic-comment-model model.
+        A function that uses a toxic comment classifier on `text`.
+        Parameters:
+            text (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "toxic" and 1 being "not toxic".
+        """
         max_length = 500
         truncated_text = text[:max_length]
         payload = {"inputs": truncated_text}
@@ -721,96 +601,6 @@ class Huggingface():
         for label in hf_response:
             if label['label'] == 'toxic':
                 return label['score']
-
-
-# old interface
-def huggingface_language_match(
-    prompt, response, evaluation_choice=None
-) -> float:
-    max_length = 500
-    truncated_text = prompt[:max_length]
-    payload = {"inputs": truncated_text}
-
-    hf_response = Huggingface().endpoint_huggingface.run_me(
-        lambda: requests.post(
-            Huggingface.LANGUAGE_API_URL,
-            headers=get_huggingface_headers(),
-            json=payload
-        ).json()
-    )
-
-    if not (isinstance(hf_response, list) and len(hf_response) > 0):
-        raise RuntimeError(hf_response)
-
-    hf_response = hf_response[0]
-
-    scores1 = {r['label']: r['score'] for r in hf_response}
-
-    truncated_text = response[:max_length]
-    payload = {"inputs": truncated_text}
-    hf_response = Huggingface().endpoint_huggingface.run_me(
-        lambda: requests.post(
-            Huggingface.LANGUAGE_API_URL,
-            headers=get_huggingface_headers(),
-            json=payload
-        ).json()
-    )
-
-    if not (isinstance(hf_response, list) and len(hf_response) > 0):
-        raise RuntimeError(hf_response)
-    hf_response = hf_response[0]
-
-    scores2 = {r['label']: r['score'] for r in hf_response}
-
-    langs = list(scores1.keys())
-    prob1 = np.array([scores1[k] for k in langs])
-    prob2 = np.array([scores2[k] for k in langs])
-    diff = prob1 - prob2
-
-    l1 = 1.0 - (np.linalg.norm(diff, ord=1)) / 2.0
-
-    return l1
-
-
-def huggingface_positive_sentiment(prompt, response, evaluation_choice):
-    if evaluation_choice == "prompt":
-        input = prompt
-    if evaluation_choice == "response":
-        input = response
-    max_length = 500
-    truncated_text = input[:max_length]
-    payload = {"inputs": truncated_text}
-    hf_response = Huggingface().endpoint_huggingface.run_me(
-        lambda: requests.post(
-            Huggingface.SENTIMENT_API_URL,
-            headers=get_huggingface_headers(),
-            json=payload
-        ).json()[0]
-    )
-
-    for label in hf_response:
-        if label['label'] == 'LABEL_2':
-            return label['score']
-
-
-def huggingface_not_toxic(prompt, response, evaluation_choice):
-    if evaluation_choice == "prompt":
-        input = prompt
-    if evaluation_choice == "response":
-        input = response
-    max_length = 500
-    truncated_text = input[:max_length]
-    payload = {"inputs": truncated_text}
-    hf_response = Huggingface().endpoint_huggingface.run_me(
-        lambda: requests.post(
-            Huggingface.TOXIC_API_URL,
-            headers=get_huggingface_headers(),
-            json=payload
-        ).json()[0]
-    )
-    for label in hf_response:
-        if label['label'] == 'toxic':
-            return label['score']
 
 
 # cohere
