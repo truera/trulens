@@ -6,34 +6,49 @@ TruLens-EvalChain is a library containing langchain instrumentation and evaluati
 
 Using feedback functions, you can objectively evaluate the quality of the responses provided by an LLM to your requests. This is completed with minimal latency, as this is achieved in a sequential call for your application, and evaluations are logged to your local machine. Finally, we provide an easy to use streamlit dashboard run locally on your machine for you to better understand your LLM’s performance.
 
-![Architecture Diagram](https://github.com/truera/llm-experiments/assets/60949774/482d68b9-5387-4f23-9d42-2dc0f0b67c6f)
+![Architecture Diagram](https://github.com/truera/trulens_private/assets/60949774/3efaba55-06cc-4a2b-b734-6030080bc4fb)
 
-# Installation
+# Installation and Setup
 
-Install trulens-evalchain package from pypi:
+Install trulens-evalchain from pypi.
 
 ```
 pip install trulens-evalchain
 ```
 
-In your application, you will need to import the following, dependent on your application requirements:
+Imports from langchain to build app, trulens for evaluation
 
-### If only using logging:
 ```python
-from trulens_evalchain import tru
-```
-
-If your application is chain-based and you wish to capture chain metadata:
-```python
-from trulens_evalchain import tru
-from trulens_evalchain import tru_chain
-```
-
-If also using evaluations:
-```python
+# imports from langchain to build app
+from langchain.chains import LLMChain
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts.chat import ChatPromptTemplate
+from langchain.prompts.chat import HumanMessagePromptTemplate
+# imports from trulens to log and get feedback on chain
 from trulens_evalchain import tru
 from trulens_evalchain import tru_chain
-from trulens_evalchain tru_feedback
+from trulens_evalchain.tru_feedback import Feedback, Huggingface
+from trulens_evalchain.keys import *
+```
+## Create a basic LLM chain to evaluate
+
+This example uses langchain and OpenAI, but the same process can be followed with any framework and model provider. Once you've created your chain, just call TruChain to wrap it. Doing so allows you to capture the chain metadata for logging.
+
+```python
+full_prompt = HumanMessagePromptTemplate(
+    prompt=PromptTemplate(
+        template="Provide a helpful response with relevant background information for the following: {prompt}",
+            input_variables=["prompt"],
+        )
+    )
+chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
+
+chat = ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0.9)
+
+chain = LLMChain(llm=chat, prompt=chat_prompt_template)
+
+# wrap with truchain to instrument your chain
+tc = tru_chain.TruChain(chain)
 ```
 
 ## Set up logging and instrumentation
@@ -41,67 +56,46 @@ from trulens_evalchain tru_feedback
 First, you need to create an empty database to store your logs. You can do this in the command line with the following:
 
 ```python
-import trulens_evalchain
-from trulens_evalchain import tru
 tru.init_db('llm_quality') 
 ```
 
-If your application is chain-based, you will need to wrap it using tru_chain. This is done like so:
+Make the first call to your LLM Application
 
 ```python
-# create the chain
-chain = LLMChain(llm=chat, prompt=chat_prompt_template)
-# wrap it with tru_chain
-tc = tru_chain.TruChain(chain)
-```
-
-Once you've done so, this metadata will be returned by your application along with the LLM response like so:
-
-```python
-llm_response, chain_details = generate_response(prompt_input, model_name)
+prompt_input = 'como adopto un perro?'
+gpt3_response, record = tc(prompt_input)
 ```
 
 You can then log information to a database on your using tru.add_data with each call to the application. Note: make sure to capture the record_id returned by add_data so that the LLM evaluation can be included later.
 
 ```python
 record_id = tru.add_data(
-        chain_id='Chain1_ChatApplication', # name of the chain/application version
-        prompt=prompt_input, #LLM prompt
-        response=llm_response, #LLM response
-        details=chain_details
+        chain_id='Chain1_ChatApplication',
+        prompt=prompt_input,
+        response=gpt3_response['text'],
+        record=record,
+        tags='dev'
     )
 ```
 
-## Capturing Tokens and Cost (OpenAI only)
-
-If you are using OpenAI as your LLM provider, you can capture the total tokens and total cost of each LLM call and then pass them through to tru.add_data() to be logged.
-
-To capture total_tokens and total_cost, simply wrap your LLM request with get_openai_callback() like shown below:
-
-```python
-with get_openai_callback() as cb:
-        llm_response, record = generate_response(prompt_input, model_name)
-        total_tokens = cb.total_tokens
-        total_cost = cb.total_cost
-```
-## Evaluate LLM Quality
+# Evaluate Quality
 
 Following the request to your app, you can then evaluate LLM quality using feedback functions. This is completed in a sequential call to minimize latency for your application, and evaluations will also be logged to your local machine.
 
 To get feedback on the quality of your LLM, you can use any of the provided feedback functions or add your own.
 
-To assess your LLM quality, you can provide the feedback functions to tru.run_feedback() in a list as shown below:
+To assess your LLM quality, you can provide the feedback functions to tru.run_feedback() in a list as shown below. Here we'll just add a simple language match checker.
 ```python
-feedback = tru.run_feedback_function(
-        prompt_input, llm_response, [
-            tru_feedback.get_factagreement_function(
-                evaluation_choice='both',
-                provider='openai',
-                model_engine='gpt-3.5-turbo'
-            ),
-            ... # add more feedback functions in a list
-        ]
+hugs = Huggingface()
+
+f_lang_match = Feedback(hugs.language_match).on(text1="prompt", text2="response")
+
+feedback = tru.run_feedback_functions(
+        chain=chain,
+        record=record,
+        feedback_functions=[f_lang_match]
     )
+
 ```
 
 After capturing feedback, you can then log it to your local database using tru.add_feedback()
@@ -109,13 +103,16 @@ After capturing feedback, you can then log it to your local database using tru.a
 tru.add_feedback(record_id, feedback)
 ```
 
-# Overview
+## Run the dashboard!
+```python
+tru.run_dashboard()
+```
 
-## Chain Leaderboard
+## Chain Leaderboard: Quickly identify quality issues.
 
 Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics across all of your LLM apps using the chain leaderboard. As you iterate new versions of your LLM application, you can compare their performance.
 
-## Evaluations
+## Understand chain performance with Evaluations
  
 To learn more about the performance of a particular chain or LLM model, we can select it to view its evaluations at the record level. LLM quality is assessed through the use of feedback functions. Feedback functions are extensible methods for determining the quality of LLM responses and can be applied to any downstream LLM task. Out of the box we provide a number of feedback functions for assessing truthfulness, sentiment, relevance and more.
 
@@ -141,7 +138,13 @@ Sentiment is currently available to use with OpenAI, HuggingFace or Cohere as th
 
 ### Fact Agreement
 
-This evaluates the *truthfulness* of the response...
+Fact agreement uses OpenAI and Huggingface to attempt an honest answer at your prompt, and then evaluates the aggreement of your LLM response to each on a scale from 1 to 10. The agreement with heach honest bot is then averaged and scaled from 0 to 1.
+
+### Language Match
+
+This evaluates if the language of the prompt and response match.
+
+Language match is currently only available to use with HuggingFace as the model provider. This feedback function returns a score in the range from 0 to 1, where 1 indicates match and 0 indicates mismatch.
 
 ### Disinformation
 
@@ -163,20 +166,4 @@ The OpenAI Moderation API is made available for use as feedback functions. This 
 
 Feedback functions are an extensible framework for evaluating LLMs. You can add your own feedback functions to evaluate the qualities required by your application using the process detailed below:
 
-1. Add a new function to tru_feedback that takes in prompt, response, evaluation_choice and model_engine and returns a feedback value. The new function should be named using the convention: <model_descriptor>_<quality_being_evaluated>.
-2. If the function falls under an existing quality, you can simply extend the applicable factory function named with the convention: get_<quality_being_evaluated>_function.
-3. If the function falls under a new LLM quality you wish to evaluate, you will need to create a new factory function wrapper in which to place it. The factory function you create should take in the provider, model_engine, evaluation_choice and output the feedback function created in step 1.
 
-Template for adding new feedback functions:
-
-```python
-def <provider>_<quality>(prompt, response, evaluation_choice):
-    return # some function that takes text as input and returns a value, potentially dependent on parameters selected
-
-def get_<quality>_function(provider, model_engine, evaluation_choice):
-
-    def <provider>_<quality>_function(prompt, response):
-        return <provider>_<quality>(prompt, response, model_engine, evaluation_choice)
-
-    return <provider>_<quality>_function
-```
