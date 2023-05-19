@@ -1,8 +1,8 @@
-# Welcome to TruLens-EvalChain!
+# Welcome to TruLens-Eval!
 
 ![TruLens](https://www.trulens.org/Assets/image/Neural_Network_Explainability.png)
 
-TruLens-EvalChain is a library containing langchain instrumentation and evaluation tools for LLM-based applications. TruLens-EvalChain supports the iterative development and monitoring of a wide range of LLM applications by  wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine.
+TruLens-Eval is a library containing langchain instrumentation and evaluation tools for LLM-based applications. TruLens-Eval supports the iterative development and monitoring of a wide range of LLM applications by  wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine.
 
 Using feedback functions, you can objectively evaluate the quality of the responses provided by an LLM to your requests. This is completed with minimal latency, as this is achieved in a sequential call for your application, and evaluations are logged to your local machine. Finally, we provide an easy to use streamlit dashboard run locally on your machine for you to better understand your LLM’s performance.
 
@@ -10,10 +10,10 @@ Using feedback functions, you can objectively evaluate the quality of the respon
 
 # Installation and Setup
 
-Install trulens-evalchain from pypi.
+Install trulens-eval from pypi.
 
 ```
-pip install trulens-evalchain
+pip install trulens-eval
 ```
 
 Imports from langchain to build app, trulens for evaluation
