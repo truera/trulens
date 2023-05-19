@@ -149,6 +149,7 @@ To learn more about the performance of a particular chain or LLM model, we can s
 The evaluations tab provides record-level metadata and feedback on the quality of your LLM application. Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain.
 
 ## Out-of-the-box Feedback Functions
+See: <https://www.trulens.org/trulens_eval/api/tru_feedback/>
 
 ### Relevance
 
@@ -175,12 +176,6 @@ Model agreement uses OpenAI to attempt an honest answer at your prompt with syst
 This evaluates if the language of the prompt and response match.
 
 Language match is currently only available to use with HuggingFace as the model provider. This feedback function returns a score in the range from 0 to 1, where 1 indicates match and 0 indicates mismatch.
-
-### Disinformation
-
-This evaluates the prompt or response to determine if it is likely to be disinformation.
-
-Disinformation is currently only available to be used with Cohere, and uses the classification endpoint and a small set of examples stored in feedback_prompts.py to return a 0 or 1.
 
 ### Toxicity
 
