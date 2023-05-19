@@ -45,6 +45,7 @@ Question/Statement relevance that is evaluated on a sub-chain input which contai
 
 """
 
+from inspect import Signature, signature
 import re
 from typing import Any, Callable, Dict, Optional, Sequence, Union
 
@@ -101,6 +102,12 @@ class Feedback():
           argument names to where to get them from a record.
         """
 
+        # Verify that `imp` expects the arguments specified in `selectors`:
+        if imp is not None and selectors is not None:
+            sig: Signature = signature(imp)
+            for argname in selectors.keys():
+                assert argname in sig.parameters, f"{argname} is not an argument to {imp.__name__}. Its arguments are {list(sig.parameters.keys())}."
+
         self.imp = imp
         self.selectors = selectors
 
@@ -129,13 +136,10 @@ class Feedback():
             # TODO: parallelize
 
             for aval in multi:
-                # print(f"multiarg {multiarg} = {aval}")
 
                 if each_query is not None:
                     aval = TruDB.project(query=each_query, obj=aval)
             
-                # print(f"multiarg {multiarg} = {aval}")
-
                 kwargs[multiarg] = aval
 
                 ret = self.imp(**kwargs)
@@ -147,6 +151,11 @@ class Feedback():
             return agg(rets)
 
         wrapped_imp.__name__ = self.imp.__name__
+
+        # Copy over signature from wrapped function. Otherwise signature of the
+        # wrapped method will include just kwargs which is insufficient for
+        # verify arguments (see Feedback.__init__).
+        wrapped_imp.__signature__ = signature(self.imp) 
 
         return Feedback(imp=wrapped_imp, selectors=self.selectors)
 
@@ -185,8 +194,6 @@ class Feedback():
         """
 
         ins = self.extract_selection(chain=chain, record=record)
-
-        # print(f"Will run {self.imp} on {ins}.")
 
         ret = self.imp(**ins)
 
