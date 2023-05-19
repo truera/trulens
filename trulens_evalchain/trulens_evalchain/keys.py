@@ -27,13 +27,13 @@ cohere_agent = None
 def get_cohere_agent():
     global cohere_agent
     if cohere_agent is None:
-        cohere.api_key = config['COHERE_API_KEY']
+        cohere.api_key = os.environ['COHERE_API_KEY']
         cohere_agent = cohere.Client(cohere.api_key)
     return cohere_agent
 
 
 def get_huggingface_headers():
     HUGGINGFACE_HEADERS = {
-        "Authorization": f"Bearer {config['HUGGINGFACE_API_KEY']}"
+        "Authorization": f"Bearer {os.environ['HUGGINGFACE_API_KEY']}"
     }
     return HUGGINGFACE_HEADERS
