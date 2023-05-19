@@ -84,13 +84,13 @@ You are a fact bot and you answer with verifiable facts
 
 AGREEMENT_SYSTEM_PROMPT = \
 """ 
-You will start seeing answers to the prompt
+You will continually start seeing responses to the prompt:
 
-{%s}
+%s
 
-that should be answered with:
+The right answer is:
 
-{%s}
+%s
 
-When you answer, Answer only with an integer from 1 to 10.
+Answer only with an integer from 1 to 10 based on how close the responses are to the right answer.
 """

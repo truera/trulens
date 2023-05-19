@@ -270,8 +270,11 @@ pat_1_10 = re.compile(r"\s*([1-9][0-9]*)\s*")
 def _re_1_10_rating(str_val):
     matches = pat_1_10.fullmatch(str_val)
     if not matches:
-        print(f"WARNING: 1-10 rating regex failed to match on: '{str_val}'")
-        return -10  # so this will be reported as -1 after division by 10
+        # Try soft match
+        matches = re.search('[1-9][0-9]*', str_val)
+        if not matches:
+            print(f"WARNING: 1-10 rating regex failed to match on: '{str_val}'")
+            return -10  # so this will be reported as -1 after division by 10
 
     return int(matches.group())
 
@@ -440,7 +443,8 @@ class OpenAI():
         A function that completes a template to check the relevance of the response to a prompt.
 
         Parameters:
-            prompt (str): Text to evaluate.
+            prompt (str): A text prompt to an agent.
+            response (str): The agent's response to the prompt.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
@@ -465,6 +469,38 @@ class OpenAI():
                 )["choices"][0]["message"]["content"]
             )
         ) / 10
+
+    def model_agreement(self, prompt: str, response: str) -> float:
+        """Uses OpenAI's Chat GPT Model.
+        A function that gives Chat GPT the same prompt and gets a response, encouraging truthfulness.
+        A second template is given to Chat GPT with a prompt that the original response is correct, and measures whether previous Chat GPT's response is similar.
+
+        Parameters:
+            prompt (str): A text prompt to an agent.
+            response (str): The agent's response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not in agreement" and 1 being "in agreement".
+        """
+        oai_chat_response = OpenAI().endpoint_openai.run_me(
+            lambda: openai.ChatCompletion.create(
+                model=self.model_engine,
+                temperature=0.0,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": feedback_prompts.CORRECT_SYSTEM_PROMPT
+                    }, {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+        )
+        agreement_txt = _get_answer_agreement(
+            prompt, response, oai_chat_response, self.model_engine
+        )
+        return _re_1_10_rating(agreement_txt) / 10
 
     def sentiment(self, text: str) -> float:
         """Uses OpenAI's Chat Completion Model.
@@ -497,17 +533,30 @@ class OpenAI():
         )
 
 
-# outdated interfaces
-def openai_moderation_not_hate(prompt, response, evaluation_choice):
-    if evaluation_choice == "prompt":
-        input = prompt
-    if evaluation_choice == "response":
-        input = response
-
-    openai_response = OpenAI(
-    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
-
-    return 1 - float(openai_response["results"][0]["category_scores"]["hate"])
+def _get_answer_agreement(prompt, response, check_response, model_engine):
+    print("DEBUG")
+    print(feedback_prompts.AGREEMENT_SYSTEM_PROMPT % (prompt, response))
+    print("MODEL ANSWER")
+    print(check_response)
+    oai_chat_response = OpenAI().endpoint_openai.run_me(
+        lambda: openai.ChatCompletion.create(
+            model=model_engine,
+            temperature=0.5,
+            messages=[
+                {
+                    "role":
+                        "system",
+                    "content":
+                        feedback_prompts.AGREEMENT_SYSTEM_PROMPT %
+                        (prompt, response)
+                }, {
+                    "role": "user",
+                    "content": check_response
+                }
+            ]
+        )["choices"][0]["message"]["content"]
+    )
+    return oai_chat_response
 
 
 class Huggingface():
@@ -640,69 +689,3 @@ def cohere_not_disinformation(prompt, response, evaluation_choice):
             )[0].prediction
         )
     )
-
-
-def _get_answer_agreement(prompt, response, check_response, model_engine):
-    oai_chat_response = OpenAI().endpoint_openai.run_me(
-        lambda: openai.ChatCompletion.create(
-            model=model_engine,
-            temperature=0.5,
-            messages=[
-                {
-                    "role":
-                        "system",
-                    "content":
-                        feedback_prompts.AGREEMENT_SYSTEM_PROMPT %
-                        (prompt, response)
-                }, {
-                    "role": "user",
-                    "content": check_response
-                }
-            ]
-        )["choices"][0]["message"]["content"]
-    )
-    return oai_chat_response
-
-
-def openai_factagreement(prompt, response, model_engine):
-    if not prompt or prompt == "":
-        prompt = f"Finish this thought: {response[:int(len(response)*4.0/5.0)]}"
-    payload = {"text": prompt}
-    hf_response = requests.post(
-        Huggingface.CHAT_API_URL,
-        headers=get_huggingface_headers(),
-        json=payload
-    ).json()['generated_text']
-
-    # Attempt an honest bot
-
-    oai_chat_response = OpenAI().endpoint_openai.run_me(
-        lambda: openai.ChatCompletion.create(
-            model=model_engine,
-            temperature=0.5,
-            messages=[
-                {
-                    "role": "system",
-                    "content": feedback_prompts.CORRECT_SYSTEM_PROMPT
-                }, {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )["choices"][0]["message"]["content"]
-    )
-
-    oai_similarity_response_1 = _get_answer_agreement(
-        prompt, response, hf_response, model_engine
-    )
-    oai_similarity_response_2 = _get_answer_agreement(
-        prompt, response, oai_chat_response, model_engine
-    )
-
-    #print(f"Prompt: {prompt}\n\nResponse: {response}\n\nHFResp: {hf_response}\n\nOAIResp: {oai_chat_response}\n\nAgree1: {oai_similarity_response_1}\n\nAgree2: {oai_similarity_response_2}\n\n")
-    return (
-        (
-            _re_1_10_rating(oai_similarity_response_1) +
-            _re_1_10_rating(oai_similarity_response_2)
-        ) / 2
-    ) / 10
