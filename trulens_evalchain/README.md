@@ -70,11 +70,11 @@ You can then log information to a database on your using tru.add_data with each 
 
 ```python
 record_id = tru.add_data(
-        chain_id='Chain1_ChatApplication',
-        prompt=prompt_input,
-        response=gpt3_response['text'],
-        record=record,
-        tags='dev'
+        chain_id='Chain1_ChatApplication', #name your chain
+        prompt=prompt_input, # prompt input
+        response=gpt3_response['text'], # LLM response
+        record=record, # record is returned by the TruChain wrapper
+        tags='dev' #add a tag
     )
 ```
 
@@ -86,26 +86,29 @@ To get feedback on the quality of your LLM, you can use any of the provided feed
 
 To assess your LLM quality, you can provide the feedback functions to tru.run_feedback() in a list as shown below. Here we'll just add a simple language match checker.
 ```python
+# initialize Huggingface class for feedback function generation
 hugs = Huggingface()
 
+# Generate a language match feedback function using HuggingFace
 f_lang_match = Feedback(hugs.language_match).on(text1="prompt", text2="response")
 
+# Run feedack functions
 feedback = tru.run_feedback_functions(
-        chain=chain,
-        record=record,
-        feedback_functions=[f_lang_match]
+        chain=chain, # the unwrapped chain
+        record=record, # record is returned by the TruChain wrapper
+        feedback_functions=[f_lang_match] # a list of feedback functions to apply
     )
 
 ```
 
 After capturing feedback, you can then log it to your local database using tru.add_feedback()
 ```python
-tru.add_feedback(record_id, feedback)
+tru.add_feedback(record_id, feedback) # log the feedback by providing the record id
 ```
 
 ## Run the dashboard!
 ```python
-tru.run_dashboard()
+tru.run_dashboard() # open a streamlit app to explore
 ```
 
 ## Chain Leaderboard: Quickly identify quality issues.
