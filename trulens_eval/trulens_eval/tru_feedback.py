@@ -279,6 +279,11 @@ def _re_1_10_rating(str_val):
 class OpenAI():
 
     def __init__(self, model_engine: str = "gpt-3.5-turbo"):
+        """A set of OpenAI Feedback Functions
+
+        Args:
+            model_engine (str, optional): The specific model version. Defaults to "gpt-3.5-turbo".
+        """
         self.model_engine = model_engine
         self.endpoint_openai = Endpoint(name="openai", rpm=30)
 
@@ -287,55 +292,128 @@ class OpenAI():
             lambda: openai.Moderation.create(input=text)
         )
 
-    def moderation_not_hate(self, text: str):
+    def moderation_not_hate(self, text: str) -> float:
+        """Uses OpenAI's Moderation API.
+A function that checks if text is hate speech.
+
+        Args:
+            text (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "hate" and 1 being "not hate".
+        """
         openai_response = self._moderation(text)
         return 1 - float(
             openai_response["results"][0]["category_scores"]["hate"]
         )
 
-    def moderation_not_hatethreatening(self, text: str):
+    def moderation_not_hatethreatening(self, text: str) -> float:
+        """Uses OpenAI's Moderation API.
+A function that checks if text is threatening speech.
+
+        Args:
+            text (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "threatening" and 1 being "not threatening".
+        """
         openai_response = self._moderation(text)
 
         return 1 - int(
             openai_response["results"][0]["category_scores"]["hate/threatening"]
         )
 
-    def moderation_not_selfharm(self, text: str):
+    def moderation_not_selfharm(self, text: str) -> float:
+        """Uses OpenAI's Moderation API.
+A function that checks if text is about self harm.
+
+        Args:
+            text (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "self harm" and 1 being "not self harm".
+        """
         openai_response = self._moderation(text)
 
         return 1 - int(
             openai_response["results"][0]["category_scores"]["self-harm"]
         )
 
-    def moderation_not_sexual(self, text: str):
+    def moderation_not_sexual(self, text: str) -> float:
+        """Uses OpenAI's Moderation API.
+A function that checks if text is sexual speech.
+
+        Args:
+            text (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "sexual" and 1 being "not sexual".
+        """
         openai_response = self._moderation(text)
 
         return 1 - int(
             openai_response["results"][0]["category_scores"]["sexual"]
         )
 
-    def moderation_not_sexualminors(self, text: str):
+    def moderation_not_sexualminors(self, text: str) -> float:
+        """Uses OpenAI's Moderation API.
+A function that checks if text is about sexual minors.
+
+        Args:
+            text (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "sexual minors" and 1 being "not sexual minors".
+        """
         openai_response = self._moderation(text)
 
         return 1 - int(
             openai_response["results"][0]["category_scores"]["sexual/minors"]
         )
 
-    def moderation_not_violence(self, text: str):
+    def moderation_not_violence(self, text: str) -> float:
+        """Uses OpenAI's Moderation API.
+A function that checks if text is about violence.
+
+        Args:
+            text (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "violence" and 1 being "not violence".
+        """
         openai_response = self._moderation(text)
 
         return 1 - int(
             openai_response["results"][0]["category_scores"]["violence"]
         )
 
-    def moderation_not_violencegraphic(self, text: str):
+    def moderation_not_violencegraphic(self, text: str) -> float:
+        """Uses OpenAI's Moderation API.
+A function that checks if text is about graphic violence.
+
+        Args:
+            text (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "graphic violence" and 1 being "not graphic violence".
+        """
         openai_response = self._moderation(text)
 
         return 1 - int(
             openai_response["results"][0]["category_scores"]["violence/graphic"]
         )
 
-    def qs_relevance(self, question: str, statement: str):
+    def qs_relevance(self, question: str, statement: str) -> float:
+        """Uses OpenAI's Chat Completion Model.
+A function that completes a template to check the relevance of the statement to the question.
+
+        Args:
+            question (str): A question being asked.
+            statement (str): A statement to the question.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
+        """
         return _re_1_10_rating(
             self.endpoint_openai.run_me(
                 lambda: openai.ChatCompletion.create(
@@ -357,7 +435,16 @@ class OpenAI():
             )
         ) / 10
 
-    def relevance(self, prompt: str, response: str):
+    def relevance(self, prompt: str, response: str) -> float:
+        """Uses OpenAI's Chat Completion Model.
+A function that completes a template to check the relevance of the response to a prompt.
+
+        Args:
+            prompt (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
+        """
         return _re_1_10_rating(
             self.endpoint_openai.run_me(
                 lambda: openai.ChatCompletion.create(
@@ -379,7 +466,17 @@ class OpenAI():
             )
         ) / 10
 
-    def sentiment(self, text: str):
+    def sentiment(self, text: str) -> float:
+        """Uses OpenAI's Chat Completion Model.
+A function that completes a template to check the sentiment of some text.
+
+        Args:
+            text (str): A prompt to an agent.
+            response (str): The agent's response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "negative sentiment" and 1 being "positive sentiment".
+        """
 
         return _re_1_10_rating(
             self.endpoint_openai.run_me(

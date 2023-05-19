@@ -6,13 +6,12 @@ from unittest import main
 from unittest import TestCase
 
 import numpy as np
+from tests.unit.multi_qoi_test_base import MultiQoiTestBase
 import torch
 from torch import cat
 from torch.nn import GRU
 from torch.nn import Linear
 from torch.nn import Module
-
-from tests.unit.multi_qoi_test_base import MultiQoiTestBase
 from trulens.nn.backend import get_backend
 from trulens.nn.models import get_model_wrapper
 

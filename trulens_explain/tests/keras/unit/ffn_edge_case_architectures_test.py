@@ -15,7 +15,6 @@ from keras.layers import Concatenate
 from keras.layers import Dense
 from keras.layers import Input
 from keras.models import Model
-
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.nn.distributions import PointDoi

@@ -3,7 +3,6 @@ from typing import Tuple
 
 import numpy as np
 import tensorflow as tf
-
 from trulens.nn.backend import get_backend
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import QoI
@@ -207,7 +206,9 @@ class TensorflowModelWrapper(ModelWrapper):
             #    raise ValueError(f"Expected to get {len(doi_tensors)} inputs for intervention but got {len(args)} args and {len(kwargs)} kwargs.")
 
             intervention_dict.update(
-                {k: v for k, v in zip(doi_tensors[0:len(args)], args)}
+                {
+                    k: v for k, v in zip(doi_tensors[0:len(args)], args)
+                }
             )
             intervention_dict.update({_tensor(k): v for k, v in kwargs.items()})
 

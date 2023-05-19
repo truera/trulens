@@ -1,5 +1,4 @@
 import numpy as np
-
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.quantities import MaxClassQoI

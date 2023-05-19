@@ -16,7 +16,6 @@ from dataclasses import dataclass
 from typing import Callable, get_type_hints, List, Tuple, Union
 
 import numpy as np
-
 from trulens.nn.backend import get_backend
 from trulens.nn.backend import memory_suggestions
 from trulens.nn.backend import rebatch

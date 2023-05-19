@@ -6,7 +6,6 @@ import traceback
 from typing import Iterable, Tuple
 
 import numpy as np
-
 from trulens.utils import tru_logger
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import nested_map
