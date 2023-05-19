@@ -43,7 +43,7 @@ def add_data(
 ):
     """_summary_
 
-    Args:
+    Parameters:
         chain_id (str): _description_
         prompt (str): _description_
         response (str): _description_
