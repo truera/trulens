@@ -8,6 +8,13 @@ Using feedback functions, you can objectively evaluate the quality of the respon
 
 ![Architecture Diagram](https://github.com/truera/trulens_private/assets/60949774/3efaba55-06cc-4a2b-b734-6030080bc4fb)
 
+# Quick Usage
+To quickly play around with the TruLens Eval library, check out the following CoLab notebooks:
+
+* PyTorch: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1rjXCVg4YlaFoVkLK2b3MLgbZbaJhi4dz?usp=share_link)
+
+
+
 # Installation and Setup
 
 Install trulens-eval from pypi.
