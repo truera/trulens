@@ -54,14 +54,14 @@ import numpy as np
 import openai
 import requests
 
-from trulens_evalchain import feedback_prompts
-from trulens_evalchain import tru
-from trulens_evalchain.keys import *
-from trulens_evalchain.provider_apis import Endpoint
-from trulens_evalchain.tru_chain import TruChain
-from trulens_evalchain.tru_db import Query
-from trulens_evalchain.tru_db import Record
-from trulens_evalchain.tru_db import TruDB
+from trulens_eval import feedback_prompts
+from trulens_eval import tru
+from trulens_eval.keys import *
+from trulens_eval.provider_apis import Endpoint
+from trulens_eval.tru_chain import TruChain
+from trulens_eval.tru_db import Query
+from trulens_eval.tru_db import Record
+from trulens_eval.tru_db import TruDB
 
 # openai
 

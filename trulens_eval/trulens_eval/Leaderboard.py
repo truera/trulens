@@ -6,11 +6,11 @@ from streamlit_extras.switch_page_button import switch_page
 
 st.runtime.legacy_caching.clear_cache()
 
-from trulens_evalchain import tru_db
+from trulens_eval import tru_db
 
 st.set_page_config(page_title="Leaderboard", layout="wide")
 
-from trulens_evalchain.ux.add_logo import add_logo
+from trulens_eval.ux.add_logo import add_logo
 
 add_logo()
 
