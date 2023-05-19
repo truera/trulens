@@ -3,6 +3,7 @@ from setuptools import setup
 
 setup(
     name="trulens_evalchain_test",
+    package_data={"": ["*.svg", "*.toml"]},
     packages=find_namespace_packages(
         include=["trulens_evalchain", "trulens_evalchain.*"]
     ),

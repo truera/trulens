@@ -4,7 +4,7 @@ import streamlit as st
 
 
 def add_logo():
-    logo = open("trulens_evalchain/trulens_logo.svg", "rb").read()
+    logo = open("trulens_logo.svg", "rb").read()
     logo_encoded = base64.b64encode(logo).decode()
     st.markdown(
         f"""
