@@ -9,10 +9,10 @@ from st_aggrid.shared import JsCode
 import streamlit as st
 from ux.add_logo import add_logo
 
-from trulens_evalchain import tru_db
-from trulens_evalchain.tru_db import is_empty
-from trulens_evalchain.tru_db import is_noserio
-from trulens_evalchain.tru_db import TruDB
+from trulens_eval import tru_db
+from trulens_eval.tru_db import is_empty
+from trulens_eval.tru_db import is_noserio
+from trulens_eval.tru_db import TruDB
 
 st.set_page_config(page_title="Evaluations", layout="wide")
 

@@ -15,9 +15,9 @@ from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
 from transformers import pipeline
 
-from trulens_evalchain.keys import PINECONE_API_KEY
-from trulens_evalchain.keys import PINECONE_ENV
-from trulens_evalchain.tru_chain import TruChain
+from trulens_eval.keys import PINECONE_API_KEY
+from trulens_eval.keys import PINECONE_ENV
+from trulens_eval.tru_chain import TruChain
 
 
 class TestTruChain():

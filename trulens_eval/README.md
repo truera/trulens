@@ -1,19 +1,26 @@
-# Welcome to TruLens-EvalChain!
+# Welcome to TruLens-Eval!
 
 ![TruLens](https://www.trulens.org/Assets/image/Neural_Network_Explainability.png)
 
-TruLens-EvalChain is a library containing langchain instrumentation and evaluation tools for LLM-based applications. TruLens-EvalChain supports the iterative development and monitoring of a wide range of LLM applications by  wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine.
+TruLens-Eval is a library containing langchain instrumentation and evaluation tools for LLM-based applications. TruLens-Eval supports the iterative development and monitoring of a wide range of LLM applications by  wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine.
 
 Using feedback functions, you can objectively evaluate the quality of the responses provided by an LLM to your requests. This is completed with minimal latency, as this is achieved in a sequential call for your application, and evaluations are logged to your local machine. Finally, we provide an easy to use streamlit dashboard run locally on your machine for you to better understand your LLM’s performance.
 
 ![Architecture Diagram](https://github.com/truera/trulens_private/assets/60949774/3efaba55-06cc-4a2b-b734-6030080bc4fb)
 
+# Quick Usage
+To quickly play around with the TruLens Eval library, check out the following CoLab notebooks:
+
+* PyTorch: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1rjXCVg4YlaFoVkLK2b3MLgbZbaJhi4dz?usp=share_link)
+
+
+
 # Installation and Setup
 
-Install trulens-evalchain from pypi.
+Install trulens-eval from pypi.
 
 ```
-pip install trulens-evalchain
+pip install trulens-eval
 ```
 
 Imports from langchain to build app, trulens for evaluation
@@ -26,10 +33,10 @@ from langchain.chat_models import ChatOpenAI
 from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
 # imports from trulens to log and get feedback on chain
-from trulens_evalchain import tru
-from trulens_evalchain import tru_chain
-from trulens_evalchain.tru_feedback import Feedback, Huggingface
-from trulens_evalchain.keys import *
+from trulens_eval import tru
+from trulens_eval import tru_chain
+from trulens_eval.tru_feedback import Feedback, Huggingface
+from trulens_eval.keys import *
 ```
 
 ## API Keys
