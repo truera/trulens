@@ -2,7 +2,9 @@ import abc
 import json
 from pathlib import Path
 import sqlite3
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
+)
 import uuid
 
 import langchain
@@ -26,20 +28,20 @@ def is_empty(obj):
     except Exception:
         return False
 
+
 def is_noserio(obj):
     return isinstance(obj, dict) and "_NON_SERIALIZED_OBJECT" in obj
 
+
 def noserio(obj, **extra: Dict) -> dict:
     inner = {
-                "class": obj.__class__.__name__,
-                "module": obj.__class__.__module__,
-                "bases": list(map(lambda b: b.__name__, obj.__class__.__bases__))
-            }
+        "class": obj.__class__.__name__,
+        "module": obj.__class__.__module__,
+        "bases": list(map(lambda b: b.__name__, obj.__class__.__bases__))
+    }
     inner.update(extra)
 
-    return {
-        '_NON_SERIALIZED_OBJECT': inner
-    }
+    return {'_NON_SERIALIZED_OBJECT': inner}
 
 
 def obj_id_of_obj(obj: dict, prefix="obj"):
@@ -151,9 +153,12 @@ class TruDB(abc.ABC):
 
         if isinstance(obj, Dict):
             temp = {}
-            new_dicted[id(obj)] = temp    
+            new_dicted[id(obj)] = temp
             temp.update(
-                {k: TruDB.dictify(v, dicted=new_dicted) for k, v in obj.items()}
+                {
+                    k: TruDB.dictify(v, dicted=new_dicted)
+                    for k, v in obj.items()
+                }
             )
             return temp
 
@@ -449,7 +454,7 @@ class LocalTinyDB(TruDB):
     def get_records_and_feedback(
         self, chain_ids: List[str]
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        
+
         queries = [Record.chain_id, Record.record_id, Record]
         queries_records = queries + [
             Record.chain._call.args.inputs, Record.chain._call.rets
@@ -559,10 +564,12 @@ class LocalSQLite(TruDB):
         self, chain_id: str, input: str, output: str, record: dict, ts: int,
         tags: str, total_tokens: int, total_cost: float
     ) -> int:
-        assert isinstance(record, Dict), f"Attempting to add a record that is not a dict, is {type(record)} instead."
+        assert isinstance(
+            record, Dict
+        ), f"Attempting to add a record that is not a dict, is {type(record)} instead."
 
         conn, c = self._connect()
-        
+
         record_str = json_str_of_obj(record)
         record_id = str(uuid.uuid4())
 
