@@ -20,6 +20,7 @@ Imports from langchain to build app, trulens for evaluation
 
 ```python
 # imports from langchain to build app
+from langchain import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts.chat import ChatPromptTemplate
@@ -30,6 +31,23 @@ from trulens_evalchain import tru_chain
 from trulens_evalchain.tru_feedback import Feedback, Huggingface
 from trulens_evalchain.keys import *
 ```
+
+## API Keys
+
+Our example chat app and feedback functions call external APIs such as OpenAI or Huggingface. You can add keys by setting the environment variables. 
+
+### In Python
+
+```python
+import os
+os.environ["OPENAI_API_KEY"] = "..."
+```
+### In Terminal
+
+```bash
+export OPENAI_API_KEY = "..."
+```
+
 ## Create a basic LLM chain to evaluate
 
 This example uses langchain and OpenAI, but the same process can be followed with any framework and model provider. Once you've created your chain, just call TruChain to wrap it. Doing so allows you to capture the chain metadata for logging.
@@ -82,28 +100,11 @@ record_id = tru.add_data(
 
 Following the request to your app, you can then evaluate LLM quality using feedback functions. This is completed in a sequential call to minimize latency for your application, and evaluations will also be logged to your local machine.
 
-## API Keys
-
-feedback functions call external APIs such as OpenAI or Huggingface. You can add keys by setting the environment variables. 
-
-### In Python
-
-```
-import os
-os.environ["OPENAI_API_KEY"] = "..."
-```
-### In Terminal
-
-```
-export OPENAI_API_KEY = "..."
-```
-
-## Adding Feedback Functions
-
 To get feedback on the quality of your LLM, you can use any of the provided feedback functions or add your own.
 
 To assess your LLM quality, you can provide the feedback functions to tru.run_feedback() in a list as shown below. Here we'll just add a simple language match checker.
 ```python
+os.environ["HUGGINGFACE_API_KEY"] = "..."
 # initialize Huggingface class for feedback function generation
 hugs = Huggingface()
 
