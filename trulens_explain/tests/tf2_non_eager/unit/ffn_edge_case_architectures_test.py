@@ -12,7 +12,6 @@ from tensorflow.keras.layers import Concatenate
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
-
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.nn.distributions import PointDoi

@@ -2,7 +2,6 @@ import importlib
 import os
 
 import numpy as np
-
 import trulens
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend

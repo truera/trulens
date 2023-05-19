@@ -10,7 +10,6 @@ from torch import cat
 from torch.nn import Linear
 from torch.nn import Module
 from torch.nn import ReLU
-
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.nn.distributions import PointDoi
