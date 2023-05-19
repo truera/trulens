@@ -1,18 +1,20 @@
+from multiprocessing.pool import ThreadPool
 import os
 from pprint import PrettyPrinter
 from typing import Dict, Set, Tuple
 
-from trulens_evalchain.tru_chain import TruChain
-from trulens_evalchain.tru_db import Record
 from langchain.callbacks import get_openai_callback
-from trulens_evalchain import tru
-from trulens_evalchain.tru import thread_pool
-from trulens_evalchain.tru_db import TruDB
-from trulens_evalchain import tru_feedback
-from trulens_evalchain.tru_feedback import Feedback
-from trulens_evalchain.tru_db import LocalTinyDB, LocalSQLite
-from multiprocessing.pool import ThreadPool
 import numpy as np
+
+from trulens_evalchain import tru
+from trulens_evalchain import tru_feedback
+from trulens_evalchain.tru import thread_pool
+from trulens_evalchain.tru_chain import TruChain
+from trulens_evalchain.tru_db import LocalSQLite
+from trulens_evalchain.tru_db import LocalTinyDB
+from trulens_evalchain.tru_db import Record
+from trulens_evalchain.tru_db import TruDB
+from trulens_evalchain.tru_feedback import Feedback
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
@@ -152,6 +154,7 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     convos[cid] = tc
 
     return tc
+
 
 # Construct feedback functions.
 

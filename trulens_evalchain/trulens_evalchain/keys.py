@@ -22,12 +22,15 @@ for k, v in config.items():
 
 global cohere_agent
 cohere_agent = None
+
+
 def get_cohere_agent():
     global cohere_agent
     if cohere_agent is None:
         cohere.api_key = config['COHERE_API_KEY']
         cohere_agent = cohere.Client(cohere.api_key)
     return cohere_agent
+
 
 def get_huggingface_headers():
     HUGGINGFACE_HEADERS = {

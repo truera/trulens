@@ -5,8 +5,9 @@ from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 import streamlit as st
-from trulens_evalchain import tru_db
 from ux.add_logo import add_logo
+
+from trulens_evalchain import tru_db
 
 st.set_page_config(page_title="Evaluations [generic]", layout="wide")
 
@@ -55,8 +56,8 @@ else:
         # print("feedback=")
         # print(df_feedback)
 
-        evaluations_df = evaluations_df.merge(on=['record_id', 'chain_id'],
-            right=df_feedback, how="outer"
+        evaluations_df = evaluations_df.merge(
+            on=['record_id', 'chain_id'], right=df_feedback, how="outer"
         )
 
         # print("merged=")
@@ -64,7 +65,9 @@ else:
 
         evaluations_df_str = evaluations_df.copy()
         for col in evaluations_df_str.columns:
-            evaluations_df_str[col] = evaluations_df_str[col].map(lambda v: str(v) if isinstance(v, dict) else v)
+            evaluations_df_str[col] = evaluations_df_str[col].map(
+                lambda v: str(v) if isinstance(v, dict) else v
+            )
 
         gb = GridOptionsBuilder.from_dataframe(evaluations_df_str)
         gb.configure_pagination()
@@ -79,7 +82,9 @@ else:
         )
 
         selected_rows = data['selected_rows']
-        selected_rows = evaluations_df[evaluations_df.record_id.isin(map(lambda r: r['record_id'], selected_rows))]
+        selected_rows = evaluations_df[evaluations_df.record_id.isin(
+            map(lambda r: r['record_id'], selected_rows)
+        )]
 
         if len(selected_rows) != 0:
             for i, row in selected_rows.iterrows():

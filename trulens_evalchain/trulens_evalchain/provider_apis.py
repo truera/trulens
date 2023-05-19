@@ -1,6 +1,5 @@
 from multiprocessing.pool import ThreadPool
 from queue import Queue
-
 from time import sleep
 from typing import Any, Dict, Hashable, Sequence
 

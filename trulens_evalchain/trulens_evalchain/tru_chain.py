@@ -134,6 +134,7 @@ langchain.verbose = False
 from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
+
 from trulens_evalchain.tru_db import obj_id_of_obj
 from trulens_evalchain.tru_db import Query
 from trulens_evalchain.tru_db import Record
@@ -203,7 +204,7 @@ class TruChain(Chain):
 
     @property
     def chain_def(self):
-        return TruDB.dictify(self) # not using self.dict()
+        return TruDB.dictify(self)  # not using self.dict()
 
     # Chain requirement
     @property

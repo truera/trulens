@@ -22,12 +22,12 @@ def load_data(dataset_choice):
             'julian3833/jigsaw-unintended-bias-in-toxicity-classification'
         )
         with zipfile.ZipFile(
-            'jigsaw-unintended-bias-in-toxicity-classification.zip'
-        ) as z:
+                'jigsaw-unintended-bias-in-toxicity-classification.zip') as z:
             with z.open('all_data.csv') as f:
-                data = pd.read_csv(f, header=0, sep=',', quotechar='"')[[
-                    'comment_text', 'toxicity'
-                ]].rename(columns={'comment_text': 'text'})
+                data = pd.read_csv(
+                    f, header=0, sep=',', quotechar='"'
+                )[['comment_text',
+                   'toxicity']].rename(columns={'comment_text': 'text'})
 
         data['label'] = data['toxicity'] >= 0.5
         data['label'] = data['label'].astype(int)
@@ -40,13 +40,15 @@ def load_data(dataset_choice):
         )
         with zipfile.ZipFile('fake-and-real-news-dataset.zip') as z:
             with z.open('True.csv') as f:
-                realdata = pd.read_csv(f, header=0, sep=',',
-                                       quotechar='"')[['title', 'text']]
+                realdata = pd.read_csv(
+                    f, header=0, sep=',', quotechar='"'
+                )[['title', 'text']]
                 realdata['label'] = 0
                 realdata = pd.DataFrame(realdata)
             with z.open('Fake.csv') as f:
-                fakedata = pd.read_csv(f, header=0, sep=',',
-                                       quotechar='"')[['title', 'text']]
+                fakedata = pd.read_csv(
+                    f, header=0, sep=',', quotechar='"'
+                )[['title', 'text']]
                 fakedata['label'] = 1
                 fakedata = pd.DataFrame(fakedata)
             data = pd.concat([realdata, fakedata])
