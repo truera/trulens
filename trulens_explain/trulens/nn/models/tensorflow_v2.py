@@ -1,7 +1,6 @@
 from typing import Tuple
 
 import tensorflow as tf
-
 from trulens.nn.backend import get_backend
 from trulens.nn.models.keras import \
     KerasModelWrapper  # dangerous to have this here if tf-less keras gets imported

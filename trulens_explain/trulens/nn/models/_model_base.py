@@ -12,7 +12,6 @@ from abc import abstractmethod
 from typing import List, Optional, Tuple, Type, Union
 
 import numpy as np
-
 from trulens.nn.backend import get_backend
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
@@ -149,10 +148,11 @@ class ModelWrapper(AbstractBaseClass):
         attribution_cut: Optional[Cut] = None,
         intervention: InterventionLike = None,
         **kwargs
-    ) -> Union[ArgsLike[TensorLike],  # attribution_cut is None
-               Tuple[ArgsLike[TensorLike],
-                     ArgsLike[TensorLike]]  # attribution_cut is not None
-              ]:
+    ) -> Union[
+            ArgsLike[TensorLike],  # attribution_cut is None
+            Tuple[ArgsLike[TensorLike],
+                  ArgsLike[TensorLike]]  # attribution_cut is not None
+    ]:
         """
         **_Used internally by `AttributionMethod`._**
 

@@ -14,7 +14,6 @@ deprecation._PRINT_DEPRECATION_WARNINGS = False
 from tensorflow.keras.layers import Input
 from tensorflow.keras.layers import Lambda
 from tensorflow.keras.models import Model
-
 from tests.unit.doi_test_base import DoiTestBase
 
 

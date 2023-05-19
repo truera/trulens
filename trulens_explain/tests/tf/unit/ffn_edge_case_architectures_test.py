@@ -13,7 +13,6 @@ import numpy as np
 from tensorflow import Graph
 import tensorflow as tf
 from tensorflow.nn import relu
-
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.nn.distributions import PointDoi
