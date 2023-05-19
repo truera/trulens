@@ -62,11 +62,11 @@ nav:
   - Home: index.md
   - Welcome to TruLens!: welcome.md
   - EvalChain:
-    - Installation: trulens_evalchain/install.md
-    - Quickstart: trulens_evalchain/quickstart.md
+    - Installation: trulens_eval/install.md
+    - Quickstart: trulens_eval/quickstart.md
     - API Reference: 
-      - Workspace: trulens_evalchain/api/tru.md
-      - TruChain: trulens_evalchain/api/truchain.md
+      - Workspace: trulens_eval/api/tru.md
+      - TruChain: trulens_eval/api/truchain.md
   - Explain:
     - Installation: trulens_explain/install.md
     - Quickstart: trulens_explain/quickstart.md

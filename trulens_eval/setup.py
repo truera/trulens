@@ -2,10 +2,10 @@ from setuptools import find_namespace_packages
 from setuptools import setup
 
 setup(
-    name="trulens_evalchain_test",
+    name="trulens_eval_test",
     package_data={"": ["*.svg", "*.toml"]},
     packages=find_namespace_packages(
-        include=["trulens_evalchain", "trulens_evalchain.*"]
+        include=["trulens_eval", "trulens_eval.*"]
     ),
     python_requires='>=3.8',
     install_requires=[

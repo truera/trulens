@@ -26,10 +26,10 @@ from langchain.chat_models import ChatOpenAI
 from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
 # imports from trulens to log and get feedback on chain
-from trulens_evalchain import tru
-from trulens_evalchain import tru_chain
-from trulens_evalchain.tru_feedback import Feedback, Huggingface
-from trulens_evalchain.keys import *
+from trulens_eval import tru
+from trulens_eval import tru_chain
+from trulens_eval.tru_feedback import Feedback, Huggingface
+from trulens_eval.keys import *
 ```
 
 ## API Keys
