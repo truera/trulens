@@ -1,0 +1,2 @@
+include trulens_logo.svg
+include .streamlit/config.toml
