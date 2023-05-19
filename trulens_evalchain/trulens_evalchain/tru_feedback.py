@@ -45,7 +45,8 @@ Question/Statement relevance that is evaluated on a sub-chain input which contai
 
 """
 
-from inspect import Signature, signature
+from inspect import Signature
+from inspect import signature
 import re
 from typing import Any, Callable, Dict, Optional, Sequence, Union
 
@@ -58,9 +59,9 @@ from trulens_evalchain import tru
 from trulens_evalchain.keys import *
 from trulens_evalchain.provider_apis import Endpoint
 from trulens_evalchain.tru_chain import TruChain
+from trulens_evalchain.tru_db import Query
 from trulens_evalchain.tru_db import Record
 from trulens_evalchain.tru_db import TruDB
-from trulens_evalchain.tru_db import Query
 
 # openai
 
@@ -84,14 +85,19 @@ from trulens_evalchain.tru_db import Query
 # - Option 1 : input, output -> real
 # - Option 2: dict (input, output, other) -> real
 
-
 Selection = Union[Query, str]
 # "prompt" or "input" mean overall chain input text
 # "response" or "output"mean overall chain output text
 # Otherwise a Query is a path into a record structure.
 
+
 class Feedback():
-    def __init__(self, imp: Optional[Callable] = None, selectors: Optional[Dict[str, Selection]] = None):
+
+    def __init__(
+        self,
+        imp: Optional[Callable] = None,
+        selectors: Optional[Dict[str, Selection]] = None
+    ):
         """
         A Feedback function container.
 
@@ -111,7 +117,12 @@ class Feedback():
         self.imp = imp
         self.selectors = selectors
 
-    def on_multiple(self, multiarg: str, each_query: Optional[Query] = None, agg: Callable = np.mean) -> 'Feedback':
+    def on_multiple(
+        self,
+        multiarg: str,
+        each_query: Optional[Query] = None,
+        agg: Callable = np.mean
+    ) -> 'Feedback':
         """
         Create a variant of `self` whose implementation will accept multiple
         values for argument `multiarg`, aggregating feedback results for each.
@@ -129,7 +140,9 @@ class Feedback():
 
             multi = kwargs[multiarg]
 
-            assert isinstance(multi, Sequence), f"Feedback function expected a sequence on {multiarg} argument."
+            assert isinstance(
+                multi, Sequence
+            ), f"Feedback function expected a sequence on {multiarg} argument."
 
             rets = []
 
@@ -139,7 +152,7 @@ class Feedback():
 
                 if each_query is not None:
                     aval = TruDB.project(query=each_query, obj=aval)
-            
+
                 kwargs[multiarg] = aval
 
                 ret = self.imp(**kwargs)
@@ -155,7 +168,7 @@ class Feedback():
         # Copy over signature from wrapped function. Otherwise signature of the
         # wrapped method will include just kwargs which is insufficient for
         # verify arguments (see Feedback.__init__).
-        wrapped_imp.__signature__ = signature(self.imp) 
+        wrapped_imp.__signature__ = signature(self.imp)
 
         return Feedback(imp=wrapped_imp, selectors=self.selectors)
 
@@ -165,8 +178,8 @@ class Feedback():
         "prompt" as input, sending it as an argument `arg` to implementation.
         """
 
-        return Feedback(imp=self.imp, selectors={arg:"prompt"})
-    
+        return Feedback(imp=self.imp, selectors={arg: "prompt"})
+
     on_input = on_prompt
 
     def on_response(self, arg: str = "text"):
@@ -176,7 +189,7 @@ class Feedback():
         """
 
         return Feedback(imp=self.imp, selectors={arg: "response"})
-    
+
     on_output = on_response
 
     def on(self, **selectors):
@@ -208,7 +221,8 @@ class Feedback():
 
         return self.imp.__name__
 
-    def extract_selection(self, chain: TruChain, record: dict) -> Dict[str, Any]:
+    def extract_selection(self, chain: TruChain,
+                          record: dict) -> Dict[str, Any]:
         """
         Given the `chain` that produced the given `record`, extract from
         `record` the values that will be sent as arguments to the implementation
@@ -241,7 +255,7 @@ class Feedback():
 
             else:
                 raise RuntimeError(f"Unhandled selection type {type(v)}.")
-            
+
             # print(f"q={q._path}")
 
             val = TruDB.project(query=q, obj=record)
@@ -249,28 +263,36 @@ class Feedback():
 
         return ret
 
+
 pat_1_10 = re.compile(r"\s*([1-9][0-9]*)\s*")
+
 
 def _re_1_10_rating(str_val):
     matches = pat_1_10.fullmatch(str_val)
     if not matches:
         print(f"WARNING: 1-10 rating regex failed to match on: '{str_val}'")
-        return -10 # so this will be reported as -1 after division by 10
-    
+        return -10  # so this will be reported as -1 after division by 10
+
     return int(matches.group())
 
+
 class OpenAI():
-    def __init__(self, model_engine: str =  "gpt-3.5-turbo"):
+
+    def __init__(self, model_engine: str = "gpt-3.5-turbo"):
         self.model_engine = model_engine
         self.endpoint_openai = Endpoint(name="openai", rpm=30)
 
     def _moderation(self, text: str):
-        return self.endpoint_openai.run_me(lambda: openai.Moderation.create(input=text))
+        return self.endpoint_openai.run_me(
+            lambda: openai.Moderation.create(input=text)
+        )
 
     def moderation_not_hate(self, text: str):
         openai_response = self._moderation(text)
-        return 1 - float(openai_response["results"][0]["category_scores"]["hate"])
-    
+        return 1 - float(
+            openai_response["results"][0]["category_scores"]["hate"]
+        )
+
     def moderation_not_hatethreatening(self, text: str):
         openai_response = self._moderation(text)
 
@@ -288,7 +310,9 @@ class OpenAI():
     def moderation_not_sexual(self, text: str):
         openai_response = self._moderation(text)
 
-        return 1 - int(openai_response["results"][0]["category_scores"]["sexual"])
+        return 1 - int(
+            openai_response["results"][0]["category_scores"]["sexual"]
+        )
 
     def moderation_not_sexualminors(self, text: str):
         openai_response = self._moderation(text)
@@ -300,7 +324,9 @@ class OpenAI():
     def moderation_not_violence(self, text: str):
         openai_response = self._moderation(text)
 
-        return 1 - int(openai_response["results"][0]["category_scores"]["violence"])
+        return 1 - int(
+            openai_response["results"][0]["category_scores"]["violence"]
+        )
 
     def moderation_not_violencegraphic(self, text: str):
         openai_response = self._moderation(text)
@@ -311,53 +337,68 @@ class OpenAI():
 
     def qs_relevance(self, question: str, statement: str):
         return _re_1_10_rating(
-            self.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
-                model=self.model_engine,
-                temperature=0.0,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": str.format(feedback_prompts.QS_RELEVANCE, question=question, statement=statement)
-                    }
-                ]
-            )["choices"][0]["message"]["content"])
+            self.endpoint_openai.run_me(
+                lambda: openai.ChatCompletion.create(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role":
+                                "system",
+                            "content":
+                                str.format(
+                                    feedback_prompts.QS_RELEVANCE,
+                                    question=question,
+                                    statement=statement
+                                )
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
         ) / 10
-
 
     def relevance(self, prompt: str, response: str):
         return _re_1_10_rating(
-            self.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
-                model=self.model_engine,
-                temperature=0.0,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": str.format(feedback_prompts.PR_RELEVANCE, prompt=prompt, response=response)
-                    }
-                ]
-            )["choices"][0]["message"]["content"])
+            self.endpoint_openai.run_me(
+                lambda: openai.ChatCompletion.create(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role":
+                                "system",
+                            "content":
+                                str.format(
+                                    feedback_prompts.PR_RELEVANCE,
+                                    prompt=prompt,
+                                    response=response
+                                )
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
         ) / 10
 
+    def sentiment(self, text: str):
 
-    def sentiment(
-        self, text: str
-    ):
-    
         return _re_1_10_rating(
-            self.endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
-                model=self.model_engine,
-                temperature=0.5,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": feedback_prompts.SENTIMENT_SYSTEM_PROMPT
-                    }, {
-                        "role": "user",
-                        "content": text
-                    }
-                ]
-            )["choices"][0]["message"]["content"]
-        ))
+            self.endpoint_openai.run_me(
+                lambda: openai.ChatCompletion.create(
+                    model=self.model_engine,
+                    temperature=0.5,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": feedback_prompts.SENTIMENT_SYSTEM_PROMPT
+                        }, {
+                            "role": "user",
+                            "content": text
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+        )
+
 
 # outdated interfaces
 def openai_moderation_not_hate(prompt, response, evaluation_choice):
@@ -366,7 +407,8 @@ def openai_moderation_not_hate(prompt, response, evaluation_choice):
     if evaluation_choice == "response":
         input = response
 
-    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI(
+    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
 
     return 1 - float(openai_response["results"][0]["category_scores"]["hate"])
 
@@ -377,7 +419,8 @@ def openai_moderation_not_hatethreatening(prompt, response, evaluation_choice):
     if evaluation_choice == "response":
         input = response
 
-    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI(
+    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
 
     return 1 - int(
         openai_response["results"][0]["category_scores"]["hate/threatening"]
@@ -389,7 +432,8 @@ def openai_moderation_not_selfharm(prompt, response, evaluation_choice):
         input = prompt
     if evaluation_choice == "response":
         input = response
-    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI(
+    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
     return 1 - int(
         openai_response["results"][0]["category_scores"]["self-harm"]
     )
@@ -400,7 +444,8 @@ def openai_moderation_not_sexual(prompt, response, evaluation_choice):
         input = prompt
     if evaluation_choice == "response":
         input = response
-    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI(
+    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
     return 1 - int(openai_response["results"][0]["category_scores"]["sexual"])
 
 
@@ -409,7 +454,8 @@ def openai_moderation_not_sexualminors(prompt, response, evaluation_choice):
         input = prompt
     if evaluation_choice == "response":
         input = response
-    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI(
+    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
     return 1 - int(
         openai_response["results"][0]["category_scores"]["sexual/minors"]
     )
@@ -420,7 +466,8 @@ def openai_moderation_not_violence(prompt, response, evaluation_choice):
         input = prompt
     if evaluation_choice == "response":
         input = response
-    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI(
+    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
     return 1 - int(openai_response["results"][0]["category_scores"]["violence"])
 
 
@@ -429,7 +476,8 @@ def openai_moderation_not_violencegraphic(prompt, response, evaluation_choice):
         input = prompt
     if evaluation_choice == "response":
         input = response
-    openai_response = OpenAI().endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
+    openai_response = OpenAI(
+    ).endpoint_openai.run_me(lambda: openai.Moderation.create(input=input))
     return 1 - int(
         openai_response["results"][0]["category_scores"]["violence/graphic"]
     )
@@ -438,37 +486,49 @@ def openai_moderation_not_violencegraphic(prompt, response, evaluation_choice):
 def openai_qs_relevance(question: str, statement: str, model_engine):
 
     return _re_1_10_rating(
-        OpenAI().endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
-            model=model_engine,
-            temperature=0.0,
-            messages=[
-                {
-                    "role": "system",
-                    "content": str.format(feedback_prompts.QS_RELEVANCE, question=question, statement=statement)
-                }
-            ]
-        )["choices"][0]["message"]["content"])
+        OpenAI().endpoint_openai.run_me(
+            lambda: openai.ChatCompletion.create(
+                model=model_engine,
+                temperature=0.0,
+                messages=[
+                    {
+                        "role":
+                            "system",
+                        "content":
+                            str.format(
+                                feedback_prompts.QS_RELEVANCE,
+                                question=question,
+                                statement=statement
+                            )
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+        )
     ) / 10
 
 
 def openai_relevance(prompt, response, model_engine):
 
     return _re_1_10_rating(
-        OpenAI().endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
-            model=model_engine,
-            temperature=0.5,
-            messages=[
-                {
-                    "role": "system",
-                    "content": feedback_prompts.RELEVANCE_SYSTEM_PROMPT + prompt
-                }, {
-                    "role":
-                        "user",
-                    "content":
-                        feedback_prompts.RELEVANCE_CONTENT_PROMPT + response
-                }
-            ]
-        )["choices"][0]["message"]["content"])
+        OpenAI().endpoint_openai.run_me(
+            lambda: openai.ChatCompletion.create(
+                model=model_engine,
+                temperature=0.5,
+                messages=[
+                    {
+                        "role":
+                            "system",
+                        "content":
+                            feedback_prompts.RELEVANCE_SYSTEM_PROMPT + prompt
+                    }, {
+                        "role":
+                            "user",
+                        "content":
+                            feedback_prompts.RELEVANCE_CONTENT_PROMPT + response
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+        )
     ) / 10
 
 
@@ -481,21 +541,22 @@ def openai_sentiment_function(
         input = response
 
     return _re_1_10_rating(
-                OpenAI().endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
-                    model=model_engine,
-                    temperature=0.5,
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": feedback_prompts.SENTIMENT_SYSTEM_PROMPT
-                        }, {
-                            "role": "user",
-                            "content": input
-                        }
-                    ]
-                )["choices"][0]["message"]["content"]
-            ))
-            
+        OpenAI().endpoint_openai.run_me(
+            lambda: openai.ChatCompletion.create(
+                model=model_engine,
+                temperature=0.5,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": feedback_prompts.SENTIMENT_SYSTEM_PROMPT
+                    }, {
+                        "role": "user",
+                        "content": input
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+        )
+    )
 
 
 # huggingface
@@ -508,7 +569,9 @@ class Huggingface():
     LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
 
     def __init__(self):
-        self.endpoint_huggingface = Endpoint(name="huggingface", rpm=30, post_headers=get_huggingface_headers())
+        self.endpoint_huggingface = Endpoint(
+            name="huggingface", rpm=30, post_headers=get_huggingface_headers()
+        )
 
     def language_match(self, text1: str, text2: str) -> float:
         # TODO: parallelize
@@ -516,20 +579,24 @@ class Huggingface():
         max_length = 500
         truncated_text = text1[:max_length]
         payload = {"inputs": truncated_text}
-        hf_response = self.endpoint_huggingface.post(url=Huggingface.LANGUAGE_API_URL, payload=payload)
+        hf_response = self.endpoint_huggingface.post(
+            url=Huggingface.LANGUAGE_API_URL, payload=payload
+        )
         scores1 = {r['label']: r['score'] for r in hf_response}
 
         truncated_text = text2[:max_length]
         payload = {"inputs": truncated_text}
-        hf_response = self.endpoint_huggingface.post(url=Huggingface.LANGUAGE_API_URL, payload=payload)
+        hf_response = self.endpoint_huggingface.post(
+            url=Huggingface.LANGUAGE_API_URL, payload=payload
+        )
         scores2 = {r['label']: r['score'] for r in hf_response}
 
         langs = list(scores1.keys())
         prob1 = np.array([scores1[k] for k in langs])
         prob2 = np.array([scores2[k] for k in langs])
         diff = prob1 - prob2
-        
-        l1 = 1.0 - (np.linalg.norm(diff, ord=1)) / 2.0 
+
+        l1 = 1.0 - (np.linalg.norm(diff, ord=1)) / 2.0
 
         return l1
 
@@ -538,7 +605,9 @@ class Huggingface():
         truncated_text = text[:max_length]
         payload = {"inputs": truncated_text}
 
-        hf_response = self.endpoint_huggingface.post(url=Huggingface.SENTIMENT_API_URL, payload=payload)
+        hf_response = self.endpoint_huggingface.post(
+            url=Huggingface.SENTIMENT_API_URL, payload=payload
+        )
 
         for label in hf_response:
             if label['label'] == 'LABEL_2':
@@ -548,35 +617,47 @@ class Huggingface():
         max_length = 500
         truncated_text = text[:max_length]
         payload = {"inputs": truncated_text}
-        hf_response = self.endpoint_huggingface.post(url=Huggingface.TOXIC_API_URL, payload=payload)
-        
+        hf_response = self.endpoint_huggingface.post(
+            url=Huggingface.TOXIC_API_URL, payload=payload
+        )
+
         for label in hf_response:
             if label['label'] == 'toxic':
                 return label['score']
 
+
 # old interface
-def huggingface_language_match(prompt, response, evaluation_choice=None) -> float:
+def huggingface_language_match(
+    prompt, response, evaluation_choice=None
+) -> float:
     max_length = 500
     truncated_text = prompt[:max_length]
     payload = {"inputs": truncated_text}
 
-    hf_response = Huggingface().endpoint_huggingface.run_me(lambda: requests.post(
-        Huggingface.LANGUAGE_API_URL, headers=get_huggingface_headers(), json=payload
-    ).json())
+    hf_response = Huggingface().endpoint_huggingface.run_me(
+        lambda: requests.post(
+            Huggingface.LANGUAGE_API_URL,
+            headers=get_huggingface_headers(),
+            json=payload
+        ).json()
+    )
 
     if not (isinstance(hf_response, list) and len(hf_response) > 0):
         raise RuntimeError(hf_response)
-    
-    hf_response = hf_response[0]
 
+    hf_response = hf_response[0]
 
     scores1 = {r['label']: r['score'] for r in hf_response}
 
     truncated_text = response[:max_length]
     payload = {"inputs": truncated_text}
-    hf_response = Huggingface().endpoint_huggingface.run_me(lambda: requests.post(
-        Huggingface.LANGUAGE_API_URL, headers=get_huggingface_headers(), json=payload
-    ).json())
+    hf_response = Huggingface().endpoint_huggingface.run_me(
+        lambda: requests.post(
+            Huggingface.LANGUAGE_API_URL,
+            headers=get_huggingface_headers(),
+            json=payload
+        ).json()
+    )
 
     if not (isinstance(hf_response, list) and len(hf_response) > 0):
         raise RuntimeError(hf_response)
@@ -588,10 +669,11 @@ def huggingface_language_match(prompt, response, evaluation_choice=None) -> floa
     prob1 = np.array([scores1[k] for k in langs])
     prob2 = np.array([scores2[k] for k in langs])
     diff = prob1 - prob2
-    
-    l1 = 1.0 - (np.linalg.norm(diff, ord=1)) / 2.0 
+
+    l1 = 1.0 - (np.linalg.norm(diff, ord=1)) / 2.0
 
     return l1
+
 
 def huggingface_positive_sentiment(prompt, response, evaluation_choice):
     if evaluation_choice == "prompt":
@@ -601,9 +683,13 @@ def huggingface_positive_sentiment(prompt, response, evaluation_choice):
     max_length = 500
     truncated_text = input[:max_length]
     payload = {"inputs": truncated_text}
-    hf_response = Huggingface().endpoint_huggingface.run_me(lambda: requests.post(
-        Huggingface.SENTIMENT_API_URL, headers=get_huggingface_headers(), json=payload
-    ).json()[0])
+    hf_response = Huggingface().endpoint_huggingface.run_me(
+        lambda: requests.post(
+            Huggingface.SENTIMENT_API_URL,
+            headers=get_huggingface_headers(),
+            json=payload
+        ).json()[0]
+    )
 
     for label in hf_response:
         if label['label'] == 'LABEL_2':
@@ -618,17 +704,24 @@ def huggingface_not_toxic(prompt, response, evaluation_choice):
     max_length = 500
     truncated_text = input[:max_length]
     payload = {"inputs": truncated_text}
-    hf_response = Huggingface().endpoint_huggingface.run_me(lambda: requests.post(
-        Huggingface.TOXIC_API_URL, headers=get_huggingface_headers(), json=payload
-    ).json()[0])
+    hf_response = Huggingface().endpoint_huggingface.run_me(
+        lambda: requests.post(
+            Huggingface.TOXIC_API_URL,
+            headers=get_huggingface_headers(),
+            json=payload
+        ).json()[0]
+    )
     for label in hf_response:
         if label['label'] == 'toxic':
             return label['score']
 
+
 # cohere
 class Cohere():
+
     def __init__(self):
         Cohere().endpoint_cohere = Endpoint(name="cohere", rpm=30)
+
 
 def cohere_sentiment(prompt, response, evaluation_choice, model_engine):
     if evaluation_choice == "prompt":
@@ -636,11 +729,13 @@ def cohere_sentiment(prompt, response, evaluation_choice, model_engine):
     if evaluation_choice == "response":
         input = response
     return int(
-        Cohere().endpoint_cohere.run_me(lambda: get_cohere_agent().classify(
-            model=model_engine,
-            inputs=[input],
-            examples=feedback_prompts.COHERE_SENTIMENT_EXAMPLES
-        )[0].prediction)
+        Cohere().endpoint_cohere.run_me(
+            lambda: get_cohere_agent().classify(
+                model=model_engine,
+                inputs=[input],
+                examples=feedback_prompts.COHERE_SENTIMENT_EXAMPLES
+            )[0].prediction
+        )
     )
 
 
@@ -650,31 +745,35 @@ def cohere_not_disinformation(prompt, response, evaluation_choice):
     if evaluation_choice == "response":
         input = response
     return int(
-        Cohere().endpoint_cohere.run_me(lambda: get_cohere_agent().classify(
-            model='large',
-            inputs=[input],
-            examples=feedback_prompts.COHERE_NOT_DISINFORMATION_EXAMPLES
-        )[0].prediction)
+        Cohere().endpoint_cohere.run_me(
+            lambda: get_cohere_agent().classify(
+                model='large',
+                inputs=[input],
+                examples=feedback_prompts.COHERE_NOT_DISINFORMATION_EXAMPLES
+            )[0].prediction
+        )
     )
 
 
 def _get_answer_agreement(prompt, response, check_response, model_engine):
-    oai_chat_response = OpenAI().endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
-        model=model_engine,
-        temperature=0.5,
-        messages=[
-            {
-                "role":
-                    "system",
-                "content":
-                    feedback_prompts.AGREEMENT_SYSTEM_PROMPT %
-                    (prompt, response)
-            }, {
-                "role": "user",
-                "content": check_response
-            }
-        ]
-    )["choices"][0]["message"]["content"])
+    oai_chat_response = OpenAI().endpoint_openai.run_me(
+        lambda: openai.ChatCompletion.create(
+            model=model_engine,
+            temperature=0.5,
+            messages=[
+                {
+                    "role":
+                        "system",
+                    "content":
+                        feedback_prompts.AGREEMENT_SYSTEM_PROMPT %
+                        (prompt, response)
+                }, {
+                    "role": "user",
+                    "content": check_response
+                }
+            ]
+        )["choices"][0]["message"]["content"]
+    )
     return oai_chat_response
 
 
@@ -683,24 +782,28 @@ def openai_factagreement(prompt, response, model_engine):
         prompt = f"Finish this thought: {response[:int(len(response)*4.0/5.0)]}"
     payload = {"text": prompt}
     hf_response = requests.post(
-        Huggingface.CHAT_API_URL, headers=get_huggingface_headers(), json=payload
+        Huggingface.CHAT_API_URL,
+        headers=get_huggingface_headers(),
+        json=payload
     ).json()['generated_text']
 
     # Attempt an honest bot
-    
-    oai_chat_response = OpenAI().endpoint_openai.run_me(lambda: openai.ChatCompletion.create(
-        model=model_engine,
-        temperature=0.5,
-        messages=[
-            {
-                "role": "system",
-                "content": feedback_prompts.CORRECT_SYSTEM_PROMPT
-            }, {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    )["choices"][0]["message"]["content"])
+
+    oai_chat_response = OpenAI().endpoint_openai.run_me(
+        lambda: openai.ChatCompletion.create(
+            model=model_engine,
+            temperature=0.5,
+            messages=[
+                {
+                    "role": "system",
+                    "content": feedback_prompts.CORRECT_SYSTEM_PROMPT
+                }, {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )["choices"][0]["message"]["content"]
+    )
 
     oai_similarity_response_1 = _get_answer_agreement(
         prompt, response, hf_response, model_engine
@@ -718,7 +821,9 @@ def openai_factagreement(prompt, response, model_engine):
     ) / 10
 
 
-def get_language_match_function(provider='huggingface', model_engine=None, evaluation_choice=None):
+def get_language_match_function(
+    provider='huggingface', model_engine=None, evaluation_choice=None
+):
     if provider == "huggingface":
 
         def huggingface_language_match_feedback_function(prompt, response):
@@ -733,6 +838,7 @@ def get_language_match_function(provider='huggingface', model_engine=None, evalu
         raise NotImplementedError(
             "Invalid provider specified. Language match feedback function is only supported for `provider` as `huggingface`"
         )
+
 
 def get_sentimentpositive_function(provider, model_engine, evaluation_choice):
     if provider == "openai":
@@ -778,7 +884,9 @@ def get_qs_relevance_function(provider, model_engine, evaluation_choice):
         )
 
     def openai_qs_relevance_function(prompt, response):
-        return openai_qs_relevance(question=prompt, statement=response, model_engine=model_engine)
+        return openai_qs_relevance(
+            question=prompt, statement=response, model_engine=model_engine
+        )
 
     return openai_qs_relevance_function
 

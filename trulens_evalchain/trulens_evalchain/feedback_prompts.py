@@ -10,7 +10,6 @@ STATEMENT: {statement}
 
 RELEVANCE: """
 
-
 PR_RELEVANCE = """
 You are a relevance classifier, providing the relevance of a given response to the given prompt.
 Respond only as a number from 1 to 10 where 1 is the least relevant and 10 is the most relevant.

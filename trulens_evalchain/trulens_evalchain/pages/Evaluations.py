@@ -7,11 +7,12 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
-from trulens_evalchain.tru_db import TruDB
-from trulens_evalchain.tru_db import is_noserio, is_empty
 from ux.add_logo import add_logo
 
 from trulens_evalchain import tru_db
+from trulens_evalchain.tru_db import is_empty
+from trulens_evalchain.tru_db import is_noserio
+from trulens_evalchain.tru_db import TruDB
 
 st.set_page_config(page_title="Evaluations", layout="wide")
 
@@ -133,10 +134,10 @@ else:
 
         selected_rows = data['selected_rows']
         selected_rows = pd.DataFrame(selected_rows)
-        
+
         if len(selected_rows) == 0:
             st.write("Hint: select a row to display chain metadata")
-            
+
         else:
             prompt = selected_rows['input'][0]
             response = selected_rows['output'][0]
@@ -147,11 +148,9 @@ else:
                 st.write(response)
 
             details = selected_rows['details'][0]
-            
-
 
             details_json = json.loads(details)
-                #json.loads(details))  # ???
+            #json.loads(details))  # ???
 
             chain_json = details_json['chain']
 
@@ -162,7 +161,10 @@ else:
                 path_str = TruDB._query_str(query)
                 st.header(f"LLM ({path_str}) Details:")
 
-                llm_kv = {k: v for k, v in llm_details_json.items() if (v is not None) and not is_empty(v) and not is_noserio(v)}
+                llm_kv = {
+                    k: v for k, v in llm_details_json.items() if
+                    (v is not None) and not is_empty(v) and not is_noserio(v)
+                }
 
                 llm_cols = st.columns(len(llm_kv.items()))
                 llm_keys = list(llm_kv.keys())
@@ -172,14 +174,12 @@ else:
 
                     with llm_cols[i]:
                         if isinstance(llm_values[i], (Dict, List)):
-                            with st.expander(llm_keys[i].capitalize(), expanded=True):
+                            with st.expander(llm_keys[i].capitalize(),
+                                             expanded=True):
                                 st.write(llm_values[i])
-                            
+
                         else:
-                            st.metric(
-                                llm_keys[i].capitalize(),
-                                llm_values[i]
-                            )
+                            st.metric(llm_keys[i].capitalize(), llm_values[i])
 
             for query, prompt_details_json in TruDB.matching_objects(
                     details_json, match=lambda q, o: len(q._path) > 0 and
@@ -187,7 +187,10 @@ else:
                 path_str = TruDB._query_str(query)
                 st.header(f"Prompt ({path_str}) Details:")
 
-                prompt_types = {k: v for k, v in prompt_details_json.items() if (v is not None) and not is_empty(v) and not is_noserio(v)}
+                prompt_types = {
+                    k: v for k, v in prompt_details_json.items() if
+                    (v is not None) and not is_empty(v) and not is_noserio(v)
+                }
                 prompt_type_cols = st.columns(len(prompt_types.items()))
                 prompt_type_keys = list(prompt_types.keys())
                 prompt_type_values = list(prompt_types.values())
@@ -196,24 +199,19 @@ else:
                     with prompt_type_cols[i]:
                         val = prompt_type_values[i]
                         if isinstance(val, (Dict, List)):
-                            with st.expander(
-                                prompt_type_keys[i].capitalize(),
-                                expanded=True
-                            ):
+                            with st.expander(prompt_type_keys[i].capitalize(),
+                                             expanded=True):
                                 st.write(val)
                         else:
                             if isinstance(val, str) and len(val) > 32:
                                 with st.expander(
-                                    prompt_type_keys[i].capitalize(),
-                                    expanded=True
-                                ):  
-                                    st.text(
-                                        prompt_type_values[i]
-                                    )
+                                        prompt_type_keys[i].capitalize(),
+                                        expanded=True):
+                                    st.text(prompt_type_values[i])
                             else:
                                 st.metric(
-                                        prompt_type_keys[i].capitalize(),
-                                        prompt_type_values[i]
+                                    prompt_type_keys[i].capitalize(),
+                                    prompt_type_values[i]
                                 )
 
             if st.button("Display full json"):

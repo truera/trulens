@@ -14,6 +14,7 @@ from trulens_evalchain.keys import *
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
 
+
 # Define function to generate GPT-3 response
 @st.cache_data
 def generate_response(prompt, model_name):
