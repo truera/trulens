@@ -61,7 +61,7 @@ theme:
 nav:
   - Home: index.md
   - Welcome to TruLens!: welcome.md
-  - EvalChain:
+  - Eval:
     - Installation: trulens_eval/install.md
     - Quickstart: trulens_eval/quickstart.md
     - API Reference: 
