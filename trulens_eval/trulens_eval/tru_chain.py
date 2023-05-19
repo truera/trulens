@@ -128,17 +128,17 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import langchain
 
-from trulens_evalchain.tru_db import noserio
+from trulens_eval.tru_db import noserio
 
 langchain.verbose = False
 from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_evalchain.tru_db import obj_id_of_obj
-from trulens_evalchain.tru_db import Query
-from trulens_evalchain.tru_db import Record
-from trulens_evalchain.tru_db import TruDB
+from trulens_eval.tru_db import obj_id_of_obj
+from trulens_eval.tru_db import Query
+from trulens_eval.tru_db import Record
+from trulens_eval.tru_db import TruDB
 
 # Addresses of chains or their contents. This is used to refer chains/parameters
 # even in cases where the live object is not in memory (i.e. on some remote

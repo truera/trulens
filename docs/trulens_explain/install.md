@@ -27,7 +27,7 @@ git clone https://github.com/truera/trulens.git
 
 4. [Locall installation] Install the trulens repo.
 ```
-cd trulens
+cd trulens_explain
 pip install -e .
 ```
 

@@ -12,14 +12,14 @@ import numpy as np
 import pinecone
 import streamlit as st
 
-from trulens_evalchain import tru
-from trulens_evalchain import tru_chain
-from trulens_evalchain import tru_feedback
-from trulens_evalchain.keys import *
-from trulens_evalchain.keys import PINECONE_API_KEY
-from trulens_evalchain.keys import PINECONE_ENV
-from trulens_evalchain.tru_db import Record
-from trulens_evalchain.tru_feedback import Feedback
+from trulens_eval import tru
+from trulens_eval import tru_chain
+from trulens_eval import tru_feedback
+from trulens_eval.keys import *
+from trulens_eval.keys import PINECONE_API_KEY
+from trulens_eval.keys import PINECONE_ENV
+from trulens_eval.tru_db import Record
+from trulens_eval.tru_feedback import Feedback
 
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"

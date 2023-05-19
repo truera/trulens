@@ -6,10 +6,11 @@ import subprocess
 from typing import Callable, Dict, List, Sequence
 
 import pkg_resources
-from trulens_evalchain.tru_chain import TruChain
-from trulens_evalchain.tru_db import json_default
-from trulens_evalchain.tru_db import LocalSQLite
-from trulens_evalchain.tru_feedback import Feedback
+
+from trulens_eval.tru_chain import TruChain
+from trulens_eval.tru_db import json_default
+from trulens_eval.tru_db import LocalSQLite
+from trulens_eval.tru_feedback import Feedback
 
 lms = LocalSQLite()
 
@@ -103,7 +104,7 @@ def get_records_and_feedback(chain_ids: List[str]):
 
 def run_dashboard():
     leaderboard_path = pkg_resources.resource_filename(
-        'trulens_evalchain', 'Leaderboard.py'
+        'trulens_eval', 'Leaderboard.py'
     )
     pkg_resources.resource_stream('trulens_evalchain', 'trulens_logo.svg')
     pkg_resources.resource_stream('trulens_evalchain', '.streamlit/config.toml')
