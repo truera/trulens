@@ -8,18 +8,18 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.vectorstores import Pinecone
+import numpy as np
 import pinecone
 import streamlit as st
-import numpy as np
 
 from trulens_evalchain import tru
 from trulens_evalchain import tru_chain
 from trulens_evalchain import tru_feedback
-from trulens_evalchain.tru_feedback import Feedback
 from trulens_evalchain.keys import *
 from trulens_evalchain.keys import PINECONE_API_KEY
 from trulens_evalchain.keys import PINECONE_ENV
 from trulens_evalchain.tru_db import Record
+from trulens_evalchain.tru_feedback import Feedback
 
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
@@ -53,6 +53,7 @@ f_qs_relevance = Feedback(openai.qs_relevance).on(
 ).on_multiple(
     multiarg="statement", each_query=Record.page_content, agg=np.min
 )
+
 
 # @st.cache_data
 def generate_response(prompt):

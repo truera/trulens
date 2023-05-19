@@ -1,13 +1,13 @@
 # common requirements
 python-dotenv
+langchain
 # slack bot and its indexing requirements:
 sentencepiece
-git+https://github.com/huggingface/transformers
+transformers
 pyllama
 tokenizers
 protobuf
 accelerate
-langchain
 openai
 pinecone-client
 tiktoken

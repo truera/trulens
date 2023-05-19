@@ -39,7 +39,6 @@ def app():
 
         for row_id, feedback_dict in enumerate(df_feedback.iterrows()):
             print(feedback_dict)
-
         """
         for i, col_name in enumerate(df_feedback.columns):
 
