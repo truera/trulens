@@ -6,10 +6,10 @@ from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
 import streamlit as st
 
-from trulens_evalchain import tru
-from trulens_evalchain import tru_chain
-from trulens_evalchain import tru_feedback
-from trulens_evalchain.keys import *
+from trulens_eval import tru
+from trulens_eval import tru_chain
+from trulens_eval import tru_feedback
+from trulens_eval.keys import *
 
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
