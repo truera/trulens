@@ -80,7 +80,7 @@ tru.init_db('llm_quality')
 Make the first call to your LLM Application
 
 ```python
-prompt_input = 'como adopto un perro?'
+prompt_input = 'que hora es?'
 gpt3_response, record = tc(prompt_input)
 ```
 
