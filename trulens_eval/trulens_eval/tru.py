@@ -106,8 +106,6 @@ def run_dashboard():
     leaderboard_path = pkg_resources.resource_filename(
         'trulens_eval', 'Leaderboard.py'
     )
-    pkg_resources.resource_stream('trulens_evalchain', 'trulens_logo.svg')
-    pkg_resources.resource_stream('trulens_evalchain', '.streamlit/config.toml')
 
     subprocess.Popen(["streamlit", "run", leaderboard_path])
     return None
