@@ -122,23 +122,26 @@ from datetime import datetime
 from inspect import BoundArguments
 from inspect import signature
 from inspect import stack
+import logging
 import os
 import threading as th
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import langchain
-
-from trulens_eval.tru_db import noserio
-
-langchain.verbose = False
+from langchain.callbacks import get_openai_callback
 from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
 
+from trulens_eval.tru_db import noserio
 from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_db import TruDB
+from trulens_eval.tru_feedback import Feedback
+from trulens_eval.util import TP
+
+langchain.verbose = False
 
 # Addresses of chains or their contents. This is used to refer chains/parameters
 # even in cases where the live object is not in memory (i.e. on some remote
@@ -174,11 +177,19 @@ class TruChain(Chain):
     # for recording is based on the call stack, see _call.
     recording: Optional[bool] = Field(exclude=True)
 
+    # Feedback functions to evaluate on each record.
+    feedbacks: Optional[Sequence[Feedback]] = Field(exclude=True)
+
+    # Database to store models/records/feedbacks.
+    db: Optional[TruDB] = Field(exclude=True)
+
     def __init__(
         self,
         chain: Chain,
         chain_id: Optional[str] = None,
         verbose: bool = False,
+        feedbacks: Optional[Sequence[Feedback]] = None,
+        db: Optional[TruDB] = None
     ):
         """
         Wrap a chain for monitoring.
@@ -194,13 +205,22 @@ class TruChain(Chain):
 
         self.chain = chain
 
-        self._instrument(obj=self.chain, query=Record.chain)
+        self._instrument_object(obj=self.chain, query=Record.chain)
         self.recording = False
 
         chain_def = self.chain_def
 
         # Track chain id. This will produce a name if not provided.
         self.chain_id = chain_id or obj_id_of_obj(obj=chain_def, prefix="chain")
+
+        if feedbacks is not None and db is None:
+            raise ValueError("Feedback logging requires `db` to be specified.")
+
+        self.feedbacks = feedbacks or []
+        self.db = db
+
+        if db is not None:
+            db.insert_chain(chain_id=self.chain_id, chain=self)
 
     @property
     def chain_def(self):
@@ -221,47 +241,9 @@ class TruChain(Chain):
     def output_keys(self) -> List[str]:
         return self.chain.output_keys
 
-        # def _run(self, *args: Any, callbacks: Callbacks = None, **kwargs: Any) -> str:
-        # TODO (piotrm): Need to figure out what to return here.
-        """Run the chain as text in, text out or multiple variables, text out."""
-        """if len(self.output_keys) != 1:
-            raise ValueError(
-                f"`run` not supported when there is not exactly "
-                f"one output key. Got {self.output_keys}."
-            )
-
-        if args and not kwargs:
-            if len(args) != 1:
-                raise ValueError("`run` supports only one positional argument.")
-            return self(args[0], callbacks=callbacks)# [self.output_keys[0]]
-
-        if kwargs and not args:
-            return self(kwargs, callbacks=callbacks)# [self.output_keys[0]]
-
-        if not kwargs and not args:
-            raise ValueError(
-                "`run` supported with either positional arguments or keyword arguments,"
-                " but none were provided."
-            )
-
-        raise ValueError(
-            f"`run` supported with either positional arguments or keyword arguments"
-            f" but not both. Got args: {args} and kwargs: {kwargs}."
-        )"""
-
-    # langchain.chains.base.py:Chain
-    # We need to override this because we defined TruChain as a Chain and the default
-    # behaviour from the parent is not the same as the behaviour of the wrapped chain.
-    def __call__(
-        self, *args, **kwargs
-    ):  #-> Dict[str, Any]: TODO(piotrm): fix type
-        """
-        Wrapped call to self.chain.__call__ with instrumentation.
-        """
-
-        print("Calling wrapped chain.")
-
-        # Mark us as recording calls. Should be sufficient for non-threaded cases.
+    def call_with_record(self, *args, **kwargs):
+        # Mark us as recording calls. Should be sufficient for non-threaded
+        # cases.
         self.recording = True
 
         # Wrapped calls will look this up by traversing the call stack. This
@@ -271,12 +253,19 @@ class TruChain(Chain):
         ret = None
         error = None
 
+        total_tokens = None
+        total_cost = None
+
         try:
-            ret = self.chain.__call__(*args, **kwargs)
+            # TODO: do this only if there is an openai model inside the chain:
+            with get_openai_callback() as cb:
+                ret = self.chain.__call__(*args, **kwargs)
+                total_tokens = cb.total_tokens
+                total_cost = cb.total_cost
 
         except BaseException as e:
             error = e
-            print(f"WARNING: {e}")
+            logging.warn(f"Chain raised an exception: {e}")
 
         self.recording = False
 
@@ -286,15 +275,76 @@ class TruChain(Chain):
         for path, calls in record.items():
             obj = TruDB._project(path=path, obj=ret_record)
             if obj is None:
-                print(f"WARNING: Cannot locate {path} in chain.")
+                logging.warn(f"Cannot locate {path} in chain.")
                 record['_call_not_found_in_chain'] = calls
             else:
                 obj.update(dict(_call=calls))
 
-        if error is None:
-            return ret, ret_record
-        else:
+        ret_record['_cost'] = dict(
+            total_tokens=total_tokens, total_cost=total_cost
+        )
+
+        if error is not None:
+            TP().runlater(self._handle_error, ret_record, error)
             raise error
+
+        TP().runlater(self._handle_record, ret_record)
+
+        return ret, ret_record
+
+    # langchain.chains.base.py:Chain
+    def __call__(self, *args, **kwargs) -> Dict[str, Any]:
+        """
+        Wrapped call to self.chain.__call__ with instrumentation. If you need to
+        get the record, use `call_with_record` instead. 
+        """
+
+        ret, record = self.call_with_record(*args, **kwargs)
+
+        return ret
+
+    def _handle_record(self, record: Dict):
+        """
+        Write out record-related info to database if set.
+        """
+
+        # Import here to avoid circular imports.
+        from trulens_eval import tru
+
+        if self.db is None:
+            return
+
+        main_input = record['chain']['_call']['args']['inputs'][
+            self.input_keys[0]]
+        main_output = record['chain']['_call']['rets'][self.output_keys[0]]
+
+        record_id = tru.add_data(
+            chain_id=self.chain_id,
+            prompt=main_input,
+            response=main_output,
+            record=record,
+            tags='dev',  # TODO: generalize
+            total_tokens=record['_cost']['total_tokens'],
+            total_cost=record['_cost']['total_cost'],
+            db=self.db
+        )
+
+        if len(self.feedbacks) == 0:
+            return
+
+        # Run feedback function and get value
+        feedback_results = tru.run_feedback_functions(
+            chain=self, record=record, feedback_functions=self.feedbacks
+        )
+
+        # Add value to database
+        tru.add_feedback(record_id, feedback_results, db=self.db)
+
+    def _handle_error(self, record, error):
+        if self.db is None:
+            return
+
+        pass
 
     # Chain requirement
     # TODO(piotrm): figure out whether the combination of _call and __call__ is working right.
@@ -328,14 +378,17 @@ class TruChain(Chain):
         """
 
         if obj.memory is not None:
-            #print(
-            #    f"WARNING: will not be able to serialize object of type {cls} because it has memory."
-            #)
+
+            logging.warn(
+                f"Will not be able to serialize object of type {cls} because it has memory."
+            )
+
             pass
 
         def safe_dict(s, json: bool = True, **kwargs: Any) -> Dict:
             """
-            Return dictionary representation `s`. If `json` is set, will make sure output can be serialized.
+            Return dictionary representation `s`. If `json` is set, will make
+            sure output can be serialized.
             """
 
             #if s.memory is not None:
@@ -380,9 +433,9 @@ class TruChain(Chain):
 
         return new_prop
 
-    def _instrument_method(self, query: Query, func: Callable):
+    def _instrument_call(self, query: Query, func: Callable):
         """
-        Instrument a Chain method to capture its inputs/outputs/errors.
+        Instrument a Chain.__call__ method to capture its inputs/outputs/errors.
         """
 
         if hasattr(func, "_instrumented"):
@@ -412,71 +465,71 @@ class TruChain(Chain):
             # "record" variable was defined there. Will use that for recording
             # the wrapped call.
             record = self._get_local_in_call_stack(
-                key="record", func=TruChain.__call__
+                key="record", func=TruChain.call_with_record
             )
 
             if record is None:
                 return func(*args, **kwargs)
 
+            # Otherwise keep track of inputs and outputs (or exception).
+
+            error = None
+            ret = None
+
+            start_time = datetime.now()
+
+            chain_stack = self._get_local_in_call_stack(
+                key="chain_stack", func=wrapper, offset=1
+            ) or []
+            chain_stack = chain_stack + [query._path]
+
+            try:
+                # Using sig bind here so we can produce a list of key-value
+                # pairs even if positional arguments were provided.
+                bindings: BoundArguments = sig.bind(*args, **kwargs)
+                ret = func(*bindings.args, **bindings.kwargs)
+
+            except BaseException as e:
+                error = e
+
+            end_time = datetime.now()
+
+            # Don't include self in the recorded arguments.
+            nonself = {
+                k: TruDB.dictify(v)
+                for k, v in bindings.arguments.items()
+                if k != "self"
+            }
+            row_args = dict(
+                args=nonself,
+                start_time=str(start_time),
+                end_time=str(end_time),
+                pid=os.getpid(),
+                tid=th.get_native_id(),
+                chain_stack=chain_stack
+            )
+
+            if error is not None:
+                row_args['error'] = error
             else:
-                # Otherwise keep track of inputs and outputs (or exception).
+                row_args['rets'] = ret
 
-                error = None
-                ret = None
-
-                start_time = datetime.now()
-
-                chain_stack = self._get_local_in_call_stack(
-                    key="chain_stack", func=wrapper, offset=1
-                ) or []
-                chain_stack = chain_stack + [query._path]
-
-                try:
-                    # Using sig bind here so we can produce a list of key-value
-                    # pairs even if positional arguments were provided.
-                    bindings: BoundArguments = sig.bind(*args, **kwargs)
-                    ret = func(*bindings.args, **bindings.kwargs)
-
-                except BaseException as e:
-                    error = e
-
-                end_time = datetime.now()
-
-                # Don't include self in the recorded arguments.
-                nonself = {
-                    k: TruDB.dictify(v)
-                    for k, v in bindings.arguments.items()
-                    if k != "self"
-                }
-                row_args = dict(
-                    args=nonself,
-                    start_time=str(start_time),
-                    end_time=str(end_time),
-                    pid=os.getpid(),
-                    tid=th.get_native_id(),
-                    chain_stack=chain_stack
-                )
-
-                if error is not None:
-                    row_args['error'] = error
+            # If there already is a call recorded at the same path, turn the
+            # calls into a list.
+            if query._path in record:
+                existing_call = record[query._path]
+                if isinstance(existing_call, dict):
+                    record[query._path] = [existing_call, row_args]
                 else:
-                    row_args['rets'] = ret
+                    record[query._path].append(row_args)
+            else:
+                # Otherwise record just the one call not inside a list.
+                record[query._path] = row_args
 
-                # If there already is a call recorded at the same path, turn the calls into a list.
-                if query._path in record:
-                    existing_call = record[query._path]
-                    if isinstance(existing_call, dict):
-                        record[query._path] = [existing_call, row_args]
-                    else:
-                        record[query._path].append(row_args)
-                else:
-                    # Otherwise record just the one call not inside a list.
-                    record[query._path] = row_args
+            if error is not None:
+                raise error
 
-                if error is not None:
-                    raise error
-
-                return ret
+            return ret
 
         wrapper._instrumented = func
 
@@ -488,7 +541,7 @@ class TruChain(Chain):
 
         return wrapper
 
-    def _instrument(self, obj, query: Query):
+    def _instrument_object(self, obj, query: Query):
         if self.verbose:
             print(f"instrumenting {query._path} {obj.__class__.__name__}")
 
@@ -514,7 +567,7 @@ class TruChain(Chain):
 
                 setattr(
                     base, "_call",
-                    self._instrument_method(query=query, func=original_fun)
+                    self._instrument_call(query=query, func=original_fun)
                 )
 
             if hasattr(base, "_chain_type"):
@@ -555,15 +608,15 @@ class TruChain(Chain):
                     pass
 
                 elif v.__class__.__module__.startswith("langchain."):
-                    self._instrument(obj=v, query=query[k])
+                    self._instrument_object(obj=v, query=query[k])
 
                 elif isinstance(v, Sequence):
                     for i, sv in enumerate(v):
                         if isinstance(sv, Chain):
-                            self._instrument(obj=sv, query=query[k][i])
+                            self._instrument_object(obj=sv, query=query[k][i])
 
                 # TODO: check if we want to instrument anything not accessible through __fields__ .
         else:
-
-            # print(f"WARNING: do not know how to instrument {obj}")
-            pass
+            logging.debug(
+                f"Do not know how to instrument object {str(obj)[:32]} of type {type(obj)}."
+            )

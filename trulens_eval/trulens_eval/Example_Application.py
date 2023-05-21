@@ -31,7 +31,7 @@ def generate_response(prompt, model_name):
 
     chain = LLMChain(llm=chat, prompt=chat_prompt_template)
     tc = tru_chain.TruChain(chain)
-    return tc(prompt)
+    return tc.call_with_record(prompt)
 
 
 # Set up Streamlit app

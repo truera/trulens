@@ -117,7 +117,7 @@ def generate_response(prompt):
     # Trulens instrumentation.
     tc = tru_chain.TruChain(chain, chain_id=chain_id)
 
-    return tc, tc(dict(question=prompt))
+    return tc, tc.call_with_record(dict(question=prompt))
 
 
 # Set up Streamlit app
