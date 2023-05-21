@@ -14,7 +14,7 @@ import dotenv
 config = dotenv.dotenv_values(".env")
 
 for k, v in config.items():
-    print(f"got {k}")
+    print(f"KEY SET: {k}")
     globals()[k] = v
 
     # set them into environment as well

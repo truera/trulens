@@ -1,5 +1,6 @@
 import abc
 import json
+import logging
 from pathlib import Path
 import sqlite3
 from typing import (
@@ -7,7 +8,6 @@ from typing import (
 )
 import uuid
 
-import langchain
 from merkle_json import MerkleJson
 import pandas as pd
 import pydantic
@@ -30,11 +30,21 @@ def is_empty(obj):
 
 
 def is_noserio(obj):
+    """
+    Determines whether the given json object represents some non-serializable
+    object. See `noserio`.
+    """
     return isinstance(obj, dict) and "_NON_SERIALIZED_OBJECT" in obj
 
 
 def noserio(obj, **extra: Dict) -> dict:
+    """
+    Create a json structure to represent a non-serializable object. Any
+    additional keyword arguments are included.
+    """
+
     inner = {
+        "id": id(obj),
         "class": obj.__class__.__name__,
         "module": obj.__class__.__module__,
         "bases": list(map(lambda b: b.__name__, obj.__class__.__bases__))
@@ -54,6 +64,9 @@ def obj_id_of_obj(obj: dict, prefix="obj"):
 
 
 def json_str_of_obj(obj: Any) -> str:
+    """
+    Encode the given json object as a string.
+    """
     return json.dumps(obj, default=json_default)
 
 
@@ -62,8 +75,11 @@ def json_default(obj: Any) -> str:
     Produce a representation of an object which cannot be json-serialized.
     """
 
-    if isinstance(obj, pydantic.BaseModel):  #langchain.schema.Document):
-        return json.dumps(obj.dict())
+    if isinstance(obj, pydantic.BaseModel):
+        try:
+            return json.dumps(obj.dict())
+        except Exception as e:
+            return noserio(obj, exception=e)
 
     # Intentionally not including much in this indicator to make sure the model
     # hashing procedure does not get randomized due to something here.
@@ -188,13 +204,10 @@ class TruDB(abc.ABC):
             return temp
 
         else:
-            #print(
-            #    f"WARNING: Don't know how to dictify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
-            #)
+            logging.debug(
+                f"Don't know how to dictify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
+            )
             return noserio(obj)
-            #raise RuntimeError(
-            #    f"Don't know how to dictify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
-            #)
 
     @staticmethod
     def leaf_queries(obj: Any, query: Query = None) -> Iterable[Query]:
@@ -364,30 +377,30 @@ class TruDB(abc.ABC):
         if isinstance(first, str):
             if isinstance(obj, pydantic.BaseModel):
                 if not hasattr(obj, first):
-                    print(
-                        f"WARNING: Cannot project {str(obj)[0:32]} with path {path} because {first} is not an attribute here."
+                    logging.warn(
+                        f"Cannot project {str(obj)[0:32]} with path {path} because {first} is not an attribute here."
                     )
                     return None
                 return TruDB._project(path=rest, obj=getattr(obj, first))
 
             elif isinstance(obj, Dict):
                 if first not in obj:
-                    print(
-                        f"WARNING: Cannot project {str(obj)[0:32]} with path {path} because {first} is not a key here."
+                    logging.warn(
+                        f"Cannot project {str(obj)[0:32]} with path {path} because {first} is not a key here."
                     )
                     return None
                 return TruDB._project(path=rest, obj=obj[first])
 
             else:
-                print(
-                    f"WARNING: Cannot project {str(obj)[0:32]} with path {path} because object is not a dict or model."
+                logging.warn(
+                    f"Cannot project {str(obj)[0:32]} with path {path} because object is not a dict or model."
                 )
                 return None
 
         elif isinstance(first, int):
             if not isinstance(obj, Sequence) or first >= len(obj):
-                print(
-                    f"WARNING: Cannot project {str(obj)[0:32]} with path {path}."
+                logging.warn(
+                    f"Cannot project {str(obj)[0:32]} with path {path}."
                 )
                 return None
 
@@ -407,7 +420,8 @@ class LocalTinyDB(TruDB):
             self.db: TinyDB = TinyDB(filename, indent=4, default=json_default)
         else:
             self.filename = None
-            print("WARNING: db is memory-only. It will not persist.")
+            logging.debug("db is memory-only. It will not persist.")
+
             self.db: TinyDB = TinyDB(storage=MemoryStorage)
 
         self.records: Table = self.db.table("records")
@@ -432,7 +446,7 @@ class LocalTinyDB(TruDB):
         chain_id = chain_id or obj_id_of_obj(obj=chain, prefix="chain")
 
         if self.chains.contains(doc_id=chain_id):
-            print(f"WARNING: chain {chain_id} already exists in {self.chains}.")
+            logging.warn(f"Chain {chain_id} already exists in {self.chains}.")
             self.chains.update(Document(doc_id=chain_id, value=chain))
         else:
             self.chains.insert(Document(doc_id=chain_id, value=chain))
@@ -596,7 +610,9 @@ class LocalSQLite(TruDB):
         chain_str = json_str_of_obj(chain)
 
         conn, c = self._connect()
-        c.execute("INSERT INTO chains VALUES (?, ?)", (chain_id, chain_str))
+        c.execute(
+            "INSERT OR IGNORE INTO chains VALUES (?, ?)", (chain_id, chain_str)
+        )
         self._close(conn)
 
         return chain_id
