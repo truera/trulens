@@ -1,16 +1,15 @@
 from datetime import datetime
-import json
-import os
 import sqlite3
 import subprocess
-from typing import Callable, Dict, List, Sequence
+from typing import Callable, Dict, List, Optional, Sequence
 
 import pkg_resources
 
-from trulens_eval.tru_chain import TruChain
-from trulens_eval.tru_db import json_default
+from trulens_eval.tru_db import json_str_of_obj
 from trulens_eval.tru_db import LocalSQLite
+from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
+from trulens_eval.util import TP
 
 lms = LocalSQLite()
 
@@ -28,7 +27,7 @@ def init_db(db_name):
 
 
 def to_json(details):
-    return json.dumps(details, default=json_default)
+    return json_str_of_obj(details)
 
 
 def add_data(
@@ -39,18 +38,27 @@ def add_data(
     tags: str = None,
     ts: int = None,
     total_tokens: int = None,
-    total_cost: float = None
+    total_cost: float = None,
+    db: Optional[TruDB] = None
 ):
     """_summary_
 
     Parameters:
+
         chain_id (str): _description_
+
         prompt (str): _description_
+
         response (str): _description_
+
         details (str, optional): _description_. Defaults to None.
+
         tags (str, optional): _description_. Defaults to None.
+
         ts (int, optional): _description_. Defaults to None.
+
         total_tokens (int, optional): _description_. Defaults to None.
+
         total_cost (float, optional): _description_. Defaults to None.
 
     Returns:
@@ -59,7 +67,10 @@ def add_data(
     if not ts:
         ts = datetime.now()
 
-    record_id = lms.insert_record(
+    if db is None:
+        db = lms
+
+    record_id = db.insert_record(
         chain_id, prompt, response, record, ts, tags, total_tokens, total_cost
     )
     return record_id
@@ -77,27 +88,43 @@ def run_feedback_function(
 
 
 def run_feedback_functions(
-    chain: TruChain, record: Dict, feedback_functions: Sequence[Feedback]
+    chain: 'TruChain', record: Dict, feedback_functions: Sequence['Feedback']
 ):
 
     # Run feedback functions
     evals = {}
 
-    for f in feedback_functions:
-        evals[f.name] = f.run(chain=chain, record=record)
+    for func in feedback_functions:
+        evals[
+            func.name
+        ] = TP().promise(lambda f: f.run(chain=chain, record=record), func)
+
+    for name, promise in evals.items():
+        temp = promise.get()
+        print(f"{name}={temp}")
+        evals[name] = temp
 
     return evals
 
 
-def add_feedback(record_id: str, eval: dict):
-    lms.insert_feedback(record_id, eval)
+def add_feedback(record_id: str, eval: dict, db: Optional[TruDB] = None):
+    if db is None:
+        db = lms
+
+    db.insert_feedback(record_id, eval)
 
 
-def get_chain(chain_id):
+def get_chain(chain_id, db: Optional[TruDB] = None):
+    if db is None:
+        db = lms
+
     return lms.get_chain(chain_id)
 
 
-def get_records_and_feedback(chain_ids: List[str]):
+def get_records_and_feedback(chain_ids: List[str], db: Optional[TruDB] = None):
+    if db is None:
+        db = lms
+
     df_records, df_feedback = lms.get_records_and_feedback(chain_ids)
     return df_records, df_feedback
 

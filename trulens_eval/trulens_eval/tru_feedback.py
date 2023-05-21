@@ -47,21 +47,22 @@ Question/Statement relevance that is evaluated on a sub-chain input which contai
 
 from inspect import Signature
 from inspect import signature
+import logging
+from multiprocessing.pool import AsyncResult
 import re
-from typing import Any, Callable, Dict, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import openai
 import requests
 
 from trulens_eval import feedback_prompts
-from trulens_eval import tru
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
-from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_db import TruDB
+from trulens_eval.util import TP
 
 # openai
 
@@ -144,9 +145,7 @@ class Feedback():
                 multi, Sequence
             ), f"Feedback function expected a sequence on {multiarg} argument."
 
-            rets = []
-
-            # TODO: parallelize
+            rets: List[AsyncResult[float]] = []
 
             for aval in multi:
 
@@ -155,9 +154,9 @@ class Feedback():
 
                 kwargs[multiarg] = aval
 
-                ret = self.imp(**kwargs)
+                rets.append(TP().promise(self.imp, **kwargs))
 
-                rets.append(ret)
+            rets: List[float] = list(map(lambda r: r.get(), rets))
 
             rets = np.array(rets)
 
@@ -199,7 +198,7 @@ class Feedback():
 
         return Feedback(imp=self.imp, selectors=selectors)
 
-    def run(self, chain: TruChain, record: Dict) -> Any:
+    def run(self, chain: 'TruChain', record: Dict) -> Any:
         """
         Run the feedback function on the given `record`. The `chain` that
         produced the record is also required to determine input/output argument
@@ -221,7 +220,7 @@ class Feedback():
 
         return self.imp.__name__
 
-    def extract_selection(self, chain: TruChain,
+    def extract_selection(self, chain: 'TruChain',
                           record: dict) -> Dict[str, Any]:
         """
         Given the `chain` that produced the given `record`, extract from
@@ -237,7 +236,9 @@ class Feedback():
 
             elif v == "prompt" or v == "input":
                 if len(chain.input_keys) > 1:
-                    #print("WARNING: chain has more than one input, guessing the first one is prompt.")
+                    logging.warn(
+                        f"Chain has more than one input, guessing the first one is prompt."
+                    )
                     pass
 
                 input_key = chain.input_keys[0]
@@ -246,7 +247,9 @@ class Feedback():
 
             elif v == "response" or v == "output":
                 if len(chain.output_keys) > 1:
-                    # print("WARNING: chain has more than one ouput, guessing the first one is response.")
+                    logging.warn(
+                        "Chain has more than one ouput, guessing the first one is response."
+                    )
                     pass
 
                 output_key = chain.output_keys[0]
@@ -255,8 +258,6 @@ class Feedback():
 
             else:
                 raise RuntimeError(f"Unhandled selection type {type(v)}.")
-
-            # print(f"q={q._path}")
 
             val = TruDB.project(query=q, obj=record)
             ret[k] = val
@@ -273,7 +274,7 @@ def _re_1_10_rating(str_val):
         # Try soft match
         matches = re.search('[1-9][0-9]*', str_val)
         if not matches:
-            print(f"WARNING: 1-10 rating regex failed to match on: '{str_val}'")
+            logging.warn(f"1-10 rating regex failed to match on: '{str_val}'")
             return -10  # so this will be reported as -1 after division by 10
 
     return int(matches.group())
@@ -282,10 +283,13 @@ def _re_1_10_rating(str_val):
 class OpenAI():
 
     def __init__(self, model_engine: str = "gpt-3.5-turbo"):
-        """A set of OpenAI Feedback Functions
+        """
+        A set of OpenAI Feedback Functions.
 
         Parameters:
-            model_engine (str, optional): The specific model version. Defaults to "gpt-3.5-turbo".
+
+        - model_engine (str, optional): The specific model version. Defaults to
+          "gpt-3.5-turbo".
         """
         self.model_engine = model_engine
         self.endpoint_openai = Endpoint(name="openai", rpm=30)
@@ -296,14 +300,16 @@ class OpenAI():
         )
 
     def moderation_not_hate(self, text: str) -> float:
-        """Uses OpenAI's Moderation API.
-        A function that checks if text is hate speech.
+        """
+        Uses OpenAI's Moderation API. A function that checks if text is hate
+        speech.
 
         Parameters:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "hate" and 1 being "not hate".
+            float: A value between 0 and 1. 0 being "hate" and 1 being "not
+            hate".
         """
         openai_response = self._moderation(text)
         return 1 - float(
@@ -311,14 +317,16 @@ class OpenAI():
         )
 
     def moderation_not_hatethreatening(self, text: str) -> float:
-        """Uses OpenAI's Moderation API.
-        A function that checks if text is threatening speech.
+        """
+        Uses OpenAI's Moderation API. A function that checks if text is
+        threatening speech.
 
         Parameters:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "threatening" and 1 being "not threatening".
+            float: A value between 0 and 1. 0 being "threatening" and 1 being
+            "not threatening".
         """
         openai_response = self._moderation(text)
 
@@ -327,14 +335,16 @@ class OpenAI():
         )
 
     def moderation_not_selfharm(self, text: str) -> float:
-        """Uses OpenAI's Moderation API.
-        A function that checks if text is about self harm.
+        """
+        Uses OpenAI's Moderation API. A function that checks if text is about
+        self harm.
 
         Parameters:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "self harm" and 1 being "not self harm".
+            float: A value between 0 and 1. 0 being "self harm" and 1 being "not
+            self harm".
         """
         openai_response = self._moderation(text)
 
@@ -343,14 +353,16 @@ class OpenAI():
         )
 
     def moderation_not_sexual(self, text: str) -> float:
-        """Uses OpenAI's Moderation API.
-        A function that checks if text is sexual speech.
+        """
+        Uses OpenAI's Moderation API. A function that checks if text is sexual
+        speech.
 
         Parameters:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "sexual" and 1 being "not sexual".
+            float: A value between 0 and 1. 0 being "sexual" and 1 being "not
+            sexual".
         """
         openai_response = self._moderation(text)
 
@@ -359,14 +371,16 @@ class OpenAI():
         )
 
     def moderation_not_sexualminors(self, text: str) -> float:
-        """Uses OpenAI's Moderation API.
-        A function that checks if text is about sexual minors.
+        """
+        Uses OpenAI's Moderation API. A function that checks if text is about
+        sexual minors.
 
         Parameters:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "sexual minors" and 1 being "not sexual minors".
+            float: A value between 0 and 1. 0 being "sexual minors" and 1 being
+            "not sexual minors".
         """
         openai_response = self._moderation(text)
 
@@ -375,14 +389,16 @@ class OpenAI():
         )
 
     def moderation_not_violence(self, text: str) -> float:
-        """Uses OpenAI's Moderation API.
-        A function that checks if text is about violence.
+        """
+        Uses OpenAI's Moderation API. A function that checks if text is about
+        violence.
 
         Parameters:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "violence" and 1 being "not violence".
+            float: A value between 0 and 1. 0 being "violence" and 1 being "not
+            violence".
         """
         openai_response = self._moderation(text)
 
@@ -391,14 +407,16 @@ class OpenAI():
         )
 
     def moderation_not_violencegraphic(self, text: str) -> float:
-        """Uses OpenAI's Moderation API.
-        A function that checks if text is about graphic violence.
+        """
+        Uses OpenAI's Moderation API. A function that checks if text is about
+        graphic violence.
 
         Parameters:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "graphic violence" and 1 being "not graphic violence".
+            float: A value between 0 and 1. 0 being "graphic violence" and 1
+            being "not graphic violence".
         """
         openai_response = self._moderation(text)
 
@@ -407,15 +425,17 @@ class OpenAI():
         )
 
     def qs_relevance(self, question: str, statement: str) -> float:
-        """Uses OpenAI's Chat Completion Model.
-        A function that completes a template to check the relevance of the statement to the question.
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the relevance of the statement to the question.
 
         Parameters:
-            question (str): A question being asked.
-            statement (str): A statement to the question.
+            question (str): A question being asked. statement (str): A statement
+            to the question.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being
+            "relevant".
         """
         return _re_1_10_rating(
             self.endpoint_openai.run_me(
@@ -439,15 +459,17 @@ class OpenAI():
         ) / 10
 
     def relevance(self, prompt: str, response: str) -> float:
-        """Uses OpenAI's Chat Completion Model.
-        A function that completes a template to check the relevance of the response to a prompt.
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the relevance of the response to a prompt.
 
         Parameters:
-            prompt (str): A text prompt to an agent.
-            response (str): The agent's response to the prompt.
+            prompt (str): A text prompt to an agent. response (str): The agent's
+            response to the prompt.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being
+            "relevant".
         """
         return _re_1_10_rating(
             self.endpoint_openai.run_me(
@@ -471,16 +493,19 @@ class OpenAI():
         ) / 10
 
     def model_agreement(self, prompt: str, response: str) -> float:
-        """Uses OpenAI's Chat GPT Model.
-        A function that gives Chat GPT the same prompt and gets a response, encouraging truthfulness.
-        A second template is given to Chat GPT with a prompt that the original response is correct, and measures whether previous Chat GPT's response is similar.
+        """
+        Uses OpenAI's Chat GPT Model. A function that gives Chat GPT the same
+        prompt and gets a response, encouraging truthfulness. A second template
+        is given to Chat GPT with a prompt that the original response is
+        correct, and measures whether previous Chat GPT's response is similar.
 
         Parameters:
-            prompt (str): A text prompt to an agent.
-            response (str): The agent's response to the prompt.
+            prompt (str): A text prompt to an agent. response (str): The agent's
+            response to the prompt.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not in agreement" and 1 being "in agreement".
+            float: A value between 0 and 1. 0 being "not in agreement" and 1
+            being "in agreement".
         """
         oai_chat_response = OpenAI().endpoint_openai.run_me(
             lambda: openai.ChatCompletion.create(
@@ -503,15 +528,17 @@ class OpenAI():
         return _re_1_10_rating(agreement_txt) / 10
 
     def sentiment(self, text: str) -> float:
-        """Uses OpenAI's Chat Completion Model.
-        A function that completes a template to check the sentiment of some text.
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the sentiment of some text.
 
         Parameters:
-            text (str): A prompt to an agent.
-            response (str): The agent's response to the prompt.
+            text (str): A prompt to an agent. response (str): The agent's
+            response to the prompt.
 
         Returns:
-            float: A value between 0 and 1. 0 being "negative sentiment" and 1 being "positive sentiment".
+            float: A value between 0 and 1. 0 being "negative sentiment" and 1
+            being "positive sentiment".
         """
 
         return _re_1_10_rating(
@@ -574,32 +601,42 @@ class Huggingface():
         )
 
     def language_match(self, text1: str, text2: str) -> float:
-        """Uses Huggingface's papluca/xlm-roberta-base-language-detection model.
-        A function that uses language detection on `text1` and `text2` and calculates the probit difference on the language detected on text1.
-        The function is: `1.0 - (|probit_language_text1(text1) - probit_language_text1(text2))`
+        """
+        Uses Huggingface's papluca/xlm-roberta-base-language-detection model. A
+        function that uses language detection on `text1` and `text2` and
+        calculates the probit difference on the language detected on text1. The
+        function is: `1.0 - (|probit_language_text1(text1) -
+        probit_language_text1(text2))`
+        
         Parameters:
+        
             text1 (str): Text to evaluate.
+
             text2 (str): Comparative text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "different languages" and 1 being "same languages".
+
+            float: A value between 0 and 1. 0 being "different languages" and 1
+            being "same languages".
         """
-        # TODO: parallelize
+
+        def get_scores(text):
+            payload = {"inputs": text}
+            hf_response = self.endpoint_huggingface.post(
+                url=Huggingface.LANGUAGE_API_URL, payload=payload
+            )
+            return {r['label']: r['score'] for r in hf_response}
 
         max_length = 500
-        truncated_text = text1[:max_length]
-        payload = {"inputs": truncated_text}
-        hf_response = self.endpoint_huggingface.post(
-            url=Huggingface.LANGUAGE_API_URL, payload=payload
+        scores1: AsyncResult[Dict] = TP().promise(
+            get_scores, text=text1[:max_length]
         )
-        scores1 = {r['label']: r['score'] for r in hf_response}
+        scores2: AsyncResult[Dict] = TP().promise(
+            get_scores, text=text2[:max_length]
+        )
 
-        truncated_text = text2[:max_length]
-        payload = {"inputs": truncated_text}
-        hf_response = self.endpoint_huggingface.post(
-            url=Huggingface.LANGUAGE_API_URL, payload=payload
-        )
-        scores2 = {r['label']: r['score'] for r in hf_response}
+        scores1: Dict = scores1.get()
+        scores2: Dict = scores2.get()
 
         langs = list(scores1.keys())
         prob1 = np.array([scores1[k] for k in langs])
@@ -611,13 +648,16 @@ class Huggingface():
         return l1
 
     def positive_sentiment(self, text: str) -> float:
-        """Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model.
-        A function that uses a sentiment classifier on `text`.
+        """
+        Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
+        function that uses a sentiment classifier on `text`.
+        
         Parameters:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "negative sentiment" and 1 being "positive sentiment".
+            float: A value between 0 and 1. 0 being "negative sentiment" and 1
+            being "positive sentiment".
         """
         max_length = 500
         truncated_text = text[:max_length]
@@ -632,13 +672,16 @@ class Huggingface():
                 return label['score']
 
     def not_toxic(self, text: str) -> float:
-        """Uses Huggingface's martin-ha/toxic-comment-model model.
-        A function that uses a toxic comment classifier on `text`.
+        """
+        Uses Huggingface's martin-ha/toxic-comment-model model. A function that
+        uses a toxic comment classifier on `text`.
+        
         Parameters:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "toxic" and 1 being "not toxic".
+            float: A value between 0 and 1. 0 being "toxic" and 1 being "not
+            toxic".
         """
         max_length = 500
         truncated_text = text[:max_length]

@@ -1,38 +1,12 @@
-from multiprocessing.pool import ThreadPool
 from queue import Queue
 from time import sleep
-from typing import Any, Dict, Hashable, Sequence
+from typing import Any, Sequence
 
 import requests
 from tqdm.auto import tqdm
 
-
-class SingletonPerName():
-    """
-    Class for creating singleton instances except there being one instance max,
-    there is one max per different `name` argument. If `name` is never given,
-    reverts to normal singleton behaviour.
-    """
-
-    # Hold singleton instances here.
-    instances: Dict[Hashable, 'SingletonPerName'] = dict()
-
-    def __new__(cls, name: str = None, *args, **kwargs):
-        """
-        Create the singleton instance if it doesn't already exist and return it.
-        """
-
-        if name not in cls.instances:
-            print(f"creating {cls} instance with name = {name}")
-            cls.instances[name] = super().__new__(cls)
-
-        return cls.instances[name]
-
-
-class TP(SingletonPerName):  # "thread processing"
-
-    def __init__(self):
-        self.thread_pool = ThreadPool(processes=8)
+from trulens_eval.util import SingletonPerName
+from trulens_eval.util import TP
 
 
 class Endpoint(SingletonPerName):

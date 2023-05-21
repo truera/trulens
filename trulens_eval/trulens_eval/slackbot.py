@@ -1,38 +1,30 @@
-from multiprocessing.pool import ThreadPool
+import logging
 import os
 from pprint import PrettyPrinter
 from typing import Dict, Set, Tuple
-
-from langchain.callbacks import get_openai_callback
-import numpy as np
-
-from trulens_eval import tru
-from trulens_eval import tru_feedback
-from trulens_eval.tru import thread_pool
-from trulens_eval.tru_chain import TruChain
-from trulens_eval.tru_db import LocalSQLite
-from trulens_eval.tru_db import LocalTinyDB
-from trulens_eval.tru_db import Record
-from trulens_eval.tru_db import TruDB
-from trulens_eval.tru_feedback import Feedback
-
-os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
-
-import logging
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.vectorstores import Pinecone
+import numpy as np
 import pinecone
 from slack_bolt import App
 from slack_sdk import WebClient
 
+from trulens_eval import tru
+from trulens_eval import tru_feedback
 from trulens_eval.keys import PINECONE_API_KEY
 from trulens_eval.keys import PINECONE_ENV
 from trulens_eval.keys import SLACK_SIGNING_SECRET
 from trulens_eval.keys import SLACK_TOKEN
+from trulens_eval.tru_chain import TruChain
+from trulens_eval.tru_db import LocalSQLite
+from trulens_eval.tru_db import Record
+from trulens_eval.tru_feedback import Feedback
+
+os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 pp = PrettyPrinter()
 
@@ -61,6 +53,29 @@ db = LocalSQLite()
 ident = lambda h: h
 
 chain_ids = {0: "0/default", 1: "1/lang_prompt", 2: "2/relevance_prompt"}
+
+# Construct feedback functions.
+
+hugs = tru_feedback.Huggingface()
+openai = tru_feedback.OpenAI()
+
+# Language match between question/answer.
+f_lang_match = Feedback(hugs.language_match).on(
+    text1="prompt", text2="response"
+)
+
+# Question/answer relevance between overall question and answer.
+f_qa_relevance = Feedback(openai.relevance).on(
+    prompt="input", response="output"
+)
+
+# Question/statement relevance between question and each context chunk.
+f_qs_relevance = Feedback(openai.qs_relevance).on(
+    question="input",
+    statement=Record.chain.combine_docs_chain._call.args.inputs.input_documents
+).on_multiple(
+    multiarg="statement", each_query=Record.page_content, agg=np.min
+)
 
 
 def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
@@ -149,35 +164,16 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     chain.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
 
     # Trulens instrumentation.
-    tc = TruChain(chain=chain, chain_id=chain_id)
+    tc = TruChain(
+        chain=chain,
+        chain_id=chain_id,
+        db=tru.lms,
+        feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance]
+    )
 
     convos[cid] = tc
 
     return tc
-
-
-# Construct feedback functions.
-
-hugs = tru_feedback.Huggingface()
-openai = tru_feedback.OpenAI()
-
-# Language match between question/answer.
-f_lang_match = Feedback(hugs.language_match).on(
-    text1="prompt", text2="response"
-)
-
-# Question/answer relevance between overall question and answer.
-f_qa_relevance = Feedback(openai.relevance).on(
-    prompt="input", response="output"
-)
-
-# Question/statement relevance between question and each context chunk.
-f_qs_relevance = Feedback(openai.qs_relevance).on(
-    question="input",
-    statement=Record.chain.combine_docs_chain._call.args.inputs.input_documents
-).on_multiple(
-    multiarg="statement", each_query=Record.page_content, agg=np.min
-)
 
 
 def get_answer(chain: TruChain, question: str) -> Tuple[str, str]:
@@ -186,37 +182,9 @@ def get_answer(chain: TruChain, question: str) -> Tuple[str, str]:
     sources elaboration text.
     """
 
-    with get_openai_callback() as cb:
-        outs, record = chain(dict(question=question))
-        total_tokens = cb.total_tokens
-        total_cost = cb.total_cost
+    outs = chain(dict(question=question))
 
     result = outs['answer']
-
-    def log_and_feedback():
-        # Log the interaction.
-        record_id = tru.add_data(
-            chain_id=chain.chain_id,
-            prompt=question,
-            response=result,
-            record=record,
-            tags='dev',
-            total_tokens=total_tokens,
-            total_cost=total_cost
-        )
-
-        # Run feedback function and get value
-        feedbacks = tru.run_feedback_functions(
-            chain=chain,
-            record=record,
-            feedback_functions=[f_lang_match, f_qa_relevance, f_qs_relevance]
-        )
-
-        # Add value to database
-        tru.add_feedback(record_id, feedbacks)
-
-    thread_pool.apply_async(log_and_feedback)
-
     sources = outs['source_documents']
 
     result_sources = "Sources:\n"
