@@ -28,7 +28,7 @@ deferred_feedback_evaluator_started = False
 
 def start_deferred_feedback_evaluator(db: Optional[TruDB] = None):
     global deferred_feedback_evaluator_started
-    
+
     db = db or lms
 
     if deferred_feedback_evaluator_started:
@@ -37,7 +37,7 @@ def start_deferred_feedback_evaluator(db: Optional[TruDB] = None):
     from trulens_eval.tru_feedback import Feedback
 
     # Start a persistent thread that evaluates feedback functions.
-    Feedback.start_evaluator(db)
+    Feedback.start_evaluator(db=db)
 
     deferred_feedback_evaluator_started = True
 

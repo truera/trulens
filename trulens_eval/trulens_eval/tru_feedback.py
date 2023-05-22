@@ -168,13 +168,21 @@ class Feedback():
                     tqdm.write(f"Starting run for row {i}.")
 
                     TP().runlater(prepare_feedback, row)
-                elif row.status in [-1, 1]:
+                elif row.status in [1]:
                     now = datetime.now().timestamp()
                     if now - row.last_ts > 30:
                         tqdm.write(f"Incomplete row {i} last made progress over 30 seconds ago. Retrying.")
                         TP().runlater(prepare_feedback, row)
                     else:
                         tqdm.write(f"Incomplete row {i} last made progress less than 30 seconds ago. Giving it more time.")
+
+                elif row.status in [-1]:
+                    now = datetime.now().timestamp()
+                    if now - row.last_ts > 10:#60*60*24:
+                        tqdm.write(f"Failed row {i} last made progress over 24 hours ago. Retrying.")
+                        TP().runlater(prepare_feedback, row)
+                    else:
+                        tqdm.write(f"Failed row {i} last made progress less than 24 hours ago. Not touching it for now.")
 
                 elif row.status == 2:
                     pass
@@ -497,7 +505,7 @@ class OpenAI(Provider):
           "gpt-3.5-turbo".
         """
         self.model_engine = model_engine
-        self.endpoint = Endpoint(name="openai", rpm=30)
+        self.endpoint = Endpoint(name="openai")
 
     def to_json(self) -> Dict:
         return Provider.to_json(self, model_engine=self.model_engine)
@@ -805,7 +813,7 @@ class Huggingface(Provider):
         """A set of Huggingface Feedback Functions. Utilizes huggingface api-inference
         """
         self.endpoint = Endpoint(
-            name="huggingface", rpm=30, post_headers=get_huggingface_headers()
+            name="huggingface", post_headers=get_huggingface_headers()
         )
 
     def language_match(self, text1: str, text2: str) -> float:
@@ -907,7 +915,7 @@ class Huggingface(Provider):
 class Cohere(Provider):
 
     def __init__(self, model_engine='large'):
-        Cohere().endpoint = Endpoint(name="cohere", rpm=30)
+        Cohere().endpoint = Endpoint(name="cohere")
         self.model_engine = model_engine
 
     def to_json(self) -> Dict:
