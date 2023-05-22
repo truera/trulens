@@ -133,7 +133,7 @@ from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_eval.tru_db import noserio
+from trulens_eval.tru_db import JSON, noserio
 from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import Record
@@ -220,6 +220,7 @@ class TruChain(Chain):
         self.db = db
 
         if db is not None:
+            logging.debug("Inserting chain and feedback function definitions to db.")
             db.insert_chain(chain_id=self.chain_id, chain_json=self.json)
             for f in self.feedbacks:
                 db.insert_feedback_def(f.json)
@@ -303,10 +304,10 @@ class TruChain(Chain):
         ret_record['chain_id'] = self.chain_id
 
         if error is not None:
-            TP().runlater(self._handle_error, ret_record, error)
+            TP().runlater(self._handle_error, record_json=ret_record, error=error)
             raise error
 
-        TP().runlater(self._handle_record, ret_record)
+        TP().runlater(self._handle_record, record_json=ret_record)
 
         return ret, ret_record
 
@@ -321,7 +322,7 @@ class TruChain(Chain):
 
         return ret
 
-    def _handle_record(self, record: Dict):
+    def _handle_record(self, record_json: JSON):
         """
         Write out record-related info to database if set.
         """
@@ -332,18 +333,18 @@ class TruChain(Chain):
         if self.db is None:
             return
 
-        main_input = record['chain']['_call']['args']['inputs'][
+        main_input = record_json['chain']['_call']['args']['inputs'][
             self.input_keys[0]]
-        main_output = record['chain']['_call']['rets'][self.output_keys[0]]
+        main_output = record_json['chain']['_call']['rets'][self.output_keys[0]]
 
         record_id = tru.add_data(
             chain_id=self.chain_id,
             prompt=main_input,
             response=main_output,
-            record=record,
+            record_json=record_json,
             tags='dev',  # TODO: generalize
-            total_tokens=record['_cost']['total_tokens'],
-            total_cost=record['_cost']['total_cost'],
+            total_tokens=record_json['_cost']['total_tokens'],
+            total_cost=record_json['_cost']['total_cost'],
             db=self.db
         )
 

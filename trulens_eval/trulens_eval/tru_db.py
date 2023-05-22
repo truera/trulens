@@ -673,8 +673,8 @@ class LocalSQLite(TruDB):
 
     def insert_feedback(
         self,
-        record_id: str,
-        feedback_id: str,
+        record_id: Optional[str] = None,
+        feedback_id: Optional[str] = None,
         last_ts: Optional[int] = None,  # "last timestamp"
         status: Optional[int] = None,
         result_json: Optional[dict] = None,
@@ -684,6 +684,11 @@ class LocalSQLite(TruDB):
         """
         Insert a record-feedback link to db or update an existing one.
         """
+
+        if record_id is None or feedback_id is None:
+            assert result_json is not None, "`result_json` needs to be given if `record_id` or `feedback_id` are not provided."
+            record_id = result_json['record_id']
+            feedback_id = result_json['feedback_id']
 
         last_ts = last_ts or 0
         status = status or 0
@@ -798,7 +803,7 @@ class LocalSQLite(TruDB):
         return db.select(*query, where)
         """
 
-    def get_chain(self, chain_id: str):
+    def get_chain(self, chain_id: str) -> JSON:
         conn, c = self._connect()
         c.execute(
             f"SELECT chain_json FROM {self.TABLE_CHAINS} WHERE chain_id=?",
@@ -809,7 +814,7 @@ class LocalSQLite(TruDB):
 
         return json.loads(result)
 
-    def get_records_and_feedback(self, chain_ids: List[str]):
+    def get_records_and_feedback(self, chain_ids: List[str]) -> Tuple[pd.DataFrame, Sequence[str]]:
         # This returns all models if the list of chain_ids is empty.
         conn, c = self._connect()
         query = f"""
@@ -853,15 +858,15 @@ class LocalSQLite(TruDB):
             return df_records, []
 
         # Apply the function to the 'data' column to convert it into separate columns
-        df_results['result_json'] = df_results['result_json'].apply(json.loads)
-            
+        df_results['result_json'] = df_results['result_json'].apply(lambda d: {} if d is None else json.loads(d)) 
+
         df_results = df_results.groupby("record_id").agg(
             lambda dicts: {key: val for d in dicts for key, val in d.items()}
         ).reset_index()
 
-        temp = df_results['result_json'].apply(pd.Series)
-        result_cols = temp.columns
-        temp['record_id'] = df_results['record_id']
-        df_results = temp
+        df_results = df_results['result_json'].apply(pd.Series)
+        result_cols = [col for col in df_results.columns if col not in ['feedback_id', 'record_id', '_success']]
+        
+        combined_df = df_records.merge(df_results, on=['record_id'])
 
-        return df_records.merge(df_results, on=['record_id']), result_cols
+        return combined_df, result_cols
