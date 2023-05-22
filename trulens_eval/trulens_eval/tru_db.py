@@ -844,18 +844,17 @@ class LocalSQLite(TruDB):
         c.execute(query)
         rows = c.fetchall()
         conn.close()
-
+        
         df_records = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
-
-        #def str_dict_to_series(d):
-        #    return pd.Series(dict_obj)
+        
+        if len(df_records) == 0:
+            return df_records, []
 
         # Apply the function to the 'data' column to convert it into separate columns
         df_results['result_json'] = df_results['result_json'].apply(json.loads)
-        #str_dict_to_series
-        #)
+            
         df_results = df_results.groupby("record_id").agg(
             lambda dicts: {key: val for d in dicts for key, val in d.items()}
         ).reset_index()
