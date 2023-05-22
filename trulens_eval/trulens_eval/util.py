@@ -48,7 +48,7 @@ class TP(SingletonPerName):  # "thread processing"
             # Already initialized as per SingletonPerName mechanism.
             return
 
-        self.thread_pool = ThreadPool(processes=8)
+        self.thread_pool = ThreadPool(processes=16)
         self.running = 0
 
     def _started(self, *args, **kwargs):

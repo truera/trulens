@@ -20,6 +20,10 @@ for k, v in config.items():
     # set them into environment as well
     os.environ[k] = v
 
+if 'OPENAI_API_KEY' in os.environ:
+    import openai
+    openai.api_key = os.environ["OPENAI_API_KEY"]
+
 global cohere_agent
 cohere_agent = None
 

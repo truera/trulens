@@ -59,14 +59,14 @@ handled_ts: Set[Tuple[str, str]] = set()
 # DB to save models and records.
 db = LocalSQLite()
 
-
 ident = lambda h: h
 
 chain_ids = {
     0: "0/default",
     1: "1/lang_prompt",
     2: "2/relevance_prompt",
-    3: "3/filtered_context"
+    3: "3/filtered_context",
+    4: "4/filtered_context_and_lang_prompt"
 }
 
 # Construct feedback functions.
@@ -222,7 +222,8 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
         chain=chain,
         chain_id=chain_id,
         db=tru.lms,
-        feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance]
+        feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance],
+        feedback_mode="deferred"
     )
 
     convos[cid] = tc
@@ -404,6 +405,8 @@ def handle_app_mention_events(body, logger):
 
 
 def start_bot():
+    tru.start_deferred_feedback_evaluator(db=db)
+    
     app.start(port=int(PORT))
 
 
