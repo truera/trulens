@@ -835,6 +835,9 @@ class LocalSQLite(TruDB):
             rows, columns=[description[0] for description in c.description]
         )
 
+        if len(df_results) == 0:
+            return df_results, []
+
         conn, c = self._connect()
         query = f"""
             SELECT DISTINCT r.*, c.chain_json
@@ -860,13 +863,23 @@ class LocalSQLite(TruDB):
         # Apply the function to the 'data' column to convert it into separate columns
         df_results['result_json'] = df_results['result_json'].apply(lambda d: {} if d is None else json.loads(d)) 
 
+        if "record_id" not in df_results.columns:
+            return df_results, []
+
         df_results = df_results.groupby("record_id").agg(
             lambda dicts: {key: val for d in dicts for key, val in d.items()}
         ).reset_index()
-
-        df_results = df_results['result_json'].apply(pd.Series)
-        result_cols = [col for col in df_results.columns if col not in ['feedback_id', 'record_id', '_success']]
         
+        df_results = df_results['result_json'].apply(pd.Series)
+
+        result_cols = [col for col in df_results.columns if col not in ['feedback_id', 'record_id', '_success', "_error"]]
+        
+        if len(df_results) == 0 or len(result_cols) == 0:
+            return df_records, []
+
+        assert "record_id" in df_results.columns
+        assert "record_id" in df_records.columns
+
         combined_df = df_records.merge(df_results, on=['record_id'])
 
         return combined_df, result_cols
