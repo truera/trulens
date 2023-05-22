@@ -71,7 +71,7 @@ class TP(SingletonPerName):  # "thread processing"
         self.thread_pool.apply_async(func, callback=self._finished, args=args, kwds=kwargs)
 
     def promise(self, func: Callable[..., T], *args,
-                **kwargs) -> AsyncResult[T]:
+                **kwargs) -> AsyncResult:
         self._started()
         return self.thread_pool.apply_async(func, callback=self._finished, args=args, kwds=kwargs)
     
