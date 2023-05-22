@@ -612,7 +612,9 @@ class LocalSQLite(TruDB):
     def insert_chain(
         self, chain_json: dict, chain_id: Optional[str] = None
     ) -> str:
-        chain_id = chain_id or obj_id_of_obj(obj=chain_json, prefix="chain")
+        chain_id = chain_id or chain_json['chain_id'] or obj_id_of_obj(
+            obj=chain_json, prefix="chain"
+        )
         chain_str = json_str_of_obj(chain_json)
 
         conn, c = self._connect()
@@ -718,7 +720,9 @@ class LocalSQLite(TruDB):
             vars.append(feedback_id)
         if status is not None:
             if isinstance(status, Sequence):
-                clauses.append("status in (" + (",".join(["?"] * len(status))) + ")")
+                clauses.append(
+                    "status in (" + (",".join(["?"] * len(status))) + ")"
+                )
                 for v in status:
                     vars.append(v)
             else:
@@ -844,18 +848,18 @@ class LocalSQLite(TruDB):
         df_records = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
-        
+
         #def str_dict_to_series(d):
         #    return pd.Series(dict_obj)
 
         # Apply the function to the 'data' column to convert it into separate columns
         df_results['result_json'] = df_results['result_json'].apply(json.loads)
-            #str_dict_to_series
+        #str_dict_to_series
         #)
         df_results = df_results.groupby("record_id").agg(
             lambda dicts: {key: val for d in dicts for key, val in d.items()}
         ).reset_index()
-        
+
         temp = df_results['result_json'].apply(pd.Series)
         result_cols = temp.columns
         temp['record_id'] = df_results['record_id']

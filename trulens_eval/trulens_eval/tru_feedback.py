@@ -61,7 +61,7 @@ from tqdm.auto import tqdm
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
-from trulens_eval.tru_db import Query, obj_id_of_obj, query_of_path
+from trulens_eval.tru_db import JSON, Query, obj_id_of_obj, query_of_path
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_db import TruDB
 from trulens_eval.util import TP
@@ -314,7 +314,7 @@ class Feedback():
 
         return Feedback(imp=self.imp, selectors=selectors)
 
-    def run(self, chain_json: dict, record_json: Dict) -> Any:
+    def run_on_record(self, chain_json: JSON, record_json: JSON) -> Any:
         """
         Run the feedback function on the given `record`. The `chain` that
         produced the record is also required to determine input/output argument
