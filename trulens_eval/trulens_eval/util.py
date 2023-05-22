@@ -32,8 +32,9 @@ class SingletonPerName():
         """
 
         if name not in cls.instances:
-            logging.debug(
-                f"creating {cls} singleton instance for name = {name}"
+            #logging.debug(
+            print(
+                f"*** Creating new {cls.__name__} singleton instance for name = {name} ***"
             )
             cls.instances[name] = super().__new__(cls)
 
@@ -43,6 +44,10 @@ class SingletonPerName():
 class TP(SingletonPerName):  # "thread processing"
 
     def __init__(self):
+        if hasattr(self, "thread_pool"):
+            # Already initialized as per SingletonPerName mechanism.
+            return
+
         self.thread_pool = ThreadPool(processes=8)
         self.running = 0
 

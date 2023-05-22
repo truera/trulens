@@ -1,29 +1,37 @@
 import logging
 import os
 from pprint import PrettyPrinter
-from typing import Dict, Set, Tuple
+from typing import Callable, Dict, List, Set, Tuple
+
+import numpy as np
 
 # This needs to be before some others to make sure api keys are ready before
 # relevant classes are loaded.
 from trulens_eval.keys import *
 
+# This is here so that import organizer does not move the keys import below this
+# line.
+_ = None
+
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
 from langchain.memory import ConversationSummaryBufferMemory
+from langchain.schema import Document
 from langchain.vectorstores import Pinecone
-import numpy as np
+from langchain.vectorstores.base import VectorStoreRetriever
 import pinecone
+from pydantic import Field
 from slack_bolt import App
 from slack_sdk import WebClient
 
 from trulens_eval import tru
 from trulens_eval import tru_feedback
-
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_db import LocalSQLite
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_feedback import Feedback
+from trulens_eval.util import TP
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
@@ -56,7 +64,12 @@ tru_feedback.Feedback.start_evaluator(db)
 
 ident = lambda h: h
 
-chain_ids = {0: "0/default", 1: "1/lang_prompt", 2: "2/relevance_prompt"}
+chain_ids = {
+    0: "0/default",
+    1: "1/lang_prompt",
+    2: "2/relevance_prompt",
+    3: "3/filtered_context"
+}
 
 # Construct feedback functions.
 
@@ -80,6 +93,39 @@ f_qs_relevance = Feedback(openai.qs_relevance).on(
 ).on_multiple(
     multiarg="statement", each_query=Record.page_content, agg=np.min
 )
+
+
+def filter_by_relevance(query, doc):
+    return openai.qs_relevance(question=query, statement=doc.page_content) > 0.5
+
+
+class WithFilterDocuments(VectorStoreRetriever):
+    filter_func: Callable = Field(exclude=True)
+
+    def __init__(self, filter_func: Callable, *args, **kwargs):
+        super().__init__(filter_func=filter_func, *args, **kwargs)
+        # self.filter_func = filter_func
+
+    def get_relevant_documents(self, query: str) -> List[Document]:
+        docs = super().get_relevant_documents(query)
+
+        promises = []
+        for doc in docs:
+            promises.append(
+                (doc, TP().promise(self.filter_func, query=query, doc=doc))
+            )
+
+        results = []
+        for doc, promise in promises:
+            results.append((doc, promise.get()))
+
+        docs_filtered = map(lambda sr: sr[0], filter(lambda sr: sr[1], results))
+
+        return list(docs_filtered)
+
+    @staticmethod
+    def of_vectorstoreretriever(retriever, filter_func: Callable):
+        return WithFilterDocuments(filter_func=filter_func, **retriever.dict())
 
 
 def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
@@ -106,7 +152,13 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     docsearch = Pinecone.from_existing_index(
         index_name="llmdemo", embedding=embedding
     )
+
     retriever = docsearch.as_retriever()
+
+    if "filtered" in chain_id:
+        retriever = WithFilterDocuments.of_vectorstoreretriever(
+            retriever=retriever, filter_func=filter_by_relevance
+        )
 
     # LLM for completing prompts, and other tasks.
     llm = OpenAI(temperature=0, max_tokens=128)
@@ -165,7 +217,7 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
             "Helpful Answer: "
 
         # "\t" important here:
-    chain.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
+        chain.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
 
     # Trulens instrumentation.
     tc = TruChain(
@@ -185,6 +237,10 @@ def get_answer(chain: TruChain, question: str) -> Tuple[str, str]:
     Use the given `chain` to respond to `question`. Return the answer text and
     sources elaboration text.
     """
+
+    # Pace our API usage. This is not perfect since the chain makes multiple api calls
+    # internally.
+    openai.endpoint.pace_me()
 
     outs = chain(dict(question=question))
 
@@ -240,7 +296,7 @@ def answer_message(client, body: dict, logger):
     else:
         convo_id = ts
 
-        if len(message) >= 2 and message[0] == "s" and message[1] in [
+        if len(message) >= 2 and message[0].lower() == "s" and message[1] in [
                 "0", "1", "2", "3", "4", "5"
         ]:
             selector = int(message[1])
@@ -293,10 +349,7 @@ client = WebClient(token=SLACK_TOKEN)
 logger = logging.getLogger(__name__)
 
 # Initializes your app with your bot token and signing secret
-app = App(
-    token=SLACK_TOKEN,
-    signing_secret=SLACK_SIGNING_SECRET,
-)
+app = App(token=SLACK_TOKEN, signing_secret=SLACK_SIGNING_SECRET)
 
 
 @app.event("app_home_opened")
