@@ -59,8 +59,6 @@ handled_ts: Set[Tuple[str, str]] = set()
 # DB to save models and records.
 db = LocalSQLite()
 
-# Start a persistent thread that evaluates feedback functions.
-tru_feedback.Feedback.start_evaluator(db)
 
 ident = lambda h: h
 

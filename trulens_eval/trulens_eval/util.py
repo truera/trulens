@@ -60,7 +60,6 @@ class TP(SingletonPerName):  # "thread processing"
     def runrepeatedly(self, func: Callable, rpm: float = 6, *args, **kwargs):
         def runner():
             while True:
-                tqdm.write(f"Running repeated {func.__name__}.")
                 func(*args, **kwargs)
                 sleep(60 / rpm)
 

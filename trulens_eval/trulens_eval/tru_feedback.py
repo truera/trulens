@@ -127,7 +127,10 @@ class Feedback():
         if imp is not None and selectors is not None:
             sig: Signature = signature(imp)
             for argname in selectors.keys():
-                assert argname in sig.parameters, f"{argname} is not an argument to {imp.__name__}. Its arguments are {list(sig.parameters.keys())}."
+                assert argname in sig.parameters, (
+                    f"{argname} is not an argument to {imp.__name__}. "
+                    f"Its arguments are {list(sig.parameters.keys())}."
+                )
 
         self.imp = imp
         self.selectors = selectors
@@ -343,7 +346,7 @@ class Feedback():
                 '_error': str(e)
             }
 
-    def run_and_log(self, record_json: Dict, db: TruDB) -> None:
+    def run_and_log(self, record_json: JSON, db: TruDB) -> None:
         record_id = record_json['record_id']
         chain_id = record_json['chain_id']
         
@@ -358,7 +361,7 @@ class Feedback():
             )
 
             chain_json = db.get_chain(chain_id=chain_id)
-            res = self.run(chain_json=chain_json, record_json=record_json)
+            res = self.run_on_record(chain_json=chain_json, record_json=record_json)
             
         except Exception as e:
             print(e)
