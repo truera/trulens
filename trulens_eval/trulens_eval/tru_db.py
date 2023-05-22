@@ -809,7 +809,7 @@ class LocalSQLite(TruDB):
         # This returns all models if the list of chain_ids is empty.
         conn, c = self._connect()
         query = f"""
-            SELECT r.record_id, f.result_json
+            SELECT r.*, f.result_json
             FROM {self.TABLE_RECORDS} r 
             LEFT JOIN {self.TABLE_FEEDBACKS} f
                 ON r.record_id = f.record_id
@@ -825,6 +825,11 @@ class LocalSQLite(TruDB):
         df_results = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
+
+        print(df_results.columns)
+
+        if len(df_results) == 0:
+            return df_results, []
 
         conn, c = self._connect()
         query = f"""
@@ -845,13 +850,9 @@ class LocalSQLite(TruDB):
             rows, columns=[description[0] for description in c.description]
         )
         
-        #def str_dict_to_series(d):
-        #    return pd.Series(dict_obj)
-
         # Apply the function to the 'data' column to convert it into separate columns
         df_results['result_json'] = df_results['result_json'].apply(json.loads)
-            #str_dict_to_series
-        #)
+            
         df_results = df_results.groupby("record_id").agg(
             lambda dicts: {key: val for d in dicts for key, val in d.items()}
         ).reset_index()
