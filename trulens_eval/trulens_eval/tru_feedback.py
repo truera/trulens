@@ -132,6 +132,9 @@ class Feedback():
         self.imp = imp
         self.selectors = selectors
 
+        if feedback_id is not None:
+            self._feedback_id = feedback_id
+
         if imp is not None and selectors is not None:
             # These are for serialization to/from json and for db storage.
 
@@ -160,6 +163,7 @@ class Feedback():
             for i, row in feedbacks.iterrows():
                 if row.status == 0:
                     tqdm.write(f"Starting run for row {i}.")
+
                     TP().runlater(prepare_feedback, row)
                 elif row.status in [-1, 1]:
                     now = datetime.now().timestamp()
@@ -326,12 +330,16 @@ class Feedback():
             ret = self.imp(**ins)
             return {
                 '_success': True,
+                'feedback_id': self.feedback_id,
+                'record_id': record_json['record_id'],
                 self.name: ret
             }
         
         except Exception as e:
             return {
                 '_success': False,
+                'feedback_id': self.feedback_id,
+                'record_id': record_json['record_id'],
                 '_error': str(e)
             }
 
@@ -339,7 +347,6 @@ class Feedback():
         record_id = record_json['record_id']
         chain_id = record_json['chain_id']
         
-
         ts_now = datetime.now().timestamp()
 
         try:
@@ -357,6 +364,8 @@ class Feedback():
             print(e)
             res = {
                 '_success': False,
+                'feedback_id': self.feedback_id,
+                'record_id': record_json['record_id'],
                 '_error': str(e)
             }
 
