@@ -717,8 +717,13 @@ class LocalSQLite(TruDB):
             clauses.append("feedback_id=?")
             vars.append(feedback_id)
         if status is not None:
-            clauses.append("status=?")
-            vars.append(status)
+            if isinstance(status, Sequence):
+                clauses.append("status in (" + (",".join(["?"] * len(status))) + ")")
+                for v in status:
+                    vars.append(v)
+            else:
+                clauses.append("status=?")
+                vars.append(status)
         if last_ts_before is not None:
             clauses.append("last_ts<=?")
             vars.append(last_ts_before)

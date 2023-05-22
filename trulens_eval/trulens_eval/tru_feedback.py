@@ -56,6 +56,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, U
 import numpy as np
 import openai
 import requests
+from tqdm.auto import tqdm
 
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
@@ -143,6 +144,35 @@ class Feedback():
             self._json = self.to_json()
             self._feedback_id = feedback_id or obj_id_of_obj(self._json, prefix="feedback")
             self._json['feedback_id'] = self._feedback_id
+
+    @staticmethod
+    def start_evaluator(db: TruDB):
+
+        def prepare_feedback(row):
+            record_json = row.record_json
+
+            feedback = Feedback.of_json(row.feedback_json)
+            feedback.run_and_log(record_json=record_json, db=db)
+
+        def runner():
+            feedbacks = db.get_feedback()
+
+            for i, row in feedbacks.iterrows():
+                if row.status == 0:
+                    tqdm.write(f"Starting run for row {i}.")
+                    TP().runlater(prepare_feedback, row)
+                elif row.status in [-1, 1]:
+                    now = datetime.now().timestamp()
+                    if now - row.last_ts > 30:
+                        tqdm.write(f"Incomplete row {i} last made progress over 30 seconds ago. Retrying.")
+                        TP().runlater(prepare_feedback, row)
+                    else:
+                        tqdm.write(f"Incomplete row {i} last made progress less than 30 seconds ago. Giving it more time.")
+
+                elif row.status == 2:
+                    pass
+
+        TP().runrepeatedly(runner)
 
     @property
     def json(self):
