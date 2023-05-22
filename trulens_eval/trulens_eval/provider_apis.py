@@ -12,7 +12,7 @@ from trulens_eval.util import TP
 class Endpoint(SingletonPerName):
 
     def __init__(
-        self, name: str, rpm: float = 60, retries: int = 3, post_headers=None
+        self, name: str, rpm: float = 60, retries: int = 0, post_headers=None
     ):
         """
         
