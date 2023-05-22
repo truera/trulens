@@ -4,13 +4,14 @@ Public interfaces.
 
 from datetime import datetime
 import logging
-import sqlite3
+import os
 import subprocess
-from typing import Callable, Dict, List, Optional, Sequence
+from typing import Callable, List, Optional, Sequence
 
 import pkg_resources
 
-from trulens_eval.tru_db import JSON, json_str_of_obj
+from trulens_eval.tru_db import JSON
+from trulens_eval.tru_db import json_str_of_obj
 from trulens_eval.tru_db import LocalSQLite
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
@@ -149,9 +150,23 @@ def get_records_and_feedback(chain_ids: List[str], db: Optional[TruDB] = None):
 
 
 def run_dashboard():
+    # Create .streamlit directory if it doesn't exist
+    streamlit_dir = os.path.join(os.getcwd(), '.streamlit')
+    os.makedirs(streamlit_dir, exist_ok=True)
+
+    # Create config.toml file
+    config_path = os.path.join(streamlit_dir, 'config.toml')
+    with open(config_path, 'w') as f:
+        f.write('[theme]\n')
+        f.write('primaryColor="#0A2C37"\n')
+        f.write('backgroundColor="#FFFFFF"\n')
+        f.write('secondaryBackgroundColor="F5F5F5"\n')
+        f.write('textColor="#0A2C37"\n')
+        f.write('font="sans serif"\n')
+
+    #run leaderboard with subprocess
     leaderboard_path = pkg_resources.resource_filename(
         'trulens_eval', 'Leaderboard.py'
     )
-
     subprocess.Popen(["streamlit", "run", leaderboard_path])
     return None
