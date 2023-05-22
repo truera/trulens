@@ -313,15 +313,13 @@ class Feedback():
         ts_now = datetime.now().timestamp()
 
         try:
-            print("pre insert feedback:", self.feedback_id)
             db.insert_feedback(
                 record_id=record_id,
                 feedback_id=self.feedback_id,
                 last_ts = ts_now,
                 status = 1 # in progress
             )
-            print("post insert feedback:", self.feedback_id)
-            
+
             chain_json = db.get_chain(chain_id=chain_id)
             res = self.run(chain_json=chain_json, record_json=record_json)
             
