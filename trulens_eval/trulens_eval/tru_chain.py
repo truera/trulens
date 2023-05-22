@@ -284,7 +284,7 @@ class TruChain(Chain):
         chain_json = self.json
 
         for path, calls in record.items():
-            obj = TruDB._project(path=path[1:], obj=chain_json)
+            obj = TruDB._project(path=path, obj=chain_json)
             # path[0] = "record"
             if obj is None:
                 logging.warn(f"Cannot locate {path} in chain.")
@@ -295,7 +295,7 @@ class TruChain(Chain):
 
             # print(f"setting record path={path}={id(calls)}")
 
-            ret_record = TruDB._set_in_json(path=path[1:], in_json=ret_record, val={"_call": calls})
+            ret_record = TruDB._set_in_json(path=path, in_json=ret_record, val={"_call": calls})
 
         ret_record['_cost'] = dict(
             total_tokens=total_tokens, total_cost=total_cost
@@ -350,17 +350,10 @@ class TruChain(Chain):
         if len(self.feedbacks) == 0:
             return
 
-        # Run feedback function and get value
-        #feedback_results = tru.run_feedback_functions(
-        #    chain=self, record=record, feedback_functions=self.feedbacks
-        #)
-        # tru.add_feedback(record_id, feedback_results, db=self.db)
-
         # Add empty (to run) feedback to db.
         for f in self.feedbacks:
-            
             feedback_id = f.feedback_id
-            print("inserting feedback", feedback_id)
+            print("inserting feedback for future evaluation", feedback_id)
             self.db.insert_feedback(record_id, feedback_id)
 
     def _handle_error(self, record, error):
