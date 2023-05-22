@@ -205,10 +205,10 @@ class TruChain(Chain):
 
         self.chain = chain
 
-        self._instrument_object(obj=self.chain, query=Record.chain)
+        self._instrument_object(obj=self.chain, query=Query().chain)
         self.recording = False
 
-        chain_def = self.chain_def
+        chain_def = self.json
 
         # Track chain id. This will produce a name if not provided.
         self.chain_id = chain_id or obj_id_of_obj(obj=chain_def, prefix="chain")
@@ -220,11 +220,20 @@ class TruChain(Chain):
         self.db = db
 
         if db is not None:
-            db.insert_chain(chain_id=self.chain_id, chain=self)
+            db.insert_chain(chain_id=self.chain_id, chain_json=self.json)
+            for f in self.feedbacks:
+                db.insert_feedback_def(f.json)
 
     @property
-    def chain_def(self):
-        return TruDB.dictify(self)  # not using self.dict()
+    def json(self):
+        temp = TruDB.jsonify(self)  # not using self.dict()
+        # Need these to run feedback functions when they don't specify their
+        # inputs exactly.
+
+        temp['input_keys'] = self.input_keys
+        temp['output_keys'] = self.output_keys
+
+        return temp
 
     # Chain requirement
     @property
@@ -271,18 +280,27 @@ class TruChain(Chain):
 
         assert len(record) > 0, "No information recorded in call."
 
-        ret_record = self.chain_def
+        ret_record = dict()
+        chain_json = self.json
+
         for path, calls in record.items():
-            obj = TruDB._project(path=path, obj=ret_record)
+            obj = TruDB._project(path=path[1:], obj=chain_json)
+            # path[0] = "record"
             if obj is None:
                 logging.warn(f"Cannot locate {path} in chain.")
-                record['_call_not_found_in_chain'] = calls
-            else:
-                obj.update(dict(_call=calls))
+
+            # record['_call_not_found_in_chain'] = calls
+            # else:
+            #    obj.update(dict(_call=calls))
+
+            # print(f"setting record path={path}={id(calls)}")
+
+            ret_record = TruDB._set_in_json(path=path[1:], in_json=ret_record, val={"_call": calls})
 
         ret_record['_cost'] = dict(
             total_tokens=total_tokens, total_cost=total_cost
         )
+        ret_record['chain_id'] = self.chain_id
 
         if error is not None:
             TP().runlater(self._handle_error, ret_record, error)
@@ -333,12 +351,17 @@ class TruChain(Chain):
             return
 
         # Run feedback function and get value
-        feedback_results = tru.run_feedback_functions(
-            chain=self, record=record, feedback_functions=self.feedbacks
-        )
+        #feedback_results = tru.run_feedback_functions(
+        #    chain=self, record=record, feedback_functions=self.feedbacks
+        #)
+        # tru.add_feedback(record_id, feedback_results, db=self.db)
 
-        # Add value to database
-        tru.add_feedback(record_id, feedback_results, db=self.db)
+        # Add empty (to run) feedback to db.
+        for f in self.feedbacks:
+            
+            feedback_id = f.feedback_id
+            print("inserting feedback", feedback_id)
+            self.db.insert_feedback(record_id, feedback_id)
 
     def _handle_error(self, record, error):
         if self.db is None:
@@ -496,7 +519,7 @@ class TruChain(Chain):
 
             # Don't include self in the recorded arguments.
             nonself = {
-                k: TruDB.dictify(v)
+                k: TruDB.jsonify(v)
                 for k, v in bindings.arguments.items()
                 if k != "self"
             }

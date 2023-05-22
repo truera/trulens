@@ -45,12 +45,13 @@ Question/Statement relevance that is evaluated on a sub-chain input which contai
 
 """
 
+from datetime import datetime
 from inspect import Signature
 from inspect import signature
 import logging
 from multiprocessing.pool import AsyncResult
 import re
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
 import openai
@@ -59,7 +60,7 @@ import requests
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
-from trulens_eval.tru_db import Query
+from trulens_eval.tru_db import Query, obj_id_of_obj, query_of_path
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_db import TruDB
 from trulens_eval.util import TP
@@ -91,13 +92,25 @@ Selection = Union[Query, str]
 # "response" or "output"mean overall chain output text
 # Otherwise a Query is a path into a record structure.
 
+PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
+
+
+def check_provider(cls_or_name: Union[Type, str]) -> None:
+    if isinstance(cls_or_name, str):
+        cls_name = cls_or_name
+    else:
+        cls_name = cls_or_name.__name__
+
+    assert cls_name in PROVIDER_CLASS_NAMES, f"Unsupported provider class {cls_name}"
+
 
 class Feedback():
 
     def __init__(
         self,
         imp: Optional[Callable] = None,
-        selectors: Optional[Dict[str, Selection]] = None
+        selectors: Optional[Dict[str, Selection]] = None,
+        feedback_id: Optional[str] = None
     ):
         """
         A Feedback function container.
@@ -117,6 +130,77 @@ class Feedback():
 
         self.imp = imp
         self.selectors = selectors
+
+        if imp is not None and selectors is not None:
+            # These are for serialization to/from json and for db storage.
+
+            assert hasattr(
+                imp, "__self__"
+            ), "Feedback implementation is not a method (it may be a function)."
+            self.provider = imp.__self__
+            check_provider(self.provider.__class__.__name__)
+            self.imp_method_name = imp.__name__
+            self._json = self.to_json()
+            self._feedback_id = feedback_id or obj_id_of_obj(self._json, prefix="feedback")
+            self._json['feedback_id'] = self._feedback_id
+
+    @property
+    def json(self):
+        assert hasattr(self, "_json"), "Cannot json-size partially defined feedback function."
+        return self._json
+
+    @property
+    def feedback_id(self):
+        assert hasattr(self, "_feedback_id"), "Cannot get id of partially defined feedback function."
+        return self._feedback_id
+
+    @staticmethod
+    def selection_to_json(select: Selection) -> dict:
+        if isinstance(select, str):
+            return select
+        elif isinstance(select, Query):
+            return select._path
+        else:
+            raise ValueError(f"Unknown selection type {type(select)}.")
+
+    @staticmethod
+    def selection_of_json(obj: Union[List, str]) -> Selection:
+        if isinstance(obj, str):
+            return obj
+        elif isinstance(obj, (List, Tuple)):
+            return query_of_path(obj)  # TODO
+        else:
+            raise ValueError(f"Unknown selection encoding of type {type(obj)}.")
+
+    def to_json(self) -> dict:
+        selectors_json = {
+            k: Feedback.selection_to_json(v) for k, v in self.selectors.items()
+        }
+        return {
+            'selectors': selectors_json,
+            'imp_method_name': self.imp_method_name,
+            'provider': self.provider.to_json()
+        }
+
+    @staticmethod
+    def of_json(obj) -> 'Feedback':
+        assert "selectors" in obj, "Feedback encoding has no 'selectors' field."
+        assert "imp_method_name" in obj, "Feedback encoding has no 'imp_method_name' field."
+        assert "provider" in obj, "Feedback encoding has no 'provider' field."
+
+        imp_method_name = obj['imp_method_name']
+        selectors = {
+            k: Feedback.selection_of_json(v)
+            for k, v in obj['selectors'].items()
+        }
+        provider = Provider.of_json(obj['provider'])
+
+        assert hasattr(
+            provider, imp_method_name
+        ), f"Provider {provider.__name__} has no feedback function {imp_method_name}."
+        imp = getattr(provider, imp_method_name)
+
+        return Feedback(imp, selectors=selectors)
 
     def on_multiple(
         self,
@@ -164,6 +248,8 @@ class Feedback():
 
         wrapped_imp.__name__ = self.imp.__name__
 
+        wrapped_imp.__self__ = self.imp.__self__ # needed for serialization
+
         # Copy over signature from wrapped function. Otherwise signature of the
         # wrapped method will include just kwargs which is insufficient for
         # verify arguments (see Feedback.__init__).
@@ -198,18 +284,77 @@ class Feedback():
 
         return Feedback(imp=self.imp, selectors=selectors)
 
-    def run(self, chain: 'TruChain', record: Dict) -> Any:
+    def run(self, chain_json: dict, record_json: Dict) -> Any:
         """
         Run the feedback function on the given `record`. The `chain` that
         produced the record is also required to determine input/output argument
         names.
         """
 
-        ins = self.extract_selection(chain=chain, record=record)
+        try:
+            ins = self.extract_selection(chain_json=chain_json, record_json=record_json)
+            ret = self.imp(**ins)
+            return {
+                '_success': True,
+                self.name: ret
+            }
+        
+        except Exception as e:
+            return {
+                '_success': False,
+                '_error': str(e)
+            }
 
-        ret = self.imp(**ins)
+    def run_and_log(self, record_json: Dict, db: TruDB) -> None:
+        record_id = record_json['record_id']
+        chain_id = record_json['chain_id']
+        
 
-        return ret
+        ts_now = datetime.now().timestamp()
+
+        try:
+            print("pre insert feedback:", self.feedback_id)
+            db.insert_feedback(
+                record_id=record_id,
+                feedback_id=self.feedback_id,
+                last_ts = ts_now,
+                status = 1 # in progress
+            )
+            print("post insert feedback:", self.feedback_id)
+            
+            chain_json = db.get_chain(chain_id=chain_id)
+            res = self.run(chain_json=chain_json, record_json=record_json)
+            
+        except Exception as e:
+            print(e)
+            res = {
+                '_success': False,
+                '_error': str(e)
+            }
+
+        ts_now = datetime.now().timestamp()
+
+        if res['_success']:
+            db.insert_feedback(
+                record_id=record_id,
+                feedback_id=self.feedback_id,
+                last_ts = ts_now,
+                status = 2, # done and good
+                result_json=res,
+                total_cost=-1.0, # todo
+                total_tokens=-1  # todo
+            )
+        else:
+            # TODO: indicate failure better
+            db.insert_feedback(
+                record_id=record_id,
+                feedback_id=self.feedback_id,
+                last_ts = ts_now,
+                status = -1, # failure
+                result_json=res,
+                total_cost=-1.0, # todo
+                total_tokens=-1  # todo
+            )
 
     @property
     def name(self):
@@ -220,8 +365,11 @@ class Feedback():
 
         return self.imp.__name__
 
-    def extract_selection(self, chain: 'TruChain',
-                          record: dict) -> Dict[str, Any]:
+    def extract_selection(
+            self,
+            chain_json: Dict,
+            record_json: Dict
+        ) -> Dict[str, Any]:
         """
         Given the `chain` that produced the given `record`, extract from
         `record` the values that will be sent as arguments to the implementation
@@ -235,31 +383,31 @@ class Feedback():
                 q = v
 
             elif v == "prompt" or v == "input":
-                if len(chain.input_keys) > 1:
+                if len(chain_json['input_keys']) > 1:
                     logging.warn(
                         f"Chain has more than one input, guessing the first one is prompt."
                     )
                     pass
 
-                input_key = chain.input_keys[0]
+                input_key = chain_json['input_keys'][0]
 
                 q = Record.chain._call.args.inputs[input_key]
 
             elif v == "response" or v == "output":
-                if len(chain.output_keys) > 1:
+                if len(chain_json['output_keys']) > 1:
                     logging.warn(
                         "Chain has more than one ouput, guessing the first one is response."
                     )
                     pass
 
-                output_key = chain.output_keys[0]
+                output_key = chain_json['output_keys'][0]
 
                 q = Record.chain._call.rets[output_key]
 
             else:
                 raise RuntimeError(f"Unhandled selection type {type(v)}.")
 
-            val = TruDB.project(query=q, obj=record)
+            val = TruDB.project(query=q, record_json=record_json, chain_json=chain_json)
             ret[k] = val
 
         return ret
@@ -280,7 +428,24 @@ def _re_1_10_rating(str_val):
     return int(matches.group())
 
 
-class OpenAI():
+class Provider():
+
+    @staticmethod
+    def of_json(obj: Dict) -> 'Provider':
+        cls_name = obj['class']
+        check_provider(cls_name)
+
+        cls = eval(cls_name)
+        kwargs = {k: v for k, v in obj.items() if k != "class"}
+
+        return cls(**kwargs)
+
+    def to_json(self: 'Provider', **extras) -> Dict:
+        obj = {'class': self.__class__.__name__}
+        obj.update(**extras)
+        return obj
+
+class OpenAI(Provider):
 
     def __init__(self, model_engine: str = "gpt-3.5-turbo"):
         """
@@ -292,10 +457,13 @@ class OpenAI():
           "gpt-3.5-turbo".
         """
         self.model_engine = model_engine
-        self.endpoint_openai = Endpoint(name="openai", rpm=30)
+        self.endpoint = Endpoint(name="openai", rpm=30)
+
+    def to_json(self) -> Dict:
+        return Provider.to_json(self, model_engine=self.model_engine)
 
     def _moderation(self, text: str):
-        return self.endpoint_openai.run_me(
+        return self.endpoint.run_me(
             lambda: openai.Moderation.create(input=text)
         )
 
@@ -438,7 +606,7 @@ class OpenAI():
             "relevant".
         """
         return _re_1_10_rating(
-            self.endpoint_openai.run_me(
+            self.endpoint.run_me(
                 lambda: openai.ChatCompletion.create(
                     model=self.model_engine,
                     temperature=0.0,
@@ -472,7 +640,7 @@ class OpenAI():
             "relevant".
         """
         return _re_1_10_rating(
-            self.endpoint_openai.run_me(
+            self.endpoint.run_me(
                 lambda: openai.ChatCompletion.create(
                     model=self.model_engine,
                     temperature=0.0,
@@ -542,7 +710,7 @@ class OpenAI():
         """
 
         return _re_1_10_rating(
-            self.endpoint_openai.run_me(
+            self.endpoint.run_me(
                 lambda: openai.ChatCompletion.create(
                     model=self.model_engine,
                     temperature=0.5,
@@ -565,7 +733,7 @@ def _get_answer_agreement(prompt, response, check_response, model_engine):
     print(feedback_prompts.AGREEMENT_SYSTEM_PROMPT % (prompt, response))
     print("MODEL ANSWER")
     print(check_response)
-    oai_chat_response = OpenAI().endpoint_openai.run_me(
+    oai_chat_response = OpenAI().endpoint.run_me(
         lambda: openai.ChatCompletion.create(
             model=model_engine,
             temperature=0.5,
@@ -586,7 +754,7 @@ def _get_answer_agreement(prompt, response, check_response, model_engine):
     return oai_chat_response
 
 
-class Huggingface():
+class Huggingface(Provider):
 
     SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
     TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
@@ -596,7 +764,7 @@ class Huggingface():
     def __init__(self):
         """A set of Huggingface Feedback Functions. Utilizes huggingface api-inference
         """
-        self.endpoint_huggingface = Endpoint(
+        self.endpoint = Endpoint(
             name="huggingface", rpm=30, post_headers=get_huggingface_headers()
         )
 
@@ -622,7 +790,7 @@ class Huggingface():
 
         def get_scores(text):
             payload = {"inputs": text}
-            hf_response = self.endpoint_huggingface.post(
+            hf_response = self.endpoint.post(
                 url=Huggingface.LANGUAGE_API_URL, payload=payload
             )
             return {r['label']: r['score'] for r in hf_response}
@@ -663,7 +831,7 @@ class Huggingface():
         truncated_text = text[:max_length]
         payload = {"inputs": truncated_text}
 
-        hf_response = self.endpoint_huggingface.post(
+        hf_response = self.endpoint.post(
             url=Huggingface.SENTIMENT_API_URL, payload=payload
         )
 
@@ -686,7 +854,7 @@ class Huggingface():
         max_length = 500
         truncated_text = text[:max_length]
         payload = {"inputs": truncated_text}
-        hf_response = self.endpoint_huggingface.post(
+        hf_response = self.endpoint.post(
             url=Huggingface.TOXIC_API_URL, payload=payload
         )
 
@@ -696,39 +864,36 @@ class Huggingface():
 
 
 # cohere
-class Cohere():
+class Cohere(Provider):
 
-    def __init__(self):
-        Cohere().endpoint_cohere = Endpoint(name="cohere", rpm=30)
+    def __init__(self, model_engine='large'):
+        Cohere().endpoint = Endpoint(name="cohere", rpm=30)
+        self.model_engine = model_engine
 
+    def to_json(self) -> Dict:
+        return Provider.to_json(self, model_engine=self.model_engine)
 
-def cohere_sentiment(prompt, response, evaluation_choice, model_engine):
-    if evaluation_choice == "prompt":
-        input = prompt
-    if evaluation_choice == "response":
-        input = response
-    return int(
-        Cohere().endpoint_cohere.run_me(
-            lambda: get_cohere_agent().classify(
-                model=model_engine,
-                inputs=[input],
-                examples=feedback_prompts.COHERE_SENTIMENT_EXAMPLES
-            )[0].prediction
+    def sentiment(
+        self,
+        text,
+    ):
+        return int(
+            Cohere().endpoint.run_me(
+                lambda: get_cohere_agent().classify(
+                    model=self.model_engine,
+                    inputs=[text],
+                    examples=feedback_prompts.COHERE_SENTIMENT_EXAMPLES
+                )[0].prediction
+            )
         )
-    )
 
-
-def cohere_not_disinformation(prompt, response, evaluation_choice):
-    if evaluation_choice == "prompt":
-        input = prompt
-    if evaluation_choice == "response":
-        input = response
-    return int(
-        Cohere().endpoint_cohere.run_me(
-            lambda: get_cohere_agent().classify(
-                model='large',
-                inputs=[input],
-                examples=feedback_prompts.COHERE_NOT_DISINFORMATION_EXAMPLES
-            )[0].prediction
+    def not_disinformation(self, text):
+        return int(
+            Cohere().endpoint.run_me(
+                lambda: get_cohere_agent().classify(
+                    model=self.model_engine,
+                    inputs=[text],
+                    examples=feedback_prompts.COHERE_NOT_DISINFORMATION_EXAMPLES
+                )[0].prediction
+            )
         )
-    )

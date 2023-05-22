@@ -26,38 +26,38 @@ lms = tru_db.LocalSQLite()
 def app():
     # Set the title and subtitle of the app
     st.title('Chain Leaderboard')
-    df, df_feedback = lms.get_records_and_feedback([])
+    df, feedback_col_names = lms.get_records_and_feedback([])
 
     if df.empty:
         st.write("No records yet...")
 
-    models = list(df.chain_id.unique())
+    chains = list(df.chain_id.unique())
     st.markdown("""---""")
 
-    for model in models:
+    for chain in chains:
         col0, col1, col2, col3, *feedback_cols, col99 = st.columns(
-            5 + len(df_feedback.columns)
+            5 + len(feedback_col_names)
         )
-        model_df = df.loc[df.chain_id == model]
-        model_df_feedback = df_feedback.loc[df.chain_id == model]
+        chain_df = df.loc[df.chain_id == chain]
+        #model_df_feedback = df.loc[df.chain_id == model]
 
-        col0.metric("Name", model)
-        col1.metric("Records", len(model_df))
+        col0.metric("Name", chain)
+        col1.metric("Records", len(chain_df))
         col2.metric(
             "Cost",
             round(
-                sum(cost for cost in model_df.total_cost if cost is not None), 5
+                sum(cost for cost in chain_df.total_cost if cost is not None), 5
             )
         )
         col3.metric(
             "Tokens",
             sum(
-                tokens for tokens in model_df.total_tokens if tokens is not None
+                tokens for tokens in chain_df.total_tokens if tokens is not None
             )
         )
 
-        for i, col_name in enumerate(df_feedback.columns):
-            mean = model_df_feedback[col_name].mean()
+        for i, col_name in enumerate(feedback_col_names):
+            mean = chain_df[col_name].mean()
 
             if i < len(feedback_cols):
                 if math.isnan(mean):
@@ -97,8 +97,8 @@ def app():
                     )
 
         with col99:
-            if st.button('Select Chain', key=f"model-selector-{model}"):
-                st.session_state.chain = model
+            if st.button('Select Chain', key=f"model-selector-{chain}"):
+                st.session_state.chain = chain
                 switch_page('Evaluations')
 
         st.markdown("""---""")

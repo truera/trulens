@@ -7,7 +7,7 @@ Do not import anything from trulens_eval here.
 import logging
 from multiprocessing.pool import AsyncResult
 from multiprocessing.pool import ThreadPool
-from typing import Callable, Dict, Hashable, TypeVar
+from typing import Callable, Dict, Hashable, List, TypeVar
 
 T = TypeVar("T")
 
@@ -47,3 +47,6 @@ class TP(SingletonPerName):  # "thread processing"
     def promise(self, func: Callable[..., T], *args,
                 **kwargs) -> AsyncResult[T]:
         return self.thread_pool.apply_async(func, args=args, kwds=kwargs)
+    
+    def status(self) -> List[str]:
+        return str(self.thread_pool)
