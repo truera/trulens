@@ -7,9 +7,11 @@ Do not import anything from trulens_eval here.
 import logging
 from multiprocessing.pool import AsyncResult
 from multiprocessing.pool import ThreadPool
+from time import sleep
 from typing import Callable, Dict, Hashable, List, TypeVar
 
 import pandas as pd
+from tqdm.auto import tqdm
 
 T = TypeVar("T")
 
@@ -45,12 +47,19 @@ class TP(SingletonPerName):  # "thread processing"
         self.running = 0
 
     def _started(self, *args, **kwargs):
-        print("started async call")
         self.running += 1
 
     def _finished(self, *args, **kwargs):
-        print("finished async call")
         self.running -= 1
+
+    def runrepeatedly(self, func: Callable, rpm: float = 6, *args, **kwargs):
+        def runner():
+            while True:
+                tqdm.write(f"Running repeated {func.__name__}.")
+                func(*args, **kwargs)
+                sleep(60 / rpm)
+
+        self.runlater(runner)
 
     def runlater(self, func: Callable, *args, **kwargs) -> None:
         self._started()

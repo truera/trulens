@@ -3,6 +3,10 @@ import os
 from pprint import PrettyPrinter
 from typing import Dict, Set, Tuple
 
+# This needs to be before some others to make sure api keys are ready before
+# relevant classes are loaded.
+from trulens_eval.keys import *
+
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
@@ -15,10 +19,7 @@ from slack_sdk import WebClient
 
 from trulens_eval import tru
 from trulens_eval import tru_feedback
-from trulens_eval.keys import PINECONE_API_KEY
-from trulens_eval.keys import PINECONE_ENV
-from trulens_eval.keys import SLACK_SIGNING_SECRET
-from trulens_eval.keys import SLACK_TOKEN
+
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_db import LocalSQLite
 from trulens_eval.tru_db import Record
@@ -49,6 +50,9 @@ handled_ts: Set[Tuple[str, str]] = set()
 
 # DB to save models and records.
 db = LocalSQLite()
+
+# Start a persistent thread that evaluates feedback functions.
+tru_feedback.Feedback.start_evaluator(db)
 
 ident = lambda h: h
 
