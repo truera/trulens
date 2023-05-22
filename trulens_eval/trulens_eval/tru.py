@@ -3,6 +3,7 @@ Public interfaces.
 """
 
 from datetime import datetime
+import logging
 import sqlite3
 import subprocess
 from typing import Callable, Dict, List, Optional, Sequence
@@ -61,7 +62,8 @@ def add_record(
     chain_id = record_json['chain_id']
 
     record_id = db.insert_record(
-        chain_id, prompt, response, record_json, ts, tags, total_tokens, total_cost
+        chain_id, prompt, response, record_json, ts, tags, total_tokens,
+        total_cost
     )
 
     return record_id
@@ -79,34 +81,57 @@ def run_feedback_function(
 
 
 def run_feedback_functions(
-    chain: 'TruChain', record: Dict, feedback_functions: Sequence['Feedback']
-):
+    record_json: JSON,
+    feedback_functions: Sequence['Feedback'],
+    chain_json: Optional[JSON] = None,
+    db: Optional[TruDB] = None
+) -> Sequence[JSON]:
+    
+    # Run a collection of feedback functions and report their result.
+    
+    db = db or lms
 
-    # Run feedback functions
-    evals = {}
+    chain_id = record_json['chain_id']
+
+    if chain_json is None:
+        chain_json = db.get_chain(chain_id=chain_id)
+        if chain_json is None:
+            raise RuntimeError("Chain {chain_id} not present in db. Either add it with `tru.add_chain` or provide `chain_json` to `tru.run_feedback_functions`.")
+        
+    else:
+        assert chain_id == chain_json['chain_id'], "Record was produced by a different chain."
+
+        if db.get_chain(chain_id=chain_json['chain_id']) is None:
+            logging.warn("Chain {chain_id} was not present in database. Adding it.")
+            add_chain(chain_json=chain_json)
+
+    evals = []
 
     for func in feedback_functions:
-        evals[
-            func.name
-        ] = TP().promise(lambda f: f.run(chain=chain, record=record), func)
+        evals.append(TP().promise(
+            lambda f: f.
+            run_on_record(chain_json=chain_json, record_json=record_json), func
+        ))
 
-    for name, promise in evals.items():
-        temp = promise.get()
-        print(f"{name}={temp}")
-        evals[name] = temp
+    evals = map(lambda p: p.get(), evals)
 
-    return evals
+    return list(evals)
 
-def add_chain(chain_json: JSON, chain_id: Optional[str] = None, db: Optional[TruDB] = None) -> None:
+
+def add_chain(
+    chain_json: JSON,
+    chain_id: Optional[str] = None,
+    db: Optional[TruDB] = None
+) -> None:
     db = db or lms
 
     db.insert_chain(chain_id=chain_id, chain_json=chain_json)
 
 
-def add_feedback(record_id: str, eval: dict, db: Optional[TruDB] = None):
+def add_feedback(result_json: JSON, db: Optional[TruDB] = None):
     db = db or lms
 
-    db.insert_feedback(record_id, eval)
+    db.insert_feedback(result_json=result_json, status=2)
 
 
 def get_chain(chain_id, db: Optional[TruDB] = None):
