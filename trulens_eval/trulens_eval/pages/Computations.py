@@ -50,7 +50,9 @@ def prepare_feedback(row):
     feedback.run_and_log(record_json=record_json, db=lms)
 
 with tab1:
-    st.write(TP().status())
+    # st.write(TP().status())
+
+    st.metric("Running computations (probably wrong)", TP().running)
 
     feedbacks = lms.get_feedback()
     st.write(feedbacks)
@@ -61,14 +63,15 @@ with tab1:
             TP().runlater(prepare_feedback, row)
         elif row.status in [-1, 1]:
             now = datetime.now().timestamp()
-            if now - row.last_ts > 60*5:
-                st.write(f"Incomplete row {i} last made progress over 5 minutes ago. Retrying.")
+            if now - row.last_ts > 30:
+                st.write(f"Incomplete row {i} last made progress over 30 seconds ago. Retrying.")
                 TP().runlater(prepare_feedback, row)
             else:
-                st.write(f"Incomplete row {i} last made progress less than 5 minutes ago. Giving it more time.")
-                
+                st.write(f"Incomplete row {i} last made progress less than 30 seconds ago. Giving it more time.")
+
         elif row.status == 2:
-            st.write(f"Row {i} already done.")
+            pass
+            #st.write(f"Row {i} already done.")
 
 with tab2:
     for e in endpoints:

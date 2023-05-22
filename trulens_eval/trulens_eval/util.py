@@ -9,6 +9,8 @@ from multiprocessing.pool import AsyncResult
 from multiprocessing.pool import ThreadPool
 from typing import Callable, Dict, Hashable, List, TypeVar
 
+import pandas as pd
+
 T = TypeVar("T")
 
 
@@ -40,13 +42,29 @@ class TP(SingletonPerName):  # "thread processing"
 
     def __init__(self):
         self.thread_pool = ThreadPool(processes=8)
+        self.running = 0
+
+    def _started(self, *args, **kwargs):
+        print("started async call")
+        self.running += 1
+
+    def _finished(self, *args, **kwargs):
+        print("finished async call")
+        self.running -= 1
 
     def runlater(self, func: Callable, *args, **kwargs) -> None:
-        self.thread_pool.apply_async(func, args=args, kwds=kwargs)
+        self._started()
+        self.thread_pool.apply_async(func, callback=self._finished, args=args, kwds=kwargs)
 
     def promise(self, func: Callable[..., T], *args,
                 **kwargs) -> AsyncResult[T]:
-        return self.thread_pool.apply_async(func, args=args, kwds=kwargs)
+        self._started()
+        return self.thread_pool.apply_async(func, callback=self._finished, args=args, kwds=kwargs)
     
     def status(self) -> List[str]:
-        return str(self.thread_pool)
+        rows = []
+
+        for p in self.thread_pool._pool:
+            rows.append([p.is_alive(), str(p)])
+            
+        return pd.DataFrame(rows, columns=["alive", "thread"])
