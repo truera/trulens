@@ -22,12 +22,18 @@ class Endpoint(SingletonPerName):
         - retries: int -- number of retries before failure.
         """
 
+        if hasattr(self, "rpm"):
+            # already initialized via the SingletonPerName mechanism
+            return
+
+        print(f"*** Creating {name} endpoint ***")
+
         self.rpm = rpm
         self.retries = retries
         self.pace = Queue(
             maxsize=rpm / 6.0
         )  # 10 second's worth of accumulated api
-        self.tqdm = tqdm(desc=f"{name}", unit="request")
+        self.tqdm = tqdm(desc=f"{name} api", unit="requests")
         self.name = name
         self.post_headers = post_headers
 
