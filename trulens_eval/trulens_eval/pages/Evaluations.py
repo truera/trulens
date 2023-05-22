@@ -23,13 +23,13 @@ st.runtime.legacy_caching.clear_cache()
 add_logo()
 
 lms = tru_db.LocalSQLite()
-df, df_feedback = lms.get_records_and_feedback([])
+df_results, feedbacl_cols = lms.get_records_and_feedback([])
 
-if df.empty:
+if df_results.empty:
     st.write("No records yet...")
 
 else:
-    chains = list(df.chain_id.unique())
+    chains = list(df_results.chain_id.unique())
 
     if 'Chains' in st.session_state:
         chain = st.session_state.chain
@@ -40,35 +40,34 @@ else:
 
     if (len(options) == 0):
         st.header("All Chains")
-
-        model_df = df
-        model_df_feedback = df_feedback
+        chain_df = df_results
+        
     elif (len(options) == 1):
         st.header(options[0])
 
-        model_df = df[df.chain_id.isin(options)]
-        model_df_feedback = df_feedback[df.chain_id.isin(options)]
+        chain_df = df_results[df_results.chain_id.isin(options)]
+
     else:
         st.header("Multiple Chains Selected")
 
-        model_df = df[df.chain_id.isin(options)]
-        model_df_feedback = df_feedback[df.chain_id.isin(options)]
+        chain_df = df_results[df_results.chain_id.isin(options)]
 
     tab1, tab2 = st.tabs(["Records", "Feedback Functions"])
 
     #mds = model_store.ModelDataStore()
 
     with tab1:
-        evaluations_df = model_df.copy()
-        evaluations_df = evaluations_df.merge(
-            model_df_feedback, left_index=True, right_index=True
-        )
-        evaluations_df = evaluations_df[[
-            'record_id',
-            'chain_id',
-            'input',
-            'output',
-        ] + list(df_feedback.columns) + ['tags', 'ts', 'details']]
+        evaluations_df = chain_df
+        #evaluations_df = model_df.copy()
+        #evaluations_df = evaluations_df.merge(
+        #    model_df_feedback, left_index=True, right_index=True
+        #)
+        #evaluations_df = evaluations_df[[
+        #    'record_id',
+        #    'chain_id',
+        #    'input',
+        #    'output',
+        #] + list(df_feedback.columns) + ['tags', 'ts', 'record_json', 'chain_json']]
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
         cellstyle_jscode = JsCode(
@@ -117,8 +116,8 @@ else:
         )
         # gb.configure_column('details', maxWidth=0)
 
-        for feedback_col in df_feedback.columns:
-            gb.configure_column(feedback_col, cellStyle=cellstyle_jscode)
+        #for feedback_col in df_feedback.columns:
+        #    gb.configure_column(feedback_col, cellStyle=cellstyle_jscode)
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
@@ -147,8 +146,10 @@ else:
             with st.expander("Response", expanded=True):
                 st.write(response)
 
-            details = selected_rows['details'][0]
+            record_str = selected_rows['record_json'][0]
+            record_json = json.loads(record_str)
 
+            details = selected_rows['chain_json'][0]
             details_json = json.loads(details)
             #json.loads(details))  # ???
 
@@ -214,12 +215,16 @@ else:
                                     prompt_type_values[i]
                                 )
 
-            if st.button("Display full json"):
+            if st.button("Display full chain json"):
 
                 st.write(details_json)
 
+            if st.button("Display full record json"):
+
+                st.write(record_json)
+
     with tab2:
-        feedback = df_feedback.columns
+        feedback = feedbacl_cols
         cols = 4
         rows = len(feedback) // cols + 1
 
@@ -232,4 +237,4 @@ else:
                         if ind < len(feedback):
                             st.text(feedback[ind])
                             # print(model_df_feedback[feedback[ind]])
-                            st.bar_chart(model_df_feedback[feedback[ind]])
+                            st.bar_chart(chain_df[feedback[ind]])
