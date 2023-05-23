@@ -1,4 +1,5 @@
 import math
+
 import millify
 import numpy as np
 import streamlit as st
@@ -50,12 +51,16 @@ def app():
         col1.metric("Records", len(chain_df))
         col2.metric(
             "Cost",
-            f"${round(sum(cost for cost in chain_df.total_cost if cost is not None), 5)}"
+            f"${millify(round(sum(cost for cost in chain_df.total_cost if cost is not None), 5), precision = 2)}"
         )
         col3.metric(
             "Tokens",
-            sum(
-                tokens for tokens in chain_df.total_tokens if tokens is not None
+            millify(
+                sum(
+                    tokens for tokens in chain_df.total_tokens
+                    if tokens is not None
+                ),
+                precision=2
             )
         )
 
