@@ -67,54 +67,6 @@ Output:
 
 ```
 
-OUTDATED: Output (the ... are the same as in the above chain parameter dictionary):
-
-```json
-
-[{...
-  'chain': {...,
-   '_call': {'input': {'inputs': {'question': 'hello there'}},
-    'start_time': '2023-05-07 23:36:13.391052',
-    'end_time': '2023-05-07 23:36:13.566101',
-    'pid': 2340147,
-    'tid': 2340147,
-    'chain_stack': [('chain',)],
-    'output': {'text': " hey. I'm here. G-g-you can tell us some things"}}},
-  ...},
- {...,
-  'chain': {...,
-   '_call': {'input': {'inputs': {'question': 'hello there general kanobi'}},
-    'start_time': '2023-05-07 23:36:13.573193',
-    'end_time': '2023-05-07 23:36:13.707811',
-    'pid': 2340147,
-    'tid': 2340147,
-    'chain_stack': [('chain',)],
-    'output': {'text': ' what is the name of the game? Katsu Kato: mewt'}}},
-  ...}]
-
-  ```
-
-- OUTDATED: Query aspects of those records via TinyDB-like queries, producing a structured
-  pandas.DataFrame:
-
-```python
-
-    db.select(
-        Record.chain.prompt.template,
-        Record.chain._call.args.inputs.question,
-        Record.chain._call.rets.text,
-        where = Record.chain._call.output.text != None
-    )
-
-```
-
-Output (pd.DataFrame):
-
-```
-
-    DATA FRAME HERE
-
-```
 """
 
 from collections import defaultdict
@@ -296,6 +248,13 @@ class TruChain(Chain):
         return self.chain.output_keys
 
     def call_with_record(self, *args, **kwargs):
+        """ Run the chain and also return a record metadata object.
+
+    
+        Returns:
+            Any: chain output
+            dict: record metadata
+        """
         # Mark us as recording calls. Should be sufficient for non-threaded
         # cases.
         self.recording = True
