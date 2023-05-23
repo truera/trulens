@@ -137,7 +137,7 @@ display(feedback_results)
 
 After capturing feedback, you can then log it to your local database
 ```python
-tru.add_feedback(feedback_results)
+tru.add_feedback(feedback_results[0])
 ```
 
 ## Automatic logging
