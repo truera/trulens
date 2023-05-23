@@ -138,7 +138,7 @@ from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
-from trulens_eval.util import TP
+from trulens_eval.util import TP, UNCIODE_YIELD, UNICODE_CHECK
 
 langchain.verbose = False
 
@@ -266,10 +266,10 @@ class TruChain(Chain):
                 "Inserting chain and feedback function definitions to db."
             )
             self.db.insert_chain(chain_id=self.chain_id, chain_json=self.json)
-            print(f"✅ {self.chain_id} -> {self.db}")
+            print(f"{UNICODE_CHECK} Chain {self.chain_id} -> {self.db}")
             for f in self.feedbacks:
                 self.db.insert_feedback_def(f.json)
-                print(f"✅ {f.json['feedback_id']} -> {self.db}")
+                print(f"{UNICODE_CHECK} Feedback definition {f.name} -> {self.db}")
 
     @property
     def json(self):
@@ -404,18 +404,20 @@ class TruChain(Chain):
         if self.feedback_mode == "deferred":
             for f in self.feedbacks:
                 feedback_id = f.feedback_id
-                print("Inserting feedback for future evaluation", feedback_id)
                 self.db.insert_feedback(record_id, feedback_id)
+                print(f"{UNCIODE_YIELD} Feedback enqueued {f.name} -> {self.db}")
 
         elif self.feedback_mode in ["withchain", "withchainthread"]:
-            print("Running feedback functions now.")
+            
             results = self.tru.run_feedback_functions(
                 record_json=record_json,
                 feedback_functions=self.feedbacks,
                 chain_json=self.json
             )
+
             for result_json in results:
                 self.tru.add_feedback(result_json)
+                print(f"{UNICODE_CHECK} Feedback {result_json['feedback_id']} -> {self.db}")
 
     def _handle_error(self, record, error):
         if self.db is None:

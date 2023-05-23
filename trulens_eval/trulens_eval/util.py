@@ -15,6 +15,9 @@ from tqdm.auto import tqdm
 
 T = TypeVar("T")
 
+UNICODE_CHECK = "✅"
+UNCIODE_YIELD = "⚡"
+
 
 class SingletonPerName():
     """

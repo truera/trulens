@@ -1,6 +1,8 @@
 # common requirements
 python-dotenv
 langchain
+typing-inspect==0.8.0 # langchain with python < 3.9 fix
+typing_extensions==4.5.0 # langchain with python < 3.9 fix
 # slack bot and its indexing requirements:
 sentencepiece
 transformers
@@ -29,3 +31,4 @@ datasets
 cohere
 kaggle
 watchdog
+millify

@@ -18,8 +18,8 @@ NoneType = type(None)
 
 JSON_BASES = (str, int, float, NoneType)
 JSON_BASES_T = Union[str, int, float, NoneType]
-#JSON = (List, Dict) + JSON_BASES
-#JSON_T = Union[JSON_BASES_T, List, Dict]
+# JSON = (List, Dict) + JSON_BASES
+# JSON_T = Union[JSON_BASES_T, List, Dict]
 JSON = Dict
 
 def is_empty(obj):
@@ -868,8 +868,6 @@ class LocalSQLite(TruDB):
         # Apply the function to the 'data' column to convert it into separate columns
         df_results['result_json'] = df_results['result_json'].apply(lambda d: {} if d is None else json.loads(d)) 
 
-        print(df_results)
-
         if "record_id" not in df_results.columns:
             return df_results, []
 
@@ -888,7 +886,5 @@ class LocalSQLite(TruDB):
         assert "record_id" in df_records.columns
 
         combined_df = df_records.merge(df_results, on=['record_id'])
-
-        print(combined_df.columns)
 
         return combined_df, result_cols
