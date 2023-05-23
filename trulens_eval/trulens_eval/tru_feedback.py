@@ -32,17 +32,6 @@ Language match feedback function:
     f_lang_match = Feedback(hugs.language_match).on(text1="prompt", text2="response")
 ```
 
-Question/Statement relevance that is evaluated on a sub-chain input which contains more than one piece of text:
-
-```python
-    f_qs_relevance = Feedback(openai.qs_relevance) \
-        .on(
-            question="input",
-            statement=Record.chain.combine_docs_chain._call.args.inputs.input_documents
-        ) \
-        .on_multiple(multiarg="statement", each_query=Record.page_content)
-```
-
 """
 
 from datetime import datetime
