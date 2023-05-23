@@ -21,6 +21,7 @@ class Tru(SingletonPerName):
     DEFAULT_DATABASE_FILE = "default.sqlite"
 
     deferred_feedback_evaluator_started = False
+    dashboard_proc = None
 
     def Chain(self, *args, **kwargs):
         from trulens_eval.tru_chain import TruChain
@@ -196,7 +197,16 @@ class Tru(SingletonPerName):
 
         return df, feedback_columns
 
+    def stop_dashboard(self) -> None:
+        if Tru.dashboard_proc is None:
+            raise ValueError("Dashboard not running.")
+        
+        Tru.dashboard_proc.kill()
+        Tru.dashboard_proc = None
+
     def run_dashboard(self) -> None:
+        if Tru.dashboard_proc is not None:
+            raise ValueError("Dashboard already running.")
 
         # Create .streamlit directory if it doesn't exist
         streamlit_dir = os.path.join(os.getcwd(), '.streamlit')
@@ -222,6 +232,10 @@ class Tru(SingletonPerName):
             'trulens_eval', 'Leaderboard.py'
         )
 
-        subprocess.Popen(
+        proc = subprocess.Popen(
             ["streamlit", "run", "--server.headless=True", leaderboard_path]
         )
+
+        Tru.dashboard_proc = proc
+
+        return proc.pid
