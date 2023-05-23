@@ -24,7 +24,7 @@ class Tru(SingletonPerName):
 
     def Chain(self, *args, **kwargs):
         from trulens_eval.tru_chain import TruChain
-        
+
         return TruChain(tru=self, *args, **kwargs)
 
     def __init__(self, db: Optional[TruDB] = None):
@@ -43,7 +43,6 @@ class Tru(SingletonPerName):
 
         self.db = db or LocalSQLite(Tru.DEFAULT_DATABASE_FILE)
 
-
     def start_deferred_feedback_evaluator(self):
         if self.deferred_feedback_evaluator_started:
             raise RuntimeError("Evaluator is already running in this process.")
@@ -55,7 +54,6 @@ class Tru(SingletonPerName):
 
         self.deferred_feedback_evaluator_started = True
 
-
     def add_record(
         self,
         prompt: str,
@@ -63,8 +61,8 @@ class Tru(SingletonPerName):
         record_json: JSON,
         tags: Optional[str] = "",
         ts: Optional[int] = None,
-        total_tokens: Optional[int] = 0,
-        total_cost: Optional[float] = 0.0,
+        total_tokens: Optional[int] = None,
+        total_cost: Optional[float] = None,
     ):
         """
         Add a record to the database.
@@ -90,8 +88,9 @@ class Tru(SingletonPerName):
             str: Unique record identifier.
 
         """
-        if not ts:
-            ts = datetime.now()
+        ts = ts or datetime.now()
+        total_tokens = total_tokens or record_json['_cost']['total_tokens']
+        total_cost = total_cost or record_json['_cost']['total_cost']
 
         chain_id = record_json['chain_id']
 
@@ -107,7 +106,6 @@ class Tru(SingletonPerName):
         )
 
         return record_id
-
 
     def run_feedback_functions(
         self,
@@ -157,9 +155,9 @@ class Tru(SingletonPerName):
         for func in feedback_functions:
             evals.append(
                 TP().promise(
-                    lambda f: f.
-                    run_on_record(chain_json=chain_json, record_json=record_json),
-                    func
+                    lambda f: f.run_on_record(
+                        chain_json=chain_json, record_json=record_json
+                    ), func
                 )
             )
 
@@ -167,42 +165,36 @@ class Tru(SingletonPerName):
 
         return list(evals)
 
-
     def add_chain(
-        self,
-        chain_json: JSON,
-        chain_id: Optional[str] = None
+        self, chain_json: JSON, chain_id: Optional[str] = None
     ) -> None:
 
         self.db.insert_chain(chain_id=chain_id, chain_json=chain_json)
 
-
     def add_feedback(self, result_json: JSON) -> None:
 
         if 'record_id' not in result_json or result_json['record_id'] is None:
-            raise RuntimeError("Result does not include record_id. "
-                            "To log feedback, log the record first using `tru.add_record`.")
+            raise RuntimeError(
+                "Result does not include record_id. "
+                "To log feedback, log the record first using `tru.add_record`."
+            )
 
         self.db.insert_feedback(result_json=result_json, status=2)
-
 
     def add_feedbacks(self, result_jsons: Iterable[JSON]) -> None:
 
         for result_json in result_jsons:
             self.add_feedback(result_json=result_json)
 
-
     def get_chain(self, chain_id: str) -> JSON:
 
         return self.db.get_chain(chain_id)
-
 
     def get_records_and_feedback(self, chain_ids: List[str]):
 
         df, feedback_columns = self.db.get_records_and_feedback(chain_ids)
 
         return df, feedback_columns
-
 
     def run_dashboard(self) -> None:
 
@@ -231,7 +223,5 @@ class Tru(SingletonPerName):
         )
 
         subprocess.Popen(
-            
             ["streamlit", "run", "--server.headless=True", leaderboard_path]
-            )
-
+        )
