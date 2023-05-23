@@ -7,7 +7,8 @@ from streamlit_extras.switch_page_button import switch_page
 
 st.runtime.legacy_caching.clear_cache()
 
-from trulens_eval import tru_db, Tru
+from trulens_eval import Tru
+from trulens_eval import tru_db
 
 st.set_page_config(page_title="Leaderboard", layout="wide")
 
@@ -30,7 +31,7 @@ def app():
     if df.empty:
         st.write("No records yet...")
         return
-    
+
     df = df.sort_values(by="chain_id")
 
     if df.empty:
@@ -40,7 +41,7 @@ def app():
     st.markdown("""---""")
 
     for chain in chains:
-        st.write(chain)
+        st.header(chain)
         col1, col2, col3, *feedback_cols, col99 = st.columns(
             4 + len(feedback_col_names)
         )

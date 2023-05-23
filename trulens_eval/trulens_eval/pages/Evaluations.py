@@ -61,16 +61,6 @@ else:
     with tab1:
         gridOptions = {'alwaysShowHorizontalScroll': True}
         evaluations_df = chain_df
-        #evaluations_df = model_df.copy()
-        #evaluations_df = evaluations_df.merge(
-        #    model_df_feedback, left_index=True, right_index=True
-        #)
-        #evaluations_df = evaluations_df[[
-        #    'record_id',
-        #    'chain_id',
-        #    'input',
-        #    'output',
-        #] + list(df_feedback.columns) + ['tags', 'ts', 'record_json', 'chain_json']]
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
         cellstyle_jscode = JsCode(
@@ -98,21 +88,20 @@ else:
 
         gb.configure_column('record_id', header_name='Record ID')
         gb.configure_column('chain_id', header_name='Chain ID')
-        gb.configure_column(
-            'input', header_name='User Input'
-            #, minWidth=500
-        )
+        gb.configure_column('input', header_name='User Input')
         gb.configure_column(
             'output',
             header_name='Response',
-            #minWidth=500
         )
+        gb.configure_column('total_tokens', header_name='Total Tokens')
+        gb.configure_column('total_cost', header_name='Total Cost')
         gb.configure_column('tags', header_name='Tags')
         gb.configure_column('ts', header_name='Time Stamp')
-        # gb.configure_column('details', maxWidth=0)
 
-        #for feedback_col in df_feedback.columns:
-        #    gb.configure_column(feedback_col, cellStyle=cellstyle_jscode)
+        for feedback_col in evaluations_df.columns.drop(['chain_id', 'ts',
+                                                         'total_tokens',
+                                                         'total_cost']):
+            gb.configure_column(feedback_col, cellStyle=cellstyle_jscode)
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
@@ -133,9 +122,11 @@ else:
             st.write("Hint: select a row to display chain metadata")
 
         else:
+            st.header(f"Selected Chain ID: {selected_rows['chain_id'][0]}")
+            st.text(f"Selected Record ID: {selected_rows['record_id'][0]}")
             prompt = selected_rows['input'][0]
             response = selected_rows['output'][0]
-            with st.expander("Question", expanded=True):
+            with st.expander("Input Prompt", expanded=True):
                 st.write(prompt)
 
             with st.expander("Response", expanded=True):
@@ -150,66 +141,70 @@ else:
 
             chain_json = details_json['chain']
 
-            for query, llm_details_json in TruDB.matching_objects(
+            llm_queries = list(
+                TruDB.matching_objects(
                     details_json,
                     match=lambda q, o: len(q._path) > 0 and "llm" == q._path[-1]
-            ):
-                path_str = TruDB._query_str(query)
-                st.header(f"LLM ({path_str}) Details:")
+                )
+            )
 
-                llm_kv = {
-                    k: v for k, v in llm_details_json.items() if
-                    (v is not None) and not is_empty(v) and not is_noserio(v)
-                }
+            prompt_queries = list(
+                TruDB.matching_objects(
+                    details_json,
+                    match=lambda q, o: len(q._path) > 0 and "prompt" == q._path[
+                        -1] and "_call" not in q._path
+                )
+            )
 
-                llm_cols = st.columns(len(llm_kv.items()))
-                llm_keys = list(llm_kv.keys())
-                llm_values = list(llm_kv.values())
+            max_len = max(len(llm_queries), len(prompt_queries))
 
-                for i in range(len(llm_keys)):
+            for i in range(max_len):
+                if i < len(llm_queries):
+                    query, llm_details_json = llm_queries[i]
+                    path_str = TruDB._query_str(query)
+                    st.header(f"Chain Step {i}: {path_str.replace('.llm', '')}")
+                    st.subheader(f"LLM Details:")
 
-                    with llm_cols[i]:
-                        if isinstance(llm_values[i], (Dict, List)):
-                            with st.expander(llm_keys[i].capitalize(),
-                                             expanded=True):
-                                st.write(llm_values[i])
+                    llm_kv = {
+                        k: v
+                        for k, v in llm_details_json.items()
+                        if (v is not None) and not is_empty(v) and
+                        not is_noserio(v)
+                    }
+                    # CSS to inject contained in a string
+                    hide_table_row_index = """
+                                <style>
+                                thead tr th:first-child {display:none}
+                                tbody th {display:none}
+                                </style>
+                                """
+                    df = pd.DataFrame.from_dict(llm_kv, orient='index')
+                    # Inject CSS with Markdown
+                    st.markdown(hide_table_row_index, unsafe_allow_html=True)
+                    st.table(df.transpose())
 
-                        else:
-                            st.metric(llm_keys[i].capitalize(), llm_values[i])
+                if i < len(prompt_queries):
+                    query, prompt_details_json = prompt_queries[i]
+                    path_str = TruDB._query_str(query)
+                    st.subheader(f"Prompt Details:")
 
-            for query, prompt_details_json in TruDB.matching_objects(
-                    details_json, match=lambda q, o: len(q._path) > 0 and
-                    "prompt" == q._path[-1] and "_call" not in q._path):
-                path_str = TruDB._query_str(query)
-                st.header(f"Prompt ({path_str}) Details:")
+                    prompt_types = {
+                        k: v
+                        for k, v in prompt_details_json.items()
+                        if (v is not None) and not is_empty(v) and
+                        not is_noserio(v)
+                    }
 
-                prompt_types = {
-                    k: v for k, v in prompt_details_json.items() if
-                    (v is not None) and not is_empty(v) and not is_noserio(v)
-                }
-                prompt_type_cols = st.columns(len(prompt_types.items()))
-                prompt_type_keys = list(prompt_types.keys())
-                prompt_type_values = list(prompt_types.values())
-
-                for i in range(len(prompt_type_keys)):
-                    with prompt_type_cols[i]:
-                        val = prompt_type_values[i]
-                        if isinstance(val, (Dict, List)):
-                            with st.expander(prompt_type_keys[i].capitalize(),
-                                             expanded=True):
-                                st.write(val)
-                        else:
-                            if isinstance(val, str) and len(val) > 32:
-                                with st.expander(
-                                        prompt_type_keys[i].capitalize(),
-                                        expanded=True):
-                                    st.text(prompt_type_values[i])
+                    for key, value in prompt_types.items():
+                        with st.expander(key.capitalize(), expanded=True):
+                            if isinstance(value, (Dict, List)):
+                                st.write(value)
                             else:
-                                st.metric(
-                                    prompt_type_keys[i].capitalize(),
-                                    prompt_type_values[i]
-                                )
-
+                                if isinstance(value, str) and len(value) > 32:
+                                    st.text(value)
+                                else:
+                                    st.write(value)
+            st.header("More options:")
             if st.button("Display full chain json"):
 
                 st.write(details_json)
@@ -238,7 +233,8 @@ else:
                             ax.hist(
                                 chain_df[feedback[ind]],
                                 bins=bins,
-                                edgecolor='black'
+                                edgecolor='black',
+                                color='#2D736D'
                             )
                             ax.set_xlabel('Feedback Value')
                             ax.set_ylabel('Frequency')
