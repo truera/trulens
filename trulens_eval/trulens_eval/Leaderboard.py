@@ -1,6 +1,6 @@
 import math
 
-import millify
+from millify import millify
 import numpy as np
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page

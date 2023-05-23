@@ -823,7 +823,7 @@ class LocalSQLite(TruDB):
         # This returns all models if the list of chain_ids is empty.
         conn, c = self._connect()
         query = f"""
-            SELECT r.record_id, r.chain_id, f.result_json
+            SELECT r.record_id, f.result_json
             FROM {self.TABLE_RECORDS} r 
             LEFT JOIN {self.TABLE_FEEDBACKS} f
                 ON r.record_id = f.record_id
@@ -868,6 +868,8 @@ class LocalSQLite(TruDB):
         # Apply the function to the 'data' column to convert it into separate columns
         df_results['result_json'] = df_results['result_json'].apply(lambda d: {} if d is None else json.loads(d)) 
 
+        print(df_results)
+
         if "record_id" not in df_results.columns:
             return df_results, []
 
@@ -886,5 +888,7 @@ class LocalSQLite(TruDB):
         assert "record_id" in df_records.columns
 
         combined_df = df_records.merge(df_results, on=['record_id'])
+
+        print(combined_df.columns)
 
         return combined_df, result_cols
