@@ -4,9 +4,14 @@ Public interfaces.
 
 from datetime import datetime
 import logging
+from multiprocessing import Process
 import os
+from pathlib import Path
 import subprocess
-from typing import Iterable, List, Optional, Sequence
+from threading import Thread
+import threading
+from time import sleep
+from typing import Iterable, List, Optional, Sequence, Union
 
 import pkg_resources
 
@@ -20,7 +25,10 @@ from trulens_eval.util import TP, SingletonPerName
 class Tru(SingletonPerName):
     DEFAULT_DATABASE_FILE = "default.sqlite"
 
-    deferred_feedback_evaluator_started = False
+    # Process or Thread of the deferred feedback function evaluator.
+    evaluator_proc = None
+
+    # Process of the dashboard app.
     dashboard_proc = None
 
     def Chain(self, *args, **kwargs):
@@ -44,16 +52,9 @@ class Tru(SingletonPerName):
 
         self.db = db or LocalSQLite(Tru.DEFAULT_DATABASE_FILE)
 
-    def start_deferred_feedback_evaluator(self):
-        if self.deferred_feedback_evaluator_started:
-            raise RuntimeError("Evaluator is already running in this process.")
-
-        from trulens_eval.tru_feedback import Feedback
-
-        # Start a persistent thread that evaluates feedback functions.
-        Feedback.start_evaluator(tru=self)
-
-        self.deferred_feedback_evaluator_started = True
+    
+    def reset_database(self):
+        self.db.reset_database()
 
     def add_record(
         self,
@@ -197,6 +198,56 @@ class Tru(SingletonPerName):
 
         return df, feedback_columns
 
+    def start_evaluator(self, fork=False) -> Union[Process, Thread]:
+        assert not fork, "Fork mode not yet implemented."
+
+        if self.evaluator_proc is not None:
+            raise RuntimeError("Evaluator is already running in this process.")
+
+        from trulens_eval.tru_feedback import Feedback
+
+        if not fork:
+            self.evaluator_stop = threading.Event()
+
+        def runloop():
+            while fork or not self.evaluator_stop.is_set():
+                print("Looking for things to do. Stop me with `tru.stop_evaluator()`.", end='')
+                Feedback.evaluate_deferred(tru=self)
+                TP().finish(timeout=10)
+                if fork:
+                    sleep(10)
+                else:
+                    self.evaluator_stop.wait(10)
+                
+            print("Evaluator stopped.")
+
+        if fork:
+            proc = Process(target=runloop)
+        else:
+            proc = Thread(target=runloop)
+
+        # Start a persistent thread or process that evaluates feedback functions.
+
+        self.evaluator_proc = proc
+        proc.start()
+
+        return proc
+
+    def stop_evaluator(self):
+        if self.evaluator_proc is None:
+            raise RuntimeError("Evaluator not running this process.")
+        
+        if isinstance(self.evaluator_proc, Process):
+            self.evaluator_proc.terminate()
+
+        elif isinstance(self.evaluator_proc, Thread):
+            self.evaluator_stop.set()
+            self.evaluator_proc.join()
+            self.evaluator_stop = None
+            
+        self.evaluator_proc = None
+        
+
     def stop_dashboard(self) -> None:
         if Tru.dashboard_proc is None:
             raise ValueError("Dashboard not running.")
@@ -204,7 +255,8 @@ class Tru(SingletonPerName):
         Tru.dashboard_proc.kill()
         Tru.dashboard_proc = None
 
-    def run_dashboard(self) -> None:
+    def run_dashboard(self, _dev: bool = False) -> Process:
+
         if Tru.dashboard_proc is not None:
             raise ValueError("Dashboard already running.")
 
@@ -232,10 +284,17 @@ class Tru(SingletonPerName):
             'trulens_eval', 'Leaderboard.py'
         )
 
+        env_opts = {}
+        if _dev:
+            env_opts['env'] = os.environ
+            env_opts['env']['PYTHONPATH'] = str(Path.cwd())
+
         proc = subprocess.Popen(
-            ["streamlit", "run", "--server.headless=True", leaderboard_path]
+            ["streamlit", "run", "--server.headless=True", leaderboard_path], **env_opts
         )
 
         Tru.dashboard_proc = proc
 
-        return proc.pid
+        return proc
+
+    start_dashboard = run_dashboard

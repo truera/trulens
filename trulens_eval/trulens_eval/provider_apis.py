@@ -1,9 +1,11 @@
+import logging
 from queue import Queue
 from time import sleep
 from typing import Any, Sequence
 
 import requests
 from tqdm.auto import tqdm
+from trulens_eval.tru_db import JSON
 
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import TP
@@ -15,18 +17,25 @@ class Endpoint(SingletonPerName):
         self, name: str, rpm: float = 60, retries: int = 3, post_headers=None
     ):
         """
+        Pacing and utilities for API endpoints.
         
         Args:
+
         - name: str -- api name / identifier.
+
         - rpm: float -- requests per minute.
+
         - retries: int -- number of retries before failure.
+
+        - post_headers: Dict -- http post headers if this endpoint uses http
+          post.
         """
 
         if hasattr(self, "rpm"):
             # already initialized via the SingletonPerName mechanism
             return
 
-        print(f"*** Creating {name} endpoint ***")
+        logging.debug(f"*** Creating {name} endpoint ***")
 
         self.rpm = rpm
         self.retries = retries
@@ -48,7 +57,7 @@ class Endpoint(SingletonPerName):
         self.tqdm.update(1)
         return
 
-    def post(self, url, payload) -> Any:
+    def post(self, url: str, payload: JSON) -> Any:
         extra = dict()
         if self.post_headers is not None:
             extra['headers'] = self.post_headers
@@ -61,7 +70,7 @@ class Endpoint(SingletonPerName):
         # Huggingface public api sometimes tells us that a model is loading and how long to wait:
         if "estimated_time" in j:
             wait_time = j['estimated_time']
-            print(f"WARNING: Waiting for {j} ({wait_time}) second(s).")
+            logging.error(f"Waiting for {j} ({wait_time}) second(s).")
             sleep(wait_time)
             return self.post(url, payload)
 
@@ -87,8 +96,8 @@ class Endpoint(SingletonPerName):
                 return ret
             except Exception as e:
                 retries -= 1
-                print(
-                    f"WARNING: {self.name} request failed {type(e)}={e}. Retries={retries}."
+                logging.error(
+                    f"{self.name} request failed {type(e)}={e}. Retries={retries}."
                 )
                 if retries > 0:
                     sleep(retry_delay)

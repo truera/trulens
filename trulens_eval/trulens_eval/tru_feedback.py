@@ -51,6 +51,7 @@ from inspect import signature
 import logging
 from multiprocessing.pool import AsyncResult
 import re
+from time import sleep
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
@@ -64,7 +65,7 @@ from trulens_eval.provider_apis import Endpoint
 from trulens_eval.tru_db import JSON, Query, obj_id_of_obj, query_of_path
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_db import TruDB
-from trulens_eval.util import TP, UNCIODE_YIELD, UNICODE_CHECK
+from trulens_eval.util import TP
 
 # openai
 
@@ -152,7 +153,7 @@ class Feedback():
             self._json['feedback_id'] = self._feedback_id
 
     @staticmethod
-    def start_evaluator(tru: 'Tru'):
+    def evaluate_deferred(tru: 'Tru'):
         db = tru.db
 
         def prepare_feedback(row):
@@ -161,35 +162,34 @@ class Feedback():
             feedback = Feedback.of_json(row.feedback_json)
             feedback.run_and_log(record_json=record_json, tru=tru)
 
-        def runner():
-            print("Looking for things to do...")
-            feedbacks = db.get_feedback()
+        feedbacks = db.get_feedback()
 
-            for i, row in feedbacks.iterrows():
-                if row.status == 0:
-                    tqdm.write(f"Starting run for row {i}.")
+        for i, row in feedbacks.iterrows():
+            if row.status == 0:
+                tqdm.write(f"Starting run for row {i}.")
 
+                TP().runlater(prepare_feedback, row)
+            elif row.status in [1]:
+                now = datetime.now().timestamp()
+                if now - row.last_ts > 30:
+                    tqdm.write(f"Incomplete row {i} last made progress over 30 seconds ago. Retrying.")
                     TP().runlater(prepare_feedback, row)
-                elif row.status in [1]:
-                    now = datetime.now().timestamp()
-                    if now - row.last_ts > 30:
-                        tqdm.write(f"Incomplete row {i} last made progress over 30 seconds ago. Retrying.")
-                        TP().runlater(prepare_feedback, row)
-                    else:
-                        tqdm.write(f"Incomplete row {i} last made progress less than 30 seconds ago. Giving it more time.")
+                else:
+                    tqdm.write(f"Incomplete row {i} last made progress less than 30 seconds ago. Giving it more time.")
 
-                elif row.status in [-1]:
-                    now = datetime.now().timestamp()
-                    if now - row.last_ts > 60*60*24:
-                        tqdm.write(f"Failed row {i} last made progress over 24 hours ago. Retrying.")
-                        TP().runlater(prepare_feedback, row)
-                    else:
-                        tqdm.write(f"Failed row {i} last made progress less than 24 hours ago. Not touching it for now.")
+            elif row.status in [-1]:
+                now = datetime.now().timestamp()
+                if now - row.last_ts > 60*60*24:
+                    tqdm.write(f"Failed row {i} last made progress over 24 hours ago. Retrying.")
+                    TP().runlater(prepare_feedback, row)
+                else:
+                    tqdm.write(f"Failed row {i} last made progress less than 24 hours ago. Not touching it for now.")
 
-                elif row.status == 2:
-                    pass
+            elif row.status == 2:
+                pass
 
-        TP().runrepeatedly(runner)
+        # TP().finish()
+        # TP().runrepeatedly(runner)
 
     @property
     def json(self):
@@ -375,8 +375,6 @@ class Feedback():
                 status = 1 # in progress
             )
 
-            print(f"{UNCIODE_YIELD} Feedback enqueued {self.name} -> {db}")
-
             chain_json = db.get_chain(chain_id=chain_id)
             res = self.run_on_record(chain_json=chain_json, record_json=record_json)
             
@@ -401,7 +399,6 @@ class Feedback():
                 total_cost=-1.0, # todo
                 total_tokens=-1  # todo
             )
-            print(f"{UNICODE_CHECK} Feedback {self.name} -> {db}")
         else:
             # TODO: indicate failure better
             db.insert_feedback(
