@@ -10,7 +10,8 @@ from st_aggrid.shared import JsCode
 import streamlit as st
 from ux.add_logo import add_logo
 
-from trulens_eval import tru_db, Tru
+from trulens_eval import Tru
+from trulens_eval import tru_db
 from trulens_eval.tru_db import is_empty
 from trulens_eval.tru_db import is_noserio
 from trulens_eval.tru_db import TruDB
@@ -229,7 +230,6 @@ else:
                     with columns[col_num]:
                         ind = row_num * cols + col_num
                         if ind < len(feedback):
-                            st.text(feedback[ind])
                             # Generate histogram
                             fig, ax = plt.subplots()
                             bins = [
@@ -242,5 +242,5 @@ else:
                             )
                             ax.set_xlabel('Feedback Value')
                             ax.set_ylabel('Frequency')
-                            ax.set_title('Feedback Distribution')
+                            ax.set_title(feedback[ind], loc='center')
                             st.pyplot(fig)
