@@ -93,9 +93,6 @@ f_qs_relevance = Feedback(openai.qs_relevance).on(
 )
 
 
-def filter_by_relevance(query, doc):
-    return openai.qs_relevance(question=query, statement=doc.page_content) > 0.5
-
 
 class WithFilterDocuments(VectorStoreRetriever):
     filter_func: Callable = Field(exclude=True)
@@ -125,6 +122,12 @@ class WithFilterDocuments(VectorStoreRetriever):
     def of_vectorstoreretriever(retriever, filter_func: Callable):
         return WithFilterDocuments(filter_func=filter_func, **retriever.dict())
 
+def filter_by_relevance(query, doc):
+    return openai.qs_relevance(question=query, statement=doc.page_content) > 0.5
+
+retriever = WithFilterDocuments.of_vectorstoreretriever(
+    retriever=retriever, filter_func=filter_by_relevance
+)
 
 def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     """
@@ -406,7 +409,7 @@ def handle_app_mention_events(body, logger):
 
 def start_bot():
     tru.start_deferred_feedback_evaluator(db=db)
-    
+
     app.start(port=int(PORT))
 
 
