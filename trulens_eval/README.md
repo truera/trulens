@@ -34,7 +34,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
 # imports from trulens to log and get feedback on chain
-from trulens_eval import tru
+from trulens_eval.tru import Tru
 from trulens_eval import tru_chain
 tru = Tru()
 ```
@@ -82,13 +82,13 @@ Make the first call to your LLM Application. The instrumented chain can operate 
 
 ```python
 prompt_input = 'que hora es?'
-gpt3_response, record = tc(prompt_input)
+gpt3_response = tc(prompt_input)
 ```
 
 We can log the records but first we need to log the chain itself.
 
 ```python
-tru.add_chain(chain_json=truchain.json)
+tru.add_chain(chain_json=tc.json)
 ```
 
 Now we can log the record:
@@ -122,7 +122,7 @@ f_lang_match = Feedback(hugs.language_match).on(
 
 # Run feedack functions. This might take a moment if the public api needs to load the language model used by the feedback function.
 feedback_result = f_lang_match.run_on_record(
-    chain_json=truchain.json, record_json=record
+    chain_json=tc.json, record_json=record
 )
 
 JSON(feedback_result)
