@@ -77,12 +77,6 @@ tc = tru_chain.TruChain(chain)
 
 ## Set up logging and instrumentation
 
-First, you need to create an empty database to store your logs. You can do this in the command line with the following:
-
-```python
-tru.init_db('llm_quality') 
-```
-
 Make the first call to your LLM Application. The instrumented chain can operate like the original but can also produce a log or "record" of the chain execution.
 
 ```python
@@ -116,6 +110,7 @@ To assess your LLM quality, you can provide the feedback functions to tru.run_fe
 from trulens_eval.tru_feedback import Feedback, Huggingface
 
 os.environ["HUGGINGFACE_API_KEY"] = "..."
+
 # Initialize Huggingface-based feedback function collection class:
 hugs = Huggingface()
 
