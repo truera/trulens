@@ -6,7 +6,7 @@ from streamlit_extras.switch_page_button import switch_page
 
 st.runtime.legacy_caching.clear_cache()
 
-from trulens_eval import tru_db
+from trulens_eval import tru_db, Tru
 
 st.set_page_config(page_title="Leaderboard", layout="wide")
 
@@ -20,7 +20,9 @@ add_logo()
 #def get_model_store():
 #    return model_store.ModelDataStore()
 
-lms = tru_db.LocalSQLite()
+# lms = tru_db.LocalSQLite()
+tru = Tru()
+lms = tru.db
 
 
 def app():
@@ -28,6 +30,10 @@ def app():
     st.title('Chain Leaderboard')
     df, feedback_col_names = lms.get_records_and_feedback([])
 
+    if df.empty:
+        st.write("No records yet...")
+        return
+    
     df = df.sort_values(by="chain_id")
 
     if df.empty:

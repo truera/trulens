@@ -136,7 +136,6 @@ from pydantic import Field
 from trulens_eval.tru_db import JSON, noserio
 from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
-from trulens_eval.tru_db import Record
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.util import TP
@@ -181,13 +180,22 @@ class TruChain(Chain):
     feedbacks: Optional[Sequence[Feedback]] = Field(exclude=True)
 
     # Feedback evaluation mode.
-    # "withchain" - Try to run feedback functions immediately after a chain produces a record.
-    # "deferred" - Evaluate later via the process started by `tru.start_deferred_feedback_evaluator`.
-    # None - No evaluation will happen even if feedback functions are specified.
-    # NOTE: Custom feedback functions cannot be run deferred and will be run as if "withchain" was set.
-    feedback_mode: Optional[str] = "withchain"
+    # - "withchain" - Try to run feedback functions immediately and before chain
+    #   returns a record.
+    # - "withchainthread" - Try to run feedback functions in the same process as
+    #   the chain but after it produces a record.
+    # - "deferred" - Evaluate later via the process started by
+    #   `tru.start_deferred_feedback_evaluator`.
+    # - None - No evaluation will happen even if feedback functions are specified.
 
-    # Database to store models/records/feedbacks.
+    # NOTE: Custom feedback functions cannot be run deferred and will be run as
+    # if "withchainthread" was set.
+    feedback_mode: Optional[str] = "withchainthread"
+
+    # Database interfaces for models/records/feedbacks.
+    tru: Optional['Tru'] = Field(exclude=True)
+
+    # Database interfaces for models/records/feedbacks.
     db: Optional[TruDB] = Field(exclude=True)
 
     def __init__(
@@ -196,8 +204,8 @@ class TruChain(Chain):
         chain_id: Optional[str] = None,
         verbose: bool = False,
         feedbacks: Optional[Sequence[Feedback]] = None,
-        feedback_mode: Optional[str] = "withchain",
-        db: Optional[TruDB] = None
+        feedback_mode: Optional[str] = "withchainthread",
+        tru: Optional['Tru'] = None
     ):
         """
         Wrap a chain for monitoring.
@@ -221,37 +229,47 @@ class TruChain(Chain):
         # Track chain id. This will produce a name if not provided.
         self.chain_id = chain_id or obj_id_of_obj(obj=chain_def, prefix="chain")
 
-        if feedbacks is not None and db is None:
-            raise ValueError("Feedback logging requires `db` to be specified.")
+        if feedbacks is not None and tru is None:
+            raise ValueError("Feedback logging requires `tru` to be specified.")
 
         self.feedbacks = feedbacks or []
 
         assert feedback_mode in [
-            'withchain', 'deferred', None
-        ], "`feedback_mode` must be one of 'withchain', 'deferred', or None."
+            'withchain', 'withchainthread', 'deferred', None
+        ], "`feedback_mode` must be one of 'withchain', 'withchainthread', 'deferred', or None."
         self.feedback_mode = feedback_mode
-        self.db = db
 
-        if db is not None:
+        if tru is not None:
+            self.db = tru.db
+
             if feedback_mode is None:
                 logging.warn(
-                    "`db` is specified but `feedback_mode` is None. "
+                    "`tru` is specified but `feedback_mode` is None. "
                     "No feedback evaluation and logging will occur."
                 )
-
-            print(
-                "Inserting chain and feedback function definitions to db."
-            )
-            db.insert_chain(chain_id=self.chain_id, chain_json=self.json)
-            for f in self.feedbacks:
-                db.insert_feedback_def(f.json)
         else:
             if feedback_mode is not None:
                 logging.warn(
-                    f"`feedback_mode` is {feedback_mode} but `db` was not specified. "
-                    "Reverting to None, feedback will be evaluated or logged "
-                    "automatically but this can still be done manually."
+                    f"`feedback_mode` is {feedback_mode} but `tru` was not specified. Reverting to None."
+
                 )
+                self.feedback_mode = None
+                feedback_mode = None
+                # Import here to avoid circular imports.
+                # from trulens_eval import Tru
+                # tru = Tru()
+
+        self.tru = tru
+
+        if tru is not None and feedback_mode is not None:
+            logging.debug(
+                "Inserting chain and feedback function definitions to db."
+            )
+            self.db.insert_chain(chain_id=self.chain_id, chain_json=self.json)
+            print(f"✅ {self.chain_id} -> {self.db}")
+            for f in self.feedbacks:
+                self.db.insert_feedback_def(f.json)
+                print(f"✅ {f.json['feedback_id']} -> {self.db}")
 
     @property
     def json(self):
@@ -303,7 +321,7 @@ class TruChain(Chain):
 
         except BaseException as e:
             error = e
-            logging.warn(f"Chain raised an exception: {e}")
+            logging.error(f"Chain raised an exception: {e}")
 
         self.recording = False
 
@@ -318,12 +336,6 @@ class TruChain(Chain):
             if obj is None:
                 logging.warn(f"Cannot locate {path} in chain.")
 
-            # record['_call_not_found_in_chain'] = calls
-            # else:
-            #    obj.update(dict(_call=calls))
-
-            # print(f"setting record path={path}={id(calls)}")
-
             ret_record = TruDB._set_in_json(
                 path=path, in_json=ret_record, val={"_call": calls}
             )
@@ -334,17 +346,22 @@ class TruChain(Chain):
         ret_record['chain_id'] = self.chain_id
 
         if error is not None:
-            if self.feedback_mode is not None:
+
+            if self.feedback_mode == "withchain":            
                 self._handle_error(record_json=ret_record, error=error)
-                #TP().runlater(
-                #    self._handle_error, record_json=ret_record, error=error
-                #)
+
+            elif self.feedback_mode in ["deferred", "withchainthread"]:
+                TP().runlater(
+                    self._handle_error, record_json=ret_record, error=error
+                )
 
             raise error
 
-        if self.feedback_mode is not None:
+        if self.feedback_mode == "withchain":
             self._handle_record(record_json=ret_record)
-            # TP().runlater(self._handle_record, record_json=ret_record)
+
+        elif self.feedback_mode in ["deferred", "withchainthread"]:
+            TP().runlater(self._handle_record, record_json=ret_record)
 
         return ret, ret_record
 
@@ -364,24 +381,20 @@ class TruChain(Chain):
         Write out record-related info to database if set.
         """
 
-        # Import here to avoid circular imports.
-        from trulens_eval import tru
-
-        if self.db is None or self.feedback_mode is None:
+        if self.tru is None or self.feedback_mode is None:
             return
 
         main_input = record_json['chain']['_call']['args']['inputs'][
             self.input_keys[0]]
         main_output = record_json['chain']['_call']['rets'][self.output_keys[0]]
 
-        record_id = tru.add_record(
+        record_id = self.tru.add_record(
             prompt=main_input,
             response=main_output,
             record_json=record_json,
             tags='dev',  # TODO: generalize
             total_tokens=record_json['_cost']['total_tokens'],
-            total_cost=record_json['_cost']['total_cost'],
-            db=self.db
+            total_cost=record_json['_cost']['total_cost']
         )
 
         if len(self.feedbacks) == 0:
@@ -394,16 +407,15 @@ class TruChain(Chain):
                 print("Inserting feedback for future evaluation", feedback_id)
                 self.db.insert_feedback(record_id, feedback_id)
 
-        elif self.feedback_mode == "withchain":
+        elif self.feedback_mode in ["withchain", "withchainthread"]:
             print("Running feedback functions now.")
-            results = tru.run_feedback_functions(
+            results = self.tru.run_feedback_functions(
                 record_json=record_json,
                 feedback_functions=self.feedbacks,
-                chain_json=self.json,
-                db=self.db
+                chain_json=self.json
             )
             for result_json in results:
-                tru.add_feedback(result_json, db=self.db)
+                self.tru.add_feedback(result_json)
 
     def _handle_error(self, record, error):
         if self.db is None:
@@ -444,9 +456,9 @@ class TruChain(Chain):
 
         if obj.memory is not None:
 
-            logging.warn(
-                f"Will not be able to serialize object of type {cls} because it has memory."
-            )
+            # logging.warn(
+            #     f"Will not be able to serialize object of type {cls} because it has memory."
+            # )
 
             pass
 

@@ -31,14 +31,16 @@ class SingletonPerName():
         Create the singleton instance if it doesn't already exist and return it.
         """
 
-        if name not in cls.instances:
+        key = cls.__name__, name
+
+        if key not in cls.instances:
             #logging.debug(
             print(
                 f"*** Creating new {cls.__name__} singleton instance for name = {name} ***"
             )
-            cls.instances[name] = super().__new__(cls)
+            SingletonPerName.instances[key] = super().__new__(cls)
 
-        return cls.instances[name]
+        return SingletonPerName.instances[key]
 
 
 class TP(SingletonPerName):  # "thread processing"
