@@ -58,7 +58,7 @@ convos: Dict[str, TruChain] = dict()
 handled_ts: Set[Tuple[str, str]] = set()
 
 # DB to save models and records.
-tru = Tru()
+tru = Tru()#LocalSQLite("trubot.sqlite"))
 
 ident = lambda h: h
 
@@ -92,8 +92,6 @@ f_qs_relevance = Feedback(openai.qs_relevance).on(
 ).on_multiple(
     multiarg="statement", each_query=Record.page_content, agg=np.min
 )
-
-
 
 class WithFilterDocuments(VectorStoreRetriever):
     filter_func: Callable = Field(exclude=True)
@@ -404,7 +402,7 @@ def handle_app_mention_events(body, logger):
 
 
 def start_bot():
-    tru.start_deferred_feedback_evaluator()
+    tru.start_evaluator()
     app.start(port=int(PORT))
 
 

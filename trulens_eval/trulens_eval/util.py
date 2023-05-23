@@ -7,8 +7,11 @@ Do not import anything from trulens_eval here.
 import logging
 from multiprocessing.pool import AsyncResult
 from multiprocessing.pool import ThreadPool
+from queue import Queue
 from time import sleep
-from typing import Callable, Dict, Hashable, List, TypeVar
+from typing import Callable, Dict, Hashable, List, Optional, TypeVar
+
+from multiprocessing.context import TimeoutError
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -37,8 +40,7 @@ class SingletonPerName():
         key = cls.__name__, name
 
         if key not in cls.instances:
-            #logging.debug(
-            print(
+            logging.debug(
                 f"*** Creating new {cls.__name__} singleton instance for name = {name} ***"
             )
             SingletonPerName.instances[key] = super().__new__(cls)
@@ -55,6 +57,7 @@ class TP(SingletonPerName):  # "thread processing"
 
         self.thread_pool = ThreadPool(processes=16)
         self.running = 0
+        self.promises = Queue(maxsize=1024)
 
     def _started(self, *args, **kwargs):
         self.running += 1
@@ -72,13 +75,42 @@ class TP(SingletonPerName):  # "thread processing"
 
     def runlater(self, func: Callable, *args, **kwargs) -> None:
         self._started()
-        self.thread_pool.apply_async(func, callback=self._finished, args=args, kwds=kwargs)
+
+        prom = self.thread_pool.apply_async(func, callback=self._finished, args=args, kwds=kwargs)
+        self.promises.put(prom)
 
     def promise(self, func: Callable[..., T], *args,
                 **kwargs) -> AsyncResult:
         self._started()
-        return self.thread_pool.apply_async(func, callback=self._finished, args=args, kwds=kwargs)
+        prom = self.thread_pool.apply_async(func, callback=self._finished, args=args, kwds=kwargs)
+        self.promises.put(prom)
+
+        return prom
     
+    def finish(self, timeout: Optional[float] = None) -> int:
+        print("Finishing ", end='')
+
+        timeouts = []
+
+        while not self.promises.empty():
+            prom = self.promises.get()
+            try:
+                prom.get(timeout=timeout)
+                print(".", end="")
+            except TimeoutError:
+                print("!", end="")
+                timeouts.append(prom)
+
+        for prom in timeouts:
+            self.promises.put(prom)
+
+        if len(timeouts) == 0:
+            print("done.")
+        else:
+            print("some tasks timed out.")
+
+        return len(timeouts)
+
     def status(self) -> List[str]:
         rows = []
 
