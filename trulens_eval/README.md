@@ -259,4 +259,19 @@ class StandAlone(Provider):
     pass
 ```
 
-2. Add a new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both promopt (str) and resposne (str). It should return a float between 0 (worst) and 1 (best).
+2. Add a new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both promopt (str) and response (str). It should return a float between 0 (worst) and 1 (best).
+
+```python
+def feedback(self, text: str) -> float:
+        """
+        Describe how the model works
+
+        Parameters:
+            text (str): Text to evaluate.
+            Can also be prompt (str) and response (str).
+
+        Returns:
+            float: A value between 0 (worst) and 1 (best).
+        """
+        return float
+```
