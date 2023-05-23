@@ -336,6 +336,9 @@ class Feedback():
         names.
         """
 
+        if 'record_id' not in record_json:
+            record_json['record_id'] = None
+
         try:
             ins = self.extract_selection(chain_json=chain_json, record_json=record_json)
             ret = self.imp(**ins)

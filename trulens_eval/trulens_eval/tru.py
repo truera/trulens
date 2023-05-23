@@ -6,7 +6,7 @@ from datetime import datetime
 import logging
 import os
 import subprocess
-from typing import Callable, List, Optional, Sequence
+from typing import Callable, Iterable, List, Optional, Sequence
 
 import pkg_resources
 
@@ -154,7 +154,18 @@ def add_chain(
 def add_feedback(result_json: JSON, db: Optional[TruDB] = None):
     db = db or lms
 
+    if 'record_id' not in result_json or result_json['record_id'] is None:
+        raise RuntimeError("Result does not include record_id. "
+                           "To log feedback, log the record first using `tru.add_record`.")
+
     db.insert_feedback(result_json=result_json, status=2)
+
+
+def add_feedbacks(result_jsons: Iterable[JSON], db: Optional[TruDB] = None):
+    db = db or lms
+
+    for result_json in result_jsons:
+        add_feedback(result_json=result_json, db=db)
 
 
 def get_chain(chain_id, db: Optional[TruDB] = None):

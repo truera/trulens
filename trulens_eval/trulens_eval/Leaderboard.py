@@ -28,6 +28,8 @@ def app():
     st.title('Chain Leaderboard')
     df, feedback_col_names = lms.get_records_and_feedback([])
 
+    df = df.sort_values(by="chain_id")
+
     if df.empty:
         st.write("No records yet...")
 
