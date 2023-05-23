@@ -1,6 +1,7 @@
 import json
 from typing import Dict, List
 
+import matplotlib.pyplot as plt
 import pandas as pd
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
@@ -43,7 +44,7 @@ else:
     if (len(options) == 0):
         st.header("All Chains")
         chain_df = df_results
-        
+
     elif (len(options) == 1):
         st.header(options[0])
 
@@ -56,9 +57,8 @@ else:
 
     tab1, tab2 = st.tabs(["Records", "Feedback Functions"])
 
-    #mds = model_store.ModelDataStore()
-
     with tab1:
+        gridOptions = {'alwaysShowHorizontalScroll': True}
         evaluations_df = chain_df
         #evaluations_df = model_df.copy()
         #evaluations_df = evaluations_df.merge(
@@ -95,12 +95,8 @@ else:
         """
         )
 
-        gb.configure_column(
-            'record_id', header_name='Record ID', maxWidth=100, pinned='left'
-        )
-        gb.configure_column(
-            'chain_id', header_name='Chain ID', maxWidth=100, pinned='left'
-        )
+        gb.configure_column('record_id', header_name='Record ID')
+        gb.configure_column('chain_id', header_name='Chain ID')
         gb.configure_column(
             'input', header_name='User Input'
             #, minWidth=500
@@ -110,12 +106,8 @@ else:
             header_name='Response',
             #minWidth=500
         )
-        gb.configure_column(
-            'tags', header_name='Tags', minWidth=100, pinned='right'
-        )
-        gb.configure_column(
-            'ts', header_name='Time Stamp', minWidth=100, pinned='right'
-        )
+        gb.configure_column('tags', header_name='Tags')
+        gb.configure_column('ts', header_name='Time Stamp')
         # gb.configure_column('details', maxWidth=0)
 
         #for feedback_col in df_feedback.columns:
@@ -238,5 +230,17 @@ else:
                         ind = row_num * cols + col_num
                         if ind < len(feedback):
                             st.text(feedback[ind])
-                            # print(model_df_feedback[feedback[ind]])
-                            st.bar_chart(chain_df[feedback[ind]])
+                            # Generate histogram
+                            fig, ax = plt.subplots()
+                            bins = [
+                                0, 0.2, 0.4, 0.6, 0.8, 1.0
+                            ]  # Quintile buckets
+                            ax.hist(
+                                chain_df[feedback[ind]],
+                                bins=bins,
+                                edgecolor='black'
+                            )
+                            ax.set_xlabel('Feedback Value')
+                            ax.set_ylabel('Frequency')
+                            ax.set_title('Feedback Distribution')
+                            st.pyplot(fig)
