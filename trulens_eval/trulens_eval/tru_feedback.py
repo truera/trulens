@@ -64,7 +64,7 @@ from trulens_eval.provider_apis import Endpoint
 from trulens_eval.tru_db import JSON, Query, obj_id_of_obj, query_of_path
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_db import TruDB
-from trulens_eval.util import TP
+from trulens_eval.util import TP, UNCIODE_YIELD, UNICODE_CHECK
 
 # openai
 
@@ -375,7 +375,7 @@ class Feedback():
                 status = 1 # in progress
             )
 
-            print(f"Feedback queued: {self.name} / {self.feedback_id} -> {db}")
+            print(f"{UNCIODE_YIELD} Feedback enqueued {self.name} -> {db}")
 
             chain_json = db.get_chain(chain_id=chain_id)
             res = self.run_on_record(chain_json=chain_json, record_json=record_json)
@@ -401,7 +401,7 @@ class Feedback():
                 total_cost=-1.0, # todo
                 total_tokens=-1  # todo
             )
-            print(f"✅ Feedback {self.name} / {self.feedback_id} -> {db}")
+            print(f"{UNICODE_CHECK} Feedback {self.name} -> {db}")
         else:
             # TODO: indicate failure better
             db.insert_feedback(
@@ -413,7 +413,6 @@ class Feedback():
                 total_cost=-1.0, # todo
                 total_tokens=-1  # todo
             )
-            print(f"Feedback error {self.name} / {self.feedback_id} -> {db}")
 
     @property
     def name(self):

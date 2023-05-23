@@ -22,6 +22,11 @@ class Tru(SingletonPerName):
 
     deferred_feedback_evaluator_started = False
 
+    def Chain(self, *args, **kwargs):
+        from trulens_eval.tru_chain import TruChain
+        
+        return TruChain(tru=self, *args, **kwargs)
+
     def __init__(self, db: Optional[TruDB] = None):
         """
         TruLens instrumentation, logging, and feedback functions for chains.
@@ -56,10 +61,10 @@ class Tru(SingletonPerName):
         prompt: str,
         response: str,
         record_json: JSON,
-        tags: Optional[str] = None,
+        tags: Optional[str] = "",
         ts: Optional[int] = None,
-        total_tokens: Optional[int] = None,
-        total_cost: Optional[float] = None,
+        total_tokens: Optional[int] = 0,
+        total_cost: Optional[float] = 0.0,
     ):
         """
         Add a record to the database.
@@ -215,10 +220,18 @@ class Tru(SingletonPerName):
             f.write('textColor="#0A2C37"\n')
             f.write('font="sans serif"\n')
 
+        cred_path = os.path.join(streamlit_dir, 'credentials.toml')
+        with open(cred_path, 'w') as f:
+            f.write('[general]\n')
+            f.write('email=""\n')
+
         #run leaderboard with subprocess
         leaderboard_path = pkg_resources.resource_filename(
             'trulens_eval', 'Leaderboard.py'
         )
 
-        subprocess.Popen(["streamlit", "run", leaderboard_path])
+        subprocess.Popen(
+            
+            ["streamlit", "run", "--server.headless=True", leaderboard_path]
+            )
 
