@@ -83,23 +83,26 @@ First, you need to create an empty database to store your logs. You can do this 
 tru.init_db('llm_quality') 
 ```
 
-Make the first call to your LLM Application
+Make the first call to your LLM Application. The instrumented chain can operate like the original but can also produce a log or "record" of the chain execution.
 
 ```python
 prompt_input = 'que hora es?'
 gpt3_response, record = tc(prompt_input)
 ```
 
-You can then log information to a database on your using tru.add_data with each call to the application. Note: make sure to capture the record_id returned by add_data so that the LLM evaluation can be included later.
+We can log the records but first we need to log the chain itself.
 
 ```python
-record_id = tru.add_data(
-        chain_id='Chain1_ChatApplication', #name your chain
-        prompt=prompt_input, # prompt input
-        response=gpt3_response['text'], # LLM response
-        record=record, # record is returned by the TruChain wrapper
-        tags='dev' #add a tag
-    )
+tru.add_chain(chain_json=truchain.json)
+```
+
+Now we can log the record:
+```python
+tru.add_record(
+    prompt=prompt_input, # prompt input
+    response=gpt3_response['text'], # LLM response
+    record_json=record # record is returned by the TruChain wrapper
+)
 ```
 
 # Evaluate Quality
@@ -113,29 +116,72 @@ To assess your LLM quality, you can provide the feedback functions to tru.run_fe
 from trulens_eval.tru_feedback import Feedback, Huggingface
 
 os.environ["HUGGINGFACE_API_KEY"] = "..."
-# initialize Huggingface class for feedback function generation
+# Initialize Huggingface-based feedback function collection class:
 hugs = Huggingface()
 
-# Generate a language match feedback function using HuggingFace
-f_lang_match = Feedback(hugs.language_match).on(text1="prompt", text2="response")
+# Define a language match feedback function using HuggingFace.
+f_lang_match = Feedback(hugs.language_match).on(
+    text1="prompt", text2="response"
+)
 
-# Run feedack functions
-feedback = tru.run_feedback_functions(
-        chain=chain, # the unwrapped chain
-        record=record, # record is returned by the TruChain wrapper
-        feedback_functions=[f_lang_match] # a list of feedback functions to apply
-    )
+# Run feedack functions. This might take a moment if the public api needs to load the language model used by the feedback function.
+feedback_result = f_lang_match.run_on_record(
+    chain_json=truchain.json, record_json=record
+)
 
+JSON(feedback_result)
+
+# We can also run a collection of feedback functions
+feedback_results = tru.run_feedback_functions(
+    record_json=record,
+    feedback_functions=[f_lang_match]
+)
+display(feedback_results)
 ```
 
-After capturing feedback, you can then log it to your local database using tru.add_feedback()
+After capturing feedback, you can then log it to your local database
 ```python
-tru.add_feedback(record_id, feedback) # log the feedback by providing the record id
+tru.add_feedback(feedback_results)
+```
+
+## Automatic logging
+The above logging and feedback function evaluation steps can be done by TruChain.
+```python
+truchain = TruChain(
+    chain,
+    chain_id='Chain1_ChatApplication',
+    feedbacks=[f_lang_match],
+    tru=tru
+)
+# Note: providing `db: TruDB` causes the above constructor to log the wrapped chain in the database specified.
+# Note: any `feedbacks` specified here will be evaluated and logged whenever the chain is used.
+
+truchain("This will be automatically logged.")
+```
+
+## Out-of-band Feedback evaluation
+
+In the above example, the feedback function evaluation is done in the same process as the chain evaluation. The alternative approach is the use the provided persistent evaluator started via `tru.start_deferred_feedback_evaluator`. Then specify the `feedback_mode` for `TruChain` as `deferred` to let the evaluator handle the feedback functions.
+
+For demonstration purposes, we start the evaluator here but it can be started in another process.
+```python
+truchain: TruChain = TruChain(
+    chain,
+    chain_id='Chain1_ChatApplication',
+    feedbacks=[f_lang_match],
+    tru=tru,
+    feedback_mode="deferred"
+)
+
+tru.start_evaluator()
+truchain("This will be logged by deferred evaluator.")
+tru.stop_evaluator()
 ```
 
 ## Run the dashboard!
 ```python
 tru.run_dashboard() # open a streamlit app to explore
+# tru.stop_dashboard() # stop if needed
 ```
 
 ## Chain Leaderboard: Quickly identify quality issues.
