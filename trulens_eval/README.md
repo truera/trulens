@@ -174,6 +174,7 @@ truchain("This will be logged by deferred evaluator.")
 tru.stop_evaluator()
 ```
 
+
 ## Run the dashboard!
 ```python
 tru.run_dashboard() # open a streamlit app to explore
@@ -182,13 +183,27 @@ tru.run_dashboard() # open a streamlit app to explore
 
 ## Chain Leaderboard: Quickly identify quality issues.
 
-Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics across all of your LLM apps using the chain leaderboard. As you iterate new versions of your LLM application, you can compare their performance.
+Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics including cost and average feedback value across all of your LLM apps using the chain leaderboard. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up.
+
+Note: Average feedback values are returned and displayed in a range from 0 (worst) to 1 (best).
+
+![Chain Leaderboard](https://github.com/truera/trulens_private/assets/60949774/02172494-5fd4-45c1-b07f-9caa1b557a2a)
+
+To dive deeper on a particular chain, click "Select Chain".
 
 ## Understand chain performance with Evaluations
  
-To learn more about the performance of a particular chain or LLM model, we can select it to view its evaluations at the record level. LLM quality is assessed through the use of feedback functions. Feedback functions are extensible methods for determining the quality of LLM responses and can be applied to any downstream LLM task. Out of the box we provide a number of feedback functions for assessing truthfulness, sentiment, relevance and more.
+To learn more about the performance of a particular chain or LLM model, we can select it to view its evaluations at the record level. LLM quality is assessed through the use of feedback functions. Feedback functions are extensible methods for determining the quality of LLM responses and can be applied to any downstream LLM task. Out of the box we provide a number of feedback functions for assessing model agreement, sentiment, relevance and more.
 
-The evaluations tab provides record-level metadata and feedback on the quality of your LLM application. Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain.
+The evaluations tab provides record-level metadata and feedback on the quality of your LLM application.
+
+![Evaluations](https://github.com/truera/trulens_private/assets/60949774/a1b84089-c759-47fc-be43-ab354888e223)
+
+Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain.
+
+![TruChain Details](https://github.com/truera/trulens_private/assets/60949774/7d547d5f-87d3-41fd-ad86-aa4ea7cd473d)
+
+If you prefer the raw format, you can quickly get it using the "Display full chain json" or "Display full record json" buttons at the bottom of the page.
 
 ## Out-of-the-box Feedback Functions
 See: <https://www.trulens.org/trulens_eval/api/tru_feedback/>
