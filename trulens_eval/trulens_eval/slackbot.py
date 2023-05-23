@@ -39,7 +39,7 @@ os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 pp = PrettyPrinter()
 
 PORT = 3000
-verb = True
+verb = False
 
 # create a conversational chain with relevant models and vector store
 
@@ -218,10 +218,9 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
         chain.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
 
     # Trulens instrumentation.
-    tc = TruChain(
+    tc = tru.Chain(
         chain=chain,
         chain_id=chain_id,
-        tru=tru,
         feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance],
         feedback_mode="deferred"
     )
@@ -405,8 +404,7 @@ def handle_app_mention_events(body, logger):
 
 
 def start_bot():
-    tru.start_deferred_feedback_evaluator(db=db)
-
+    tru.start_deferred_feedback_evaluator()
     app.start(port=int(PORT))
 
 
