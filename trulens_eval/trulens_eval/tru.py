@@ -51,7 +51,7 @@ class Tru(SingletonPerName):
             # Already initialized by SingletonByName mechanism.
             return
 
-        self.db = db or LocalSQLite(Tru.DEFAULT_DATABASE_FILE)
+        self.db = LocalSQLite(Tru.DEFAULT_DATABASE_FILE)
 
     
     def reset_database(self):
