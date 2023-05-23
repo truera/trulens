@@ -1,7 +1,9 @@
 import logging
-from queue import Queue
+from multiprocessing import Queue
+# from queue import Queue
+from threading import Thread
 from time import sleep
-from typing import Any, Sequence
+from typing import Any, Optional, Sequence
 
 import requests
 from tqdm.auto import tqdm
@@ -40,7 +42,7 @@ class Endpoint(SingletonPerName):
         self.rpm = rpm
         self.retries = retries
         self.pace = Queue(
-            maxsize=rpm / 6.0
+            maxsize=rpm // 6
         )  # 10 second's worth of accumulated api
         self.tqdm = tqdm(desc=f"{name} api", unit="requests")
         self.name = name
@@ -57,13 +59,13 @@ class Endpoint(SingletonPerName):
         self.tqdm.update(1)
         return
 
-    def post(self, url: str, payload: JSON) -> Any:
+    def post(self, url: str, payload: JSON, timeout: Optional[int] = None) -> Any:
         extra = dict()
         if self.post_headers is not None:
             extra['headers'] = self.post_headers
 
         self.pace_me()
-        ret = requests.post(url, json=payload, **extra)
+        ret = requests.post(url, json=payload, timeout=timeout, **extra)
 
         j = ret.json()
 
@@ -71,7 +73,7 @@ class Endpoint(SingletonPerName):
         if "estimated_time" in j:
             wait_time = j['estimated_time']
             logging.error(f"Waiting for {j} ({wait_time}) second(s).")
-            sleep(wait_time)
+            sleep(wait_time+2)
             return self.post(url, payload)
 
         assert isinstance(
@@ -114,4 +116,7 @@ class Endpoint(SingletonPerName):
                 sleep(60.0 / self.rpm)
                 self.pace.put(True)
 
-        TP().thread_pool.apply_async(keep_pace)
+        thread = Thread(target=keep_pace)
+        thread.start()
+
+        self.pacer_thread = thread
