@@ -9,7 +9,7 @@ from st_aggrid.shared import JsCode
 import streamlit as st
 from ux.add_logo import add_logo
 
-from trulens_eval import tru_db
+from trulens_eval import tru_db, Tru
 from trulens_eval.tru_db import is_empty
 from trulens_eval.tru_db import is_noserio
 from trulens_eval.tru_db import TruDB
@@ -22,8 +22,10 @@ st.runtime.legacy_caching.clear_cache()
 
 add_logo()
 
-lms = tru_db.LocalSQLite()
-df_results, feedbacl_cols = lms.get_records_and_feedback([])
+tru = Tru()
+lms = tru.db
+
+df_results, feedback_cols = lms.get_records_and_feedback([])
 
 if df_results.empty:
     st.write("No records yet...")
@@ -224,7 +226,7 @@ else:
                 st.write(record_json)
 
     with tab2:
-        feedback = feedbacl_cols
+        feedback = feedback_cols
         cols = 4
         rows = len(feedback) // cols + 1
 

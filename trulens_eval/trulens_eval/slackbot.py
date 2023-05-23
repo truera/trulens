@@ -9,6 +9,7 @@ import numpy as np
 # relevant classes are loaded.
 from trulens_eval.keys import *
 
+
 # This is here so that import organizer does not move the keys import below this
 # line.
 _ = None
@@ -25,7 +26,7 @@ from pydantic import Field
 from slack_bolt import App
 from slack_sdk import WebClient
 
-from trulens_eval import tru
+from trulens_eval import Tru
 from trulens_eval import tru_feedback
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_db import LocalSQLite
@@ -57,7 +58,7 @@ convos: Dict[str, TruChain] = dict()
 handled_ts: Set[Tuple[str, str]] = set()
 
 # DB to save models and records.
-db = LocalSQLite()
+tru = Tru()
 
 ident = lambda h: h
 
@@ -124,10 +125,6 @@ class WithFilterDocuments(VectorStoreRetriever):
 
 def filter_by_relevance(query, doc):
     return openai.qs_relevance(question=query, statement=doc.page_content) > 0.5
-
-retriever = WithFilterDocuments.of_vectorstoreretriever(
-    retriever=retriever, filter_func=filter_by_relevance
-)
 
 def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     """
@@ -224,7 +221,7 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     tc = TruChain(
         chain=chain,
         chain_id=chain_id,
-        db=tru.lms,
+        tru=tru,
         feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance],
         feedback_mode="deferred"
     )
