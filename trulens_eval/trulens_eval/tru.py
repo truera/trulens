@@ -36,14 +36,10 @@ class Tru(SingletonPerName):
 
         return TruChain(tru=self, *args, **kwargs)
 
-    def __init__(self, db: Optional[TruDB] = None):
+    def __init__(self):
         """
         TruLens instrumentation, logging, and feedback functions for chains.
-        
-        Parameters:
-        
-            db (TruDB, optional): Target database. Default database is an SQLite
-            db at Tru.DEFAULT_DATABASE_FILE if not provided.
+        Creates a local database 'default.sqlite' in current working directory.
         """
 
         if hasattr(self, "db"):
