@@ -1,7 +1,3 @@
-"""
-Public interfaces.
-"""
-
 from datetime import datetime
 import logging
 from multiprocessing import Process
@@ -23,6 +19,15 @@ from trulens_eval.util import TP, SingletonPerName
 
 
 class Tru(SingletonPerName):
+    """ Tru is the main class that provides an entry points to trulens-eval. Tru lets you:
+
+    * Log chain prompts and outputs
+    * Log chain Metadata
+    * Run and log feedback functions
+    * Run streamlit dashboard to view experiment results
+
+    All data is logged to the current working directory to default.sqlite.
+    """
     DEFAULT_DATABASE_FILE = "default.sqlite"
 
     # Process or Thread of the deferred feedback function evaluator.
@@ -243,8 +248,12 @@ class Tru(SingletonPerName):
             
         self.evaluator_proc = None
         
-
     def stop_dashboard(self) -> None:
+        """Stop existing dashboard if running.
+
+        Raises:
+            ValueError: Dashboard is already running.
+        """
         if Tru.dashboard_proc is None:
             raise ValueError("Dashboard not running.")
         
@@ -252,9 +261,17 @@ class Tru(SingletonPerName):
         Tru.dashboard_proc = None
 
     def run_dashboard(self, _dev: bool = False) -> Process:
+        """ Runs a streamlit dashboard to view logged results and chains
+
+        Raises:
+            ValueError: Dashboard is already running.
+
+        Returns:
+            Process: Process containing streamlit dashboard.
+        """
 
         if Tru.dashboard_proc is not None:
-            raise ValueError("Dashboard already running.")
+            raise ValueError("Dashboard already running. Run tru.stop_dashboard() to stop existing dashboard.")
 
         # Create .streamlit directory if it doesn't exist
         streamlit_dir = os.path.join(os.getcwd(), '.streamlit')
