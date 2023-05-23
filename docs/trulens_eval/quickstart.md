@@ -1,9 +1,8 @@
 ## Quickstart
 
 ### Playground
-To quickly play around with the TruLens-Eval library, check out the following CoLab notebooks:
 
-* OpenAI/LangChain Evaluation: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1rjXCVg4YlaFoVkLK2b3MLgbZbaJhi4dz?usp=share_link)
+To quickly play around with the TruLens Eval library, download this notebook: [trulens_eval_quickstart.ipynb](https://github.com/truera/trulens_private/blob/main/trulens_eval/trulens_eval_quickstart.ipynb).
 
 
 ### Install & Use
