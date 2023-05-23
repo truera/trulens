@@ -19,7 +19,8 @@ from trulens_eval.util import TP, SingletonPerName
 
 
 class Tru(SingletonPerName):
-    """ Tru is the main class that provides an entry points to trulens-eval. Tru lets you:
+    """
+    Tru is the main class that provides an entry points to trulens-eval. Tru lets you:
 
     * Log chain prompts and outputs
     * Log chain Metadata
@@ -37,6 +38,10 @@ class Tru(SingletonPerName):
     dashboard_proc = None
 
     def Chain(self, *args, **kwargs):
+        """
+        Create a TruChain with database managed by self.
+        """
+
         from trulens_eval.tru_chain import TruChain
 
         return TruChain(tru=self, *args, **kwargs)
@@ -53,8 +58,11 @@ class Tru(SingletonPerName):
 
         self.db = LocalSQLite(Tru.DEFAULT_DATABASE_FILE)
 
-    
     def reset_database(self):
+        """
+        Reset the database. Clears all tables.
+        """
+
         self.db.reset_database()
 
     def add_record(
@@ -171,10 +179,16 @@ class Tru(SingletonPerName):
     def add_chain(
         self, chain_json: JSON, chain_id: Optional[str] = None
     ) -> None:
+        """
+        Add a chain to the database.        
+        """
 
         self.db.insert_chain(chain_id=chain_id, chain_json=chain_json)
 
     def add_feedback(self, result_json: JSON) -> None:
+        """
+        Add a single feedback result to the database.
+        """
 
         if 'record_id' not in result_json or result_json['record_id'] is None:
             raise RuntimeError(
@@ -185,21 +199,34 @@ class Tru(SingletonPerName):
         self.db.insert_feedback(result_json=result_json, status=2)
 
     def add_feedbacks(self, result_jsons: Iterable[JSON]) -> None:
+        """
+        Add multiple feedback results to the database.
+        """
 
         for result_json in result_jsons:
             self.add_feedback(result_json=result_json)
 
     def get_chain(self, chain_id: str) -> JSON:
+        """
+        Look up a chain from the database.
+        """
 
         return self.db.get_chain(chain_id)
 
     def get_records_and_feedback(self, chain_ids: List[str]):
+        """
+        Get records, their feeback results, and feedback names from the database.
+        """
 
         df, feedback_columns = self.db.get_records_and_feedback(chain_ids)
 
         return df, feedback_columns
 
     def start_evaluator(self, fork=False) -> Union[Process, Thread]:
+        """
+        Start a deferred feedback function evaluation thread.
+        """
+
         assert not fork, "Fork mode not yet implemented."
 
         if self.evaluator_proc is not None:
@@ -235,6 +262,10 @@ class Tru(SingletonPerName):
         return proc
 
     def stop_evaluator(self):
+        """
+        Stop the deferred feedback evaluation thread.
+        """
+
         if self.evaluator_proc is None:
             raise RuntimeError("Evaluator not running this process.")
         
