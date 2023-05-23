@@ -55,7 +55,9 @@ class TP(SingletonPerName):  # "thread processing"
             # Already initialized as per SingletonPerName mechanism.
             return
 
-        self.thread_pool = ThreadPool(processes=16)
+        # TODO(piotrm): if more tasks than `processes` get added, future ones
+        # will block and earlier ones may never start executing.
+        self.thread_pool = ThreadPool(processes=1024)
         self.running = 0
         self.promises = Queue(maxsize=1024)
 
@@ -88,7 +90,7 @@ class TP(SingletonPerName):  # "thread processing"
         return prom
     
     def finish(self, timeout: Optional[float] = None) -> int:
-        print("Finishing ", end='')
+        print(f"Finishing {self.promises.qsize()} task(s) ", end='')
 
         timeouts = []
 
