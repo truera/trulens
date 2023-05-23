@@ -752,9 +752,9 @@ class LocalSQLite(TruDB):
         self._close(conn)
 
         if status == 2:
-            print(f"{UNICODE_CHECK} feedback {feedback_id} -> {self.filename}")
+            print(f"{UNICODE_CHECK} feedback {feedback_id} on {record_id} -> {self.filename}")
         else:
-            print(f"{UNCIODE_YIELD} feedback {feedback_id} -> {self.filename}")
+            print(f"{UNCIODE_YIELD} feedback {feedback_id} on {record_id} -> {self.filename}")
 
     def get_feedback(
         self,

@@ -179,11 +179,11 @@ class Feedback():
 
             elif row.status in [-1]:
                 now = datetime.now().timestamp()
-                if now - row.last_ts > 60*60*24:
-                    tqdm.write(f"Failed row {i} last made progress over 24 hours ago. Retrying.")
+                if now - row.last_ts > 60*5:
+                    tqdm.write(f"Failed row {i} last made progress over 5 minutes ago. Retrying.")
                     TP().runlater(prepare_feedback, row)
                 else:
-                    tqdm.write(f"Failed row {i} last made progress less than 24 hours ago. Not touching it for now.")
+                    tqdm.write(f"Failed row {i} last made progress less than 5 minutes ago. Not touching it for now.")
 
             elif row.status == 2:
                 pass
@@ -344,6 +344,7 @@ class Feedback():
         try:
             ins = self.extract_selection(chain_json=chain_json, record_json=record_json)
             ret = self.imp(**ins)
+            
             return {
                 '_success': True,
                 'feedback_id': self.feedback_id,
@@ -376,8 +377,9 @@ class Feedback():
             )
 
             chain_json = db.get_chain(chain_id=chain_id)
+
             res = self.run_on_record(chain_json=chain_json, record_json=record_json)
-            
+
         except Exception as e:
             print(e)
             res = {
@@ -846,7 +848,7 @@ class Huggingface(Provider):
         def get_scores(text):
             payload = {"inputs": text}
             hf_response = self.endpoint.post(
-                url=Huggingface.LANGUAGE_API_URL, payload=payload
+                url=Huggingface.LANGUAGE_API_URL, payload=payload, timeout=30
             )
             return {r['label']: r['score'] for r in hf_response}
 
