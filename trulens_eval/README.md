@@ -26,6 +26,7 @@ pip install trulens-eval
 Imports from langchain to build app, trulens for evaluation
 
 ```python
+from IPython.display import JSON
 # imports from langchain to build app
 from langchain import PromptTemplate
 from langchain.chains import LLMChain
@@ -35,7 +36,7 @@ from langchain.prompts.chat import HumanMessagePromptTemplate
 # imports from trulens to log and get feedback on chain
 from trulens_eval import tru
 from trulens_eval import tru_chain
-from trulens_eval.keys import *
+tru = Tru()
 ```
 
 ## API Keys
