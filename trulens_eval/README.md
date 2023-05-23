@@ -6,7 +6,7 @@ Evaluate and track your LLM experiments with TruLens. As you work on your models
 
 Using feedback functions, you can objectively evaluate the quality of the responses provided by an LLM to your requests. This is completed with minimal latency, as this is achieved in a sequential call for your application, and evaluations are logged to your local machine. Finally, we provide an easy to use streamlit dashboard run locally on your machine for you to better understand your LLM’s performance.
 
-![Architecture Diagram](../docs/Assets/image/TruLens_Architecture.png)
+![Architecture Diagram](https://github.com/truera/trulens/blob/main/docs/Assets/image/TruLens_Architecture.png)
 
 # Quick Usage
 To quickly play around with the TruLens Eval library, download this notebook: [trulens_eval_quickstart.ipynb](https://github.com/truera/trulens/blob/main/trulens_eval/trulens_eval_quickstart.ipynb).
@@ -185,7 +185,7 @@ Understand how your LLM application is performing at a glance. Once you've set u
 
 Note: Average feedback values are returned and displayed in a range from 0 (worst) to 1 (best).
 
-![Chain Leaderboard](../docs/Assets/image/Leaderboard.png)
+![Chain Leaderboard](https://github.com/truera/trulens/blob/main/docs/Assets/image/Leaderboard.png)
 
 To dive deeper on a particular chain, click "Select Chain".
 
@@ -196,11 +196,11 @@ To learn more about the performance of a particular chain or LLM model, we can s
 The evaluations tab provides record-level metadata and feedback on the quality of your LLM application.
 
 
-![Evaluations](../docs/Assets/image/Evaluations.png)
+![Evaluations](https://github.com/truera/trulens/blob/main/docs/Assets/image/Evaluations.png)
 
 Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain.
 
-![TruChain Details](../docs/Assets/image/Chain_Explore.png)
+![TruChain Details](https://github.com/truera/trulens/blob/main/docs/Assets/image/Chain_Explore.png)
 
 If you prefer the raw format, you can quickly get it using the "Display full chain json" or "Display full record json" buttons at the bottom of the page.
 
