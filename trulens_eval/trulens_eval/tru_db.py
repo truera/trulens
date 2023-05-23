@@ -12,6 +12,7 @@ import pandas as pd
 import pydantic
 from tinydb import Query as TinyQuery
 from tinydb.queries import QueryInstance as TinyQueryInstance
+from trulens_eval.util import UNCIODE_YIELD, UNICODE_CHECK
 
 mj = MerkleJson()
 NoneType = type(None)
@@ -124,6 +125,12 @@ class TruDB(abc.ABC):
 
     # Use TinyDB queries for looking up parts of records/models and/or filtering
     # on those parts.
+
+    @abc.abstractmethod
+    def reset_database(self):
+        """Delete all data."""
+
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def select(
@@ -534,8 +541,29 @@ class LocalSQLite(TruDB):
     def __str__(self):
         return f"SQLite({self.filename})"
 
-    def __init__(self, filename: Optional[Path] = 'default.sqlite'):
-        self.filename = filename
+    def reset_database(self):
+        self._clear_tables()
+        self._build_tables()
+
+    def _clear_tables(self):
+        conn, c = self._connect()
+
+        # Create table if it does not exist
+        c.execute(
+            f'''DELETE FROM {self.TABLE_RECORDS}'''
+        )
+        c.execute(
+            f'''DELETE FROM {self.TABLE_FEEDBACKS}'''
+        )
+        c.execute(
+            f'''DELETE FROM {self.TABLE_FEEDBACK_DEFS}'''
+        )
+        c.execute(
+            f'''DELETE FROM {self.TABLE_CHAINS}'''
+        )
+        self._close(conn)
+
+    def _build_tables(self):
         conn, c = self._connect()
 
         # Create table if it does not exist
@@ -579,6 +607,10 @@ class LocalSQLite(TruDB):
         )
         self._close(conn)
 
+    def __init__(self, filename: Optional[Path] = 'default.sqlite'):
+        self.filename = filename
+        self._build_tables()
+
     def _connect(self):
         conn = sqlite3.connect(self.filename)
         c = conn.cursor()
@@ -611,6 +643,9 @@ class LocalSQLite(TruDB):
             )
         )
         self._close(conn)
+
+        print(f"{UNICODE_CHECK} record {record_id} from {chain_id} -> {self.filename}")
+
         return record_id
 
     # TruDB requirement
@@ -629,6 +664,8 @@ class LocalSQLite(TruDB):
         )
         self._close(conn)
 
+        print(f"{UNICODE_CHECK} chain {chain_id} -> {self.filename}")
+
         return chain_id
 
     def insert_feedback_def(self, feedback_json: dict):
@@ -645,6 +682,8 @@ class LocalSQLite(TruDB):
             (feedback_id, feedback_str)
         )
         self._close(conn)
+
+        print(f"{UNICODE_CHECK} feedback def. {feedback_id} -> {self.filename}")
 
     def get_feedback_defs(self, feedback_id: Optional[str] = None):
         clause = ""
@@ -711,6 +750,11 @@ class LocalSQLite(TruDB):
             )
         )
         self._close(conn)
+
+        if status == 2:
+            print(f"{UNICODE_CHECK} feedback {feedback_id} -> {self.filename}")
+        else:
+            print(f"{UNCIODE_YIELD} feedback {feedback_id} -> {self.filename}")
 
     def get_feedback(
         self,
