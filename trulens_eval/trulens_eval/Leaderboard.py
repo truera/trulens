@@ -1,5 +1,5 @@
 import math
-
+import millify
 import numpy as np
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
@@ -26,6 +26,9 @@ lms = tru_db.LocalSQLite()
 def app():
     # Set the title and subtitle of the app
     st.title('Chain Leaderboard')
+    st.write(
+        'Average feedback values displayed in the range from 0 (worst) to 1 (best).'
+    )
     df, feedback_col_names = lms.get_records_and_feedback([])
 
     df = df.sort_values(by="chain_id")
@@ -47,9 +50,7 @@ def app():
         col1.metric("Records", len(chain_df))
         col2.metric(
             "Cost",
-            round(
-                sum(cost for cost in chain_df.total_cost if cost is not None), 5
-            )
+            f"${round(sum(cost for cost in chain_df.total_cost if cost is not None), 5)}"
         )
         col3.metric(
             "Tokens",
@@ -65,38 +66,15 @@ def app():
                 if math.isnan(mean):
                     pass
 
-                elif mean < 0.5:
-                    feedback_cols[i].metric(
-                        col_name,
-                        round(mean, 2),
-                        delta="Fail",
-                        delta_color="inverse"
-                    )
                 else:
-                    feedback_cols[i].metric(
-                        col_name,
-                        round(mean, 2),
-                        delta="Pass",
-                        delta_color="normal"
-                    )
+                    feedback_cols[i].metric(col_name, round(mean, 2))
+
             else:
                 if math.isnan(mean):
                     pass
 
-                elif mean < 0.5:
-                    feedback_cols[i].metric(
-                        col_name,
-                        round(mean, 2),
-                        delta="Fail",
-                        delta_color="inverse"
-                    )
                 else:
-                    feedback_cols[i].metric(
-                        col_name,
-                        round(mean, 2),
-                        delta="Pass",
-                        delta_color="normal"
-                    )
+                    feedback_cols[i].metric(col_name, round(mean, 2))
 
         with col99:
             if st.button('Select Chain', key=f"model-selector-{chain}"):
