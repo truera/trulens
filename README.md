@@ -18,7 +18,6 @@ Install trulens-eval from pypi.
 pip install trulens-eval
 ```
 
-
 ```python
 from trulens_eval import tru
 from trulens_eval import tru_chain
@@ -81,9 +80,17 @@ truchain = TruChain(
 truchain("que hora es?")
 ```
 
+Now you can explore your LLM-based application!
+
+Doing so will help you understand how your LLM application is performing at a glance. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up. You'll also be able to view evaluations at a record level, and explore the chain metadata for each record.
+
+```python
+tru.run_dashboard() # open a streamlit app to explore
+```
+
 For more information, see [TruLens-Eval Documentation](trulens_eval/quickstart.md).
 
-## TruLens-Eval
+## TruLens-Explain
 
 **TruLens-Explain** is a cross-framework library for deep learning explainability. It provides a uniform abstraction over a number of different frameworks. It provides a uniform abstraction layer over TensorFlow, Pytorch, and Keras and allows input and internal explanations.
 
