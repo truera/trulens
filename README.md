@@ -88,7 +88,7 @@ Doing so will help you understand how your LLM application is performing at a gl
 tru.run_dashboard() # open a streamlit app to explore
 ```
 
-For more information, see [TruLens-Eval Documentation](trulens_eval/quickstart.md).
+For more information, see [TruLens-Eval Documentation](https://www.trulens.org/trulens_eval/quickstart/).
 
 ## TruLens-Explain
 
@@ -121,3 +121,5 @@ To quickly play around with the TruLens library, check out the following CoLab n
 
 * PyTorch: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1n77IGrPDO2XpeIVo_LQW0gY78enV-tY9?usp=sharing)
 * Tensorflow 2 / Keras: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1f-ETsdlppODJGQCdMXG-jmGmfyWyW2VD?usp=sharing)
+
+For more information, see [TruLens-Explain Documentation](https://www.trulens.org/trulens_explain/quickstart/).
