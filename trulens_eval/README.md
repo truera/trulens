@@ -244,8 +244,19 @@ Toxicity is currently only available to be used with HuggingFace, and uses a cla
 
 The OpenAI Moderation API is made available for use as feedback functions. This includes hate, hate/threatening, self-harm, sexual, sexual/minors, violence, and violence/graphic. Each is negated (ex: not_hate) so that a 0 would indicate that the moderation rule is violated. These feedback functions return a score in the range 0 to 1.
 
-# Contributing new feedback functions
+# Adding new feedback functions
 
-Feedback functions are an extensible framework for evaluating LLMs. You can add your own feedback functions to evaluate the qualities required by your application using the process detailed below:
+Feedback functions are an extensible framework for evaluating LLMs. You can add your own feedback functions to evaluate the qualities required by your application by updating trulens_eval/tru_feedback.py. If your contributions would be useful for others, we encourage you to contribute to trulens!
 
+Feedback functions are organized by model provider into Provider classes.
 
+The process for adding new feedback functions is:
+1. Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class:
+
+```python
+class StandAlone(Provider):
+    def __init__(self):
+    pass
+```
+
+2. Add a new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both promopt (str) and resposne (str). It should return a float between 0 (worst) and 1 (best).
