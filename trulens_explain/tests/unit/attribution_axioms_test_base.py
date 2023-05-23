@@ -14,7 +14,6 @@ These axioms should hold on arbitrary networks.
 from functools import partial
 
 import numpy as np
-
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.nn.distributions import DoI

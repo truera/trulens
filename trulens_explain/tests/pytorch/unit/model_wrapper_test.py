@@ -6,12 +6,11 @@ from unittest import main
 from unittest import TestCase
 
 import numpy as np
+from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 from torch import Tensor
 from torch.nn import Linear
 from torch.nn import Module
 from torch.nn import ReLU
-
-from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 from trulens.nn.backend import get_backend
 from trulens.nn.models.pytorch import PytorchModelWrapper
 from trulens.nn.quantities import MaxClassQoI

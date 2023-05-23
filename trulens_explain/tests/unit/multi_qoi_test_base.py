@@ -2,7 +2,6 @@ from unittest import main
 from unittest import TestCase
 
 import numpy as np
-
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.backend import get_backend
 from trulens.nn.distributions import DoI

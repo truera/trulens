@@ -5,7 +5,6 @@ from typing import Optional, Tuple
 
 import numpy as np
 import torch
-
 from trulens.nn.backend import get_backend
 from trulens.nn.backend.pytorch_backend import pytorch
 from trulens.nn.backend.pytorch_backend.pytorch import memory_suggestions
@@ -224,8 +223,8 @@ class PytorchModelWrapper(ModelWrapper):
 
         elif isinstance(cut, LogitCut):
             return_output = many_of_om(
-                hooks['logits' if self._logit_layer is None else self.
-                      _logit_layer]
+                hooks['logits' if self._logit_layer is
+                      None else self._logit_layer]
             )
 
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
