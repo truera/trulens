@@ -143,7 +143,7 @@ tru.add_feedback(feedback_results)
 ## Automatic logging
 The above logging and feedback function evaluation steps can be done by TruChain.
 ```python
-truchain = TruChain(
+tc = tru_chain.TruChain(
     chain,
     chain_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match],
@@ -152,7 +152,7 @@ truchain = TruChain(
 # Note: providing `db: TruDB` causes the above constructor to log the wrapped chain in the database specified.
 # Note: any `feedbacks` specified here will be evaluated and logged whenever the chain is used.
 
-truchain("This will be automatically logged.")
+tc("This will be automatically logged.")
 ```
 
 ## Out-of-band Feedback evaluation
@@ -161,7 +161,7 @@ In the above example, the feedback function evaluation is done in the same proce
 
 For demonstration purposes, we start the evaluator here but it can be started in another process.
 ```python
-truchain: TruChain = TruChain(
+tc: tru_chain.TruChain = tru_chain.TruChain(
     chain,
     chain_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match],
@@ -170,7 +170,7 @@ truchain: TruChain = TruChain(
 )
 
 tru.start_evaluator()
-truchain("This will be logged by deferred evaluator.")
+tc("This will be logged by deferred evaluator.")
 tru.stop_evaluator()
 ```
 
