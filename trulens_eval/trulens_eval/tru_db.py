@@ -16,8 +16,11 @@ from tinydb.queries import QueryInstance as TinyQueryInstance
 mj = MerkleJson()
 NoneType = type(None)
 
-JSON_BASES = Union[str, int, float, NoneType]
-JSON = Union[JSON_BASES, List, Dict]
+JSON_BASES = (str, int, float, NoneType)
+JSON_BASES_T = Union[str, int, float, NoneType]
+#JSON = (List, Dict) + JSON_BASES
+#JSON_T = Union[JSON_BASES_T, List, Dict]
+JSON = Dict
 
 
 def is_empty(obj):
@@ -529,7 +532,10 @@ class LocalSQLite(TruDB):
     TABLE_FEEDBACK_DEFS = "feedback_defs"
     TABLE_CHAINS = "chains"
 
-    def __init__(self, filename: Optional[Path] = 'llm_quality.db'):
+    def __str__(self):
+        return f"SQLite({self.filename})"
+
+    def __init__(self, filename: Optional[Path] = 'default.sqlite'):
         self.filename = filename
         conn, c = self._connect()
 

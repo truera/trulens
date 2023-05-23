@@ -16,7 +16,7 @@ from ux.add_logo import add_logo
 from trulens_eval.tru_db import is_empty
 
 
-from trulens_eval import tru_db
+from trulens_eval import tru_db, Tru
 from trulens_eval.provider_apis import Endpoint
 
 from trulens_eval.tru_db import is_noserio
@@ -30,7 +30,8 @@ st.runtime.legacy_caching.clear_cache()
 
 add_logo()
 
-lms = tru_db.LocalSQLite()
+tru = Tru()
+lms = tru.db
 
 e_openai = Endpoint("openai")
 e_hugs = Endpoint("huggingface")

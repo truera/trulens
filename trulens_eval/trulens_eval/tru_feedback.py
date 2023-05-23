@@ -152,15 +152,17 @@ class Feedback():
             self._json['feedback_id'] = self._feedback_id
 
     @staticmethod
-    def start_evaluator(db: TruDB):
+    def start_evaluator(tru: 'Tru'):
+        db = tru.db
 
         def prepare_feedback(row):
             record_json = row.record_json
 
             feedback = Feedback.of_json(row.feedback_json)
-            feedback.run_and_log(record_json=record_json, db=db)
+            feedback.run_and_log(record_json=record_json, tru=tru)
 
         def runner():
+            print("Looking for things to do...")
             feedbacks = db.get_feedback()
 
             for i, row in feedbacks.iterrows():
@@ -178,7 +180,7 @@ class Feedback():
 
                 elif row.status in [-1]:
                     now = datetime.now().timestamp()
-                    if now - row.last_ts > 10:#60*60*24:
+                    if now - row.last_ts > 60*60*24:
                         tqdm.write(f"Failed row {i} last made progress over 24 hours ago. Retrying.")
                         TP().runlater(prepare_feedback, row)
                     else:
@@ -357,11 +359,13 @@ class Feedback():
                 '_error': str(e)
             }
 
-    def run_and_log(self, record_json: JSON, db: TruDB) -> None:
+    def run_and_log(self, record_json: JSON, tru: 'Tru') -> None:
         record_id = record_json['record_id']
         chain_id = record_json['chain_id']
         
         ts_now = datetime.now().timestamp()
+
+        db = tru.db
 
         try:
             db.insert_feedback(
@@ -370,6 +374,8 @@ class Feedback():
                 last_ts = ts_now,
                 status = 1 # in progress
             )
+
+            print(f"Feedback queued: {self.name} / {self.feedback_id} -> {db}")
 
             chain_json = db.get_chain(chain_id=chain_id)
             res = self.run_on_record(chain_json=chain_json, record_json=record_json)
@@ -395,6 +401,7 @@ class Feedback():
                 total_cost=-1.0, # todo
                 total_tokens=-1  # todo
             )
+            print(f"✅ Feedback {self.name} / {self.feedback_id} -> {db}")
         else:
             # TODO: indicate failure better
             db.insert_feedback(
@@ -406,6 +413,7 @@ class Feedback():
                 total_cost=-1.0, # todo
                 total_tokens=-1  # todo
             )
+            print(f"Feedback error {self.name} / {self.feedback_id} -> {db}")
 
     @property
     def name(self):
@@ -435,9 +443,9 @@ class Feedback():
 
             elif v == "prompt" or v == "input":
                 if len(chain_json['input_keys']) > 1:
-                    logging.warn(
-                        f"Chain has more than one input, guessing the first one is prompt."
-                    )
+                    #logging.warn(
+                    #    f"Chain has more than one input, guessing the first one is prompt."
+                    #)
                     pass
 
                 input_key = chain_json['input_keys'][0]
@@ -446,9 +454,9 @@ class Feedback():
 
             elif v == "response" or v == "output":
                 if len(chain_json['output_keys']) > 1:
-                    logging.warn(
-                        "Chain has more than one ouput, guessing the first one is response."
-                    )
+                    #logging.warn(
+                    #    "Chain has more than one ouput, guessing the first one is response."
+                    #)
                     pass
 
                 output_key = chain_json['output_keys'][0]

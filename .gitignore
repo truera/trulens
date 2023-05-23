@@ -34,3 +34,4 @@ imagenet_class_index.json.*
 
 */.env
 */*.db
+*/*.sqlite
