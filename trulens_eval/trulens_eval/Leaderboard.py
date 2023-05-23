@@ -40,13 +40,13 @@ def app():
     st.markdown("""---""")
 
     for chain in chains:
-        col0, col1, col2, col3, *feedback_cols, col99 = st.columns(
-            5 + len(feedback_col_names)
+        st.write(chain)
+        col1, col2, col3, *feedback_cols, col99 = st.columns(
+            4 + len(feedback_col_names)
         )
         chain_df = df.loc[df.chain_id == chain]
         #model_df_feedback = df.loc[df.chain_id == model]
 
-        col0.metric("Name", chain)
         col1.metric("Records", len(chain_df))
         col2.metric(
             "Cost",
