@@ -5,12 +5,11 @@ os.environ['TRULENS_BACKEND'] = 'pytorch'
 from unittest import main
 from unittest import TestCase
 
+from tests.unit.batch_test_base import BatchTestBase
 from torch import Tensor
 from torch.nn import Linear
 from torch.nn import Module
 from torch.nn import ReLU
-
-from tests.unit.batch_test_base import BatchTestBase
 from trulens.nn.backend import get_backend
 from trulens.nn.models import get_model_wrapper
 

@@ -6,7 +6,6 @@ from unittest import main
 from unittest import TestCase
 
 import tensorflow as tf
-
 from tests.unit.doi_test_base import DoiTestBase
 
 assert (not tf.executing_eagerly())
@@ -14,7 +13,6 @@ assert (not tf.executing_eagerly())
 from tensorflow.keras.layers import Input
 from tensorflow.keras.layers import Lambda
 from tensorflow.keras.models import Model
-
 from tests.unit.doi_test_base import DoiTestBase
 from trulens.nn.models.keras import KerasModelWrapper
 

@@ -1,0 +1,97 @@
+site_name: TruLens
+
+markdown_extensions:
+  # https://squidfunk.github.io/mkdocs-material/reference/mathjax/
+  - pymdownx.arithmatex:
+      generic: true
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+  - mdx_math:
+      enable_dollar_delimiter: True #for use of inline $..$
+
+
+plugins:
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          rendering:
+            show_root_heading: false
+            show_source: true
+          selection:
+            filters:
+              - "!^_"  # exlude all members starting with _
+              - "^__init__$"  # but always include __init__ modules and methods
+              - "^__call__$"  # and __call__ methods
+      watch:
+        - trulens_explain/trulens
+  - search
+
+
+theme:
+  name: material
+  custom_dir: docs/overrides/
+  palette:
+    scheme: trulens
+  #font:
+  #  text: Source Sans Pro
+  favicon: img/favicon.ico
+  logo: img/squid.png
+  features:
+    - navigation.sections
+
+nav:
+  - Home: index.md
+  - Welcome to TruLens!: welcome.md
+  - Eval:
+    - Installation: trulens_eval/install.md
+    - Quickstart: trulens_eval/quickstart.md
+    - API Reference: 
+      - Tru: trulens_eval/api/tru.md
+      - TruChain: trulens_eval/api/truchain.md
+      - Feedback Functions: trulens_eval/api/tru_feedback.md
+  - Explain:
+    - Installation: trulens_explain/install.md
+    - Quickstart: trulens_explain/quickstart.md
+    - Attributions for Different Use Cases: trulens_explain/attribution_parameterization.md
+    - API Reference: 
+      - Attribution: trulens_explain/api/attribution.md
+      - Models: trulens_explain/api/model_wrappers.md
+      - Slices: trulens_explain/api/slices.md
+      - Quantities: trulens_explain/api/quantities.md
+      - Distributions: trulens_explain/api/distributions.md
+      - Visualizations: trulens_explain/api/visualizations.md
+#  - Resources: 
+#    - NeurIPS Demo: https://truera.github.io/neurips-demo-2021/
+
+extra_css:
+  - stylesheets/extra.css
+  - stylesheets/cover.css
+
+# https://squidfunk.github.io/mkdocs-material/reference/mathjax/
+# Polyfill provides backcompat for JS. We need to import it before
+# importing MathJax.
+extra_javascript:
+  - javascript/config.js
+  - javascript/app.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - javascript/tex-mml-chtml-3.0.0.js
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML

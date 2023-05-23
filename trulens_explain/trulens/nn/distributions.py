@@ -11,7 +11,6 @@ from abc import abstractmethod
 from typing import Callable, Optional
 
 import numpy as np
-
 from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
 from trulens.utils.typing import accepts_model_inputs
