@@ -6,7 +6,6 @@ from unittest import main
 from unittest import TestCase
 
 import tensorflow as tf
-
 from tests.tf2.unit.model_wrapper_test import ModelWrapperTest
 
 assert (not tf.executing_eagerly())

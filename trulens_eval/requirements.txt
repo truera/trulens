@@ -1,0 +1,34 @@
+# common requirements
+python-dotenv
+langchain
+typing-inspect==0.8.0 # langchain with python < 3.9 fix
+typing_extensions==4.5.0 # langchain with python < 3.9 fix
+# slack bot and its indexing requirements:
+sentencepiece
+transformers
+pyllama
+tokenizers
+protobuf
+accelerate
+openai
+pinecone-client
+tiktoken
+slack_bolt
+requests
+beautifulsoup4
+unstructured
+pypdf
+pdfminer.six
+# TruChain requirements:
+tinydb
+pydantic
+merkle_json
+# app requirements:
+streamlit
+streamlit-aggrid
+streamlit-extras
+datasets
+cohere
+kaggle
+watchdog
+millify

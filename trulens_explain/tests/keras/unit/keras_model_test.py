@@ -13,7 +13,6 @@ from keras.layers import Dense
 from keras.layers import Input
 from keras.models import Model
 import numpy as np
-
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 from trulens.nn.models.keras import KerasModelWrapper
 
