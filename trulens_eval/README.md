@@ -82,7 +82,7 @@ Make the first call to your LLM Application. The instrumented chain can operate 
 
 ```python
 prompt_input = 'que hora es?'
-gpt3_response = tc(prompt_input)
+gpt3_response, record = tc.call_with_record(prompt_input)
 ```
 
 We can log the records but first we need to log the chain itself.
