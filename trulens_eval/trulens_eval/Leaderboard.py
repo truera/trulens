@@ -15,12 +15,6 @@ from trulens_eval.ux.add_logo import add_logo
 
 add_logo()
 
-#import model_store
-
-#@st.cache_resource
-#def get_model_store():
-#    return model_store.ModelDataStore()
-
 lms = tru_db.LocalSQLite()
 
 
