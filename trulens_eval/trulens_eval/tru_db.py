@@ -606,7 +606,7 @@ class LocalSQLite(TruDB):
             )
         )
         self._close(conn)
-        return record_id  # record_id
+        return record_id
 
     # TruDB requirement
     def insert_chain(
