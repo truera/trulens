@@ -15,6 +15,7 @@ setup(
         'kaggle>=1.5.13',
         'langchain>=0.0.170',
         'merkle-json>=1.0.0',
+        'millify>=0.1.1',
         'openai>=0.27.6',
         'pinecone-client>=2.2.1',
         'pydantic>=1.10.7',

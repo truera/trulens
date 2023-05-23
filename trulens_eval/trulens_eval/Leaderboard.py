@@ -1,5 +1,6 @@
 import math
 
+import millify
 import numpy as np
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
@@ -14,13 +15,6 @@ from trulens_eval.ux.add_logo import add_logo
 
 add_logo()
 
-#import model_store
-
-#@st.cache_resource
-#def get_model_store():
-#    return model_store.ModelDataStore()
-
-# lms = tru_db.LocalSQLite()
 tru = Tru()
 lms = tru.db
 
@@ -28,6 +22,9 @@ lms = tru.db
 def app():
     # Set the title and subtitle of the app
     st.title('Chain Leaderboard')
+    st.write(
+        'Average feedback values displayed in the range from 0 (worst) to 1 (best).'
+    )
     df, feedback_col_names = lms.get_records_and_feedback([])
 
     if df.empty:
@@ -53,14 +50,16 @@ def app():
         col1.metric("Records", len(chain_df))
         col2.metric(
             "Cost",
-            round(
-                sum(cost for cost in chain_df.total_cost if cost is not None), 5
-            )
+            f"${millify(round(sum(cost for cost in chain_df.total_cost if cost is not None), 5), precision = 2)}"
         )
         col3.metric(
             "Tokens",
-            sum(
-                tokens for tokens in chain_df.total_tokens if tokens is not None
+            millify(
+                sum(
+                    tokens for tokens in chain_df.total_tokens
+                    if tokens is not None
+                ),
+                precision=2
             )
         )
 
@@ -71,38 +70,15 @@ def app():
                 if math.isnan(mean):
                     pass
 
-                elif mean < 0.5:
-                    feedback_cols[i].metric(
-                        col_name,
-                        round(mean, 2),
-                        delta="Fail",
-                        delta_color="inverse"
-                    )
                 else:
-                    feedback_cols[i].metric(
-                        col_name,
-                        round(mean, 2),
-                        delta="Pass",
-                        delta_color="normal"
-                    )
+                    feedback_cols[i].metric(col_name, round(mean, 2))
+
             else:
                 if math.isnan(mean):
                     pass
 
-                elif mean < 0.5:
-                    feedback_cols[i].metric(
-                        col_name,
-                        round(mean, 2),
-                        delta="Fail",
-                        delta_color="inverse"
-                    )
                 else:
-                    feedback_cols[i].metric(
-                        col_name,
-                        round(mean, 2),
-                        delta="Pass",
-                        delta_color="normal"
-                    )
+                    feedback_cols[i].metric(col_name, round(mean, 2))
 
         with col99:
             if st.button('Select Chain', key=f"model-selector-{chain}"):
