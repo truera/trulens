@@ -65,7 +65,7 @@ nav:
     - Installation: trulens_eval/install.md
     - Quickstart: trulens_eval/quickstart.md
     - API Reference: 
-      - Workspace: trulens_eval/api/tru.md
+      - Tru: trulens_eval/api/tru.md
       - TruChain: trulens_eval/api/truchain.md
       - Feedback Functions: trulens_eval/api/tru_feedback.md
   - Explain:
