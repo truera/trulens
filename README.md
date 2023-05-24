@@ -94,7 +94,7 @@ For more information, see [TruLens-Eval Documentation](https://www.trulens.org/t
 
 **TruLens-Explain** is a cross-framework library for deep learning explainability. It provides a uniform abstraction over a number of different frameworks. It provides a uniform abstraction layer over TensorFlow, Pytorch, and Keras and allows input and internal explanations.
 
-## Getting going with TruLens-Explain
+### Get going with TruLens-Explain
 
 These installation instructions assume that you have conda installed and added to your path.
 
