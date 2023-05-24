@@ -17,6 +17,15 @@
     &--contact {
         text-align: center;
     }
+
+    img {
+        max-width:100%;
+        box-shadow: 0px 0px 30px 10px rgba(45, 115, 109, 0.1);
+    }
+
+    p + img {
+        margin-top:1rem;
+    }
 }
 
 header {
@@ -32,7 +41,11 @@ header {
     }
     
     @include res-max-tablet {
-        padding: 5rem 1.25rem;
+        padding: 3rem 1.25rem;
+
+        h1 {
+            margin-top:0px;
+        }
     }
 }
 
@@ -60,6 +73,28 @@ header {
                 height: auto;
             }
         }
+        &.llm {
+            left:0px;
+            top:auto;
+            bottom:0px;
+            right:0px;
+            transform:none;
+            display: flex;
+            align-items: end;
+            svg {
+                width:100%;
+                height:auto;
+            }
+
+            @include res-max-tablet {
+                left: -150px;
+                right:-50px;
+            }
+
+        }
+    }
+    img {
+        max-width:calc(100% + 20px);
     }
 }
 
@@ -106,3 +141,15 @@ header {
         }
     }
 } 
+
+.home {
+    header {
+        h1 {
+
+        }
+        p {
+            color:$white;
+            max-width:600px;
+        }
+    }
+}
