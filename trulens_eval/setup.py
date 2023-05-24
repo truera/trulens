@@ -2,7 +2,7 @@ from setuptools import find_namespace_packages
 from setuptools import setup
 
 setup(
-    name="trulens_eval_test",
+    name="trulens_eval",
     include_package_data=True,
     packages=find_namespace_packages(
         include=["trulens_eval", "trulens_eval.*"]
