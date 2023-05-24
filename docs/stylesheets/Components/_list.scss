@@ -1,29 +1,20 @@
-.custom-list {
-    li {
-        position: relative;
-        padding-left: 2.125rem;
-        margin-bottom: var(--gap-md);
+.custom-list li {
+    position: relative;
+    padding-left: 2.125rem;
+    margin-bottom: var(--gap-lg);
 
-        &::before {
-            content: '';
-            position: absolute;
-            top: 10px;
-            left: 2px;
-            width: 12px;    
-            height: 12px;
-            border-radius:2px;
-            background-color: $d-teal;
+    &::before {
+        content: '';
+        position: absolute;
+        top: 10px;
+        left: 0;
+        width: 12px;    
+        height: 12px;
+        background-color: #034A61;
 
-            @include res-max-tablet {
-                top: 5px;
-            }
-            
+        @include res-max-tablet {
+            top: 5px;
         }
-    }
-
-    &.col-2 {
-        columns: 2;
-        -webkit-columns: 2;
-        -moz-columns: 2;
+        
     }
 }
