@@ -137,6 +137,15 @@ $hamburger-size: calc(var(--gap-lg) * 2 + #{$hamburger-item-width});
         display: flex;
         flex-direction: row;
         justify-content: center;
+        align-items:center;
+
+        a {
+            transition:color .3s ease-in-out;
+            &:hover {
+                text-decoration: none;
+                color:$teal;
+            }
+        }
 
         @include res-max-tablet {
             flex-direction: column;
@@ -152,9 +161,30 @@ $hamburger-size: calc(var(--gap-lg) * 2 + #{$hamburger-item-width});
             transform: translate(-150%, 0);
             transition: transform 0.5s cubic-bezier(0.77,0.2,0.05,1.0);
 
+            a {
+                width:100%;
+            }
+
             .header__btn {
                 margin-left: 1.25rem;
                 margin-right: auto;
+                width:calc(100% - 2.5rem);
+                padding-right:2rem;
+                margin-bottom:5rem;
+            }
+        }
+
+        @include res-min-tablet {
+
+            .header__btn {
+                margin-left: 1.5rem;
+                padding:0.5rem 1.25rem;
+
+                &--text {
+                    border-left:none;
+                    margin-left:0px;
+                    padding-left:0px;
+                }
             }
         }
     
