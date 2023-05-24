@@ -15,7 +15,7 @@ body {
     }
 }
 
-h1, h2, h3, h4 {
+h1, h2, h3, h4, h5 {
     margin-top: 0;
     color: var(--color-primary);
     font-family: $font-family-headers;
@@ -59,6 +59,16 @@ h4 {
     
     @include res-max-tablet {
         font-size: 1.5rem;
+    }
+}
+
+h5 {
+    font-size: 1.375rem;
+    line-height: 120%;
+    margin-bottom: 1.5rem;
+    
+    @include res-max-tablet {
+        font-size: 1.175rem;
     }
 }
 
