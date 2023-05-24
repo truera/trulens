@@ -21,6 +21,9 @@
         border-top: 1px solid rgba(3, 74, 97, 0.25);
         padding: 5rem 0;
 
+        .container__wrapper {
+            padding-bottom:0px;
+        }
         
         @include res-max-mobile {
             padding: 2.5rem 0;
