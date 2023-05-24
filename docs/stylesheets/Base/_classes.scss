@@ -53,6 +53,7 @@ $sizes: (
   "md": var(--gap-md),  
   "lg": var(--gap-lg),  
   "xl": var(--gap-xl),  
+  "xll": var(--gap-xll),
   "xxl": var(--gap-xxl)  
 );
 
@@ -62,6 +63,7 @@ $text-sizes: (
   "md": var(--text-md),  
   "lg": var(--text-lg),  
   "xl": var(--text-xl),  
+  "xll": var(--gap-xll),
   "xxl": var(--text-xxl),  
   "h1": var(--text-h1),  
   "h2": var(--text-h2),  
@@ -102,20 +104,28 @@ $color-types: (
         &-3 {
             display: flex;
             flex-wrap: wrap;
-            gap: 1.875rem;
+            gap: 3rem;
 
             > * {
                 flex: 1 1 20rem;
+            }
+
+            @include res-max-tablet {
+                gap: 0.5rem;
             }
         }
         
         &-2 {
             display: flex;
             flex-wrap: wrap;
-            gap: 1.875rem;
+            gap: 3rem;
 
             > * {
                 flex: 1 1 30rem;
+            }
+
+            @include res-max-tablet {
+                gap: 0.5rem;
             }
         }
     }
@@ -190,11 +200,18 @@ $color-types: (
 
     @include res-max-tablet {
         .m {
-            &t-xxl {
+            &t-xxl, &t-xxl-mob {
                 margin-top: 2.5rem;
             }
             
-            &b-xxl {
+            &b-xxl, &b-xxl-mob {
+                margin-bottom: 2.5rem;
+            }
+            &t-xll, &t-xll-mob {
+                margin-top: 2.5rem;
+            }
+            
+            &b-xll, &b-xll-mob {
                 margin-bottom: 2.5rem;
             }
         }
