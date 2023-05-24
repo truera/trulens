@@ -9,7 +9,7 @@ from multiprocessing.pool import AsyncResult
 from multiprocessing.pool import ThreadPool
 from queue import Queue
 from time import sleep
-from typing import Callable, Dict, Hashable, List, Optional, TypeVar
+from typing import Callable, Dict, Hashable, List, Optional, Sequence, TypeVar
 
 from multiprocessing.context import TimeoutError
 
@@ -21,6 +21,15 @@ T = TypeVar("T")
 UNICODE_CHECK = "✅"
 UNCIODE_YIELD = "⚡"
 
+
+def first(seq: Sequence[T]) -> T:
+    return seq[0]
+
+def second(seq: Sequence[T]) -> T:
+    return seq[1]
+
+def third(seq: Sequence[T]) -> T:
+    return seq[2]
 
 class SingletonPerName():
     """
@@ -61,12 +70,6 @@ class TP(SingletonPerName):  # "thread processing"
         self.running = 0
         self.promises = Queue(maxsize=1024)
 
-    def _started(self, *args, **kwargs):
-        self.running += 1
-
-    def _finished(self, *args, **kwargs):
-        self.running -= 1
-
     def runrepeatedly(self, func: Callable, rpm: float = 6, *args, **kwargs):
         def runner():
             while True:
@@ -76,15 +79,12 @@ class TP(SingletonPerName):  # "thread processing"
         self.runlater(runner)
 
     def runlater(self, func: Callable, *args, **kwargs) -> None:
-        self._started()
-
-        prom = self.thread_pool.apply_async(func, callback=self._finished, args=args, kwds=kwargs)
+        prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
         self.promises.put(prom)
 
     def promise(self, func: Callable[..., T], *args,
                 **kwargs) -> AsyncResult:
-        self._started()
-        prom = self.thread_pool.apply_async(func, callback=self._finished, args=args, kwds=kwargs)
+        prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
         self.promises.put(prom)
 
         return prom
@@ -113,7 +113,7 @@ class TP(SingletonPerName):  # "thread processing"
 
         return len(timeouts)
 
-    def status(self) -> List[str]:
+    def _status(self) -> List[str]:
         rows = []
 
         for p in self.thread_pool._pool:
