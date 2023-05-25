@@ -1,7 +1,7 @@
 import logging
 import os
 from pprint import PrettyPrinter
-from typing import Dict, Set, Tuple
+from typing import Callable, Dict, List, Set, Tuple
 
 import numpy as np
 
@@ -9,9 +9,7 @@ import numpy as np
 # relevant classes are loaded.
 from trulens_eval.keys import *
 
-# This is here so that import organizer does not move the keys import below this
-# line.
-_ = None
+"This is here so that import organizer does not move the keys import below this"
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
