@@ -34,8 +34,7 @@ if df_results.empty:
 
 else:
     chains = list(df_results.chain_id.unique())
-
-    if 'Chains' in st.session_state:
+    if 'chain' in st.session_state:
         chain = st.session_state.chain
     else:
         chain = chains
