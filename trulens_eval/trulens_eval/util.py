@@ -9,9 +9,10 @@ from multiprocessing.pool import AsyncResult
 from multiprocessing.pool import ThreadPool
 from queue import Queue
 from time import sleep
-from typing import Callable, Dict, Hashable, List, Optional, Sequence, TypeVar
+from typing import Any, Callable, Dict, Hashable, List, Optional, Sequence, TypeVar, Union
 
 from multiprocessing.context import TimeoutError
+from dataclasses import dataclass
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -30,6 +31,42 @@ def second(seq: Sequence[T]) -> T:
 
 def third(seq: Sequence[T]) -> T:
     return seq[2]
+
+
+class JLens(object):
+    # TODO(piotrm): more appropriate version of tinydb.Query
+
+    class Step():
+        pass
+
+    @dataclass
+    class GetAttribute(Step):
+        attribute: str
+    
+    @dataclass
+    class GetItem(Step):
+        item: Union[str, int]
+
+    class Aggregate(Step):
+        pass
+
+    def __init__(self):
+        self._path = []
+
+    def __call__(self, json: Dict) -> Union[Any, Sequence[Any], Dict[Any, Any]]:
+        pass
+
+    def _agg(self, aggregator: Callable) -> Any:
+        pass
+
+    def __getitem__(self, index: int) -> 'JLens':
+        pass
+
+    def __getattribute__(self, name: str) -> 'JLens':
+        pass
+
+
+
 
 class SingletonPerName():
     """
