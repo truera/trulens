@@ -972,5 +972,6 @@ class LocalSQLite(TruDB):
         assert "record_id" in df_records.columns
 
         combined_df = df_records.merge(df_results, on=['record_id'])
+        combined_df = combined_df.drop(columns=set(["_success", "_error"]).intersection(set(combined_df.columns)))
 
         return combined_df, result_cols
