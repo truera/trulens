@@ -12,7 +12,7 @@ import pandas as pd
 import pydantic
 from tinydb import Query as TinyQuery
 from tinydb.queries import QueryInstance as TinyQueryInstance
-from trulens_eval.util import UNCIODE_YIELD, UNICODE_CHECK
+from trulens_eval.util import UNCIODE_YIELD, UNICODE_CHECK, JSONPath
 
 mj = MerkleJson()
 NoneType = type(None)
@@ -22,6 +22,42 @@ JSON_BASES_T = Union[str, int, float, NoneType]
 # JSON = (List, Dict) + JSON_BASES
 # JSON_T = Union[JSON_BASES_T, List, Dict]
 JSON = Dict
+
+class RecordCost(pydantic.BaseModel):
+    n_tokens: Optional[int]
+    cost: Optional[float]
+
+class RecordChainCall(pydantic.BaseModel):
+    stack: Sequence[JSONPath]
+
+    args: Dict
+    rets: Dict
+
+class Record(pydantic.BaseModel):
+    record_id: str
+    chain_id: str
+
+    cost: RecordCost
+
+    chain: JSON # not the actual chain, but rather json structure that mirrors the chain structure
+
+class Chain(pydantic.BaseModel):
+    chain_id: str
+
+    tags: str
+    chain: JSON # langchain structure
+
+class FeedbackResult(pydantic.BaseModel):
+    record_id: str
+    chain_id: str
+
+    feedback_id: Optional[str] 
+
+class FeedbackDef(pydantic.BaseModel):
+    feedback_id: str
+    selectors: Dict[str, JSONPath]
+    imp: Callable
+
 
 def is_empty(obj):
     try:
