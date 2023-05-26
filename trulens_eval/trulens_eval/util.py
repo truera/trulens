@@ -9,9 +9,10 @@ from multiprocessing.pool import AsyncResult
 from multiprocessing.pool import ThreadPool
 from queue import Queue
 from time import sleep
-from typing import Callable, Dict, Hashable, List, Optional, TypeVar
+from typing import Any, Callable, Dict, Hashable, List, Optional, Sequence, TypeVar, Union
 
 from multiprocessing.context import TimeoutError
+from dataclasses import dataclass
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -20,6 +21,51 @@ T = TypeVar("T")
 
 UNICODE_CHECK = "✅"
 UNCIODE_YIELD = "⚡"
+
+
+def first(seq: Sequence[T]) -> T:
+    return seq[0]
+
+def second(seq: Sequence[T]) -> T:
+    return seq[1]
+
+def third(seq: Sequence[T]) -> T:
+    return seq[2]
+
+
+class JLens(object):
+    # TODO(piotrm): more appropriate version of tinydb.Query
+
+    class Step():
+        pass
+
+    @dataclass
+    class GetAttribute(Step):
+        attribute: str
+    
+    @dataclass
+    class GetItem(Step):
+        item: Union[str, int]
+
+    class Aggregate(Step):
+        pass
+
+    def __init__(self):
+        self._path = []
+
+    def __call__(self, json: Dict) -> Union[Any, Sequence[Any], Dict[Any, Any]]:
+        pass
+
+    def _agg(self, aggregator: Callable) -> Any:
+        pass
+
+    def __getitem__(self, index: int) -> 'JLens':
+        pass
+
+    def __getattribute__(self, name: str) -> 'JLens':
+        pass
+
+
 
 
 class SingletonPerName():
@@ -61,12 +107,6 @@ class TP(SingletonPerName):  # "thread processing"
         self.running = 0
         self.promises = Queue(maxsize=1024)
 
-    def _started(self, *args, **kwargs):
-        self.running += 1
-
-    def _finished(self, *args, **kwargs):
-        self.running -= 1
-
     def runrepeatedly(self, func: Callable, rpm: float = 6, *args, **kwargs):
         def runner():
             while True:
@@ -76,15 +116,12 @@ class TP(SingletonPerName):  # "thread processing"
         self.runlater(runner)
 
     def runlater(self, func: Callable, *args, **kwargs) -> None:
-        self._started()
-
-        prom = self.thread_pool.apply_async(func, callback=self._finished, args=args, kwds=kwargs)
+        prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
         self.promises.put(prom)
 
     def promise(self, func: Callable[..., T], *args,
                 **kwargs) -> AsyncResult:
-        self._started()
-        prom = self.thread_pool.apply_async(func, callback=self._finished, args=args, kwds=kwargs)
+        prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
         self.promises.put(prom)
 
         return prom
@@ -113,7 +150,7 @@ class TP(SingletonPerName):  # "thread processing"
 
         return len(timeouts)
 
-    def status(self) -> List[str]:
+    def _status(self) -> List[str]:
         rows = []
 
         for p in self.thread_pool._pool:

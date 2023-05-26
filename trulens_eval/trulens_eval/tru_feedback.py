@@ -270,7 +270,7 @@ class Feedback():
             for aval in multi:
 
                 if each_query is not None:
-                    aval = TruDB.project(query=each_query, obj=aval)
+                    aval = TruDB.project(query=each_query, record_json=aval, chain_json=None)
 
                 kwargs[multiarg] = aval
 
