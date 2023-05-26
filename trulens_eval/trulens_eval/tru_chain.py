@@ -74,6 +74,7 @@ from datetime import datetime
 from inspect import BoundArguments
 from inspect import signature
 from inspect import stack
+import inspect
 import logging
 import os
 import threading as th
@@ -203,7 +204,6 @@ class TruChain(Chain):
             if feedback_mode is not None:
                 logging.warn(
                     f"`feedback_mode` is {feedback_mode} but `tru` was not specified. Reverting to None."
-
                 )
                 self.feedback_mode = None
                 feedback_mode = None
@@ -304,7 +304,7 @@ class TruChain(Chain):
 
         if error is not None:
 
-            if self.feedback_mode == "withchain":            
+            if self.feedback_mode == "withchain":
                 self._handle_error(record_json=ret_record, error=error)
 
             elif self.feedback_mode in ["deferred", "withchainthread"]:
@@ -364,7 +364,7 @@ class TruChain(Chain):
                 self.db.insert_feedback(record_id, feedback_id)
 
         elif self.feedback_mode in ["withchain", "withchainthread"]:
-            
+
             results = self.tru.run_feedback_functions(
                 record_json=record_json,
                 feedback_functions=self.feedbacks,
@@ -411,13 +411,12 @@ class TruChain(Chain):
         non-serialization situations.
         """
 
-        if obj.memory is not None:
-
-            # logging.warn(
-            #     f"Will not be able to serialize object of type {cls} because it has memory."
-            # )
-
-            pass
+        if hasattr(obj, "memory"):
+            if obj.memory is not None:
+                # logging.warn(
+                #     f"Will not be able to serialize object of type {cls} because it has memory."
+                # )
+                pass
 
         def safe_dict(s, json: bool = True, **kwargs: Any) -> Dict:
             """
@@ -429,8 +428,13 @@ class TruChain(Chain):
             # continue anyway
             # raise ValueError("Saving of memory is not yet supported.")
 
-            _dict = super(cls, s).dict(**kwargs)
-            _dict["_type"] = s._chain_type
+            sup = super(cls, s)
+            if hasattr(sup, "dict"):
+                _dict = super(cls, s).dict(**kwargs)
+            else:
+                _dict = {"_base_type": cls.__name__}
+            # _dict = cls.dict(s, **kwargs)
+            # _dict["_type"] = s._chain_type
 
             # TODO: json
 
@@ -467,10 +471,16 @@ class TruChain(Chain):
 
         return new_prop
 
-    def _instrument_call(self, query: Query, func: Callable):
+    def _instrument_tracked_method(
+        self, query: Query, func: Callable, method_name: str, class_name: str,
+        module_name: str
+    ):
         """
-        Instrument a Chain.__call__ method to capture its inputs/outputs/errors.
+        Instrument a method to capture its inputs/outputs/errors.
         """
+
+        if self.verbose:
+            print(f"instrumenting {method_name}={func} in {query._path}")
 
         if hasattr(func, "_instrumented"):
             if self.verbose:
@@ -514,8 +524,14 @@ class TruChain(Chain):
 
             chain_stack = self._get_local_in_call_stack(
                 key="chain_stack", func=wrapper, offset=1
-            ) or []
-            chain_stack = chain_stack + [query._path]
+            ) or ()
+            frame_ident = dict(
+                path=tuple(query._path),
+                method_name=method_name,
+                class_name=class_name,
+                module_name=module_name,
+            )
+            chain_stack = chain_stack + (frame_ident, )
 
             try:
                 # Using sig bind here so we can produce a list of key-value
@@ -534,6 +550,7 @@ class TruChain(Chain):
                 for k, v in bindings.arguments.items()
                 if k != "self"
             }
+
             row_args = dict(
                 args=nonself,
                 start_time=str(start_time),
@@ -576,33 +593,49 @@ class TruChain(Chain):
         return wrapper
 
     def _instrument_object(self, obj, query: Query):
-        if self.verbose:
-            print(f"instrumenting {query._path} {obj.__class__.__name__}")
 
-        cls = obj.__class__
+        # cls = inspect.getattr_static(obj, "__class__").__get__()
+        cls = type(obj)
+
+        if self.verbose:
+            pass
+            #print(
+            #    f"instrumenting {query._path} {cls.__name__}, bases={cls.__bases__}"
+            #)
 
         # NOTE: We cannot instrument chain directly and have to instead
         # instrument its class. The pydantic BaseModel does not allow instance
         # attributes that are not fields:
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
-        for base in cls.mro():
+
+        methods_to_instrument = {"_call", "get_relevant_documents"}
+
+        for base in [cls] + cls.mro():
             # All of mro() may need instrumentation here if some subchains call
             # superchains, and we want to capture the intermediate steps.
 
-            if not base.__module__.startswith("langchain."):
+            if not base.__module__.startswith(
+                    "langchain.") and not base.__module__.startswith("trulens"):
                 continue
 
-            if hasattr(base, "_call"):
-                original_fun = getattr(base, "_call")
+            for method_name in methods_to_instrument:
+                if hasattr(base, method_name):
+                    original_fun = getattr(base, method_name)
 
-                if self.verbose:
-                    print(f"instrumenting {base}._call")
+                    if self.verbose:
+                        print(f"instrumenting {base}.{method_name}")
 
-                setattr(
-                    base, "_call",
-                    self._instrument_call(query=query, func=original_fun)
-                )
+                    setattr(
+                        base, method_name,
+                        self._instrument_tracked_method(
+                            query=query,
+                            func=original_fun,
+                            method_name=method_name,
+                            class_name=base.__name__,
+                            module_name=base.__module__
+                        )
+                    )
 
             if hasattr(base, "_chain_type"):
                 if self.verbose:
@@ -624,7 +657,7 @@ class TruChain(Chain):
                     self._instrument_type_method(obj=obj, prop=prop)
                 )
 
-            if isinstance(obj, Chain):
+            if hasattr(base, "dict"):
                 if self.verbose:
                     print(f"instrumenting {base}.dict")
 
@@ -641,7 +674,8 @@ class TruChain(Chain):
                 if isinstance(v, str):
                     pass
 
-                elif v.__class__.__module__.startswith("langchain."):
+                elif type(v).__module__.startswith("langchain.") or type(
+                        v).__module__.startswith("trulens"):
                     self._instrument_object(obj=v, query=query[k])
 
                 elif isinstance(v, Sequence):
@@ -652,5 +686,5 @@ class TruChain(Chain):
                 # TODO: check if we want to instrument anything not accessible through __fields__ .
         else:
             logging.debug(
-                f"Do not know how to instrument object {str(obj)[:32]} of type {type(obj)}."
+                f"Do not know how to instrument object {str(obj)[:32]} of type {cls}."
             )
