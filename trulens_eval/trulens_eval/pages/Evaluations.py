@@ -86,8 +86,12 @@ else:
         """
         )
 
-        gb.configure_column('record_id', header_name='Record ID')
+        gb.configure_column('record_json', header_name='Record JSON', hide=True)
+        gb.configure_column('chain_json', header_name='Chain JSON', hide=True)
+
+        gb.configure_column('record_id', header_name='Record ID', hide=True)
         gb.configure_column('chain_id', header_name='Chain ID')
+        gb.configure_column('feedback_id', header_name='Feedback ID', hide=True)
         gb.configure_column('input', header_name='User Input')
         gb.configure_column(
             'output',
