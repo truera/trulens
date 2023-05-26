@@ -21,6 +21,6 @@ def render_calls(record_json: JSON):
             #     st.write(render_call_frame(frame))
 
                 st.subheader(f"Inputs:")
-                st.write(args)
+                st.json(args)
                 st.subheader(f"Outputs:")
-                st.write(rets)
+                st.json(rets)
