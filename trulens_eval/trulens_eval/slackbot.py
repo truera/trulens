@@ -9,10 +9,7 @@ import numpy as np
 # relevant classes are loaded.
 from trulens_eval.keys import *
 
-
-# This is here so that import organizer does not move the keys import below this
-# line.
-_ = None
+"This is here so that import organizer does not move the keys import below this"
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -33,6 +30,7 @@ from trulens_eval.tru_db import LocalSQLite
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.util import TP
+from trulens_eval.utils.langchain import WithFilterDocuments
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
@@ -92,34 +90,6 @@ f_qs_relevance = Feedback(openai.qs_relevance).on(
 ).on_multiple(
     multiarg="statement", each_query=Record.page_content, agg=np.min
 )
-
-class WithFilterDocuments(VectorStoreRetriever):
-    filter_func: Callable = Field(exclude=True)
-
-    def __init__(self, filter_func: Callable, *args, **kwargs):
-        super().__init__(filter_func=filter_func, *args, **kwargs)
-        # self.filter_func = filter_func
-
-    def get_relevant_documents(self, query: str) -> List[Document]:
-        docs = super().get_relevant_documents(query)
-
-        promises = []
-        for doc in docs:
-            promises.append(
-                (doc, TP().promise(self.filter_func, query=query, doc=doc))
-            )
-
-        results = []
-        for doc, promise in promises:
-            results.append((doc, promise.get()))
-
-        docs_filtered = map(lambda sr: sr[0], filter(lambda sr: sr[1], results))
-
-        return list(docs_filtered)
-
-    @staticmethod
-    def of_vectorstoreretriever(retriever, filter_func: Callable):
-        return WithFilterDocuments(filter_func=filter_func, **retriever.dict())
 
 def filter_by_relevance(query, doc):
     return openai.qs_relevance(question=query, statement=doc.page_content) > 0.5

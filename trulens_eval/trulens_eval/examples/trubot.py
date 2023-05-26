@@ -8,11 +8,7 @@ import numpy as np
 # This needs to be before some others to make sure api keys are ready before
 # relevant classes are loaded.
 from trulens_eval.keys import *
-
-
-# This is here so that import organizer does not move the keys import below this
-# line.
-_ = None
+"This is here so that import organizer does not move the keys import below this line."
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -33,6 +29,7 @@ from trulens_eval.tru_db import LocalSQLite
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.util import TP
+from trulens_eval.utils.langchain import WithFilterDocuments
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
@@ -58,7 +55,7 @@ convos: Dict[str, TruChain] = dict()
 handled_ts: Set[Tuple[str, str]] = set()
 
 # DB to save models and records.
-tru = Tru()#LocalSQLite("trubot.sqlite"))
+tru = Tru()
 
 ident = lambda h: h
 
@@ -93,41 +90,16 @@ f_qs_relevance = Feedback(openai.qs_relevance).on(
     multiarg="statement", each_query=Record.page_content, agg=np.min
 )
 
-class WithFilterDocuments(VectorStoreRetriever):
-    filter_func: Callable = Field(exclude=True)
-
-    def __init__(self, filter_func: Callable, *args, **kwargs):
-        super().__init__(filter_func=filter_func, *args, **kwargs)
-        # self.filter_func = filter_func
-
-    def get_relevant_documents(self, query: str) -> List[Document]:
-        docs = super().get_relevant_documents(query)
-
-        promises = []
-        for doc in docs:
-            promises.append(
-                (doc, TP().promise(self.filter_func, query=query, doc=doc))
-            )
-
-        results = []
-        for doc, promise in promises:
-            results.append((doc, promise.get()))
-
-        docs_filtered = map(lambda sr: sr[0], filter(lambda sr: sr[1], results))
-
-        return list(docs_filtered)
-
-    @staticmethod
-    def of_vectorstoreretriever(retriever, filter_func: Callable):
-        return WithFilterDocuments(filter_func=filter_func, **retriever.dict())
 
 def filter_by_relevance(query, doc):
     return openai.qs_relevance(question=query, statement=doc.page_content) > 0.5
 
+
 def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     """
     Create a new chain for the given conversation id `cid` or return an existing
-    one. Return the new or existing chain.
+    one. Return the new or existing chain. `selector` determines which chain
+    variant to return.
     """
 
     # NOTE(piotrm): Unsure about the thread safety of the various components so
@@ -152,7 +124,7 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     retriever = docsearch.as_retriever()
 
     if "filtered" in chain_id:
-        retriever = WithFilterDocuments.of_vectorstoreretriever(
+        retriever = WithFilterDocuments.of_retriever(
             retriever=retriever, filter_func=filter_by_relevance
         )
 
@@ -233,10 +205,6 @@ def get_answer(chain: TruChain, question: str) -> Tuple[str, str]:
     Use the given `chain` to respond to `question`. Return the answer text and
     sources elaboration text.
     """
-
-    # Pace our API usage. This is not perfect since the chain makes multiple api calls
-    # internally.
-    openai.endpoint.pace_me()
 
     outs = chain(dict(question=question))
 
