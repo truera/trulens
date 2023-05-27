@@ -46,6 +46,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, U
 import numpy as np
 import openai
 import requests
+import pydantic
 from tqdm.auto import tqdm
 
 from trulens_eval import feedback_prompts
@@ -54,7 +55,7 @@ from trulens_eval.provider_apis import Endpoint
 from trulens_eval.tru_db import JSON, Query, obj_id_of_obj, query_of_path
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_db import TruDB
-from trulens_eval.util import TP
+from trulens_eval.util import TP, JSONPath
 
 # openai
 
@@ -78,7 +79,7 @@ from trulens_eval.util import TP
 # - Option 1 : input, output -> real
 # - Option 2: dict (input, output, other) -> real
 
-Selection = Union[Query, str]
+Selection = Union[JSONPath, str]
 # "prompt" or "input" mean overall chain input text
 # "response" or "output"mean overall chain output text
 # Otherwise a Query is a path into a record structure.
@@ -95,7 +96,30 @@ def check_provider(cls_or_name: Union[Type, str]) -> None:
     assert cls_name in PROVIDER_CLASS_NAMES, f"Unsupported provider class {cls_name}"
 
 
-class Feedback():
+class FeedbackResult(pydantic.BaseModel):
+    record_id: str
+    chain_id: str
+    feedback_id: Optional[str]
+
+    results_json: JSON
+
+
+class Feedback(pydantic.BaseModel):
+    # Implementation, not serializable.
+    imp: Optional[Callable] = pydantic.Field(exclude=True)
+
+    # Implementation serialization info.
+    imp_json: Optional[JSON] = pydantic.Field(exclude=True)
+
+    # Id, if not given, unique determined from _json below.
+    feedback_id: Optional[str] = None
+
+    # Selectors, pointers into Records of where to get
+    # arguments for `imp`.
+    selectors: Optional[Dict[str, Selection]] = None
+
+    # JSON version of this object.
+    feedback_json: Optional[JSON] = pydantic.Field(exclude=True)
 
     def __init__(
         self,
@@ -113,6 +137,8 @@ class Feedback():
           argument names to where to get them from a record.
         """
 
+        super().__init__()
+
         # Verify that `imp` expects the arguments specified in `selectors`:
         if imp is not None and selectors is not None:
             sig: Signature = signature(imp)
@@ -126,20 +152,25 @@ class Feedback():
         self.selectors = selectors
 
         if feedback_id is not None:
-            self._feedback_id = feedback_id
+            self.feedback_id = feedback_id
 
         if imp is not None and selectors is not None:
             # These are for serialization to/from json and for db storage.
 
+            impj = dict()
+
             assert hasattr(
                 imp, "__self__"
-            ), "Feedback implementation is not a method (it may be a function)."
-            self.provider = imp.__self__
-            check_provider(self.provider.__class__.__name__)
-            self.imp_method_name = imp.__name__
-            self._json = self.to_json()
-            self._feedback_id = feedback_id or obj_id_of_obj(self._json, prefix="feedback")
-            self._json['feedback_id'] = self._feedback_id
+            ), "Feedback implementation is not a method (maybe it is a function?)."
+
+            impj['provider'] = imp.__self__.to_json()
+            impj['method_name'] = imp.__name__
+            
+            self.imp_json = impj
+
+            self.feedback_json = self.to_json()
+            self.feedback_id = feedback_id or obj_id_of_obj(self.feedback_json, prefix="feedback")
+            self.feedback_json['feedback_id'] = self.feedback_id
 
     @staticmethod
     def evaluate_deferred(tru: 'Tru'):
@@ -180,16 +211,18 @@ class Feedback():
         # TP().finish()
         # TP().runrepeatedly(runner)
 
-    @property
-    def json(self):
-        assert hasattr(self, "_json"), "Cannot json-size partially defined feedback function."
-        return self._json
+    #@property
+    #def json(self):
+    #    assert hasattr(self, "_json"), "Cannot json-size partially defined feedback function."
+    #    return self._json
 
+    """
     @property
     def feedback_id(self):
         assert hasattr(self, "_feedback_id"), "Cannot get id of partially defined feedback function."
         return self._feedback_id
-
+    """
+        
     @staticmethod
     def selection_to_json(select: Selection) -> dict:
         if isinstance(select, str):
@@ -214,22 +247,23 @@ class Feedback():
         }
         return {
             'selectors': selectors_json,
-            'imp_method_name': self.imp_method_name,
-            'provider': self.provider.to_json()
+            'imp_json': self.imp_json,
+            'feedback_id': self.feedback_id
         }
 
     @staticmethod
     def of_json(obj) -> 'Feedback':
+        assert 'imp_json' in obj,  "Feedback encoding has no 'imp_json' field."
         assert "selectors" in obj, "Feedback encoding has no 'selectors' field."
-        assert "imp_method_name" in obj, "Feedback encoding has no 'imp_method_name' field."
-        assert "provider" in obj, "Feedback encoding has no 'provider' field."
+        
+        jobj = obj['imp_json']
+        imp_method_name = jobj['method_name']
 
-        imp_method_name = obj['imp_method_name']
         selectors = {
             k: Feedback.selection_of_json(v)
             for k, v in obj['selectors'].items()
         }
-        provider = Provider.of_json(obj['provider'])
+        provider = Provider.of_json(jobj['provider_class'])
 
         assert hasattr(
             provider, imp_method_name
@@ -474,24 +508,30 @@ def _re_1_10_rating(str_val):
     return int(matches.group())
 
 
-class Provider():
+class Provider(pydantic.BaseModel):
+    endpoint: Any = pydantic.Field(exclude=True)
 
     @staticmethod
     def of_json(obj: Dict) -> 'Provider':
-        cls_name = obj['class']
+        cls_name = obj['class_name']
+        mod_name = obj['module_name'] # ignored for now
         check_provider(cls_name)
 
         cls = eval(cls_name)
-        kwargs = {k: v for k, v in obj.items() if k != "class"}
+        kwargs = {k: v for k, v in obj.items() if k not in ['class_name', 'module_name']}
 
         return cls(**kwargs)
 
     def to_json(self: 'Provider', **extras) -> Dict:
-        obj = {'class': self.__class__.__name__}
+        obj = {
+            'class_name': self.__class__.__name__,
+            'module_name': self.__class__.__module__
+            }
         obj.update(**extras)
         return obj
 
 class OpenAI(Provider):
+    model_engine: str = "gpt-3.5-turbo"
 
     def __init__(self, model_engine: str = "gpt-3.5-turbo"):
         """
@@ -502,6 +542,8 @@ class OpenAI(Provider):
         - model_engine (str, optional): The specific model version. Defaults to
           "gpt-3.5-turbo".
         """
+        super().__init__() # need to include pydantic.BaseModel.__init__
+
         self.model_engine = model_engine
         self.endpoint = Endpoint(name="openai")
 
@@ -808,8 +850,13 @@ class Huggingface(Provider):
     LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
 
     def __init__(self):
-        """A set of Huggingface Feedback Functions. Utilizes huggingface api-inference
         """
+        A set of Huggingface Feedback Functions. Utilizes huggingface
+        api-inference.
+        """
+
+        super().__init__() # need to include pydantic.BaseModel.__init__
+
         self.endpoint = Endpoint(
             name="huggingface", post_headers=get_huggingface_headers()
         )
@@ -911,8 +958,11 @@ class Huggingface(Provider):
 
 # cohere
 class Cohere(Provider):
+    model_engine: str = "large"
 
     def __init__(self, model_engine='large'):
+        super().__init__() # need to include pydantic.BaseModel.__init__
+
         Cohere().endpoint = Endpoint(name="cohere")
         self.model_engine = model_engine
 
