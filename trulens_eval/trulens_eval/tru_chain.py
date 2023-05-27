@@ -86,7 +86,7 @@ from langchain.chains.base import Chain as LangChain
 from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_eval.tru_db import JSON, RecordChainCall, noserio
+from trulens_eval.tru_db import JSON, Record, RecordChainCall, RecordChainCallFrame, RecordCost, noserio
 from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import TruDB
@@ -291,7 +291,7 @@ class TruChain(LangChain):
 
         assert len(record) > 0, "No information recorded in call."
 
-        ret_record = dict()
+        ret_record_args = dict()
         chain_json = self.json
 
         for path, calls in record.items():
@@ -300,32 +300,36 @@ class TruChain(LangChain):
             if obj is None:
                 logging.warn(f"Cannot locate {path} in chain.")
 
-            ret_record = TruDB._set_in_json(
-                path=path, in_json=ret_record, val={"_call": calls}
+            ret_record_args = TruDB._set_in_json(
+                path=path, in_json=ret_record_args, val={"_call": calls}
             )
 
-        ret_record['_cost'] = dict(
-            total_tokens=total_tokens, total_cost=total_cost
+        ret_record_args['cost'] = RecordCost(
+            n_tokens=total_tokens, cost=total_cost
         )
-        ret_record['chain_id'] = self.chain_id
+        ret_record_args['chain_id'] = self.chain_id
 
         if error is not None:
+            ret_record_args['error'] = str(error)
 
+        ret_record = Record(**ret_record_args)
+
+        if error is not None:
             if self.feedback_mode == "withchain":
-                self._handle_error(record_json=ret_record, error=error)
+                self._handle_error(record=ret_record, error=error)
 
             elif self.feedback_mode in ["deferred", "withchainthread"]:
                 TP().runlater(
-                    self._handle_error, record_json=ret_record, error=error
+                    self._handle_error, record=ret_record, error=error
                 )
 
             raise error
 
         if self.feedback_mode == "withchain":
-            self._handle_record(record_json=ret_record)
+            self._handle_record(record=ret_record)
 
         elif self.feedback_mode in ["deferred", "withchainthread"]:
-            TP().runlater(self._handle_record, record_json=ret_record)
+            TP().runlater(self._handle_record, record=ret_record)
 
         return ret, ret_record
 
@@ -340,7 +344,7 @@ class TruChain(LangChain):
 
         return ret
 
-    def _handle_record(self, record_json: JSON):
+    def _handle_record(self, record: Record):
         """
         Write out record-related info to database if set.
         """
@@ -348,17 +352,17 @@ class TruChain(LangChain):
         if self.tru is None or self.feedback_mode is None:
             return
 
-        main_input = record_json['chain']['_call']['args']['inputs'][
+        main_input = record.calls[0].args['inputs'][
             self.input_keys[0]]
-        main_output = record_json['chain']['_call']['rets'][self.output_keys[0]]
+        main_output = record.calls[0].rets[self.output_keys[0]]
 
         record_id = self.tru.add_record(
             prompt=main_input,
             response=main_output,
-            record_json=record_json,
+            record_json=record.dict(),
             tags='dev',  # TODO: generalize
-            total_tokens=record_json['_cost']['total_tokens'],
-            total_cost=record_json['_cost']['total_cost']
+            total_tokens=record.cost.n_tokens,
+            total_cost=record.cost.cost
         )
 
         if len(self.feedbacks) == 0:
@@ -373,7 +377,7 @@ class TruChain(LangChain):
         elif self.feedback_mode in ["withchain", "withchainthread"]:
 
             results = self.tru.run_feedback_functions(
-                record_json=record_json,
+                record_json=record.dict(),
                 feedback_functions=self.feedbacks,
                 chain_json=self.json
             )
@@ -381,7 +385,7 @@ class TruChain(LangChain):
             for result_json in results:
                 self.tru.add_feedback(result_json)
 
-    def _handle_error(self, record, error):
+    def _handle_error(self, record: Record, error: Exception):
         if self.db is None:
             return
 
@@ -532,7 +536,7 @@ class TruChain(LangChain):
             chain_stack = self._get_local_in_call_stack(
                 key="chain_stack", func=wrapper, offset=1
             ) or ()
-            frame_ident = dict(
+            frame_ident = RecordChainCallFrame(
                 path=tuple(query._path),
                 method_name=method_name,
                 class_name=class_name,

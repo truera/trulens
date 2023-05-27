@@ -23,18 +23,24 @@ JSON_BASES_T = Union[str, int, float, NoneType]
 # JSON_T = Union[JSON_BASES_T, List, Dict]
 JSON = Dict
 
-"""
+class RecordChainCallFrame(pydantic.BaseModel):
+    path: JSONPath
+    method_name: str
+    class_name: str
+    module_name: str
+ 
+
 class RecordCost(pydantic.BaseModel):
     n_tokens: Optional[int]
     cost: Optional[float]
-"""
+
 class RecordChainCall(pydantic.BaseModel):
     """
     Info regarding each instrumented method call is put into this container.
     """
 
     # Call stack but only containing paths of instrumented chains/other objects.
-    chain_stack: Sequence[JSONPath]
+    chain_stack: Sequence[RecordChainCallFrame]
 
     # Arguments to the instrumented method.
     args: Dict
@@ -59,10 +65,12 @@ class Record(pydantic.BaseModel):
     record_id: str
     chain_id: str
 
+    cost: RecordCost
+
     total_tokens: int
     total_cost: float
 
-    chain: JSON # not the actual chain, but rather json structure that mirrors the chain structure
+    calls: Sequence[RecordChainCall] # not the actual chain, but rather json structure that mirrors the chain structure
 
 
 def is_empty(obj):
@@ -131,16 +139,16 @@ def json_default(obj: Any) -> str:
 
 
 # Typing for type hints.
-Query = TinyQuery
+# Query = TinyQuery
 
 # Instance for constructing queries for record json like `Record.chain.llm`.
-Record = Query()._record
+# Record = Query()._record
 
 # Instance for constructing queries for chain json.
-Chain = Query()._chain
+# Chain = Query()._chain
 
 # Type of conditions, constructed from query/record like `Record.chain != None`.
-Condition = TinyQueryInstance
+# Condition = TinyQueryInstance
 
 
 def get_calls(record_json: JSON) -> Iterable[JSON]:
