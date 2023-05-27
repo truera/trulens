@@ -122,7 +122,7 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     retriever = docsearch.as_retriever()
 
     if "filtered" in chain_id:
-        retriever = WithFilterDocuments.of_vectorstoreretriever(
+        retriever = WithFilterDocuments.of_retriever(
             retriever=retriever, filter_func=filter_by_relevance
         )
 
