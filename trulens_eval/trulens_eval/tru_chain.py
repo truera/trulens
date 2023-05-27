@@ -81,11 +81,11 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import langchain
 from langchain.callbacks import get_openai_callback
-from langchain.chains.base import Chain
+from langchain.chains.base import Chain as LangChain
 from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_eval.tru_db import JSON, noserio
+from trulens_eval.tru_db import JSON, RecordChainCall, noserio
 from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import TruDB
@@ -111,14 +111,21 @@ Path = Tuple[Union[str, int], ...]
 # - 'chain_stack': List[Path] -- call stack of chain runs. Elements address
 #   chains.
 
+"""
+class Chain(pydantic.BaseModel):
+    chain_id: str
 
-class TruChain(Chain):
+    tags: str
+    chain: JSON # langchain structure
+"""
+
+class TruChain(LangChain):
     """
     Wrap a langchain Chain to capture its configuration and evaluation steps. 
     """
 
     # The wrapped/instrumented chain.
-    chain: Chain = None
+    chain: LangChain = None
 
     # Chain name/id. Will be a hash of chain definition/configuration if not provided.
     chain_id: Optional[str] = None
@@ -152,7 +159,7 @@ class TruChain(Chain):
 
     def __init__(
         self,
-        chain: Chain,
+        chain: LangChain,
         chain_id: Optional[str] = None,
         verbose: bool = False,
         feedbacks: Optional[Sequence[Feedback]] = None,
@@ -169,17 +176,17 @@ class TruChain(Chain):
           name is constructed from wrapped chain parameters.
         """
 
-        Chain.__init__(self, verbose=verbose)
+        LangChain.__init__(self, verbose=verbose)
 
         self.chain = chain
 
         self._instrument_object(obj=self.chain, query=Query().chain)
         self.recording = False
 
-        chain_def = self.json
+        chain_json = self.json
 
         # Track chain id. This will produce a name if not provided.
-        self.chain_id = chain_id or obj_id_of_obj(obj=chain_def, prefix="chain")
+        self.chain_id = chain_id or obj_id_of_obj(obj=chain_json, prefix="chain")
 
         if feedbacks is not None and tru is None:
             raise ValueError("Feedback logging requires `tru` to be specified.")
@@ -219,7 +226,7 @@ class TruChain(Chain):
             )
             self.db.insert_chain(chain_id=self.chain_id, chain_json=self.json)
             for f in self.feedbacks:
-                self.db.insert_feedback_def(f.json)
+                self.db.insert_feedback_def(f.feedback_json)
 
     @property
     def json(self):
@@ -425,7 +432,7 @@ class TruChain(Chain):
             sure output can be serialized.
             """
 
-            #if s.memory is not None:
+            # if s.memory is not None:
             # continue anyway
             # raise ValueError("Saving of memory is not yet supported.")
 
@@ -515,7 +522,7 @@ class TruChain(Chain):
             chain_stack = self._get_local_in_call_stack(
                 key="chain_stack", func=wrapper, offset=1
             ) or []
-            chain_stack = chain_stack + [query._path]
+            chain_stack = chain_stack + tuple(query._path)
 
             try:
                 # Using sig bind here so we can produce a list of key-value
@@ -534,7 +541,8 @@ class TruChain(Chain):
                 for k, v in bindings.arguments.items()
                 if k != "self"
             }
-            row_args = dict(
+
+            row_args = RecordChainCall(
                 args=nonself,
                 start_time=str(start_time),
                 end_time=str(end_time),
@@ -624,7 +632,7 @@ class TruChain(Chain):
                     self._instrument_type_method(obj=obj, prop=prop)
                 )
 
-            if isinstance(obj, Chain):
+            if isinstance(obj, LangChain):
                 if self.verbose:
                     print(f"instrumenting {base}.dict")
 
@@ -646,7 +654,7 @@ class TruChain(Chain):
 
                 elif isinstance(v, Sequence):
                     for i, sv in enumerate(v):
-                        if isinstance(sv, Chain):
+                        if isinstance(sv, LangChain):
                             self._instrument_object(obj=sv, query=query[k][i])
 
                 # TODO: check if we want to instrument anything not accessible through __fields__ .

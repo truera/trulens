@@ -23,40 +23,46 @@ JSON_BASES_T = Union[str, int, float, NoneType]
 # JSON_T = Union[JSON_BASES_T, List, Dict]
 JSON = Dict
 
+"""
 class RecordCost(pydantic.BaseModel):
     n_tokens: Optional[int]
     cost: Optional[float]
-
+"""
 class RecordChainCall(pydantic.BaseModel):
-    stack: Sequence[JSONPath]
+    """
+    Info regarding each instrumented method call is put into this container.
+    """
 
+    # Call stack but only containing paths of instrumented chains/other objects.
+    chain_stack: Sequence[JSONPath]
+
+    # Arguments to the instrumented method.
     args: Dict
+
+    # Returns of the instrumented method.
     rets: Dict
+
+    # Error message if call raised exception.
+    error: Optional[str]
+
+    # Timestamps tracking entrance and exit of the instrumented method.
+    start_time: int
+    end_int: int
+
+    # Process id.
+    pid: int
+
+    # Thread id.
+    tid: int
 
 class Record(pydantic.BaseModel):
     record_id: str
     chain_id: str
 
-    cost: RecordCost
+    total_tokens: int
+    total_cost: float
 
     chain: JSON # not the actual chain, but rather json structure that mirrors the chain structure
-
-class Chain(pydantic.BaseModel):
-    chain_id: str
-
-    tags: str
-    chain: JSON # langchain structure
-
-class FeedbackResult(pydantic.BaseModel):
-    record_id: str
-    chain_id: str
-
-    feedback_id: Optional[str] 
-
-class FeedbackDef(pydantic.BaseModel):
-    feedback_id: str
-    selectors: Dict[str, JSONPath]
-    imp: Callable
 
 
 def is_empty(obj):

@@ -11,13 +11,14 @@ from multiprocessing.pool import AsyncResult
 from multiprocessing.pool import ThreadPool
 from queue import Queue
 from time import sleep
-from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, TypeVar, Union
+from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union
 
 from multiprocessing.context import TimeoutError
 from dataclasses import dataclass
 
 import pandas as pd
 from tqdm.auto import tqdm
+import pydantic
 
 T = TypeVar("T")
 
@@ -37,93 +38,90 @@ def third(seq: Sequence[T]) -> T:
     return seq[2]
 
 
-class JSONPath(object):
-    # TODO(piotrm): more appropriate version of tinydb.Query
-
-    class Step():
+class Step(pydantic.BaseModel):
         pass
 
-    @dataclass
-    class GetAttribute(Step):
-        attribute: str
 
-        def __call__(self, obj: Any) -> Iterable[Any]:
-            if hasattr(obj, self.attribute):
-                yield getattr(self, self.attribute)
+class GetAttribute(Step):
+    attribute: str
+
+    def __call__(self, obj: Any) -> Iterable[Any]:
+        if hasattr(obj, self.attribute):
+            yield getattr(self, self.attribute)
+        else:
+            raise ValueError(f"Object does not have attribute: {self.attribute}")
+
+
+class GetIndex(Step):
+    index: int
+
+    def __call__(self, obj: Sequence[T]) -> Iterable[T]: 
+        if isinstance(obj, Sequence):
+            if len(obj) > self.index:
+                yield obj[self.index]
             else:
-                raise ValueError(f"Object does not have attribute: {self.attribute}")
+                raise IndexError(f"Index out of bounds: {self.index}")
+        else:
+            raise ValueError("Object is not a sequence.")
 
-    @dataclass
-    class GetIndex(Step):
-        index: int
+class GetItem(Step):
+    item: str
 
-        def __call__(self, obj: Sequence[T]) -> Iterable[T]: 
-            if isinstance(obj, Sequence):
-                if len(obj) > self.index:
-                    yield obj[self.index]
-                else:
-                    raise IndexError(f"Index out of bounds: {self.index}")
+    def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
+        if isinstance(obj, Dict):
+            if self.item in obj:
+                yield obj[self.item]
             else:
-                raise ValueError("Object is not a sequence.")
+                raise KeyError(f"Key not in dictionary: {self.item}")
+        else:
+            raise ValueError("Object is not a dictionary.")
 
-    @dataclass
-    class GetItem(Step):
-        item: str
+class GetSlice(Step):
+    slice: Tuple[int, int, int]
+   
+    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+        if isinstance(obj, Sequence):
+            lower, upper, step = slice(**self.slice).indices(len(obj))
+            for i in range(lower, upper, step):
+                yield obj[i]
+        else:
+            raise ValueError("Object is not a sequence.")
 
-        def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
-            if isinstance(obj, Dict):
-                if self.item in obj:
-                    yield obj[self.item]
-                else:
-                    raise KeyError(f"Key not in dictionary: {self.item}")
-            else:
-                raise ValueError("Object is not a dictionary.")
+class GetIndices(Step):
+    indices: Sequence[int]
 
-    @dataclass
-    class GetSlice(Step):
-        slice: slice
-
-        def __call__(self, obj: Sequence[T]) -> Iterable[T]:
-            if isinstance(obj, Sequence):
-                lower, upper, step = self.slice.indices(len(obj))
-                for i in range(lower, upper, step):
-                    yield obj[i]
-            else:
-                raise ValueError("Object is not a sequence.")
-
-    @dataclass
-    class GetIndices(Step):
-        indices: Sequence[int]
-
-        def __call__(self, obj: Sequence[T]) -> Iterable[T]:
-            if isinstance(obj, Sequence):
-                for i in self.indices:
-                    yield obj[i]
-            else:
-                raise ValueError("Object is not a sequence.")
+    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+        if isinstance(obj, Sequence):
+            for i in self.indices:
+                yield obj[i]
+        else:
+            raise ValueError("Object is not a sequence.")
 
 
-    @dataclass
-    class GetItems(Step):
-        items: Sequence[str]
+class GetItems(Step):
+    items: Sequence[str]
 
-        def __call__(self, obj: Dict[T]) -> Iterable[T]:
-            if isinstance(obj, Dict):
-                for i in self.items:
-                    yield obj[i]
-            else:
-                raise ValueError("Object is not a dictionary.")
+    def __call__(self, obj: Dict[T]) -> Iterable[T]:
+        if isinstance(obj, Dict):
+            for i in self.items:
+                yield obj[i]
+        else:
+            raise ValueError("Object is not a dictionary.")
 
 
     class Aggregate(Step):
         pass
 
-    @property
-    def path(self):
-        return self._path
+class JSONPath(pydantic.BaseModel):
+    path: Tuple[Step]
+    # TODO(piotrm): more appropriate version of tinydb.Query
+
+    #@property
+    #def path(self):
+    #    return self._path
 
     def __init__(self, path=None):
-        self._path = path or []
+        self.path = path or []
 
     def __str__(self):
         return "JSONPath(" + ".".join(map(str, self._path)) + ")"
@@ -132,24 +130,21 @@ class JSONPath(object):
         return str(self)
 
     def __call__(self, obj: Any) -> Iterable[Any]:
-        if len(self._path) == 0:
+        if len(self.path) == 0:
             yield obj
             return
         
-        first = self._path[0]
-        if len(self._path) == 1:
+        first = self.path[0]
+        if len(self.path) == 1:
             rest = JSONPath()
         else:
-            rest = JSONPath(self._path[1:])
+            rest = JSONPath(self.path[1:])
 
         for first_selection in first.__call__(obj):
             for rest_selection in rest.__call__(first_selection):
                 yield rest_selection
 
-    def __agg(self, aggregator: str) -> Any:
-        pass
-
-    def __append(self, step: JSONPath.Step) -> JSONPath:
+    def __append(self, step: Step) -> JSONPath:
         return JSONPath(self._path + [step])
 
     def __getitem__(
