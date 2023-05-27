@@ -15,6 +15,7 @@ from trulens_eval import tru_db
 from trulens_eval.tru_db import is_empty
 from trulens_eval.tru_db import is_noserio
 from trulens_eval.tru_db import TruDB
+from trulens_eval.ux.components import render_calls
 
 st.set_page_config(page_title="Evaluations", layout="wide")
 
@@ -85,8 +86,12 @@ else:
         """
         )
 
-        gb.configure_column('record_id', header_name='Record ID')
+        gb.configure_column('record_json', header_name='Record JSON', hide=True)
+        gb.configure_column('chain_json', header_name='Chain JSON', hide=True)
+
+        gb.configure_column('record_id', header_name='Record ID', hide=True)
         gb.configure_column('chain_id', header_name='Chain ID')
+        gb.configure_column('feedback_id', header_name='Feedback ID', hide=True)
         gb.configure_column('input', header_name='User Input')
         gb.configure_column(
             'output',
@@ -134,6 +139,9 @@ else:
             record_str = selected_rows['record_json'][0]
             record_json = json.loads(record_str)
 
+            st.header("Call Trace")
+            render_calls(record_json)
+            
             details = selected_rows['chain_json'][0]
             details_json = json.loads(details)
             #json.loads(details))  # ???
