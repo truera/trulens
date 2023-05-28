@@ -1,3 +1,4 @@
+from typing import Dict
 import streamlit as st
 from trulens_eval.tru_db import JSON, get_calls_by_stack
 
@@ -21,6 +22,13 @@ def render_calls(record_json: JSON):
             #     st.write(render_call_frame(frame))
 
                 st.subheader(f"Inputs:")
-                st.json(args)
+                if isinstance(args, Dict):
+                    st.json(args)
+                else:
+                    st.write(args)
+                    
                 st.subheader(f"Outputs:")
-                st.json(rets)
+                if isinstance(rets, Dict):
+                    st.json(rets)
+                else:
+                    st.write(rets)
