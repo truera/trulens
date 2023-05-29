@@ -187,6 +187,42 @@ def get_calls_by_stack(record_json: JSON) -> Dict[Tuple[str,...],JSON]:
     return ret
 
 
+def get_calls(record_json: JSON) -> Iterable[JSON]:
+    """
+    Iterate over the call parts of the record.
+    """
+
+    for q in TruDB.all_queries(record_json):
+        if q._path[-1] == "_call":
+            yield q
+
+def get_calls_by_stack(record_json: JSON) -> Dict[Tuple[str,...],JSON]:
+    """
+    Get a dictionary mapping chain call stack to the call information.
+    """
+
+    def frozen_frame(frame):
+        frame['path'] = tuple(frame['path'])
+        return frozendict(frame)
+
+    ret = dict()
+    for c in get_calls(record_json):
+        obj = TruDB.project(c, record_json=record_json, chain_json=None)
+        if isinstance(obj, Sequence):
+            for o in obj:
+                call_stack = tuple(map(frozen_frame, o['chain_stack']))
+                if call_stack not in ret:
+                    ret[call_stack] = []
+                ret[call_stack].append(o)
+        else:
+            call_stack = tuple(map(frozen_frame, obj['chain_stack']))
+            if call_stack not in ret:
+                ret[call_stack] = []
+            ret[call_stack].append(obj)
+
+    return ret
+
+
 def query_of_path(path: List[Union[str, int]]) -> Query:
     """
     Convert the given path to a query object.
