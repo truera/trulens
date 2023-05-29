@@ -23,6 +23,7 @@ pdfminer.six
 tinydb
 pydantic
 merkle_json
+frozendict
 # app requirements:
 streamlit
 streamlit-aggrid
