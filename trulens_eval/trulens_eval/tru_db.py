@@ -3,16 +3,18 @@ import json
 import logging
 from pathlib import Path
 import sqlite3
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
-)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
+                    Set, Tuple, Union)
 
+from frozendict import frozendict
 from merkle_json import MerkleJson
 import pandas as pd
 import pydantic
 from tinydb import Query as TinyQuery
 from tinydb.queries import QueryInstance as TinyQueryInstance
-from trulens_eval.util import UNCIODE_YIELD, UNICODE_CHECK
+
+from trulens_eval.util import UNCIODE_YIELD
+from trulens_eval.util import UNICODE_CHECK
 
 mj = MerkleJson()
 NoneType = type(None)
@@ -101,7 +103,47 @@ Chain = Query()._chain
 Condition = TinyQueryInstance
 
 
+def get_calls(record_json: JSON) -> Iterable[JSON]:
+    """
+    Iterate over the call parts of the record.
+    """
+
+    for q in TruDB.all_queries(record_json):
+        if q._path[-1] == "_call":
+            yield q
+
+def get_calls_by_stack(record_json: JSON) -> Dict[Tuple[str,...],JSON]:
+    """
+    Get a dictionary mapping chain call stack to the call information.
+    """
+
+    def frozen_frame(frame):
+        frame['path'] = tuple(frame['path'])
+        return frozendict(frame)
+
+    ret = dict()
+    for c in get_calls(record_json):
+        obj = TruDB.project(c, record_json=record_json, chain_json=None)
+        if isinstance(obj, Sequence):
+            for o in obj:
+                call_stack = tuple(map(frozen_frame, o['chain_stack']))
+                if call_stack not in ret:
+                    ret[call_stack] = []
+                ret[call_stack].append(o)
+        else:
+            call_stack = tuple(map(frozen_frame, obj['chain_stack']))
+            if call_stack not in ret:
+                ret[call_stack] = []
+            ret[call_stack].append(obj)
+
+    return ret
+
+
 def query_of_path(path: List[Union[str, int]]) -> Query:
+    """
+    Convert the given path to a query object.
+    """
+
     if path[0] == "_record":
         ret = Record
         path = path[1:]
@@ -930,5 +972,6 @@ class LocalSQLite(TruDB):
         assert "record_id" in df_records.columns
 
         combined_df = df_records.merge(df_results, on=['record_id'])
+        combined_df = combined_df.drop(columns=set(["_success", "_error"]).intersection(set(combined_df.columns)))
 
         return combined_df, result_cols
