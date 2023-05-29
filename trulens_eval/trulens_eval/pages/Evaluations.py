@@ -185,10 +185,24 @@ else:
                                 tbody th {display:none}
                                 </style>
                                 """
-                    df = pd.DataFrame.from_dict(llm_kv, orient='index')
+                    df = pd.DataFrame.from_dict(llm_kv, orient='index').transpose()
+
+                    # Iterate over each column of the DataFrame
+                    for column in df.columns:
+                        # Check if any cell in the column is a dictionary
+                        if any(isinstance(cell, dict) for cell in df[column]):
+                            # Create new columns for each key in the dictionary
+                            new_columns = df[column].apply(lambda x: pd.Series(x) if isinstance(x, dict) else pd.Series())
+                            new_columns.columns = [f"{key}" for key in new_columns.columns]
+
+                            # Remove extra zeros after the decimal point
+                            new_columns = new_columns.applymap(lambda x: '{0:g}'.format(x) if isinstance(x, float) else x)
+                            
+                            # Add the new columns to the original DataFrame
+                            df = pd.concat([df.drop(column, axis=1), new_columns], axis=1)
                     # Inject CSS with Markdown
                     st.markdown(hide_table_row_index, unsafe_allow_html=True)
-                    st.table(df.transpose())
+                    st.table(df)
 
                 if i < len(prompt_queries):
                     query, prompt_details_json = prompt_queries[i]
