@@ -57,7 +57,6 @@ from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_db import TruDB
 from trulens_eval.schema import FeedbackDefinition, Selection
-from trulens_eval.util import JSONPath
 from trulens_eval.util import TP
 
 # openai
@@ -116,8 +115,11 @@ class Feedback(FeedbackDefinition):
         Parameters:
         
         - imp: Optional[Callable] -- implementation of the feedback function.
+
         - selectors: Optional[Dict[str, Selection]] -- mapping of implementation
           argument names to where to get them from a record.
+
+        - feedback_id: Optional[str] - unique identifier.
         """
 
         super().__init__()
@@ -205,6 +207,10 @@ class Feedback(FeedbackDefinition):
         assert hasattr(self, "_feedback_id"), "Cannot get id of partially defined feedback function."
         return self._feedback_id
     """
+
+    def __call__(self, *args, **kwargs) -> Any:
+        assert self.imp is not None, "Feedback definition needs an implementation to call."
+        return self.imp(*args, **kwargs)
         
     @staticmethod
     def selection_to_json(select: Selection) -> dict:
@@ -224,6 +230,7 @@ class Feedback(FeedbackDefinition):
         else:
             raise ValueError(f"Unknown selection encoding of type {type(obj)}.")
 
+    """
     def to_json(self) -> dict:
         selectors_json = {
             k: Feedback.selection_to_json(v) for k, v in self.selectors.items()
@@ -233,6 +240,7 @@ class Feedback(FeedbackDefinition):
             'imp_json': self.imp_json,
             'feedback_id': self.feedback_id
         }
+    """
 
     @staticmethod
     def of_json(obj) -> 'Feedback':

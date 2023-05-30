@@ -11,16 +11,14 @@ from merkle_json import MerkleJson
 import pandas as pd
 import pydantic
 
-from trulens_eval.schema import Chain
+from trulens_eval.schema import Chain, JSONPath, RecordChainCall
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import Record
-from trulens_eval.util import _project
-from trulens_eval.util import GetItem
+from trulens_eval.util import JSONPathBuilder, _project
 from trulens_eval.util import JSON
 from trulens_eval.util import JSON_BASES
 from trulens_eval.util import json_str_of_obj
-from trulens_eval.util import JSONPath
 from trulens_eval.util import noserio
 from trulens_eval.util import obj_id_of_obj
 from trulens_eval.util import UNCIODE_YIELD
@@ -32,26 +30,26 @@ NoneType = type(None)
 
 
 # Typing for type hints.
-Query = JSONPath
+Query = JSONPathBuilder
 
 # Instance for constructing queries for record json like `Record.chain.llm`.
-RecordQuery = Query().attr("_record")
+RecordQuery = Query()._record
 
 # Instance for constructing queries for chain json.
-ChainQuery = Query().attr("_chain")
+ChainQuery = Query()._chain
 
 
-def get_calls(record_json: JSON) -> Iterable[JSON]:
+def get_calls(record: Record) -> Iterable[RecordChainCall]:
     """
     Iterate over the call parts of the record.
     """
 
-    for q in TruDB.all_queries(record_json):
+    for q in TruDB.all_queries(record):
         if q._path[-1] == "_call":
             yield q
 
 
-def get_calls_by_stack(record_json: JSON) -> Dict[Tuple[str, ...], JSON]:
+def get_calls_by_stack(record: Record) -> Dict[Tuple[str, ...], RecordChainCall]:
     """
     Get a dictionary mapping chain call stack to the call information.
     """
@@ -61,45 +59,8 @@ def get_calls_by_stack(record_json: JSON) -> Dict[Tuple[str, ...], JSON]:
         return frozendict(frame)
 
     ret = dict()
-    for c in get_calls(record_json):
-        obj = TruDB.project(c, record_json=record_json, chain_json=None)
-        if isinstance(obj, Sequence):
-            for o in obj:
-                call_stack = tuple(map(frozen_frame, o['chain_stack']))
-                if call_stack not in ret:
-                    ret[call_stack] = []
-                ret[call_stack].append(o)
-        else:
-            call_stack = tuple(map(frozen_frame, obj['chain_stack']))
-            if call_stack not in ret:
-                ret[call_stack] = []
-            ret[call_stack].append(obj)
-
-    return ret
-
-
-def get_calls(record_json: JSON) -> Iterable[JSON]:
-    """
-    Iterate over the call parts of the record.
-    """
-
-    for q in TruDB.all_queries(record_json):
-        if q._path[-1] == "_call":
-            yield q
-
-
-def get_calls_by_stack(record_json: JSON) -> Dict[Tuple[str, ...], JSON]:
-    """
-    Get a dictionary mapping chain call stack to the call information.
-    """
-
-    def frozen_frame(frame):
-        frame['path'] = tuple(frame['path'])
-        return frozendict(frame)
-
-    ret = dict()
-    for c in get_calls(record_json):
-        obj = TruDB.project(c, record_json=record_json, chain_json=None)
+    for c in get_calls(record):
+        obj = TruDB.project(c, record_json=record, chain_json=None)
         if isinstance(obj, Sequence):
             for o in obj:
                 call_stack = tuple(map(frozen_frame, o['chain_stack']))
