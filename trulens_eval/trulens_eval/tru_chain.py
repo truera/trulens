@@ -74,7 +74,6 @@ from datetime import datetime
 from inspect import BoundArguments
 from inspect import signature
 from inspect import stack
-import inspect
 import logging
 import os
 import threading as th
@@ -86,11 +85,12 @@ from langchain.chains.base import Chain as LangChain
 from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_eval.tru_db import JSON, Record, RecordChainCall, RecordChainCallFrame, RecordCost, noserio
+from trulens_eval.tru_db import noserio
 from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
+from trulens_eval.schema import Record, RecordChainCall, RecordChainCallFrame, RecordCost
 from trulens_eval.util import TP
 
 langchain.verbose = False
@@ -111,14 +111,6 @@ Path = Tuple[Union[str, int], ...]
 # - 'tid': int -- thread id for debuggin threading.
 # - 'chain_stack': List[Path] -- call stack of chain runs. Elements address
 #   chains.
-
-"""
-class Chain(pydantic.BaseModel):
-    chain_id: str
-
-    tags: str
-    chain: JSON # langchain structure
-"""
 
 class TruChain(LangChain):
     """
