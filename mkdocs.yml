@@ -28,6 +28,7 @@ markdown_extensions:
       enable_dollar_delimiter: True #for use of inline $..$
 
 plugins:
+  - mkdocs-jupyter
   - mkdocstrings:
       default_handler: python
       handlers:
@@ -62,6 +63,7 @@ nav:
   - Eval:
       - Installation: trulens_eval/install.md
       - Quickstart: trulens_eval/quickstart.ipynb
+      - Feedback Functions: trulens_eval/feedback_functions.md
       - API Reference:
           - Tru: trulens_eval/api/tru.md
           - TruChain: trulens_eval/api/truchain.md
