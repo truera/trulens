@@ -40,22 +40,25 @@ from inspect import signature
 import logging
 from multiprocessing.pool import AsyncResult
 import re
-from time import sleep
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import (Any, Callable, Dict, List, Optional, Sequence, Tuple, Type,
+                    Union)
 
 import numpy as np
 import openai
-import requests
 import pydantic
 from tqdm.auto import tqdm
 
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
-from trulens_eval.tru_db import JSON, Query, obj_id_of_obj, query_of_path
+from trulens_eval.tru_db import JSON
+from trulens_eval.tru_db import obj_id_of_obj
+from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_db import TruDB
-from trulens_eval.util import TP, JSONPath
+from trulens_eval.schema import FeedbackDefinition, Selection
+from trulens_eval.util import JSONPath
+from trulens_eval.util import TP
 
 # openai
 
@@ -79,7 +82,7 @@ from trulens_eval.util import TP, JSONPath
 # - Option 1 : input, output -> real
 # - Option 2: dict (input, output, other) -> real
 
-Selection = Union[JSONPath, str]
+
 # "prompt" or "input" mean overall chain input text
 # "response" or "output"mean overall chain output text
 # Otherwise a Query is a path into a record structure.
@@ -96,31 +99,11 @@ def check_provider(cls_or_name: Union[Type, str]) -> None:
     assert cls_name in PROVIDER_CLASS_NAMES, f"Unsupported provider class {cls_name}"
 
 
-class FeedbackResult(pydantic.BaseModel):
-    record_id: str
-    chain_id: str
-    feedback_id: Optional[str]
 
-    results_json: JSON
-
-
-class Feedback(pydantic.BaseModel):
+class Feedback(FeedbackDefinition):
     # Implementation, not serializable.
     imp: Optional[Callable] = pydantic.Field(exclude=True)
-
-    # Implementation serialization info.
-    imp_json: Optional[JSON] = pydantic.Field(exclude=True)
-
-    # Id, if not given, unique determined from _json below.
-    feedback_id: Optional[str] = None
-
-    # Selectors, pointers into Records of where to get
-    # arguments for `imp`.
-    selectors: Optional[Dict[str, Selection]] = None
-
-    # JSON version of this object.
-    feedback_json: Optional[JSON] = pydantic.Field(exclude=True)
-
+    
     def __init__(
         self,
         imp: Optional[Callable] = None,
@@ -237,7 +220,7 @@ class Feedback(pydantic.BaseModel):
         if isinstance(obj, str):
             return obj
         elif isinstance(obj, (List, Tuple)):
-            return query_of_path(obj)  # TODO
+            return JSONPath.of_path(obj)  # TODO
         else:
             raise ValueError(f"Unknown selection encoding of type {type(obj)}.")
 
