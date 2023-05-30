@@ -1,9 +1,148 @@
-from typing import Callable, Dict, Optional, Sequence, Union
+"""
+Serializable objects and their schemas.
+"""
+
+import abc
+from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Tuple,
+                    TypeVar, Union)
 
 import pydantic
 
-from trulens_eval.util import JSON
-from trulens_eval.util import JSONPath
+JSON_BASES = (str, int, float, type(None))
+JSON_BASES_T = Union[str, int, float, type(None)]
+# JSON = (List, Dict) + JSON_BASES
+# JSON_T = Union[JSON_BASES_T, List, Dict]
+JSON = Dict
+
+T = TypeVar("T")
+
+
+class Obj(pydantic.BaseModel):
+    """
+    An object that may or may not be serializable.
+    """
+    class_name: str
+    module_name: str
+
+
+    # From id(obj), identifiers memory location of a python object. Use this for handling loops in JSON objects.
+    id: int 
+
+class FeedbackImplementation(pydantic.BaseModel):
+    cls: Obj
+
+    kwargs: Dict[str, JSON]
+
+class Step(pydantic.BaseModel):
+    """
+    A step in a selection path.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    #@abc.abstractmethod
+    #def __call__(self, obj: Any) -> Iterable[Any]:
+    #    """
+    #    Get the element of `obj`, indexed by `self`.
+    #    """
+#
+ #       raise NotImplementedError
+
+
+class GetAttribute(Step):
+    attribute: str
+
+    def __call__(self, obj: Any) -> Iterable[Any]:
+        if hasattr(obj, self.attribute):
+            yield getattr(obj, self.attribute)
+        else:
+            raise ValueError(
+                f"Object does not have attribute: {self.attribute}"
+            )
+
+    def __repr__(self):
+        return f".{self.attribute}"
+
+
+class GetIndex(Step):
+    index: int
+
+    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+        if isinstance(obj, Sequence):
+            if len(obj) > self.index:
+                yield obj[self.index]
+            else:
+                raise IndexError(f"Index out of bounds: {self.index}")
+        else:
+            raise ValueError("Object is not a sequence.")
+
+    def __repr__(self):
+        return f"[{self.index}]"
+
+
+class GetItem(Step):
+    item: str
+
+    def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
+        if isinstance(obj, Dict):
+            if self.item in obj:
+                yield obj[self.item]
+            else:
+                raise KeyError(f"Key not in dictionary: {self.item}")
+        else:
+            raise ValueError("Object is not a dictionary.")
+
+    def __repr__(self):
+        return f"[{self.item}]"
+
+
+class GetSlice(Step):
+    slice: Tuple[int, int, int]
+
+    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+        if isinstance(obj, Sequence):
+            lower, upper, step = slice(**self.slice).indices(len(obj))
+            for i in range(lower, upper, step):
+                yield obj[i]
+        else:
+            raise ValueError("Object is not a sequence.")
+
+    def __repr__(self):
+        return f"[{self.slice[0]}:{self.slice[1]}:{self.slice[2]}]"
+
+
+
+class GetIndices(Step):
+    indices: Sequence[int]
+
+    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+        if isinstance(obj, Sequence):
+            for i in self.indices:
+                yield obj[i]
+        else:
+            raise ValueError("Object is not a sequence.")
+
+    def __repr__(self):
+        return f"[{','.join(map(str, self.indices))}]"
+
+
+class GetItems(Step):
+    items: Sequence[str]
+
+    def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
+        if isinstance(obj, Dict):
+            for i in self.items:
+                yield obj[i]
+        else:
+            raise ValueError("Object is not a dictionary.")
+
+    def __repr__(self):
+        return f"[{','.join(self.indices)}]"
+
+
+class JSONPath(pydantic.BaseModel):
+    path: Tuple[Step]
 
 
 class Chain(pydantic.BaseModel):

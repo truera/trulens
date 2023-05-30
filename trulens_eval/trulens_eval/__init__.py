@@ -17,6 +17,8 @@ provider_apis.py feedback_prompts.py
 
 util.py keys.py
 
+schema.py
+
 
 """
 
