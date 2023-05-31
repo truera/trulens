@@ -41,3 +41,4 @@ class WithFilterDocuments(VectorStoreRetriever):
     @staticmethod
     def of_retriever(retriever: VectorStoreRetriever, filter_func: Callable):
         return WithFilterDocuments(filter_func=filter_func, **retriever.dict())
+    

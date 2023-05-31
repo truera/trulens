@@ -1,4 +1,5 @@
 import abc
+from datetime import datetime
 import json
 import logging
 from pathlib import Path
@@ -11,11 +12,11 @@ from merkle_json import MerkleJson
 import pandas as pd
 import pydantic
 
-from trulens_eval.schema import Chain, JSONPath, RecordChainCall
+from trulens_eval.schema import JSONPath, Model, RecordChainCall
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import Record
-from trulens_eval.util import JSONPathBuilder, _project
+from trulens_eval.util import GetItem, JSONPath, _project
 from trulens_eval.util import JSON
 from trulens_eval.util import JSON_BASES
 from trulens_eval.util import json_str_of_obj
@@ -30,13 +31,18 @@ NoneType = type(None)
 
 
 # Typing for type hints.
-Query = JSONPathBuilder
+Query = JSONPath
 
 # Instance for constructing queries for record json like `Record.chain.llm`.
 RecordQuery = Query()._record
 
 # Instance for constructing queries for chain json.
 ChainQuery = Query()._chain
+
+# A Chain's main input and main output.
+# TODO: Chain input/output generalization.
+RecordInput = RecordQuery.main_input
+RecordOutput = RecordQuery.main_output
 
 
 def get_calls(record: Record) -> Iterable[RecordChainCall]:
@@ -96,60 +102,7 @@ def query_of_path(path: List[Union[str, int]]) -> JSONPath:
     return ret
 
 
-def jsonify(obj: Any, dicted=None) -> JSON:
-    """
-    Convert the given object into types that can be serialized in json.
-    """
-
-    dicted = dicted or dict()
-
-    if isinstance(obj, JSON_BASES):
-        return obj
-
-    if id(obj) in dicted:
-        return {'_CIRCULAR_REFERENCE': id(obj)}
-
-    new_dicted = {k: v for k, v in dicted.items()}
-
-    if isinstance(obj, Dict):
-        temp = {}
-        new_dicted[id(obj)] = temp
-        temp.update({k: jsonify(v, dicted=new_dicted) for k, v in obj.items()})
-        return temp
-
-    elif isinstance(obj, Sequence):
-        temp = []
-        new_dicted[id(obj)] = temp
-        for x in (jsonify(v, dicted=new_dicted) for v in obj):
-            temp.append(x)
-        return temp
-
-    elif isinstance(obj, Set):
-        temp = []
-        new_dicted[id(obj)] = temp
-        for x in (jsonify(v, dicted=new_dicted) for v in obj):
-            temp.append(x)
-        return temp
-
-    elif isinstance(obj, pydantic.BaseModel):
-        temp = {}
-        new_dicted[id(obj)] = temp
-        temp.update(
-            {
-                k: jsonify(getattr(obj, k), dicted=new_dicted)
-                for k in obj.__fields__
-            }
-        )
-        return temp
-
-    else:
-        logging.debug(
-            f"Don't know how to jsonify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
-        )
-        return noserio(obj)
-
-
-class TruDB(abc.ABC):
+class TruDB(pydantic.BaseModel, abc.ABC):
 
     # Use TinyDB queries for looking up parts of records/models and/or filtering
     # on those parts.
@@ -194,7 +147,7 @@ class TruDB(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_chain(self, chain: Chain) -> str:
+    def insert_chain(self, chain: Model) -> str:
         """
         Insert a new `chain` into db under the given `chain_id`. 
 
@@ -259,37 +212,16 @@ class TruDB(abc.ABC):
         """
         raise NotImplementedError()
 
-    @staticmethod
-    def project(
-        query: JSONPath,
-        record_json: JSON,
-        chain_json: JSON,
-        obj: Optional[JSON] = None
-    ):
-        path = query.path
-
-        if path[0] == GetItem("_record"):
-            if len(path) == 1:
-                return record_json
-            return _project(path=path[1:], obj=record_json)
-
-        elif path[0] == GetItem("_chain"):
-            if len(path) == 1:
-                return chain_json
-
-            return _project(path=path[1:], obj=chain_json)
-        else:
-            return _project(path=path, obj=obj)
-
 
 class LocalSQLite(TruDB):
+    filename: Path
 
     TABLE_RECORDS = "records"
     TABLE_FEEDBACKS = "feedbacks"
     TABLE_FEEDBACK_DEFS = "feedback_defs"
     TABLE_CHAINS = "chains"
 
-    def __init__(self, filename: Optional[Path] = 'default.sqlite'):
+    def __init__(self, filename: Path):
         """
         Database locally hosted using SQLite.
 
@@ -299,8 +231,8 @@ class LocalSQLite(TruDB):
           file. It will be created if it does not exist.
 
         """
+        super().__init__(filename=filename)
 
-        self.filename = filename
         self._build_tables()
 
     def __str__(self) -> str:
@@ -376,20 +308,20 @@ class LocalSQLite(TruDB):
 
     # TruDB requirement
     def insert_record(
-        self, chain_id: str, input: str, output: str, record: Record, ts: int,
+        self, input: str, output: str, record: Record, ts: int,
         tags: str, total_tokens: int, total_cost: float
     ) -> str:
 
-        record_json = record.dict()
+        ts = ts or datetime.now()
+        total_tokens = total_tokens or record.cost.total_tokens
+        total_cost = total_cost or record.cost.total_cost
+        chain_id = record.chain_id
+        record_id = record.record_id
 
-        assert isinstance(
-            record_json, Dict
-        ), f"Attempting to add a record that is not a dict, is {type(record_json)} instead."
+        record_json = record.json()
 
         conn, c = self._connect()
 
-        record_id = obj_id_of_obj(obj=record_json, prefix="record")
-        record_json['record_id'] = record_id
         record_str = json_str_of_obj(record_json)
 
         c.execute(
@@ -408,11 +340,10 @@ class LocalSQLite(TruDB):
         return record_id
 
     # TruDB requirement
-    def insert_chain(self, chain: Chain) -> str:
+    def insert_chain(self, chain: Model) -> str:
+        chain_id = chain.chain_id
 
-        chain_json = chain.dict()
-
-        chain_id = chain_json['chain_id']
+        chain_json = chain.json()
         chain_str = json_str_of_obj(chain_json)
 
         conn, c = self._connect()
@@ -431,7 +362,7 @@ class LocalSQLite(TruDB):
         Insert a feedback definition into the database.
         """
 
-        feedback_json = feedback.dict()
+        feedback_json = feedback.json()
 
         feedback_id = feedback_json['feedback_id']
         feedback_str = json_str_of_obj(feedback_json)
@@ -493,7 +424,7 @@ class LocalSQLite(TruDB):
         """
 
         if result is not None:
-            result_json = result.dict()
+            result_json = result.json()
 
         if record_id is None or feedback_id is None:
             assert result is not None, "`result` needs to be given if `record_id` or `feedback_id` are not provided."

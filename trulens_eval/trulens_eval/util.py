@@ -5,6 +5,7 @@ Do not import anything from trulens_eval here.
 """
 
 from __future__ import annotations
+import abc
 
 import json
 import logging
@@ -14,24 +15,15 @@ from multiprocessing.pool import ThreadPool
 from queue import Queue
 from time import sleep
 from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Tuple,
-    TypeVar
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set, Tuple,
+    TypeVar, Union
 )
+
+from sklearn.utils import Bunch
 
 from merkle_json import MerkleJson
 import pandas as pd
 import pydantic
-
-from trulens_eval.schema import GetAttribute
-from trulens_eval.schema import GetIndex
-from trulens_eval.schema import GetIndices
-from trulens_eval.schema import GetItem
-from trulens_eval.schema import GetItems
-from trulens_eval.schema import GetSlice
-from trulens_eval.schema import JSON
-from trulens_eval.schema import JSON_BASES
-from trulens_eval.schema import JSONPath
-from trulens_eval.schema import Step
 
 T = TypeVar("T")
 
@@ -54,6 +46,12 @@ def third(seq: Sequence[T]) -> T:
 
 
 # JSON utilities
+
+JSON_BASES = (str, int, float, type(None))
+JSON_BASES_T = Union[str, int, float, type(None)]
+# JSON = (List, Dict) + JSON_BASES
+# JSON_T = Union[JSON_BASES_T, List, Dict]
+JSON = Dict
 
 mj = MerkleJson()
 
@@ -113,7 +111,7 @@ def json_default(obj: Any) -> str:
 
     if isinstance(obj, pydantic.BaseModel):
         try:
-            return json.dumps(obj.dict())
+            return json.dumps(obj.json())
         except Exception as e:
             return noserio(obj, exception=e)
 
@@ -123,13 +121,67 @@ def json_default(obj: Any) -> str:
     return noserio(obj)
 
 
+def jsonify(obj: Any, dicted=None) -> JSON:
+    """
+    Convert the given object into types that can be serialized in json.
+    """
+
+    dicted = dicted or dict()
+
+    if isinstance(obj, JSON_BASES):
+        return obj
+
+    if id(obj) in dicted:
+        return {'_CIRCULAR_REFERENCE': id(obj)}
+
+    new_dicted = {k: v for k, v in dicted.items()}
+
+    if isinstance(obj, Dict):
+        temp = {}
+        new_dicted[id(obj)] = temp
+        temp.update({k: jsonify(v, dicted=new_dicted) for k, v in obj.items()})
+        return temp
+
+    elif isinstance(obj, Sequence):
+        temp = []
+        new_dicted[id(obj)] = temp
+        for x in (jsonify(v, dicted=new_dicted) for v in obj):
+            temp.append(x)
+        return temp
+
+    elif isinstance(obj, Set):
+        temp = []
+        new_dicted[id(obj)] = temp
+        for x in (jsonify(v, dicted=new_dicted) for v in obj):
+            temp.append(x)
+        return temp
+
+    elif isinstance(obj, pydantic.BaseModel):
+        temp = {}
+        new_dicted[id(obj)] = temp
+        temp.update(
+            {
+                k: jsonify(getattr(obj, k), dicted=new_dicted)
+                for k in obj.__fields__
+            }
+        )
+        return temp
+
+    else:
+        logging.debug(
+            f"Don't know how to jsonify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
+        )
+        return noserio(obj)
+
+
+
 def leaf_queries(obj_json: JSON,
-                 query: JSONPathBuilder = None) -> Iterable[JSONPathBuilder]:
+                 query: JSONPath = None) -> Iterable[JSONPath]:
     """
     Get all queries for the given object that select all of its leaf values.
     """
 
-    query = query or JSONPathBuilder()
+    query = query or JSONPath()
 
     if isinstance(obj_json, JSON_BASES):
         yield query
@@ -393,7 +445,223 @@ def _project(path: List, obj: Any):
 # JSONPath, a container for selector/accessors/setters of data stored in a json structure.
 
 
-class JSONPathBuilder():
+class Step(pydantic.BaseModel, abc.ABC):
+    """
+    A step in a selection path.
+    """
+
+    #def __init__(self, *args, **kwargs):
+    #    super().__init__(*args, **kwargs)
+
+    @abc.abstractmethod
+    def __call__(self, obj: Any) -> Iterable[Any]:
+        """
+        Get the element of `obj`, indexed by `self`.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def set(self, obj: Any, val: Any) -> Any:
+        """
+        Set the value(s) indicated by self in `obj` to value `val`.
+        """
+        raise NotImplementedError
+
+class GetAttribute(Step):
+    attribute: str
+
+    def __hash__(self):
+        return hash(self.attribute)
+
+    def __call__(self, obj: Any) -> Iterable[Any]:
+        if hasattr(obj, self.attribute):
+            yield getattr(obj, self.attribute)
+        else:
+            raise ValueError(
+                f"Object does not have attribute: {self.attribute}"
+            )
+
+    def set(self, obj: Any, val: Any) -> Any:
+        if obj is None:
+            obj = Bunch()
+        
+        if hasattr(obj, self.attribute):
+            setattr(obj, self.attribute, val)
+            return obj
+        else:
+            # might fail
+            setattr(obj, self.attribute, val)
+            return obj
+
+    def __repr__(self):
+        return f".{self.attribute}"
+
+
+class GetIndex(Step):
+    index: int
+
+    def __hash__(self):
+        return hash(self.index)
+
+    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+        if isinstance(obj, Sequence):
+            if len(obj) > self.index:
+                yield obj[self.index]
+            else:
+                raise IndexError(f"Index out of bounds: {self.index}")
+        else:
+            raise ValueError("Object is not a sequence.")
+
+    def set(self, obj: Any, val: Any) -> Any:
+        if obj is None:
+            obj = []
+
+        assert isinstance(obj, Sequence), "Sequence expected."
+
+        if self.index >= 0:
+            while len(obj) <= self.index:
+                obj.append(None)
+        
+        obj[self.index] = val
+        return obj
+
+    def __repr__(self):
+        return f"[{self.index}]"
+
+
+class GetItem(Step):
+    item: str
+
+    def __hash__(self):
+        return hash(self.item)
+
+    def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
+        if isinstance(obj, Dict):
+            if self.item in obj:
+                yield obj[self.item]
+            else:
+                raise KeyError(f"Key not in dictionary: {self.item}")
+        else:
+            raise ValueError("Object is not a dictionary.")
+
+    def set(self, obj: Any, val: Any) -> Any:
+        if obj is None:
+            obj = dict()
+
+        assert isinstance(obj, Dict), "Dictionary expected."
+
+        obj[self.item] = val
+        return obj
+
+    def __repr__(self):
+        return f"[{self.item}]"
+
+
+class GetSlice(Step):
+    start: Optional[int]
+    stop: Optional[int]
+    step: Optional[int]
+
+    def __hash__(self):
+        return hash((self.start, self.stop, self.step))
+
+    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+        if isinstance(obj, Sequence):
+            lower, upper, step = slice(self.start, self.stop,
+                                       self.step).indices(len(obj))
+            for i in range(lower, upper, step):
+                yield obj[i]
+        else:
+            raise ValueError("Object is not a sequence.")
+
+    def set(self, obj: Any, val: Any) -> Any:
+        if obj is None:
+            obj = []
+
+        assert isinstance(obj, Sequence), "Sequence expected."
+
+        lower, upper, step = slice(self.start, self.stop,
+                                    self.step).indices(len(obj))
+        
+        for i in range(lower, upper, step):
+            obj[i] = val
+
+        return obj
+
+    def __repr__(self):
+        pieces = ":".join(
+            [
+                "" if p is None else str(p)
+                for p in (self.start, self.stop, self.step)
+            ]
+        )
+        if pieces == "::":
+            pieces = ":"
+
+        return f"[{pieces}]"
+
+
+class GetIndices(Step):
+    indices: Sequence[int]
+
+    def __hash__(self):
+        return hash(tuple(self.indices))
+
+    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+        if isinstance(obj, Sequence):
+            for i in self.indices:
+                yield obj[i]
+        else:
+            raise ValueError("Object is not a sequence.")
+
+    def set(self, obj: Any, val: Any) -> Any:
+        if obj is None:
+            obj = []
+
+        assert isinstance(obj, Sequence), "Sequence expected."
+
+        for i in self.indices:
+            if i > 0:
+                while len(obj) <= i:
+                    obj.append(None)
+
+            obj[i] = val
+
+        return obj
+
+    def __repr__(self):
+        return f"[{','.join(map(str, self.indices))}]"
+
+
+class GetItems(Step):
+    items: Sequence[str]
+
+    def __hash__(self):
+        return hash(tuple(self.items))
+
+    def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
+        if isinstance(obj, Dict):
+            for i in self.items:
+                yield obj[i]
+        else:
+            raise ValueError("Object is not a dictionary.")
+
+    def set(self, obj: Any, val: Any) -> Any:
+        if obj is None:
+            obj = dict()
+
+        assert isinstance(obj, Dict), "Dictionary expected."
+
+        for i in self.items:
+            obj[i] = val
+
+        return obj
+
+    def __repr__(self):
+        return f"[{','.join(self.indices)}]"
+
+
+class JSONPath(pydantic.BaseModel):
     """
     Utilitiy class for building JSONPaths. This is seperated from JSONPath
     because those are pydantic.BaseModel which needs to handle attrbutes and
@@ -404,14 +672,14 @@ class JSONPathBuilder():
     
     ```python
 
-        JSONPathBuilder().record[5]['somekey]
+        JSONPath().record[5]['somekey]
     ```
     """
 
-    path: Tuple[Step]
+    path: Tuple[Step,...]
 
-    def __init__(self, path=None):
-        self.path = path or []
+    def __init__(self, path: Optional[Tuple[Step,...]]=None):
+        super().__init__(path=path or ())
 
     def __str__(self):
         return "*" + ("".join(map(repr, self.path)))
@@ -419,17 +687,60 @@ class JSONPathBuilder():
     def __repr__(self):
         return "JSONPath()" + ("".join(map(repr, self.path)))
 
+    def __hash__(self):
+        return hash(self.path)
+    
+    #def __eq__(self, other):
+    #    return self.path == other
+
+    """
     @staticmethod
-    def of_jsonpath(path: JSONPath) -> JSONPathBuilder:
-        return JSONPathBuilder(path=path.path)
+    def of_jsonpath(path: JSONPath) -> JSONPath:
+        return JSONPath(path=path.path)
 
     def to_jsonpath(self) -> JSONPath:
         return JSONPath(path=self.path)
+    """
 
     #@staticmethod
     #def of_path(path: Sequence[str | int]):
     #    raise NotImplementedError()
     #    return JSONPath()
+
+    def set(self, obj: Any, val: Any) -> Any:
+        if len(self.path) == 0:
+            return val
+        
+        first = self.path[0]
+        rest = JSONPath(path=self.path[1:])
+
+        try:
+            for first_obj in first(obj):
+
+                obj = first.set(
+                    first_obj,
+                    rest.set(
+                        first_obj,
+                        val
+                    ),
+                )
+
+        except (ValueError, IndexError, KeyError):
+            first_obj = first.set(None, None)
+
+            obj = first.set(
+                first_obj,
+                rest.set(
+                    first_obj,
+                    val
+                ),
+            )
+
+        return obj
+
+    def get_sole_item(self, obj: Any) -> Any:
+        gen = self.__call__(obj)
+        return next(gen)
 
     def __call__(self, obj: Any) -> Iterable[Any]:
         if len(self.path) == 0:
@@ -438,26 +749,28 @@ class JSONPathBuilder():
 
         first = self.path[0]
         if len(self.path) == 1:
-            rest = JSONPath()
+            rest = JSONPath(path=())
         else:
-            rest = JSONPath(self.path[1:])
+            rest = JSONPath(path=self.path[1:])
 
         for first_selection in first.__call__(obj):
             for rest_selection in rest.__call__(first_selection):
                 yield rest_selection
 
     def _append(self, step: Step) -> JSONPath:
-        return JSONPathBuilder(self.path + [step])
+        return JSONPath(path=self.path + (step,))
 
     def __getitem__(
         self, item: int | str | slice | Sequence[int] | Sequence[str]
-    ) -> JSONPathBuilder:
+    ) -> JSONPath:
         if isinstance(item, int):
             return self._append(GetIndex(index=item))
         if isinstance(item, str):
             return self._append(GetItem(item=item))
         if isinstance(item, slice):
-            return self._append(GetSlice(slice=item))
+            return self._append(
+                GetSlice(start=item.start, stop=item.stop, step=item.step)
+            )
         if isinstance(item, Sequence):
             item = tuple(item)
             if all(isinstance(i, int) for i in item):
@@ -472,7 +785,7 @@ class JSONPathBuilder():
 
         raise TypeError(f"Unhandled item type {type(item)}.")
 
-    def __getattr__(self, attr: str) -> JSONPathBuilder:
+    def __getattr__(self, attr: str) -> JSONPath:
         return self._append(GetAttribute(attribute=attr))
 
 

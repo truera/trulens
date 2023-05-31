@@ -51,13 +51,13 @@ from tqdm.auto import tqdm
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
-from trulens_eval.tru_db import JSON
+from trulens_eval.tru_db import JSON, ChainQuery, RecordQuery
 from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_db import TruDB
-from trulens_eval.schema import FeedbackDefinition, Selection
-from trulens_eval.util import TP
+from trulens_eval.schema import FeedbackDefinition, FeedbackResult, Method, Model, Selection
+from trulens_eval.util import TP, JSONPath
 
 # openai
 
@@ -100,14 +100,14 @@ def check_provider(cls_or_name: Union[Type, str]) -> None:
 
 
 class Feedback(FeedbackDefinition):
-    # Implementation, not serializable.
+    # Implementation, not serializable, note that FeedbackDefinition contains
+    # `implementation` mean to serialize the below.
     imp: Optional[Callable] = pydantic.Field(exclude=True)
     
     def __init__(
         self,
         imp: Optional[Callable] = None,
-        selectors: Optional[Dict[str, Selection]] = None,
-        feedback_id: Optional[str] = None
+        *args, **kwargs
     ):
         """
         A Feedback function container.
@@ -115,47 +115,24 @@ class Feedback(FeedbackDefinition):
         Parameters:
         
         - imp: Optional[Callable] -- implementation of the feedback function.
-
-        - selectors: Optional[Dict[str, Selection]] -- mapping of implementation
-          argument names to where to get them from a record.
-
-        - feedback_id: Optional[str] - unique identifier.
         """
 
-        super().__init__()
+        if imp is not None:
+            # These are for serialization to/from json and for db storage.
+            kwargs['implementation'] = Method.of_method(imp)
 
-        # Verify that `imp` expects the arguments specified in `selectors`:
-        if imp is not None and selectors is not None:
-            sig: Signature = signature(imp)
-            for argname in selectors.keys():
-                assert argname in sig.parameters, (
-                    f"{argname} is not an argument to {imp.__name__}. "
-                    f"Its arguments are {list(sig.parameters.keys())}."
-                )
+        super().__init__(*args, **kwargs)
 
         self.imp = imp
-        self.selectors = selectors
 
-        if feedback_id is not None:
-            self.feedback_id = feedback_id
-
-        if imp is not None and selectors is not None:
-            # These are for serialization to/from json and for db storage.
-
-            impj = dict()
-
-            assert hasattr(
-                imp, "__self__"
-            ), "Feedback implementation is not a method (maybe it is a function?)."
-
-            impj['provider'] = imp.__self__.to_json()
-            impj['method_name'] = imp.__name__
-            
-            self.imp_json = impj
-
-            self.feedback_json = self.to_json()
-            self.feedback_id = feedback_id or obj_id_of_obj(self.feedback_json, prefix="feedback")
-            self.feedback_json['feedback_id'] = self.feedback_id
+        # Verify that `imp` expects the arguments specified in `selectors`:
+        if self.imp is not None and self.selectors is not None:
+            sig: Signature = signature(self.imp)
+            for argname in self.selectors.keys():
+                assert argname in sig.parameters, (
+                    f"{argname} is not an argument to {self.imp.__name__}. "
+                    f"Its arguments are {list(sig.parameters.keys())}."
+                )
 
     @staticmethod
     def evaluate_deferred(tru: 'Tru'):
@@ -281,10 +258,14 @@ class Feedback(FeedbackDefinition):
           input to `multiarg` to some inner value which will be sent to `self.imp`.
         """
 
-        def wrapped_imp(**kwargs):
-            assert multiarg in kwargs, f"Feedback function expected {multiarg} keyword argument."
+        sig = signature(self.imp)
 
-            multi = kwargs[multiarg]
+        def wrapped_imp(*args, **kwargs):
+            bindings = sig.bind(*args, **kwargs)
+
+            assert multiarg in bindings.arguments, f"Feedback function expected {multiarg} keyword argument."
+
+            multi = bindings.arguments[multiarg]
 
             assert isinstance(
                 multi, Sequence
@@ -297,9 +278,9 @@ class Feedback(FeedbackDefinition):
                 if each_query is not None:
                     aval = TruDB.project(query=each_query, record_json=aval, chain_json=None)
 
-                kwargs[multiarg] = aval
+                bindings.arguments[multiarg] = aval
 
-                rets.append(TP().promise(self.imp, **kwargs))
+                rets.append(TP().promise(self.imp, *bindings.args, **bindings.kwargs))
 
             rets: List[float] = list(map(lambda r: r.get(), rets))
 
@@ -345,34 +326,35 @@ class Feedback(FeedbackDefinition):
 
         return Feedback(imp=self.imp, selectors=selectors)
 
-    def run_on_record(self, chain_json: JSON, record_json: JSON) -> Any:
+    def run(self, chain: Optional[Model]=None, record: Optional[Record]=None) -> Any:
         """
         Run the feedback function on the given `record`. The `chain` that
         produced the record is also required to determine input/output argument
         names.
         """
 
-        if 'record_id' not in record_json:
-            record_json['record_id'] = None
-
         try:
-            ins = self.extract_selection(chain_json=chain_json, record_json=record_json)
+            ins = self.extract_selection(chain=chain, record=record)
             ret = self.imp(**ins)
             
-            return {
-                '_success': True,
-                'feedback_id': self.feedback_id,
-                'record_id': record_json['record_id'],
-                self.name: ret
-            }
+            return FeedbackResult(
+                result_json={
+                    '_success': True,
+                    self.name: ret
+                },
+                feedback_definition_id = self.feedback_definition_id,
+                record_id = record.record_id
+            )
         
         except Exception as e:
-            return {
-                '_success': False,
-                'feedback_id': self.feedback_id,
-                'record_id': record_json['record_id'],
-                '_error': str(e)
-            }
+            return FeedbackResult(
+                result_json={
+                    '_success': False,
+                    '_error': str(e)
+                },
+                feedback_definition_id = self.feedback_definition_id,
+                record_id = record.record_id
+            )
 
     def run_and_log(self, record_json: JSON, tru: 'Tru') -> None:
         record_id = record_json['record_id']
@@ -438,8 +420,8 @@ class Feedback(FeedbackDefinition):
 
     def extract_selection(
             self,
-            chain_json: Dict,
-            record_json: Dict
+            chain: Model,
+            record: Record
         ) -> Dict[str, Any]:
         """
         Given the `chain` that produced the given `record`, extract from
@@ -453,32 +435,20 @@ class Feedback(FeedbackDefinition):
             if isinstance(v, Query):
                 q = v
 
-            elif v == "prompt" or v == "input":
-                if len(chain_json['input_keys']) > 1:
-                    #logging.warn(
-                    #    f"Chain has more than one input, guessing the first one is prompt."
-                    #)
-                    pass
-
-                input_key = chain_json['input_keys'][0]
-
-                q = Record.chain._call.args.inputs[input_key]
-
-            elif v == "response" or v == "output":
-                if len(chain_json['output_keys']) > 1:
-                    #logging.warn(
-                    #    "Chain has more than one ouput, guessing the first one is response."
-                    #)
-                    pass
-
-                output_key = chain_json['output_keys'][0]
-
-                q = Record.chain._call.rets[output_key]
-
             else:
                 raise RuntimeError(f"Unhandled selection type {type(v)}.")
 
-            val = TruDB.project(query=q, record_json=record_json, chain_json=chain_json)
+            if q[0] == RecordQuery.path[0]:
+                o = record.layout_calls_as_chain()
+            elif q[0] == ChainQuery.path[0]:
+                o = chain
+            else:
+                raise ValueError("Query does not indicate whether it is about a record or about a chain:", q)
+
+            q_within_o = JSONPath(path=q.path[1:])
+
+            val = q_within_o(o)
+
             ret[k] = val
 
         return ret
@@ -832,14 +802,15 @@ def _get_answer_agreement(prompt, response, check_response, model_engine):
     )
     return oai_chat_response
 
+# Cannot put these inside Huggingface since it interferes with pydantic.BaseModel.
+HUGS_SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
+HUGS_TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
+HUGS_CHAT_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-3B"
+HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
 
 class Huggingface(Provider):
 
-    SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
-    TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
-    CHAT_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-3B"
-    LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
-
+    
     def __init__(self):
         """
         A set of Huggingface Feedback Functions. Utilizes huggingface
@@ -875,7 +846,7 @@ class Huggingface(Provider):
         def get_scores(text):
             payload = {"inputs": text}
             hf_response = self.endpoint.post(
-                url=Huggingface.LANGUAGE_API_URL, payload=payload, timeout=30
+                url=HUGS_LANGUAGE_API_URL, payload=payload, timeout=30
             )
             return {r['label']: r['score'] for r in hf_response}
 
@@ -916,7 +887,7 @@ class Huggingface(Provider):
         payload = {"inputs": truncated_text}
 
         hf_response = self.endpoint.post(
-            url=Huggingface.SENTIMENT_API_URL, payload=payload
+            url=HUGS_SENTIMENT_API_URL, payload=payload
         )
 
         for label in hf_response:
@@ -939,7 +910,7 @@ class Huggingface(Provider):
         truncated_text = text[:max_length]
         payload = {"inputs": truncated_text}
         hf_response = self.endpoint.post(
-            url=Huggingface.TOXIC_API_URL, payload=payload
+            url=HUGS_TOXIC_API_URL, payload=payload
         )
 
         for label in hf_response:
