@@ -1,0 +1,29 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - trulens_eval
+
+pr:
+  branches:
+    include:
+      - main
+      - releases/*
+  paths:
+    include:
+      - trulens_eval
+
+
+jobs:
+  - job: quickstartTests
+    pool:
+      vmImage: "ubuntu-latest"
+    timeoutInMinutes: 30
+
+    steps:
+      - checkout: self
+        clean: true
+      - bash: echo "##vso[task.prependpath]$CONDA/bin"
+        displayName: Add conda to PATH
