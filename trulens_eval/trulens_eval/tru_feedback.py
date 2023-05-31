@@ -51,7 +51,7 @@ from tqdm.auto import tqdm
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
-from trulens_eval.tru_db import JSON, ChainQuery, RecordQuery
+from trulens_eval.tru_db import JSON, ChainQuery, RecordInput, RecordOutput, RecordQuery
 from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import Record
@@ -305,7 +305,7 @@ class Feedback(FeedbackDefinition):
         "prompt" as input, sending it as an argument `arg` to implementation.
         """
 
-        return Feedback(imp=self.imp, selectors={arg: "prompt"})
+        return Feedback(imp=self.imp, selectors={arg: RecordInput})
 
     on_input = on_prompt
 
@@ -315,7 +315,7 @@ class Feedback(FeedbackDefinition):
         "response" as input, sending it as an argument `arg` to implementation.
         """
 
-        return Feedback(imp=self.imp, selectors={arg: "response"})
+        return Feedback(imp=self.imp, selectors={arg: RecordOutput})
 
     on_output = on_response
 
@@ -338,22 +338,24 @@ class Feedback(FeedbackDefinition):
             ret = self.imp(**ins)
             
             return FeedbackResult(
-                result_json={
+                results_json={
                     '_success': True,
                     self.name: ret
                 },
                 feedback_definition_id = self.feedback_definition_id,
-                record_id = record.record_id
+                record_id = record.record_id,
+                chain_id=chain.chain_id
             )
         
         except Exception as e:
             return FeedbackResult(
-                result_json={
+                results_json={
                     '_success': False,
                     '_error': str(e)
                 },
                 feedback_definition_id = self.feedback_definition_id,
-                record_id = record.record_id
+                record_id = record.record_id,
+                chain_id=chain.chain_id
             )
 
     def run_and_log(self, record_json: JSON, tru: 'Tru') -> None:
@@ -438,16 +440,19 @@ class Feedback(FeedbackDefinition):
             else:
                 raise RuntimeError(f"Unhandled selection type {type(v)}.")
 
-            if q[0] == RecordQuery.path[0]:
+            if q.path[0] == RecordQuery.path[0]:
                 o = record.layout_calls_as_chain()
-            elif q[0] == ChainQuery.path[0]:
+            elif q.path[0] == ChainQuery.path[0]:
                 o = chain
             else:
-                raise ValueError("Query does not indicate whether it is about a record or about a chain:", q)
+                raise ValueError(f"Query {q} does not indicate whether it is about a record or about a chain.")
 
             q_within_o = JSONPath(path=q.path[1:])
 
-            val = q_within_o(o)
+            val = list(q_within_o(o))
+
+            if len(val) == 1:
+                val = val[0]
 
             ret[k] = val
 

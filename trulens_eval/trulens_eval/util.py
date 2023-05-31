@@ -5,8 +5,9 @@ Do not import anything from trulens_eval here.
 """
 
 from __future__ import annotations
-import abc
 
+import abc
+import itertools
 import json
 import logging
 from multiprocessing.context import TimeoutError
@@ -15,13 +16,12 @@ from multiprocessing.pool import ThreadPool
 from queue import Queue
 from time import sleep
 from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set, Tuple,
-    TypeVar, Union
+    Any, Callable, Dict, Hashable, Iterable, Iterator, List, Optional, Sequence, Set,
+    Tuple, TypeVar, Union
 )
 
-from sklearn.utils import Bunch
-
 from merkle_json import MerkleJson
+from munch import Munch as Bunch
 import pandas as pd
 import pydantic
 
@@ -44,6 +44,12 @@ def second(seq: Sequence[T]) -> T:
 def third(seq: Sequence[T]) -> T:
     return seq[2]
 
+# Generator utils
+
+def iterable_peek(it: Iterable[T]) -> Tuple[T, Iterable[T]]:
+    iterator = iter(it)
+    item = next(iterator)
+    return item, itertools.chain([item], iterator)
 
 # JSON utilities
 
@@ -174,9 +180,7 @@ def jsonify(obj: Any, dicted=None) -> JSON:
         return noserio(obj)
 
 
-
-def leaf_queries(obj_json: JSON,
-                 query: JSONPath = None) -> Iterable[JSONPath]:
+def leaf_queries(obj_json: JSON, query: JSONPath = None) -> Iterable[JSONPath]:
     """
     Get all queries for the given object that select all of its leaf values.
     """
@@ -467,6 +471,7 @@ class Step(pydantic.BaseModel, abc.ABC):
         """
         raise NotImplementedError
 
+
 class GetAttribute(Step):
     attribute: str
 
@@ -478,13 +483,13 @@ class GetAttribute(Step):
             yield getattr(obj, self.attribute)
         else:
             raise ValueError(
-                f"Object does not have attribute: {self.attribute}"
+                f"Object {obj} does not have attribute: {self.attribute}"
             )
 
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = Bunch()
-        
+
         if hasattr(obj, self.attribute):
             setattr(obj, self.attribute, val)
             return obj
@@ -510,7 +515,7 @@ class GetIndex(Step):
             else:
                 raise IndexError(f"Index out of bounds: {self.index}")
         else:
-            raise ValueError("Object is not a sequence.")
+            raise ValueError(f"Object {obj} is not a sequence.")
 
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
@@ -521,7 +526,7 @@ class GetIndex(Step):
         if self.index >= 0:
             while len(obj) <= self.index:
                 obj.append(None)
-        
+
         obj[self.index] = val
         return obj
 
@@ -542,7 +547,7 @@ class GetItem(Step):
             else:
                 raise KeyError(f"Key not in dictionary: {self.item}")
         else:
-            raise ValueError("Object is not a dictionary.")
+            raise ValueError(f"Object {obj} is not a dictionary.")
 
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
@@ -554,7 +559,43 @@ class GetItem(Step):
         return obj
 
     def __repr__(self):
-        return f"[{self.item}]"
+        return f"[{repr(self.item)}]"
+
+
+
+class GetItemOrAttribute(Step):
+    # For item/attribute agnostic addressing.
+
+    item: str
+
+    def __hash__(self):
+        return hash(self.item)
+
+    def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
+        if isinstance(obj, Dict):
+            if self.item in obj:
+                yield obj[self.item]
+            else:
+                raise KeyError(f"Key not in dictionary: {self.item}")
+        else:
+            if hasattr(obj, self.item):
+                yield getattr(obj, self.item)
+            else:
+                raise ValueError(f"Object {obj} does not have item or attribute {self.item}.")
+
+    def set(self, obj: Any, val: Any) -> Any:
+        if obj is None:
+            obj = dict()
+
+        if isinstance(obj, Dict):
+            obj[self.item] = val
+        else:
+            setattr(obj, self.item)
+
+        return obj
+
+    def __repr__(self):
+        return f".{self.item}"
 
 
 class GetSlice(Step):
@@ -581,8 +622,8 @@ class GetSlice(Step):
         assert isinstance(obj, Sequence), "Sequence expected."
 
         lower, upper, step = slice(self.start, self.stop,
-                                    self.step).indices(len(obj))
-        
+                                   self.step).indices(len(obj))
+
         for i in range(lower, upper, step):
             obj[i] = val
 
@@ -621,7 +662,7 @@ class GetIndices(Step):
         assert isinstance(obj, Sequence), "Sequence expected."
 
         for i in self.indices:
-            if i > 0:
+            if i >= 0:
                 while len(obj) <= i:
                     obj.append(None)
 
@@ -676,9 +717,10 @@ class JSONPath(pydantic.BaseModel):
     ```
     """
 
-    path: Tuple[Step,...]
+    path: Tuple[Step, ...]
 
-    def __init__(self, path: Optional[Tuple[Step,...]]=None):
+    def __init__(self, path: Optional[Tuple[Step, ...]] = None):
+
         super().__init__(path=path or ())
 
     def __str__(self):
@@ -689,10 +731,9 @@ class JSONPath(pydantic.BaseModel):
 
     def __hash__(self):
         return hash(self.path)
-    
+
     #def __eq__(self, other):
     #    return self.path == other
-
     """
     @staticmethod
     def of_jsonpath(path: JSONPath) -> JSONPath:
@@ -710,37 +751,30 @@ class JSONPath(pydantic.BaseModel):
     def set(self, obj: Any, val: Any) -> Any:
         if len(self.path) == 0:
             return val
-        
+
         first = self.path[0]
         rest = JSONPath(path=self.path[1:])
 
         try:
-            for first_obj in first(obj):
+            firsts = first(obj)
+            first_obj, firsts = iterable_peek(firsts)
+            
+        except (ValueError, IndexError, KeyError, AttributeError):
 
-                obj = first.set(
-                    first_obj,
-                    rest.set(
-                        first_obj,
-                        val
-                    ),
-                )
+            # `first` points to an element that does not exist, use `set` to create a spot for it.
+            obj = first.set(obj, None) # will create a spot for `first`
+            firsts = first(obj)
 
-        except (ValueError, IndexError, KeyError):
-            first_obj = first.set(None, None)
-
+        for first_obj in firsts:
             obj = first.set(
-                first_obj,
-                rest.set(
-                    first_obj,
-                    val
-                ),
+                obj,
+                rest.set(first_obj, val),
             )
 
         return obj
 
     def get_sole_item(self, obj: Any) -> Any:
-        gen = self.__call__(obj)
-        return next(gen)
+        return next(self.__call__(obj))
 
     def __call__(self, obj: Any) -> Iterable[Any]:
         if len(self.path) == 0:
@@ -766,7 +800,7 @@ class JSONPath(pydantic.BaseModel):
         if isinstance(item, int):
             return self._append(GetIndex(index=item))
         if isinstance(item, str):
-            return self._append(GetItem(item=item))
+            return self._append(GetItemOrAttribute(item=item))
         if isinstance(item, slice):
             return self._append(
                 GetSlice(start=item.start, stop=item.stop, step=item.step)
@@ -786,7 +820,7 @@ class JSONPath(pydantic.BaseModel):
         raise TypeError(f"Unhandled item type {type(item)}.")
 
     def __getattr__(self, attr: str) -> JSONPath:
-        return self._append(GetAttribute(attribute=attr))
+        return self._append(GetItemOrAttribute(item=attr))
 
 
 # Python utilities

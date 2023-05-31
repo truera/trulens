@@ -24,6 +24,7 @@ tinydb
 pydantic
 merkle_json
 frozendict
+munch>=3.0.0
 # app requirements:
 streamlit
 streamlit-aggrid

@@ -318,7 +318,7 @@ class LocalSQLite(TruDB):
         chain_id = record.chain_id
         record_id = record.record_id
 
-        record_json = record.json()
+        record_json = record.dict()
 
         conn, c = self._connect()
 
@@ -343,8 +343,7 @@ class LocalSQLite(TruDB):
     def insert_chain(self, chain: Model) -> str:
         chain_id = chain.chain_id
 
-        chain_json = chain.json()
-        chain_str = json_str_of_obj(chain_json)
+        chain_str = chain.json()
 
         conn, c = self._connect()
         c.execute(
@@ -362,19 +361,18 @@ class LocalSQLite(TruDB):
         Insert a feedback definition into the database.
         """
 
-        feedback_json = feedback.json()
-
-        feedback_id = feedback_json['feedback_id']
-        feedback_str = json_str_of_obj(feedback_json)
+    
+        feedback_definition_id = feedback.feedback_definition_id
+        feedback_str = feedback.json()
 
         conn, c = self._connect()
         c.execute(
             f"INSERT OR REPLACE INTO {self.TABLE_FEEDBACK_DEFS} VALUES (?, ?)",
-            (feedback_id, feedback_str)
+            (feedback_definition_id, feedback_str)
         )
         self._close(conn)
 
-        print(f"{UNICODE_CHECK} feedback def. {feedback_id} -> {self.filename}")
+        print(f"{UNICODE_CHECK} feedback def. {feedback_definition_id} -> {self.filename}")
 
     def get_feedback_defs(
         self, feedback_id: Optional[str] = None
@@ -423,20 +421,16 @@ class LocalSQLite(TruDB):
         Insert a record-feedback link to db or update an existing one.
         """
 
-        if result is not None:
-            result_json = result.json()
-
         if record_id is None or feedback_id is None:
             assert result is not None, "`result` needs to be given if `record_id` or `feedback_id` are not provided."
-            record_id = result_json['record_id']
-            feedback_id = result_json['feedback_id']
+            record_id = result.record_id
+            feedback_id = result.feedback_result_id
 
         last_ts = last_ts or 0
         status = status or 0
-        result_json = result_json or dict()
         total_cost = total_cost = 0.0
         total_tokens = total_tokens or 0
-        result_str = json_str_of_obj(result_json)
+        result_str = result.json() if result is not None else "{}"
 
         conn, c = self._connect()
         c.execute(

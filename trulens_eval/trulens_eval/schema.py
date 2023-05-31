@@ -14,7 +14,7 @@ import langchain
 import pydantic
 from pydantic import Field
 
-from trulens_eval.util import JSON, GetAttribute, jsonify
+from trulens_eval.util import JSON, GetAttribute, GetItemOrAttribute, jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.util import obj_id_of_obj, json_default
 
@@ -117,10 +117,10 @@ class RecordChainCall(pydantic.BaseModel):
     args: JSON
 
     # Returns of the instrumented method if successful.
-    rets: Optional[JSON]
+    rets: Optional[JSON] = None
 
     # Error message if call raised exception.
-    error: Optional[str]
+    error: Optional[str] = None
 
     # Timestamps tracking entrance and exit of the instrumented method.
     start_time: datetime.datetime
@@ -146,7 +146,8 @@ class Record(pydantic.BaseModel):
     cost: RecordCost
 
     main_input: str
-    main_output: str
+    main_output: Optional[str] # if no error
+    main_error: Optional[str] # if error
 
     # The collection of calls recorded. Note that these can be converted into a
     # json structure with the same paths as the chain that generated this record
@@ -159,11 +160,12 @@ class Record(pydantic.BaseModel):
         super().__init__(record_id="temporay", **kwargs)
 
         if record_id is None:
-            record_id = obj_id_of_obj(self.json(), prefix="record")
+            record_id = obj_id_of_obj(self.dict(), prefix="record")
 
         self.record_id = record_id
 
-    def layout_calls_as_chain(self) -> JSON:
+    # TODO: typing
+    def layout_calls_as_chain(self) -> Any:
         """
         Layout the calls in this record into the structure that follows that of
         the chain that created this record. This uses the paths stored in each
@@ -179,13 +181,18 @@ class Record(pydantic.BaseModel):
               definitions would be in the Chain structure.
         """
 
-        ret = dict()
+        from munch import Munch as Bunch
+
+        # TODO: problem: collissions
+        ret = Bunch(**self.dict())
+
+        print("ret=", ret)
 
         for call in self.calls:
             frame_info = call.top(
             )  # info about the method call is at the top of the stack
             path = frame_info.path._append(
-                GetAttribute(attribute=frame_info.method.method_name)
+                GetItemOrAttribute(item=frame_info.method.method_name)
             )  # adds another attribute to path, from method name
             # TODO: append if already there
             ret = path.set(obj=ret, val=call)
@@ -211,7 +218,7 @@ class FeedbackResult(pydantic.BaseModel):
 
         if feedback_result_id is None:
             feedback_result_id = obj_id_of_obj(
-                self.json(), prefix="feedback_result"
+                self.dict(), prefix="feedback_result"
             )
 
         self.feedback_result_id = feedback_result_id
@@ -253,7 +260,7 @@ class FeedbackDefinition(pydantic.BaseModel):
         self.implementation = implementation
         if feedback_definition_id is None and implementation is not None:
             feedback_definition_id = obj_id_of_obj(
-                self.json(), prefix="feedback_definition"
+                self.dict(), prefix="feedback_definition"
             )
 
 
@@ -316,7 +323,7 @@ class Model(pydantic.BaseModel):
         # Create a chain_id from entire serializable structure, even stuff
         # coming from subclass.
         if chain_id is None:
-            chain_id = obj_id_of_obj(obj=self.json(), prefix="chain")
+            chain_id = obj_id_of_obj(obj=self.dict(), prefix="chain")
 
         self.chain_id = chain_id
 
@@ -325,6 +332,10 @@ class Model(pydantic.BaseModel):
         # structure contains loops.
 
         return json.dumps(jsonify(self.__fields__), default=json_default)
+    
+    def dict(self):
+        # Same problem as in json.
+        return jsonify(self.__fields__)
 
 
 class LangChainModel(Model):
