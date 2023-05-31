@@ -168,7 +168,7 @@ class TruChain(LangChainModel):
             )
             self.db.insert_chain(chain=self)
             for f in self.feedbacks:
-                self.db.insert_feedback_def(f.feedback)
+                self.db.insert_feedback_def(f)
 
         self._instrument_object(obj=self.chain, query=Query().chain)
         
@@ -253,15 +253,13 @@ class TruChain(LangChainModel):
 
         ret_record_args['main_input'] = "temporary input"
         ret_record_args['main_output'] = "temporary output"
+        ret_record_args['main_error'] = str(error)
         ret_record_args['calls'] = record
         ret_record_args['cost'] = RecordCost(
             n_tokens=total_tokens, cost=total_cost
         )
         ret_record_args['chain_id'] = self.chain_id
-
-        if error is not None:
-            ret_record_args['error'] = str(error)
-
+        
         ret_record = Record(**ret_record_args)
 
         if error is not None:
@@ -476,7 +474,7 @@ class TruChain(LangChainModel):
             # Otherwise keep track of inputs and outputs (or exception).
 
             error = None
-            ret = None
+            rets = None
 
             start_time = datetime.now()
 
@@ -493,10 +491,11 @@ class TruChain(LangChainModel):
                 # Using sig bind here so we can produce a list of key-value
                 # pairs even if positional arguments were provided.
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
-                ret = func(*bindings.args, **bindings.kwargs)
+                rets = func(*bindings.args, **bindings.kwargs)
 
             except BaseException as e:
                 error = e
+                error_str = str(e)
 
             end_time = datetime.now()
 
@@ -513,13 +512,10 @@ class TruChain(LangChainModel):
                 end_time=end_time,
                 pid=os.getpid(),
                 tid=th.get_native_id(),
-                chain_stack=chain_stack
+                chain_stack=chain_stack,
+                rets = rets,
+                error = error_str if error is not None else None
             )
-
-            if error is not None:
-                row_args['error'] = error
-            else:
-                row_args['rets'] = ret
 
             row = RecordChainCall(**row_args)
 
@@ -541,7 +537,7 @@ class TruChain(LangChainModel):
             if error is not None:
                 raise error
 
-            return ret
+            return rets
 
         wrapper._instrumented = func
 
