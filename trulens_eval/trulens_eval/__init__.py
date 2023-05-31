@@ -1,25 +1,27 @@
 """
-Imports of most common parts of the library. Should include everything to get started.
+# Imports of most common parts of the library.
 
-Module organization/dependency. Modules on lower lines should not import modules on same or above lines:
+    Should include everything to get started.
 
-__init__.py
+# Module organization/dependency
 
-tru.py
+    Modules on lower lines should not import modules on same or above lines:
 
-tru_chain.py
+    - __init__.py
 
-tru_feedback.py
+    - tru_chain.py
 
-tru_db.py
+    - tru.py
 
-provider_apis.py feedback_prompts.py
+    - tru_feedback.py
 
-util.py keys.py
+    - tru_db.py
 
-schema.py
+    - provider_apis.py feedback_prompts.py
 
+    - schema.py
 
+    - util.py keys.py
 """
 
 __version__ = "0.1.1"

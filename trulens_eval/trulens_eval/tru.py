@@ -13,8 +13,8 @@ import pkg_resources
 
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import LocalSQLite
-from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
+from trulens_eval.schema import FeedbackResult, Model, Record
 from trulens_eval.util import TP, SingletonPerName
 
 
@@ -37,14 +37,14 @@ class Tru(SingletonPerName):
     # Process of the dashboard app.
     dashboard_proc = None
 
-    def Chain(self, *args, **kwargs):
+    def Chain(self, **kwargs):
         """
         Create a TruChain with database managed by self.
         """
 
         from trulens_eval.tru_chain import TruChain
 
-        return TruChain(tru=self, *args, **kwargs)
+        return TruChain(tru=self, **kwargs)
 
     def __init__(self):
         """
@@ -56,7 +56,7 @@ class Tru(SingletonPerName):
             # Already initialized by SingletonByName mechanism.
             return
 
-        self.db = LocalSQLite(Tru.DEFAULT_DATABASE_FILE)
+        self.db = LocalSQLite(filename=Path(Tru.DEFAULT_DATABASE_FILE))
 
     def reset_database(self):
         """
@@ -69,7 +69,7 @@ class Tru(SingletonPerName):
         self,
         prompt: str,
         response: str,
-        record_json: JSON,
+        record: Record,
         tags: Optional[str] = "",
         ts: Optional[int] = None,
         total_tokens: Optional[int] = None,
@@ -99,17 +99,11 @@ class Tru(SingletonPerName):
             str: Unique record identifier.
 
         """
-        ts = ts or datetime.now()
-        total_tokens = total_tokens or record_json['_cost']['total_tokens']
-        total_cost = total_cost or record_json['_cost']['total_cost']
-
-        chain_id = record_json['chain_id']
 
         record_id = self.db.insert_record(
-            chain_id=chain_id,
             input=prompt,
             output=response,
-            record_json=record_json,
+            record=record,
             ts=ts,
             tags=tags,
             total_tokens=total_tokens,
@@ -120,9 +114,9 @@ class Tru(SingletonPerName):
 
     def run_feedback_functions(
         self,
-        record_json: JSON,
-        feedback_functions: Sequence['Feedback'],
-        chain_json: Optional[JSON] = None,
+        record: Record,
+        feedback_functions: Sequence[Feedback],
+        chain: Optional[Model] = None,
     ) -> Sequence[JSON]:
         """
         Run a collection of feedback functions and report their result.
@@ -141,25 +135,24 @@ class Tru(SingletonPerName):
         Returns nothing.
         """
 
-        chain_id = record_json['chain_id']
+        chain_id = record.chain_id
 
-        if chain_json is None:
-            chain_json = self.db.get_chain(chain_id=chain_id)
-            if chain_json is None:
+        if chain is None:
+            chain = self.db.get_chain(chain_id=chain_id)
+            if chain is None:
                 raise RuntimeError(
                     "Chain {chain_id} not present in db. "
                     "Either add it with `tru.add_chain` or provide `chain_json` to `tru.run_feedback_functions`."
                 )
 
         else:
-            assert chain_id == chain_json[
-                'chain_id'], "Record was produced by a different chain."
+            assert chain_id == chain.chain_id, "Record was produced by a different chain."
 
-            if self.db.get_chain(chain_id=chain_json['chain_id']) is None:
+            if self.db.get_chain(chain_id=chain.chain_id) is None:
                 logging.warn(
                     "Chain {chain_id} was not present in database. Adding it."
                 )
-                self.add_chain(chain_json=chain_json)
+                self.add_chain(chain=chain)
 
         evals = []
 
@@ -167,7 +160,7 @@ class Tru(SingletonPerName):
             evals.append(
                 TP().promise(
                     lambda f: f.run_on_record(
-                        chain_json=chain_json, record_json=record_json
+                        chain=chain, record=record
                     ), func
                 )
             )
@@ -177,18 +170,19 @@ class Tru(SingletonPerName):
         return list(evals)
 
     def add_chain(
-        self, chain_json: JSON, chain_id: Optional[str] = None
+        self, chain: Model
     ) -> None:
         """
         Add a chain to the database.        
         """
 
-        self.db.insert_chain(chain_id=chain_id, chain_json=chain_json)
+        self.db.insert_chain(chain=chain)
 
-    def add_feedback(self, result_json: JSON) -> None:
+    def add_feedback(self, result: FeedbackResult) -> None:
         """
         Add a single feedback result to the database.
         """
+        result_json = result.json()
 
         if 'record_id' not in result_json or result_json['record_id'] is None:
             raise RuntimeError(
@@ -196,21 +190,22 @@ class Tru(SingletonPerName):
                 "To log feedback, log the record first using `tru.add_record`."
             )
 
-        self.db.insert_feedback(result_json=result_json, status=2)
+        self.db.insert_feedback(result=result, status=2)
 
-    def add_feedbacks(self, result_jsons: Iterable[JSON]) -> None:
+    def add_feedbacks(self, results: Iterable[FeedbackResult]) -> None:
         """
         Add multiple feedback results to the database.
         """
 
-        for result_json in result_jsons:
-            self.add_feedback(result_json=result_json)
+        for result in results:
+            self.add_feedback(result=result)
 
     def get_chain(self, chain_id: str) -> JSON:
         """
         Look up a chain from the database.
         """
 
+        # TODO: unserialize
         return self.db.get_chain(chain_id)
 
     def get_records_and_feedback(self, chain_ids: List[str]):

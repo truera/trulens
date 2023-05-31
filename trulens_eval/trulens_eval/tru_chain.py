@@ -81,83 +81,50 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import langchain
 from langchain.callbacks import get_openai_callback
-from langchain.chains.base import Chain as LangChain
+from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_eval.tru_db import noserio
-from trulens_eval.tru_db import obj_id_of_obj
+from trulens_eval.schema import FeedbackMode, Method
+from trulens_eval.schema import LangChainModel
+from trulens_eval.schema import Record
+from trulens_eval.schema import RecordChainCall
+from trulens_eval.schema import RecordChainCallMethod
+from trulens_eval.schema import RecordCost
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
-from trulens_eval.schema import Record, RecordChainCall, RecordChainCallFrame, RecordCost
-from trulens_eval.util import TP
+from trulens_eval.tru import Tru
+from trulens_eval.util import TP, JSONPath, jsonify
 
-langchain.verbose = False
 
-# Addresses of chains or their contents. This is used to refer chains/parameters
-# even in cases where the live object is not in memory (i.e. on some remote
-# app).
-Path = Tuple[Union[str, int], ...]
-
-# Records of a chain run are dictionaries with these keys:
-#
-# - 'args': Dict[str, Any] -- chain __call__ input args.
-# - 'rets': Dict[str, Any] -- chain __call__ return dict for calls that succeed.
-# - 'error': str -- exception text if not successful.
-# - 'start_time': datetime
-# - 'end_time': datetime -- runtime info.
-# - 'pid': int -- process id for debugging multiprocessing.
-# - 'tid': int -- thread id for debuggin threading.
-# - 'chain_stack': List[Path] -- call stack of chain runs. Elements address
-#   chains.
-
-class TruChain(LangChain):
+class TruChain(LangChainModel):
     """
     Wrap a langchain Chain to capture its configuration and evaluation steps. 
     """
 
-    # The wrapped/instrumented chain.
-    chain: LangChain = None
+    class Config:
+        arbitrary_types_allowed = True
 
-    # Chain name/id. Will be a hash of chain definition/configuration if not provided.
-    chain_id: Optional[str] = None
-
-    # Flag of whether the chain is currently recording records. This is set
-    # automatically but is imperfect in threaded situations. The second check
-    # for recording is based on the call stack, see _call.
-    recording: Optional[bool] = Field(exclude=True)
+    # See LangChainModel for serializable fields.
 
     # Feedback functions to evaluate on each record.
-    feedbacks: Optional[Sequence[Feedback]] = Field(exclude=True)
-
-    # Feedback evaluation mode.
-    # - "withchain" - Try to run feedback functions immediately and before chain
-    #   returns a record.
-    # - "withchainthread" - Try to run feedback functions in the same process as
-    #   the chain but after it produces a record.
-    # - "deferred" - Evaluate later via the process started by
-    #   `tru.start_deferred_feedback_evaluator`.
-    # - None - No evaluation will happen even if feedback functions are specified.
-
-    # NOTE: Custom feedback functions cannot be run deferred and will be run as
-    # if "withchainthread" was set.
-    feedback_mode: Optional[str] = "withchainthread"
+    feedbacks: Sequence[Feedback] = Field(name="feedbacks", exclude=True)
 
     # Database interfaces for models/records/feedbacks.
-    tru: Optional['Tru'] = Field(exclude=True)
+    # NOTE: Maybe move to schema.Model .
+    tru: Optional[Tru] = Field(name="tru", exclude=True)
 
     # Database interfaces for models/records/feedbacks.
-    db: Optional[TruDB] = Field(exclude=True)
+    # NOTE: Maybe mobe to schema.Model .
+    db: Optional[TruDB] = Field(name="db", exclude=True)
 
     def __init__(
         self,
-        chain: LangChain,
-        chain_id: Optional[str] = None,
-        verbose: bool = False,
+        tru: Optional[Tru] = None,
         feedbacks: Optional[Sequence[Feedback]] = None,
-        feedback_mode: Optional[str] = "withchainthread",
-        tru: Optional['Tru'] = None
+        feedback_mode: FeedbackMode = FeedbackMode.WITH_CHAIN_THREAD,
+        **kwargs
     ):
         """
         Wrap a chain for monitoring.
@@ -169,60 +136,47 @@ class TruChain(LangChain):
           name is constructed from wrapped chain parameters.
         """
 
-        LangChain.__init__(self, verbose=verbose)
-
-        self.chain = chain
-
-        self._instrument_object(obj=self.chain, query=Query().chain)
-        self.recording = False
-
-        chain_json = self.json
-
-        # Track chain id. This will produce a name if not provided.
-        self.chain_id = chain_id or obj_id_of_obj(obj=chain_json, prefix="chain")
-
         if feedbacks is not None and tru is None:
             raise ValueError("Feedback logging requires `tru` to be specified.")
-
-        self.feedbacks = feedbacks or []
-
-        assert feedback_mode in [
-            'withchain', 'withchainthread', 'deferred', None
-        ], "`feedback_mode` must be one of 'withchain', 'withchainthread', 'deferred', or None."
-        self.feedback_mode = feedback_mode
+        feedbacks = feedbacks or []
 
         if tru is not None:
-            self.db = tru.db
+            kwargs['db'] = tru.db
 
-            if feedback_mode is None:
+            if feedback_mode == FeedbackMode.NONE:
                 logging.warn(
-                    "`tru` is specified but `feedback_mode` is None. "
+                    "`tru` is specified but `feedback_mode` is FeedbackMode.NONE. "
                     "No feedback evaluation and logging will occur."
                 )
         else:
-            if feedback_mode is not None:
+            
+            if feedback_mode != FeedbackMode.NONE:
                 logging.warn(
-                    f"`feedback_mode` is {feedback_mode} but `tru` was not specified. Reverting to None."
+                    f"`feedback_mode` is {feedback_mode} but `tru` was not specified. Reverting to FeedbackMode.NONE ."
                 )
-                self.feedback_mode = None
-                feedback_mode = None
-                # Import here to avoid circular imports.
-                # from trulens_eval import Tru
-                # tru = Tru()
+                feedback_mode = FeedbackMode.NONE
 
-        self.tru = tru
+        kwargs['tru'] = tru
+        kwargs['feedbacks'] = feedbacks
+        kwargs['feedback_mode'] = feedback_mode
 
-        if tru is not None and feedback_mode is not None:
+        super().__init__(**kwargs)
+
+        if tru is not None and feedback_mode != FeedbackMode.NONE:
             logging.debug(
                 "Inserting chain and feedback function definitions to db."
             )
-            self.db.insert_chain(chain_id=self.chain_id, chain_json=self.json)
+            self.db.insert_chain(chain=self)
             for f in self.feedbacks:
-                self.db.insert_feedback_def(f.feedback_json)
+                self.db.insert_feedback_def(f.feedback)
 
+        self._instrument_object(obj=self.chain, query=Query().chain)
+        
+
+    """
     @property
     def json(self):
-        temp = TruDB.jsonify(self)  # not using self.dict()
+        temp = jsonify(self)  # not using self.dict()
         # Need these to run feedback functions when they don't specify their
         # inputs exactly.
 
@@ -230,6 +184,7 @@ class TruChain(LangChain):
         temp['output_keys'] = self.output_keys
 
         return temp
+    """
 
     # Chain requirement
     @property
@@ -260,7 +215,7 @@ class TruChain(LangChain):
 
         # Wrapped calls will look this up by traversing the call stack. This
         # should work with threads.
-        record = defaultdict(list)
+        record: Sequence[RecordChainCall] = []
 
         ret = None
         error = None
@@ -284,18 +239,21 @@ class TruChain(LangChain):
         assert len(record) > 0, "No information recorded in call."
 
         ret_record_args = dict()
-        chain_json = self.json
+        # chain_json = self.json
 
-        for path, calls in record.items():
-            obj = TruDB._project(path=path, obj=chain_json)
+        #for path, calls in record.items():
+            # obj = path.get_sole_item(obj=chain_json)
 
-            if obj is None:
-                logging.warn(f"Cannot locate {path} in chain.")
+            #if obj is None:
+            #    logging.warn(f"Cannot locate {path} in chain.")
 
-            ret_record_args = TruDB._set_in_json(
-                path=path, in_json=ret_record_args, val={"_call": calls}
-            )
+            #ret_record_args = TruDB._set_in_json(
+            #    path=path, in_json=ret_record_args, val={"_call": calls}
+            #)
 
+        ret_record_args['main_input'] = "temporary input"
+        ret_record_args['main_output'] = "temporary output"
+        ret_record_args['calls'] = record
         ret_record_args['cost'] = RecordCost(
             n_tokens=total_tokens, cost=total_cost
         )
@@ -307,20 +265,22 @@ class TruChain(LangChain):
         ret_record = Record(**ret_record_args)
 
         if error is not None:
-            if self.feedback_mode == "withchain":
+            if self.feedback_mode == FeedbackMode.WITH_CHAIN:
                 self._handle_error(record=ret_record, error=error)
 
-            elif self.feedback_mode in ["deferred", "withchainthread"]:
+            elif self.feedback_mode in [FeedbackMode.DEFERRED,
+                                        FeedbackMode.WITH_CHAIN_THREAD]:
                 TP().runlater(
                     self._handle_error, record=ret_record, error=error
                 )
 
             raise error
 
-        if self.feedback_mode == "withchain":
+        if self.feedback_mode == FeedbackMode.WITH_CHAIN:
             self._handle_record(record=ret_record)
 
-        elif self.feedback_mode in ["deferred", "withchainthread"]:
+        elif self.feedback_mode in [FeedbackMode.DEFERRED,
+                                    FeedbackMode.WITH_CHAIN_THREAD]:
             TP().runlater(self._handle_record, record=ret_record)
 
         return ret, ret_record
@@ -344,14 +304,13 @@ class TruChain(LangChain):
         if self.tru is None or self.feedback_mode is None:
             return
 
-        main_input = record.calls[0].args['inputs'][
-            self.input_keys[0]]
+        main_input = record.calls[0].args['inputs'][self.input_keys[0]]
         main_output = record.calls[0].rets[self.output_keys[0]]
 
         record_id = self.tru.add_record(
             prompt=main_input,
             response=main_output,
-            record_json=record.dict(),
+            record=record,
             tags='dev',  # TODO: generalize
             total_tokens=record.cost.n_tokens,
             total_cost=record.cost.cost
@@ -361,17 +320,18 @@ class TruChain(LangChain):
             return
 
         # Add empty (to run) feedback to db.
-        if self.feedback_mode == "deferred":
+        if self.feedback_mode == FeedbackMode.DEFERRED:
             for f in self.feedbacks:
                 feedback_id = f.feedback_id
                 self.db.insert_feedback(record_id, feedback_id)
 
-        elif self.feedback_mode in ["withchain", "withchainthread"]:
+        elif self.feedback_mode in [FeedbackMode.WITH_CHAIN,
+                                    FeedbackMode.WITH_CHAIN_THREAD]:
 
             results = self.tru.run_feedback_functions(
-                record_json=record.dict(),
+                record=record,
                 feedback_functions=self.feedbacks,
-                chain_json=self.json
+                chain=self
             )
 
             for result_json in results:
@@ -380,8 +340,6 @@ class TruChain(LangChain):
     def _handle_error(self, record: Record, error: Exception):
         if self.db is None:
             return
-
-        pass
 
     # Chain requirement
     # TODO(piotrm): figure out whether the combination of _call and __call__ is working right.
@@ -475,19 +433,16 @@ class TruChain(LangChain):
         return new_prop
 
     def _instrument_tracked_method(
-        self, query: Query, func: Callable, method_name: str, class_name: str,
-        module_name: str
+        self, query: Query, func: Callable, method_name: str, cls: type, obj: object
     ):
         """
         Instrument a method to capture its inputs/outputs/errors.
         """
 
-        if self.verbose:
-            print(f"instrumenting {method_name}={func} in {query._path}")
+        logging.debug(f"instrumenting {method_name}={func} in {query._path}")
 
         if hasattr(func, "_instrumented"):
-            if self.verbose:
-                print(f"{func} is already instrumented")
+            logging.debug(f"{func} is already instrumented")
 
             # Already instrumented. Note that this may happen under expected
             # operation when the same chain is used multiple times as part of a
@@ -528,13 +483,11 @@ class TruChain(LangChain):
             chain_stack = self._get_local_in_call_stack(
                 key="chain_stack", func=wrapper, offset=1
             ) or ()
-            frame_ident = RecordChainCallFrame(
-                path=tuple(query._path),
-                method_name=method_name,
-                class_name=class_name,
-                module_name=module_name,
+            frame_ident = RecordChainCallMethod(
+                path=query,
+                method=Method.of_method(func, obj=obj)
             )
-            chain_stack = chain_stack + (frame_ident, )
+            chain_stack = chain_stack + (frame_ident,)
 
             try:
                 # Using sig bind here so we can produce a list of key-value
@@ -549,15 +502,15 @@ class TruChain(LangChain):
 
             # Don't include self in the recorded arguments.
             nonself = {
-                k: TruDB.jsonify(v)
+                k: jsonify(v)
                 for k, v in bindings.arguments.items()
                 if k != "self"
             }
 
-            row_args = RecordChainCall(
+            row_args = dict(
                 args=nonself,
-                start_time=str(start_time),
-                end_time=str(end_time),
+                start_time=start_time,
+                end_time=end_time,
                 pid=os.getpid(),
                 tid=th.get_native_id(),
                 chain_stack=chain_stack
@@ -568,18 +521,23 @@ class TruChain(LangChain):
             else:
                 row_args['rets'] = ret
 
+            row = RecordChainCall(**row_args)
+
             # If there already is a call recorded at the same path, turn the
             # calls into a list.
+            record.append(row)
+            """
             if query._path in record:
                 existing_call = record[query._path]
                 if isinstance(existing_call, dict):
-                    record[query._path] = [existing_call, row_args]
+                    record[query._path] = [existing_call, row]
                 else:
-                    record[query._path].append(row_args)
+                    record[query._path].append(row)
             else:
                 # Otherwise record just the one call not inside a list.
-                record[query._path] = row_args
-
+                record[query._path] = row
+            """
+                
             if error is not None:
                 raise error
 
@@ -600,11 +558,9 @@ class TruChain(LangChain):
         # cls = inspect.getattr_static(obj, "__class__").__get__()
         cls = type(obj)
 
-        if self.verbose:
-            pass
-            #print(
-            #    f"instrumenting {query._path} {cls.__name__}, bases={cls.__bases__}"
-            #)
+        logging.debug(
+            f"instrumenting {query._path} {cls.__name__}, bases={cls.__bases__}"
+        )
 
         # NOTE: We cannot instrument chain directly and have to instead
         # instrument its class. The pydantic BaseModel does not allow instance
@@ -626,8 +582,7 @@ class TruChain(LangChain):
                 if hasattr(base, method_name):
                     original_fun = getattr(base, method_name)
 
-                    if self.verbose:
-                        print(f"instrumenting {base}.{method_name}")
+                    logging.debug(f"instrumenting {base}.{method_name}")
 
                     setattr(
                         base, method_name,
@@ -635,14 +590,13 @@ class TruChain(LangChain):
                             query=query,
                             func=original_fun,
                             method_name=method_name,
-                            class_name=base.__name__,
-                            module_name=base.__module__
+                            cls=base,
+                            obj=obj
                         )
                     )
 
             if hasattr(base, "_chain_type"):
-                if self.verbose:
-                    print(f"instrumenting {base}._chain_type")
+                logging.debug(f"instrumenting {base}._chain_type")
 
                 prop = getattr(base, "_chain_type")
                 setattr(
@@ -651,8 +605,7 @@ class TruChain(LangChain):
                 )
 
             if hasattr(base, "_prompt_type"):
-                if self.verbose:
-                    print(f"instrumenting {base}._chain_prompt")
+                logging.debug(f"instrumenting {base}._chain_prompt")
 
                 prop = getattr(base, "_prompt_type")
                 setattr(
@@ -661,8 +614,7 @@ class TruChain(LangChain):
                 )
 
             if hasattr(base, "dict"):
-                if self.verbose:
-                    print(f"instrumenting {base}.dict")
+                logging.debug(f"instrumenting {base}.dict")
 
                 setattr(base, "dict", self._instrument_dict(cls=base, obj=obj))
 
@@ -683,7 +635,7 @@ class TruChain(LangChain):
 
                 elif isinstance(v, Sequence):
                     for i, sv in enumerate(v):
-                        if isinstance(sv, LangChain):
+                        if isinstance(sv, langchain.chains.base.Chain):
                             self._instrument_object(obj=sv, query=query[k][i])
 
                 # TODO: check if we want to instrument anything not accessible through __fields__ .
