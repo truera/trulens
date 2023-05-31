@@ -1,10 +1,19 @@
 trigger:
-  - main
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - trulens_explain
 
 pr:
-  - main
-  - releases/*
-
+  branches:
+    include:
+      - main
+      - releases/*
+  paths:
+    include:
+      - trulens_explain
 jobs:
   - job: lensApiTests
     pool:
