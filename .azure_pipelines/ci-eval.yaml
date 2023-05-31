@@ -5,6 +5,7 @@ trigger:
   paths:
     include:
       - trulens_eval
+      - docs/*.ipynb
 
 pr:
   branches:
@@ -14,6 +15,7 @@ pr:
   paths:
     include:
       - trulens_eval
+      - docs/*.ipynb
 
 
 jobs:
@@ -22,8 +24,51 @@ jobs:
       vmImage: "ubuntu-latest"
     timeoutInMinutes: 30
 
+    strategy:
+      matrix:
+        docs_notebooks:
+          condaEnvFileSuffix: "trulens-llm"
+          testSubdirectory: "tests/docs_notebooks"
+
     steps:
       - checkout: self
         clean: true
       - bash: echo "##vso[task.prependpath]$CONDA/bin"
         displayName: Add conda to PATH
+      - bash: |
+          set -e
+          conda create -n $(condaEnvFileSuffix) python=3
+          conda init bash
+        displayName: Create Anaconda environment
+      - bash: |
+          set -e
+          source activate $(condaEnvFileSuffix)
+          which python
+        displayName: Which Python
+      - bash: |
+          set -e
+          source activate $(condaEnvFileSuffix)
+          cd ./trulens_eval
+          pip install -e .
+          python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
+        displayName: Install pip package
+      - bash: |
+          set -e
+          source activate $(condaEnvFileSuffix)
+          ./format.sh
+        displayName: Format Code
+      - bash: |
+          num_changed_files=`git ls-files --others -m --exclude-standard | wc -l`
+          if [ $num_changed_files -ne 0 ]; then
+            echo "The following files have changed after running format.sh. Please format your code and update the PR."
+            git ls-files --others -m --exclude-standard
+            echo "\n\nOutputting git diff for checked in files.\n"
+            git diff
+          fi
+        displayName: NoDiffCheck
+      - bash: |
+          source activate $(condaEnvFileSuffix)
+          pip install pytest==7.0.1 pytest-azurepipelines
+          cd ./trulens_explain
+          python -m pytest $(testSubdirectory)
+        displayName: Run unit tests
