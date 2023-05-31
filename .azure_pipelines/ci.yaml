@@ -1,10 +1,6 @@
 trigger:
   - main
 
-pr:
-  - main
-  - releases/*
-
 jobs:
   - job: lensApiTests
     pool:
