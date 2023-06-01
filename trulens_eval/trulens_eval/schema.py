@@ -6,17 +6,19 @@ import abc
 import datetime
 from enum import Enum
 import json
-from typing import (
-    Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Tuple,
+                    TypeVar, Union)
 
 import langchain
+from munch import Munch as Bunch
 import pydantic
-from pydantic import Field
 
-from trulens_eval.util import JSON, GetAttribute, GetItemOrAttribute, jsonify
+from trulens_eval.util import GetItemOrAttribute
+from trulens_eval.util import JSON
+from trulens_eval.util import json_default
+from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
-from trulens_eval.util import obj_id_of_obj, json_default
+from trulens_eval.util import obj_id_of_obj
 
 T = TypeVar("T")
 
@@ -146,15 +148,13 @@ class Record(pydantic.BaseModel):
     cost: RecordCost
 
     main_input: str
-    main_output: Optional[str] # if no error
-    main_error: Optional[str] # if error
+    main_output: Optional[str]  # if no error
+    main_error: Optional[str]  # if error
 
     # The collection of calls recorded. Note that these can be converted into a
     # json structure with the same paths as the chain that generated this record
     # via `layout_calls_as_chain`.
-    calls: Sequence[
-        RecordChainCall
-    ]
+    calls: Sequence[RecordChainCall]
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
         super().__init__(record_id="temporay", **kwargs)
@@ -181,12 +181,8 @@ class Record(pydantic.BaseModel):
               definitions would be in the Chain structure.
         """
 
-        from munch import Munch as Bunch
-
         # TODO: problem: collissions
         ret = Bunch(**self.dict())
-
-        print("ret=", ret)
 
         for call in self.calls:
             frame_info = call.top(
@@ -231,8 +227,11 @@ class FeedbackDefinition(pydantic.BaseModel):
     # Implementation serialization info.
     implementation: Optional[Method] = None
 
+    # Aggregator method for serialization.
+    aggregator: Optional[Method] = None
+
     # Id, if not given, unique determined from _json below.
-    feedback_definition_id: Optional[FeedbackDefinitionID] = None
+    feedback_definition_id: FeedbackDefinitionID
 
     # Selectors, pointers into Records of where to get
     # arguments for `imp`.
@@ -240,8 +239,9 @@ class FeedbackDefinition(pydantic.BaseModel):
 
     def __init__(
         self,
-        implementation: Optional[Method] = None,
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+        implementation: Optional[Method] = None,
+        aggregator: Optional[Method] = None,
         selectors: Dict[str, Selection] = None
     ):
         """
@@ -252,16 +252,22 @@ class FeedbackDefinition(pydantic.BaseModel):
 
         """
 
-        super().__init__()
+        super().__init__(
+            feedback_definition_id="temporary",
+            selectors=selectors,
+            implementation=implementation,
+            aggregator=aggregator,
+        )
+
+        if feedback_definition_id is None:
+            if implementation is not None:
+                feedback_definition_id = obj_id_of_obj(
+                    self.dict(), prefix="feedback_definition"
+                )
+            else:
+                feedback_definition_id = "anonymous_feedback_definition"
 
         self.feedback_definition_id = feedback_definition_id
-        self.selectors = selectors
-
-        self.implementation = implementation
-        if feedback_definition_id is None and implementation is not None:
-            feedback_definition_id = obj_id_of_obj(
-                self.dict(), prefix="feedback_definition"
-            )
 
 
 # Model/chain related:
@@ -332,7 +338,7 @@ class Model(pydantic.BaseModel):
         # structure contains loops.
 
         return json.dumps(jsonify(self.__fields__), default=json_default)
-    
+
     def dict(self):
         # Same problem as in json.
         return jsonify(self.__fields__)

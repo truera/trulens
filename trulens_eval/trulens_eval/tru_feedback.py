@@ -37,10 +37,11 @@ Language match feedback function:
 from datetime import datetime
 from inspect import Signature
 from inspect import signature
+import itertools
 import logging
 from multiprocessing.pool import AsyncResult
 import re
-from typing import (Any, Callable, Dict, List, Optional, Sequence, Tuple, Type,
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type,
                     Union)
 
 import numpy as np
@@ -103,11 +104,16 @@ class Feedback(FeedbackDefinition):
     # Implementation, not serializable, note that FeedbackDefinition contains
     # `implementation` mean to serialize the below.
     imp: Optional[Callable] = pydantic.Field(exclude=True)
+
+    # Aggregator method for feedback functions that produce more than one
+    # result.
+    agg: Optional[Callable] = pydantic.Field(exclude=True, value=np.mean)
     
     def __init__(
         self,
         imp: Optional[Callable] = None,
-        *args, **kwargs
+        agg: Optional[Callable] = None,
+        **kwargs
     ):
         """
         A Feedback function container.
@@ -117,13 +123,19 @@ class Feedback(FeedbackDefinition):
         - imp: Optional[Callable] -- implementation of the feedback function.
         """
 
+        agg = agg or np.mean
+
         if imp is not None:
             # These are for serialization to/from json and for db storage.
             kwargs['implementation'] = Method.of_method(imp)
 
-        super().__init__(*args, **kwargs)
+        if agg is not None:
+            kwargs['aggregator'] = Method.of_method(agg)
+
+        super().__init__(**kwargs)
 
         self.imp = imp
+        self.agg = agg
 
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None and self.selectors is not None:
@@ -189,6 +201,9 @@ class Feedback(FeedbackDefinition):
         assert self.imp is not None, "Feedback definition needs an implementation to call."
         return self.imp(*args, **kwargs)
         
+    def aggregate(self, func: Callable) -> 'Feedback':
+        return Feedback(imp=self.imp, selectors=self.selectors, agg=func)
+
     @staticmethod
     def selection_to_json(select: Selection) -> dict:
         if isinstance(select, str):
@@ -240,72 +255,13 @@ class Feedback(FeedbackDefinition):
 
         return Feedback(imp, selectors=selectors)
 
-    def on_multiple(
-        self,
-        multiarg: str,
-        each_query: Optional[Query] = None,
-        agg: Callable = np.mean
-    ) -> 'Feedback':
-        """
-        Create a variant of `self` whose implementation will accept multiple
-        values for argument `multiarg`, aggregating feedback results for each.
-        Optionally each input element is further projected with `each_query`.
-
-        Parameters:
-
-        - multiarg: str -- implementation argument that expects multiple values.
-        - each_query: Optional[Query] -- a query providing the path from each
-          input to `multiarg` to some inner value which will be sent to `self.imp`.
-        """
-
-        sig = signature(self.imp)
-
-        def wrapped_imp(*args, **kwargs):
-            bindings = sig.bind(*args, **kwargs)
-
-            assert multiarg in bindings.arguments, f"Feedback function expected {multiarg} keyword argument."
-
-            multi = bindings.arguments[multiarg]
-
-            assert isinstance(
-                multi, Sequence
-            ), f"Feedback function expected a sequence on {multiarg} argument."
-
-            rets: List[AsyncResult[float]] = []
-
-            for aval in multi:
-
-                if each_query is not None:
-                    aval = TruDB.project(query=each_query, record_json=aval, chain_json=None)
-
-                bindings.arguments[multiarg] = aval
-
-                rets.append(TP().promise(self.imp, *bindings.args, **bindings.kwargs))
-
-            rets: List[float] = list(map(lambda r: r.get(), rets))
-
-            rets = np.array(rets)
-
-            return agg(rets)
-
-        wrapped_imp.__name__ = self.imp.__name__
-
-        wrapped_imp.__self__ = self.imp.__self__ # needed for serialization
-
-        # Copy over signature from wrapped function. Otherwise signature of the
-        # wrapped method will include just kwargs which is insufficient for
-        # verify arguments (see Feedback.__init__).
-        wrapped_imp.__signature__ = signature(self.imp)
-
-        return Feedback(imp=wrapped_imp, selectors=self.selectors)
-
     def on_prompt(self, arg: str = "text"):
         """
         Create a variant of `self` that will take in the main chain input or
         "prompt" as input, sending it as an argument `arg` to implementation.
         """
 
-        return Feedback(imp=self.imp, selectors={arg: RecordInput})
+        return Feedback(imp=self.imp, selectors={arg: RecordInput}, agg=self.agg)
 
     on_input = on_prompt
 
@@ -315,7 +271,7 @@ class Feedback(FeedbackDefinition):
         "response" as input, sending it as an argument `arg` to implementation.
         """
 
-        return Feedback(imp=self.imp, selectors={arg: RecordOutput})
+        return Feedback(imp=self.imp, selectors={arg: RecordOutput}, agg=self.agg)
 
     on_output = on_response
 
@@ -324,7 +280,7 @@ class Feedback(FeedbackDefinition):
         Create a variant of `self` with the same implementation but the given `selectors`.
         """
 
-        return Feedback(imp=self.imp, selectors=selectors)
+        return Feedback(imp=self.imp, selectors=selectors, agg=self.agg)
 
     def run(self, chain: Optional[Model]=None, record: Optional[Record]=None) -> Any:
         """
@@ -333,14 +289,21 @@ class Feedback(FeedbackDefinition):
         names.
         """
 
+        result_vals = []
+
         try:
-            ins = self.extract_selection(chain=chain, record=record)
-            ret = self.imp(**ins)
-            
+            for ins in self.extract_selection(chain=chain, record=record):
+                result_val = self.imp(**ins)
+                result_vals.append(result_val)
+
+            print("result_vals=", result_vals)
+            result_vals = np.array(result_vals)
+            result = self.agg(result_vals)
+
             return FeedbackResult(
                 results_json={
                     '_success': True,
-                    self.name: ret
+                    self.name: result
                 },
                 feedback_definition_id = self.feedback_definition_id,
                 record_id = record.record_id,
@@ -424,14 +387,14 @@ class Feedback(FeedbackDefinition):
             self,
             chain: Model,
             record: Record
-        ) -> Dict[str, Any]:
+        ) -> Iterable[Dict[str, Any]]:
         """
         Given the `chain` that produced the given `record`, extract from
         `record` the values that will be sent as arguments to the implementation
         as specified by `self.selectors`.
         """
 
-        ret = {}
+        arg_vals = {}
 
         for k, v in self.selectors.items():
             if isinstance(v, Query):
@@ -448,15 +411,16 @@ class Feedback(FeedbackDefinition):
                 raise ValueError(f"Query {q} does not indicate whether it is about a record or about a chain.")
 
             q_within_o = JSONPath(path=q.path[1:])
+            arg_vals[k] = list(q_within_o(o))
 
-            val = list(q_within_o(o))
+        keys = arg_vals.keys()
+        vals = arg_vals.values()
 
-            if len(val) == 1:
-                val = val[0]
+        assignments = itertools.product(*vals)
 
-            ret[k] = val
+        for assignment in assignments:
+            yield {k: v for k, v in zip(keys, assignment)}
 
-        return ret
 
 
 pat_1_10 = re.compile(r"\s*([1-9][0-9]*)\s*")

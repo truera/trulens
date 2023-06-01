@@ -239,20 +239,19 @@ class TruChain(LangChainModel):
         assert len(record) > 0, "No information recorded in call."
 
         ret_record_args = dict()
-        # chain_json = self.json
+        
+        # Figure out the content of the "inputs" arg that __call__ constructs
+        # for _call so we can lookup main input and output.
+        input_key = self.input_keys[0]
+        output_key = self.output_keys[0]
+        for k, v in zip(self.input_keys, args):
+            kwargs[k] = v
 
-        #for path, calls in record.items():
-            # obj = path.get_sole_item(obj=chain_json)
+        # TODO: main input and output might need be generalized based on chain
+        # behaviour.
+        ret_record_args['main_input'] = kwargs[input_key]
+        ret_record_args['main_output'] = ret[output_key]
 
-            #if obj is None:
-            #    logging.warn(f"Cannot locate {path} in chain.")
-
-            #ret_record_args = TruDB._set_in_json(
-            #    path=path, in_json=ret_record_args, val={"_call": calls}
-            #)
-
-        ret_record_args['main_input'] = "temporary input"
-        ret_record_args['main_output'] = "temporary output"
         ret_record_args['main_error'] = str(error)
         ret_record_args['calls'] = record
         ret_record_args['cost'] = RecordCost(

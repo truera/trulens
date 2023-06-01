@@ -8,7 +8,6 @@ import numpy as np
 # This needs to be before some others to make sure api keys are ready before
 # relevant classes are loaded.
 from trulens_eval.keys import *
-
 "This is here so that import organizer does not move the keys import below this"
 
 from langchain.chains import ConversationalRetrievalChain
@@ -25,9 +24,13 @@ from slack_sdk import WebClient
 
 from trulens_eval import Tru
 from trulens_eval import tru_feedback
+from trulens_eval.schema import FeedbackMode
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_db import LocalSQLite
 from trulens_eval.tru_db import Record
+from trulens_eval.tru_db import RecordInput
+from trulens_eval.tru_db import RecordOutput
+from trulens_eval.tru_db import RecordQuery
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.util import TP
 from trulens_eval.utils.langchain import WithFilterDocuments
@@ -56,7 +59,7 @@ convos: Dict[str, TruChain] = dict()
 handled_ts: Set[Tuple[str, str]] = set()
 
 # DB to save models and records.
-tru = Tru()#LocalSQLite("trubot.sqlite"))
+tru = Tru()  #LocalSQLite("trubot.sqlite"))
 
 ident = lambda h: h
 
@@ -75,24 +78,25 @@ openai = tru_feedback.OpenAI()
 
 # Language match between question/answer.
 f_lang_match = Feedback(hugs.language_match).on(
-    text1="prompt", text2="response"
+    text1=RecordInput, text2=RecordOutput
 )
 
 # Question/answer relevance between overall question and answer.
 f_qa_relevance = Feedback(openai.relevance).on(
-    prompt="input", response="output"
+    prompt=RecordInput, response=RecordOutput
 )
 
 # Question/statement relevance between question and each context chunk.
-f_qs_relevance = Feedback(openai.qs_relevance).on(
-    question="input",
-    statement=Record.chain.combine_docs_chain._call.args.inputs.input_documents
-).on_multiple(
-    multiarg="statement", each_query=Record.page_content, agg=np.min
-)
+f_qs_relevance = tru_feedback.Feedback(openai.qs_relevance).on(
+    question=RecordInput,
+    statement=RecordQuery.chain.combine_docs_chain._call.args.inputs.
+    input_documents[:].page_content
+).aggregate(np.min)
+
 
 def filter_by_relevance(query, doc):
     return openai.qs_relevance(question=query, statement=doc.page_content) > 0.5
+
 
 def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     """
@@ -190,7 +194,7 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
         chain=chain,
         chain_id=chain_id,
         feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance],
-        feedback_mode="deferred"
+        feedback_mode=FeedbackMode.DEFERRED
     )
 
     convos[cid] = tc
