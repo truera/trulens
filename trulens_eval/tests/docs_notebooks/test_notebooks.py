@@ -16,7 +16,7 @@ def get_unit_test_for_filename(filename):
         with open(f'../docs/trulens_eval/{filename}') as f:
             nb = read(f, as_version=4)
             ExecutePreprocessor(
-                timeout=600, kernel_name='trulens_llm'
+                timeout=600, kernel_name='trulens-llm'
             ).preprocess(nb, {})
 
     return test
