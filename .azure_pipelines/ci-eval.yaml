@@ -28,6 +28,7 @@ jobs:
       matrix:
         docs_notebooks:
           condaEnvFileSuffix: "trulens-llm"
+          requirementsFile: "tests/docs_notebooks/requirements.txt"
           testSubdirectory: "tests/docs_notebooks"
 
     steps:
@@ -50,6 +51,7 @@ jobs:
           source activate $(condaEnvFileSuffix)
           cd ./trulens_eval
           pip install -e .
+          pip install -r $(requirementsFile)
           pip install ipykernel
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
         displayName: Install pip package
@@ -70,6 +72,6 @@ jobs:
       - bash: |
           source activate $(condaEnvFileSuffix)
           pip install pytest==7.0.1 pytest-azurepipelines
-          cd ./trulens_explain
+          cd ./trulens_eval
           python -m pytest $(testSubdirectory)
         displayName: Run unit tests
