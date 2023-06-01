@@ -59,7 +59,9 @@ class Endpoint(SingletonPerName):
         self.tqdm.update(1)
         return
 
-    def post(self, url: str, payload: JSON, timeout: Optional[int] = None) -> Any:
+    def post(
+        self, url: str, payload: JSON, timeout: Optional[int] = None
+    ) -> Any:
         extra = dict()
         if self.post_headers is not None:
             extra['headers'] = self.post_headers
@@ -73,7 +75,7 @@ class Endpoint(SingletonPerName):
         if "estimated_time" in j:
             wait_time = j['estimated_time']
             logging.error(f"Waiting for {j} ({wait_time}) second(s).")
-            sleep(wait_time+2)
+            sleep(wait_time + 2)
             return self.post(url, payload)
 
         assert isinstance(

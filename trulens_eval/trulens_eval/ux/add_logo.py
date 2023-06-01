@@ -6,9 +6,8 @@ import streamlit as st
 
 def add_logo():
     logo = open(
-        pkg_resources.resource_filename(
-            'trulens_eval', 'ux/trulens_logo.svg'
-        ), "rb"
+        pkg_resources.resource_filename('trulens_eval', 'ux/trulens_logo.svg'),
+        "rb"
     ).read()
 
     logo_encoded = base64.b64encode(logo).decode()

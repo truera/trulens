@@ -239,14 +239,17 @@ class Tru(SingletonPerName):
 
         def runloop():
             while fork or not self.evaluator_stop.is_set():
-                print("Looking for things to do. Stop me with `tru.stop_evaluator()`.", end='')
+                print(
+                    "Looking for things to do. Stop me with `tru.stop_evaluator()`.",
+                    end=''
+                )
                 Feedback.evaluate_deferred(tru=self)
                 TP().finish(timeout=10)
                 if fork:
                     sleep(10)
                 else:
                     self.evaluator_stop.wait(10)
-                
+
             print("Evaluator stopped.")
 
         if fork:
@@ -268,7 +271,7 @@ class Tru(SingletonPerName):
 
         if self.evaluator_proc is None:
             raise RuntimeError("Evaluator not running this process.")
-        
+
         if isinstance(self.evaluator_proc, Process):
             self.evaluator_proc.terminate()
 
@@ -276,9 +279,9 @@ class Tru(SingletonPerName):
             self.evaluator_stop.set()
             self.evaluator_proc.join()
             self.evaluator_stop = None
-            
+
         self.evaluator_proc = None
-        
+
     def stop_dashboard(self) -> None:
         """Stop existing dashboard if running.
 
@@ -287,7 +290,7 @@ class Tru(SingletonPerName):
         """
         if Tru.dashboard_proc is None:
             raise ValueError("Dashboard not running.")
-        
+
         Tru.dashboard_proc.kill()
         Tru.dashboard_proc = None
 
@@ -302,7 +305,9 @@ class Tru(SingletonPerName):
         """
 
         if Tru.dashboard_proc is not None:
-            raise ValueError("Dashboard already running. Run tru.stop_dashboard() to stop existing dashboard.")
+            raise ValueError(
+                "Dashboard already running. Run tru.stop_dashboard() to stop existing dashboard."
+            )
 
         # Create .streamlit directory if it doesn't exist
         streamlit_dir = os.path.join(os.getcwd(), '.streamlit')
@@ -334,7 +339,8 @@ class Tru(SingletonPerName):
             env_opts['env']['PYTHONPATH'] = str(Path.cwd())
 
         proc = subprocess.Popen(
-            ["streamlit", "run", "--server.headless=True", leaderboard_path], **env_opts
+            ["streamlit", "run", "--server.headless=True", leaderboard_path],
+            **env_opts
         )
 
         Tru.dashboard_proc = proc
