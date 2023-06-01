@@ -28,21 +28,21 @@ from trulens_eval.util import UNICODE_CHECK
 mj = MerkleJson()
 NoneType = type(None)
 
+class Query:
 
+    # Typing for type hints.
+    Query = JSONPath
 
-# Typing for type hints.
-Query = JSONPath
+    # Instance for constructing queries for record json like `Record.chain.llm`.
+    Record = Query()._record
 
-# Instance for constructing queries for record json like `Record.chain.llm`.
-RecordQuery = Query()._record
+    # Instance for constructing queries for chain json.
+    Chain = Query()._chain
 
-# Instance for constructing queries for chain json.
-ChainQuery = Query()._chain
-
-# A Chain's main input and main output.
-# TODO: Chain input/output generalization.
-RecordInput = RecordQuery.main_input
-RecordOutput = RecordQuery.main_output
+    # A Chain's main input and main output.
+    # TODO: Chain input/output generalization.
+    RecordInput = Record.main_input
+    RecordOutput = Record.main_output
 
 
 def get_calls(record: Record) -> Iterable[RecordChainCall]:

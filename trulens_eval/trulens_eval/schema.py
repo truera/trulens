@@ -5,9 +5,12 @@ Serializable objects and their schemas.
 import abc
 import datetime
 from enum import Enum
+import importlib
 import json
-from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Tuple,
-                    TypeVar, Union)
+from types import ModuleType
+from typing import (
+    Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, TypeVar, Union
+)
 
 import langchain
 from munch import Munch as Bunch
@@ -29,21 +32,52 @@ ChainID = str
 FeedbackDefinitionID = str
 FeedbackResultID = str
 
+# Serialization of python objects/methods. Not using pickling here so we can
+# inspect the contents a little better before unserializaing.
+
+
+class Module(pydantic.BaseModel):
+    package_name: str
+    module_name: str
+
+    def of_module(mod: ModuleType) -> 'Module':
+        return Module(package_name=mod.__package__, module_name=mod.__name__)
+
+    def of_module_name(module_name: str) -> 'Module':
+        mod = importlib.import_module(module_name)
+        package_name = mod.__package__
+        return Module(package_name=package_name, module_name=module_name)
+
+    def load(self) -> ModuleType:
+        return importlib.import_module(
+            self.module_name, package=self.package_name
+        )
+
 
 class Class(pydantic.BaseModel):
     """
     A python class by name.
     """
 
-    class_name: str
-    module_name: str
+    name: str
+
+    module: Module
 
     @staticmethod
     def of_class(cls: type) -> 'Class':
-        return Class(class_name=cls.__name__, module_name=cls.__module__)
+        return Class(
+            name=cls.__name__, module=Module.of_module_name(cls.__module__)
+        )
+
+    def load(self) -> type:  # class
+        try:
+            mod = self.module.load()
+            return getattr(mod, self.name)
+
+        except Exception as e:
+            raise RuntimeError(f"Could not load class {self} because {e}.")
 
 
-# Serialization of python objects/methods:
 class Obj(pydantic.BaseModel):
     """
     An object that may or may not be serializable. Do not use for base types
@@ -56,15 +90,45 @@ class Obj(pydantic.BaseModel):
     # handling loops in JSON objects.
     id: int
 
+    # For objects that can be easily reconstructed, provide their kwargs here.
+    init_kwargs: Optional[Dict] = None
+
     @staticmethod
     def of_object(obj: object, cls: Optional[type] = None) -> 'Obj':
         if cls is None:
             cls = obj.__class__
 
-        return Obj(cls=Class.of_class(cls), id=id(obj))
+        if isinstance(obj, pydantic.BaseModel):
+            init_kwargs = obj.dict()
+        else:
+            init_kwargs = None
+
+        return Obj(cls=Class.of_class(cls), id=id(obj), init_kwargs=init_kwargs)
+
+    def load(self) -> object:
+        cls = self.cls.load()
+
+        if issubclass(cls, pydantic.BaseModel) and self.init_kwargs is not None:
+            return cls(**self.init_kwargs)
+        else:
+            raise RuntimeError(f"Do not know how to load object {self}.")
 
 
-class Method(pydantic.BaseModel):
+class FunctionOrMethod(pydantic.BaseModel, abc.ABC):
+
+    @staticmethod
+    def of_callable(c: Callable) -> 'FunctionOrMethod':
+        if hasattr(c, "__self__"):
+            return Method.of_method(c, obj=getattr(c, "__self__"))
+        else:
+            return Function.of_function(c)
+
+    @abc.abstractmethod
+    def load(self) -> Any:
+        raise NotImplementedError()
+
+
+class Method(FunctionOrMethod):
     """
     A python method. A method belongs to some class in some module and must have
     a pre-bound self object. The location of the method is encoded in `obj`
@@ -72,7 +136,7 @@ class Method(pydantic.BaseModel):
     """
 
     obj: Obj
-    method_name: str
+    name: str
 
     @staticmethod
     def of_method(
@@ -91,7 +155,44 @@ class Method(pydantic.BaseModel):
 
         obj_json = Obj.of_object(obj, cls=cls)
 
-        return Method(obj=obj_json, method_name=meth.__name__)
+        return Method(obj=obj_json, name=meth.__name__)
+
+    def load(self) -> Callable:
+        obj = self.obj.load()
+        return getattr(obj, self.name)
+
+
+class Function(FunctionOrMethod):
+    """
+    A python function.
+    """
+
+    module: Module
+    cls: Optional[Class]
+    name: str
+
+    @staticmethod
+    def of_function(
+        func: Callable,
+        module: Optional[ModuleType] = None,
+        cls: Optional[type] = None
+    ) -> 'Function':  # actually: class
+
+        if module is None:
+            module = Module.of_module_name(func.__module__)
+
+        if cls is not None:
+            cls = Class.of_class(cls)
+
+        return Function(cls=cls, module=module, name=func.__name__)
+
+    def load(self) -> Callable:
+        if self.cls is not None:
+            cls = self.cls.load()
+            return getattr(cls, self.name)
+        else:
+            mod = self.module.load()
+            return getattr(mod, self.name)
 
 
 # Record related:
@@ -188,7 +289,7 @@ class Record(pydantic.BaseModel):
             frame_info = call.top(
             )  # info about the method call is at the top of the stack
             path = frame_info.path._append(
-                GetItemOrAttribute(item=frame_info.method.method_name)
+                GetItemOrAttribute(item=frame_info.method.name)
             )  # adds another attribute to path, from method name
             # TODO: append if already there
             ret = path.set(obj=ret, val=call)
@@ -225,10 +326,10 @@ Selection = Union[JSONPath, str]
 
 class FeedbackDefinition(pydantic.BaseModel):
     # Implementation serialization info.
-    implementation: Optional[Method] = None
+    implementation: Optional[Callable] = None
 
     # Aggregator method for serialization.
-    aggregator: Optional[Method] = None
+    aggregator: Optional[Callable] = None
 
     # Id, if not given, unique determined from _json below.
     feedback_definition_id: FeedbackDefinitionID

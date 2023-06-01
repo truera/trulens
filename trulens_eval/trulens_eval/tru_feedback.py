@@ -52,40 +52,14 @@ from tqdm.auto import tqdm
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
-from trulens_eval.tru_db import JSON, ChainQuery, RecordInput, RecordOutput, RecordQuery
+from trulens_eval.tru_db import JSON, Query
 from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_db import TruDB
 from trulens_eval.schema import FeedbackDefinition, FeedbackResult, Method, Model, Selection
-from trulens_eval.util import TP, JSONPath
+from trulens_eval.util import TP
 
-# openai
-
-# (external) feedback-
-# provider
-# model
-
-# feedback_collator:
-# - record, feedback_imp, selector -> dict (input, output, other)
-
-# (external) feedback:
-# - *args, **kwargs -> real
-# - dict -> real
-# - (record, selectors) -> real
-# - str, List[str] -> real
-#    agg(relevance(str, str[0]),
-#        relevance(str, str[1])
-#    ...)
-
-# (internal) feedback_imp:
-# - Option 1 : input, output -> real
-# - Option 2: dict (input, output, other) -> real
-
-
-# "prompt" or "input" mean overall chain input text
-# "response" or "output"mean overall chain output text
-# Otherwise a Query is a path into a record structure.
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
@@ -204,6 +178,7 @@ class Feedback(FeedbackDefinition):
     def aggregate(self, func: Callable) -> 'Feedback':
         return Feedback(imp=self.imp, selectors=self.selectors, agg=func)
 
+    """
     @staticmethod
     def selection_to_json(select: Selection) -> dict:
         if isinstance(select, str):
@@ -218,11 +193,10 @@ class Feedback(FeedbackDefinition):
         if isinstance(obj, str):
             return obj
         elif isinstance(obj, (List, Tuple)):
-            return JSONPath.of_path(obj)  # TODO
+            return Query.Query.of_str_path(obj)  # TODO
         else:
             raise ValueError(f"Unknown selection encoding of type {type(obj)}.")
 
-    """
     def to_json(self) -> dict:
         selectors_json = {
             k: Feedback.selection_to_json(v) for k, v in self.selectors.items()
@@ -234,6 +208,17 @@ class Feedback(FeedbackDefinition):
         }
     """
 
+    @staticmethod
+    def of_feedback_definition(f: FeedbackDefinition):
+        implementation = f.implementation
+        aggregator = f.aggregator
+
+        imp_func = implementation.construct()
+        agg_func = aggregator.construct()
+
+        return Feedback(imp=imp_func, agg=agg_func, **f.dict())
+
+    """
     @staticmethod
     def of_json(obj) -> 'Feedback':
         assert 'imp_json' in obj,  "Feedback encoding has no 'imp_json' field."
@@ -254,6 +239,7 @@ class Feedback(FeedbackDefinition):
         imp = getattr(provider, imp_method_name)
 
         return Feedback(imp, selectors=selectors)
+    """
 
     def on_prompt(self, arg: str = "text"):
         """
@@ -261,7 +247,7 @@ class Feedback(FeedbackDefinition):
         "prompt" as input, sending it as an argument `arg` to implementation.
         """
 
-        return Feedback(imp=self.imp, selectors={arg: RecordInput}, agg=self.agg)
+        return Feedback(imp=self.imp, selectors={arg: Query.RecordInput}, agg=self.agg)
 
     on_input = on_prompt
 
@@ -271,7 +257,7 @@ class Feedback(FeedbackDefinition):
         "response" as input, sending it as an argument `arg` to implementation.
         """
 
-        return Feedback(imp=self.imp, selectors={arg: RecordOutput}, agg=self.agg)
+        return Feedback(imp=self.imp, selectors={arg: Query.RecordOutput}, agg=self.agg)
 
     on_output = on_response
 
@@ -296,7 +282,6 @@ class Feedback(FeedbackDefinition):
                 result_val = self.imp(**ins)
                 result_vals.append(result_val)
 
-            print("result_vals=", result_vals)
             result_vals = np.array(result_vals)
             result = self.agg(result_vals)
 
@@ -403,14 +388,14 @@ class Feedback(FeedbackDefinition):
             else:
                 raise RuntimeError(f"Unhandled selection type {type(v)}.")
 
-            if q.path[0] == RecordQuery.path[0]:
+            if q.path[0] == Query.Record.path[0]:
                 o = record.layout_calls_as_chain()
-            elif q.path[0] == ChainQuery.path[0]:
+            elif q.path[0] == Query.Chain.path[0]:
                 o = chain
             else:
                 raise ValueError(f"Query {q} does not indicate whether it is about a record or about a chain.")
 
-            q_within_o = JSONPath(path=q.path[1:])
+            q_within_o = Query.Query(path=q.path[1:])
             arg_vals[k] = list(q_within_o(o))
 
         keys = arg_vals.keys()
@@ -777,9 +762,7 @@ HUGS_TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxi
 HUGS_CHAT_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-3B"
 HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
 
-class Huggingface(Provider):
-
-    
+class Huggingface(Provider):    
     def __init__(self):
         """
         A set of Huggingface Feedback Functions. Utilizes huggingface
