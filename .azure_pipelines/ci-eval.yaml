@@ -70,6 +70,6 @@ jobs:
       - bash: |
           source activate $(condaEnvFileSuffix)
           pip install pytest==7.0.1 pytest-azurepipelines
-          cd ./trulens_explain
+          cd ./trulens_eval
           python -m pytest $(testSubdirectory)
         displayName: Run unit tests
