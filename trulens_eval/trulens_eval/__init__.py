@@ -31,5 +31,6 @@ from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru_feedback import OpenAI
 from trulens_eval.tru_feedback import Huggingface
 from trulens_eval.tru import Tru
+from trulens_eval.tru_db import Query
 
-__all__ = ['TruChain', 'Feedback', 'OpenAI', 'Huggingface', 'Tru']
+__all__ = ['TruChain', 'Feedback', 'OpenAI', 'Huggingface', 'Tru', 'Query']

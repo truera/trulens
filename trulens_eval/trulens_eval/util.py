@@ -732,22 +732,6 @@ class JSONPath(pydantic.BaseModel):
     def __hash__(self):
         return hash(self.path)
 
-    #def __eq__(self, other):
-    #    return self.path == other
-    """
-    @staticmethod
-    def of_jsonpath(path: JSONPath) -> JSONPath:
-        return JSONPath(path=path.path)
-
-    def to_jsonpath(self) -> JSONPath:
-        return JSONPath(path=self.path)
-    """
-
-    #@staticmethod
-    #def of_path(path: Sequence[str | int]):
-    #    raise NotImplementedError()
-    #    return JSONPath()
-
     def set(self, obj: Any, val: Any) -> Any:
         if len(self.path) == 0:
             return val
