@@ -4,7 +4,7 @@
 
 Evaluate and track your LLM experiments with TruLens. As you work on your models and prompts TruLens-Eval supports the iterative development and of a wide range of LLM applications by wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine.
 
-Using feedback functions, you can objectively evaluate the quality of the responses provided by an LLM to your requests. This is completed with minimal latency, as this is achieved in a sequential call for your application, and evaluations are logged to your local machine. Finally, we provide an easy to use streamlit dashboard run locally on your machine for you to better understand your LLM’s performance.
+Using feedback functions, you can objectively evaluate the quality of the responses provided by an LLM to your requests. This is completed with minimal latency, as this is achieved in a sequential call for your application, and evaluations are logged to your local machine. Finally, we provide an easy to use Streamlit dashboard run locally on your machine for you to better understand your LLM’s performance.
 
 ![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
 
@@ -15,13 +15,13 @@ To quickly play around with the TruLens Eval library, download this notebook: [t
 
 ## Installation and Setup
 
-Install trulens-eval from pypi.
+Install the trulens-eval pip package from PyPI.
 
 ```bash
     pip install trulens-eval
 ```
 
-Imports from langchain to build app, trulens for evaluation
+Imports from LangChain to build app, TruLens for evaluation
 
 ```python
     from IPython.display import JSON
@@ -39,7 +39,7 @@ Imports from langchain to build app, trulens for evaluation
 
 ### API Keys
 
-Our example chat app and feedback functions call external APIs such as OpenAI or Huggingface. You can add keys by setting the environment variables. 
+Our example chat app and feedback functions call external APIs such as OpenAI or HuggingFace. You can add keys by setting the environment variables. 
 
 #### In Python
 
@@ -56,7 +56,7 @@ export OPENAI_API_KEY = "..."
 
 ### Create a basic LLM chain to evaluate
 
-This example uses langchain and OpenAI, but the same process can be followed with any framework and model provider. Once you've created your chain, just call TruChain to wrap it. Doing so allows you to capture the chain metadata for logging.
+This example uses LangChain and OpenAI, but the same process can be followed with any framework and model provider. Once you've created your chain, just call TruChain to wrap it. Doing so allows you to capture the chain metadata for logging.
 
 ```python
     full_prompt = HumanMessagePromptTemplate(
@@ -77,7 +77,7 @@ This example uses langchain and OpenAI, but the same process can be followed wit
 
 ### Set up logging and instrumentation
 
-Make the first call to your LLM Application. The instrumented chain can operate like the original but can also produce a log or "record" of the chain execution.
+Make the first call to your LLM application. The instrumented chain can operate like the original but can also produce a log or "record" of the chain execution.
 
 ```python
     prompt_input = 'que hora es?'
@@ -238,11 +238,11 @@ Sentiment is currently available to use with OpenAI, HuggingFace or Cohere as th
 
 * The OpenAI sentiment feedback function prompts a Chat Completion model to rate the sentiment from 1 to 10, and then scales the response down to 0-1.
 * The HuggingFace sentiment feedback function returns a raw score from 0 to 1.
-* The Cohere sentiment feedback function uses the classification endpoint and a small set of examples stored in feedback_prompts.py to return either a 0 or a 1.
+* The Cohere sentiment feedback function uses the classification endpoint and a small set of examples stored in `feedback_prompts.py` to return either a 0 or a 1.
 
 #### Model Agreement
 
-Model agreement uses OpenAI to attempt an honest answer at your prompt with system prompts for correctness, and then evaluates the aggreement of your LLM response to this model on a scale from 1 to 10. The agreement with each honest bot is then averaged and scaled from 0 to 1.
+Model agreement uses OpenAI to attempt an honest answer at your prompt with system prompts for correctness, and then evaluates the agreement of your LLM response to this model on a scale from 1 to 10. The agreement with each honest bot is then averaged and scaled from 0 to 1.
 
 #### Language Match
 
@@ -262,7 +262,7 @@ The OpenAI Moderation API is made available for use as feedback functions. This 
 
 ## Adding new feedback functions
 
-Feedback functions are an extensible framework for evaluating LLMs. You can add your own feedback functions to evaluate the qualities required by your application by updating trulens_eval/tru_feedback.py. If your contributions would be useful for others, we encourage you to contribute to trulens!
+Feedback functions are an extensible framework for evaluating LLMs. You can add your own feedback functions to evaluate the qualities required by your application by updating `trulens_eval/tru_feedback.py`. If your contributions would be useful for others, we encourage you to contribute to trulens!
 
 Feedback functions are organized by model provider into Provider classes.
 
