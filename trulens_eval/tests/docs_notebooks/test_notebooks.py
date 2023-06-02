@@ -13,6 +13,8 @@ class DocsNotebookTests(TestCase):
 def get_unit_test_for_filename(filename):
 
     def test(self):
+        import os
+        raise Exception(os.environ)
         with open(f'../docs/trulens_eval/{filename}') as f:
             nb = read(f, as_version=4)
             ExecutePreprocessor(
@@ -30,6 +32,4 @@ for filename in listdir('../docs/trulens_eval'):
         )
 
 if __name__ == '__main__':
-    import os
-    raise Exception(os.environ)
     main()
