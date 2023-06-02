@@ -126,7 +126,7 @@ else:
             st.write("Hint: select a row to display chain metadata")
 
         else:
-            st.header(f"Selected Chain ID: {selected_rows['chain_id'][0]}")
+            st.header(f"Overall Results: {selected_rows['chain_id'][0]}")
             st.text(f"Selected Record ID: {selected_rows['record_id'][0]}")
             prompt = selected_rows['input'][0]
             response = selected_rows['output'][0]
@@ -139,12 +139,8 @@ else:
             record_str = selected_rows['record_json'][0]
             record_json = json.loads(record_str)
 
-            st.header("Call Trace")
-            render_calls(record_json)
-
             details = selected_rows['chain_json'][0]
             details_json = json.loads(details)
-            #json.loads(details))  # ???
 
             chain_json = details_json['chain']
 
@@ -165,13 +161,12 @@ else:
 
             max_len = max(len(llm_queries), len(prompt_queries))
 
-            for i in range(max_len):
+            for i in range(max_len + 1):
+                st.header(f"Call Trace Step {i+1}")
+                render_calls(record_json, i + 1)
                 if i < len(llm_queries):
                     query, llm_details_json = llm_queries[i]
-                    path_str = TruDB._query_str(query)
-                    st.header(f"Chain Step {i}: {path_str.replace('.llm', '')}")
                     st.subheader(f"LLM Details:")
-
                     llm_kv = {
                         k: v
                         for k, v in llm_details_json.items()
