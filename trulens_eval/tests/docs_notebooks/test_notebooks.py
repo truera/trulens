@@ -30,4 +30,6 @@ for filename in listdir('../docs/trulens_eval'):
         )
 
 if __name__ == '__main__':
+    import os
+    raise Exception(os.environ)
     main()
