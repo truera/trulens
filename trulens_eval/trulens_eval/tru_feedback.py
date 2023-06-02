@@ -449,7 +449,7 @@ def _re_1_10_rating(str_val):
     return int(matches.group())
 
 
-class Provider(pydantic.BaseModel):
+class Provider(SerialModel):
     endpoint: Any = pydantic.Field(exclude=True)
 
     @staticmethod
