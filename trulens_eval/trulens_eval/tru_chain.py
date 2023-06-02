@@ -76,6 +76,7 @@ from inspect import signature
 from inspect import stack
 import logging
 import os
+from pprint import PrettyPrinter
 import threading as th
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
@@ -85,18 +86,19 @@ from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_eval.schema import FeedbackMode, Method
+from trulens_eval.schema import FeedbackMode, Method, MethodIdent
 from trulens_eval.schema import LangChainModel
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
 from trulens_eval.schema import RecordChainCallMethod
-from trulens_eval.schema import RecordCost
+from trulens_eval.schema import Cost
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru import Tru
-from trulens_eval.util import TP, JSONPath, jsonify
+from trulens_eval.util import TP, JSONPath, jsonify, noserio
 
+pp = PrettyPrinter()
 
 class TruChain(LangChainModel):
     """
@@ -109,15 +111,15 @@ class TruChain(LangChainModel):
     # See LangChainModel for serializable fields.
 
     # Feedback functions to evaluate on each record.
-    feedbacks: Sequence[Feedback] = Field(name="feedbacks", exclude=True)
+    feedbacks: Sequence[Feedback] = Field(exclude=True)
 
     # Database interfaces for models/records/feedbacks.
     # NOTE: Maybe move to schema.Model .
-    tru: Optional[Tru] = Field(name="tru", exclude=True)
+    tru: Optional[Tru] = Field(exclude=True)
 
     # Database interfaces for models/records/feedbacks.
     # NOTE: Maybe mobe to schema.Model .
-    db: Optional[TruDB] = Field(name="db", exclude=True)
+    db: Optional[TruDB] = Field(exclude=True)
 
     def __init__(
         self,
@@ -168,9 +170,9 @@ class TruChain(LangChainModel):
             )
             self.db.insert_chain(chain=self)
             for f in self.feedbacks:
-                self.db.insert_feedback_def(f)
+                self.db.insert_feedback_definition(f)
 
-        self._instrument_object(obj=self.chain, query=Query().chain)
+        self._instrument_object(obj=self.chain, query=Query.Chain)
         
 
     """
@@ -201,10 +203,10 @@ class TruChain(LangChainModel):
     def output_keys(self) -> List[str]:
         return self.chain.output_keys
 
-    def call_with_record(self, *args, **kwargs):
+    # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
+    def call_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs):
         """ Run the chain and also return a record metadata object.
 
-    
         Returns:
             Any: chain output
             dict: record metadata
@@ -226,7 +228,7 @@ class TruChain(LangChainModel):
         try:
             # TODO: do this only if there is an openai model inside the chain:
             with get_openai_callback() as cb:
-                ret = self.chain.__call__(*args, **kwargs)
+                ret = self.chain.__call__(inputs=inputs, **kwargs)
                 total_tokens = cb.total_tokens
                 total_cost = cb.total_cost
 
@@ -240,25 +242,33 @@ class TruChain(LangChainModel):
 
         ret_record_args = dict()
         
+        inputs = self.chain.prep_inputs(inputs)
+
+        print("inputs=", inputs)
+    
         # Figure out the content of the "inputs" arg that __call__ constructs
         # for _call so we can lookup main input and output.
         input_key = self.input_keys[0]
         output_key = self.output_keys[0]
-        for k, v in zip(self.input_keys, args):
-            kwargs[k] = v
-
+        #for k, v in zip(self.input_keys, args):
+        #    kwargs[k] = v
         # TODO: main input and output might need be generalized based on chain
         # behaviour.
-        ret_record_args['main_input'] = kwargs[input_key]
+        #print("input_key=", input_key)
+
+        ret_record_args['main_input'] = inputs[input_key]
         ret_record_args['main_output'] = ret[output_key]
 
         ret_record_args['main_error'] = str(error)
         ret_record_args['calls'] = record
-        ret_record_args['cost'] = RecordCost(
+        ret_record_args['cost'] = Cost(
             n_tokens=total_tokens, cost=total_cost
         )
         ret_record_args['chain_id'] = self.chain_id
         
+        print("creating record with")
+        print(ret_record_args)
+
         ret_record = Record(**ret_record_args)
 
         if error is not None:
@@ -301,12 +311,12 @@ class TruChain(LangChainModel):
         if self.tru is None or self.feedback_mode is None:
             return
 
-        main_input = record.calls[0].args['inputs'][self.input_keys[0]]
-        main_output = record.calls[0].rets[self.output_keys[0]]
+        #main_input = record.calls[0].args['inputs'][self.input_keys[0]]
+        #main_output = record.calls[0].rets[self.output_keys[0]]
 
         record_id = self.tru.add_record(
-            prompt=main_input,
-            response=main_output,
+            # prompt=main_input,
+            # response=main_output,
             record=record,
             tags='dev',  # TODO: generalize
             total_tokens=record.cost.n_tokens,
@@ -319,8 +329,12 @@ class TruChain(LangChainModel):
         # Add empty (to run) feedback to db.
         if self.feedback_mode == FeedbackMode.DEFERRED:
             for f in self.feedbacks:
-                feedback_id = f.feedback_id
-                self.db.insert_feedback(record_id, feedback_id)
+                feedback_definition_id = f.feedback_definition_id
+                self.db.insert_feedback(
+                    record_id=record_id,
+                    feedback_definition_id=feedback_definition_id,
+                    status=0
+                )
 
         elif self.feedback_mode in [FeedbackMode.WITH_CHAIN,
                                     FeedbackMode.WITH_CHAIN_THREAD]:
@@ -482,7 +496,7 @@ class TruChain(LangChainModel):
             ) or ()
             frame_ident = RecordChainCallMethod(
                 path=query,
-                method=Method.of_method(func, obj=obj)
+                method=MethodIdent.of_method(func, obj=obj)
             )
             chain_stack = chain_stack + (frame_ident,)
 

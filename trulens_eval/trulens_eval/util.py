@@ -7,17 +7,19 @@ Do not import anything from trulens_eval here.
 from __future__ import annotations
 
 import abc
+from enum import Enum
 import itertools
 import json
 import logging
 from multiprocessing.context import TimeoutError
 from multiprocessing.pool import AsyncResult
 from multiprocessing.pool import ThreadPool
+from pathlib import Path
 from queue import Queue
 from time import sleep
 from typing import (
-    Any, Callable, Dict, Hashable, Iterable, Iterator, List, Optional, Sequence, Set,
-    Tuple, TypeVar, Union
+    Any, Callable, Dict, Hashable, Iterable, Iterator, List, Optional, Sequence,
+    Set, Tuple, TypeVar, Union
 )
 
 from merkle_json import MerkleJson
@@ -44,12 +46,15 @@ def second(seq: Sequence[T]) -> T:
 def third(seq: Sequence[T]) -> T:
     return seq[2]
 
+
 # Generator utils
+
 
 def iterable_peek(it: Iterable[T]) -> Tuple[T, Iterable[T]]:
     iterator = iter(it)
     item = next(iterator)
     return item, itertools.chain([item], iterator)
+
 
 # JSON utilities
 
@@ -57,7 +62,8 @@ JSON_BASES = (str, int, float, type(None))
 JSON_BASES_T = Union[str, int, float, type(None)]
 # JSON = (List, Dict) + JSON_BASES
 # JSON_T = Union[JSON_BASES_T, List, Dict]
-JSON = Dict
+JSON = Union[JSON_BASES_T, Dict[str, Any]]
+# want: Union[JSON_BASES_T, Dict[str, JSON]] but this will result in loop at some point
 
 mj = MerkleJson()
 
@@ -103,23 +109,36 @@ def obj_id_of_obj(obj: dict, prefix="obj"):
     return f"{prefix}_hash_{mj.hash(obj)}"
 
 
-def json_str_of_obj(obj: Any) -> str:
+def json_str_of_obj(obj: Any, *args, **kwargs) -> str:
     """
     Encode the given json object as a string.
     """
-    return json.dumps(obj, default=json_default)
 
+    if isinstance(obj, pydantic.BaseModel):
+        kwargs['encoder'] = json_default
+        return obj.json(*args, **kwargs)
+
+    return json.dumps(obj, default=json_default)
 
 def json_default(obj: Any) -> str:
     """
     Produce a representation of an object which cannot be json-serialized.
     """
 
-    if isinstance(obj, pydantic.BaseModel):
-        try:
-            return json.dumps(obj.json())
-        except Exception as e:
-            return noserio(obj, exception=e)
+    obj = jsonify(obj)
+
+    # Try the encoders included with pydantic first (should handle things like
+    # Datetime):
+    try:
+        return pydantic.json.pydantic_encoder(obj)
+    except:
+        pass
+
+    #if isinstance(obj, pydantic.BaseModel):
+    #    try:
+    #        return json.dumps(obj.json())
+    #    except Exception as e:
+    #        return noserio(obj, exception=e)
 
     # Intentionally not including much in this indicator to make sure the model
     # hashing procedure does not get randomized due to something here.
@@ -136,6 +155,14 @@ def jsonify(obj: Any, dicted=None) -> JSON:
 
     if isinstance(obj, JSON_BASES):
         return obj
+
+    if isinstance(obj, Path):
+        return str(obj)
+
+    if type(obj) in pydantic.json.ENCODERS_BY_TYPE:
+        return obj
+    # if isinstance(obj, Enum):
+    #    return str(obj)
 
     if id(obj) in dicted:
         return {'_CIRCULAR_REFERENCE': id(obj)}
@@ -177,6 +204,7 @@ def jsonify(obj: Any, dicted=None) -> JSON:
         logging.debug(
             f"Don't know how to jsonify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
         )
+
         return noserio(obj)
 
 
@@ -245,7 +273,6 @@ def all_queries(obj: Any, query: JSONPath = None) -> Iterable[JSONPath]:
         yield query
 
 
-@staticmethod
 def all_objects(obj: Any,
                 query: JSONPath = None) -> Iterable[Tuple[JSONPath, Any]]:
     """
@@ -286,7 +313,6 @@ def all_objects(obj: Any,
         yield (query, obj)
 
 
-@staticmethod
 def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
     for q in leaf_queries(obj):
         path_str = _query_str(q)
@@ -294,7 +320,6 @@ def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
         yield (path_str, val)
 
 
-@staticmethod
 def matching_queries(obj: Any, match: Callable) -> Iterable[JSONPath]:
     for q in all_queries(obj):
         val = _project(q._path, obj)
@@ -302,7 +327,6 @@ def matching_queries(obj: Any, match: Callable) -> Iterable[JSONPath]:
             yield q
 
 
-@staticmethod
 def matching_objects(obj: Any,
                      match: Callable) -> Iterable[Tuple[JSONPath, Any]]:
     for q, val in all_objects(obj):
@@ -310,7 +334,6 @@ def matching_objects(obj: Any,
             yield (q, val)
 
 
-@staticmethod
 def _query_str(query: JSONPath) -> str:
 
     def render(ks):
@@ -446,31 +469,53 @@ def _project(path: List, obj: Any):
         )
 
 
-# JSONPath, a container for selector/accessors/setters of data stored in a json structure.
-
-
-class Step(pydantic.BaseModel, abc.ABC):
+# JSONPath, a container for selector/accessors/setters of data stored in a json
+# structure. Cannot make abstract since pydantic will try to initialize it.
+class Step(pydantic.BaseModel):#, abc.ABC):
     """
     A step in a selection path.
-    """
+    """                          
 
-    #def __init__(self, *args, **kwargs):
-    #    super().__init__(*args, **kwargs)
+    @classmethod
+    def __get_validator__(cls):
+        yield cls.validate
 
-    @abc.abstractmethod
+    @classmethod
+    def validate(cls, d):        
+        if not isinstance(d, Dict):
+            return d
+        
+        ATTRIBUTE_TYPE_MAP = {
+            'item': GetItem,
+            'index': GetIndex,
+            'attribute': GetAttribute,
+            'item_or_attribute': GetItemOrAttribute,
+            'start': GetSlice,
+            'stop': GetSlice,
+            'step': GetSlice,
+            'items': GetItems,
+            'indices': GetIndices
+        }
+
+        a = next(iter(d.keys()))
+        if a in ATTRIBUTE_TYPE_MAP:
+            return ATTRIBUTE_TYPE_MAP[a](**d)
+        else:
+            raise RuntimeError(f"Don't know how to deserialize Step with {d}.")
+
+    # @abc.abstractmethod
     def __call__(self, obj: Any) -> Iterable[Any]:
         """
         Get the element of `obj`, indexed by `self`.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
-    @abc.abstractmethod
+    # @abc.abstractmethod
     def set(self, obj: Any, val: Any) -> Any:
         """
         Set the value(s) indicated by self in `obj` to value `val`.
         """
-        raise NotImplementedError
-
+        raise NotImplementedError()
 
 class GetAttribute(Step):
     attribute: str
@@ -562,40 +607,41 @@ class GetItem(Step):
         return f"[{repr(self.item)}]"
 
 
-
 class GetItemOrAttribute(Step):
     # For item/attribute agnostic addressing.
 
-    item: str
+    item_or_attribute: str # distinct from "item" for deserialization
 
     def __hash__(self):
         return hash(self.item)
 
     def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
         if isinstance(obj, Dict):
-            if self.item in obj:
-                yield obj[self.item]
+            if self.item_or_attribute in obj:
+                yield obj[self.item_or_attribute]
             else:
-                raise KeyError(f"Key not in dictionary: {self.item}")
+                raise KeyError(f"Key not in dictionary: {self.item_or_attribute}")
         else:
-            if hasattr(obj, self.item):
-                yield getattr(obj, self.item)
+            if hasattr(obj, self.item_or_attribute):
+                yield getattr(obj, self.item_or_attribute)
             else:
-                raise ValueError(f"Object {obj} does not have item or attribute {self.item}.")
+                raise ValueError(
+                    f"Object {obj} does not have item or attribute {self.item_or_attribute}."
+                )
 
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = dict()
 
         if isinstance(obj, Dict):
-            obj[self.item] = val
+            obj[self.item_or_attribute] = val
         else:
-            setattr(obj, self.item)
+            setattr(obj, self.item_or_attribute)
 
         return obj
 
     def __repr__(self):
-        return f".{self.item}"
+        return f".{self.item_or_attribute}"
 
 
 class GetSlice(Step):
@@ -732,6 +778,14 @@ class JSONPath(pydantic.BaseModel):
     def __hash__(self):
         return hash(self.path)
 
+    def __len__(self):
+        return len(self.path)
+
+    #@staticmethod
+    #def parse_obj(d):
+    #    path = tuple(map(Step.parse_obj, d['path']))
+    #    return JSONPath(path=path)
+
     def set(self, obj: Any, val: Any) -> Any:
         if len(self.path) == 0:
             return val
@@ -742,11 +796,11 @@ class JSONPath(pydantic.BaseModel):
         try:
             firsts = first(obj)
             first_obj, firsts = iterable_peek(firsts)
-            
+
         except (ValueError, IndexError, KeyError, AttributeError):
 
             # `first` points to an element that does not exist, use `set` to create a spot for it.
-            obj = first.set(obj, None) # will create a spot for `first`
+            obj = first.set(obj, None)  # will create a spot for `first`
             firsts = first(obj)
 
         for first_obj in firsts:
@@ -784,7 +838,7 @@ class JSONPath(pydantic.BaseModel):
         if isinstance(item, int):
             return self._append(GetIndex(index=item))
         if isinstance(item, str):
-            return self._append(GetItemOrAttribute(item=item))
+            return self._append(GetItemOrAttribute(item_or_attribute=item))
         if isinstance(item, slice):
             return self._append(
                 GetSlice(start=item.start, stop=item.stop, step=item.step)
@@ -804,7 +858,7 @@ class JSONPath(pydantic.BaseModel):
         raise TypeError(f"Unhandled item type {type(item)}.")
 
     def __getattr__(self, attr: str) -> JSONPath:
-        return self._append(GetItemOrAttribute(item=attr))
+        return self._append(GetItemOrAttribute(item_or_attribute=attr))
 
 
 # Python utilities

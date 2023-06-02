@@ -41,8 +41,8 @@ import itertools
 import logging
 from multiprocessing.pool import AsyncResult
 import re
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type,
-                    Union)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Type, Union)
 
 import numpy as np
 import openai
@@ -52,14 +52,14 @@ from tqdm.auto import tqdm
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
-from trulens_eval.tru_db import JSON, Query
-from trulens_eval.tru_db import obj_id_of_obj
+from trulens_eval.schema import FeedbackDefinition
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import FunctionOrMethod
+from trulens_eval.schema import Model
+from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import Record
-from trulens_eval.tru_db import TruDB
-from trulens_eval.schema import FeedbackDefinition, FeedbackResult, Method, Model, Selection
 from trulens_eval.util import TP
-
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
@@ -81,7 +81,7 @@ class Feedback(FeedbackDefinition):
 
     # Aggregator method for feedback functions that produce more than one
     # result.
-    agg: Optional[Callable] = pydantic.Field(exclude=True, value=np.mean)
+    agg: Optional[Callable] = pydantic.Field(exclude=True)
     
     def __init__(
         self,
@@ -101,10 +101,16 @@ class Feedback(FeedbackDefinition):
 
         if imp is not None:
             # These are for serialization to/from json and for db storage.
-            kwargs['implementation'] = Method.of_method(imp)
+            kwargs['implementation'] = FunctionOrMethod.of_callable(imp)
+        else:
+            if "implementation" in kwargs:
+                imp: Callable = kwargs['implementation'].load()
 
         if agg is not None:
-            kwargs['aggregator'] = Method.of_method(agg)
+            kwargs['aggregator'] = FunctionOrMethod.of_callable(agg)
+        else:
+            if 'arrgregator' in kwargs:
+                agg: Callable = kwargs['aggregator'].load()
 
         super().__init__(**kwargs)
 
@@ -126,9 +132,12 @@ class Feedback(FeedbackDefinition):
 
         def prepare_feedback(row):
             record_json = row.record_json
+            record = Record(**record_json)
 
-            feedback = Feedback.of_json(row.feedback_json)
-            feedback.run_and_log(record_json=record_json, tru=tru)
+            chain_json = row.chain_json
+
+            feedback = Feedback(**row.feedback_definition_json)
+            feedback.run_and_log(record=record, chain_json=chain_json, tru=tru)
 
         feedbacks = db.get_feedback()
 
@@ -213,8 +222,8 @@ class Feedback(FeedbackDefinition):
         implementation = f.implementation
         aggregator = f.aggregator
 
-        imp_func = implementation.construct()
-        agg_func = aggregator.construct()
+        imp_func = implementation.load()
+        agg_func = aggregator.load()
 
         return Feedback(imp=imp_func, agg=agg_func, **f.dict())
 
@@ -306,13 +315,26 @@ class Feedback(FeedbackDefinition):
                 chain_id=chain.chain_id
             )
 
-    def run_and_log(self, record_json: JSON, tru: 'Tru') -> None:
-        record_id = record_json['record_id']
-        chain_id = record_json['chain_id']
+    def run_and_log(self, record: Record, tru: 'Tru', chain_json: Optional[JSON] = None) -> None:
+        record_id = record.record_id
+        chain_id = record.chain_id
         
         ts_now = datetime.now().timestamp()
 
         db = tru.db
+
+        # TODO:
+        results = dict(
+            total_cost = -1.0,
+            total_tokens = -1
+        )
+
+        feedback_result_dict = dict(
+            feedback_definition_id = self.feedback_definition_id,
+            record_id = record_id,
+            chain_id = chain_id,
+            results_json = results
+        )
 
         try:
             db.insert_feedback(
@@ -322,17 +344,22 @@ class Feedback(FeedbackDefinition):
                 status = 1 # in progress
             )
 
-            chain_json = db.get_chain(chain_id=chain_id)
+            if chain_json is None:
+                chain_json = db.get_chain(chain_id=chain_id)
 
-            res = self.run_on_record(chain_json=chain_json, record_json=record_json)
+            res = self.run(chain_json=chain_json, record=record)
 
+        
         except Exception as e:
             print(e)
+            feedback_result_dict['error'] = str(e)
             res = {
                 '_success': False,
-                'feedback_id': self.feedback_id,
-                'record_id': record_json['record_id'],
-                '_error': str(e)
+                'feedback_result_id': self.feedback_result_id,
+                'record_id': record_id,
+                'error': str(e),
+                'result': res,
+                
             }
 
         ts_now = datetime.now().timestamp()
@@ -343,9 +370,8 @@ class Feedback(FeedbackDefinition):
                 feedback_id=self.feedback_id,
                 last_ts = ts_now,
                 status = 2, # done and good
-                result_json=res,
-                total_cost=-1.0, # todo
-                total_tokens=-1  # todo
+                result=res,
+                
             )
         else:
             # TODO: indicate failure better
@@ -354,7 +380,7 @@ class Feedback(FeedbackDefinition):
                 feedback_id=self.feedback_id,
                 last_ts = ts_now,
                 status = -1, # failure
-                result_json=res,
+                result=res,
                 total_cost=-1.0, # todo
                 total_tokens=-1  # todo
             )
