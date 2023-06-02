@@ -28,6 +28,8 @@ def app():
     )
     df, feedback_col_names = lms.get_records_and_feedback([])
 
+    test_threshold = 0.5
+
     if df.empty:
         st.write("No records yet...")
         return
@@ -63,23 +65,51 @@ def app():
                 precision=2
             )
         )
-
         for i, col_name in enumerate(feedback_col_names):
             mean = chain_df[col_name].mean()
+
+            st.write(
+                """ <style> [data-testid="stMetricDelta"] svg { display: none; } </style> """,
+                unsafe_allow_html=True,
+            )
 
             if i < len(feedback_cols):
                 if math.isnan(mean):
                     pass
 
                 else:
-                    feedback_cols[i].metric(col_name, round(mean, 2))
+                    if mean >= test_threshold:
+                        feedback_cols[i].metric(
+                            label=col_name,
+                            value=f'{round(mean, 2)}',
+                            delta='✅ High'
+                        )
+                    else:
+                        feedback_cols[i].metric(
+                            label=col_name,
+                            value=f'{round(mean, 2)}',
+                            delta='⚠️ Low ',
+                            delta_color="inverse"
+                        )
 
             else:
                 if math.isnan(mean):
                     pass
 
                 else:
-                    feedback_cols[i].metric(col_name, round(mean, 2))
+                    if mean >= test_threshold:
+                        feedback_cols[i].metric(
+                            label=col_name,
+                            value=f'{round(mean, 2)}',
+                            delta='✅ High'
+                        )
+                    else:
+                        feedback_cols[i].metric(
+                            label=col_name,
+                            value=f'{round(mean, 2)}',
+                            delta='⚠️ Low ',
+                            delta_color="inverse"
+                        )
 
         with col99:
             if st.button('Select Chain', key=f"model-selector-{chain}"):
