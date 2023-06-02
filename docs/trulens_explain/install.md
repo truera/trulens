@@ -15,7 +15,7 @@ conda install keras             # Or whatever backend you're using.
 conda install matplotlib        # For visualizations.
 ```
 
-2. [Pip installation] Install the TruLens pip package from PyPI.
+2. [Pip installation] Install the trulens pip package from PyPI.
 ```
 pip install trulens
 ```

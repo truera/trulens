@@ -15,7 +15,7 @@ To quickly play around with the TruLens Eval library, download this notebook: [t
 
 # Installation and Setup
 
-Install trulens-eval from PyPI.
+Install the trulens-eval pip package from PyPI.
 
 ```
 pip install trulens-eval
