@@ -41,7 +41,9 @@ import logging
 from multiprocessing.pool import AsyncResult
 import re
 from time import sleep
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import (
+    Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
+)
 
 import numpy as np
 import openai
@@ -51,7 +53,10 @@ from tqdm.auto import tqdm
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
-from trulens_eval.tru_db import JSON, Query, obj_id_of_obj, query_of_path
+from trulens_eval.tru_db import JSON
+from trulens_eval.tru_db import obj_id_of_obj
+from trulens_eval.tru_db import Query
+from trulens_eval.tru_db import query_of_path
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_db import TruDB
 from trulens_eval.util import TP
@@ -84,6 +89,8 @@ Selection = Union[Query, str]
 # Otherwise a Query is a path into a record structure.
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
+
+default_pass_fail_color_threshold = 0.5
 
 
 def check_provider(cls_or_name: Union[Type, str]) -> None:

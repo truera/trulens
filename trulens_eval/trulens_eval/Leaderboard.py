@@ -9,6 +9,7 @@ st.runtime.legacy_caching.clear_cache()
 
 from trulens_eval import Tru
 from trulens_eval import tru_db
+from trulens_eval.tru_feedback import default_pass_fail_color_threshold
 
 st.set_page_config(page_title="Leaderboard", layout="wide")
 
@@ -27,8 +28,6 @@ def app():
         'Average feedback values displayed in the range from 0 (worst) to 1 (best).'
     )
     df, feedback_col_names = lms.get_records_and_feedback([])
-
-    test_threshold = 0.5
 
     if df.empty:
         st.write("No records yet...")
@@ -78,7 +77,7 @@ def app():
                     pass
 
                 else:
-                    if mean >= test_threshold:
+                    if mean >= default_pass_fail_color_threshold:
                         feedback_cols[i].metric(
                             label=col_name,
                             value=f'{round(mean, 2)}',
@@ -97,7 +96,7 @@ def app():
                     pass
 
                 else:
-                    if mean >= test_threshold:
+                    if mean >= default_pass_fail_color_threshold:
                         feedback_cols[i].metric(
                             label=col_name,
                             value=f'{round(mean, 2)}',
