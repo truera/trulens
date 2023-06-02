@@ -3,8 +3,9 @@ import json
 import logging
 from pathlib import Path
 import sqlite3
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
-                    Set, Tuple, Union)
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
+)
 
 from frozendict import frozendict
 from merkle_json import MerkleJson
@@ -24,6 +25,7 @@ JSON_BASES_T = Union[str, int, float, NoneType]
 # JSON = (List, Dict) + JSON_BASES
 # JSON_T = Union[JSON_BASES_T, List, Dict]
 JSON = Dict
+
 
 def is_empty(obj):
     try:
@@ -112,7 +114,8 @@ def get_calls(record_json: JSON) -> Iterable[JSON]:
         if q._path[-1] == "_call":
             yield q
 
-def get_calls_by_stack(record_json: JSON) -> Dict[Tuple[str,...],JSON]:
+
+def get_calls_by_stack(record_json: JSON) -> Dict[Tuple[str, ...], JSON]:
     """
     Get a dictionary mapping chain call stack to the call information.
     """
@@ -591,18 +594,10 @@ class LocalSQLite(TruDB):
         conn, c = self._connect()
 
         # Create table if it does not exist
-        c.execute(
-            f'''DELETE FROM {self.TABLE_RECORDS}'''
-        )
-        c.execute(
-            f'''DELETE FROM {self.TABLE_FEEDBACKS}'''
-        )
-        c.execute(
-            f'''DELETE FROM {self.TABLE_FEEDBACK_DEFS}'''
-        )
-        c.execute(
-            f'''DELETE FROM {self.TABLE_CHAINS}'''
-        )
+        c.execute(f'''DELETE FROM {self.TABLE_RECORDS}''')
+        c.execute(f'''DELETE FROM {self.TABLE_FEEDBACKS}''')
+        c.execute(f'''DELETE FROM {self.TABLE_FEEDBACK_DEFS}''')
+        c.execute(f'''DELETE FROM {self.TABLE_CHAINS}''')
         self._close(conn)
 
     def _build_tables(self):
@@ -686,7 +681,9 @@ class LocalSQLite(TruDB):
         )
         self._close(conn)
 
-        print(f"{UNICODE_CHECK} record {record_id} from {chain_id} -> {self.filename}")
+        print(
+            f"{UNICODE_CHECK} record {record_id} from {chain_id} -> {self.filename}"
+        )
 
         return record_id
 
@@ -794,9 +791,13 @@ class LocalSQLite(TruDB):
         self._close(conn)
 
         if status == 2:
-            print(f"{UNICODE_CHECK} feedback {feedback_id} on {record_id} -> {self.filename}")
+            print(
+                f"{UNICODE_CHECK} feedback {feedback_id} on {record_id} -> {self.filename}"
+            )
         else:
-            print(f"{UNCIODE_YIELD} feedback {feedback_id} on {record_id} -> {self.filename}")
+            print(
+                f"{UNCIODE_YIELD} feedback {feedback_id} on {record_id} -> {self.filename}"
+            )
 
     def get_feedback(
         self,
@@ -905,7 +906,9 @@ class LocalSQLite(TruDB):
 
         return json.loads(result)
 
-    def get_records_and_feedback(self, chain_ids: List[str]) -> Tuple[pd.DataFrame, Sequence[str]]:
+    def get_records_and_feedback(
+        self, chain_ids: List[str]
+    ) -> Tuple[pd.DataFrame, Sequence[str]]:
         # This returns all models if the list of chain_ids is empty.
         conn, c = self._connect()
         query = f"""
@@ -943,16 +946,18 @@ class LocalSQLite(TruDB):
         c.execute(query)
         rows = c.fetchall()
         conn.close()
-        
+
         df_records = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
-        
+
         if len(df_records) == 0:
             return df_records, []
 
         # Apply the function to the 'data' column to convert it into separate columns
-        df_results['result_json'] = df_results['result_json'].apply(lambda d: {} if d is None else json.loads(d)) 
+        df_results['result_json'] = df_results['result_json'].apply(
+            lambda d: {} if d is None else json.loads(d)
+        )
 
         if "record_id" not in df_results.columns:
             return df_results, []
@@ -960,11 +965,14 @@ class LocalSQLite(TruDB):
         df_results = df_results.groupby("record_id").agg(
             lambda dicts: {key: val for d in dicts for key, val in d.items()}
         ).reset_index()
-        
+
         df_results = df_results['result_json'].apply(pd.Series)
 
-        result_cols = [col for col in df_results.columns if col not in ['feedback_id', 'record_id', '_success', "_error"]]
-        
+        result_cols = [
+            col for col in df_results.columns
+            if col not in ['feedback_id', 'record_id', '_success', "_error"]
+        ]
+
         if len(df_results) == 0 or len(result_cols) == 0:
             return df_records, []
 
@@ -972,6 +980,9 @@ class LocalSQLite(TruDB):
         assert "record_id" in df_records.columns
 
         combined_df = df_records.merge(df_results, on=['record_id'])
-        combined_df = combined_df.drop(columns=set(["_success", "_error"]).intersection(set(combined_df.columns)))
+        combined_df = combined_df.drop(
+            columns=set(["_success", "_error"]
+                       ).intersection(set(combined_df.columns))
+        )
 
         return combined_df, result_cols

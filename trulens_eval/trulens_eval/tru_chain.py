@@ -531,7 +531,7 @@ class TruChain(Chain):
                 class_name=class_name,
                 module_name=module_name,
             )
-            chain_stack = chain_stack + (frame_ident, )
+            chain_stack = chain_stack + (frame_ident,)
 
             try:
                 # Using sig bind here so we can produce a list of key-value
