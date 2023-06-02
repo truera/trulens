@@ -8,7 +8,6 @@ import numpy as np
 # This needs to be before some others to make sure api keys are ready before
 # relevant classes are loaded.
 from trulens_eval.keys import *
-
 "This is here so that import organizer does not move the keys import below this"
 
 from langchain.chains import ConversationalRetrievalChain
@@ -90,6 +89,7 @@ f_qs_relevance = tru_feedback.Feedback(openai.qs_relevance).on(
     statement=Query.Record.chain.combine_docs_chain._call.args.inputs.
     input_documents[:].page_content
 ).aggregate(np.min)
+
 
 
 def filter_by_relevance(query, doc):
