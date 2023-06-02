@@ -41,8 +41,8 @@ def get_unit_test_for_filename(filename):
                 timeout=600,
                 kernel_name='trulens-llm',
                 code_to_run_before_each_cell=[
-                    f"OPENAI_API_KEY='{OPENAI_API_KEY}'",
-                    f"HUGGINGFACE_API_KEY='{HUGGINGFACE_API_KEY}'",
+                    f"os.environ['OPENAI_API_KEY']='{OPENAI_API_KEY}'",
+                    f"os.environ['HUGGINGFACE_API_KEY']='{HUGGINGFACE_API_KEY}'",
                 ]
             ).preprocess(nb, {})
 
