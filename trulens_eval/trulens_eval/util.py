@@ -26,8 +26,10 @@ UNCIODE_YIELD = "⚡"
 def first(seq: Sequence[T]) -> T:
     return seq[0]
 
+
 def second(seq: Sequence[T]) -> T:
     return seq[1]
+
 
 def third(seq: Sequence[T]) -> T:
     return seq[2]
@@ -42,7 +44,7 @@ class JLens(object):
     @dataclass
     class GetAttribute(Step):
         attribute: str
-    
+
     @dataclass
     class GetItem(Step):
         item: Union[str, int]
@@ -64,8 +66,6 @@ class JLens(object):
 
     def __getattribute__(self, name: str) -> 'JLens':
         pass
-
-
 
 
 class SingletonPerName():
@@ -108,6 +108,7 @@ class TP(SingletonPerName):  # "thread processing"
         self.promises = Queue(maxsize=1024)
 
     def runrepeatedly(self, func: Callable, rpm: float = 6, *args, **kwargs):
+
         def runner():
             while True:
                 func(*args, **kwargs)
@@ -119,13 +120,12 @@ class TP(SingletonPerName):  # "thread processing"
         prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
         self.promises.put(prom)
 
-    def promise(self, func: Callable[..., T], *args,
-                **kwargs) -> AsyncResult:
+    def promise(self, func: Callable[..., T], *args, **kwargs) -> AsyncResult:
         prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
         self.promises.put(prom)
 
         return prom
-    
+
     def finish(self, timeout: Optional[float] = None) -> int:
         print(f"Finishing {self.promises.qsize()} task(s) ", end='')
 
@@ -155,5 +155,5 @@ class TP(SingletonPerName):  # "thread processing"
 
         for p in self.thread_pool._pool:
             rows.append([p.is_alive(), str(p)])
-            
+
         return pd.DataFrame(rows, columns=["alive", "thread"])

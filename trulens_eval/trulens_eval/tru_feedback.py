@@ -138,7 +138,9 @@ class Feedback():
             check_provider(self.provider.__class__.__name__)
             self.imp_method_name = imp.__name__
             self._json = self.to_json()
-            self._feedback_id = feedback_id or obj_id_of_obj(self._json, prefix="feedback")
+            self._feedback_id = feedback_id or obj_id_of_obj(
+                self._json, prefix="feedback"
+            )
             self._json['feedback_id'] = self._feedback_id
 
     @staticmethod
@@ -161,18 +163,26 @@ class Feedback():
             elif row.status in [1]:
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 30:
-                    tqdm.write(f"Incomplete row {i} last made progress over 30 seconds ago. Retrying.")
+                    tqdm.write(
+                        f"Incomplete row {i} last made progress over 30 seconds ago. Retrying."
+                    )
                     TP().runlater(prepare_feedback, row)
                 else:
-                    tqdm.write(f"Incomplete row {i} last made progress less than 30 seconds ago. Giving it more time.")
+                    tqdm.write(
+                        f"Incomplete row {i} last made progress less than 30 seconds ago. Giving it more time."
+                    )
 
             elif row.status in [-1]:
                 now = datetime.now().timestamp()
-                if now - row.last_ts > 60*5:
-                    tqdm.write(f"Failed row {i} last made progress over 5 minutes ago. Retrying.")
+                if now - row.last_ts > 60 * 5:
+                    tqdm.write(
+                        f"Failed row {i} last made progress over 5 minutes ago. Retrying."
+                    )
                     TP().runlater(prepare_feedback, row)
                 else:
-                    tqdm.write(f"Failed row {i} last made progress less than 5 minutes ago. Not touching it for now.")
+                    tqdm.write(
+                        f"Failed row {i} last made progress less than 5 minutes ago. Not touching it for now."
+                    )
 
             elif row.status == 2:
                 pass
@@ -182,12 +192,16 @@ class Feedback():
 
     @property
     def json(self):
-        assert hasattr(self, "_json"), "Cannot json-size partially defined feedback function."
+        assert hasattr(
+            self, "_json"
+        ), "Cannot json-size partially defined feedback function."
         return self._json
 
     @property
     def feedback_id(self):
-        assert hasattr(self, "_feedback_id"), "Cannot get id of partially defined feedback function."
+        assert hasattr(
+            self, "_feedback_id"
+        ), "Cannot get id of partially defined feedback function."
         return self._feedback_id
 
     @staticmethod
@@ -270,7 +284,9 @@ class Feedback():
             for aval in multi:
 
                 if each_query is not None:
-                    aval = TruDB.project(query=each_query, record_json=aval, chain_json=None)
+                    aval = TruDB.project(
+                        query=each_query, record_json=aval, chain_json=None
+                    )
 
                 kwargs[multiarg] = aval
 
@@ -284,7 +300,7 @@ class Feedback():
 
         wrapped_imp.__name__ = self.imp.__name__
 
-        wrapped_imp.__self__ = self.imp.__self__ # needed for serialization
+        wrapped_imp.__self__ = self.imp.__self__  # needed for serialization
 
         # Copy over signature from wrapped function. Otherwise signature of the
         # wrapped method will include just kwargs which is insufficient for
@@ -331,16 +347,18 @@ class Feedback():
             record_json['record_id'] = None
 
         try:
-            ins = self.extract_selection(chain_json=chain_json, record_json=record_json)
+            ins = self.extract_selection(
+                chain_json=chain_json, record_json=record_json
+            )
             ret = self.imp(**ins)
-            
+
             return {
                 '_success': True,
                 'feedback_id': self.feedback_id,
                 'record_id': record_json['record_id'],
                 self.name: ret
             }
-        
+
         except Exception as e:
             return {
                 '_success': False,
@@ -352,7 +370,7 @@ class Feedback():
     def run_and_log(self, record_json: JSON, tru: 'Tru') -> None:
         record_id = record_json['record_id']
         chain_id = record_json['chain_id']
-        
+
         ts_now = datetime.now().timestamp()
 
         db = tru.db
@@ -361,13 +379,15 @@ class Feedback():
             db.insert_feedback(
                 record_id=record_id,
                 feedback_id=self.feedback_id,
-                last_ts = ts_now,
-                status = 1 # in progress
+                last_ts=ts_now,
+                status=1  # in progress
             )
 
             chain_json = db.get_chain(chain_id=chain_id)
 
-            res = self.run_on_record(chain_json=chain_json, record_json=record_json)
+            res = self.run_on_record(
+                chain_json=chain_json, record_json=record_json
+            )
 
         except Exception as e:
             print(e)
@@ -384,10 +404,10 @@ class Feedback():
             db.insert_feedback(
                 record_id=record_id,
                 feedback_id=self.feedback_id,
-                last_ts = ts_now,
-                status = 2, # done and good
+                last_ts=ts_now,
+                status=2,  # done and good
                 result_json=res,
-                total_cost=-1.0, # todo
+                total_cost=-1.0,  # todo
                 total_tokens=-1  # todo
             )
         else:
@@ -395,10 +415,10 @@ class Feedback():
             db.insert_feedback(
                 record_id=record_id,
                 feedback_id=self.feedback_id,
-                last_ts = ts_now,
-                status = -1, # failure
+                last_ts=ts_now,
+                status=-1,  # failure
                 result_json=res,
-                total_cost=-1.0, # todo
+                total_cost=-1.0,  # todo
                 total_tokens=-1  # todo
             )
 
@@ -411,11 +431,8 @@ class Feedback():
 
         return self.imp.__name__
 
-    def extract_selection(
-            self,
-            chain_json: Dict,
-            record_json: Dict
-        ) -> Dict[str, Any]:
+    def extract_selection(self, chain_json: Dict,
+                          record_json: Dict) -> Dict[str, Any]:
         """
         Given the `chain` that produced the given `record`, extract from
         `record` the values that will be sent as arguments to the implementation
@@ -453,7 +470,9 @@ class Feedback():
             else:
                 raise RuntimeError(f"Unhandled selection type {type(v)}.")
 
-            val = TruDB.project(query=q, record_json=record_json, chain_json=chain_json)
+            val = TruDB.project(
+                query=q, record_json=record_json, chain_json=chain_json
+            )
             ret[k] = val
 
         return ret
@@ -490,6 +509,7 @@ class Provider():
         obj = {'class': self.__class__.__name__}
         obj.update(**extras)
         return obj
+
 
 class OpenAI(Provider):
 
