@@ -462,16 +462,12 @@ class KerasModelWrapper(ModelWrapper):
         )
         # Other placeholders come from kwargs.
         val_map.update(
-            {
-                hash_tensor(_tensor(k)): v for k, v in model_kwargs.items()
-            }
+            {hash_tensor(_tensor(k)): v for k, v in model_kwargs.items()}
         )
 
         # Finally, interventions override any previously set tensors.
         val_map.update(
-            {
-                hash_tensor(k): v for k, v in zip(doi_tensors, intervention)
-            }
+            {hash_tensor(k): v for k, v in zip(doi_tensors, intervention)}
         )
 
         all_inputs = [unhash_tensor(k) for k in val_map]

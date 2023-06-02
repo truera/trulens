@@ -8,7 +8,6 @@ import numpy as np
 # This needs to be before some others to make sure api keys are ready before
 # relevant classes are loaded.
 from trulens_eval.keys import *
-
 "This is here so that import organizer does not move the keys import below this"
 
 from langchain.chains import ConversationalRetrievalChain
@@ -56,7 +55,7 @@ convos: Dict[str, TruChain] = dict()
 handled_ts: Set[Tuple[str, str]] = set()
 
 # DB to save models and records.
-tru = Tru()#LocalSQLite("trubot.sqlite"))
+tru = Tru()  #LocalSQLite("trubot.sqlite"))
 
 ident = lambda h: h
 
@@ -91,8 +90,10 @@ f_qs_relevance = Feedback(openai.qs_relevance).on(
     multiarg="statement", each_query=Record.page_content, agg=np.min
 )
 
+
 def filter_by_relevance(query, doc):
     return openai.qs_relevance(question=query, statement=doc.page_content) > 0.5
+
 
 def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     """
