@@ -129,9 +129,9 @@ If you want to explain an internal layer, you do not move the DoI layer.
 
 The distribution of interest is a concept of aggregating attributions over a sample or distribution. 
 
-* [Grad-CAM](https://ieeexplore.ieee.org/document/8237336) does this over a Gaussian distribution of inputs. 
-* [Shapley values (SHAP)](https://shap.readthedocs.io/en/latest/example_notebooks/overviews/An%20introduction%20to%20explainable%20AI%20with%20Shapley%20values.html) do this over different background data. 
-* [Integrated Gradients](https://arxiv.org/abs/1703.01365) do this over an interpolation from a baseline to the input.
+* Grad-CAM ([Paper](https://ieeexplore.ieee.org/document/8237336), [GitHub](https://github.com/jacobgil/pytorch-grad-cam), [Docs](https://jacobgil.github.io/pytorch-gradcam-book/introduction.html)) does this over a Gaussian distribution of inputs. 
+* Shapley values ([GitHub](https://github.com/slundberg/shap), [Docs](https://shap.readthedocs.io/en/latest/)) do this over different background data. 
+* Integrated Gradients ([Paper](https://arxiv.org/abs/1703.01365), [Tutorial](https://www.tensorflow.org/tutorials/interpretability/integrated_gradients)) do this over an interpolation from a baseline to the input.
 
 ***How does this relate to the Attribution Cut?***
 
