@@ -10,7 +10,6 @@ trigger:
 pr:
   branches:
     include:
-      - main
       - releases/*
   paths:
     include:
