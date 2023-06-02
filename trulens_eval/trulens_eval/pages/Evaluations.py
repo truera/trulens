@@ -12,8 +12,8 @@ from ux.add_logo import add_logo
 
 from trulens_eval import Tru
 from trulens_eval import tru_db
-from trulens_eval.tru_db import is_empty
-from trulens_eval.tru_db import is_noserio
+from trulens_eval.util import is_empty, matching_objects
+from trulens_eval.util import is_noserio
 from trulens_eval.tru_db import TruDB
 from trulens_eval.ux.components import render_calls
 
@@ -149,14 +149,14 @@ else:
             chain_json = details_json['chain']
 
             llm_queries = list(
-                TruDB.matching_objects(
+                matching_objects(
                     details_json,
                     match=lambda q, o: len(q._path) > 0 and "llm" == q._path[-1]
                 )
             )
 
             prompt_queries = list(
-                TruDB.matching_objects(
+                matching_objects(
                     details_json,
                     match=lambda q, o: len(q._path) > 0 and "prompt" == q._path[
                         -1] and "_call" not in q._path

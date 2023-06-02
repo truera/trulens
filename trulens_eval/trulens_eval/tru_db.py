@@ -3,23 +3,33 @@ from datetime import datetime
 import json
 import logging
 from pathlib import Path
+from pprint import PrettyPrinter
 import sqlite3
-from typing import (Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple,
-                    Union)
+from typing import (
+    Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
+)
 
 from frozendict import frozendict
 from merkle_json import MerkleJson
 import pandas as pd
 import pydantic
 
-from trulens_eval.schema import JSONPath, Model, RecordChainCall
 from trulens_eval.schema import FeedbackDefinition
+from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import FeedbackResultID
+from trulens_eval.schema import JSONPath
+from trulens_eval.schema import Model
 from trulens_eval.schema import Record
-from trulens_eval.util import GetItem, JSONPath, _project
+from trulens_eval.schema import RecordChainCall
+from trulens_eval.schema import RecordID
+from trulens_eval.util import _project
+from trulens_eval.util import all_queries
+from trulens_eval.util import GetItem
 from trulens_eval.util import JSON
 from trulens_eval.util import JSON_BASES
 from trulens_eval.util import json_str_of_obj
+from trulens_eval.util import JSONPath
 from trulens_eval.util import noserio
 from trulens_eval.util import obj_id_of_obj
 from trulens_eval.util import UNCIODE_YIELD
@@ -27,6 +37,9 @@ from trulens_eval.util import UNICODE_CHECK
 
 mj = MerkleJson()
 NoneType = type(None)
+
+pp = PrettyPrinter()
+
 
 class Query:
 
@@ -50,12 +63,14 @@ def get_calls(record: Record) -> Iterable[RecordChainCall]:
     Iterate over the call parts of the record.
     """
 
-    for q in TruDB.all_queries(record):
+    for q in all_queries(record):
         if q._path[-1] == "_call":
             yield q
 
 
-def get_calls_by_stack(record: Record) -> Dict[Tuple[str, ...], RecordChainCall]:
+def get_calls_by_stack(
+    record: Record
+) -> Dict[Tuple[str, ...], RecordChainCall]:
     """
     Get a dictionary mapping chain call stack to the call information.
     """
@@ -82,16 +97,14 @@ def get_calls_by_stack(record: Record) -> Dict[Tuple[str, ...], RecordChainCall]
     return ret
 
 
+"""
 def query_of_path(path: List[Union[str, int]]) -> JSONPath:
-    """
-    Convert the given path to a query object.
-    """
 
     if path[0] == "_record":
-        ret = RecordQuery
+        ret = Query.Record
         path = path[1:]
     elif path[0] == "_chain":
-        ret = ChainQuery
+        ret = Record.Chain
         path = path[1:]
     else:
         ret = JSONPath()
@@ -100,6 +113,7 @@ def query_of_path(path: List[Union[str, int]]) -> JSONPath:
         ret = getattr(ret, attr)
 
     return ret
+"""
 
 
 class TruDB(pydantic.BaseModel, abc.ABC):
@@ -117,8 +131,14 @@ class TruDB(pydantic.BaseModel, abc.ABC):
 
     @abc.abstractmethod
     def insert_record(
-        self, chain_id: str, input: str, output: str, record: Record, ts: int,
-        tags: str, total_tokens: int, total_cost: float
+        self,
+        chain_id: str,
+        #input: str, output: str,
+        record: Record,
+        ts: int,
+        tags: str,
+        total_tokens: int,
+        total_cost: float
     ) -> int:
         """
         Insert a new `record` into db, indicating its `model` as well. Return
@@ -158,7 +178,7 @@ class TruDB(pydantic.BaseModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_feedback_def(self, feedback: FeedbackDefinition):
+    def insert_feedback_definition(self, feedback: FeedbackDefinition):
         """
         Insert a feedback definition into the db.
         """
@@ -168,14 +188,15 @@ class TruDB(pydantic.BaseModel, abc.ABC):
     @abc.abstractmethod
     def insert_feedback(
         self,
-        record_id: str,
-        feedback_id: str,
+        record_id: Optional[RecordID] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
         last_ts: Optional[int] = None,  # "last timestamp"
         status: Optional[int] = None,
         result: Optional[FeedbackResult] = None,
         total_cost: Optional[float] = None,
         total_tokens: Optional[int] = None,
-    ) -> str:
+    ) -> FeedbackResultID:
         """
         Insert a feedback record into the db.
 
@@ -259,13 +280,13 @@ class LocalSQLite(TruDB):
         # Create table if it does not exist
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_RECORDS} (
-                record_id TEXT,
-                chain_id TEXT,
+                record_id TEXT NOT NULL,
+                chain_id TEXT NOT NULL,
                 input TEXT,
                 output TEXT,
                 record_json TEXT,
                 tags TEXT,
-                ts INTEGER,
+                ts INTEGER NOT NULL,
                 total_tokens INTEGER,
                 total_cost REAL,
                 PRIMARY KEY (record_id, chain_id)
@@ -273,19 +294,20 @@ class LocalSQLite(TruDB):
         )
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_FEEDBACKS} (
-                record_id TEXT,
-                feedback_id TEXT,
-                last_ts INTEGER,
-                status INTEGER,
-                result_json TEXT,
-                total_tokens INTEGER,
-                total_cost REAL,
-                PRIMARY KEY (record_id, feedback_id)
+                record_id TEXT NOT NULL,
+                chain_id TEXT NOT NULL,
+                feedback_result_id TEXT NOT NULL PRIMARY KEY,
+                feedback_definition_id TEXT,
+                last_ts INTEGER NOT NULL,
+                status INTEGER NOT NULL,
+                error TEXT,
+                results_json TEXT,
+                cost_json TEXT
             )'''
         )
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_FEEDBACK_DEFS} (
-                feedback_id TEXT PRIMARY KEY,
+                feedback_definition_id TEXT PRIMARY KEY,
                 feedback_json TEXT
             )'''
         )
@@ -308,8 +330,13 @@ class LocalSQLite(TruDB):
 
     # TruDB requirement
     def insert_record(
-        self, input: str, output: str, record: Record, ts: int,
-        tags: str, total_tokens: int, total_cost: float
+        self,
+        # input: str, output: str,
+        record: Record,
+        ts: int,
+        tags: str,
+        total_tokens: int,
+        total_cost: float
     ) -> str:
 
         ts = ts or datetime.now()
@@ -318,17 +345,14 @@ class LocalSQLite(TruDB):
         chain_id = record.chain_id
         record_id = record.record_id
 
-        record_json = record.dict()
-
         conn, c = self._connect()
-
-        record_str = json_str_of_obj(record_json)
+        record_str = json_str_of_obj(record)
 
         c.execute(
             f"INSERT INTO {self.TABLE_RECORDS} VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
-                record_id, chain_id, input, output, record_str, tags, ts,
-                total_tokens, total_cost
+                record_id, chain_id, record.main_input, record.main_output,
+                record_str, tags, ts, total_tokens, total_cost
             )
         )
         self._close(conn)
@@ -356,12 +380,11 @@ class LocalSQLite(TruDB):
 
         return chain_id
 
-    def insert_feedback_def(self, feedback: FeedbackDefinition) -> None:
+    def insert_feedback_definition(self, feedback: FeedbackDefinition) -> None:
         """
         Insert a feedback definition into the database.
         """
 
-    
         feedback_definition_id = feedback.feedback_definition_id
         feedback_str = feedback.json()
 
@@ -372,21 +395,23 @@ class LocalSQLite(TruDB):
         )
         self._close(conn)
 
-        print(f"{UNICODE_CHECK} feedback def. {feedback_definition_id} -> {self.filename}")
+        print(
+            f"{UNICODE_CHECK} feedback def. {feedback_definition_id} -> {self.filename}"
+        )
 
     def get_feedback_defs(
-        self, feedback_id: Optional[str] = None
+        self, feedback_definition_id: Optional[str] = None
     ) -> pd.DataFrame:
 
         clause = ""
         args = ()
-        if feedback_id is not None:
+        if feedback_definition_id is not None:
             clause = "WHERE feedback_id=?"
-            args = (feedback_id,)
+            args = (feedback_definition_id,)
 
         query = f"""
             SELECT
-                feedback_id, feedback_json
+                feedback_definition_id, feedback_json
             FROM {self.TABLE_FEEDBACK_DEFS}
             {clause}
         """
@@ -396,89 +421,101 @@ class LocalSQLite(TruDB):
         rows = c.fetchall()
         self._close(conn)
 
-        from trulens_eval.tru_feedback import Feedback
-
         df_rows = []
 
         for row in rows:
             row = list(row)
-            row[1] = Feedback.of_json(json.loads(row[1]))
+            # row[1] = FeedbackDefinition(**json.loads(row[1]))
+            
             df_rows.append(row)
 
-        return pd.DataFrame(rows, columns=['feedback_id', 'feedback'])
+        return pd.DataFrame(
+            rows, columns=['feedback_definition_id', 'feedback']
+        )
 
     def insert_feedback(
         self,
-        record_id: Optional[str] = None,
-        feedback_id: Optional[str] = None,
+        record_id: Optional[RecordID] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
         last_ts: Optional[int] = None,  # "last timestamp"
         status: Optional[int] = None,
         result: Optional[FeedbackResult] = None,
         total_cost: Optional[float] = None,
         total_tokens: Optional[int] = None,
-    ) -> None:
+    ) -> FeedbackResultID:
         """
         Insert a record-feedback link to db or update an existing one.
         """
 
-        if record_id is None or feedback_id is None:
-            assert result is not None, "`result` needs to be given if `record_id` or `feedback_id` are not provided."
+        if result is not None:
             record_id = result.record_id
-            feedback_id = result.feedback_result_id
+            feedback_result_id = result.feedback_result_id
+            feedback_definition_id = result.feedback_definition_idd
 
         last_ts = last_ts or 0
         status = status or 0
         total_cost = total_cost = 0.0
         total_tokens = total_tokens or 0
-        result_str = result.json() if result is not None else "{}"
+        result_str = json_str_of_obj(result)
 
         conn, c = self._connect()
         c.execute(
-            f"INSERT OR REPLACE INTO {self.TABLE_FEEDBACKS} VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (
-                record_id, feedback_id, last_ts, status, result_str,
-                total_tokens, total_cost
+            f"""INSERT OR REPLACE INTO {self.TABLE_FEEDBACKS}
+                VALUES (?, ?, ?, ?, ?,
+                        ?, ?, ?)""", (
+                record_id, feedback_result_id, feedback_definition_id, last_ts,
+                status, result_str, total_tokens, total_cost
             )
         )
         self._close(conn)
 
         if status == 2:
             print(
-                f"{UNICODE_CHECK} feedback {feedback_id} on {record_id} -> {self.filename}"
+                f"{UNICODE_CHECK} feedback {feedback_result_id} on {record_id} -> {self.filename}"
             )
         else:
             print(
-                f"{UNCIODE_YIELD} feedback {feedback_id} on {record_id} -> {self.filename}"
+                f"{UNCIODE_YIELD} feedback {feedback_result_id} on {record_id} -> {self.filename}"
             )
 
     def get_feedback(
         self,
-        record_id: Optional[str] = None,
-        feedback_id: Optional[str] = None,
+        record_id: Optional[RecordID] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
         status: Optional[int] = None,
         last_ts_before: Optional[int] = None
     ) -> pd.DataFrame:
 
         clauses = []
         vars = []
+
         if record_id is not None:
             clauses.append("record_id=?")
             vars.append(record_id)
-        if feedback_id is not None:
-            clauses.append("feedback_id=?")
-            vars.append(feedback_id)
+
+        if feedback_result_id is not None:
+            clauses.append("f.feedback_result_id=?")
+            vars.append(feedback_result_id)
+
+        if feedback_definition_id is not None:
+            clauses.append("f.feedback_definition_id=?")
+            vars.append(feedback_definition_id)
+
         if status is not None:
             if isinstance(status, Sequence):
                 clauses.append(
-                    "status in (" + (",".join(["?"] * len(status))) + ")"
+                    "f.status in (" + (",".join(["?"] * len(status))) + ")"
                 )
                 for v in status:
                     vars.append(v)
             else:
-                clauses.append("status=?")
+                clauses.append("f.status=?")
                 vars.append(status)
+
         if last_ts_before is not None:
-            clauses.append("last_ts<=?")
+            clauses.append("f.last_ts<=?")
             vars.append(last_ts_before)
 
         where_clause = " AND ".join(clauses)
@@ -487,14 +524,18 @@ class LocalSQLite(TruDB):
 
         query = f"""
             SELECT
-                f.record_id, f.feedback_id, f.last_ts, f.status,
-                f.result_json, f.total_cost, f.total_tokens,
-                fd.feedback_json, r.record_json, c.chain_json
+                f.record_id, f.feedback_result_id, f.feedback_definition_id, 
+                f.last_ts, f.status, f.error,
+                f.results_json, 
+                f.cost_json,
+                fd.feedback_json, 
+                r.record_json, 
+                c.chain_json
             FROM {self.TABLE_FEEDBACKS} f 
                 JOIN {self.TABLE_FEEDBACK_DEFS} fd
                 JOIN {self.TABLE_RECORDS} r
                 JOIN {self.TABLE_CHAINS} c
-            WHERE f.feedback_id=fd.feedback_id
+            WHERE f.feedback_definition_id=fd.feedback_definition_id
                 AND r.record_id=f.record_id
                 AND r.chain_id=c.chain_id
                 {where_clause}
@@ -509,20 +550,23 @@ class LocalSQLite(TruDB):
 
         df_rows = []
         for row in rows:
+            # NOTE: pandas dataframe will take in the various classes below but the
+            # agg table used in UI will not like it. Sending it JSON/dicts instead.
             row = list(row)
-            row[4] = json.loads(row[4])  # result_json
-            row[7] = json.loads(row[7])  # feedback_json
-            row[8] = json.loads(row[8])  # record_json
-            row[9] = json.loads(row[9])  # chain_json
+            row[6] = json.loads(row[6])  # result_json (unstructured)
+            row[7] = json.loads(row[7])  # cost_json (Cost)
+            row[8] = json.loads(row[8])  # feedback_json (FeedbackDefinition)
+            row[9] = json.loads(row[9])  # record_json (Record)
+            row[10] = json.loads(row[10]) # chain_json (Model)
 
             df_rows.append(row)
 
         return pd.DataFrame(
             df_rows,
             columns=[
-                'record_id', 'feedback_id', 'last_ts', 'status', 'result_json',
-                'total_cost', 'total_tokens', 'feedback_json', 'record_json',
-                'chain_json'
+                'record_id', 'feedback_result_id', 'feedback_definition_id',
+                'last_ts', 'status', 'error', 'result_json', 'cost_json',
+                'feedback_definition_json', 'record_json', 'chain_json'
             ]
         )
 
@@ -594,7 +638,7 @@ class LocalSQLite(TruDB):
             return df_results, []
 
         df_results = df_results.groupby("record_id").agg(
-            lambda dicts: {key: val for d in dicts for key, val in d.items()}
+            lambda dicts: {key: val for d in dicts if d is not None for key, val in d.items()}
         ).reset_index()
 
         df_results = df_results['result_json'].apply(pd.Series)

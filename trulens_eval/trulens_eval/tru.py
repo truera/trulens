@@ -67,8 +67,8 @@ class Tru(SingletonPerName):
 
     def add_record(
         self,
-        prompt: str,
-        response: str,
+        #prompt: str,
+        #response: str,
         record: Record,
         tags: Optional[str] = "",
         ts: Optional[int] = None,
@@ -101,8 +101,8 @@ class Tru(SingletonPerName):
         """
 
         record_id = self.db.insert_record(
-            input=prompt,
-            output=response,
+            #input=prompt,
+            #output=response,
             record=record,
             ts=ts,
             tags=tags,
@@ -286,7 +286,7 @@ class Tru(SingletonPerName):
         Tru.dashboard_proc.kill()
         Tru.dashboard_proc = None
 
-    def run_dashboard(self, _dev: bool = False) -> Process:
+    def run_dashboard(self, _dev: Optional[Path] = None) -> Process:
         """ Runs a streamlit dashboard to view logged results and chains
 
         Raises:
@@ -324,9 +324,9 @@ class Tru(SingletonPerName):
         )
 
         env_opts = {}
-        if _dev:
+        if _dev is not None:
             env_opts['env'] = os.environ
-            env_opts['env']['PYTHONPATH'] = str(Path.cwd())
+            env_opts['env']['PYTHONPATH'] = str(_dev)
 
         proc = subprocess.Popen(
             ["streamlit", "run", "--server.headless=True", leaderboard_path], **env_opts
