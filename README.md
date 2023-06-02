@@ -12,7 +12,7 @@ TruLens provides a set of tools for developing and monitoring neural nets, inclu
 
 ### Get going with TruLens-Eval
 
-Install trulens-eval from pypi.
+Install trulens-eval from PyPI.
 
 ```
 pip install trulens-eval
@@ -24,10 +24,10 @@ from trulens_eval import tru_chain
 tru = Tru()
 ```
 
-This example uses langchain and OpenAI, but the same process can be followed with any framework and model provider.
+This example uses LangChain and OpenAI, but the same process can be followed with any framework and model provider.
 
 ```python
-# imports from langchain to build app
+# imports from LangChain to build app
 from langchain import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
@@ -61,7 +61,7 @@ from trulens_eval.tru_feedback import Feedback, Huggingface
 
 os.environ["HUGGINGFACE_API_KEY"] = "..."
 
-# Initialize Huggingface-based feedback function collection class:
+# Initialize HuggingFace-based feedback function collection class:
 hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
@@ -85,7 +85,7 @@ Now you can explore your LLM-based application!
 Doing so will help you understand how your LLM application is performing at a glance. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up. You'll also be able to view evaluations at a record level, and explore the chain metadata for each record.
 
 ```python
-tru.run_dashboard() # open a streamlit app to explore
+tru.run_dashboard() # open a Streamlit app to explore
 ```
 
 For more information, see [TruLens-Eval Documentation](https://www.trulens.org/trulens_eval/quickstart/).
@@ -111,7 +111,7 @@ conda install keras             # Or whatever backend you're using.
 conda install matplotlib        # For visualizations.
 ```
 
-2. [Pip installation] Install the trulens pip package.
+2. [Pip installation] Install the trulens pip package from PyPI.
 ```
 pip install trulens
 ```
@@ -120,6 +120,6 @@ pip install trulens
 To quickly play around with the TruLens library, check out the following CoLab notebooks:
 
 * PyTorch: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1n77IGrPDO2XpeIVo_LQW0gY78enV-tY9?usp=sharing)
-* Tensorflow 2 / Keras: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1f-ETsdlppODJGQCdMXG-jmGmfyWyW2VD?usp=sharing)
+* TensorFlow 2 / Keras: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1f-ETsdlppODJGQCdMXG-jmGmfyWyW2VD?usp=sharing)
 
 For more information, see [TruLens-Explain Documentation](https://www.trulens.org/trulens_explain/quickstart/).

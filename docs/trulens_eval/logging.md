@@ -2,7 +2,7 @@
 
 ## Automatic Logging
 
-The simplest method for logging with trulens is by wrapping with TruChain and including the tru argument, as shown in the quickstart.
+The simplest method for logging with TruLens is by wrapping with TruChain and including the tru argument, as shown in the quickstart.
 
 This is done like so:
 
@@ -29,7 +29,7 @@ truchain("This will be automatically logged.")
 
 ## Manual Logging
 
-### wrap with truchain to instrument your chain
+### Wrap with TruChain to instrument your chain
 ```python
 tc = tru_chain.TruChain(chain, chain_id='Chain1_ChatApplication)
 ```
@@ -63,7 +63,7 @@ Following the request to your app, you can then evaluate LLM quality using feedb
 
 To get feedback on the quality of your LLM, you can use any of the provided feedback functions or add your own.
 
-To assess your LLM quality, you can provide the feedback functions to tru.run_feedback() in a list provided to feedback_functions.
+To assess your LLM quality, you can provide the feedback functions to `tru.run_feedback()` in a list provided to `feedback_functions`.
 
 ```python
 feedback_results = tru.run_feedback_functions(
@@ -73,7 +73,7 @@ feedback_results = tru.run_feedback_functions(
 display(feedback_results)
 ```
 
-After capturing feedback, you can then log it to your local database
+After capturing feedback, you can then log it to your local database.
 ```python
 tru.add_feedback(feedback_results)
 ```
