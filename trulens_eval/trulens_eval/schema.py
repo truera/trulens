@@ -16,7 +16,7 @@ import langchain
 from munch import Munch as Bunch
 import pydantic
 
-from trulens_eval.util import GetItemOrAttribute, json_str_of_obj
+from trulens_eval.util import GetItemOrAttribute, SerialModel, json_str_of_obj
 from trulens_eval.util import JSON
 from trulens_eval.util import json_default
 from trulens_eval.util import jsonify
@@ -36,7 +36,7 @@ FeedbackResultID = str
 # inspect the contents a little better before unserializaing.
 
 
-class Module(pydantic.BaseModel):
+class Module(SerialModel):
     package_name: str
     module_name: str
 
@@ -54,7 +54,7 @@ class Module(pydantic.BaseModel):
         )
 
 
-class Class(pydantic.BaseModel):
+class Class(SerialModel):
     """
     A python class by name.
     """
@@ -78,7 +78,7 @@ class Class(pydantic.BaseModel):
             raise RuntimeError(f"Could not load class {self} because {e}.")
 
 
-class Obj(pydantic.BaseModel):
+class Obj(SerialModel):
     """
     An object that may or may not be serializable. Do not use for base types
     that don't have a class.
@@ -116,7 +116,9 @@ class Obj(pydantic.BaseModel):
 
 # FunctionOrMethod = Union[Function, Method]
 
-class FunctionOrMethod(pydantic.BaseModel):#, abc.ABC): 
+
+class FunctionOrMethod(SerialModel):  #, abc.ABC):
+
     @classmethod
     def __get_validator__(cls):
         yield cls.validate
@@ -125,13 +127,15 @@ class FunctionOrMethod(pydantic.BaseModel):#, abc.ABC):
     def validate(cls, d) -> 'FunctionOrMethod':
         if not isinstance(d, Dict):
             return d
-        
+
         if "obj" in d:
             return Method(**d)
         elif "cls" in d:
             return Function(**d)
         else:
-            raise RuntimeError(f"Don't know how to deserialize a function or method from {d}.")
+            raise RuntimeError(
+                f"Don't know how to deserialize a function or method from {d}."
+            )
 
     @staticmethod
     def of_callable(c: Callable) -> 'FunctionOrMethod':
@@ -145,7 +149,7 @@ class FunctionOrMethod(pydantic.BaseModel):#, abc.ABC):
         raise NotImplementedError()
 
 
-class MethodIdent(pydantic.BaseModel):
+class MethodIdent(SerialModel):
     """
     Identifier of a method (as opposed to a serialization of the method itself).
     """
@@ -171,9 +175,13 @@ class MethodIdent(pydantic.BaseModel):
 
         module_name = cls.__module__
 
-        return MethodIdent(module_name=module_name, class_name=cls.__name__, method_name=method.__name__)
+        return MethodIdent(
+            module_name=module_name,
+            class_name=cls.__name__,
+            method_name=method.__name__
+        )
 
-            
+
 class Method(FunctionOrMethod):
     """
     A python method. A method belongs to some class in some module and must have
@@ -206,7 +214,7 @@ class Method(FunctionOrMethod):
     def load(self) -> Callable:
         obj = self.obj.load()
         return getattr(obj, self.name)
-    
+
     # @staticmethod
     # def parse_obj(o: Dict) -> 'Method':
     #    return Method(obj=Obj.parse_obj(o['obj']), name=o['name'])
@@ -256,17 +264,17 @@ class Function(FunctionOrMethod):
 # Record related:
 
 
-class RecordChainCallMethod(pydantic.BaseModel):
+class RecordChainCallMethod(SerialModel):
     path: JSONPath
     method: MethodIdent
 
 
-class Cost(pydantic.BaseModel):
-    n_tokens: Optional[int]
-    cost: Optional[float]
+class Cost(SerialModel):
+    n_tokens: Optional[int] = None
+    cost: Optional[float] = None
 
 
-class RecordChainCall(pydantic.BaseModel):
+class RecordChainCall(SerialModel):
     """
     Info regarding each instrumented method call is put into this container.
     """
@@ -301,22 +309,29 @@ class RecordChainCall(pydantic.BaseModel):
         return self.top().method
 
 
-class Record(pydantic.BaseModel):
+class Record(SerialModel):
     record_id: RecordID
     chain_id: ChainID
 
-    cost: Cost
+    cost: Cost = pydantic.Field(default_factory=Cost)
 
-    main_input: str
-    main_output: Optional[str]  # if no error
-    main_error: Optional[str]  # if error
+    ts: datetime.datetime = pydantic.Field(default_factory=lambda: datetime.datetime.now())
+
+    tags: str = ""
+
+    main_input: Optional[str]
+    main_output: Optional[str] # if no error
+    main_error: Optional[str] # if error
 
     # The collection of calls recorded. Note that these can be converted into a
     # json structure with the same paths as the chain that generated this record
     # via `layout_calls_as_chain`.
-    calls: Sequence[RecordChainCall]
+    calls: Sequence[RecordChainCall] = []
 
-    def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
+    def __init__(self,
+                 record_id: Optional[RecordID] = None,
+
+                 **kwargs):
         super().__init__(record_id="temporay", **kwargs)
 
         if record_id is None:
@@ -358,13 +373,15 @@ class Record(pydantic.BaseModel):
 
 # Feedback related:
 
+
 class FeedbackResultStatus(Enum):
     NONE = "none"
     RUNNING = "running"
     FAILED = "failed"
     DONE = "done"
 
-class FeedbackResult(pydantic.BaseModel):
+
+class FeedbackResult(SerialModel):
     record_id: RecordID
     chain_id: ChainID
 
@@ -373,20 +390,28 @@ class FeedbackResult(pydantic.BaseModel):
     feedback_definition_id: Optional[FeedbackDefinitionID] = None
 
     # "last timestamp"
-    last_ts: int
+    last_ts: datetime.datetime
 
     status: FeedbackResultStatus = "none"
 
-    error: Optional[str] = None # if there was an error
+    error: Optional[str] = None  # if there was an error
 
-    results_json: JSON # keeping unrestricted in type for now
+    results_json: JSON  # keeping unrestricted in type for now
 
     cost: Cost
 
+    tags: str
+
     def __init__(
-        self, feedback_result_id: Optional[FeedbackResultID] = None, **kwargs
+        self,
+        feedback_result_id: Optional[FeedbackResultID] = None,
+        ts: Optional[datetime.datetime] = None,
+        tags: str = "",
+        **kwargs
     ):
-        super().__init__(feedback_result_id="temporary", **kwargs)
+        ts = ts or datetime.now()
+
+        super().__init__(feedback_result_id="temporary", ts=ts, tags=tags, **kwargs)
 
         if feedback_result_id is None:
             feedback_result_id = obj_id_of_obj(
@@ -396,7 +421,7 @@ class FeedbackResult(pydantic.BaseModel):
         self.feedback_result_id = feedback_result_id
 
 
-class FeedbackDefinition(pydantic.BaseModel):
+class FeedbackDefinition(SerialModel):
     # Implementation serialization info.
     implementation: Optional[FunctionOrMethod] = None
 
@@ -478,7 +503,7 @@ class FeedbackMode(str, Enum):
     DEFERRED = "deferred"
 
 
-class Model(pydantic.BaseModel):
+class Model(SerialModel):
     """
     Base container for any model that can be instrumented with trulens.
     """
@@ -521,17 +546,15 @@ class Model(pydantic.BaseModel):
 
         self.chain_id = chain_id
 
-    
     def json(self, *args, **kwargs):
         # Need custom jsonification here because it is likely the model
         # structure contains loops.
 
         return json_str_of_obj(self.dict(), *args, **kwargs)
-    
+
     def dict(self):
         # Same problem as in json.
         return jsonify(self)
-    
 
 
 class LangChainModel(langchain.chains.base.Chain, Model):
@@ -542,7 +565,7 @@ class LangChainModel(langchain.chains.base.Chain, Model):
     # The wrapped/instrumented chain.
     chain: langchain.chains.base.Chain
 
-    # TODO: Consider 
+    # TODO: Consider
 
 
 class LlamaIndexModel(Model):

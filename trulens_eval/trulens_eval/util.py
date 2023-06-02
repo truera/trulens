@@ -469,9 +469,20 @@ def _project(path: List, obj: Any):
         )
 
 
+class SerialModel(pydantic.BaseModel):
+    """
+    Trulens-specific additions on top of pydantic models. Includes utilities to help serialization mostly.
+    """
+
+    def update(self, **d):
+        for k, v in d.items():
+            setattr(self, k, v)
+
+        return self
+
 # JSONPath, a container for selector/accessors/setters of data stored in a json
 # structure. Cannot make abstract since pydantic will try to initialize it.
-class Step(pydantic.BaseModel):#, abc.ABC):
+class Step(SerialModel):#, abc.ABC):
     """
     A step in a selection path.
     """                          
@@ -748,12 +759,9 @@ class GetItems(Step):
         return f"[{','.join(self.indices)}]"
 
 
-class JSONPath(pydantic.BaseModel):
+class JSONPath(SerialModel):
     """
-    Utilitiy class for building JSONPaths. This is seperated from JSONPath
-    because those are pydantic.BaseModel which needs to handle attrbutes and
-    other functionalities whereas we would like to use them for path building.
-    We do so here and convert to serializable JSONPath as needed.
+    Utilitiy class for building JSONPaths.
 
     Usage:
     

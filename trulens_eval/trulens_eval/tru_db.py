@@ -14,7 +14,7 @@ from merkle_json import MerkleJson
 import pandas as pd
 import pydantic
 
-from trulens_eval.schema import FeedbackDefinition
+from trulens_eval.schema import ChainID, FeedbackDefinition
 from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
@@ -116,7 +116,7 @@ def query_of_path(path: List[Union[str, int]]) -> JSONPath:
 """
 
 
-class TruDB(pydantic.BaseModel, abc.ABC):
+class TruDB(SerialModel, abc.ABC):
 
     # Use TinyDB queries for looking up parts of records/models and/or filtering
     # on those parts.
@@ -132,42 +132,20 @@ class TruDB(pydantic.BaseModel, abc.ABC):
     @abc.abstractmethod
     def insert_record(
         self,
-        chain_id: str,
-        #input: str, output: str,
         record: Record,
-        ts: int,
-        tags: str,
-        total_tokens: int,
-        total_cost: float
-    ) -> int:
+    ) -> RecordID:
         """
         Insert a new `record` into db, indicating its `model` as well. Return
         record id.
 
         Args:
-
-        - chain_id: str - the chain id of the chain that generated `record`.
-
-        - input: str - the main chain input.
-
-        - output: str - the main chain output.
-
-        - record: Record - the full record of the execution of a chain.
-
-        - ts: int - timestamp.
-
-        - tags: str - additional metadata to store alongside the record.
-
-        - total_tokens: int - number of tokens generated in process of chain
-          evaluation.
-
-        - total_cost: float - the cost of chain evaluation.
+        - record: Record
         """
 
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_chain(self, chain: Model) -> str:
+    def insert_chain(self, chain: Model) -> ChainID:
         """
         Insert a new `chain` into db under the given `chain_id`. 
 
@@ -178,7 +156,9 @@ class TruDB(pydantic.BaseModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_feedback_definition(self, feedback: FeedbackDefinition):
+    def insert_feedback_definition(
+        self, feedback_definition: FeedbackDefinition
+    ) -> FeedbackDefinitionID:
         """
         Insert a feedback definition into the db.
         """
@@ -188,36 +168,14 @@ class TruDB(pydantic.BaseModel, abc.ABC):
     @abc.abstractmethod
     def insert_feedback(
         self,
-        record_id: Optional[RecordID] = None,
-        feedback_result_id: Optional[FeedbackResultID] = None,
-        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-        last_ts: Optional[int] = None,  # "last timestamp"
-        status: Optional[int] = None,
-        result: Optional[FeedbackResult] = None,
-        total_cost: Optional[float] = None,
-        total_tokens: Optional[int] = None,
+        feedback_result: FeedbackResult,
     ) -> FeedbackResultID:
         """
         Insert a feedback record into the db.
 
         Args:
 
-        - record_id: Optional[str] - the record id that produced the feedback,
-          if any.
-
-        - feedback_id: Optional[str] - the feedback id of the feedback function
-          definition that produced this result, if any.
-
-        - last_ts: Optional[int] - timestamp of the last update to this record.
-
-        - status: Optional[int] - the status of the result used for referred
-          execution.
-
-        - result: Optional[FeedbackResult] - the result itself.
-
-        - total_cost: Optional[float] - 
-
-        - total_tokens: Optional[int] - 
+        - feedback_result: FeedbackResult
         """
 
         raise NotImplementedError()
@@ -331,19 +289,8 @@ class LocalSQLite(TruDB):
     # TruDB requirement
     def insert_record(
         self,
-        # input: str, output: str,
         record: Record,
-        ts: int,
-        tags: str,
-        total_tokens: int,
-        total_cost: float
-    ) -> str:
-
-        ts = ts or datetime.now()
-        total_tokens = total_tokens or record.cost.total_tokens
-        total_cost = total_cost or record.cost.total_cost
-        chain_id = record.chain_id
-        record_id = record.record_id
+    ) -> RecordID:
 
         conn, c = self._connect()
         record_str = json_str_of_obj(record)
@@ -351,20 +298,21 @@ class LocalSQLite(TruDB):
         c.execute(
             f"INSERT INTO {self.TABLE_RECORDS} VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
-                record_id, chain_id, record.main_input, record.main_output,
-                record_str, tags, ts, total_tokens, total_cost
+                record.record_id, record.chain_id, record.main_input,
+                record.main_output, record_str, record.tags, record.ts,
+                record.cost.n_tokens, record.cost.cost
             )
         )
         self._close(conn)
 
         print(
-            f"{UNICODE_CHECK} record {record_id} from {chain_id} -> {self.filename}"
+            f"{UNICODE_CHECK} record {record.record_id} from {record.chain_id} -> {self.filename}"
         )
 
-        return record_id
+        return record.record_id
 
     # TruDB requirement
-    def insert_chain(self, chain: Model) -> str:
+    def insert_chain(self, chain: Model) -> ChainID:
         chain_id = chain.chain_id
 
         chain_str = chain.json()
@@ -380,7 +328,9 @@ class LocalSQLite(TruDB):
 
         return chain_id
 
-    def insert_feedback_definition(self, feedback: FeedbackDefinition) -> None:
+    def insert_feedback_definition(
+        self, feedback: FeedbackDefinition
+    ) -> FeedbackDefinitionID:
         """
         Insert a feedback definition into the database.
         """
@@ -398,6 +348,8 @@ class LocalSQLite(TruDB):
         print(
             f"{UNICODE_CHECK} feedback def. {feedback_definition_id} -> {self.filename}"
         )
+
+        return feedback_definition_id
 
     def get_feedback_defs(
         self, feedback_definition_id: Optional[str] = None
@@ -426,7 +378,7 @@ class LocalSQLite(TruDB):
         for row in rows:
             row = list(row)
             # row[1] = FeedbackDefinition(**json.loads(row[1]))
-            
+
             df_rows.append(row)
 
         return pd.DataFrame(
@@ -434,49 +386,34 @@ class LocalSQLite(TruDB):
         )
 
     def insert_feedback(
-        self,
-        record_id: Optional[RecordID] = None,
-        feedback_result_id: Optional[FeedbackResultID] = None,
-        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-        last_ts: Optional[int] = None,  # "last timestamp"
-        status: Optional[int] = None,
-        result: Optional[FeedbackResult] = None,
-        total_cost: Optional[float] = None,
-        total_tokens: Optional[int] = None,
+        self, feedback_result: FeedbackResult
     ) -> FeedbackResultID:
         """
         Insert a record-feedback link to db or update an existing one.
         """
 
-        if result is not None:
-            record_id = result.record_id
-            feedback_result_id = result.feedback_result_id
-            feedback_definition_id = result.feedback_definition_idd
-
-        last_ts = last_ts or 0
-        status = status or 0
-        total_cost = total_cost = 0.0
-        total_tokens = total_tokens or 0
-        result_str = json_str_of_obj(result)
+        feedback_result_str = json_str_of_obj(feedback_result)
 
         conn, c = self._connect()
         c.execute(
             f"""INSERT OR REPLACE INTO {self.TABLE_FEEDBACKS}
                 VALUES (?, ?, ?, ?, ?,
                         ?, ?, ?)""", (
-                record_id, feedback_result_id, feedback_definition_id, last_ts,
-                status, result_str, total_tokens, total_cost
+                feedback_result.record_id, feedback_result.feedback_result_id,
+                feedback_result.feedback_definition_id, feedback_result.last_ts,
+                feedback_result.status, feedback_result_str,
+                feedback_result.cost.n_tokens, feedback_result.cost.cost
             )
         )
         self._close(conn)
 
-        if status == 2:
+        if feedback_result.status == 2:
             print(
-                f"{UNICODE_CHECK} feedback {feedback_result_id} on {record_id} -> {self.filename}"
+                f"{UNICODE_CHECK} feedback {feedback_result.feedback_result_id} on {feedback_result.record_id} -> {self.filename}"
             )
         else:
             print(
-                f"{UNCIODE_YIELD} feedback {feedback_result_id} on {record_id} -> {self.filename}"
+                f"{UNCIODE_YIELD} feedback {feedback_result.feedback_result_id} on {feedback_result.record_id} -> {self.filename}"
             )
 
     def get_feedback(
@@ -557,7 +494,7 @@ class LocalSQLite(TruDB):
             row[7] = json.loads(row[7])  # cost_json (Cost)
             row[8] = json.loads(row[8])  # feedback_json (FeedbackDefinition)
             row[9] = json.loads(row[9])  # record_json (Record)
-            row[10] = json.loads(row[10]) # chain_json (Model)
+            row[10] = json.loads(row[10])  # chain_json (Model)
 
             df_rows.append(row)
 
@@ -638,7 +575,10 @@ class LocalSQLite(TruDB):
             return df_results, []
 
         df_results = df_results.groupby("record_id").agg(
-            lambda dicts: {key: val for d in dicts if d is not None for key, val in d.items()}
+            lambda dicts: {
+                key: val for d in dicts if d is not None
+                for key, val in d.items()
+            }
         ).reset_index()
 
         df_results = df_results['result_json'].apply(pd.Series)

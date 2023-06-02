@@ -67,50 +67,31 @@ class Tru(SingletonPerName):
 
     def add_record(
         self,
-        #prompt: str,
-        #response: str,
-        record: Record,
-        tags: Optional[str] = "",
-        ts: Optional[int] = None,
-        total_tokens: Optional[int] = None,
-        total_cost: Optional[float] = None,
+        record: Optional[Record] = None,
+        **kwargs
     ):
         """
         Add a record to the database.
 
         Parameters:
+        
+        - record: Record
 
-            prompt (str): Chain input or "prompt".
-
-            response (str): Chain output or "response".
-
-            record_json (JSON): Record as produced by `TruChain.call_with_record`.
-
-            tags (str, optional): Additional metadata to include with the record.
-
-            ts (int, optional): Timestamp of record creation.
-
-            total_tokens (int, optional): The number of tokens generated in
-            producing the response.
-
-            total_cost (float, optional): The cost of producing the response.
-
+        - **kwargs: Record fields.
+            
         Returns:
-            str: Unique record identifier.
+            RecordID: Unique record identifier.
 
         """
 
-        record_id = self.db.insert_record(
-            #input=prompt,
-            #output=response,
-            record=record,
-            ts=ts,
-            tags=tags,
-            total_tokens=total_tokens,
-            total_cost=total_cost
-        )
+        if record is None:
+            record = Record(**kwargs)
+        else:
+            record.update(**kwargs)
 
-        return record_id
+        return self.db.insert_record(
+            record=record
+        )
 
     def run_feedback_functions(
         self,
@@ -178,19 +159,17 @@ class Tru(SingletonPerName):
 
         self.db.insert_chain(chain=chain)
 
-    def add_feedback(self, result: FeedbackResult) -> None:
+    def add_feedback(self, result: FeedbackResult, **kwargs) -> None:
         """
         Add a single feedback result to the database.
         """
-        result_json = result.json()
 
-        if 'record_id' not in result_json or result_json['record_id'] is None:
-            raise RuntimeError(
-                "Result does not include record_id. "
-                "To log feedback, log the record first using `tru.add_record`."
-            )
+        if result is None:
+            result = FeedbackResult(**kwargs)
+        else:
+            result.update(**kwargs)
 
-        self.db.insert_feedback(result=result, status=2)
+        self.db.insert_feedback(result=result)
 
     def add_feedbacks(self, results: Iterable[FeedbackResult]) -> None:
         """
@@ -200,7 +179,7 @@ class Tru(SingletonPerName):
         for result in results:
             self.add_feedback(result=result)
 
-    def get_chain(self, chain_id: str) -> JSON:
+    def get_chain(self, chain_id: Optional[str] = None) -> JSON:
         """
         Look up a chain from the database.
         """
