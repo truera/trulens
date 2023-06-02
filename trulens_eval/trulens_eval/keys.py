@@ -25,7 +25,6 @@ def set_openai_key():
     if 'OPENAI_API_KEY' in os.environ:
         import openai
         openai.api_key = os.environ["OPENAI_API_KEY"]
-        return None
 
 
 global cohere_agent
