@@ -72,43 +72,23 @@ def app():
                 unsafe_allow_html=True,
             )
 
-            if i < len(feedback_cols):
-                if math.isnan(mean):
-                    pass
-
-                else:
-                    if mean >= default_pass_fail_color_threshold:
-                        feedback_cols[i].metric(
-                            label=col_name,
-                            value=f'{round(mean, 2)}',
-                            delta='✅ High'
-                        )
-                    else:
-                        feedback_cols[i].metric(
-                            label=col_name,
-                            value=f'{round(mean, 2)}',
-                            delta='⚠️ Low ',
-                            delta_color="inverse"
-                        )
+            if math.isnan(mean):
+                pass
 
             else:
-                if math.isnan(mean):
-                    pass
-
+                if mean >= default_pass_fail_color_threshold:
+                    feedback_cols[i].metric(
+                        label=col_name,
+                        value=f'{round(mean, 2)}',
+                        delta='✅ High'
+                    )
                 else:
-                    if mean >= default_pass_fail_color_threshold:
-                        feedback_cols[i].metric(
-                            label=col_name,
-                            value=f'{round(mean, 2)}',
-                            delta='✅ High'
-                        )
-                    else:
-                        feedback_cols[i].metric(
-                            label=col_name,
-                            value=f'{round(mean, 2)}',
-                            delta='⚠️ Low ',
-                            delta_color="inverse"
-                        )
+                    feedback_cols[i].metric(
+                        label=col_name,
+                        value=f'{round(mean, 2)}',
+                        delta='⚠️ Low ',
+                        delta_color="inverse"
+                    )
 
         with col99:
             if st.button('Select Chain', key=f"model-selector-{chain}"):
