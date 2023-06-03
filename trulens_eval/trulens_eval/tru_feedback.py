@@ -44,6 +44,7 @@ import re
 from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
                     Tuple, Type, Union)
 
+from langchain.callbacks import get_openai_callback
 import numpy as np
 import openai
 import pydantic
@@ -52,13 +53,18 @@ from tqdm.auto import tqdm
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
+from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import FeedbackResultID
+from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import FunctionOrMethod
 from trulens_eval.schema import Model
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import Record
+from trulens_eval.util import jsonify
+from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
@@ -104,13 +110,13 @@ class Feedback(FeedbackDefinition):
             kwargs['implementation'] = FunctionOrMethod.of_callable(imp)
         else:
             if "implementation" in kwargs:
-                imp: Callable = kwargs['implementation'].load()
+                imp: Callable = FunctionOrMethod.pick(**(kwargs['implementation'])).load()
 
         if agg is not None:
             kwargs['aggregator'] = FunctionOrMethod.of_callable(agg)
         else:
             if 'arrgregator' in kwargs:
-                agg: Callable = kwargs['aggregator'].load()
+                agg: Callable = FunctionOrMethod.pick(**(kwargs['aggregator'])).load()
 
         super().__init__(**kwargs)
 
@@ -136,33 +142,36 @@ class Feedback(FeedbackDefinition):
 
             chain_json = row.chain_json
 
-            feedback = Feedback(**row.feedback_definition_json)
-            feedback.run_and_log(record=record, chain_json=chain_json, tru=tru)
+            feedback = Feedback(**row.feedback_json)
+            feedback.run_and_log(record=record, chain=chain_json, tru=tru, feedback_result_id=row.feedback_result_id)
 
         feedbacks = db.get_feedback()
 
         for i, row in feedbacks.iterrows():
-            if row.status == 0:
+            if row.status == FeedbackResultStatus.NONE:
                 tqdm.write(f"Starting run for row {i}.")
 
                 TP().runlater(prepare_feedback, row)
-            elif row.status in [1]:
+
+            elif row.status in [FeedbackResultStatus.RUNNING]:
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 30:
                     tqdm.write(f"Incomplete row {i} last made progress over 30 seconds ago. Retrying.")
                     TP().runlater(prepare_feedback, row)
+
                 else:
                     tqdm.write(f"Incomplete row {i} last made progress less than 30 seconds ago. Giving it more time.")
 
-            elif row.status in [-1]:
+            elif row.status in [FeedbackResultStatus.FAILED]:
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 60*5:
                     tqdm.write(f"Failed row {i} last made progress over 5 minutes ago. Retrying.")
                     TP().runlater(prepare_feedback, row)
+
                 else:
                     tqdm.write(f"Failed row {i} last made progress less than 5 minutes ago. Not touching it for now.")
 
-            elif row.status == 2:
+            elif row.status == FeedbackResultStatus.DONE:
                 pass
 
         # TP().finish()
@@ -277,114 +286,98 @@ class Feedback(FeedbackDefinition):
 
         return Feedback(imp=self.imp, selectors=selectors, agg=self.agg)
 
-    def run(self, chain: Optional[Model]=None, record: Optional[Record]=None) -> Any:
+    def run(self, chain: Union[Model,JSON], record: Record) -> FeedbackResult:
         """
         Run the feedback function on the given `record`. The `chain` that
         produced the record is also required to determine input/output argument
         names.
+
+        Might not have a Chain here but only the serialized chain_json .
         """
+
+        if isinstance(chain, Model):
+            chain_json = jsonify(chain)
+        else:
+            chain_json = chain
 
         result_vals = []
 
-        try:
-            for ins in self.extract_selection(chain=chain, record=record):
-                result_val = self.imp(**ins)
-                result_vals.append(result_val)
+        feedback_result = FeedbackResult(
+            feedback_definition_id = self.feedback_definition_id,
+            record_id = record.record_id,
+            chain_id=chain_json['chain_id']
+        )
 
+        try:
+            total_tokens = 0
+            total_cost = 0.0
+            for ins in self.extract_selection(chain=chain_json, record=record):
+
+                # TODO: Do this only if there is an openai model inside the chain:
+                # NODE: This only works for langchain uses of openai.
+                with get_openai_callback() as cb:
+                    result_val = self.imp(**ins)
+                    result_vals.append(result_val)
+
+                    total_tokens += cb.total_tokens
+                    total_cost += cb.total_cost
+                
             result_vals = np.array(result_vals)
             result = self.agg(result_vals)
 
-            return FeedbackResult(
+            feedback_result.update(
                 results_json={
-                    '_success': True,
                     self.name: result
                 },
-                feedback_definition_id = self.feedback_definition_id,
-                record_id = record.record_id,
-                chain_id=chain.chain_id
-            )
-        
-        except Exception as e:
-            return FeedbackResult(
-                results_json={
-                    '_success': False,
-                    '_error': str(e)
-                },
-                feedback_definition_id = self.feedback_definition_id,
-                record_id = record.record_id,
-                chain_id=chain.chain_id
+                status=FeedbackResultStatus.DONE,
+                cost=Cost(n_tokens=total_tokens, cost=total_cost)
             )
 
-    def run_and_log(self, record: Record, tru: 'Tru', chain_json: Optional[JSON] = None) -> None:
+            return feedback_result
+        
+        except Exception as e:
+            raise e
+
+
+    def run_and_log(self, record: Record, tru: 'Tru', chain: Union[Model, JSON] = None, feedback_result_id: Optional[FeedbackResultID] = None) -> FeedbackResult:
         record_id = record.record_id
         chain_id = record.chain_id
-        
-        ts_now = datetime.now().timestamp()
 
         db = tru.db
 
-        # TODO:
-        results = dict(
-            total_cost = -1.0,
-            total_tokens = -1
+        # Placeholder result to indicate a run.
+        feedback_result = FeedbackResult(
+            feedback_definition_id = self.feedback_definition_id,
+            feedback_result_id = feedback_result_id,
+            record_id = record_id,
+            chain_id = chain_id
         )
 
-        feedback_result_dict = dict(
-            feedback_definition_id = self.feedback_definition_id,
-            record_id = record_id,
-            chain_id = chain_id,
-            results_json = results
-        )
+        if feedback_result_id is None:
+            feedback_result_id = feedback_result.feedback_result_id
 
         try:
             db.insert_feedback(
-                record_id=record_id,
-                feedback_id=self.feedback_id,
-                last_ts = ts_now,
-                status = 1 # in progress
+                feedback_result.update(
+                    status = FeedbackResultStatus.RUNNING # in progress
+                )
             )
+    
+            feedback_result = self.run(chain=chain, record=record).update(feedback_result_id=feedback_result_id)
 
-            if chain_json is None:
-                chain_json = db.get_chain(chain_id=chain_id)
-
-            res = self.run(chain_json=chain_json, record=record)
-
-        
         except Exception as e:
-            print(e)
-            feedback_result_dict['error'] = str(e)
-            res = {
-                '_success': False,
-                'feedback_result_id': self.feedback_result_id,
-                'record_id': record_id,
-                'error': str(e),
-                'result': res,
-                
-            }
-
-        ts_now = datetime.now().timestamp()
-
-        if res['_success']:
             db.insert_feedback(
-                record_id=record_id,
-                feedback_id=self.feedback_id,
-                last_ts = ts_now,
-                status = 2, # done and good
-                result=res,
-                
+                feedback_result.update(error=str(e), status=FeedbackResultStatus.FAILED)
             )
-        else:
-            # TODO: indicate failure better
-            db.insert_feedback(
-                record_id=record_id,
-                feedback_id=self.feedback_id,
-                last_ts = ts_now,
-                status = -1, # failure
-                result=res,
-                total_cost=-1.0, # todo
-                total_tokens=-1  # todo
-            )
+            return
+        
+        # Otherwise update based on what Feedback.run produced (could be success or failure).
+        db.insert_feedback(
+            feedback_result
+        )
 
+        return feedback_result
+    
     @property
     def name(self):
         """
@@ -396,7 +389,7 @@ class Feedback(FeedbackDefinition):
 
     def extract_selection(
             self,
-            chain: Model,
+            chain: Union[Model,JSON],
             record: Record
         ) -> Iterable[Dict[str, Any]]:
         """
@@ -408,7 +401,7 @@ class Feedback(FeedbackDefinition):
         arg_vals = {}
 
         for k, v in self.selectors.items():
-            if isinstance(v, Query):
+            if isinstance(v, Query.Query):
                 q = v
 
             else:

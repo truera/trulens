@@ -196,7 +196,7 @@ class Tru(SingletonPerName):
 
         return df, feedback_columns
 
-    def start_evaluator(self, fork=False) -> Union[Process, Thread]:
+    def start_evaluator(self, restart=False, fork=False) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread.
         """
@@ -204,7 +204,10 @@ class Tru(SingletonPerName):
         assert not fork, "Fork mode not yet implemented."
 
         if self.evaluator_proc is not None:
-            raise RuntimeError("Evaluator is already running in this process.")
+            if restart:
+                self.stop_evaluator()
+            else: 
+                raise RuntimeError("Evaluator is already running in this process.")
 
         from trulens_eval.tru_feedback import Feedback
 
@@ -253,19 +256,39 @@ class Tru(SingletonPerName):
             
         self.evaluator_proc = None
         
-    def stop_dashboard(self) -> None:
+    def stop_dashboard(self, force: bool = False) -> None:
         """Stop existing dashboard if running.
 
         Raises:
             ValueError: Dashboard is already running.
         """
         if Tru.dashboard_proc is None:
-            raise ValueError("Dashboard not running.")
-        
-        Tru.dashboard_proc.kill()
-        Tru.dashboard_proc = None
+            if not force:
+                raise ValueError(
+                    "Dashboard not running in this workspace. "
+                    "You may be able to shut other instances by setting the `force` flag."
+                )
+            
+            else:
+                print("Force stopping dashboard ...")
+                import psutil
+                import pwd
+                import os
+                username = pwd.getpwuid(os.getuid())[0]
+                for p in psutil.process_iter():
+                    try:
+                        cmd = " ".join(p.cmdline())
+                        if "streamlit" in cmd and "Leaderboard.py" in cmd and p.username() == username:
+                            print(f"killing {p}")
+                            p.kill()
+                    except Exception as e:
+                        continue
 
-    def run_dashboard(self, _dev: Optional[Path] = None) -> Process:
+        else:
+            Tru.dashboard_proc.kill()
+            Tru.dashboard_proc = None
+
+    def run_dashboard(self, force: bool, _dev: Optional[Path] = None) -> Process:
         """ Runs a streamlit dashboard to view logged results and chains
 
         Raises:
@@ -275,8 +298,13 @@ class Tru(SingletonPerName):
             Process: Process containing streamlit dashboard.
         """
 
+        if force:
+            self.stop_dashboard(force=force)
+
         if Tru.dashboard_proc is not None:
             raise ValueError("Dashboard already running. Run tru.stop_dashboard() to stop existing dashboard.")
+
+        print("Starting dashboard ...")
 
         # Create .streamlit directory if it doesn't exist
         streamlit_dir = os.path.join(os.getcwd(), '.streamlit')

@@ -8,6 +8,7 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
+from trulens_eval.schema import FeedbackResultStatus
 from ux.add_logo import add_logo
 
 from trulens_eval import Tru
@@ -40,7 +41,7 @@ endpoints = [e_openai, e_hugs, e_cohere]
 tab1, tab2, tab3 = st.tabs(["Progress", "Endpoints", "Feedback Functions"])
 
 with tab1:
-    feedbacks = lms.get_feedback(status=[-1, 0, 1])
+    feedbacks = lms.get_feedback(status=[FeedbackResultStatus.NONE, FeedbackResultStatus.RUNNING, FeedbackResultStatus.FAILED])
     st.write(feedbacks)
 
 with tab2:
