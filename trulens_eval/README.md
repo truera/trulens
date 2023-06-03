@@ -71,7 +71,7 @@ This example uses LangChain and OpenAI, but the same process can be followed wit
 
     chain = LLMChain(llm=chat, prompt=chat_prompt_template)
 
-    # wrap with truchain to instrument your chain
+    # wrap with TruChain to instrument your chain
     tc = tru_chain.TruChain(chain)
 ```
 
