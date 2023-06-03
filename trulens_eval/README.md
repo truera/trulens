@@ -44,14 +44,14 @@ Our example chat app and feedback functions call external APIs such as OpenAI or
 #### In Python
 
 ```python
-import os
-os.environ["OPENAI_API_KEY"] = "..."
+    import os
+    os.environ["OPENAI_API_KEY"] = "..."
 ```
 
 #### In Terminal
 
 ```bash
-export OPENAI_API_KEY = "..."
+    export OPENAI_API_KEY = "..."
 ```
 
 ### Create a basic LLM chain to evaluate

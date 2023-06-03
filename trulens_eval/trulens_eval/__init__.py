@@ -26,11 +26,11 @@
 
 __version__ = "0.1.1"
 
-from trulens_eval.tru_chain import TruChain
-from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru_feedback import OpenAI
-from trulens_eval.tru_feedback import Huggingface
 from trulens_eval.tru import Tru
+from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_db import Query
+from trulens_eval.tru_feedback import Feedback
+from trulens_eval.tru_feedback import Huggingface
+from trulens_eval.tru_feedback import OpenAI
 
 __all__ = ['TruChain', 'Feedback', 'OpenAI', 'Huggingface', 'Tru', 'Query']
