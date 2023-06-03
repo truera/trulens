@@ -25,13 +25,13 @@ Imports from LangChain to build app, TruLens for evaluation
 
 ```python
     from IPython.display import JSON
-    # imports from langchain to build app
+    # imports from LangChain to build app
     from langchain import PromptTemplate
     from langchain.chains import LLMChain
     from langchain.chat_models import ChatOpenAI
     from langchain.prompts.chat import ChatPromptTemplate
     from langchain.prompts.chat import HumanMessagePromptTemplate
-    # imports from trulens to log and get feedback on chain
+    # imports from TruLens to log and get feedback on chain
     from trulens_eval.tru import Tru
     from trulens_eval import tru_chain
     tru = Tru()
@@ -123,7 +123,7 @@ To assess your LLM quality, you can provide the feedback functions to tru.run_fe
         text1=RecordInput, text2=RecordOutput
     )
 
-    # Run feedack functions. This might take a moment if the public api needs to load the language model used by the feedback function.
+    # Run feedback functions. This might take a moment if the public api needs to load the language model used by the feedback function.
     feedback_result = f_lang_match.run(
         chain=tc, record=record
     )
