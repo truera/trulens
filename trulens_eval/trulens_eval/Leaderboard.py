@@ -71,10 +71,11 @@ def app():
             if math.isnan(mean):
                 pass
             else:
-                st.write(
-                    styles.stmetricdelta_hidearrow,
-                    unsafe_allow_html=True,
-                )
+                feedback_cols[i].metric(col_name, round(mean, 2))
+            st.write(
+                styles.stmetricdelta_hidearrow,
+                unsafe_allow_html=True,
+            )
 
         with col99:
             if st.button('Select Chain', key=f"model-selector-{chain}"):
