@@ -529,6 +529,7 @@ class OpenAI(Provider):
         - model_engine (str, optional): The specific model version. Defaults to
           "gpt-3.5-turbo".
         """
+        set_openai_key()
         self.model_engine = model_engine
         self.endpoint = Endpoint(name="openai")
 
