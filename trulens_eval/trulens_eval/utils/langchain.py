@@ -4,7 +4,9 @@ from langchain.schema import Document
 from langchain.vectorstores.base import VectorStoreRetriever
 from pydantic import Field
 
-from trulens_eval.util import TP, first, second
+from trulens_eval.util import first
+from trulens_eval.util import second
+from trulens_eval.util import TP
 
 
 class WithFilterDocuments(VectorStoreRetriever):
@@ -41,4 +43,3 @@ class WithFilterDocuments(VectorStoreRetriever):
     @staticmethod
     def of_retriever(retriever: VectorStoreRetriever, filter_func: Callable):
         return WithFilterDocuments(filter_func=filter_func, **retriever.dict())
-    

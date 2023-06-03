@@ -8,15 +8,16 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
-from trulens_eval.schema import Record
-from trulens_eval.util import GetItemOrAttribute
 from ux.add_logo import add_logo
 
 from trulens_eval import Tru
 from trulens_eval import tru_db
-from trulens_eval.util import is_empty, matching_objects
-from trulens_eval.util import is_noserio
+from trulens_eval.schema import Record
 from trulens_eval.tru_db import TruDB
+from trulens_eval.util import GetItemOrAttribute
+from trulens_eval.util import is_empty
+from trulens_eval.util import is_noserio
+from trulens_eval.util import matching_objects
 from trulens_eval.ux.components import draw_calls
 
 st.set_page_config(page_title="Evaluations", layout="wide")
@@ -148,9 +149,11 @@ else:
             st.header("Call Trace")
 
             draw_calls(record)
-            
+
             details = selected_rows['chain_json'][0]
-            chain_json = json.loads(details) # chains may not be deserializable, don't try to, keep it json.
+            chain_json = json.loads(
+                details
+            )  # chains may not be deserializable, don't try to, keep it json.
             #json.loads(details))  # ???
             chain_json = chain_json['chain']
 
@@ -161,14 +164,16 @@ else:
             llm_queries = list(
                 matching_objects(
                     chain_json,
-                    match=lambda q, o: len(q.path) > 0 and step_llm == q.path[-1]
+                    match=lambda q, o: len(q.path) > 0 and step_llm == q.path[-1
+                                                                             ]
                 )
             )
 
             prompt_queries = list(
                 matching_objects(
                     chain_json,
-                    match=lambda q, o: len(q.path) > 0 and step_prompt == q.path[-1] and step_call not in q._path
+                    match=lambda q, o: len(q.path) > 0 and step_prompt == q.
+                    path[-1] and step_call not in q._path
                 )
             )
 
@@ -178,8 +183,10 @@ else:
                 if i < len(llm_queries):
                     query, llm_details_json = llm_queries[i]
                     path_str = str(query)
-                    st.header(f"LLM Step {i}: {path_str[:-4]}") # TODO: chopped off ".llm"from the end
-                    
+                    st.header(
+                        f"LLM Step {i}: {path_str[:-4]}"
+                    )  # TODO: chopped off ".llm"from the end
+
                     st.subheader(f"LLM Details:")
                     st.text(path_str)
 

@@ -120,6 +120,7 @@ def json_str_of_obj(obj: Any, *args, **kwargs) -> str:
 
     return json.dumps(obj, default=json_default)
 
+
 def json_default(obj: Any) -> str:
     """
     Produce a representation of an object which cannot be json-serialized.
@@ -480,22 +481,23 @@ class SerialModel(pydantic.BaseModel):
 
         return self
 
+
 # JSONPath, a container for selector/accessors/setters of data stored in a json
 # structure. Cannot make abstract since pydantic will try to initialize it.
-class Step(SerialModel):#, abc.ABC):
+class Step(SerialModel):  #, abc.ABC):
     """
     A step in a selection path.
-    """                          
+    """
 
     @classmethod
     def __get_validator__(cls):
         yield cls.validate
 
     @classmethod
-    def validate(cls, d):        
+    def validate(cls, d):
         if not isinstance(d, Dict):
             return d
-        
+
         ATTRIBUTE_TYPE_MAP = {
             'item': GetItem,
             'index': GetIndex,
@@ -527,6 +529,7 @@ class Step(SerialModel):#, abc.ABC):
         Set the value(s) indicated by self in `obj` to value `val`.
         """
         raise NotImplementedError()
+
 
 class GetAttribute(Step):
     attribute: str
@@ -621,7 +624,7 @@ class GetItem(Step):
 class GetItemOrAttribute(Step):
     # For item/attribute agnostic addressing.
 
-    item_or_attribute: str # distinct from "item" for deserialization
+    item_or_attribute: str  # distinct from "item" for deserialization
 
     def __hash__(self):
         return hash(self.item)
@@ -631,7 +634,9 @@ class GetItemOrAttribute(Step):
             if self.item_or_attribute in obj:
                 yield obj[self.item_or_attribute]
             else:
-                raise KeyError(f"Key not in dictionary: {self.item_or_attribute}")
+                raise KeyError(
+                    f"Key not in dictionary: {self.item_or_attribute}"
+                )
         else:
             if hasattr(obj, self.item_or_attribute):
                 yield getattr(obj, self.item_or_attribute)

@@ -86,20 +86,26 @@ from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_eval.schema import FeedbackMode, Method, MethodIdent
+from trulens_eval.schema import Cost
+from trulens_eval.schema import FeedbackMode
+from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import LangChainModel
+from trulens_eval.schema import Method
+from trulens_eval.schema import MethodIdent
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
 from trulens_eval.schema import RecordChainCallMethod
-from trulens_eval.schema import Cost
+from trulens_eval.tru import Tru
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru import Tru
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.util import TP, JSONPath, jsonify, noserio
+from trulens_eval.util import jsonify
+from trulens_eval.util import JSONPath
+from trulens_eval.util import noserio
+from trulens_eval.util import TP
 
 pp = PrettyPrinter()
+
 
 class TruChain(LangChainModel):
     """
@@ -152,7 +158,7 @@ class TruChain(LangChainModel):
                     "No feedback evaluation and logging will occur."
                 )
         else:
-            
+
             if feedback_mode != FeedbackMode.NONE:
                 logging.warn(
                     f"`feedback_mode` is {feedback_mode} but `tru` was not specified. Reverting to FeedbackMode.NONE ."
@@ -174,7 +180,6 @@ class TruChain(LangChainModel):
                 self.db.insert_feedback_definition(f)
 
         self._instrument_object(obj=self.chain, query=Query.Query().chain)
-
 
     # Chain requirement
     @property
@@ -229,24 +234,22 @@ class TruChain(LangChainModel):
         assert len(record) > 0, "No information recorded in call."
 
         ret_record_args = dict()
-        
+
         inputs = self.chain.prep_inputs(inputs)
 
         # Figure out the content of the "inputs" arg that __call__ constructs
         # for _call so we can lookup main input and output.
         input_key = self.input_keys[0]
         output_key = self.output_keys[0]
-     
+
         ret_record_args['main_input'] = inputs[input_key]
         ret_record_args['main_output'] = ret[output_key]
 
         ret_record_args['main_error'] = str(error)
         ret_record_args['calls'] = record
-        ret_record_args['cost'] = Cost(
-            n_tokens=total_tokens, cost=total_cost
-        )
+        ret_record_args['cost'] = Cost(n_tokens=total_tokens, cost=total_cost)
         ret_record_args['chain_id'] = self.chain_id
-        
+
         ret_record = Record(**ret_record_args)
 
         if error is not None:
@@ -289,9 +292,7 @@ class TruChain(LangChainModel):
         if self.tru is None or self.feedback_mode is None:
             return
 
-        record_id = self.tru.add_record(
-            record=record
-        )
+        record_id = self.tru.add_record(record=record)
 
         if len(self.feedbacks) == 0:
             return
@@ -311,9 +312,7 @@ class TruChain(LangChainModel):
                                     FeedbackMode.WITH_CHAIN_THREAD]:
 
             results = self.tru.run_feedback_functions(
-                record=record,
-                feedback_functions=self.feedbacks,
-                chain=self
+                record=record, feedback_functions=self.feedbacks, chain=self
             )
 
             for result in results:
@@ -415,7 +414,8 @@ class TruChain(LangChainModel):
         return new_prop
 
     def _instrument_tracked_method(
-        self, query: Query, func: Callable, method_name: str, cls: type, obj: object
+        self, query: Query, func: Callable, method_name: str, cls: type,
+        obj: object
     ):
         """
         Instrument a method to capture its inputs/outputs/errors.
@@ -466,8 +466,7 @@ class TruChain(LangChainModel):
                 key="chain_stack", func=wrapper, offset=1
             ) or ()
             frame_ident = RecordChainCallMethod(
-                path=query,
-                method=MethodIdent.of_method(func, obj=obj)
+                path=query, method=MethodIdent.of_method(func, obj=obj)
             )
             chain_stack = chain_stack + (frame_ident,)
 
@@ -497,13 +496,13 @@ class TruChain(LangChainModel):
                 pid=os.getpid(),
                 tid=th.get_native_id(),
                 chain_stack=chain_stack,
-                rets = rets,
-                error = error_str if error is not None else None
+                rets=rets,
+                error=error_str if error is not None else None
             )
 
             row = RecordChainCall(**row_args)
             record.append(row)
-                
+
             if error is not None:
                 raise error
 

@@ -5,8 +5,9 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 import sqlite3
-from typing import (Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple,
-                    Union)
+from typing import (
+    Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
+)
 
 from frozendict import frozendict
 from merkle_json import MerkleJson
@@ -14,21 +15,21 @@ import pandas as pd
 import pydantic
 
 from trulens_eval.schema import ChainID
+from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
+from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import JSONPath
 from trulens_eval.schema import Model
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
 from trulens_eval.schema import RecordID
-from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import _project
 from trulens_eval.util import all_queries
 from trulens_eval.util import GetItem
+from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
 from trulens_eval.util import JSON_BASES
 from trulens_eval.util import json_str_of_obj
@@ -69,7 +70,8 @@ def get_calls(record: Record) -> Iterable[RecordChainCall]:
 
     for q in all_queries(record):
         print("consider query", q)
-        if len(q.path) > 0 and q.path[-1] == GetItemOrAttribute(item_or_attribute="_call"):
+        if len(q.path) > 0 and q.path[-1] == GetItemOrAttribute(
+                item_or_attribute="_call"):
             yield q
 
 
@@ -125,6 +127,7 @@ def query_of_path(path: List[Union[str, int]]) -> JSONPath:
 
 
 class TruDB(SerialModel, abc.ABC):
+
     @abc.abstractmethod
     def reset_database(self):
         """
@@ -405,7 +408,9 @@ class LocalSQLite(TruDB):
         Insert a record-feedback link to db or update an existing one.
         """
 
-        feedback_results_json_str = json_str_of_obj(feedback_result.results_json)
+        feedback_results_json_str = json_str_of_obj(
+            feedback_result.results_json
+        )
         cost_json_str = json_str_of_obj(feedback_result.cost)
 
         conn, c = self._connect()
@@ -413,10 +418,9 @@ class LocalSQLite(TruDB):
             f"""INSERT OR REPLACE INTO {self.TABLE_FEEDBACKS}
                 VALUES (?, ?, ?, ?, ?,
                         ?, ?, ?, ?)""", (
-                feedback_result.record_id,
-                feedback_result.chain_id, 
+                feedback_result.record_id, feedback_result.chain_id,
                 feedback_result.feedback_result_id,
-                feedback_result.feedback_definition_id, 
+                feedback_result.feedback_definition_id,
                 feedback_result.last_ts.timestamp(),
                 feedback_result.status.value, feedback_result.error,
                 feedback_results_json_str, cost_json_str
@@ -507,11 +511,17 @@ class LocalSQLite(TruDB):
         def map_row(row):
             # NOTE: pandas dataframe will take in the various classes below but the
             # agg table used in UI will not like it. Sending it JSON/dicts instead.
-            
-            row.results_json = json.loads(row.results_json)  # results_json (unstructured)
+
+            row.results_json = json.loads(
+                row.results_json
+            )  # results_json (unstructured)
             row.cost_json = json.loads(row.cost_json)  # cost_json (Cost)
-            row.feedback_json = json.loads(row.feedback_json)  # feedback_json (FeedbackDefinition)
-            row.record_json = json.loads(row.record_json)  # record_json (Record)
+            row.feedback_json = json.loads(
+                row.feedback_json
+            )  # feedback_json (FeedbackDefinition)
+            row.record_json = json.loads(
+                row.record_json
+            )  # record_json (Record)
             row.chain_json = json.loads(row.chain_json)  # chain_json (Model)
 
             row.status = FeedbackResultStatus(row.status)
@@ -537,7 +547,8 @@ class LocalSQLite(TruDB):
         return json.loads(result)
 
     def get_records_and_feedback(
-        self, chain_ids: Optional[List[str]] = None
+        self,
+        chain_ids: Optional[List[str]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         # This returns all models if the list of chain_ids is empty.
         chain_ids = chain_ids or []

@@ -16,12 +16,14 @@ import langchain
 from munch import Munch as Bunch
 import pydantic
 
-from trulens_eval.util import GetItemOrAttribute, SerialModel, json_str_of_obj
+from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
 from trulens_eval.util import json_default
+from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.util import obj_id_of_obj
+from trulens_eval.util import SerialModel
 
 T = TypeVar("T")
 
@@ -116,7 +118,9 @@ class Obj(SerialModel):
 
 # FunctionOrMethod = Union[Function, Method]
 
+
 class FunctionOrMethod(SerialModel):  #, abc.ABC):
+
     @staticmethod
     def pick(**kwargs):
         if 'obj' in kwargs:
@@ -127,7 +131,7 @@ class FunctionOrMethod(SerialModel):  #, abc.ABC):
     @classmethod
     def __get_validator__(cls):
         yield cls.validate
-    
+
     @classmethod
     def validate(cls, d) -> 'FunctionOrMethod':
         if isinstance(d, Function):
@@ -137,7 +141,9 @@ class FunctionOrMethod(SerialModel):  #, abc.ABC):
         elif isinstance(d, Dict):
             return FunctionOrMethod.pick(**d)
         else:
-            raise RuntimeError(f"Unhandled FunctionOrMethod source of type {type(d)}.")
+            raise RuntimeError(
+                f"Unhandled FunctionOrMethod source of type {type(d)}."
+            )
 
     @staticmethod
     def of_callable(c: Callable) -> 'FunctionOrMethod':
@@ -322,18 +328,15 @@ class Record(SerialModel):
     tags: str = ""
 
     main_input: Optional[str]
-    main_output: Optional[str] # if no error
-    main_error: Optional[str] # if error
+    main_output: Optional[str]  # if no error
+    main_error: Optional[str]  # if error
 
     # The collection of calls recorded. Note that these can be converted into a
     # json structure with the same paths as the chain that generated this record
     # via `layout_calls_as_chain`.
     calls: Sequence[RecordChainCall] = []
 
-    def __init__(self,
-                 record_id: Optional[RecordID] = None,
-
-                 **kwargs):
+    def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
         super().__init__(record_id="temporay", **kwargs)
 
         if record_id is None:
@@ -365,7 +368,9 @@ class Record(SerialModel):
             frame_info = call.top(
             )  # info about the method call is at the top of the stack
             path = frame_info.path._append(
-                GetItemOrAttribute(item_or_attribute=frame_info.method.method_name)
+                GetItemOrAttribute(
+                    item_or_attribute=frame_info.method.method_name
+                )
             )  # adds another attribute to path, from method name
             # TODO: append if already there
             ret = path.set(obj=ret, val=call)
@@ -398,16 +403,16 @@ class FeedbackResult(SerialModel):
 
     error: Optional[str] = None  # if there was an error
 
-    results_json: JSON = pydantic.Field(default_factory=dict) # keeping unrestricted in type for now
+    results_json: JSON = pydantic.Field(
+        default_factory=dict
+    )  # keeping unrestricted in type for now
 
     cost: Cost = pydantic.Field(default_factory=Cost)
 
     tags: str = ""
 
     def __init__(
-        self,
-        feedback_result_id: Optional[FeedbackResultID] = None,
-        **kwargs
+        self, feedback_result_id: Optional[FeedbackResultID] = None, **kwargs
     ):
 
         super().__init__(feedback_result_id="temporary", **kwargs)
