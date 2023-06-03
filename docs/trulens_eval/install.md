@@ -8,17 +8,17 @@ conda create -n "<my_name>" python=3  # Skip if using existing environment.
 conda activate <my_name>
 ```
 
-2. [Pip installation] Install the trulens-eval pip package.
+2. [Pip installation] Install the trulens-eval pip package from PyPI.
 ```
 pip install trulens-eval
 ```
 
-3. [Local installation] If you would like to develop or modify trulens, you can download the source code by cloning the trulens repo.
+3. [Local installation] If you would like to develop or modify TruLens, you can download the source code by cloning the TruLens repo.
 ```
 git clone https://github.com/truera/trulens.git
 ```
 
-4. [Locall installation] Install the trulens repo.
+4. [Local installation] Install the TruLens repo.
 ```
 cd trulens/trulens_eval
 pip install -e .

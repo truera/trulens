@@ -156,20 +156,28 @@ class Feedback(FeedbackDefinition):
             elif row.status in [FeedbackResultStatus.RUNNING]:
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 30:
-                    tqdm.write(f"Incomplete row {i} last made progress over 30 seconds ago. Retrying.")
+                    tqdm.write(
+                        f"Incomplete row {i} last made progress over 30 seconds ago. Retrying."
+                    )
                     TP().runlater(prepare_feedback, row)
 
                 else:
-                    tqdm.write(f"Incomplete row {i} last made progress less than 30 seconds ago. Giving it more time.")
+                    tqdm.write(
+                        f"Incomplete row {i} last made progress less than 30 seconds ago. Giving it more time."
+                    )
 
             elif row.status in [FeedbackResultStatus.FAILED]:
                 now = datetime.now().timestamp()
-                if now - row.last_ts > 60*5:
-                    tqdm.write(f"Failed row {i} last made progress over 5 minutes ago. Retrying.")
+                if now - row.last_ts > 60 * 5:
+                    tqdm.write(
+                        f"Failed row {i} last made progress over 5 minutes ago. Retrying."
+                    )
                     TP().runlater(prepare_feedback, row)
 
                 else:
-                    tqdm.write(f"Failed row {i} last made progress less than 5 minutes ago. Not touching it for now.")
+                    tqdm.write(
+                        f"Failed row {i} last made progress less than 5 minutes ago. Not touching it for now."
+                    )
 
             elif row.status == FeedbackResultStatus.DONE:
                 pass
@@ -185,7 +193,9 @@ class Feedback(FeedbackDefinition):
     """
     @property
     def feedback_id(self):
-        assert hasattr(self, "_feedback_id"), "Cannot get id of partially defined feedback function."
+        assert hasattr(
+            self, "_feedback_id"
+        ), "Cannot get id of partially defined feedback function."
         return self._feedback_id
     """
 
@@ -463,6 +473,7 @@ class Provider(SerialModel):
             }
         obj.update(**extras)
         return obj
+
 
 class OpenAI(Provider):
     model_engine: str = "gpt-3.5-turbo"
