@@ -3,7 +3,7 @@ Serializable objects and their schemas.
 """
 
 import abc
-import datetime
+from datetime import datetime
 from enum import Enum
 import importlib
 import json
@@ -116,26 +116,28 @@ class Obj(SerialModel):
 
 # FunctionOrMethod = Union[Function, Method]
 
-
 class FunctionOrMethod(SerialModel):  #, abc.ABC):
+    @staticmethod
+    def pick(**kwargs):
+        if 'obj' in kwargs:
+            return Method(**kwargs)
+        elif 'cls' in kwargs:
+            return Function(**kwargs)
 
     @classmethod
     def __get_validator__(cls):
         yield cls.validate
-
+    
     @classmethod
     def validate(cls, d) -> 'FunctionOrMethod':
-        if not isinstance(d, Dict):
+        if isinstance(d, Function):
             return d
-
-        if "obj" in d:
-            return Method(**d)
-        elif "cls" in d:
-            return Function(**d)
+        elif isinstance(d, Method):
+            return d
+        elif isinstance(d, Dict):
+            return FunctionOrMethod.pick(**d)
         else:
-            raise RuntimeError(
-                f"Don't know how to deserialize a function or method from {d}."
-            )
+            raise RuntimeError(f"Unhandled FunctionOrMethod source of type {type(d)}.")
 
     @staticmethod
     def of_callable(c: Callable) -> 'FunctionOrMethod':
@@ -293,8 +295,8 @@ class RecordChainCall(SerialModel):
     error: Optional[str] = None
 
     # Timestamps tracking entrance and exit of the instrumented method.
-    start_time: datetime.datetime
-    end_time: datetime.datetime
+    start_time: datetime
+    end_time: datetime
 
     # Process id.
     pid: int
@@ -315,7 +317,7 @@ class Record(SerialModel):
 
     cost: Cost = pydantic.Field(default_factory=Cost)
 
-    ts: datetime.datetime = pydantic.Field(default_factory=lambda: datetime.datetime.now())
+    ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
     tags: str = ""
 
@@ -363,7 +365,7 @@ class Record(SerialModel):
             frame_info = call.top(
             )  # info about the method call is at the top of the stack
             path = frame_info.path._append(
-                GetItemOrAttribute(item=frame_info.method.name)
+                GetItemOrAttribute(item_or_attribute=frame_info.method.method_name)
             )  # adds another attribute to path, from method name
             # TODO: append if already there
             ret = path.set(obj=ret, val=call)
@@ -390,28 +392,25 @@ class FeedbackResult(SerialModel):
     feedback_definition_id: Optional[FeedbackDefinitionID] = None
 
     # "last timestamp"
-    last_ts: datetime.datetime
+    last_ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
-    status: FeedbackResultStatus = "none"
+    status: FeedbackResultStatus = FeedbackResultStatus.NONE
 
     error: Optional[str] = None  # if there was an error
 
-    results_json: JSON  # keeping unrestricted in type for now
+    results_json: JSON = pydantic.Field(default_factory=dict) # keeping unrestricted in type for now
 
-    cost: Cost
+    cost: Cost = pydantic.Field(default_factory=Cost)
 
-    tags: str
+    tags: str = ""
 
     def __init__(
         self,
         feedback_result_id: Optional[FeedbackResultID] = None,
-        ts: Optional[datetime.datetime] = None,
-        tags: str = "",
         **kwargs
     ):
-        ts = ts or datetime.now()
 
-        super().__init__(feedback_result_id="temporary", ts=ts, tags=tags, **kwargs)
+        super().__init__(feedback_result_id="temporary", **kwargs)
 
         if feedback_result_id is None:
             feedback_result_id = obj_id_of_obj(
@@ -423,10 +422,10 @@ class FeedbackResult(SerialModel):
 
 class FeedbackDefinition(SerialModel):
     # Implementation serialization info.
-    implementation: Optional[FunctionOrMethod] = None
+    implementation: Optional[Union[Function, Method]] = None
 
     # Aggregator method for serialization.
-    aggregator: Optional[FunctionOrMethod] = None
+    aggregator: Optional[Union[Function, Method]] = None
 
     # Id, if not given, unique determined from _json below.
     feedback_definition_id: FeedbackDefinitionID
@@ -438,8 +437,8 @@ class FeedbackDefinition(SerialModel):
     def __init__(
         self,
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-        implementation: Optional[Method] = None,
-        aggregator: Optional[Method] = None,
+        implementation: Optional[Union[Function, Method]] = None,
+        aggregator: Optional[Union[Function, Method]] = None,
         selectors: Dict[str, JSONPath] = None
     ):
         """

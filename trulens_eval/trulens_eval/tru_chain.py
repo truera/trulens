@@ -96,6 +96,7 @@ from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru import Tru
+from trulens_eval.schema import FeedbackResult
 from trulens_eval.util import TP, JSONPath, jsonify, noserio
 
 pp = PrettyPrinter()
@@ -172,21 +173,8 @@ class TruChain(LangChainModel):
             for f in self.feedbacks:
                 self.db.insert_feedback_definition(f)
 
-        self._instrument_object(obj=self.chain, query=Query.Chain)
-        
+        self._instrument_object(obj=self.chain, query=Query.Query().chain)
 
-    """
-    @property
-    def json(self):
-        temp = jsonify(self)  # not using self.dict()
-        # Need these to run feedback functions when they don't specify their
-        # inputs exactly.
-
-        temp['input_keys'] = self.input_keys
-        temp['output_keys'] = self.output_keys
-
-        return temp
-    """
 
     # Chain requirement
     @property
@@ -244,18 +232,11 @@ class TruChain(LangChainModel):
         
         inputs = self.chain.prep_inputs(inputs)
 
-        print("inputs=", inputs)
-    
         # Figure out the content of the "inputs" arg that __call__ constructs
         # for _call so we can lookup main input and output.
         input_key = self.input_keys[0]
         output_key = self.output_keys[0]
-        #for k, v in zip(self.input_keys, args):
-        #    kwargs[k] = v
-        # TODO: main input and output might need be generalized based on chain
-        # behaviour.
-        #print("input_key=", input_key)
-
+     
         ret_record_args['main_input'] = inputs[input_key]
         ret_record_args['main_output'] = ret[output_key]
 
@@ -266,9 +247,6 @@ class TruChain(LangChainModel):
         )
         ret_record_args['chain_id'] = self.chain_id
         
-        print("creating record with")
-        print(ret_record_args)
-
         ret_record = Record(**ret_record_args)
 
         if error is not None:
@@ -299,7 +277,7 @@ class TruChain(LangChainModel):
         get the record, use `call_with_record` instead. 
         """
 
-        ret, record = self.call_with_record(*args, **kwargs)
+        ret, _ = self.call_with_record(*args, **kwargs)
 
         return ret
 
@@ -311,16 +289,8 @@ class TruChain(LangChainModel):
         if self.tru is None or self.feedback_mode is None:
             return
 
-        #main_input = record.calls[0].args['inputs'][self.input_keys[0]]
-        #main_output = record.calls[0].rets[self.output_keys[0]]
-
         record_id = self.tru.add_record(
-            # prompt=main_input,
-            # response=main_output,
-            record=record,
-            tags='dev',  # TODO: generalize
-            total_tokens=record.cost.n_tokens,
-            total_cost=record.cost.cost
+            record=record
         )
 
         if len(self.feedbacks) == 0:
@@ -329,11 +299,12 @@ class TruChain(LangChainModel):
         # Add empty (to run) feedback to db.
         if self.feedback_mode == FeedbackMode.DEFERRED:
             for f in self.feedbacks:
-                feedback_definition_id = f.feedback_definition_id
                 self.db.insert_feedback(
-                    record_id=record_id,
-                    feedback_definition_id=feedback_definition_id,
-                    status=0
+                    FeedbackResult(
+                        chain_id=self.chain_id,
+                        record_id=record_id,
+                        feedback_definition_id=f.feedback_definition_id
+                    )
                 )
 
         elif self.feedback_mode in [FeedbackMode.WITH_CHAIN,
@@ -345,8 +316,8 @@ class TruChain(LangChainModel):
                 chain=self
             )
 
-            for result_json in results:
-                self.tru.add_feedback(result_json)
+            for result in results:
+                self.tru.add_feedback(result)
 
     def _handle_error(self, record: Record, error: Exception):
         if self.db is None:
@@ -531,21 +502,7 @@ class TruChain(LangChainModel):
             )
 
             row = RecordChainCall(**row_args)
-
-            # If there already is a call recorded at the same path, turn the
-            # calls into a list.
             record.append(row)
-            """
-            if query._path in record:
-                existing_call = record[query._path]
-                if isinstance(existing_call, dict):
-                    record[query._path] = [existing_call, row]
-                else:
-                    record[query._path].append(row)
-            else:
-                # Otherwise record just the one call not inside a list.
-                record[query._path] = row
-            """
                 
             if error is not None:
                 raise error
