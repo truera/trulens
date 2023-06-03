@@ -9,6 +9,7 @@ st.runtime.legacy_caching.clear_cache()
 
 from trulens_eval import Tru
 from trulens_eval import tru_db
+from trulens_eval.ux import styles
 
 st.set_page_config(page_title="Leaderboard", layout="wide")
 
@@ -67,19 +68,13 @@ def app():
         for i, col_name in enumerate(feedback_col_names):
             mean = chain_df[col_name].mean()
 
-            if i < len(feedback_cols):
-                if math.isnan(mean):
-                    pass
-
-                else:
-                    feedback_cols[i].metric(col_name, round(mean, 2))
-
+            if math.isnan(mean):
+                pass
             else:
-                if math.isnan(mean):
-                    pass
-
-                else:
-                    feedback_cols[i].metric(col_name, round(mean, 2))
+                st.write(
+                    styles.stmetricdelta_hidearrow,
+                    unsafe_allow_html=True,
+                )
 
         with col99:
             if st.button('Select Chain', key=f"model-selector-{chain}"):
