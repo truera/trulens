@@ -42,10 +42,10 @@ else:
     else:
         chain = chains
 
-    options = st.multiselect('Filter Chains', chains, default=chain)
+    options = st.multiselect('Filter Applications', chains, default=chain)
 
     if (len(options) == 0):
-        st.header("All Chains")
+        st.header("All Applications")
         chain_df = df_results
 
     elif (len(options) == 1):
@@ -54,7 +54,7 @@ else:
         chain_df = df_results[df_results.chain_id.isin(options)]
 
     else:
-        st.header("Multiple Chains Selected")
+        st.header("Multiple Applications Selected")
 
         chain_df = df_results[df_results.chain_id.isin(options)]
 
@@ -129,7 +129,9 @@ else:
             st.write("Hint: select a row to display chain metadata")
 
         else:
-            st.header(f"Selected Chain ID: {selected_rows['chain_id'][0]}")
+            st.header(
+                f"Selected LLM Application: {selected_rows['chain_id'][0]}"
+            )
             st.text(f"Selected Record ID: {selected_rows['record_id'][0]}")
 
             prompt = selected_rows['input'][0]
@@ -145,15 +147,9 @@ else:
             record_json = json.loads(record_str)
             record = Record(**record_json)
 
-            st.header("Call Trace")
-
-            draw_calls(record)
-            
             details = selected_rows['chain_json'][0]
             chain_json = json.loads(details) # chains may not be deserializable, don't try to, keep it json.
-            #json.loads(details))  # ???
-            chain_json = chain_json['chain']
-
+            
             step_llm = GetItemOrAttribute(item_or_attribute="llm")
             step_prompt = GetItemOrAttribute(item_or_attribute="prompt")
             step_call = GetItemOrAttribute(item_or_attribute="_call")
@@ -174,14 +170,15 @@ else:
 
             max_len = max(len(llm_queries), len(prompt_queries))
 
-            for i in range(max_len):
+            for i in range(max_len + 1):
+                st.header(f"Component {i+1}")
+                draw_calls(record, index=i + 1)
+
                 if i < len(llm_queries):
                     query, llm_details_json = llm_queries[i]
-                    path_str = str(query)
-                    st.header(f"LLM Step {i}: {path_str[:-4]}") # TODO: chopped off ".llm"from the end
-                    
                     st.subheader(f"LLM Details:")
-                    st.text(path_str)
+                    path_str = str(query)
+                    st.text(path_str[:-4])
 
                     llm_kv = {
                         k: v

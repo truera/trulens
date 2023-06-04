@@ -13,15 +13,22 @@ def render_call_frame(frame: RecordChainCall) -> str: # markdown
     return (f"{frame.path}.___{frame.method.method_name}___\n"
             f"(`{frame.method.module_name}.{frame.method.class_name}`)")
 
-def draw_calls(record: Record) -> None:
+
+def draw_calls(record: Record, index: int) -> None:
     """
     Draw the calls recorded in a `record`.
     """
 
     calls = record.calls
 
+    chain_step = 0
+
     for call in calls:
+        chain_step += 1
         top = call.chain_stack[-1]
+
+        if chain_step != index:
+            continue
 
         with st.expander(label=render_call_frame(top)): 
             args = call.args
