@@ -8,14 +8,16 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
+from trulens_eval.schema import Record
+from trulens_eval.util import GetItemOrAttribute
 from ux.add_logo import add_logo
 
 from trulens_eval import Tru
 from trulens_eval import tru_db
-from trulens_eval.tru_db import is_empty
-from trulens_eval.tru_db import is_noserio
+from trulens_eval.util import is_empty, matching_objects
+from trulens_eval.util import is_noserio
 from trulens_eval.tru_db import TruDB
-from trulens_eval.ux.components import render_calls
+from trulens_eval.ux.components import draw_calls
 
 st.set_page_config(page_title="Evaluations", layout="wide")
 
@@ -40,10 +42,10 @@ else:
     else:
         chain = chains
 
-    options = st.multiselect('Filter Chains', chains, default=chain)
+    options = st.multiselect('Filter Applications', chains, default=chain)
 
     if (len(options) == 0):
-        st.header("All Chains")
+        st.header("All Applications")
         chain_df = df_results
 
     elif (len(options) == 1):
@@ -52,7 +54,7 @@ else:
         chain_df = df_results[df_results.chain_id.isin(options)]
 
     else:
-        st.header("Multiple Chains Selected")
+        st.header("Multiple Applications Selected")
 
         chain_df = df_results[df_results.chain_id.isin(options)]
 
@@ -88,6 +90,7 @@ else:
 
         gb.configure_column('record_json', header_name='Record JSON', hide=True)
         gb.configure_column('chain_json', header_name='Chain JSON', hide=True)
+        gb.configure_column('cost_json', header_name='Cost JSON', hide=True)
 
         gb.configure_column('record_id', header_name='Record ID', hide=True)
         gb.configure_column('chain_id', header_name='Chain ID')
@@ -97,8 +100,8 @@ else:
             'output',
             header_name='Response',
         )
-        gb.configure_column('total_tokens', header_name='Total Tokens')
-        gb.configure_column('total_cost', header_name='Total Cost')
+        gb.configure_column('total_tokens', header_name='Total Tokens (#)')
+        gb.configure_column('total_cost', header_name='Total Cost (USD)')
         gb.configure_column('tags', header_name='Tags')
         gb.configure_column('ts', header_name='Time Stamp')
 
@@ -126,10 +129,14 @@ else:
             st.write("Hint: select a row to display chain metadata")
 
         else:
-            st.header(f"Selected Chain ID: {selected_rows['chain_id'][0]}")
+            st.header(
+                f"Selected LLM Application: {selected_rows['chain_id'][0]}"
+            )
             st.text(f"Selected Record ID: {selected_rows['record_id'][0]}")
+
             prompt = selected_rows['input'][0]
             response = selected_rows['output'][0]
+
             with st.expander("Input Prompt", expanded=True):
                 st.write(prompt)
 
@@ -138,39 +145,40 @@ else:
 
             record_str = selected_rows['record_json'][0]
             record_json = json.loads(record_str)
-
-            st.header("Call Trace")
-            render_calls(record_json)
+            record = Record(**record_json)
 
             details = selected_rows['chain_json'][0]
-            details_json = json.loads(details)
-            #json.loads(details))  # ???
-
-            chain_json = details_json['chain']
+            chain_json = json.loads(details) # chains may not be deserializable, don't try to, keep it json.
+            
+            step_llm = GetItemOrAttribute(item_or_attribute="llm")
+            step_prompt = GetItemOrAttribute(item_or_attribute="prompt")
+            step_call = GetItemOrAttribute(item_or_attribute="_call")
 
             llm_queries = list(
-                TruDB.matching_objects(
-                    details_json,
-                    match=lambda q, o: len(q._path) > 0 and "llm" == q._path[-1]
+                matching_objects(
+                    chain_json,
+                    match=lambda q, o: len(q.path) > 0 and step_llm == q.path[-1]
                 )
             )
 
             prompt_queries = list(
-                TruDB.matching_objects(
-                    details_json,
-                    match=lambda q, o: len(q._path) > 0 and "prompt" == q._path[
-                        -1] and "_call" not in q._path
+                matching_objects(
+                    chain_json,
+                    match=lambda q, o: len(q.path) > 0 and step_prompt == q.path[-1] and step_call not in q._path
                 )
             )
 
             max_len = max(len(llm_queries), len(prompt_queries))
 
-            for i in range(max_len):
+            for i in range(max_len + 1):
+                st.header(f"Component {i+1}")
+                draw_calls(record, index=i + 1)
+
                 if i < len(llm_queries):
                     query, llm_details_json = llm_queries[i]
-                    path_str = TruDB._query_str(query)
-                    st.header(f"Chain Step {i}: {path_str.replace('.llm', '')}")
                     st.subheader(f"LLM Details:")
+                    path_str = str(query)
+                    st.text(path_str[:-4])
 
                     llm_kv = {
                         k: v
@@ -218,8 +226,9 @@ else:
 
                 if i < len(prompt_queries):
                     query, prompt_details_json = prompt_queries[i]
-                    path_str = TruDB._query_str(query)
+                    path_str = str(query)
                     st.subheader(f"Prompt Details:")
+                    st.text(path_str)
 
                     prompt_types = {
                         k: v
@@ -237,10 +246,11 @@ else:
                                     st.text(value)
                                 else:
                                     st.write(value)
+
             st.header("More options:")
             if st.button("Display full chain json"):
 
-                st.write(details_json)
+                st.write(chain_json)
 
             if st.button("Display full record json"):
 
