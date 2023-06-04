@@ -69,7 +69,7 @@ from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
-from trulens_eval.tru_db import query_of_path
+
 from trulens_eval.tru_db import Record
 from trulens_eval.util import jsonify
 from trulens_eval.util import SerialModel
