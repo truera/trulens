@@ -295,7 +295,7 @@ The process for adding new feedback functions is:
 
 ## Feedback function arguments
 
-Methods wrapped with tru_feedback.Feedback need to be instructed how to map chain input/outputs or internal components to method inputs. In the implest cases, the inputs are either chain input or prompt and chain output or response. These can specified with one of these `Feedback` methods:
+Methods wrapped with tru_feedback.Feedback need to be instructed how to map chain input/outputs or internal components to method inputs. In the simplest cases, the inputs are either chain input or prompt and chain output or response. These can specified with one of these `Feedback` methods:
 
 ```python
     f = Feedback(StandAlone.feedback)
