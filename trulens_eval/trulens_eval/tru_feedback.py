@@ -43,6 +43,10 @@ from multiprocessing.pool import AsyncResult
 import re
 from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
                     Tuple, Type, Union)
+from time import sleep
+from typing import (
+    Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
+)
 
 from langchain.callbacks import get_openai_callback
 import numpy as np
@@ -62,6 +66,10 @@ from trulens_eval.schema import FunctionOrMethod
 from trulens_eval.schema import Model
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import Query
+from trulens_eval.tru_db import JSON
+from trulens_eval.tru_db import obj_id_of_obj
+from trulens_eval.tru_db import Query
+from trulens_eval.tru_db import query_of_path
 from trulens_eval.tru_db import Record
 from trulens_eval.util import jsonify
 from trulens_eval.util import SerialModel
@@ -489,6 +497,7 @@ class OpenAI(Provider):
         """
         super().__init__() # need to include pydantic.BaseModel.__init__
 
+        set_openai_key()
         self.model_engine = model_engine
         self.endpoint = Endpoint(name="openai")
 
