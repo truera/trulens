@@ -1,121 +1,81 @@
 import abc
+from datetime import datetime
 import json
 import logging
 from pathlib import Path
+from pprint import PrettyPrinter
 import sqlite3
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
-)
+from typing import (Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple,
+                    Union)
 
 from frozendict import frozendict
 from merkle_json import MerkleJson
 import pandas as pd
 import pydantic
-from tinydb import Query as TinyQuery
-from tinydb.queries import QueryInstance as TinyQueryInstance
 
+from trulens_eval.schema import ChainID
+from trulens_eval.schema import FeedbackDefinition
+from trulens_eval.schema import FeedbackDefinitionID
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import FeedbackResultID
+from trulens_eval.schema import JSONPath
+from trulens_eval.schema import Model
+from trulens_eval.schema import Record
+from trulens_eval.schema import RecordChainCall
+from trulens_eval.schema import RecordID
+from trulens_eval.schema import Cost
+from trulens_eval.schema import FeedbackResultStatus
+from trulens_eval.util import GetItemOrAttribute
+from trulens_eval.util import _project
+from trulens_eval.util import all_queries
+from trulens_eval.util import GetItem
+from trulens_eval.util import JSON
+from trulens_eval.util import JSON_BASES
+from trulens_eval.util import json_str_of_obj
+from trulens_eval.util import JSONPath
+from trulens_eval.util import noserio
+from trulens_eval.util import obj_id_of_obj
+from trulens_eval.util import SerialModel
 from trulens_eval.util import UNCIODE_YIELD
 from trulens_eval.util import UNICODE_CHECK
 
 mj = MerkleJson()
 NoneType = type(None)
 
-JSON_BASES = (str, int, float, NoneType)
-JSON_BASES_T = Union[str, int, float, NoneType]
-# JSON = (List, Dict) + JSON_BASES
-# JSON_T = Union[JSON_BASES_T, List, Dict]
-JSON = Dict
+pp = PrettyPrinter()
 
 
-def is_empty(obj):
-    try:
-        return len(obj) == 0
-    except Exception:
-        return False
+class Query:
+
+    # Typing for type hints.
+    Query = JSONPath
+
+    # Instance for constructing queries for record json like `Record.chain.llm`.
+    Record = Query().__record__
+
+    # Instance for constructing queries for chain json.
+    Chain = Query().__chain__
+
+    # A Chain's main input and main output.
+    # TODO: Chain input/output generalization.
+    RecordInput = Record.main_input
+    RecordOutput = Record.main_output
 
 
-def is_noserio(obj):
-    """
-    Determines whether the given json object represents some non-serializable
-    object. See `noserio`.
-    """
-    return isinstance(obj, dict) and "_NON_SERIALIZED_OBJECT" in obj
-
-
-def noserio(obj, **extra: Dict) -> dict:
-    """
-    Create a json structure to represent a non-serializable object. Any
-    additional keyword arguments are included.
-    """
-
-    inner = {
-        "id": id(obj),
-        "class": obj.__class__.__name__,
-        "module": obj.__class__.__module__,
-        "bases": list(map(lambda b: b.__name__, obj.__class__.__bases__))
-    }
-    inner.update(extra)
-
-    return {'_NON_SERIALIZED_OBJECT': inner}
-
-
-def obj_id_of_obj(obj: dict, prefix="obj"):
-    """
-    Create an id from a json-able structure/definition. Should produce the same
-    name if definition stays the same.
-    """
-
-    return f"{prefix}_hash_{mj.hash(obj)}"
-
-
-def json_str_of_obj(obj: Any) -> str:
-    """
-    Encode the given json object as a string.
-    """
-    return json.dumps(obj, default=json_default)
-
-
-def json_default(obj: Any) -> str:
-    """
-    Produce a representation of an object which cannot be json-serialized.
-    """
-
-    if isinstance(obj, pydantic.BaseModel):
-        try:
-            return json.dumps(obj.dict())
-        except Exception as e:
-            return noserio(obj, exception=e)
-
-    # Intentionally not including much in this indicator to make sure the model
-    # hashing procedure does not get randomized due to something here.
-
-    return noserio(obj)
-
-
-# Typing for type hints.
-Query = TinyQuery
-
-# Instance for constructing queries for record json like `Record.chain.llm`.
-Record = Query()._record
-
-# Instance for constructing queries for chain json.
-Chain = Query()._chain
-
-# Type of conditions, constructed from query/record like `Record.chain != None`.
-Condition = TinyQueryInstance
-
-
-def get_calls(record_json: JSON) -> Iterable[JSON]:
+def get_calls(record: Record) -> Iterable[RecordChainCall]:
     """
     Iterate over the call parts of the record.
     """
 
-    for q in TruDB.all_queries(record_json):
-        if q._path[-1] == "_call":
+    for q in all_queries(record):
+        print("consider query", q)
+        if len(q.path) > 0 and q.path[-1] == GetItemOrAttribute(item_or_attribute="_call"):
             yield q
 
 
-def get_calls_by_stack(record_json: JSON) -> Dict[Tuple[str, ...], JSON]:
+def get_calls_by_stack(
+    record: Record
+) -> Dict[Tuple[str, ...], RecordChainCall]:
     """
     Get a dictionary mapping chain call stack to the call information.
     """
@@ -125,8 +85,11 @@ def get_calls_by_stack(record_json: JSON) -> Dict[Tuple[str, ...], JSON]:
         return frozendict(frame)
 
     ret = dict()
-    for c in get_calls(record_json):
-        obj = TruDB.project(c, record_json=record_json, chain_json=None)
+
+    for c in get_calls(record):
+        print("call", c)
+
+        obj = TruDB.project(c, record_json=record, chain_json=None)
         if isinstance(obj, Sequence):
             for o in obj:
                 call_stack = tuple(map(frozen_frame, o['chain_stack']))
@@ -142,559 +105,236 @@ def get_calls_by_stack(record_json: JSON) -> Dict[Tuple[str, ...], JSON]:
     return ret
 
 
-def query_of_path(path: List[Union[str, int]]) -> Query:
-    """
-    Convert the given path to a query object.
-    """
+"""
+def query_of_path(path: List[Union[str, int]]) -> JSONPath:
 
     if path[0] == "_record":
-        ret = Record
+        ret = Query.Record
         path = path[1:]
     elif path[0] == "_chain":
-        ret = Chain
+        ret = Record.Chain
         path = path[1:]
     else:
-        ret = Query()
+        ret = JSONPath()
 
     for attr in path:
         ret = getattr(ret, attr)
 
     return ret
+"""
 
 
-def path_of_query(query: Query) -> List[Union[str, int]]:
-    return query._path
-
-
-class TruDB(abc.ABC):
-
-    # Use TinyDB queries for looking up parts of records/models and/or filtering
-    # on those parts.
-
+class TruDB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def reset_database(self):
-        """Delete all data."""
-
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def select(
-        self,
-        *query: Tuple[Query],
-        where: Optional[Condition] = None
-    ) -> pd.DataFrame:
         """
-        Select `query` fields from the records database, filtering documents
-        that do not match the `where` condition.
+        Delete all data.
         """
 
         raise NotImplementedError()
 
     @abc.abstractmethod
     def insert_record(
-        self, chain_id: str, input: str, output: str, record_json: JSON,
-        ts: int, tags: str, total_tokens: int, total_cost: float
-    ) -> int:
+        self,
+        record: Record,
+    ) -> RecordID:
         """
         Insert a new `record` into db, indicating its `model` as well. Return
         record id.
+
+        Args:
+        - record: Record
         """
 
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_chain(
-        self, chain_json: JSON, chain_id: Optional[str] = None
-    ) -> str:
+    def insert_chain(self, chain: Model) -> ChainID:
         """
-        Insert a new `chain` into db under the given `chain_id`. If name not
-        provided, generate a name from chain definition. Return the name.
+        Insert a new `chain` into db under the given `chain_id`. 
+
+        Args:
+        - chain: Chain - Chain definition. 
         """
 
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_feedback_def(self, feedback_json: dict):
+    def insert_feedback_definition(
+        self, feedback_definition: FeedbackDefinition
+    ) -> FeedbackDefinitionID:
+        """
+        Insert a feedback definition into the db.
+        """
+
         raise NotImplementedError()
 
     @abc.abstractmethod
     def insert_feedback(
         self,
-        record_id: str,
-        feedback_id: str,
-        last_ts: Optional[int] = None,  # "last timestamp"
-        status: Optional[int] = None,
-        result_json: Optional[JSON] = None,
-        total_cost: Optional[float] = None,
-        total_tokens: Optional[int] = None,
-    ) -> str:
+        feedback_result: FeedbackResult,
+    ) -> FeedbackResultID:
+        """
+        Insert a feedback record into the db.
+
+        Args:
+
+        - feedback_result: FeedbackResult
+        """
+
         raise NotImplementedError()
 
     @abc.abstractmethod
     def get_records_and_feedback(
         self, chain_ids: List[str]
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    ) -> Tuple[pd.DataFrame, Sequence[str]]:
+        """
+        Get the records logged for the given set of `chain_ids` (otherwise all)
+        alongside the names of the feedback function columns listed the
+        dataframe.
+        """
         raise NotImplementedError()
-
-    @staticmethod
-    def jsonify(obj: Any, dicted=None) -> JSON:
-        """
-        Convert the given object into types that can be serialized in json.
-        """
-
-        dicted = dicted or dict()
-
-        if isinstance(obj, JSON_BASES):
-            return obj
-
-        if id(obj) in dicted:
-            return {'_CIRCULAR_REFERENCE': id(obj)}
-
-        new_dicted = {k: v for k, v in dicted.items()}
-
-        if isinstance(obj, Dict):
-            temp = {}
-            new_dicted[id(obj)] = temp
-            temp.update(
-                {
-                    k: TruDB.jsonify(v, dicted=new_dicted)
-                    for k, v in obj.items()
-                }
-            )
-            return temp
-
-        elif isinstance(obj, Sequence):
-            temp = []
-            new_dicted[id(obj)] = temp
-            for x in (TruDB.jsonify(v, dicted=new_dicted) for v in obj):
-                temp.append(x)
-            return temp
-
-        elif isinstance(obj, Set):
-            temp = []
-            new_dicted[id(obj)] = temp
-            for x in (TruDB.jsonify(v, dicted=new_dicted) for v in obj):
-                temp.append(x)
-            return temp
-
-        elif isinstance(obj, pydantic.BaseModel):
-            temp = {}
-            new_dicted[id(obj)] = temp
-            temp.update(
-                {
-                    k: TruDB.jsonify(getattr(obj, k), dicted=new_dicted)
-                    for k in obj.__fields__
-                }
-            )
-            return temp
-
-        else:
-            logging.debug(
-                f"Don't know how to jsonify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
-            )
-            return noserio(obj)
-
-    @staticmethod
-    def leaf_queries(obj_json: JSON, query: Query = None) -> Iterable[Query]:
-        """
-        Get all queries for the given object that select all of its leaf values.
-        """
-
-        query = query or Record
-
-        if isinstance(obj_json, (str, int, float, NoneType)):
-            yield query
-
-        elif isinstance(obj_json, Dict):
-            for k, v in obj_json.items():
-                sub_query = query[k]
-                for res in TruDB.leaf_queries(obj_json[k], sub_query):
-                    yield res
-
-        elif isinstance(obj_json, Sequence):
-            for i, v in enumerate(obj_json):
-                sub_query = query[i]
-                for res in TruDB.leaf_queries(obj_json[i], sub_query):
-                    yield res
-
-        else:
-            yield query
-
-    @staticmethod
-    def all_queries(obj: Any, query: Query = None) -> Iterable[Query]:
-        """
-        Get all queries for the given object.
-        """
-
-        query = query or Record
-
-        if isinstance(obj, (str, int, float, NoneType)):
-            yield query
-
-        elif isinstance(obj, pydantic.BaseModel):
-            yield query
-
-            for k in obj.__fields__:
-                v = getattr(obj, k)
-                sub_query = query[k]
-                for res in TruDB.all_queries(v, sub_query):
-                    yield res
-
-        elif isinstance(obj, Dict):
-            yield query
-
-            for k, v in obj.items():
-                sub_query = query[k]
-                for res in TruDB.all_queries(obj[k], sub_query):
-                    yield res
-
-        elif isinstance(obj, Sequence):
-            yield query
-
-            for i, v in enumerate(obj):
-                sub_query = query[i]
-                for res in TruDB.all_queries(obj[i], sub_query):
-                    yield res
-
-        else:
-            yield query
-
-    @staticmethod
-    def all_objects(obj: Any,
-                    query: Query = None) -> Iterable[Tuple[Query, Any]]:
-        """
-        Get all queries for the given object.
-        """
-
-        query = query or Record
-
-        if isinstance(obj, (str, int, float, NoneType)):
-            yield (query, obj)
-
-        elif isinstance(obj, pydantic.BaseModel):
-            yield (query, obj)
-
-            for k in obj.__fields__:
-                v = getattr(obj, k)
-                sub_query = query[k]
-                for res in TruDB.all_objects(v, sub_query):
-                    yield res
-
-        elif isinstance(obj, Dict):
-            yield (query, obj)
-
-            for k, v in obj.items():
-                sub_query = query[k]
-                for res in TruDB.all_objects(obj[k], sub_query):
-                    yield res
-
-        elif isinstance(obj, Sequence):
-            yield (query, obj)
-
-            for i, v in enumerate(obj):
-                sub_query = query[i]
-                for res in TruDB.all_objects(obj[i], sub_query):
-                    yield res
-
-        else:
-            yield (query, obj)
-
-    @staticmethod
-    def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
-        for q in TruDB.leaf_queries(obj):
-            path_str = TruDB._query_str(q)
-            val = TruDB._project(q._path, obj)
-            yield (path_str, val)
-
-    @staticmethod
-    def matching_queries(obj: Any, match: Callable) -> Iterable[Query]:
-        for q in TruDB.all_queries(obj):
-            val = TruDB._project(q._path, obj)
-            if match(q, val):
-                yield q
-
-    @staticmethod
-    def matching_objects(obj: Any,
-                         match: Callable) -> Iterable[Tuple[Query, Any]]:
-        for q, val in TruDB.all_objects(obj):
-            if match(q, val):
-                yield (q, val)
-
-    @staticmethod
-    def _query_str(query: Query) -> str:
-
-        def render(ks):
-            if len(ks) == 0:
-                return ""
-
-            first = ks[0]
-            if len(ks) > 1:
-                rest = ks[1:]
-            else:
-                rest = ()
-
-            if isinstance(first, str):
-                return f".{first}{render(rest)}"
-            elif isinstance(first, int):
-                return f"[{first}]{render(rest)}"
-            else:
-                RuntimeError(
-                    f"Don't know how to render path element {first} of type {type(first)}."
-                )
-
-        return "Record" + render(query._path)
-
-    @staticmethod
-    def set_in_json(query: Query, in_json: JSON, val: JSON) -> JSON:
-        return TruDB._set_in_json(query._path, in_json=in_json, val=val)
-
-    @staticmethod
-    def _set_in_json(path, in_json: JSON, val: JSON) -> JSON:
-        if len(path) == 0:
-            if isinstance(in_json, Dict):
-                assert isinstance(val, Dict)
-                in_json = {k: v for k, v in in_json.items()}
-                in_json.update(val)
-                return in_json
-
-            assert in_json is None, f"Cannot set non-None json object: {in_json}"
-
-            return val
-
-        if len(path) == 1:
-            first = path[0]
-            rest = []
-        else:
-            first = path[0]
-            rest = path[1:]
-
-        if isinstance(first, str):
-            if isinstance(in_json, Dict):
-                in_json = {k: v for k, v in in_json.items()}
-                if not first in in_json:
-                    in_json[first] = None
-            elif in_json is None:
-                in_json = {first: None}
-            else:
-                raise RuntimeError(
-                    f"Do not know how to set path {path} in {in_json}."
-                )
-
-            in_json[first] = TruDB._set_in_json(
-                path=rest, in_json=in_json[first], val=val
-            )
-            return in_json
-
-        elif isinstance(first, int):
-            if isinstance(in_json, Sequence):
-                # In case it is some immutable sequence. Also copy.
-                in_json = list(in_json)
-            elif in_json is None:
-                in_json = []
-            else:
-                raise RuntimeError(
-                    f"Do not know how to set path {path} in {in_json}."
-                )
-
-            while len(in_json) <= first:
-                in_json.append(None)
-
-            in_json[first] = TruDB._set_in_json(
-                path=rest, in_json=in_json[first], val=val
-            )
-            return in_json
-
-        else:
-            raise RuntimeError(
-                f"Do not know how to set path {path} in {in_json}."
-            )
-
-    @staticmethod
-    def project(
-        query: Query,
-        record_json: JSON,
-        chain_json: JSON,
-        obj: Optional[JSON] = None
-    ):
-        path = query._path
-        if path[0] == "_record":
-            if len(path) == 1:
-                return record_json
-            return TruDB._project(path=path[1:], obj=record_json)
-        elif path[0] == "_chain":
-            if len(path) == 1:
-                return chain_json
-            return TruDB._project(path=path[1:], obj=chain_json)
-        else:
-            return TruDB._project(path=path, obj=obj)
-
-    @staticmethod
-    def _project(path: List, obj: Any):
-        if len(path) == 0:
-            return obj
-
-        first = path[0]
-        if len(path) > 1:
-            rest = path[1:]
-        else:
-            rest = ()
-
-        if isinstance(first, str):
-            if isinstance(obj, pydantic.BaseModel):
-                if not hasattr(obj, first):
-                    logging.warn(
-                        f"Cannot project {str(obj)[0:32]} with path {path} because {first} is not an attribute here."
-                    )
-                    return None
-                return TruDB._project(path=rest, obj=getattr(obj, first))
-
-            elif isinstance(obj, Dict):
-                if first not in obj:
-                    logging.warn(
-                        f"Cannot project {str(obj)[0:32]} with path {path} because {first} is not a key here."
-                    )
-                    return None
-                return TruDB._project(path=rest, obj=obj[first])
-
-            else:
-                logging.warn(
-                    f"Cannot project {str(obj)[0:32]} with path {path} because object is not a dict or model."
-                )
-                return None
-
-        elif isinstance(first, int):
-            if not isinstance(obj, Sequence) or first >= len(obj):
-                logging.warn(
-                    f"Cannot project {str(obj)[0:32]} with path {path}."
-                )
-                return None
-
-            return TruDB._project(path=rest, obj=obj[first])
-        else:
-            raise RuntimeError(
-                f"Don't know how to locate element with key of type {first}"
-            )
 
 
 class LocalSQLite(TruDB):
+    filename: Path
 
     TABLE_RECORDS = "records"
     TABLE_FEEDBACKS = "feedbacks"
     TABLE_FEEDBACK_DEFS = "feedback_defs"
     TABLE_CHAINS = "chains"
 
-    def __str__(self):
-        return f"SQLite({self.filename})"
+    TYPE_TIMESTAMP = "FLOAT"
+    TYPE_ENUM = "TEXT"
 
-    def reset_database(self):
-        self._clear_tables()
+    TABLES = [TABLE_RECORDS, TABLE_FEEDBACKS, TABLE_FEEDBACK_DEFS, TABLE_CHAINS]
+
+    def __init__(self, filename: Path):
+        """
+        Database locally hosted using SQLite.
+
+        Args
+        
+        - filename: Optional[Path] -- location of sqlite database dump
+          file. It will be created if it does not exist.
+
+        """
+        super().__init__(filename=filename)
+
         self._build_tables()
 
-    def _clear_tables(self):
+    def __str__(self) -> str:
+        return f"SQLite({self.filename})"
+
+    # TruDB requirement
+    def reset_database(self) -> None:
+        self._drop_tables()
+        self._build_tables()
+
+    def _clear_tables(self) -> None:
         conn, c = self._connect()
 
-        # Create table if it does not exist
-        c.execute(f'''DELETE FROM {self.TABLE_RECORDS}''')
-        c.execute(f'''DELETE FROM {self.TABLE_FEEDBACKS}''')
-        c.execute(f'''DELETE FROM {self.TABLE_FEEDBACK_DEFS}''')
-        c.execute(f'''DELETE FROM {self.TABLE_CHAINS}''')
+        for table in self.TABLES:
+            c.execute(f'''DELETE FROM {table}''')
+
+        self._close(conn)
+
+    def _drop_tables(self) -> None:
+        conn, c = self._connect()
+
+        for table in self.TABLES:
+            c.execute(f'''DROP TABLE IF EXISTS {table}''')
+
         self._close(conn)
 
     def _build_tables(self):
         conn, c = self._connect()
 
-        # Create table if it does not exist
+        # Create table if it does not exist. Note that the record_json column
+        # also encodes inside it all other columns.
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_RECORDS} (
-                record_id TEXT,
-                chain_id TEXT,
+                record_id TEXT NOT NULL PRIMARY KEY,
+                chain_id TEXT NOT NULL,
                 input TEXT,
                 output TEXT,
-                record_json TEXT,
-                tags TEXT,
-                ts INTEGER,
-                total_tokens INTEGER,
-                total_cost REAL,
-                PRIMARY KEY (record_id, chain_id)
+                record_json TEXT NOT NULL,
+                tags TEXT NOT NULL,
+                ts {self.TYPE_TIMESTAMP} NOT NULL,
+                cost_json TEXT NOT NULL
             )'''
         )
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_FEEDBACKS} (
-                record_id TEXT,
-                feedback_id TEXT,
-                last_ts INTEGER,
-                status INTEGER,
-                result_json TEXT,
-                total_tokens INTEGER,
-                total_cost REAL,
-                PRIMARY KEY (record_id, feedback_id)
+                record_id TEXT NOT NULL,
+                chain_id TEXT NOT NULL,
+                feedback_result_id TEXT NOT NULL PRIMARY KEY,
+                feedback_definition_id TEXT,
+                last_ts {self.TYPE_TIMESTAMP} NOT NULL,
+                status {self.TYPE_ENUM} NOT NULL,
+                error TEXT,
+                results_json TEXT NOT NULL,
+                cost_json TEXT NOT NULL
             )'''
         )
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_FEEDBACK_DEFS} (
-                feedback_id TEXT PRIMARY KEY,
-                feedback_json TEXT
+                feedback_definition_id TEXT NOT NULL PRIMARY KEY,
+                feedback_json TEXT NOT NULL
             )'''
         )
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_CHAINS} (
-                chain_id TEXT PRIMARY KEY,
-                chain_json TEXT
+                chain_id TEXT NOT NULL PRIMARY KEY,
+                chain_json TEXT NOT NULL
             )'''
         )
         self._close(conn)
 
-    def __init__(self, filename: Optional[Path] = 'default.sqlite'):
-        self.filename = filename
-        self._build_tables()
-
-    def _connect(self):
+    def _connect(self) -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
         conn = sqlite3.connect(self.filename)
         c = conn.cursor()
         return conn, c
 
-    def _close(self, conn):
+    def _close(self, conn: sqlite3.Connection) -> None:
         conn.commit()
         conn.close()
 
     # TruDB requirement
     def insert_record(
-        self, chain_id: str, input: str, output: str, record_json: dict,
-        ts: int, tags: str, total_tokens: int, total_cost: float
-    ) -> int:
-        assert isinstance(
-            record_json, Dict
-        ), f"Attempting to add a record that is not a dict, is {type(record_json)} instead."
+        self,
+        record: Record,
+    ) -> RecordID:
+        # NOTE: Oddness here in that the entire record is put into the
+        # record_json column while some parts of that records are also put in
+        # other columns. Might want to keep this so we can query on the columns
+        # within sqlite.
 
         conn, c = self._connect()
-
-        record_id = obj_id_of_obj(obj=record_json, prefix="record")
-        record_json['record_id'] = record_id
-        record_str = json_str_of_obj(record_json)
+        record_json_str = json_str_of_obj(record)
+        cost_json_str = json_str_of_obj(record.cost)
 
         c.execute(
-            f"INSERT INTO {self.TABLE_RECORDS} VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            f"INSERT INTO {self.TABLE_RECORDS} VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
-                record_id, chain_id, input, output, record_str, tags, ts,
-                total_tokens, total_cost
+                record.record_id, record.chain_id, record.main_input,
+                record.main_output, record_json_str, record.tags, record.ts,
+                cost_json_str
             )
         )
         self._close(conn)
 
         print(
-            f"{UNICODE_CHECK} record {record_id} from {chain_id} -> {self.filename}"
+            f"{UNICODE_CHECK} record {record.record_id} from {record.chain_id} -> {self.filename}"
         )
 
-        return record_id
+        return record.record_id
 
     # TruDB requirement
-    def insert_chain(
-        self, chain_json: dict, chain_id: Optional[str] = None
-    ) -> str:
-        chain_id = chain_id or chain_json['chain_id'] or obj_id_of_obj(
-            obj=chain_json, prefix="chain"
-        )
-        chain_str = json_str_of_obj(chain_json)
+    def insert_chain(self, chain: Model) -> ChainID:
+        chain_id = chain.chain_id
+
+        chain_str = chain.json()
 
         conn, c = self._connect()
         c.execute(
@@ -707,33 +347,42 @@ class LocalSQLite(TruDB):
 
         return chain_id
 
-    def insert_feedback_def(self, feedback_json: dict):
+    def insert_feedback_definition(
+        self, feedback: FeedbackDefinition
+    ) -> FeedbackDefinitionID:
         """
         Insert a feedback definition into the database.
         """
 
-        feedback_id = feedback_json['feedback_id']
-        feedback_str = json_str_of_obj(feedback_json)
+        feedback_definition_id = feedback.feedback_definition_id
+        feedback_str = feedback.json()
 
         conn, c = self._connect()
         c.execute(
             f"INSERT OR REPLACE INTO {self.TABLE_FEEDBACK_DEFS} VALUES (?, ?)",
-            (feedback_id, feedback_str)
+            (feedback_definition_id, feedback_str)
         )
         self._close(conn)
 
-        print(f"{UNICODE_CHECK} feedback def. {feedback_id} -> {self.filename}")
+        print(
+            f"{UNICODE_CHECK} feedback def. {feedback_definition_id} -> {self.filename}"
+        )
 
-    def get_feedback_defs(self, feedback_id: Optional[str] = None):
+        return feedback_definition_id
+
+    def get_feedback_defs(
+        self, feedback_definition_id: Optional[str] = None
+    ) -> pd.DataFrame:
+
         clause = ""
         args = ()
-        if feedback_id is not None:
+        if feedback_definition_id is not None:
             clause = "WHERE feedback_id=?"
-            args = (feedback_id,)
+            args = (feedback_definition_id,)
 
         query = f"""
             SELECT
-                feedback_id, feedback_json
+                feedback_definition_id, feedback_json
             FROM {self.TABLE_FEEDBACK_DEFS}
             {clause}
         """
@@ -743,91 +392,85 @@ class LocalSQLite(TruDB):
         rows = c.fetchall()
         self._close(conn)
 
-        from trulens_eval.tru_feedback import Feedback
+        df = pd.DataFrame(
+            rows, columns=[description[0] for description in c.description]
+        )
 
-        df_rows = []
-
-        for row in rows:
-            row = list(row)
-            row[1] = Feedback.of_json(json.loads(row[1]))
-            df_rows.append(row)
-
-        return pd.DataFrame(rows, columns=['feedback_id', 'feedback'])
+        return df
 
     def insert_feedback(
-        self,
-        record_id: Optional[str] = None,
-        feedback_id: Optional[str] = None,
-        last_ts: Optional[int] = None,  # "last timestamp"
-        status: Optional[int] = None,
-        result_json: Optional[dict] = None,
-        total_cost: Optional[float] = None,
-        total_tokens: Optional[int] = None,
-    ):
+        self, feedback_result: FeedbackResult
+    ) -> FeedbackResultID:
         """
         Insert a record-feedback link to db or update an existing one.
         """
 
-        if record_id is None or feedback_id is None:
-            assert result_json is not None, "`result_json` needs to be given if `record_id` or `feedback_id` are not provided."
-            record_id = result_json['record_id']
-            feedback_id = result_json['feedback_id']
-
-        last_ts = last_ts or 0
-        status = status or 0
-        result_json = result_json or dict()
-        total_cost = total_cost = 0.0
-        total_tokens = total_tokens or 0
-        result_str = json_str_of_obj(result_json)
+        feedback_results_json_str = json_str_of_obj(feedback_result.results_json)
+        cost_json_str = json_str_of_obj(feedback_result.cost)
 
         conn, c = self._connect()
         c.execute(
-            f"INSERT OR REPLACE INTO {self.TABLE_FEEDBACKS} VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (
-                record_id, feedback_id, last_ts, status, result_str,
-                total_tokens, total_cost
+            f"""INSERT OR REPLACE INTO {self.TABLE_FEEDBACKS}
+                VALUES (?, ?, ?, ?, ?,
+                        ?, ?, ?, ?)""", (
+                feedback_result.record_id,
+                feedback_result.chain_id, 
+                feedback_result.feedback_result_id,
+                feedback_result.feedback_definition_id, 
+                feedback_result.last_ts.timestamp(),
+                feedback_result.status.value, feedback_result.error,
+                feedback_results_json_str, cost_json_str
             )
         )
         self._close(conn)
 
-        if status == 2:
+        if feedback_result.status == 2:
             print(
-                f"{UNICODE_CHECK} feedback {feedback_id} on {record_id} -> {self.filename}"
+                f"{UNICODE_CHECK} feedback {feedback_result.feedback_result_id} on {feedback_result.record_id} -> {self.filename}"
             )
         else:
             print(
-                f"{UNCIODE_YIELD} feedback {feedback_id} on {record_id} -> {self.filename}"
+                f"{UNCIODE_YIELD} feedback {feedback_result.feedback_result_id} on {feedback_result.record_id} -> {self.filename}"
             )
 
     def get_feedback(
         self,
-        record_id: Optional[str] = None,
-        feedback_id: Optional[str] = None,
-        status: Optional[int] = None,
-        last_ts_before: Optional[int] = None
-    ):
+        record_id: Optional[RecordID] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+        status: Optional[FeedbackResultStatus] = None,
+        last_ts_before: Optional[datetime] = None
+    ) -> pd.DataFrame:
 
         clauses = []
         vars = []
+
         if record_id is not None:
             clauses.append("record_id=?")
             vars.append(record_id)
-        if feedback_id is not None:
-            clauses.append("feedback_id=?")
-            vars.append(feedback_id)
+
+        if feedback_result_id is not None:
+            clauses.append("f.feedback_result_id=?")
+            vars.append(feedback_result_id)
+
+        if feedback_definition_id is not None:
+            clauses.append("f.feedback_definition_id=?")
+            vars.append(feedback_definition_id)
+
         if status is not None:
             if isinstance(status, Sequence):
                 clauses.append(
-                    "status in (" + (",".join(["?"] * len(status))) + ")"
+                    "f.status in (" + (",".join(["?"] * len(status))) + ")"
                 )
                 for v in status:
-                    vars.append(v)
+                    vars.append(v.value)
             else:
-                clauses.append("status=?")
+                clauses.append("f.status=?")
                 vars.append(status)
+
         if last_ts_before is not None:
-            clauses.append("last_ts<=?")
-            vars.append(last_ts_before)
+            clauses.append("f.last_ts<=?")
+            vars.append(last_ts_before.timestamp())
 
         where_clause = " AND ".join(clauses)
         if len(where_clause) > 0:
@@ -835,14 +478,18 @@ class LocalSQLite(TruDB):
 
         query = f"""
             SELECT
-                f.record_id, f.feedback_id, f.last_ts, f.status,
-                f.result_json, f.total_cost, f.total_tokens,
-                fd.feedback_json, r.record_json, c.chain_json
-            FROM {self.TABLE_FEEDBACKS} f 
+                f.record_id, f.feedback_result_id, f.feedback_definition_id, 
+                f.last_ts, f.status, f.error,
+                f.results_json, 
+                f.cost_json,
+                fd.feedback_json, 
+                r.record_json, 
+                c.chain_json
+            FROM {self.TABLE_RECORDS} r
+                JOIN {self.TABLE_FEEDBACKS} f 
                 JOIN {self.TABLE_FEEDBACK_DEFS} fd
-                JOIN {self.TABLE_RECORDS} r
                 JOIN {self.TABLE_CHAINS} c
-            WHERE f.feedback_id=fd.feedback_id
+            WHERE f.feedback_definition_id=fd.feedback_definition_id
                 AND r.record_id=f.record_id
                 AND r.chain_id=c.chain_id
                 {where_clause}
@@ -853,47 +500,30 @@ class LocalSQLite(TruDB):
         rows = c.fetchall()
         self._close(conn)
 
-        from trulens_eval.tru_feedback import Feedback
-
-        df_rows = []
-        for row in rows:
-            row = list(row)
-            row[4] = json.loads(row[4])  # result_json
-            row[7] = json.loads(row[7])  # feedback_json
-            row[8] = json.loads(row[8])  # record_json
-            row[9] = json.loads(row[9])  # chain_json
-
-            df_rows.append(row)
-
-        return pd.DataFrame(
-            df_rows,
-            columns=[
-                'record_id', 'feedback_id', 'last_ts', 'status', 'result_json',
-                'total_cost', 'total_tokens', 'feedback_json', 'record_json',
-                'chain_json'
-            ]
+        df = pd.DataFrame(
+            rows, columns=[description[0] for description in c.description]
         )
 
-    # TO REMOVE:
-    # TruDB requirement
-    def select(
-        self,
-        *query: Tuple[Query],
-        where: Optional[Condition] = None
-    ) -> pd.DataFrame:
-        raise NotImplementedError
-        """
-        # get the record json dumps from sql
-        record_strs = ...  # TODO(shayak)
+        def map_row(row):
+            # NOTE: pandas dataframe will take in the various classes below but the
+            # agg table used in UI will not like it. Sending it JSON/dicts instead.
+            
+            row.results_json = json.loads(row.results_json)  # results_json (unstructured)
+            row.cost_json = json.loads(row.cost_json)  # cost_json (Cost)
+            row.feedback_json = json.loads(row.feedback_json)  # feedback_json (FeedbackDefinition)
+            row.record_json = json.loads(row.record_json)  # record_json (Record)
+            row.chain_json = json.loads(row.chain_json)  # chain_json (Model)
 
-        records: Sequence[Dict] = map(json.loads, record_strs)
+            row.status = FeedbackResultStatus(row.status)
 
-        db = LocalTinyDB()  # in-memory db if filename not provided
-        for record in records:
-            db.insert_record(chain_id=record['chain_id'], record=record)
+            row['total_tokens'] = row.cost_json['n_tokens']
+            row['total_cost'] = row.cost_json['cost']
 
-        return db.select(*query, where)
-        """
+            return row
+
+        df = df.apply(map_row, axis=1)
+
+        return pd.DataFrame(df)
 
     def get_chain(self, chain_id: str) -> JSON:
         conn, c = self._connect()
@@ -907,12 +537,14 @@ class LocalSQLite(TruDB):
         return json.loads(result)
 
     def get_records_and_feedback(
-        self, chain_ids: List[str]
+        self, chain_ids: Optional[List[str]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         # This returns all models if the list of chain_ids is empty.
+        chain_ids = chain_ids or []
+
         conn, c = self._connect()
         query = f"""
-            SELECT r.record_id, f.result_json
+            SELECT r.record_id, f.results_json
             FROM {self.TABLE_RECORDS} r 
             LEFT JOIN {self.TABLE_FEEDBACKS} f
                 ON r.record_id = f.record_id
@@ -951,22 +583,34 @@ class LocalSQLite(TruDB):
             rows, columns=[description[0] for description in c.description]
         )
 
+        cost = df_records['cost_json'].map(Cost.parse_raw)
+        df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
+        df_records['total_cost'] = cost.map(lambda v: v.cost)
+
         if len(df_records) == 0:
             return df_records, []
 
         # Apply the function to the 'data' column to convert it into separate columns
-        df_results['result_json'] = df_results['result_json'].apply(
-            lambda d: {} if d is None else json.loads(d)
+        df_results['results_json'] = df_results['results_json'].apply(
+            json.loads
         )
 
         if "record_id" not in df_results.columns:
             return df_results, []
 
         df_results = df_results.groupby("record_id").agg(
-            lambda dicts: {key: val for d in dicts for key, val in d.items()}
+            lambda dicts: {
+                key: val for d in dicts if d is not None
+                for key, val in d.items()
+            }
         ).reset_index()
 
-        df_results = df_results['result_json'].apply(pd.Series)
+        def expand_results(row):
+            s = pd.Series(row.results_json)
+            s['record_id'] = row.record_id
+            return s
+
+        df_results = df_results.apply(expand_results, axis=1)
 
         result_cols = [
             col for col in df_results.columns
@@ -981,7 +625,7 @@ class LocalSQLite(TruDB):
 
         combined_df = df_records.merge(df_results, on=['record_id'])
         combined_df = combined_df.drop(
-            columns=set(["_success", "_error"]
+            columns=set(["_success", "_error", 'cost_json']
                        ).intersection(set(combined_df.columns))
         )
 
