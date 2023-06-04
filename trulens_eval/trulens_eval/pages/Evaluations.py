@@ -147,15 +147,9 @@ else:
             record_json = json.loads(record_str)
             record = Record(**record_json)
 
-            st.header("Call Trace")
-
-            draw_calls(record)
-            
             details = selected_rows['chain_json'][0]
             chain_json = json.loads(details) # chains may not be deserializable, don't try to, keep it json.
-            #json.loads(details))  # ???
-            chain_json = chain_json['chain']
-
+            
             step_llm = GetItemOrAttribute(item_or_attribute="llm")
             step_prompt = GetItemOrAttribute(item_or_attribute="prompt")
             step_call = GetItemOrAttribute(item_or_attribute="_call")
@@ -178,8 +172,8 @@ else:
 
             for i in range(max_len + 1):
                 st.header(f"Component {i+1}")
-                draw_calls(record_json, i + 1)
-                
+                draw_calls(record, index=i + 1)
+
                 if i < len(llm_queries):
                     query, llm_details_json = llm_queries[i]
                     st.subheader(f"LLM Details:")
