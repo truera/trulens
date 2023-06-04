@@ -329,11 +329,14 @@ class Feedback(FeedbackDefinition):
         try:
             total_tokens = 0
             total_cost = 0.0
+            feedback_calls = []
             for ins in self.extract_selection(chain=chain_json, record=record):
 
                 # TODO: Do this only if there is an openai model inside the chain:
                 # NODE: This only works for langchain uses of openai.
                 with get_openai_callback() as cb:
+                    feedback_call = 
+
                     result_val = self.imp(**ins)
                     result_vals.append(result_val)
 
