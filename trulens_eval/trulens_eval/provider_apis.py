@@ -12,6 +12,7 @@ from trulens_eval.tru_db import JSON
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import TP
 
+logger = logging.getLogger(__name__)
 
 class Endpoint(SingletonPerName):
 
@@ -37,7 +38,7 @@ class Endpoint(SingletonPerName):
             # already initialized via the SingletonPerName mechanism
             return
 
-        logging.debug(f"*** Creating {name} endpoint ***")
+        logger.debug(f"*** Creating {name} endpoint ***")
 
         self.rpm = rpm
         self.retries = retries
@@ -74,7 +75,7 @@ class Endpoint(SingletonPerName):
         # Huggingface public api sometimes tells us that a model is loading and how long to wait:
         if "estimated_time" in j:
             wait_time = j['estimated_time']
-            logging.error(f"Waiting for {j} ({wait_time}) second(s).")
+            logger.error(f"Waiting for {j} ({wait_time}) second(s).")
             sleep(wait_time + 2)
             return self.post(url, payload)
 
@@ -100,7 +101,7 @@ class Endpoint(SingletonPerName):
                 return ret
             except Exception as e:
                 retries -= 1
-                logging.error(
+                logger.error(
                     f"{self.name} request failed {type(e)}={e}. Retries={retries}."
                 )
                 if retries > 0:

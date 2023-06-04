@@ -30,7 +30,7 @@ from trulens_eval.tru_db import LocalSQLite
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.util import TP
-from trulens_eval.utils.langchain import WithFilterDocuments
+from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
@@ -124,8 +124,8 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     retriever = docsearch.as_retriever()
 
     if "filtered" in chain_id:
-        retriever = WithFilterDocuments.of_retriever(
-            retriever=retriever, filter_func=filter_by_relevance
+        retriever = WithFeedbackFilterDocuments.of_retriever(
+            retriever=retriever, feedback=f_qs_relevance, threshold = 0.5
         )
 
     # LLM for completing prompts, and other tasks.
