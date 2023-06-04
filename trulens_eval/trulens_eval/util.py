@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import abc
 from enum import Enum
+from inspect import stack
 import itertools
 import json
 import logging
@@ -16,6 +17,7 @@ from multiprocessing.pool import AsyncResult
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from queue import Queue
+from threading import Thread
 from time import sleep
 from typing import (
     Any, Callable, Dict, Hashable, Iterable, Iterator, List, Optional, Sequence,
@@ -26,6 +28,8 @@ from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pandas as pd
 import pydantic
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
@@ -201,7 +205,7 @@ def jsonify(obj: Any, dicted=None) -> JSON:
         return temp
 
     else:
-        logging.debug(
+        logger.debug(
             f"Don't know how to jsonify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
         )
 
@@ -437,7 +441,7 @@ def _project(path: List, obj: Any):
     if isinstance(first, str):
         if isinstance(obj, pydantic.BaseModel):
             if not hasattr(obj, first):
-                logging.warn(
+                logger.warn(
                     f"Cannot project {str(obj)[0:32]} with path {path} because {first} is not an attribute here."
                 )
                 return None
@@ -445,21 +449,21 @@ def _project(path: List, obj: Any):
 
         elif isinstance(obj, Dict):
             if first not in obj:
-                logging.warn(
+                logger.warn(
                     f"Cannot project {str(obj)[0:32]} with path {path} because {first} is not a key here."
                 )
                 return None
             return _project(path=rest, obj=obj[first])
 
         else:
-            logging.warn(
+            logger.warn(
                 f"Cannot project {str(obj)[0:32]} with path {path} because object is not a dict or model."
             )
             return None
 
     elif isinstance(first, int):
         if not isinstance(obj, Sequence) or first >= len(obj):
-            logging.warn(f"Cannot project {str(obj)[0:32]} with path {path}.")
+            logger.warn(f"Cannot project {str(obj)[0:32]} with path {path}.")
             return None
 
         return _project(path=rest, obj=obj[first])
@@ -890,7 +894,7 @@ class SingletonPerName():
         key = cls.__name__, name
 
         if key not in cls.instances:
-            logging.debug(
+            logger.debug(
                 f"*** Creating new {cls.__name__} singleton instance for name = {name} ***"
             )
             SingletonPerName.instances[key] = super().__new__(cls)
@@ -902,6 +906,10 @@ class SingletonPerName():
 
 
 class TP(SingletonPerName):  # "thread processing"
+
+    # Store here stacks of calls to various thread starting methods so that we can retrieve
+    # the trace of calls that caused a thread to start.
+    # pre_run_stacks = dict()
 
     def __init__(self):
         if hasattr(self, "thread_pool"):
@@ -923,18 +931,44 @@ class TP(SingletonPerName):  # "thread processing"
 
         self.runlater(runner)
 
+    @staticmethod
+    def _thread_target_wrapper(stack, func, *args, **kwargs):
+        """
+        Wrapper for a function that is started by threads. This is needed to
+        record the call stack prior to thread creation as in python threads do
+        not inherit the stack. Our instrumentation, however, relies on walking
+        the stack and need to do this to the frames prior to thread starts.
+        """
+
+        # Keep this for looking up via get_local_in_call_stack .
+        pre_start_stack = stack
+
+        return func(*args, **kwargs)
+
+    def _thread_starter(self, func, args, kwargs):
+        present_stack = stack()
+
+        prom = self.thread_pool.apply_async(self._thread_target_wrapper, args=(present_stack, func) + args, kwds=kwargs)
+        return prom
+
+        # thread = Thread(target=func, args=args, kwargs=kwargs)
+        # thread.start()
+        # self.pre_run_stacks[thread_id] = stack()
+        
     def runlater(self, func: Callable, *args, **kwargs) -> None:
-        prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
+        # prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
+        prom = self._thread_starter(func, args, kwargs)
         self.promises.put(prom)
 
     def promise(self, func: Callable[..., T], *args, **kwargs) -> AsyncResult:
-        prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
+        # prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
+        prom = self._thread_starter(func, args, kwargs)
         self.promises.put(prom)
 
         return prom
 
     def finish(self, timeout: Optional[float] = None) -> int:
-        print(f"Finishing {self.promises.qsize()} task(s) ", end='')
+        logger.debug(f"Finishing {self.promises.qsize()} task(s).")
 
         timeouts = []
 
@@ -942,18 +976,16 @@ class TP(SingletonPerName):  # "thread processing"
             prom = self.promises.get()
             try:
                 prom.get(timeout=timeout)
-                print(".", end="")
             except TimeoutError:
-                print("!", end="")
                 timeouts.append(prom)
 
         for prom in timeouts:
             self.promises.put(prom)
 
         if len(timeouts) == 0:
-            print("done.")
+            logger.debug("Done.")
         else:
-            print("some tasks timed out.")
+            logger.debug("Some tasks timed out.")
 
         return len(timeouts)
 
@@ -964,3 +996,51 @@ class TP(SingletonPerName):  # "thread processing"
             rows.append([p.is_alive(), str(p)])
 
         return pd.DataFrame(rows, columns=["alive", "thread"])
+
+
+def get_local_in_call_stack(
+    key: str, func: Callable[[Callable], bool], offset: int = 1
+) -> Optional[Any]:
+    """
+    Get the value of the local variable named `key` in the stack at the nearest
+    frame executing a function which `func` recognizes (returns True on).
+    Returns None if `func` does not recognize the correct function. Raises
+    RuntimeError if a function is recognized but does not have `key` in its
+    locals.
+
+    This method works across threads as long as they are started using the TP
+    class above.
+
+    """
+
+    frames = stack()[offset + 1:] # + 1 to skip this method itself
+
+    # Using queue for frames as additional frames may be added due to handling threads.
+    q = Queue()
+    for f in frames:
+        q.put(f)
+
+    while not q.empty():
+        fi = q.get()
+
+        if id(fi.frame.f_code) == id(TP()._thread_target_wrapper.__code__):
+            logger.debug(
+                "Found thread starter frame. "
+                "Will walk over frames in prior to thread start."
+            )
+            locs = fi.frame.f_locals
+            assert "pre_start_stack" in locs, "Pre thread start stack expected but not found."
+            for f in locs['pre_start_stack']:
+                q.put(f)
+            continue
+        
+        if func(fi.frame.f_code):
+            logger.debug(f"looking {func.__name__} found: {fi}")
+            locs = fi.frame.f_locals
+            if key in locs:
+                return locs[key]
+            else:
+                raise RuntimeError(f"No local named {key} in {func} found.")
+        logger.debug(f"looking {func.__name__}, pass : {fi}")
+
+    return None
