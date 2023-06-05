@@ -41,6 +41,7 @@ pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
 
+
 class Query:
 
     # Typing for type hints.
@@ -65,7 +66,8 @@ def get_calls(record: Record) -> Iterable[RecordChainCall]:
 
     for q in all_queries(record):
         print("consider query", q)
-        if len(q.path) > 0 and q.path[-1] == GetItemOrAttribute(item_or_attribute="_call"):
+        if len(q.path) > 0 and q.path[-1] == GetItemOrAttribute(
+                item_or_attribute="_call"):
             yield q
 
 
@@ -121,6 +123,7 @@ def query_of_path(path: List[Union[str, int]]) -> JSONPath:
 
 
 class TruDB(SerialModel, abc.ABC):
+
     @abc.abstractmethod
     def reset_database(self):
         """
@@ -311,10 +314,10 @@ class LocalSQLite(TruDB):
         record_json_str = json_str_of_obj(record)
         cost_json_str = json_str_of_obj(record.cost)
         vals = (
-                record.record_id, record.chain_id, record.main_input,
-                record.main_output, record_json_str, record.tags, record.ts,
-                cost_json_str
-            )
+            record.record_id, record.chain_id, record.main_input,
+            record.main_output, record_json_str, record.tags, record.ts,
+            cost_json_str
+        )
 
         self._insert_or_replace_vals(table=self.TABLE_RECORDS, vals=vals)
 
@@ -330,7 +333,7 @@ class LocalSQLite(TruDB):
         chain_str = chain.json()
 
         vals = (chain_id, chain_str)
-        self._insert_or_replace_vals(table = self.TABLE_CHAINS, vals=vals)
+        self._insert_or_replace_vals(table=self.TABLE_CHAINS, vals=vals)
 
         print(f"{UNICODE_CHECK} chain {chain_id} -> {self.filename}")
 
@@ -347,8 +350,8 @@ class LocalSQLite(TruDB):
         feedback_str = feedback.json()
         vals = (feedback_definition_id, feedback_str)
 
-        self._insert_or_replace_vals(table = self.TABLE_FEEDBACK_DEFS, vals=vals)
-        
+        self._insert_or_replace_vals(table=self.TABLE_FEEDBACK_DEFS, vals=vals)
+
         print(
             f"{UNICODE_CHECK} feedback def. {feedback_definition_id} -> {self.filename}"
         )
@@ -387,10 +390,9 @@ class LocalSQLite(TruDB):
         conn, c = self._connect()
         c.execute(
             f"""INSERT OR REPLACE INTO {table}
-                VALUES ({','.join('?' for _ in vals)})""", vals 
+                VALUES ({','.join('?' for _ in vals)})""", vals
         )
         self._close(conn)
-
 
     def insert_feedback(
         self, feedback_result: FeedbackResult
@@ -400,18 +402,13 @@ class LocalSQLite(TruDB):
         """
 
         vals = (
-                feedback_result.feedback_result_id,
-                feedback_result.record_id,
-                feedback_result.chain_id, 
-                feedback_result.feedback_definition_id, 
-                feedback_result.last_ts.timestamp(),
-                feedback_result.status.value,
-                feedback_result.error,
-                json_str_of_obj(feedback_result.calls),
-                feedback_result.result,
-                feedback_result.name,
-                json_str_of_obj(feedback_result.cost)
-            )
+            feedback_result.feedback_result_id, feedback_result.record_id,
+            feedback_result.chain_id, feedback_result.feedback_definition_id,
+            feedback_result.last_ts.timestamp(), feedback_result.status.value,
+            feedback_result.error, json_str_of_obj(feedback_result.calls),
+            feedback_result.result, feedback_result.name,
+            json_str_of_obj(feedback_result.cost)
+        )
 
         self._insert_or_replace_vals(table=self.TABLE_FEEDBACKS, vals=vals)
 
@@ -502,11 +499,17 @@ class LocalSQLite(TruDB):
         def map_row(row):
             # NOTE: pandas dataframe will take in the various classes below but the
             # agg table used in UI will not like it. Sending it JSON/dicts instead.
-            
-            row.calls_json = json.loads(row.calls_json)  # calls_json (sequence of FeedbackCall)
+
+            row.calls_json = json.loads(
+                row.calls_json
+            )  # calls_json (sequence of FeedbackCall)
             row.cost_json = json.loads(row.cost_json)  # cost_json (Cost)
-            row.feedback_json = json.loads(row.feedback_json)  # feedback_json (FeedbackDefinition)
-            row.record_json = json.loads(row.record_json)  # record_json (Record)
+            row.feedback_json = json.loads(
+                row.feedback_json
+            )  # feedback_json (FeedbackDefinition)
+            row.record_json = json.loads(
+                row.record_json
+            )  # record_json (Record)
             row.chain_json = json.loads(row.chain_json)  # chain_json (Model)
 
             row.status = FeedbackResultStatus(row.status)
@@ -532,7 +535,8 @@ class LocalSQLite(TruDB):
         return json.loads(result)
 
     def get_records_and_feedback(
-        self, chain_ids: Optional[List[str]] = None
+        self,
+        chain_ids: Optional[List[str]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         # This returns all models if the list of chain_ids is empty.
         chain_ids = chain_ids or []
@@ -585,10 +589,8 @@ class LocalSQLite(TruDB):
         if len(df_records) == 0:
             return df_records, []
 
-        df_results['calls_json'] = df_results['calls_json'].apply(
-            json.loads
-        )
-        
+        df_results['calls_json'] = df_results['calls_json'].apply(json.loads)
+
         def expand_results(row):
             row[row['name']] = row.result
             row[row['name'] + " calls"] = row.calls_json
@@ -604,7 +606,7 @@ class LocalSQLite(TruDB):
         df_results = df_results.groupby("record_id").agg(
             lambda vals: list(filter(lambda val: not np.isnan(val), vals))[0]
         ).reset_index()
-        
+
         result_cols = [
             col for col in df_results.columns
             if col not in ['feedback_id', 'record_id', '_success', "_error"]
