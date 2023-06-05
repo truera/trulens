@@ -129,7 +129,7 @@ def json_default(obj: Any) -> str:
     Produce a representation of an object which cannot be json-serialized.
     """
 
-    obj = jsonify(obj)
+    # obj = jsonify(obj)
 
     # Try the encoders included with pydantic first (should handle things like
     # Datetime):
@@ -137,6 +137,12 @@ def json_default(obj: Any) -> str:
         return pydantic.json.pydantic_encoder(obj)
     except:
         pass
+
+    #if isinstance(obj, Enum):
+    #    return obj.name
+    
+    #if isinstance(obj, dict):
+    #    return 
 
     #if isinstance(obj, pydantic.BaseModel):
     #    try:
