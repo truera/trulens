@@ -14,11 +14,13 @@ jupyter nbconvert --to script quickstart.ipynb
 jupyter nbconvert --to script all_tools.ipynb
 
 ## Remove ipynb JSON calls
-sed -i .bak  '/JSON/d' quickstart.py all_tools.py
+sed -i ".bak"  "/JSON/d" quickstart.py all_tools.py
 ## Replace jupyter display with python print 
-sed -i .bak  's/display/print/g' quickstart.py all_tools.py
+sed -i ".bak"  "s/display/print/g" quickstart.py all_tools.py
 ## Remove cell metadata
-sed -i .bak  '/\# In\[/d' quickstart.py all_tools.py
+sed -i ".bak"  "/\# In\[/d" quickstart.py all_tools.py
+## Remove single # lines
+sed -i ".bak"  "/\#$/d" quickstart.py all_tools.py
 ## Collapse multiple empty line from sed replacements with a single line
-sed -i .bak -e '/./b' -e :n -e 'N;s/\\n$//;tn' quickstart.py all_tools.py
+sed -i ".bak" -e "/./b" -e ":n" -e "N;s/\\n$//;tn" quickstart.py all_tools.py
 
