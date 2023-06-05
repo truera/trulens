@@ -3,25 +3,30 @@ from typing import Callable, List
 from langchain.schema import Document
 from langchain.vectorstores.base import VectorStoreRetriever
 from pydantic import Field
+from trulens_eval.tru_feedback import Feedback
 
 from trulens_eval.util import TP, first, second
 
 
-class WithFilterDocuments(VectorStoreRetriever):
-    filter_func: Callable = Field(exclude=True)
+class WithFeedbackFilterDocuments(VectorStoreRetriever):
+    feedback: Feedback
+    threshold: float
 
     def __init__(
-        self, filter_func: Callable[[Document], bool], *args, **kwargs
+        self, feedback: Feedback, threshold: float, *args, **kwargs
     ):
         """
-        A VectorStoreRetriever that filters documents before returning them.
+        A VectorStoreRetriever that filters documents using a minimum threshold
+        on a feedback function before returning them.
 
-        - filter_func: Callable[[Document], bool] - apply this filter before
-          returning documents. Will return only documents for which the filter
-          returns true.
+        - feedback: Feedback - use this feedback function to score each
+          document.
+        
+        - threshold: float - and keep documents only if their feedback value is
+          at least this threshold.
         """
 
-        super().__init__(filter_func=filter_func, *args, **kwargs)
+        super().__init__(feedback=feedback, threshold=threshold, *args, **kwargs)
 
     def get_relevant_documents(self, query: str) -> List[Document]:
         # Get relevant docs using super class:
@@ -29,8 +34,10 @@ class WithFilterDocuments(VectorStoreRetriever):
 
         # Evaluate the filter on each, in parallel.
         promises = (
-            (doc, TP().promise(self.filter_func, query=query, doc=doc))
-            for doc in docs
+            (doc, TP().promise(
+            lambda doc, query: self.feedback(query, doc.page_content) > self.threshold,
+            query=query,
+            doc=doc)) for doc in docs
         )
         results = ((doc, promise.get()) for (doc, promise) in promises)
         filtered = map(first, filter(second, results))
@@ -39,6 +46,6 @@ class WithFilterDocuments(VectorStoreRetriever):
         return list(filtered)
 
     @staticmethod
-    def of_retriever(retriever: VectorStoreRetriever, filter_func: Callable):
-        return WithFilterDocuments(filter_func=filter_func, **retriever.dict())
+    def of_retriever(retriever: VectorStoreRetriever, **kwargs):
+        return WithFeedbackFilterDocuments(**kwargs, **retriever.dict())
     

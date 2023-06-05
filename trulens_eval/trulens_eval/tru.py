@@ -130,7 +130,7 @@ class Tru(SingletonPerName):
             assert chain_id == chain.chain_id, "Record was produced by a different chain."
 
             if self.db.get_chain(chain_id=chain.chain_id) is None:
-                logging.warn(
+                logger.warn(
                     "Chain {chain_id} was not present in database. Adding it."
                 )
                 self.add_chain(chain=chain)
