@@ -24,6 +24,7 @@ jobs:
           pip install jupyter
           pip install nbmerge
           ../../.github/workflows/combine_nb_to_docs_testing.sh
+          rm -rf break.md
       - name: Commit Branch
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
