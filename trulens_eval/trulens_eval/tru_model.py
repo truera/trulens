@@ -1,72 +1,9 @@
 """
-# Langchain instrumentation and monitoring. 
+Generalized root type for various libraries like llama_index and langchain .
+"""
 
-## Limitations
-
-- Uncertain thread safety.
-
-- If the same wrapped sub-chain is called multiple times within a single call to
-  the root chain, the record of this execution will not be exact with regards to
-  the path to the call information. All call dictionaries will appear in a list
-  addressed by the last subchain (by order in which it is instrumented). For
-  example, in a sequential chain containing two of the same chain, call records
-  will be addressed to the second of the (same) chains and contain a list
-  describing calls of both the first and second.
-
-- Some chains cannot be serialized/jsonized. Sequential chain is an example.
-  This is a limitation of langchain itself.
-
-## Basic Usage
-
-- Wrap an existing chain:
-
-```python
-
-    tc = TruChain(t.llm_chain)
-
-```
-
-- Retrieve the parameters of the wrapped chain:
-
-```python
-
-    tc.chain
-
-```
-
-Output:
-
-```json
-
-{'memory': None,
- 'verbose': False,
- 'chain': {'memory': None,
-  'verbose': True,
-  'prompt': {'input_variables': ['question'],
-   'output_parser': None,
-   'partial_variables': {},
-   'template': 'Q: {question} A:',
-   'template_format': 'f-string',
-   'validate_template': True,
-   '_type': 'prompt'},
-  'llm': {'model_id': 'gpt2',
-   'model_kwargs': None,
-   '_type': 'huggingface_pipeline'},
-  'output_key': 'text',
-  '_type': 'llm_chain'},
- '_type': 'TruChain'}
- 
- ```
-
-- Make calls like you would to the wrapped chain.
-
-```python
-
-    rec1: dict = tc("hello there")
-    rec2: dict = tc("hello there general kanobi")
-
-```
-
+"""
+# Llama_index instrumentation and monitoring. 
 """
 
 from collections import defaultdict
@@ -80,14 +17,14 @@ from pprint import PrettyPrinter
 import threading as th
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
-import langchain
-from langchain.callbacks import get_openai_callback
-from langchain.chains.base import Chain
+
 from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_eval.schema import FeedbackMode, Method, MethodIdent
-from trulens_eval.schema import LangChainModel
+import langchain
+import llama_index
+
+from trulens_eval.schema import FeedbackMode, MethodIdent
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
 from trulens_eval.schema import RecordChainCallMethod
@@ -97,6 +34,7 @@ from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru import Tru
 from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import Model
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import TP, JSONPath, jsonify, noserio
 
@@ -104,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-class TruChain(LangChainModel):
+class TruModel(Model):
     """
     Wrap a langchain Chain to capture its configuration and evaluation steps. 
     """
@@ -132,15 +70,6 @@ class TruChain(LangChainModel):
         feedback_mode: FeedbackMode = FeedbackMode.WITH_CHAIN_THREAD,
         **kwargs
     ):
-        """
-        Wrap a chain for monitoring.
-
-        Arguments:
-        
-        - chain: Chain -- the chain to wrap.
-        - chain_id: Optional[str] -- chain name or id. If not given, the
-          name is constructed from wrapped chain parameters.
-        """
 
         if feedbacks is not None and tru is None:
             raise ValueError("Feedback logging requires `tru` to be specified.")
@@ -172,27 +101,12 @@ class TruChain(LangChainModel):
             logger.debug(
                 "Inserting chain and feedback function definitions to db."
             )
-            self.db.insert_chain(chain=self)
+            # self.db.insert_chain(chain=self) # TODO: Generalize
             for f in self.feedbacks:
                 self.db.insert_feedback_definition(f)
 
-        self._instrument_object(obj=self.chain, query=Query.Query().chain)
+        # self._instrument_object(obj=self.chain, query=Query.Query().chain) : # TODO: Generalize
 
-
-    # Chain requirement
-    @property
-    def _chain_type(self):
-        return "TruChain"
-
-    # Chain requirement
-    @property
-    def input_keys(self) -> List[str]:
-        return self.chain.input_keys
-
-    # Chain requirement
-    @property
-    def output_keys(self) -> List[str]:
-        return self.chain.output_keys
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
     def call_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs):
@@ -218,10 +132,11 @@ class TruChain(LangChainModel):
 
         try:
             # TODO: do this only if there is an openai model inside the chain:
-            with get_openai_callback() as cb:
-                ret = self.chain.__call__(inputs=inputs, **kwargs)
-                total_tokens = cb.total_tokens
-                total_cost = cb.total_cost
+            # with get_openai_callback() as cb:
+            # ret = self.chain.__call__(inputs=inputs, **kwargs) # TODO: generalize
+            # total_tokens = cb.total_tokens
+            # total_cost = cb.total_cost
+            pass
 
         except BaseException as e:
             error = e
@@ -237,11 +152,11 @@ class TruChain(LangChainModel):
 
         # Figure out the content of the "inputs" arg that __call__ constructs
         # for _call so we can lookup main input and output.
-        input_key = self.input_keys[0]
-        output_key = self.output_keys[0]
+        # input_key = self.input_keys[0]
+        # output_key = self.output_keys[0]
      
-        ret_record_args['main_input'] = inputs[input_key]
-        ret_record_args['main_output'] = ret[output_key]
+        ret_record_args['main_input'] = "generalize" # inputs[input_key]
+        ret_record_args['main_output'] = "generalize" # ret[output_key]
 
         ret_record_args['main_error'] = str(error)
         ret_record_args['calls'] = record
@@ -272,17 +187,6 @@ class TruChain(LangChainModel):
             TP().runlater(self._handle_record, record=ret_record)
 
         return ret, ret_record
-
-    # langchain.chains.base.py:Chain
-    def __call__(self, *args, **kwargs) -> Dict[str, Any]:
-        """
-        Wrapped call to self.chain.__call__ with instrumentation. If you need to
-        get the record, use `call_with_record` instead. 
-        """
-
-        ret, _ = self.call_with_record(*args, **kwargs)
-
-        return ret
 
     def _handle_record(self, record: Record):
         """
@@ -327,76 +231,6 @@ class TruChain(LangChainModel):
         if self.db is None:
             return
 
-    # Chain requirement
-    # TODO(piotrm): figure out whether the combination of _call and __call__ is working right.
-    def _call(self, *args, **kwargs) -> Any:
-        return self.chain._call(*args, **kwargs)
-
-    def _instrument_dict(self, cls, obj: Any):
-        """
-        Replacement for langchain's dict method to one that does not fail under
-        non-serialization situations.
-        """
-
-        if hasattr(obj, "memory"):
-            if obj.memory is not None:
-                # logger.warn(
-                #     f"Will not be able to serialize object of type {cls} because it has memory."
-                # )
-                pass
-
-        def safe_dict(s, json: bool = True, **kwargs: Any) -> Dict:
-            """
-            Return dictionary representation `s`. If `json` is set, will make
-            sure output can be serialized.
-            """
-
-            # if s.memory is not None:
-            # continue anyway
-            # raise ValueError("Saving of memory is not yet supported.")
-
-            sup = super(cls, s)
-            if hasattr(sup, "dict"):
-                _dict = super(cls, s).dict(**kwargs)
-            else:
-                _dict = {"_base_type": cls.__name__}
-            # _dict = cls.dict(s, **kwargs)
-            # _dict["_type"] = s._chain_type
-
-            # TODO: json
-
-            return _dict
-
-        safe_dict._instrumented = getattr(cls, "dict")
-
-        return safe_dict
-
-    def _instrument_type_method(self, obj, prop):
-        """
-        Instrument the Langchain class's method _*_type which is presently used
-        to control chain saving. Override the exception behaviour. Note that
-        _chain_type is defined as a property in langchain.
-        """
-
-        # Properties doesn't let us new define new attributes like "_instrument"
-        # so we put it on fget instead.
-        if hasattr(prop.fget, "_instrumented"):
-            prop = prop.fget._instrumented
-
-        def safe_type(s) -> Union[str, Dict]:
-            # self should be chain
-            try:
-                ret = prop.fget(s)
-                return ret
-
-            except NotImplementedError as e:
-
-                return noserio(obj, error=f"{e.__class__.__name__}='{str(e)}'")
-
-        safe_type._instrumented = prop
-        new_prop = property(fget=safe_type)
-
-        return new_prop
 
     def _instrument_tracked_method(
         self, query: Query, func: Callable, method_name: str, cls: type, obj: object
@@ -432,7 +266,7 @@ class TruChain(LangChainModel):
             logger.debug(f"Calling instrumented method {func} on {query}")
 
             def find_call_with_record(f):
-                return id(f) == id(TruChain.call_with_record.__code__)
+                return id(f) == id(TruModel.call_with_record.__code__)
 
             # Look up whether TruChain._call was called earlier in the stack and
             # "record" variable was defined there. Will use that for recording
@@ -535,8 +369,9 @@ class TruChain(LangChainModel):
         # Instrument only methods with these names and of these classes.
         methods_to_instrument = {
             "_call": lambda o: isinstance(o, langchain.chains.base.Chain),
+            "_query": lambda o: isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
+            "__call__": lambda o: isinstance(o, Feedback), # Feedback
             "get_relevant_documents": lambda o: True, # VectorStoreRetriever
-            "__call__": lambda o: isinstance(o, Feedback) # Feedback
         }
 
         for base in [cls] + cls.mro():
@@ -570,6 +405,8 @@ class TruChain(LangChainModel):
 
             # Instrument special langchain methods that may cause serialization
             # failures.
+            # TODO: Generalize
+            """
             if hasattr(base, "_chain_type"):
                 logger.debug(f"instrumenting {base}._chain_type")
 
@@ -594,6 +431,7 @@ class TruChain(LangChainModel):
                 logger.debug(f"instrumenting {base}.dict")
 
                 setattr(base, "dict", self._instrument_dict(cls=base, obj=obj))
+            """
 
         # Not using chain.dict() here as that recursively converts subchains to
         # dicts but we want to traverse the instantiations here.
