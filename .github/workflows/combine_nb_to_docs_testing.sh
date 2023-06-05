@@ -1,4 +1,5 @@
 rm -rf all_tools.ipynb
+rm -rf break.md
 
 # Combined notebook flow - will be tested
 nbmerge quickstart.ipynb logging.ipynb feedback_functions.ipynb >> all_tools.ipynb
