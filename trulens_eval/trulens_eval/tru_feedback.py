@@ -68,7 +68,6 @@ from trulens_eval.schema import Model
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import JSON
-from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
 
 from trulens_eval.tru_db import Record
@@ -78,6 +77,8 @@ from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
+
+default_pass_fail_color_threshold = 0.5
 
 
 def check_provider(cls_or_name: Union[Type, str]) -> None:
