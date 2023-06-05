@@ -3,7 +3,7 @@
 ![TruLens](https://www.trulens.org/Assets/image/Neural_Network_Explainability.png)
 
 
-TruLens is a cross-framework library for deep learning explainability. It provides a uniform abstraction over a number of different frameworks. It provides a uniform abstraction layer over TensorFlow, Pytorch, and Keras and allows input and internal explanations.
+TruLens is a cross-framework library for deep learning explainability. It provides a uniform abstraction over a number of different frameworks. It provides a uniform abstraction layer over TensorFlow, PyTorch, and Keras and allows input and internal explanations.
 
 [This paper](https://arxiv.org/abs/1802.03788) is an introduction to the theoretical foundations of the library. We’ve been using TruLens at TruEra across a wide range of real-world use cases to explain deep learning models ranging from time-series RNNs to image and NLP models, and wanted to share the awesomeness with the world.
 
@@ -11,12 +11,12 @@ TruLens is a cross-framework library for deep learning explainability. It provid
 [Documentation](https://www.trulens.org/)
 
 # Quick Usage
-To quickly play around with the TruLens library, check out the following CoLab notebooks:
+To quickly play around with the TruLens library, check out the following Colab notebooks:
 
 * PyTorch: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1n77IGrPDO2XpeIVo_LQW0gY78enV-tY9?usp=sharing)
-* Tensorflow 2 / Keras: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1f-ETsdlppODJGQCdMXG-jmGmfyWyW2VD?usp=sharing)
+* TensorFlow 2 / Keras: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1f-ETsdlppODJGQCdMXG-jmGmfyWyW2VD?usp=sharing)
 * NLP with PyTorch: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/18GcjsYMkRbxPDDS3J6BEbKnb7AY-1-Wa?usp=sharing)
-* NLP with Tensorflow 2 / Keras: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1K09IvN7cMTkzsnb-uAeA0YQNfDU7Ibhs?usp=sharing)
+* NLP with TensorFlow 2 / Keras: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1K09IvN7cMTkzsnb-uAeA0YQNfDU7Ibhs?usp=sharing)
 
 
 # Installation
@@ -34,7 +34,7 @@ conda install tensorflow-gpu=1  # Or whatever backend you're using.
 conda install keras             # Or whatever backend you're using.
 conda install matplotlib        # For visualizations.
 ```
-2. Install the trulens package
+2. Install the trulens pip package from PyPI.
 ```
 pip install trulens
 ```
@@ -77,7 +77,7 @@ A `Slice` object specifies two layers: (1) the layer of the variables that we ar
 The *quantity of interest* (QoI) essentially defines the model behavior we would like to explain using attributions.
 The QoI is a function of the model's output at some layer.
 For example, it may select the confidence score for a particular class.
-In its most general form, the QoI can be pecified by an implementation of the `QoI` class in the `trulens.nn.quantities` module.
+In its most general form, the QoI can be specified by an implementation of the `QoI` class in the `trulens.nn.quantities` module.
 Several common default implementations are provided in this module as well.
 
 The *distribution of interest* (DoI) essentially specifies for which points surrounding each record the calculated attribution should be valid.

@@ -13,8 +13,8 @@ import pkg_resources
 
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import LocalSQLite
-from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
+from trulens_eval.schema import FeedbackResult, Model, Record
 from trulens_eval.util import TP, SingletonPerName
 
 
@@ -37,14 +37,14 @@ class Tru(SingletonPerName):
     # Process of the dashboard app.
     dashboard_proc = None
 
-    def Chain(self, *args, **kwargs):
+    def Chain(self, **kwargs):
         """
         Create a TruChain with database managed by self.
         """
 
         from trulens_eval.tru_chain import TruChain
 
-        return TruChain(tru=self, *args, **kwargs)
+        return TruChain(tru=self, **kwargs)
 
     def __init__(self):
         """
@@ -56,7 +56,7 @@ class Tru(SingletonPerName):
             # Already initialized by SingletonByName mechanism.
             return
 
-        self.db = LocalSQLite(Tru.DEFAULT_DATABASE_FILE)
+        self.db = LocalSQLite(filename=Path(Tru.DEFAULT_DATABASE_FILE))
 
     def reset_database(self):
         """
@@ -65,64 +65,33 @@ class Tru(SingletonPerName):
 
         self.db.reset_database()
 
-    def add_record(
-        self,
-        prompt: str,
-        response: str,
-        record_json: JSON,
-        tags: Optional[str] = "",
-        ts: Optional[int] = None,
-        total_tokens: Optional[int] = None,
-        total_cost: Optional[float] = None,
-    ):
+    def add_record(self, record: Optional[Record] = None, **kwargs):
         """
         Add a record to the database.
 
         Parameters:
+        
+        - record: Record
 
-            prompt (str): Chain input or "prompt".
-
-            response (str): Chain output or "response".
-
-            record_json (JSON): Record as produced by `TruChain.call_with_record`.
-
-            tags (str, optional): Additional metadata to include with the record.
-
-            ts (int, optional): Timestamp of record creation.
-
-            total_tokens (int, optional): The number of tokens generated in
-            producing the response.
-
-            total_cost (float, optional): The cost of producing the response.
-
+        - **kwargs: Record fields.
+            
         Returns:
-            str: Unique record identifier.
+            RecordID: Unique record identifier.
 
         """
-        ts = ts or datetime.now()
-        total_tokens = total_tokens or record_json['_cost']['total_tokens']
-        total_cost = total_cost or record_json['_cost']['total_cost']
 
-        chain_id = record_json['chain_id']
+        if record is None:
+            record = Record(**kwargs)
+        else:
+            record.update(**kwargs)
 
-        record_id = self.db.insert_record(
-            chain_id=chain_id,
-            input=prompt,
-            output=response,
-            record_json=record_json,
-            ts=ts,
-            tags=tags,
-            total_tokens=total_tokens,
-            total_cost=total_cost
-        )
-
-        return record_id
+        return self.db.insert_record(record=record)
 
     def run_feedback_functions(
         self,
-        record_json: JSON,
-        feedback_functions: Sequence['Feedback'],
-        chain_json: Optional[JSON] = None,
+        record: Record,
+        feedback_functions: Sequence[Feedback],
+        chain: Optional[Model] = None,
     ) -> Sequence[JSON]:
         """
         Run a collection of feedback functions and report their result.
@@ -141,34 +110,31 @@ class Tru(SingletonPerName):
         Returns nothing.
         """
 
-        chain_id = record_json['chain_id']
+        chain_id = record.chain_id
 
-        if chain_json is None:
-            chain_json = self.db.get_chain(chain_id=chain_id)
-            if chain_json is None:
+        if chain is None:
+            chain = self.db.get_chain(chain_id=chain_id)
+            if chain is None:
                 raise RuntimeError(
                     "Chain {chain_id} not present in db. "
                     "Either add it with `tru.add_chain` or provide `chain_json` to `tru.run_feedback_functions`."
                 )
 
         else:
-            assert chain_id == chain_json[
-                'chain_id'], "Record was produced by a different chain."
+            assert chain_id == chain.chain_id, "Record was produced by a different chain."
 
-            if self.db.get_chain(chain_id=chain_json['chain_id']) is None:
-                logging.warn(
+            if self.db.get_chain(chain_id=chain.chain_id) is None:
+                logger.warn(
                     "Chain {chain_id} was not present in database. Adding it."
                 )
-                self.add_chain(chain_json=chain_json)
+                self.add_chain(chain=chain)
 
         evals = []
 
         for func in feedback_functions:
             evals.append(
                 TP().promise(
-                    lambda f: f.run_on_record(
-                        chain_json=chain_json, record_json=record_json
-                    ), func
+                    lambda f: f.run_on_record(chain=chain, record=record), func
                 )
             )
 
@@ -176,41 +142,39 @@ class Tru(SingletonPerName):
 
         return list(evals)
 
-    def add_chain(
-        self, chain_json: JSON, chain_id: Optional[str] = None
-    ) -> None:
+    def add_chain(self, chain: Model) -> None:
         """
         Add a chain to the database.        
         """
 
-        self.db.insert_chain(chain_id=chain_id, chain_json=chain_json)
+        self.db.insert_chain(chain=chain)
 
-    def add_feedback(self, result_json: JSON) -> None:
+    def add_feedback(self, result: FeedbackResult, **kwargs) -> None:
         """
         Add a single feedback result to the database.
         """
 
-        if 'record_id' not in result_json or result_json['record_id'] is None:
-            raise RuntimeError(
-                "Result does not include record_id. "
-                "To log feedback, log the record first using `tru.add_record`."
-            )
+        if result is None:
+            result = FeedbackResult(**kwargs)
+        else:
+            result.update(**kwargs)
 
-        self.db.insert_feedback(result_json=result_json, status=2)
+        self.db.insert_feedback(result=result)
 
-    def add_feedbacks(self, result_jsons: Iterable[JSON]) -> None:
+    def add_feedbacks(self, results: Iterable[FeedbackResult]) -> None:
         """
         Add multiple feedback results to the database.
         """
 
-        for result_json in result_jsons:
-            self.add_feedback(result_json=result_json)
+        for result in results:
+            self.add_feedback(result=result)
 
-    def get_chain(self, chain_id: str) -> JSON:
+    def get_chain(self, chain_id: Optional[str] = None) -> JSON:
         """
         Look up a chain from the database.
         """
 
+        # TODO: unserialize
         return self.db.get_chain(chain_id)
 
     def get_records_and_feedback(self, chain_ids: List[str]):
@@ -222,7 +186,9 @@ class Tru(SingletonPerName):
 
         return df, feedback_columns
 
-    def start_evaluator(self, fork=False) -> Union[Process, Thread]:
+    def start_evaluator(self,
+                        restart=False,
+                        fork=False) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread.
         """
@@ -230,7 +196,12 @@ class Tru(SingletonPerName):
         assert not fork, "Fork mode not yet implemented."
 
         if self.evaluator_proc is not None:
-            raise RuntimeError("Evaluator is already running in this process.")
+            if restart:
+                self.stop_evaluator()
+            else:
+                raise RuntimeError(
+                    "Evaluator is already running in this process."
+                )
 
         from trulens_eval.tru_feedback import Feedback
 
@@ -239,14 +210,17 @@ class Tru(SingletonPerName):
 
         def runloop():
             while fork or not self.evaluator_stop.is_set():
-                print("Looking for things to do. Stop me with `tru.stop_evaluator()`.", end='')
+                print(
+                    "Looking for things to do. Stop me with `tru.stop_evaluator()`.",
+                    end=''
+                )
                 Feedback.evaluate_deferred(tru=self)
                 TP().finish(timeout=10)
                 if fork:
                     sleep(10)
                 else:
                     self.evaluator_stop.wait(10)
-                
+
             print("Evaluator stopped.")
 
         if fork:
@@ -268,7 +242,7 @@ class Tru(SingletonPerName):
 
         if self.evaluator_proc is None:
             raise RuntimeError("Evaluator not running this process.")
-        
+
         if isinstance(self.evaluator_proc, Process):
             self.evaluator_proc.terminate()
 
@@ -276,22 +250,45 @@ class Tru(SingletonPerName):
             self.evaluator_stop.set()
             self.evaluator_proc.join()
             self.evaluator_stop = None
-            
+
         self.evaluator_proc = None
-        
-    def stop_dashboard(self) -> None:
+
+    def stop_dashboard(self, force: bool = False) -> None:
         """Stop existing dashboard if running.
 
         Raises:
             ValueError: Dashboard is already running.
         """
         if Tru.dashboard_proc is None:
-            raise ValueError("Dashboard not running.")
-        
-        Tru.dashboard_proc.kill()
-        Tru.dashboard_proc = None
+            if not force:
+                raise ValueError(
+                    "Dashboard not running in this workspace. "
+                    "You may be able to shut other instances by setting the `force` flag."
+                )
 
-    def run_dashboard(self, _dev: bool = False) -> Process:
+            else:
+                print("Force stopping dashboard ...")
+                import psutil
+                import pwd
+                import os
+                username = pwd.getpwuid(os.getuid())[0]
+                for p in psutil.process_iter():
+                    try:
+                        cmd = " ".join(p.cmdline())
+                        if "streamlit" in cmd and "Leaderboard.py" in cmd and p.username(
+                        ) == username:
+                            print(f"killing {p}")
+                            p.kill()
+                    except Exception as e:
+                        continue
+
+        else:
+            Tru.dashboard_proc.kill()
+            Tru.dashboard_proc = None
+
+    def run_dashboard(
+        self, force: bool, _dev: Optional[Path] = None
+    ) -> Process:
         """ Runs a streamlit dashboard to view logged results and chains
 
         Raises:
@@ -301,8 +298,15 @@ class Tru(SingletonPerName):
             Process: Process containing streamlit dashboard.
         """
 
+        if force:
+            self.stop_dashboard(force=force)
+
         if Tru.dashboard_proc is not None:
-            raise ValueError("Dashboard already running. Run tru.stop_dashboard() to stop existing dashboard.")
+            raise ValueError(
+                "Dashboard already running. Run tru.stop_dashboard() to stop existing dashboard."
+            )
+
+        print("Starting dashboard ...")
 
         # Create .streamlit directory if it doesn't exist
         streamlit_dir = os.path.join(os.getcwd(), '.streamlit')
@@ -329,12 +333,13 @@ class Tru(SingletonPerName):
         )
 
         env_opts = {}
-        if _dev:
+        if _dev is not None:
             env_opts['env'] = os.environ
-            env_opts['env']['PYTHONPATH'] = str(Path.cwd())
+            env_opts['env']['PYTHONPATH'] = str(_dev)
 
         proc = subprocess.Popen(
-            ["streamlit", "run", "--server.headless=True", leaderboard_path], **env_opts
+            ["streamlit", "run", "--server.headless=True", leaderboard_path],
+            **env_opts
         )
 
         Tru.dashboard_proc = proc
