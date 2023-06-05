@@ -109,6 +109,7 @@ else:
                                                          'total_tokens',
                                                          'total_cost']):
             gb.configure_column(feedback_col, cellStyle=cellstyle_jscode)
+    
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
@@ -142,6 +143,18 @@ else:
 
             with st.expander("Response", expanded=True):
                 st.write(response)
+
+            row = evaluations_df.iloc[selected_rows.head().index]
+
+            st.header("Feedback")
+            for fcol in feedback_cols:
+                feedback_name = fcol
+                feedback_result = float(row[fcol])
+                feedback_calls = row[f"{fcol}_calls"]
+                    
+                with st.expander(f"{feedback_name} = {feedback_result}", expanded=True):
+                    for call in feedback_calls:
+                        st.write(call)
 
             record_str = selected_rows['record_json'][0]
             record_json = json.loads(record_str)

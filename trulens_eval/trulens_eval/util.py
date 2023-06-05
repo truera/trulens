@@ -173,6 +173,9 @@ def jsonify(obj: Any, dicted=None) -> JSON:
 
     new_dicted = {k: v for k, v in dicted.items()}
 
+    if isinstance(obj, Enum):
+        return obj.name
+
     if isinstance(obj, Dict):
         temp = {}
         new_dicted[id(obj)] = temp
