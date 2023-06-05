@@ -572,8 +572,6 @@ class LangChainModel(langchain.chains.base.Chain, Model):
     # The wrapped/instrumented chain.
     chain: langchain.chains.base.Chain
 
-    # TODO: Consider
-
 class LlamaIndexModel(Model):
     
     # Other engine types or whatever is the typical root of a llama index 
