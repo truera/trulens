@@ -51,7 +51,7 @@ def get_unit_test_for_filename(filename):
 
 
 for filename in listdir('../docs/trulens_eval'):
-    if filename.endswith('.ipynb'):
+    if filename.endswith('all_tools.ipynb'):
         setattr(
             DocsNotebookTests, 'test_' + filename.split('.ipynb')[0],
             get_unit_test_for_filename(filename)

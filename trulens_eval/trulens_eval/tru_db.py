@@ -5,13 +5,13 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 import sqlite3
-from typing import (Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple,
-                    Union)
+from typing import (Dict, Iterable, List, Optional, Sequence, Tuple)
+
+import numpy as np
 
 from frozendict import frozendict
 from merkle_json import MerkleJson
 import pandas as pd
-import pydantic
 
 from trulens_eval.schema import ChainID
 from trulens_eval.schema import FeedbackDefinition
@@ -26,15 +26,10 @@ from trulens_eval.schema import RecordID
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.util import GetItemOrAttribute
-from trulens_eval.util import _project
 from trulens_eval.util import all_queries
-from trulens_eval.util import GetItem
 from trulens_eval.util import JSON
-from trulens_eval.util import JSON_BASES
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import JSONPath
-from trulens_eval.util import noserio
-from trulens_eval.util import obj_id_of_obj
 from trulens_eval.util import SerialModel
 from trulens_eval.util import UNCIODE_YIELD
 from trulens_eval.util import UNICODE_CHECK
@@ -43,6 +38,8 @@ mj = MerkleJson()
 NoneType = type(None)
 
 pp = PrettyPrinter()
+
+logger = logging.getLogger(__name__)
 
 
 class Query:
@@ -69,7 +66,8 @@ def get_calls(record: Record) -> Iterable[RecordChainCall]:
 
     for q in all_queries(record):
         print("consider query", q)
-        if len(q.path) > 0 and q.path[-1] == GetItemOrAttribute(item_or_attribute="_call"):
+        if len(q.path) > 0 and q.path[-1] == GetItemOrAttribute(
+                item_or_attribute="_call"):
             yield q
 
 
@@ -105,26 +103,8 @@ def get_calls_by_stack(
     return ret
 
 
-"""
-def query_of_path(path: List[Union[str, int]]) -> JSONPath:
-
-    if path[0] == "_record":
-        ret = Query.Record
-        path = path[1:]
-    elif path[0] == "_chain":
-        ret = Record.Chain
-        path = path[1:]
-    else:
-        ret = JSONPath()
-
-    for attr in path:
-        ret = getattr(ret, attr)
-
-    return ret
-"""
-
-
 class TruDB(SerialModel, abc.ABC):
+
     @abc.abstractmethod
     def reset_database(self):
         """
@@ -266,14 +246,16 @@ class LocalSQLite(TruDB):
         )
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_FEEDBACKS} (
+                feedback_result_id TEXT NOT NULL PRIMARY KEY,
                 record_id TEXT NOT NULL,
                 chain_id TEXT NOT NULL,
-                feedback_result_id TEXT NOT NULL PRIMARY KEY,
                 feedback_definition_id TEXT,
                 last_ts {self.TYPE_TIMESTAMP} NOT NULL,
                 status {self.TYPE_ENUM} NOT NULL,
                 error TEXT,
-                results_json TEXT NOT NULL,
+                calls_json TEXT NOT NULL,
+                result FLOAT,
+                name TEXT NOT NULL,
                 cost_json TEXT NOT NULL
             )'''
         )
@@ -310,19 +292,15 @@ class LocalSQLite(TruDB):
         # other columns. Might want to keep this so we can query on the columns
         # within sqlite.
 
-        conn, c = self._connect()
         record_json_str = json_str_of_obj(record)
         cost_json_str = json_str_of_obj(record.cost)
-
-        c.execute(
-            f"INSERT INTO {self.TABLE_RECORDS} VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                record.record_id, record.chain_id, record.main_input,
-                record.main_output, record_json_str, record.tags, record.ts,
-                cost_json_str
-            )
+        vals = (
+            record.record_id, record.chain_id, record.main_input,
+            record.main_output, record_json_str, record.tags, record.ts,
+            cost_json_str
         )
-        self._close(conn)
+
+        self._insert_or_replace_vals(table=self.TABLE_RECORDS, vals=vals)
 
         print(
             f"{UNICODE_CHECK} record {record.record_id} from {record.chain_id} -> {self.filename}"
@@ -333,15 +311,10 @@ class LocalSQLite(TruDB):
     # TruDB requirement
     def insert_chain(self, chain: Model) -> ChainID:
         chain_id = chain.chain_id
-
         chain_str = chain.json()
 
-        conn, c = self._connect()
-        c.execute(
-            f"INSERT OR IGNORE INTO {self.TABLE_CHAINS} VALUES (?, ?)",
-            (chain_id, chain_str)
-        )
-        self._close(conn)
+        vals = (chain_id, chain_str)
+        self._insert_or_replace_vals(table=self.TABLE_CHAINS, vals=vals)
 
         print(f"{UNICODE_CHECK} chain {chain_id} -> {self.filename}")
 
@@ -356,13 +329,9 @@ class LocalSQLite(TruDB):
 
         feedback_definition_id = feedback.feedback_definition_id
         feedback_str = feedback.json()
+        vals = (feedback_definition_id, feedback_str)
 
-        conn, c = self._connect()
-        c.execute(
-            f"INSERT OR REPLACE INTO {self.TABLE_FEEDBACK_DEFS} VALUES (?, ?)",
-            (feedback_definition_id, feedback_str)
-        )
-        self._close(conn)
+        self._insert_or_replace_vals(table=self.TABLE_FEEDBACK_DEFS, vals=vals)
 
         print(
             f"{UNICODE_CHECK} feedback def. {feedback_definition_id} -> {self.filename}"
@@ -398,6 +367,14 @@ class LocalSQLite(TruDB):
 
         return df
 
+    def _insert_or_replace_vals(self, table, vals):
+        conn, c = self._connect()
+        c.execute(
+            f"""INSERT OR REPLACE INTO {table}
+                VALUES ({','.join('?' for _ in vals)})""", vals
+        )
+        self._close(conn)
+
     def insert_feedback(
         self, feedback_result: FeedbackResult
     ) -> FeedbackResultID:
@@ -405,24 +382,21 @@ class LocalSQLite(TruDB):
         Insert a record-feedback link to db or update an existing one.
         """
 
-        feedback_results_json_str = json_str_of_obj(feedback_result.results_json)
-        cost_json_str = json_str_of_obj(feedback_result.cost)
-
-        conn, c = self._connect()
-        c.execute(
-            f"""INSERT OR REPLACE INTO {self.TABLE_FEEDBACKS}
-                VALUES (?, ?, ?, ?, ?,
-                        ?, ?, ?, ?)""", (
+        vals = (
+                feedback_result.feedback_result_id,
                 feedback_result.record_id,
                 feedback_result.chain_id, 
-                feedback_result.feedback_result_id,
                 feedback_result.feedback_definition_id, 
                 feedback_result.last_ts.timestamp(),
-                feedback_result.status.value, feedback_result.error,
-                feedback_results_json_str, cost_json_str
+                feedback_result.status.value,
+                feedback_result.error,
+                json_str_of_obj(dict(calls=feedback_result.calls)), # extra dict is needed json's root must be a dict
+                feedback_result.result,
+                feedback_result.name,
+                json_str_of_obj(feedback_result.cost)
             )
-        )
-        self._close(conn)
+
+        self._insert_or_replace_vals(table=self.TABLE_FEEDBACKS, vals=vals)
 
         if feedback_result.status == 2:
             print(
@@ -479,9 +453,13 @@ class LocalSQLite(TruDB):
         query = f"""
             SELECT
                 f.record_id, f.feedback_result_id, f.feedback_definition_id, 
-                f.last_ts, f.status, f.error,
-                f.results_json, 
+                f.last_ts,
+                f.status,
+                f.error,
+                f.name,
+                f.result, 
                 f.cost_json,
+                f.calls_json,
                 fd.feedback_json, 
                 r.record_json, 
                 c.chain_json
@@ -508,10 +486,14 @@ class LocalSQLite(TruDB):
             # NOTE: pandas dataframe will take in the various classes below but the
             # agg table used in UI will not like it. Sending it JSON/dicts instead.
             
-            row.results_json = json.loads(row.results_json)  # results_json (unstructured)
+            row.calls_json = json.loads(row.calls_json)['calls']  # calls_json (sequence of FeedbackCall)
             row.cost_json = json.loads(row.cost_json)  # cost_json (Cost)
-            row.feedback_json = json.loads(row.feedback_json)  # feedback_json (FeedbackDefinition)
-            row.record_json = json.loads(row.record_json)  # record_json (Record)
+            row.feedback_json = json.loads(
+                row.feedback_json
+            )  # feedback_json (FeedbackDefinition)
+            row.record_json = json.loads(
+                row.record_json
+            )  # record_json (Record)
             row.chain_json = json.loads(row.chain_json)  # chain_json (Model)
 
             row.status = FeedbackResultStatus(row.status)
@@ -537,14 +519,15 @@ class LocalSQLite(TruDB):
         return json.loads(result)
 
     def get_records_and_feedback(
-        self, chain_ids: Optional[List[str]] = None
+        self,
+        chain_ids: Optional[List[str]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         # This returns all models if the list of chain_ids is empty.
         chain_ids = chain_ids or []
 
         conn, c = self._connect()
         query = f"""
-            SELECT r.record_id, f.results_json
+            SELECT r.record_id, f.calls_json, f.result, f.name
             FROM {self.TABLE_RECORDS} r 
             LEFT JOIN {self.TABLE_FEEDBACKS} f
                 ON r.record_id = f.record_id
@@ -590,43 +573,36 @@ class LocalSQLite(TruDB):
         if len(df_records) == 0:
             return df_records, []
 
-        # Apply the function to the 'data' column to convert it into separate columns
-        df_results['results_json'] = df_results['results_json'].apply(
-            json.loads
-        )
-
-        if "record_id" not in df_results.columns:
-            return df_results, []
-
-        df_results = df_results.groupby("record_id").agg(
-            lambda dicts: {
-                key: val for d in dicts if d is not None
-                for key, val in d.items()
-            }
-        ).reset_index()
+        result_cols = set()
 
         def expand_results(row):
-            s = pd.Series(row.results_json)
-            s['record_id'] = row.record_id
-            return s
+            result_cols.add(row['name'])
+            row[row['name']] = row.result
+            row[row['name'] + "_calls"] = json.loads(row.calls_json)['calls'] # extra step to keep json root a dict
+            return pd.Series(row)
 
         df_results = df_results.apply(expand_results, axis=1)
+        df_results = df_results.drop(columns=["name", "result", "calls_json"])
 
-        result_cols = [
-            col for col in df_results.columns
-            if col not in ['feedback_id', 'record_id', '_success', "_error"]
-        ]
+        def nonempty(val):
+            if isinstance(val, np.float):
+                return not np.isnan(val)
+            return True
 
-        if len(df_results) == 0 or len(result_cols) == 0:
-            return df_records, []
+        def merge_feedbacks(vals):
+            ress = list(filter(nonempty, vals))
+            if len(ress) > 0:
+                return ress[0]
+            else:
+                return np.nan
 
+        df_results = df_results.groupby("record_id").agg(
+            merge_feedbacks
+        ).reset_index()
+            
         assert "record_id" in df_results.columns
         assert "record_id" in df_records.columns
 
         combined_df = df_records.merge(df_results, on=['record_id'])
-        combined_df = combined_df.drop(
-            columns=set(["_success", "_error", 'cost_json']
-                       ).intersection(set(combined_df.columns))
-        )
 
-        return combined_df, result_cols
+        return combined_df, list(result_cols)

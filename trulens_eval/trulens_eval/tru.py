@@ -65,11 +65,7 @@ class Tru(SingletonPerName):
 
         self.db.reset_database()
 
-    def add_record(
-        self,
-        record: Optional[Record] = None,
-        **kwargs
-    ):
+    def add_record(self, record: Optional[Record] = None, **kwargs):
         """
         Add a record to the database.
 
@@ -89,9 +85,7 @@ class Tru(SingletonPerName):
         else:
             record.update(**kwargs)
 
-        return self.db.insert_record(
-            record=record
-        )
+        return self.db.insert_record(record=record)
 
     def run_feedback_functions(
         self,
@@ -130,7 +124,7 @@ class Tru(SingletonPerName):
             assert chain_id == chain.chain_id, "Record was produced by a different chain."
 
             if self.db.get_chain(chain_id=chain.chain_id) is None:
-                logging.warn(
+                logger.warn(
                     "Chain {chain_id} was not present in database. Adding it."
                 )
                 self.add_chain(chain=chain)
@@ -140,9 +134,7 @@ class Tru(SingletonPerName):
         for func in feedback_functions:
             evals.append(
                 TP().promise(
-                    lambda f: f.run_on_record(
-                        chain=chain, record=record
-                    ), func
+                    lambda f: f.run_on_record(chain=chain, record=record), func
                 )
             )
 
@@ -150,9 +142,7 @@ class Tru(SingletonPerName):
 
         return list(evals)
 
-    def add_chain(
-        self, chain: Model
-    ) -> None:
+    def add_chain(self, chain: Model) -> None:
         """
         Add a chain to the database.        
         """
@@ -196,7 +186,9 @@ class Tru(SingletonPerName):
 
         return df, feedback_columns
 
-    def start_evaluator(self, restart=False, fork=False) -> Union[Process, Thread]:
+    def start_evaluator(self,
+                        restart=False,
+                        fork=False) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread.
         """
@@ -206,8 +198,10 @@ class Tru(SingletonPerName):
         if self.evaluator_proc is not None:
             if restart:
                 self.stop_evaluator()
-            else: 
-                raise RuntimeError("Evaluator is already running in this process.")
+            else:
+                raise RuntimeError(
+                    "Evaluator is already running in this process."
+                )
 
         from trulens_eval.tru_feedback import Feedback
 
@@ -258,7 +252,7 @@ class Tru(SingletonPerName):
             self.evaluator_stop = None
 
         self.evaluator_proc = None
-        
+
     def stop_dashboard(self, force: bool = False) -> None:
         """Stop existing dashboard if running.
 
@@ -271,7 +265,7 @@ class Tru(SingletonPerName):
                     "Dashboard not running in this workspace. "
                     "You may be able to shut other instances by setting the `force` flag."
                 )
-            
+
             else:
                 print("Force stopping dashboard ...")
                 import psutil
@@ -281,7 +275,8 @@ class Tru(SingletonPerName):
                 for p in psutil.process_iter():
                     try:
                         cmd = " ".join(p.cmdline())
-                        if "streamlit" in cmd and "Leaderboard.py" in cmd and p.username() == username:
+                        if "streamlit" in cmd and "Leaderboard.py" in cmd and p.username(
+                        ) == username:
                             print(f"killing {p}")
                             p.kill()
                     except Exception as e:
@@ -291,7 +286,9 @@ class Tru(SingletonPerName):
             Tru.dashboard_proc.kill()
             Tru.dashboard_proc = None
 
-    def run_dashboard(self, force: bool, _dev: Optional[Path] = None) -> Process:
+    def run_dashboard(
+        self, force: bool, _dev: Optional[Path] = None
+    ) -> Process:
         """ Runs a streamlit dashboard to view logged results and chains
 
         Raises:
