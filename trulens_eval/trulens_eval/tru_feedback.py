@@ -78,6 +78,8 @@ from trulens_eval.util import TP
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
+default_pass_fail_color_threshold = 0.5
+
 
 def check_provider(cls_or_name: Union[Type, str]) -> None:
     if isinstance(cls_or_name, str):
