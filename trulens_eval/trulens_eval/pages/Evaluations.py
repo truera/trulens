@@ -152,10 +152,21 @@ else:
                 feedback_name = fcol
                 feedback_result = row[fcol]
                 feedback_calls = row[f"{fcol}_calls"]
+
+
+                def display_feedback_call(call):
+                    def highlight(s):
+                        return ['background-color: #4CAF50']*len(s) if s.result >= 0.5 else ['background-color: #FCE6E6']*len(s)
+                    if (len(call) > 0):
+                        df = pd.DataFrame.from_records([call[i]["args"] for i in range(len(call))])
+                        df["result"] = pd.DataFrame([float(call[i]["ret"]) for i in range(len(call))])
+                        st.dataframe(df.style.apply(highlight, axis=1).format("{:.2}", subset=["result"]))
+                    else:
+                        st.text("No feedback details.")
+
                     
                 with st.expander(f"{feedback_name} = {feedback_result}", expanded=True):
-                    for call in feedback_calls:
-                        st.write(call)
+                    display_feedback_call(feedback_calls)
 
             record_str = selected_rows['record_json'][0]
             record_json = json.loads(record_str)
