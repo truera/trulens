@@ -13,6 +13,7 @@ from typing import (
 )
 
 import langchain
+import llama_index
 from munch import Munch as Bunch
 import pydantic
 
@@ -573,9 +574,7 @@ class LangChainModel(langchain.chains.base.Chain, Model):
 
     # TODO: Consider
 
-
 class LlamaIndexModel(Model):
-    """
-    TODO: Instrumented llama index model.
-    """
-    pass
+    
+    # Other engine types or whatever is the typical root of a llama index 
+    engine: llama_index.indices.query.base.BaseQueryEngine
