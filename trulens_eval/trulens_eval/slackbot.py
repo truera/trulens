@@ -91,7 +91,6 @@ f_qs_relevance = tru_feedback.Feedback(openai.qs_relevance).on(
 ).aggregate(np.min)
 
 
-
 def filter_by_relevance(query, doc):
     return openai.qs_relevance(question=query, statement=doc.page_content) > 0.5
 
@@ -125,7 +124,7 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
 
     if "filtered" in chain_id:
         retriever = WithFeedbackFilterDocuments.of_retriever(
-            retriever=retriever, feedback=f_qs_relevance, threshold = 0.5
+            retriever=retriever, feedback=f_qs_relevance, threshold=0.5
         )
 
     # LLM for completing prompts, and other tasks.

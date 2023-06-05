@@ -63,8 +63,8 @@ nav:
   - Eval:
       - Installation: trulens_eval/install.md
       - Quickstart: trulens_eval/quickstart.ipynb
-      - Logging: trulens_eval/logging.md
-      - Feedback Functions: trulens_eval/feedback_functions.md
+      - Logging: trulens_eval/logging.ipynb
+      - Feedback Functions: trulens_eval/feedback_functions.ipynb
       - API Reference:
           - Tru: trulens_eval/api/tru.md
           - TruChain: trulens_eval/api/truchain.md
