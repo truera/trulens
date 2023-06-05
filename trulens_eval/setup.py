@@ -27,7 +27,9 @@ setup(
         'streamlit-extras>=0.2.7',
         'tinydb>=4.7.1',
         'transformers>=4.10.0',
-        'typing-inspect==0.8.0', # langchain with python < 3.9 fix
-        'typing_extensions==4.5.0' # langchain with python < 3.9 fix
+        'typing-inspect==0.8.0',  # langchain with python < 3.9 fix
+        'typing_extensions==4.5.0',  # langchain with python < 3.9 fix
+        'frozendict>=2.3.8',
+        'munch>=3.0.0',
     ],
 )
