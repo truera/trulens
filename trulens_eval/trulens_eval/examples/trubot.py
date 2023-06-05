@@ -31,7 +31,6 @@ from trulens_eval.tru_feedback import Feedback
 from trulens_eval.util import TP
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 from trulens_eval.schema import FeedbackMode
-from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
