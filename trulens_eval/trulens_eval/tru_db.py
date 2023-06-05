@@ -101,25 +101,6 @@ def get_calls_by_stack(
     return ret
 
 
-"""
-def query_of_path(path: List[Union[str, int]]) -> JSONPath:
-
-    if path[0] == "_record":
-        ret = Query.Record
-        path = path[1:]
-    elif path[0] == "_chain":
-        ret = Record.Chain
-        path = path[1:]
-    else:
-        ret = JSONPath()
-
-    for attr in path:
-        ret = getattr(ret, attr)
-
-    return ret
-"""
-
-
 class TruDB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def reset_database(self):
@@ -407,7 +388,7 @@ class LocalSQLite(TruDB):
                 feedback_result.last_ts.timestamp(),
                 feedback_result.status.value,
                 feedback_result.error,
-                json_str_of_obj(feedback_result.calls),
+                json_str_of_obj(dict(calls=feedback_result.calls)), # extra dict is needed json's root must be a dict
                 feedback_result.result,
                 feedback_result.name,
                 json_str_of_obj(feedback_result.cost)
@@ -503,7 +484,7 @@ class LocalSQLite(TruDB):
             # NOTE: pandas dataframe will take in the various classes below but the
             # agg table used in UI will not like it. Sending it JSON/dicts instead.
             
-            row.calls_json = json.loads(row.calls_json)  # calls_json (sequence of FeedbackCall)
+            row.calls_json = json.loads(row.calls_json)['calls']  # calls_json (sequence of FeedbackCall)
             row.cost_json = json.loads(row.cost_json)  # cost_json (Cost)
             row.feedback_json = json.loads(row.feedback_json)  # feedback_json (FeedbackDefinition)
             row.record_json = json.loads(row.record_json)  # record_json (Record)
@@ -585,41 +566,44 @@ class LocalSQLite(TruDB):
         if len(df_records) == 0:
             return df_records, []
 
-        df_results['calls_json'] = df_results['calls_json'].apply(
-            json.loads
-        )
-        
+        result_cols = set()
+
         def expand_results(row):
+            result_cols.add(row['name'])
             row[row['name']] = row.result
-            row[row['name'] + " calls"] = row.calls_json
-            return row
+            row[row['name'] + "_calls"] = json.loads(row.calls_json)['calls'] # extra step to keep json root a dict
+            return pd.Series(row)
 
         df_results = df_results.apply(expand_results, axis=1)
         df_results = df_results.drop(columns=["name", "result", "calls_json"])
 
-        print(df_results.columns)
+        def nonempty(val):
+            if isinstance(val, np.float):
+                return not np.isnan(val)
+            return True
+            """
+            elif isinstance(val, str):
+                return val != ""
+            elif isinstance(val, dict):
+                return len(val) > 0
+            elif isinstance(val, Sequence):
+                return len(val) > 0
+            """
 
-        print(df_results)
+        def merge_feedbacks(vals):
+            ress = list(filter(nonempty, vals))
+            if len(ress) > 0:
+                return ress[0]
+            else:
+                return np.nan
 
         df_results = df_results.groupby("record_id").agg(
-            lambda vals: list(filter(lambda val: not np.isnan(val), vals))[0]
+            merge_feedbacks
         ).reset_index()
-        
-        result_cols = [
-            col for col in df_results.columns
-            if col not in ['feedback_id', 'record_id', '_success', "_error"]
-        ]
-
-        if len(df_results) == 0 or len(result_cols) == 0:
-            return df_records, []
-
+            
         assert "record_id" in df_results.columns
         assert "record_id" in df_records.columns
 
         combined_df = df_records.merge(df_results, on=['record_id'])
-        combined_df = combined_df.drop(
-            columns=set(["_success", "_error", 'cost_json']
-                       ).intersection(set(combined_df.columns))
-        )
 
-        return combined_df, result_cols
+        return combined_df, list(result_cols)
