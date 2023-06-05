@@ -407,9 +407,8 @@ class FeedbackResult(SerialModel):
 
     name: str
 
-    #results_json: JSON = pydantic.Field(default_factory=dict) # keeping unrestricted in type for now
-    calls: Sequence[FeedbackCall]
-    result: float # final result, potentially aggregating multiple calls
+    calls: Sequence[FeedbackCall] = []
+    result: Optional[float] = None # final result, potentially aggregating multiple calls
     error: Optional[str] = None  # if there was an error
 
     def __init__(

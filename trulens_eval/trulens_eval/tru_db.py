@@ -5,13 +5,13 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 import sqlite3
-from typing import (Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple,
-                    Union)
+from typing import (Dict, Iterable, List, Optional, Sequence, Tuple)
+
+import numpy as np
 
 from frozendict import frozendict
 from merkle_json import MerkleJson
 import pandas as pd
-import pydantic
 
 from trulens_eval.schema import ChainID
 from trulens_eval.schema import FeedbackDefinition
@@ -26,15 +26,10 @@ from trulens_eval.schema import RecordID
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.util import GetItemOrAttribute
-from trulens_eval.util import _project
 from trulens_eval.util import all_queries
-from trulens_eval.util import GetItem
 from trulens_eval.util import JSON
-from trulens_eval.util import JSON_BASES
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import JSONPath
-from trulens_eval.util import noserio
-from trulens_eval.util import obj_id_of_obj
 from trulens_eval.util import SerialModel
 from trulens_eval.util import UNCIODE_YIELD
 from trulens_eval.util import UNICODE_CHECK
@@ -44,6 +39,7 @@ NoneType = type(None)
 
 pp = PrettyPrinter()
 
+logger = logging.getLogger(__name__)
 
 class Query:
 
@@ -411,7 +407,7 @@ class LocalSQLite(TruDB):
                 feedback_result.last_ts.timestamp(),
                 feedback_result.status.value,
                 feedback_result.error,
-                json_str_of_obj(feedback_result.calls_json),
+                json_str_of_obj(feedback_result.calls),
                 feedback_result.result,
                 feedback_result.name,
                 json_str_of_obj(feedback_result.cost)
@@ -474,9 +470,13 @@ class LocalSQLite(TruDB):
         query = f"""
             SELECT
                 f.record_id, f.feedback_result_id, f.feedback_definition_id, 
-                f.last_ts, f.status, f.error,
-                f.results_json, 
+                f.last_ts,
+                f.status,
+                f.error,
+                f.name,
+                f.result, 
                 f.cost_json,
+                f.calls_json,
                 fd.feedback_json, 
                 r.record_json, 
                 c.chain_json
@@ -503,7 +503,7 @@ class LocalSQLite(TruDB):
             # NOTE: pandas dataframe will take in the various classes below but the
             # agg table used in UI will not like it. Sending it JSON/dicts instead.
             
-            row.results_json = json.loads(row.results_json)  # results_json (unstructured)
+            row.calls_json = json.loads(row.calls_json)  # calls_json (sequence of FeedbackCall)
             row.cost_json = json.loads(row.cost_json)  # cost_json (Cost)
             row.feedback_json = json.loads(row.feedback_json)  # feedback_json (FeedbackDefinition)
             row.record_json = json.loads(row.record_json)  # record_json (Record)
@@ -539,7 +539,7 @@ class LocalSQLite(TruDB):
 
         conn, c = self._connect()
         query = f"""
-            SELECT r.record_id, f.results_json
+            SELECT r.record_id, f.calls_json, f.result, f.name
             FROM {self.TABLE_RECORDS} r 
             LEFT JOIN {self.TABLE_FEEDBACKS} f
                 ON r.record_id = f.record_id
@@ -585,28 +585,26 @@ class LocalSQLite(TruDB):
         if len(df_records) == 0:
             return df_records, []
 
-        # Apply the function to the 'data' column to convert it into separate columns
-        df_results['results_json'] = df_results['results_json'].apply(
+        df_results['calls_json'] = df_results['calls_json'].apply(
             json.loads
         )
-
-        if "record_id" not in df_results.columns:
-            return df_results, []
-
-        df_results = df_results.groupby("record_id").agg(
-            lambda dicts: {
-                key: val for d in dicts if d is not None
-                for key, val in d.items()
-            }
-        ).reset_index()
-
+        
         def expand_results(row):
-            s = pd.Series(row.results_json)
-            s['record_id'] = row.record_id
-            return s
+            row[row['name']] = row.result
+            row[row['name'] + " calls"] = row.calls_json
+            return row
 
         df_results = df_results.apply(expand_results, axis=1)
+        df_results = df_results.drop(columns=["name", "result", "calls_json"])
 
+        print(df_results.columns)
+
+        print(df_results)
+
+        df_results = df_results.groupby("record_id").agg(
+            lambda vals: list(filter(lambda val: not np.isnan(val), vals))[0]
+        ).reset_index()
+        
         result_cols = [
             col for col in df_results.columns
             if col not in ['feedback_id', 'record_id', '_success', "_error"]
