@@ -588,14 +588,6 @@ class LocalSQLite(TruDB):
             if isinstance(val, np.float):
                 return not np.isnan(val)
             return True
-            """
-            elif isinstance(val, str):
-                return val != ""
-            elif isinstance(val, dict):
-                return len(val) > 0
-            elif isinstance(val, Sequence):
-                return len(val) > 0
-            """
 
         def merge_feedbacks(vals):
             ress = list(filter(nonempty, vals))
