@@ -14,6 +14,7 @@ from trulens_eval.util import TP
 
 logger = logging.getLogger(__name__)
 
+
 class Endpoint(SingletonPerName):
 
     def __init__(

@@ -41,7 +41,12 @@ endpoints = [e_openai, e_hugs, e_cohere]
 tab1, tab2, tab3 = st.tabs(["Progress", "Endpoints", "Feedback Functions"])
 
 with tab1:
-    feedbacks = lms.get_feedback(status=[FeedbackResultStatus.NONE, FeedbackResultStatus.RUNNING, FeedbackResultStatus.FAILED])
+    feedbacks = lms.get_feedback(
+        status=[
+            FeedbackResultStatus.NONE, FeedbackResultStatus.RUNNING,
+            FeedbackResultStatus.FAILED
+        ]
+    )
     st.write(feedbacks)
 
 with tab2:

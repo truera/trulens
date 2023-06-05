@@ -148,8 +148,10 @@ else:
             record = Record(**record_json)
 
             details = selected_rows['chain_json'][0]
-            chain_json = json.loads(details) # chains may not be deserializable, don't try to, keep it json.
-            
+            chain_json = json.loads(
+                details
+            )  # chains may not be deserializable, don't try to, keep it json.
+
             step_llm = GetItemOrAttribute(item_or_attribute="llm")
             step_prompt = GetItemOrAttribute(item_or_attribute="prompt")
             step_call = GetItemOrAttribute(item_or_attribute="_call")
@@ -157,14 +159,16 @@ else:
             llm_queries = list(
                 matching_objects(
                     chain_json,
-                    match=lambda q, o: len(q.path) > 0 and step_llm == q.path[-1]
+                    match=lambda q, o: len(q.path) > 0 and step_llm == q.path[-1
+                                                                             ]
                 )
             )
 
             prompt_queries = list(
                 matching_objects(
                     chain_json,
-                    match=lambda q, o: len(q.path) > 0 and step_prompt == q.path[-1] and step_call not in q._path
+                    match=lambda q, o: len(q.path) > 0 and step_prompt == q.
+                    path[-1] and step_call not in q._path
                 )
             )
 
