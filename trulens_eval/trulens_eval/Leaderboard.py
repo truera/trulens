@@ -9,7 +9,8 @@ st.runtime.legacy_caching.clear_cache()
 
 from trulens_eval import Tru
 from trulens_eval import tru_db
-from trulens_eval.tru_feedback import default_pass_fail_color_threshold
+from trulens_eval.ux import styles
+
 
 st.set_page_config(page_title="Leaderboard", layout="wide")
 
@@ -68,7 +69,7 @@ def app():
             mean = chain_df[col_name].mean()
 
             st.write(
-                """ <style> [data-testid="stMetricDelta"] svg { display: none; } </style> """,
+                styles.stmetricdelta_hidearrow,
                 unsafe_allow_html=True,
             )
 

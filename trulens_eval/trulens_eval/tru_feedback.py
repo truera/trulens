@@ -37,56 +37,45 @@ Language match feedback function:
 from datetime import datetime
 from inspect import Signature
 from inspect import signature
+import itertools
 import logging
 from multiprocessing.pool import AsyncResult
 import re
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
+)
 from time import sleep
 from typing import (
     Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
 )
 
+from langchain.callbacks import get_openai_callback
 import numpy as np
 import openai
-import requests
+import pydantic
 from tqdm.auto import tqdm
 
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
+from trulens_eval.schema import Cost
+from trulens_eval.schema import FeedbackDefinition
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import FeedbackResultID
+from trulens_eval.schema import FeedbackResultStatus
+from trulens_eval.schema import FunctionOrMethod
+from trulens_eval.schema import Model
+from trulens_eval.tru_db import JSON
+from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
-from trulens_eval.tru_db import query_of_path
+
 from trulens_eval.tru_db import Record
-from trulens_eval.tru_db import TruDB
+from trulens_eval.schema import FeedbackCall
+from trulens_eval.util import jsonify
+from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
-
-# openai
-
-# (external) feedback-
-# provider
-# model
-
-# feedback_collator:
-# - record, feedback_imp, selector -> dict (input, output, other)
-
-# (external) feedback:
-# - *args, **kwargs -> real
-# - dict -> real
-# - (record, selectors) -> real
-# - str, List[str] -> real
-#    agg(relevance(str, str[0]),
-#        relevance(str, str[1])
-#    ...)
-
-# (internal) feedback_imp:
-# - Option 1 : input, output -> real
-# - Option 2: dict (input, output, other) -> real
-
-Selection = Union[Query, str]
-# "prompt" or "input" mean overall chain input text
-# "response" or "output"mean overall chain output text
-# Otherwise a Query is a path into a record structure.
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
@@ -102,13 +91,20 @@ def check_provider(cls_or_name: Union[Type, str]) -> None:
     assert cls_name in PROVIDER_CLASS_NAMES, f"Unsupported provider class {cls_name}"
 
 
-class Feedback():
+class Feedback(FeedbackDefinition):
+    # Implementation, not serializable, note that FeedbackDefinition contains
+    # `implementation` mean to serialize the below.
+    imp: Optional[Callable] = pydantic.Field(exclude=True)
+
+    # Aggregator method for feedback functions that produce more than one
+    # result.
+    agg: Optional[Callable] = pydantic.Field(exclude=True)
 
     def __init__(
         self,
         imp: Optional[Callable] = None,
-        selectors: Optional[Dict[str, Selection]] = None,
-        feedback_id: Optional[str] = None
+        agg: Optional[Callable] = None,
+        **kwargs
     ):
         """
         A Feedback function container.
@@ -116,39 +112,39 @@ class Feedback():
         Parameters:
         
         - imp: Optional[Callable] -- implementation of the feedback function.
-        - selectors: Optional[Dict[str, Selection]] -- mapping of implementation
-          argument names to where to get them from a record.
         """
 
-        # Verify that `imp` expects the arguments specified in `selectors`:
-        if imp is not None and selectors is not None:
-            sig: Signature = signature(imp)
-            for argname in selectors.keys():
-                assert argname in sig.parameters, (
-                    f"{argname} is not an argument to {imp.__name__}. "
-                    f"Its arguments are {list(sig.parameters.keys())}."
-                )
+        agg = agg or np.mean
+
+        if imp is not None:
+            # These are for serialization to/from json and for db storage.
+            kwargs['implementation'] = FunctionOrMethod.of_callable(imp)
+        else:
+            if "implementation" in kwargs:
+                imp: Callable = FunctionOrMethod.pick(
+                    **(kwargs['implementation'])
+                ).load()
+
+        if agg is not None:
+            kwargs['aggregator'] = FunctionOrMethod.of_callable(agg)
+        else:
+            if 'arrgregator' in kwargs:
+                agg: Callable = FunctionOrMethod.pick(**(kwargs['aggregator'])
+                                                     ).load()
+
+        super().__init__(**kwargs)
 
         self.imp = imp
-        self.selectors = selectors
+        self.agg = agg
 
-        if feedback_id is not None:
-            self._feedback_id = feedback_id
-
-        if imp is not None and selectors is not None:
-            # These are for serialization to/from json and for db storage.
-
-            assert hasattr(
-                imp, "__self__"
-            ), "Feedback implementation is not a method (it may be a function)."
-            self.provider = imp.__self__
-            check_provider(self.provider.__class__.__name__)
-            self.imp_method_name = imp.__name__
-            self._json = self.to_json()
-            self._feedback_id = feedback_id or obj_id_of_obj(
-                self._json, prefix="feedback"
-            )
-            self._json['feedback_id'] = self._feedback_id
+        # Verify that `imp` expects the arguments specified in `selectors`:
+        if self.imp is not None and self.selectors is not None:
+            sig: Signature = signature(self.imp)
+            for argname in self.selectors.keys():
+                assert argname in sig.parameters, (
+                    f"{argname} is not an argument to {self.imp.__name__}. "
+                    f"Its arguments are {list(sig.parameters.keys())}."
+                )
 
     @staticmethod
     def evaluate_deferred(tru: 'Tru'):
@@ -156,165 +152,71 @@ class Feedback():
 
         def prepare_feedback(row):
             record_json = row.record_json
+            record = Record(**record_json)
 
-            feedback = Feedback.of_json(row.feedback_json)
-            feedback.run_and_log(record_json=record_json, tru=tru)
+            chain_json = row.chain_json
+
+            feedback = Feedback(**row.feedback_json)
+            feedback.run_and_log(
+                record=record,
+                chain=chain_json,
+                tru=tru,
+                feedback_result_id=row.feedback_result_id
+            )
 
         feedbacks = db.get_feedback()
 
         for i, row in feedbacks.iterrows():
-            if row.status == 0:
+            if row.status == FeedbackResultStatus.NONE:
                 tqdm.write(f"Starting run for row {i}.")
 
                 TP().runlater(prepare_feedback, row)
-            elif row.status in [1]:
+
+            elif row.status in [FeedbackResultStatus.RUNNING]:
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 30:
                     tqdm.write(
                         f"Incomplete row {i} last made progress over 30 seconds ago. Retrying."
                     )
                     TP().runlater(prepare_feedback, row)
+
                 else:
                     tqdm.write(
                         f"Incomplete row {i} last made progress less than 30 seconds ago. Giving it more time."
                     )
 
-            elif row.status in [-1]:
+            elif row.status in [FeedbackResultStatus.FAILED]:
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 60 * 5:
                     tqdm.write(
                         f"Failed row {i} last made progress over 5 minutes ago. Retrying."
                     )
                     TP().runlater(prepare_feedback, row)
+
                 else:
                     tqdm.write(
                         f"Failed row {i} last made progress less than 5 minutes ago. Not touching it for now."
                     )
 
-            elif row.status == 2:
+            elif row.status == FeedbackResultStatus.DONE:
                 pass
 
-        # TP().finish()
-        # TP().runrepeatedly(runner)
+    def __call__(self, *args, **kwargs) -> Any:
+        assert self.imp is not None, "Feedback definition needs an implementation to call."
+        return self.imp(*args, **kwargs)
 
-    @property
-    def json(self):
-        assert hasattr(
-            self, "_json"
-        ), "Cannot json-size partially defined feedback function."
-        return self._json
-
-    @property
-    def feedback_id(self):
-        assert hasattr(
-            self, "_feedback_id"
-        ), "Cannot get id of partially defined feedback function."
-        return self._feedback_id
+    def aggregate(self, func: Callable) -> 'Feedback':
+        return Feedback(imp=self.imp, selectors=self.selectors, agg=func)
 
     @staticmethod
-    def selection_to_json(select: Selection) -> dict:
-        if isinstance(select, str):
-            return select
-        elif isinstance(select, Query):
-            return select._path
-        else:
-            raise ValueError(f"Unknown selection type {type(select)}.")
+    def of_feedback_definition(f: FeedbackDefinition):
+        implementation = f.implementation
+        aggregator = f.aggregator
 
-    @staticmethod
-    def selection_of_json(obj: Union[List, str]) -> Selection:
-        if isinstance(obj, str):
-            return obj
-        elif isinstance(obj, (List, Tuple)):
-            return query_of_path(obj)  # TODO
-        else:
-            raise ValueError(f"Unknown selection encoding of type {type(obj)}.")
+        imp_func = implementation.load()
+        agg_func = aggregator.load()
 
-    def to_json(self) -> dict:
-        selectors_json = {
-            k: Feedback.selection_to_json(v) for k, v in self.selectors.items()
-        }
-        return {
-            'selectors': selectors_json,
-            'imp_method_name': self.imp_method_name,
-            'provider': self.provider.to_json()
-        }
-
-    @staticmethod
-    def of_json(obj) -> 'Feedback':
-        assert "selectors" in obj, "Feedback encoding has no 'selectors' field."
-        assert "imp_method_name" in obj, "Feedback encoding has no 'imp_method_name' field."
-        assert "provider" in obj, "Feedback encoding has no 'provider' field."
-
-        imp_method_name = obj['imp_method_name']
-        selectors = {
-            k: Feedback.selection_of_json(v)
-            for k, v in obj['selectors'].items()
-        }
-        provider = Provider.of_json(obj['provider'])
-
-        assert hasattr(
-            provider, imp_method_name
-        ), f"Provider {provider.__name__} has no feedback function {imp_method_name}."
-        imp = getattr(provider, imp_method_name)
-
-        return Feedback(imp, selectors=selectors)
-
-    def on_multiple(
-        self,
-        multiarg: str,
-        each_query: Optional[Query] = None,
-        agg: Callable = np.mean
-    ) -> 'Feedback':
-        """
-        Create a variant of `self` whose implementation will accept multiple
-        values for argument `multiarg`, aggregating feedback results for each.
-        Optionally each input element is further projected with `each_query`.
-
-        Parameters:
-
-        - multiarg: str -- implementation argument that expects multiple values.
-        - each_query: Optional[Query] -- a query providing the path from each
-          input to `multiarg` to some inner value which will be sent to `self.imp`.
-        """
-
-        def wrapped_imp(**kwargs):
-            assert multiarg in kwargs, f"Feedback function expected {multiarg} keyword argument."
-
-            multi = kwargs[multiarg]
-
-            assert isinstance(
-                multi, Sequence
-            ), f"Feedback function expected a sequence on {multiarg} argument."
-
-            rets: List[AsyncResult[float]] = []
-
-            for aval in multi:
-
-                if each_query is not None:
-                    aval = TruDB.project(
-                        query=each_query, record_json=aval, chain_json=None
-                    )
-
-                kwargs[multiarg] = aval
-
-                rets.append(TP().promise(self.imp, **kwargs))
-
-            rets: List[float] = list(map(lambda r: r.get(), rets))
-
-            rets = np.array(rets)
-
-            return agg(rets)
-
-        wrapped_imp.__name__ = self.imp.__name__
-
-        wrapped_imp.__self__ = self.imp.__self__  # needed for serialization
-
-        # Copy over signature from wrapped function. Otherwise signature of the
-        # wrapped method will include just kwargs which is insufficient for
-        # verify arguments (see Feedback.__init__).
-        wrapped_imp.__signature__ = signature(self.imp)
-
-        return Feedback(imp=wrapped_imp, selectors=self.selectors)
+        return Feedback(imp=imp_func, agg=agg_func, **f.dict())
 
     def on_prompt(self, arg: str = "text"):
         """
@@ -322,7 +224,9 @@ class Feedback():
         "prompt" as input, sending it as an argument `arg` to implementation.
         """
 
-        return Feedback(imp=self.imp, selectors={arg: "prompt"})
+        return Feedback(
+            imp=self.imp, selectors={arg: Query.RecordInput}, agg=self.agg
+        )
 
     on_input = on_prompt
 
@@ -332,7 +236,9 @@ class Feedback():
         "response" as input, sending it as an argument `arg` to implementation.
         """
 
-        return Feedback(imp=self.imp, selectors={arg: "response"})
+        return Feedback(
+            imp=self.imp, selectors={arg: Query.RecordOutput}, agg=self.agg
+        )
 
     on_output = on_response
 
@@ -341,93 +247,113 @@ class Feedback():
         Create a variant of `self` with the same implementation but the given `selectors`.
         """
 
-        return Feedback(imp=self.imp, selectors=selectors)
+        return Feedback(imp=self.imp, selectors=selectors, agg=self.agg)
 
-    def run_on_record(self, chain_json: JSON, record_json: JSON) -> Any:
+    def run(self, chain: Union[Model, JSON], record: Record) -> FeedbackResult:
         """
         Run the feedback function on the given `record`. The `chain` that
         produced the record is also required to determine input/output argument
         names.
+
+        Might not have a Chain here but only the serialized chain_json .
         """
 
-        if 'record_id' not in record_json:
-            record_json['record_id'] = None
+        if isinstance(chain, Model):
+            chain_json = jsonify(chain)
+        else:
+            chain_json = chain
+
+        result_vals = []
+
+        feedback_calls = []
+
+        feedback_result = FeedbackResult(
+            feedback_definition_id=self.feedback_definition_id,
+            record_id=record.record_id,
+            chain_id=chain_json['chain_id'],
+            name=self.name
+        )
 
         try:
-            ins = self.extract_selection(
-                chain_json=chain_json, record_json=record_json
-            )
-            ret = self.imp(**ins)
+            total_tokens = 0
+            total_cost = 0.0
 
-            return {
-                '_success': True,
-                'feedback_id': self.feedback_id,
-                'record_id': record_json['record_id'],
-                self.name: ret
-            }
+            for ins in self.extract_selection(chain=chain_json, record=record):
+
+                # TODO: Do this only if there is an openai model inside the chain:
+                # NODE: This only works for langchain uses of openai.
+                with get_openai_callback() as cb:
+                    result_val = self.imp(**ins)
+                    result_vals.append(result_val)
+
+                    feedback_call = FeedbackCall(args=ins, ret=result_val)
+                    feedback_calls.append(feedback_call)
+
+                    total_tokens += cb.total_tokens
+                    total_cost += cb.total_cost
+
+            result_vals = np.array(result_vals)
+            result = self.agg(result_vals)
+
+            feedback_result.update(
+                result=result,
+                status=FeedbackResultStatus.DONE,
+                cost=Cost(n_tokens=total_tokens, cost=total_cost),
+                calls=feedback_calls
+            )
+
+            return feedback_result
 
         except Exception as e:
-            return {
-                '_success': False,
-                'feedback_id': self.feedback_id,
-                'record_id': record_json['record_id'],
-                '_error': str(e)
-            }
+            raise e
 
-    def run_and_log(self, record_json: JSON, tru: 'Tru') -> None:
-        record_id = record_json['record_id']
-        chain_id = record_json['chain_id']
-
-        ts_now = datetime.now().timestamp()
+    def run_and_log(
+        self,
+        record: Record,
+        tru: 'Tru',
+        chain: Union[Model, JSON] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None
+    ) -> FeedbackResult:
+        record_id = record.record_id
+        chain_id = record.chain_id
 
         db = tru.db
 
+        # Placeholder result to indicate a run.
+        feedback_result = FeedbackResult(
+            feedback_definition_id=self.feedback_definition_id,
+            feedback_result_id=feedback_result_id,
+            record_id=record_id,
+            chain_id=chain_id,
+            name=self.name
+        )
+
+        if feedback_result_id is None:
+            feedback_result_id = feedback_result.feedback_result_id
+
         try:
             db.insert_feedback(
-                record_id=record_id,
-                feedback_id=self.feedback_id,
-                last_ts=ts_now,
-                status=1  # in progress
+                feedback_result.update(
+                    status=FeedbackResultStatus.RUNNING  # in progress
+                )
             )
 
-            chain_json = db.get_chain(chain_id=chain_id)
-
-            res = self.run_on_record(
-                chain_json=chain_json, record_json=record_json
-            )
+            feedback_result = self.run(
+                chain=chain, record=record
+            ).update(feedback_result_id=feedback_result_id)
 
         except Exception as e:
-            print(e)
-            res = {
-                '_success': False,
-                'feedback_id': self.feedback_id,
-                'record_id': record_json['record_id'],
-                '_error': str(e)
-            }
-
-        ts_now = datetime.now().timestamp()
-
-        if res['_success']:
             db.insert_feedback(
-                record_id=record_id,
-                feedback_id=self.feedback_id,
-                last_ts=ts_now,
-                status=2,  # done and good
-                result_json=res,
-                total_cost=-1.0,  # todo
-                total_tokens=-1  # todo
+                feedback_result.update(
+                    error=str(e), status=FeedbackResultStatus.FAILED
+                )
             )
-        else:
-            # TODO: indicate failure better
-            db.insert_feedback(
-                record_id=record_id,
-                feedback_id=self.feedback_id,
-                last_ts=ts_now,
-                status=-1,  # failure
-                result_json=res,
-                total_cost=-1.0,  # todo
-                total_tokens=-1  # todo
-            )
+            return
+
+        # Otherwise update based on what Feedback.run produced (could be success or failure).
+        db.insert_feedback(feedback_result)
+
+        return feedback_result
 
     @property
     def name(self):
@@ -438,51 +364,42 @@ class Feedback():
 
         return self.imp.__name__
 
-    def extract_selection(self, chain_json: Dict,
-                          record_json: Dict) -> Dict[str, Any]:
+    def extract_selection(self, chain: Union[Model, JSON],
+                          record: Record) -> Iterable[Dict[str, Any]]:
         """
         Given the `chain` that produced the given `record`, extract from
         `record` the values that will be sent as arguments to the implementation
         as specified by `self.selectors`.
         """
 
-        ret = {}
+        arg_vals = {}
 
         for k, v in self.selectors.items():
-            if isinstance(v, Query):
+            if isinstance(v, Query.Query):
                 q = v
-
-            elif v == "prompt" or v == "input":
-                if len(chain_json['input_keys']) > 1:
-                    #logging.warn(
-                    #    f"Chain has more than one input, guessing the first one is prompt."
-                    #)
-                    pass
-
-                input_key = chain_json['input_keys'][0]
-
-                q = Record.chain._call.args.inputs[input_key]
-
-            elif v == "response" or v == "output":
-                if len(chain_json['output_keys']) > 1:
-                    #logging.warn(
-                    #    "Chain has more than one ouput, guessing the first one is response."
-                    #)
-                    pass
-
-                output_key = chain_json['output_keys'][0]
-
-                q = Record.chain._call.rets[output_key]
 
             else:
                 raise RuntimeError(f"Unhandled selection type {type(v)}.")
 
-            val = TruDB.project(
-                query=q, record_json=record_json, chain_json=chain_json
-            )
-            ret[k] = val
+            if q.path[0] == Query.Record.path[0]:
+                o = record.layout_calls_as_chain()
+            elif q.path[0] == Query.Chain.path[0]:
+                o = chain
+            else:
+                raise ValueError(
+                    f"Query {q} does not indicate whether it is about a record or about a chain."
+                )
 
-        return ret
+            q_within_o = Query.Query(path=q.path[1:])
+            arg_vals[k] = list(q_within_o(o))
+
+        keys = arg_vals.keys()
+        vals = arg_vals.values()
+
+        assignments = itertools.product(*vals)
+
+        for assignment in assignments:
+            yield {k: v for k, v in zip(keys, assignment)}
 
 
 pat_1_10 = re.compile(r"\s*([1-9][0-9]*)\s*")
@@ -494,31 +411,41 @@ def _re_1_10_rating(str_val):
         # Try soft match
         matches = re.search('[1-9][0-9]*', str_val)
         if not matches:
-            logging.warn(f"1-10 rating regex failed to match on: '{str_val}'")
+            logger.warn(f"1-10 rating regex failed to match on: '{str_val}'")
             return -10  # so this will be reported as -1 after division by 10
 
     return int(matches.group())
 
 
-class Provider():
+class Provider(SerialModel):
+    endpoint: Any = pydantic.Field(exclude=True)
 
     @staticmethod
     def of_json(obj: Dict) -> 'Provider':
-        cls_name = obj['class']
+        cls_name = obj['class_name']
+        mod_name = obj['module_name']  # ignored for now
         check_provider(cls_name)
 
         cls = eval(cls_name)
-        kwargs = {k: v for k, v in obj.items() if k != "class"}
+        kwargs = {
+            k: v
+            for k, v in obj.items()
+            if k not in ['class_name', 'module_name']
+        }
 
         return cls(**kwargs)
 
     def to_json(self: 'Provider', **extras) -> Dict:
-        obj = {'class': self.__class__.__name__}
+        obj = {
+            'class_name': self.__class__.__name__,
+            'module_name': self.__class__.__module__
+        }
         obj.update(**extras)
         return obj
 
 
 class OpenAI(Provider):
+    model_engine: str = "gpt-3.5-turbo"
 
     def __init__(self, model_engine: str = "gpt-3.5-turbo"):
         """
@@ -529,6 +456,8 @@ class OpenAI(Provider):
         - model_engine (str, optional): The specific model version. Defaults to
           "gpt-3.5-turbo".
         """
+        super().__init__()  # need to include pydantic.BaseModel.__init__
+
         set_openai_key()
         self.model_engine = model_engine
         self.endpoint = Endpoint(name="openai")
@@ -828,16 +757,23 @@ def _get_answer_agreement(prompt, response, check_response, model_engine):
     return oai_chat_response
 
 
+# Cannot put these inside Huggingface since it interferes with pydantic.BaseModel.
+HUGS_SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
+HUGS_TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
+HUGS_CHAT_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-3B"
+HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
+
+
 class Huggingface(Provider):
 
-    SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
-    TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
-    CHAT_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-3B"
-    LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
-
     def __init__(self):
-        """A set of Huggingface Feedback Functions. Utilizes huggingface api-inference
         """
+        A set of Huggingface Feedback Functions. Utilizes huggingface
+        api-inference.
+        """
+
+        super().__init__()  # need to include pydantic.BaseModel.__init__
+
         self.endpoint = Endpoint(
             name="huggingface", post_headers=get_huggingface_headers()
         )
@@ -865,7 +801,7 @@ class Huggingface(Provider):
         def get_scores(text):
             payload = {"inputs": text}
             hf_response = self.endpoint.post(
-                url=Huggingface.LANGUAGE_API_URL, payload=payload, timeout=30
+                url=HUGS_LANGUAGE_API_URL, payload=payload, timeout=30
             )
             return {r['label']: r['score'] for r in hf_response}
 
@@ -906,7 +842,7 @@ class Huggingface(Provider):
         payload = {"inputs": truncated_text}
 
         hf_response = self.endpoint.post(
-            url=Huggingface.SENTIMENT_API_URL, payload=payload
+            url=HUGS_SENTIMENT_API_URL, payload=payload
         )
 
         for label in hf_response:
@@ -929,7 +865,7 @@ class Huggingface(Provider):
         truncated_text = text[:max_length]
         payload = {"inputs": truncated_text}
         hf_response = self.endpoint.post(
-            url=Huggingface.TOXIC_API_URL, payload=payload
+            url=HUGS_TOXIC_API_URL, payload=payload
         )
 
         for label in hf_response:
@@ -939,8 +875,11 @@ class Huggingface(Provider):
 
 # cohere
 class Cohere(Provider):
+    model_engine: str = "large"
 
     def __init__(self, model_engine='large'):
+        super().__init__()  # need to include pydantic.BaseModel.__init__
+
         Cohere().endpoint = Endpoint(name="cohere")
         self.model_engine = model_engine
 
