@@ -304,6 +304,7 @@ class TruChain(LangChainModel):
             for f in self.feedbacks:
                 self.db.insert_feedback(
                     FeedbackResult(
+                        name=f.name,
                         chain_id=self.chain_id,
                         record_id=record_id,
                         feedback_definition_id=f.feedback_definition_id
