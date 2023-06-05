@@ -108,8 +108,8 @@ else:
         for feedback_col in evaluations_df.columns.drop(['chain_id', 'ts',
                                                          'total_tokens',
                                                          'total_cost']):
-            gb.configure_column(feedback_col, cellStyle=cellstyle_jscode)
-    
+            gb.configure_column(feedback_col, cellStyle=cellstyle_jscode, hide=feedback_col.endswith("_calls"))
+        
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
