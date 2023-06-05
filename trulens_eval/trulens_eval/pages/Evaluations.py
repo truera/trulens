@@ -2,6 +2,7 @@ import json
 from typing import Dict, List
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
@@ -144,12 +145,12 @@ else:
             with st.expander("Response", expanded=True):
                 st.write(response)
 
-            row = evaluations_df.iloc[selected_rows.head().index]
+            row = selected_rows.head().iloc[0]
 
             st.header("Feedback")
             for fcol in feedback_cols:
                 feedback_name = fcol
-                feedback_result = float(row[fcol])
+                feedback_result = row[fcol]
                 feedback_calls = row[f"{fcol}_calls"]
                     
                 with st.expander(f"{feedback_name} = {feedback_result}", expanded=True):
