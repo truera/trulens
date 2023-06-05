@@ -9,6 +9,7 @@ from __future__ import annotations
 import abc
 from enum import Enum
 import importlib
+from inspect import stack
 import itertools
 import json
 import logging
@@ -482,23 +483,6 @@ def _project(path: List, obj: Any):
         raise RuntimeError(
             f"Don't know how to locate element with key of type {first}"
         )
-
-
-class WithClassInfo(pydantic.BaseModel):
-    """
-    Mixin to track class information to aid in querying serialized components
-    without having to deserialize them.
-    """
-
-    _: Class 
-
-    def __init__(self, **kwargs):
-        super().__init__(_ = Class.of_class(self.__class__), **kwargs)
-
-    @staticmethod
-    def of_object(obj: object):
-        
-
 
 
 class SerialModel(pydantic.BaseModel):
@@ -1035,6 +1019,56 @@ class TP(SingletonPerName):  # "thread processing"
 
 # python instrumentation utilities
 
+def get_local_in_call_stack(
+    key: str,
+    func: Callable[[Callable], bool],
+    offset: int = 1
+) -> Optional[Any]:
+    """
+    Get the value of the local variable named `key` in the stack at the nearest
+    frame executing a function which `func` recognizes (returns True on).
+    Returns None if `func` does not recognize the correct function. Raises
+    RuntimeError if a function is recognized but does not have `key` in its
+    locals.
+
+    This method works across threads as long as they are started using the TP
+    class above.
+
+    """
+
+    frames = stack()[offset + 1:]  # + 1 to skip this method itself
+
+    # Using queue for frames as additional frames may be added due to handling threads.
+    q = Queue()
+    for f in frames:
+        q.put(f)
+
+    while not q.empty():
+        fi = q.get()
+
+        if id(fi.frame.f_code) == id(TP()._thread_target_wrapper.__code__):
+            logger.debug(
+                "Found thread starter frame. "
+                "Will walk over frames in prior to thread start."
+            )
+            locs = fi.frame.f_locals
+            assert "pre_start_stack" in locs, "Pre thread start stack expected but not found."
+            for f in locs['pre_start_stack']:
+                q.put(f)
+            continue
+
+        if func(fi.frame.f_code):
+            logger.debug(f"looking {func.__name__} found: {fi}")
+            locs = fi.frame.f_locals
+            if key in locs:
+                return locs[key]
+            else:
+                raise RuntimeError(f"No local named {key} in {func} found.")
+        logger.debug(f"looking {func.__name__}, pass : {fi}")
+
+    return None
+
+
 class Module(SerialModel):
     package_name: str
     module_name: str
@@ -1055,18 +1089,25 @@ class Module(SerialModel):
 
 class Class(SerialModel):
     """
-    A python class by name.
+    A python class. Should be enough to deserialize the constructor. Also
+    includes bases so that we can query subtyping relationships without
+    deserializing the class first.
     """
 
     name: str
 
     module: Module
 
+    bases: Sequence[Class] # TODO: make optional
+
     @staticmethod
     def of_class(cls: type) -> 'Class':
         return Class(
-            name=cls.__name__, module=Module.of_module_name(cls.__module__)
+            name=cls.__name__, 
+            module=Module.of_module_name(cls.__module__),
+            bases=map(lambda base: Class.of_class(cls=base), cls.__bases__)
         )
+        
 
     def load(self) -> type:  # class
         try:
@@ -1088,6 +1129,14 @@ class Obj(SerialModel):
     # From id(obj), identifiers memory location of a python object. Use this for
     # handling loops in JSON objects.
     id: int
+
+
+class ObjSerial(Obj):
+    """
+    Object that can be deserialized, or at least intended to be deserialized.
+    Stores additional information beyond the class that can be used to
+    deserialize it.
+    """
 
     # For objects that can be easily reconstructed, provide their kwargs here.
     init_kwargs: Optional[Dict] = None
@@ -1149,14 +1198,12 @@ class FunctionOrMethod(SerialModel):  #, abc.ABC):
     def load(self) -> Callable:
         raise NotImplementedError()
 
-
+"""
 class MethodIdent(SerialModel):
-    """
-    Identifier of a method (as opposed to a serialization of the method itself).
-    """
-
+   
     module_name: str
     class_name: str
+
     method_name: str
 
     @staticmethod
@@ -1181,13 +1228,13 @@ class MethodIdent(SerialModel):
             class_name=cls.__name__,
             method_name=method.__name__
         )
-
+"""
 
 class Method(FunctionOrMethod):
     """
     A python method. A method belongs to some class in some module and must have
     a pre-bound self object. The location of the method is encoded in `obj`
-    alongside self.
+    alongside self. If obj is ObjSerial, this method should be deserializable.
     """
 
     obj: Obj
@@ -1208,7 +1255,7 @@ class Method(FunctionOrMethod):
         if cls is None:
             cls = obj.__class__
 
-        obj_json = Obj.of_object(obj, cls=cls)
+        obj_json = ObjSerial.of_object(obj, cls=cls)
 
         return Method(obj=obj_json, name=meth.__name__)
 
@@ -1261,3 +1308,40 @@ class Function(FunctionOrMethod):
     #        name=o['name']
     #    )
 
+"""
+class ModuleIdent(pydantic.BaseModel):
+
+class ClassIdent(pydantic.BaseModel):
+    class_name: str
+
+    module_name: str
+    package_name: str
+
+    bases: Sequence[ClassIdent]
+"""
+    
+class WithClassInfo(pydantic.BaseModel):
+    """
+    Mixin to track class information to aid in querying serialized components
+    without having to deserialize them.
+    """
+
+    class_info: Class
+
+    def __init__(self, obj: Optional[object] = None, cls: Optional[type] = None, **kwargs):
+        if obj is not None:
+            print(f"got object: {obj}")
+            cls = type(obj)
+            print(f"cls={cls}")
+
+        assert cls is not None, "Either `obj` or `cls` need to be specified."
+
+        super().__init__(class_info = Class.of_class(cls), **kwargs)
+
+    @staticmethod
+    def of_object(obj: object):
+        return WithClassInfo(_ = Class.of_class(obj.__class__))
+
+    @staticmethod
+    def of_class(cls: type): # class
+        return WithClassInfo(_ = Class.of_class(cls))

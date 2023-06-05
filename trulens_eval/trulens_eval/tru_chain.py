@@ -97,6 +97,7 @@ from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru import Tru
 from trulens_eval.schema import FeedbackResult
+from trulens_eval.util import WithClassInfo
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import TP, JSONPath, jsonify, noserio
 
@@ -105,7 +106,7 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 
-class TruChain(LangChainModel):
+class TruChain(LangChainModel, WithClassInfo):
     """
     Wrap a langchain Chain to capture its configuration and evaluation steps. 
     """
@@ -167,7 +168,10 @@ class TruChain(LangChainModel):
         kwargs['feedbacks'] = feedbacks
         kwargs['feedback_mode'] = feedback_mode
 
-        super().__init__(**kwargs)
+        super().update_forward_refs()
+        super().__init__(obj=self, **kwargs)
+        # print("self=", self)
+        # WithClassInfo.__init__(self, obj=self)
 
         if tru is not None and feedback_mode != FeedbackMode.NONE:
             logger.debug(
