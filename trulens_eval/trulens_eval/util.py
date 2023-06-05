@@ -17,6 +17,7 @@ from multiprocessing.pool import AsyncResult
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from queue import Queue
+from threading import Thread
 from time import sleep
 from types import ModuleType
 from typing import (
@@ -28,6 +29,8 @@ from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pandas as pd
 import pydantic
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
@@ -122,12 +125,13 @@ def json_str_of_obj(obj: Any, *args, **kwargs) -> str:
 
     return json.dumps(obj, default=json_default)
 
+
 def json_default(obj: Any) -> str:
     """
     Produce a representation of an object which cannot be json-serialized.
     """
 
-    obj = jsonify(obj)
+    # obj = jsonify(obj)
 
     # Try the encoders included with pydantic first (should handle things like
     # Datetime):
@@ -135,6 +139,12 @@ def json_default(obj: Any) -> str:
         return pydantic.json.pydantic_encoder(obj)
     except:
         pass
+
+    #if isinstance(obj, Enum):
+    #    return obj.name
+    
+    #if isinstance(obj, dict):
+    #    return 
 
     #if isinstance(obj, pydantic.BaseModel):
     #    try:
@@ -171,6 +181,9 @@ def jsonify(obj: Any, dicted=None) -> JSON:
 
     new_dicted = {k: v for k, v in dicted.items()}
 
+    if isinstance(obj, Enum):
+        return obj.name
+
     if isinstance(obj, Dict):
         temp = {}
         new_dicted[id(obj)] = temp
@@ -203,7 +216,7 @@ def jsonify(obj: Any, dicted=None) -> JSON:
         return temp
 
     else:
-        logging.debug(
+        logger.debug(
             f"Don't know how to jsonify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
         )
 
@@ -439,7 +452,7 @@ def _project(path: List, obj: Any):
     if isinstance(first, str):
         if isinstance(obj, pydantic.BaseModel):
             if not hasattr(obj, first):
-                logging.warn(
+                logger.warn(
                     f"Cannot project {str(obj)[0:32]} with path {path} because {first} is not an attribute here."
                 )
                 return None
@@ -447,21 +460,21 @@ def _project(path: List, obj: Any):
 
         elif isinstance(obj, Dict):
             if first not in obj:
-                logging.warn(
+                logger.warn(
                     f"Cannot project {str(obj)[0:32]} with path {path} because {first} is not a key here."
                 )
                 return None
             return _project(path=rest, obj=obj[first])
 
         else:
-            logging.warn(
+            logger.warn(
                 f"Cannot project {str(obj)[0:32]} with path {path} because object is not a dict or model."
             )
             return None
 
     elif isinstance(first, int):
         if not isinstance(obj, Sequence) or first >= len(obj):
-            logging.warn(f"Cannot project {str(obj)[0:32]} with path {path}.")
+            logger.warn(f"Cannot project {str(obj)[0:32]} with path {path}.")
             return None
 
         return _project(path=rest, obj=obj[first])
@@ -499,22 +512,23 @@ class SerialModel(pydantic.BaseModel):
 
         return self
 
+
 # JSONPath, a container for selector/accessors/setters of data stored in a json
 # structure. Cannot make abstract since pydantic will try to initialize it.
-class Step(SerialModel):#, abc.ABC):
+class Step(SerialModel):  #, abc.ABC):
     """
     A step in a selection path.
-    """                          
+    """
 
     @classmethod
     def __get_validator__(cls):
         yield cls.validate
 
     @classmethod
-    def validate(cls, d):        
+    def validate(cls, d):
         if not isinstance(d, Dict):
             return d
-        
+
         ATTRIBUTE_TYPE_MAP = {
             'item': GetItem,
             'index': GetIndex,
@@ -546,6 +560,7 @@ class Step(SerialModel):#, abc.ABC):
         Set the value(s) indicated by self in `obj` to value `val`.
         """
         raise NotImplementedError()
+
 
 class GetAttribute(Step):
     attribute: str
@@ -640,7 +655,7 @@ class GetItem(Step):
 class GetItemOrAttribute(Step):
     # For item/attribute agnostic addressing.
 
-    item_or_attribute: str # distinct from "item" for deserialization
+    item_or_attribute: str  # distinct from "item" for deserialization
 
     def __hash__(self):
         return hash(self.item)
@@ -650,7 +665,9 @@ class GetItemOrAttribute(Step):
             if self.item_or_attribute in obj:
                 yield obj[self.item_or_attribute]
             else:
-                raise KeyError(f"Key not in dictionary: {self.item_or_attribute}")
+                raise KeyError(
+                    f"Key not in dictionary: {self.item_or_attribute}"
+                )
         else:
             if hasattr(obj, self.item_or_attribute):
                 yield getattr(obj, self.item_or_attribute)
@@ -909,7 +926,7 @@ class SingletonPerName():
         key = cls.__name__, name
 
         if key not in cls.instances:
-            logging.debug(
+            logger.debug(
                 f"*** Creating new {cls.__name__} singleton instance for name = {name} ***"
             )
             SingletonPerName.instances[key] = super().__new__(cls)
@@ -921,6 +938,10 @@ class SingletonPerName():
 
 
 class TP(SingletonPerName):  # "thread processing"
+
+    # Store here stacks of calls to various thread starting methods so that we can retrieve
+    # the trace of calls that caused a thread to start.
+    # pre_run_stacks = dict()
 
     def __init__(self):
         if hasattr(self, "thread_pool"):
@@ -942,18 +963,48 @@ class TP(SingletonPerName):  # "thread processing"
 
         self.runlater(runner)
 
+    @staticmethod
+    def _thread_target_wrapper(stack, func, *args, **kwargs):
+        """
+        Wrapper for a function that is started by threads. This is needed to
+        record the call stack prior to thread creation as in python threads do
+        not inherit the stack. Our instrumentation, however, relies on walking
+        the stack and need to do this to the frames prior to thread starts.
+        """
+
+        # Keep this for looking up via get_local_in_call_stack .
+        pre_start_stack = stack
+
+        return func(*args, **kwargs)
+
+    def _thread_starter(self, func, args, kwargs):
+        present_stack = stack()
+
+        prom = self.thread_pool.apply_async(
+            self._thread_target_wrapper,
+            args=(present_stack, func) + args,
+            kwds=kwargs
+        )
+        return prom
+
+        # thread = Thread(target=func, args=args, kwargs=kwargs)
+        # thread.start()
+        # self.pre_run_stacks[thread_id] = stack()
+
     def runlater(self, func: Callable, *args, **kwargs) -> None:
-        prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
+        # prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
+        prom = self._thread_starter(func, args, kwargs)
         self.promises.put(prom)
 
     def promise(self, func: Callable[..., T], *args, **kwargs) -> AsyncResult:
-        prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
+        # prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
+        prom = self._thread_starter(func, args, kwargs)
         self.promises.put(prom)
 
         return prom
 
     def finish(self, timeout: Optional[float] = None) -> int:
-        print(f"Finishing {self.promises.qsize()} task(s) ", end='')
+        logger.debug(f"Finishing {self.promises.qsize()} task(s).")
 
         timeouts = []
 
@@ -961,18 +1012,16 @@ class TP(SingletonPerName):  # "thread processing"
             prom = self.promises.get()
             try:
                 prom.get(timeout=timeout)
-                print(".", end="")
             except TimeoutError:
-                print("!", end="")
                 timeouts.append(prom)
 
         for prom in timeouts:
             self.promises.put(prom)
 
         if len(timeouts) == 0:
-            print("done.")
+            logger.debug("Done.")
         else:
-            print("some tasks timed out.")
+            logger.debug("Some tasks timed out.")
 
         return len(timeouts)
 

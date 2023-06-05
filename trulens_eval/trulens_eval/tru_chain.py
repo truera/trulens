@@ -97,9 +97,13 @@ from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru import Tru
 from trulens_eval.schema import FeedbackResult
+from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import TP, JSONPath, jsonify, noserio
 
+logger = logging.getLogger(__name__)
+
 pp = PrettyPrinter()
+
 
 class TruChain(LangChainModel):
     """
@@ -147,14 +151,14 @@ class TruChain(LangChainModel):
             kwargs['db'] = tru.db
 
             if feedback_mode == FeedbackMode.NONE:
-                logging.warn(
+                logger.warn(
                     "`tru` is specified but `feedback_mode` is FeedbackMode.NONE. "
                     "No feedback evaluation and logging will occur."
                 )
         else:
-            
+
             if feedback_mode != FeedbackMode.NONE:
-                logging.warn(
+                logger.warn(
                     f"`feedback_mode` is {feedback_mode} but `tru` was not specified. Reverting to FeedbackMode.NONE ."
                 )
                 feedback_mode = FeedbackMode.NONE
@@ -166,7 +170,7 @@ class TruChain(LangChainModel):
         super().__init__(**kwargs)
 
         if tru is not None and feedback_mode != FeedbackMode.NONE:
-            logging.debug(
+            logger.debug(
                 "Inserting chain and feedback function definitions to db."
             )
             self.db.insert_chain(chain=self)
@@ -174,7 +178,6 @@ class TruChain(LangChainModel):
                 self.db.insert_feedback_definition(f)
 
         self._instrument_object(obj=self.chain, query=Query.Query().chain)
-
 
     # Chain requirement
     @property
@@ -222,31 +225,29 @@ class TruChain(LangChainModel):
 
         except BaseException as e:
             error = e
-            logging.error(f"Chain raised an exception: {e}")
+            logger.error(f"Chain raised an exception: {e}")
 
         self.recording = False
 
         assert len(record) > 0, "No information recorded in call."
 
         ret_record_args = dict()
-        
+
         inputs = self.chain.prep_inputs(inputs)
 
         # Figure out the content of the "inputs" arg that __call__ constructs
         # for _call so we can lookup main input and output.
         input_key = self.input_keys[0]
         output_key = self.output_keys[0]
-     
+
         ret_record_args['main_input'] = inputs[input_key]
         ret_record_args['main_output'] = ret[output_key]
 
         ret_record_args['main_error'] = str(error)
         ret_record_args['calls'] = record
-        ret_record_args['cost'] = Cost(
-            n_tokens=total_tokens, cost=total_cost
-        )
+        ret_record_args['cost'] = Cost(n_tokens=total_tokens, cost=total_cost)
         ret_record_args['chain_id'] = self.chain_id
-        
+
         ret_record = Record(**ret_record_args)
 
         if error is not None:
@@ -289,9 +290,7 @@ class TruChain(LangChainModel):
         if self.tru is None or self.feedback_mode is None:
             return
 
-        record_id = self.tru.add_record(
-            record=record
-        )
+        record_id = self.tru.add_record(record=record)
 
         if len(self.feedbacks) == 0:
             return
@@ -301,6 +300,7 @@ class TruChain(LangChainModel):
             for f in self.feedbacks:
                 self.db.insert_feedback(
                     FeedbackResult(
+                        name=f.name,
                         chain_id=self.chain_id,
                         record_id=record_id,
                         feedback_definition_id=f.feedback_definition_id
@@ -311,9 +311,7 @@ class TruChain(LangChainModel):
                                     FeedbackMode.WITH_CHAIN_THREAD]:
 
             results = self.tru.run_feedback_functions(
-                record=record,
-                feedback_functions=self.feedbacks,
-                chain=self
+                record=record, feedback_functions=self.feedbacks, chain=self
             )
 
             for result in results:
@@ -328,26 +326,6 @@ class TruChain(LangChainModel):
     def _call(self, *args, **kwargs) -> Any:
         return self.chain._call(*args, **kwargs)
 
-    def _get_local_in_call_stack(
-        self, key: str, func: Callable, offset: int = 1
-    ) -> Optional[Any]:
-        """
-        Get the value of the local variable named `key` in the stack at the
-        nearest frame executing `func`. Returns None if `func` is not in call
-        stack. Raises RuntimeError if `func` is in call stack but does not have
-        `key` in its locals.
-        """
-
-        for fi in stack()[offset + 1:]:  # + 1 to skip this method itself
-            if id(fi.frame.f_code) == id(func.__code__):
-                locs = fi.frame.f_locals
-                if key in locs:
-                    return locs[key]
-                else:
-                    raise RuntimeError(f"No local named {key} in {func} found.")
-
-        return None
-
     def _instrument_dict(self, cls, obj: Any):
         """
         Replacement for langchain's dict method to one that does not fail under
@@ -356,7 +334,7 @@ class TruChain(LangChainModel):
 
         if hasattr(obj, "memory"):
             if obj.memory is not None:
-                # logging.warn(
+                # logger.warn(
                 #     f"Will not be able to serialize object of type {cls} because it has memory."
                 # )
                 pass
@@ -415,16 +393,17 @@ class TruChain(LangChainModel):
         return new_prop
 
     def _instrument_tracked_method(
-        self, query: Query, func: Callable, method_name: str, cls: type, obj: object
+        self, query: Query, func: Callable, method_name: str, cls: type,
+        obj: object
     ):
         """
         Instrument a method to capture its inputs/outputs/errors.
         """
 
-        logging.debug(f"instrumenting {method_name}={func} in {query._path}")
+        logger.debug(f"instrumenting {method_name}={func} in {query}")
 
         if hasattr(func, "_instrumented"):
-            logging.debug(f"{func} is already instrumented")
+            logger.debug(f"{func} is already instrumented")
 
             # Already instrumented. Note that this may happen under expected
             # operation when the same chain is used multiple times as part of a
@@ -445,14 +424,20 @@ class TruChain(LangChainModel):
             #if not self.recording:
             #    return func(*args, **kwargs)
 
+            logger.debug(f"Calling instrumented method {func} on {query}")
+
+            def find_call_with_record(f):
+                return id(f) == id(TruChain.call_with_record.__code__)
+
             # Look up whether TruChain._call was called earlier in the stack and
             # "record" variable was defined there. Will use that for recording
             # the wrapped call.
-            record = self._get_local_in_call_stack(
-                key="record", func=TruChain.call_with_record
+            record = get_local_in_call_stack(
+                key="record", func=find_call_with_record
             )
 
             if record is None:
+                logger.debug("No record found, not recording.")
                 return func(*args, **kwargs)
 
             # Otherwise keep track of inputs and outputs (or exception).
@@ -462,12 +447,17 @@ class TruChain(LangChainModel):
 
             start_time = datetime.now()
 
-            chain_stack = self._get_local_in_call_stack(
-                key="chain_stack", func=wrapper, offset=1
+            def find_instrumented(f):
+                return id(f) == id(wrapper.__code__)
+                # return hasattr(f, "_instrumented")
+
+            # If a wrapped method was called in this call stack, get the prior
+            # calls from this variable. Otherwise create a new chain stack.
+            chain_stack = get_local_in_call_stack(
+                key="chain_stack", func=find_instrumented, offset=1
             ) or ()
             frame_ident = RecordChainCallMethod(
-                path=query,
-                method=MethodIdent.of_method(func, obj=obj)
+                path=query, method=MethodIdent.of_method(func, obj=obj)
             )
             chain_stack = chain_stack + (frame_ident,)
 
@@ -497,13 +487,13 @@ class TruChain(LangChainModel):
                 pid=os.getpid(),
                 tid=th.get_native_id(),
                 chain_stack=chain_stack,
-                rets = rets,
-                error = error_str if error is not None else None
+                rets=rets,
+                error=error_str if error is not None else None
             )
 
             row = RecordChainCall(**row_args)
             record.append(row)
-                
+
             if error is not None:
                 raise error
 
@@ -521,11 +511,10 @@ class TruChain(LangChainModel):
 
     def _instrument_object(self, obj, query: Query):
 
-        # cls = inspect.getattr_static(obj, "__class__").__get__()
         cls = type(obj)
 
-        logging.debug(
-            f"instrumenting {query._path} {cls.__name__}, bases={cls.__bases__}"
+        logger.debug(
+            f"instrumenting {query} {cls.__name__}, bases={cls.__bases__}"
         )
 
         # NOTE: We cannot instrument chain directly and have to instead
@@ -534,7 +523,13 @@ class TruChain(LangChainModel):
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
 
-        methods_to_instrument = {"_call", "get_relevant_documents"}
+        # Instrument only methods with these names and of these classes.
+        methods_to_instrument = {
+            "_call": lambda o: isinstance(o, langchain.chains.base.Chain),
+            "get_relevant_documents": lambda o: True,  # VectorStoreRetriever
+            "__call__":
+                lambda o: isinstance(o, Feedback)  # Feedback
+        }
 
         for base in [cls] + cls.mro():
             # All of mro() may need instrumentation here if some subchains call
@@ -546,9 +541,13 @@ class TruChain(LangChainModel):
 
             for method_name in methods_to_instrument:
                 if hasattr(base, method_name):
+                    check_class = methods_to_instrument[method_name]
+                    if not check_class(obj):
+                        continue
+
                     original_fun = getattr(base, method_name)
 
-                    logging.debug(f"instrumenting {base}.{method_name}")
+                    logger.debug(f"instrumenting {base}.{method_name}")
 
                     setattr(
                         base, method_name,
@@ -561,8 +560,10 @@ class TruChain(LangChainModel):
                         )
                     )
 
+            # Instrument special langchain methods that may cause serialization
+            # failures.
             if hasattr(base, "_chain_type"):
-                logging.debug(f"instrumenting {base}._chain_type")
+                logger.debug(f"instrumenting {base}._chain_type")
 
                 prop = getattr(base, "_chain_type")
                 setattr(
@@ -571,7 +572,7 @@ class TruChain(LangChainModel):
                 )
 
             if hasattr(base, "_prompt_type"):
-                logging.debug(f"instrumenting {base}._chain_prompt")
+                logger.debug(f"instrumenting {base}._chain_prompt")
 
                 prop = getattr(base, "_prompt_type")
                 setattr(
@@ -579,8 +580,10 @@ class TruChain(LangChainModel):
                     self._instrument_type_method(obj=obj, prop=prop)
                 )
 
+            # Instrument a pydantic.BaseModel method that may cause
+            # serialization failures.
             if hasattr(base, "dict"):
-                logging.debug(f"instrumenting {base}.dict")
+                logger.debug(f"instrumenting {base}.dict")
 
                 setattr(base, "dict", self._instrument_dict(cls=base, obj=obj))
 
@@ -606,6 +609,6 @@ class TruChain(LangChainModel):
 
                 # TODO: check if we want to instrument anything not accessible through __fields__ .
         else:
-            logging.debug(
+            logger.debug(
                 f"Do not know how to instrument object {str(obj)[:32]} of type {cls}."
             )

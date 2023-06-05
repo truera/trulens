@@ -95,18 +95,15 @@ class Record(SerialModel):
     tags: str = ""
 
     main_input: Optional[str]
-    main_output: Optional[str] # if no error
-    main_error: Optional[str] # if error
+    main_output: Optional[str]  # if no error
+    main_error: Optional[str]  # if error
 
     # The collection of calls recorded. Note that these can be converted into a
     # json structure with the same paths as the chain that generated this record
     # via `layout_calls_as_chain`.
     calls: Sequence[RecordChainCall] = []
 
-    def __init__(self,
-                 record_id: Optional[RecordID] = None,
-
-                 **kwargs):
+    def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
         super().__init__(record_id="temporay", **kwargs)
 
         if record_id is None:
@@ -138,7 +135,9 @@ class Record(SerialModel):
             frame_info = call.top(
             )  # info about the method call is at the top of the stack
             path = frame_info.path._append(
-                GetItemOrAttribute(item_or_attribute=frame_info.method.method_name)
+                GetItemOrAttribute(
+                    item_or_attribute=frame_info.method.method_name
+                )
             )  # adds another attribute to path, from method name
             # TODO: append if already there
             ret = path.set(obj=ret, val=call)
@@ -156,11 +155,17 @@ class FeedbackResultStatus(Enum):
     DONE = "done"
 
 
-class FeedbackResult(SerialModel):
-    record_id: RecordID
-    chain_id: ChainID
+class FeedbackCall(SerialModel):
+    args: Dict[str, str]
+    ret: float
 
+
+class FeedbackResult(SerialModel):
     feedback_result_id: FeedbackResultID
+
+    record_id: RecordID
+
+    chain_id: ChainID
 
     feedback_definition_id: Optional[FeedbackDefinitionID] = None
 
@@ -169,18 +174,19 @@ class FeedbackResult(SerialModel):
 
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
 
-    error: Optional[str] = None  # if there was an error
-
-    results_json: JSON = pydantic.Field(default_factory=dict) # keeping unrestricted in type for now
-
     cost: Cost = pydantic.Field(default_factory=Cost)
 
     tags: str = ""
 
+    name: str
+
+    calls: Sequence[FeedbackCall] = []
+    result: Optional[
+        float] = None  # final result, potentially aggregating multiple calls
+    error: Optional[str] = None  # if there was an error
+
     def __init__(
-        self,
-        feedback_result_id: Optional[FeedbackResultID] = None,
-        **kwargs
+        self, feedback_result_id: Optional[FeedbackResultID] = None, **kwargs
     ):
 
         super().__init__(feedback_result_id="temporary", **kwargs)
