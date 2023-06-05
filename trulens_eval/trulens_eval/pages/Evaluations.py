@@ -2,6 +2,7 @@ import json
 from typing import Dict, List
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
@@ -108,7 +109,8 @@ else:
         for feedback_col in evaluations_df.columns.drop(['chain_id', 'ts',
                                                          'total_tokens',
                                                          'total_cost']):
-            gb.configure_column(feedback_col, cellStyle=cellstyle_jscode)
+            gb.configure_column(feedback_col, cellStyle=cellstyle_jscode, hide=feedback_col.endswith("_calls"))
+        
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
@@ -142,6 +144,18 @@ else:
 
             with st.expander("Response", expanded=True):
                 st.write(response)
+
+            row = selected_rows.head().iloc[0]
+
+            st.header("Feedback")
+            for fcol in feedback_cols:
+                feedback_name = fcol
+                feedback_result = row[fcol]
+                feedback_calls = row[f"{fcol}_calls"]
+                    
+                with st.expander(f"{feedback_name} = {feedback_result}", expanded=True):
+                    for call in feedback_calls:
+                        st.write(call)
 
             record_str = selected_rows['record_json'][0]
             record_json = json.loads(record_str)
