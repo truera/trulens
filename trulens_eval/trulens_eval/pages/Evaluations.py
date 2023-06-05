@@ -19,6 +19,9 @@ from trulens_eval.util import is_empty, matching_objects
 from trulens_eval.util import is_noserio
 from trulens_eval.tru_db import TruDB
 from trulens_eval.ux.components import draw_calls
+from trulens_eval.ux.styles import cellstyle_jscode
+from trulens_eval.tru_feedback import default_pass_fail_color_threshold
+
 
 st.set_page_config(page_title="Evaluations", layout="wide")
 
@@ -66,28 +69,7 @@ else:
         evaluations_df = chain_df
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
-        cellstyle_jscode = JsCode(
-            """
-        function(params) {
-            if (parseFloat(params.value) < 0.5) {
-                return {
-                    'color': 'black',
-                    'backgroundColor': '#FCE6E6'
-                }
-            } else if (parseFloat(params.value) >= 0.5) {
-                return {
-                    'color': 'black',
-                    'backgroundColor': '#4CAF50'
-                }
-            } else {
-                return {
-                    'color': 'black',
-                    'backgroundColor': 'white'
-                }
-            }
-        };
-        """
-        )
+        cellstyle_jscode = JsCode(cellstyle_jscode)
 
         gb.configure_column('record_json', header_name='Record JSON', hide=True)
         gb.configure_column('chain_json', header_name='Chain JSON', hide=True)
@@ -156,7 +138,7 @@ else:
 
                 def display_feedback_call(call):
                     def highlight(s):
-                        return ['background-color: #4CAF50']*len(s) if s.result >= 0.5 else ['background-color: #FCE6E6']*len(s)
+                        return ['background-color: #4CAF50']*len(s) if s.result >= default_pass_fail_color_threshold else ['background-color: #FCE6E6']*len(s)
                     if (len(call) > 0):
                         df = pd.DataFrame.from_records([call[i]["args"] for i in range(len(call))])
                         df["result"] = pd.DataFrame([float(call[i]["ret"]) for i in range(len(call))])
