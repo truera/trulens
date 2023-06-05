@@ -13,6 +13,8 @@ from trulens_eval.schema import Record
 from trulens_eval.util import GetItemOrAttribute
 from ux.add_logo import add_logo
 
+import streamlit.components.v1 as components
+
 from trulens_eval import Tru
 from trulens_eval import tru_db
 from trulens_eval.util import is_empty, matching_objects
