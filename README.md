@@ -58,6 +58,7 @@ Now that we created an LLM chain, we can set up our first feedback function. Her
 # create a feedback function
 
 from trulens_eval.tru_feedback import Feedback, Huggingface
+from trulens_eval.tru_db import Query
 
 os.environ["HUGGINGFACE_API_KEY"] = "..."
 
@@ -66,7 +67,7 @@ hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
 f_lang_match = Feedback(hugs.language_match).on(
-    text1="prompt", text2="response"
+    text1=Query.RecordInput, text2=Query.RecordOutput
 )
 
 # wrap your chain with TruChain
