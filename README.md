@@ -14,72 +14,72 @@ TruLens provides a set of tools for developing and monitoring neural nets, inclu
 
 Install trulens-eval from PyPI.
 
-```
+```bash
 pip install trulens-eval
 ```
 
 ```python
-    from trulens_eval import tru
-    from trulens_eval import tru_chain
-    from trulens_eval import Query
+from trulens_eval import tru
+from trulens_eval import tru_chain
+from trulens_eval import Query
 
-    tru = Tru()
+tru = Tru()
 ```
 
 This example uses LangChain and OpenAI, but the same process can be followed with any framework and model provider.
 
 ```python
-    # imports from LangChain to build app
-    from langchain import PromptTemplate
-    from langchain.chains import LLMChain
-    from langchain.chat_models import ChatOpenAI
-    from langchain.prompts.chat import ChatPromptTemplate
-    from langchain.prompts.chat import HumanMessagePromptTemplate
+# imports from LangChain to build app
+from langchain import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts.chat import ChatPromptTemplate
+from langchain.prompts.chat import HumanMessagePromptTemplate
 
-    # Set your API key as an environmental variable
-    import os
-    os.environ["OPENAI_API_KEY"] = "..."
+# Set your API key as an environmental variable
+import os
+os.environ["OPENAI_API_KEY"] = "..."
 
-    # create LLM chain
-    full_prompt = HumanMessagePromptTemplate(
-        prompt=PromptTemplate(
-            template="Provide a helpful response with relevant background information for the following: {prompt}",
-                input_variables=["prompt"],
-            )
+# create LLM chain
+full_prompt = HumanMessagePromptTemplate(
+    prompt=PromptTemplate(
+        template="Provide a helpful response with relevant background information for the following: {prompt}",
+            input_variables=["prompt"],
         )
-    chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
+    )
+chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
 
-    chat = ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0.9)
+chat = ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0.9)
 
-    chain = LLMChain(llm=chat, prompt=chat_prompt_template)
+chain = LLMChain(llm=chat, prompt=chat_prompt_template)
 ```
 
 Now that we created an LLM chain, we can set up our first feedback function. Here, we'll create a feedback function for language matching. After we've created the feedback function, we can include it in the TruChain wrapper. Now, whenever our wrapped chain is used we'll log both the metadata and feedback.
 
 ```python
-    # create a feedback function
+# create a feedback function
 
-    from trulens_eval.tru_feedback import Feedback, Huggingface
+from trulens_eval.tru_feedback import Feedback, Huggingface
 
-    os.environ["HUGGINGFACE_API_KEY"] = "..."
+os.environ["HUGGINGFACE_API_KEY"] = "..."
 
-    # Initialize HuggingFace-based feedback function collection class:
-    hugs = Huggingface()
+# Initialize HuggingFace-based feedback function collection class:
+hugs = Huggingface()
 
-    # Define a language match feedback function using HuggingFace.
-    f_lang_match = Feedback(hugs.language_match).on(
-        text1=Query.RecordInput, text2=Query.RecordOutput
-    )
+# Define a language match feedback function using HuggingFace.
+f_lang_match = Feedback(hugs.language_match).on(
+    text1=Query.RecordInput, text2=Query.RecordOutput
+)
 
-    # wrap your chain with TruChain
-    truchain = TruChain(
-        chain,
-        chain_id='Chain1_ChatApplication',
-        feedbacks=[f_lang_match],
-        tru=tru
-    )
-    # Note: any `feedbacks` specified here will be evaluated and logged whenever the chain is used.
-    truchain("que hora es?")
+# wrap your chain with TruChain
+truchain = TruChain(
+    chain,
+    chain_id='Chain1_ChatApplication',
+    feedbacks=[f_lang_match],
+    tru=tru
+)
+# Note: any `feedbacks` specified here will be evaluated and logged whenever the chain is used.
+truchain("que hora es?")
 ```
 
 Now you can explore your LLM-based application!
@@ -87,7 +87,7 @@ Now you can explore your LLM-based application!
 Doing so will help you understand how your LLM application is performing at a glance. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up. You'll also be able to view evaluations at a record level, and explore the chain metadata for each record.
 
 ```python
-    tru.run_dashboard() # open a Streamlit app to explore
+tru.run_dashboard() # open a Streamlit app to explore
 ```
 
 For more information, see [TruLens-Eval Documentation](https://www.trulens.org/trulens_eval/quickstart/).
@@ -102,20 +102,20 @@ These installation instructions assume that you have conda installed and added t
 
 0. Create a virtual environment (or modify an existing one).
 ```bash
-    conda create -n "<my_name>" python=3.7  # Skip if using existing environment.
-    conda activate <my_name>
+conda create -n "<my_name>" python=3.7  # Skip if using existing environment.
+conda activate <my_name>
 ```
  
 1. Install dependencies.
 ```bash
-    conda install tensorflow-gpu=1  # Or whatever backend you're using.
-    conda install keras             # Or whatever backend you're using.
-    conda install matplotlib        # For visualizations.
+conda install tensorflow-gpu=1  # Or whatever backend you're using.
+conda install keras             # Or whatever backend you're using.
+conda install matplotlib        # For visualizations.
 ```
 
 2. [Pip installation] Install the trulens pip package from PyPI.
 ```bash
-    pip install trulens
+pip install trulens
 ```
 
 3. Get started!
