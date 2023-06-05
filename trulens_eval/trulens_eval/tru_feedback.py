@@ -71,6 +71,7 @@ from trulens_eval.tru_db import obj_id_of_obj
 from trulens_eval.tru_db import Query
 
 from trulens_eval.tru_db import Record
+from trulens_eval.schema import FeedbackCall
 from trulens_eval.util import jsonify
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
@@ -190,59 +191,12 @@ class Feedback(FeedbackDefinition):
             elif row.status == FeedbackResultStatus.DONE:
                 pass
 
-        # TP().finish()
-        # TP().runrepeatedly(runner)
-
-    #@property
-    #def json(self):
-    #    assert hasattr(self, "_json"), "Cannot json-size partially defined feedback function."
-    #    return self._json
-
-    """
-    @property
-    def feedback_id(self):
-        assert hasattr(
-            self, "_feedback_id"
-        ), "Cannot get id of partially defined feedback function."
-        return self._feedback_id
-    """
-
     def __call__(self, *args, **kwargs) -> Any:
         assert self.imp is not None, "Feedback definition needs an implementation to call."
         return self.imp(*args, **kwargs)
         
     def aggregate(self, func: Callable) -> 'Feedback':
         return Feedback(imp=self.imp, selectors=self.selectors, agg=func)
-
-    """
-    @staticmethod
-    def selection_to_json(select: Selection) -> dict:
-        if isinstance(select, str):
-            return select
-        elif isinstance(select, Query):
-            return select._path
-        else:
-            raise ValueError(f"Unknown selection type {type(select)}.")
-
-    @staticmethod
-    def selection_of_json(obj: Union[List, str]) -> Selection:
-        if isinstance(obj, str):
-            return obj
-        elif isinstance(obj, (List, Tuple)):
-            return Query.Query.of_str_path(obj)  # TODO
-        else:
-            raise ValueError(f"Unknown selection encoding of type {type(obj)}.")
-
-    def to_json(self) -> dict:
-        selectors_json = {
-            k: Feedback.selection_to_json(v) for k, v in self.selectors.items()
-        }
-        return {
-            'selectors': selectors_json,
-            'imp_json': self.imp_json,
-            'feedback_id': self.feedback_id
-        }
-    """
 
     @staticmethod
     def of_feedback_definition(f: FeedbackDefinition):
@@ -253,29 +207,6 @@ class Feedback(FeedbackDefinition):
         agg_func = aggregator.load()
 
         return Feedback(imp=imp_func, agg=agg_func, **f.dict())
-
-    """
-    @staticmethod
-    def of_json(obj) -> 'Feedback':
-        assert 'imp_json' in obj,  "Feedback encoding has no 'imp_json' field."
-        assert "selectors" in obj, "Feedback encoding has no 'selectors' field."
-        
-        jobj = obj['imp_json']
-        imp_method_name = jobj['method_name']
-
-        selectors = {
-            k: Feedback.selection_of_json(v)
-            for k, v in obj['selectors'].items()
-        }
-        provider = Provider.of_json(jobj['provider_class'])
-
-        assert hasattr(
-            provider, imp_method_name
-        ), f"Provider {provider.__name__} has no feedback function {imp_method_name}."
-        imp = getattr(provider, imp_method_name)
-
-        return Feedback(imp, selectors=selectors)
-    """
 
     def on_prompt(self, arg: str = "text"):
         """
@@ -320,15 +251,19 @@ class Feedback(FeedbackDefinition):
 
         result_vals = []
 
+        feedback_calls = []
+
         feedback_result = FeedbackResult(
             feedback_definition_id = self.feedback_definition_id,
             record_id = record.record_id,
-            chain_id=chain_json['chain_id']
+            chain_id=chain_json['chain_id'],
+            name=self.name
         )
 
         try:
             total_tokens = 0
             total_cost = 0.0
+            
             for ins in self.extract_selection(chain=chain_json, record=record):
 
                 # TODO: Do this only if there is an openai model inside the chain:
@@ -337,6 +272,9 @@ class Feedback(FeedbackDefinition):
                     result_val = self.imp(**ins)
                     result_vals.append(result_val)
 
+                    feedback_call = FeedbackCall(args=ins, ret=result_val)
+                    feedback_calls.append(feedback_call)
+
                     total_tokens += cb.total_tokens
                     total_cost += cb.total_cost
                 
@@ -344,11 +282,10 @@ class Feedback(FeedbackDefinition):
             result = self.agg(result_vals)
 
             feedback_result.update(
-                results_json={
-                    self.name: result
-                },
+                result = result,
                 status=FeedbackResultStatus.DONE,
-                cost=Cost(n_tokens=total_tokens, cost=total_cost)
+                cost=Cost(n_tokens=total_tokens, cost=total_cost),
+                calls = feedback_calls
             )
 
             return feedback_result
@@ -368,7 +305,8 @@ class Feedback(FeedbackDefinition):
             feedback_definition_id = self.feedback_definition_id,
             feedback_result_id = feedback_result_id,
             record_id = record_id,
-            chain_id = chain_id
+            chain_id = chain_id,
+            name = self.name
         )
 
         if feedback_result_id is None:
