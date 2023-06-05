@@ -383,11 +383,16 @@ class FeedbackResultStatus(Enum):
     DONE = "done"
 
 
-class FeedbackResult(SerialModel):
-    record_id: RecordID
-    chain_id: ChainID
+class FeedbackCall(SerialModel):
+    args: Dict[str, str]
+    ret: float
 
+class FeedbackResult(SerialModel):
     feedback_result_id: FeedbackResultID
+
+    record_id: RecordID
+
+    chain_id: ChainID
 
     feedback_definition_id: Optional[FeedbackDefinitionID] = None
 
@@ -396,13 +401,15 @@ class FeedbackResult(SerialModel):
 
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
 
-    error: Optional[str] = None  # if there was an error
-
-    results_json: JSON = pydantic.Field(default_factory=dict) # keeping unrestricted in type for now
-
     cost: Cost = pydantic.Field(default_factory=Cost)
 
     tags: str = ""
+
+    name: str
+
+    calls: Sequence[FeedbackCall] = []
+    result: Optional[float] = None # final result, potentially aggregating multiple calls
+    error: Optional[str] = None  # if there was an error
 
     def __init__(
         self,
