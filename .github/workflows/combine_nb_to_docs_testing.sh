@@ -26,5 +26,6 @@ sed -i "/\#$/d" quickstart.py all_tools.py
 sed -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" quickstart.py all_tools.py
 
 # Move all generated files to the generated_files folder
+cp all_tools.md ../../trulens_eval/README.md
 mv all_tools* ../../trulens_eval/generated_files/
 mv quickstart.py ../../trulens_eval/generated_files/
