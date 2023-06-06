@@ -312,12 +312,12 @@ class TruChain(LangChainModel):
         elif self.feedback_mode in [FeedbackMode.WITH_CHAIN,
                                     FeedbackMode.WITH_CHAIN_THREAD]:
 
-            results = self.tru.run_feedback_functions(
+            feedback_results = self.tru.run_feedback_functions(
                 record=record, feedback_functions=self.feedbacks, chain=self
             )
 
-            for result in results:
-                self.tru.add_feedback(result)
+            for feedback_result in feedback_results:
+                self.tru.add_feedback(feedback_result)
 
     def _handle_error(self, record: Record, error: Exception):
         if self.db is None:
