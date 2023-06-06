@@ -1,37 +1,5 @@
 """
 # Feedback Functions
-
-Initialize feedback function providers:
-
-```python
-    hugs = Huggingface()
-    openai = OpenAI()
-```
-
-Run feedback functions. See examples below on how to create them:
-
-```python
-    feedbacks = tru.run_feedback_functions(
-        chain=chain,
-        record=record,
-        feedback_functions=[f_lang_match, f_qs_relevance]
-    )
-```
-
-## Examples:
-
-Non-toxicity of response:
-
-```python
-    f_non_toxic = Feedback(hugs.not_toxic).on_response()
-```
-
-Language match feedback function:
-
-```python
-    f_lang_match = Feedback(hugs.language_match).on(text1="prompt", text2="response")
-```
-
 """
 
 from datetime import datetime
@@ -79,6 +47,8 @@ from trulens_eval.util import TP
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
 default_pass_fail_color_threshold = 0.5
+
+logger = logging.getLogger(__name__)
 
 
 def check_provider(cls_or_name: Union[Type, str]) -> None:

@@ -16,7 +16,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 # ### Import from LangChain and TruLens
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru
+from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
 tru = Tru()
 
 # imports from langchain to build app
@@ -58,7 +58,7 @@ hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
 f_lang_match = Feedback(hugs.language_match).on(
-    text1="prompt", text2="response"
+    text1=Query.RecordInput, text2=Query.RecordOutput
 )
 
 # ## Instrument chain for logging with TruLens
@@ -86,7 +86,7 @@ tru.run_dashboard() # open a local streamlit app to explore
 # 
 # Note: Average feedback values are returned and printed in a range from 0 (worst) to 1 (best).
 # 
-# ![Chain Leaderboard](Assets/image/Leaderboard.png)
+# ![Chain Leaderboard](https://www.trulens.org/Assets/image/Leaderboard.png)
 # 
 # To dive deeper on a particular chain, click "Select Chain".
 # 
@@ -96,13 +96,13 @@ tru.run_dashboard() # open a local streamlit app to explore
 # 
 # The evaluations tab provides record-level metadata and feedback on the quality of your LLM application.
 # 
-# ![Evaluations](Assets/image/Leaderboard.png)
+# ![Evaluations](https://www.trulens.org/Assets/image/Leaderboard.png)
 # 
 # ### Deep dive into full chain metadata
 # 
 # Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain.
 # 
-# ![Explore a Chain](Assets/image/Chain_Explore.png)
+# ![Explore a Chain](https://www.trulens.org/Assets/image/Chain_Explore.png)
 # 
 # If you prefer the raw format, you can quickly get it using the "Display full chain json" or "Display full record json" buttons at the bottom of the page.
 
