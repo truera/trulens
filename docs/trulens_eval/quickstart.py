@@ -17,7 +17,6 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 
 # Imports main tools:
 from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
-
 tru = Tru()
 
 # imports from langchain to build app
