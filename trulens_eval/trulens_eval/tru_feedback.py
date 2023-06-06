@@ -1,37 +1,6 @@
 """
 # Feedback Functions
 
-Initialize feedback function providers:
-
-```python
-    hugs = Huggingface()
-    openai = OpenAI()
-```
-
-Run feedback functions. See examples below on how to create them:
-
-```python
-    feedbacks = tru.run_feedback_functions(
-        chain=chain,
-        record=record,
-        feedback_functions=[f_lang_match, f_qs_relevance]
-    )
-```
-
-## Examples:
-
-Non-toxicity of response:
-
-```python
-    f_non_toxic = Feedback(hugs.not_toxic).on_response()
-```
-
-Language match feedback function:
-
-```python
-    f_lang_match = Feedback(hugs.language_match).on(text1="prompt", text2="response")
-```
-
 """
 
 from datetime import datetime
@@ -81,6 +50,9 @@ PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 default_pass_fail_color_threshold = 0.5
 
 
+logger = logging.getLogger(__name__)
+
+
 def check_provider(cls_or_name: Union[Type, str]) -> None:
     if isinstance(cls_or_name, str):
         cls_name = cls_or_name
@@ -117,7 +89,7 @@ class Feedback(FeedbackDefinition):
 
         if imp is not None:
             # These are for serialization to/from json and for db storage.
-            kwargs['implementation'] = FunctionOrMethod.of_callable(imp)
+            kwargs['implementation'] = FunctionOrMethod.of_callable(imp, loadable=True)
         else:
             if "implementation" in kwargs:
                 imp: Callable = FunctionOrMethod.pick(
@@ -419,6 +391,7 @@ def _re_1_10_rating(str_val):
 class Provider(SerialModel):
     endpoint: Any = pydantic.Field(exclude=True)
 
+    """
     @staticmethod
     def of_json(obj: Dict) -> 'Provider':
         cls_name = obj['class_name']
@@ -441,6 +414,7 @@ class Provider(SerialModel):
         }
         obj.update(**extras)
         return obj
+    """
 
 
 class OpenAI(Provider):
@@ -461,8 +435,10 @@ class OpenAI(Provider):
         self.model_engine = model_engine
         self.endpoint = Endpoint(name="openai")
 
+    """
     def to_json(self) -> Dict:
         return Provider.to_json(self, model_engine=self.model_engine)
+    """
 
     def _moderation(self, text: str):
         return self.endpoint.run_me(
@@ -882,8 +858,10 @@ class Cohere(Provider):
         Cohere().endpoint = Endpoint(name="cohere")
         self.model_engine = model_engine
 
+    """
     def to_json(self) -> Dict:
         return Provider.to_json(self, model_engine=self.model_engine)
+    """
 
     def sentiment(
         self,
