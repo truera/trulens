@@ -87,7 +87,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 #
 # Note: Average feedback values are returned and printed in a range from 0 (worst) to 1 (best).
 #
-# ![Chain Leaderboard](Assets/image/Leaderboard.png)
+# ![Chain Leaderboard](https://www.trulens.org/Assets/image/Leaderboard.png)
 #
 # To dive deeper on a particular chain, click "Select Chain".
 #
@@ -97,13 +97,13 @@ tru.run_dashboard()  # open a local streamlit app to explore
 #
 # The evaluations tab provides record-level metadata and feedback on the quality of your LLM application.
 #
-# ![Evaluations](Assets/image/Leaderboard.png)
+# ![Evaluations](https://www.trulens.org/Assets/image/Leaderboard.png)
 #
 # ### Deep dive into full chain metadata
 #
 # Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain.
 #
-# ![Explore a Chain](Assets/image/Chain_Explore.png)
+# ![Explore a Chain](https://www.trulens.org/Assets/image/Chain_Explore.png)
 #
 # If you prefer the raw format, you can quickly get it using the "Display full chain json" or "Display full record json" buttons at the bottom of the page.
 
