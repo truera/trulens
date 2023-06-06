@@ -14,12 +14,6 @@ cat intro.md break.md all_tools.md > README.md
 jupyter nbconvert --to script quickstart.ipynb
 jupyter nbconvert --to script all_tools.ipynb
 
-
-# Move all generated files to the generated_files folder
-mv README.md ../../trulens_eval/README.md
-mv all_tools* ../../trulens_eval/generated_files/
-mv quickstart.py ../../trulens_eval/generated_files/
-
 # gnu sed/gsed needed on mac:
 SED=`which -a gsed sed | head -n1`
 
@@ -33,3 +27,7 @@ $SED -i "/\# In\[/d" quickstart.py all_tools.py
 $SED -i "/\#$/d" quickstart.py all_tools.py
 ## Collapse multiple empty line from sed replacements with a single line
 $SED -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" quickstart.py all_tools.py
+
+# Move all generated files to the generated_files folder
+mv README.md ../../trulens_eval/README.md
+mv all_tools* quickstart.py ../../trulens_eval/generated_files/
