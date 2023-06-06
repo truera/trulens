@@ -18,12 +18,16 @@ stmetricdelta_hidearrow = """
 
 cellstyle_jscode = """
     function(params) {
-        if (parseFloat(params.value) < """ + str(default_pass_fail_color_threshold) + """) {
+        if (parseFloat(params.value) < """ + str(
+    default_pass_fail_color_threshold
+) + """) {
             return {
                 'color': 'black',
                 'backgroundColor': '#FCE6E6'
             }
-        } else if (parseFloat(params.value) >= """ + str(default_pass_fail_color_threshold) + """) {
+        } else if (parseFloat(params.value) >= """ + str(
+    default_pass_fail_color_threshold
+) + """) {
             return {
                 'color': 'black',
                 'backgroundColor': '#4CAF50'

@@ -65,20 +65,6 @@ llm_response = chain(prompt_input)
 display(llm_response)
 ```
 
-    
-    
-    [1m> Entering new LLMChain chain...[0m
-    Prompt after formatting:
-    [32;1m[1;3mHuman: Provide a helpful response with relevant background information for the following: ¿que hora es?[0m
-    
-    [1m> Finished chain.[0m
-
-
-
-    {'prompt': '¿que hora es?',
-     'text': '\n\nLa hora actual es [hora actual]. La hora es la medida en que la Tierra se divide en 24 horas del día. Una hora es un intervalo de tiempo que equivale a 60 minutos. Un minuto es una fracción de 60 segundos. El tiempo es medido en relojes, relojes digitales, teléfonos celulares y otros dispositivos.'}
-
-
 ## Initialize Feedback Function(s)
 
 
@@ -92,10 +78,6 @@ f_lang_match = Feedback(hugs.language_match).on(
 )
 ```
 
-
-    huggingface api: 0requests [00:00, ?requests/s]
-
-
 ## Instrument chain for logging with TruLens
 
 
@@ -106,10 +88,6 @@ truchain = TruChain(chain,
     tru = tru)
 ```
 
-    ✅ chain Chain3_ChatApplication -> default.sqlite
-    ✅ feedback def. feedback_hash_26c84c76d907d808c36028e024af63c0 -> default.sqlite
-
-
 
 ```python
 # Instrumented chain can operate like the original:
@@ -117,22 +95,6 @@ llm_response = truchain(prompt_input)
 
 display(llm_response)
 ```
-
-    
-    
-    [1m> Entering new LLMChain chain...[0m
-    
-    [1m> Finished chain.[0m
-
-
-
-    {'prompt': '¿que hora es?',
-     'text': '\n\nLa hora actual es la hora exacta del reloj. Dependiendo de dónde te encuentres, la hora puede ser diferente porque hay diferentes husos horarios en diferentes partes del mundo.'}
-
-
-    ✅ record record_hash_c6e856f362dc9a30bc823182eeb335b4 from Chain3_ChatApplication -> default.sqlite
-    ✅ feedback feedback_hash_26c84c76d907d808c36028e024af63c0 on record_hash_c6e856f362dc9a30bc823182eeb335b4 -> default.sqlite
-
 
 ## Explore in a Dashboard
 
@@ -144,28 +106,13 @@ tru.run_dashboard() # open a local streamlit app to explore
 # tru.stop_dashboard() # stop if needed
 ```
 
-
-
-
-    <Popen: returncode: None args: ['streamlit', 'run', '--server.headless=True'...>
-
-
-
-    
-      You can now view your Streamlit app in your browser.
-    
-      Network URL: http://192.168.4.23:8502
-      External URL: http://100.36.49.61:8502
-    
-
-
 ### Chain Leaderboard
 
 Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics including cost and average feedback value across all of your LLM apps using the chain leaderboard. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up.
 
 Note: Average feedback values are returned and displayed in a range from 0 (worst) to 1 (best).
 
-![Chain Leaderboard](Assets/image/Leaderboard.png)
+![Chain Leaderboard](https://www.trulens.org/Assets/image/Leaderboard.png)
 
 To dive deeper on a particular chain, click "Select Chain".
 
@@ -175,13 +122,13 @@ To learn more about the performance of a particular chain or LLM model, we can s
 
 The evaluations tab provides record-level metadata and feedback on the quality of your LLM application.
 
-![Evaluations](Assets/image/Leaderboard.png)
+![Evaluations](https://www.trulens.org/Assets/image/Leaderboard.png)
 
 ### Deep dive into full chain metadata
 
 Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain.
 
-![Explore a Chain](Assets/image/Chain_Explore.png)
+![Explore a Chain](https://www.trulens.org/Assets/image/Chain_Explore.png)
 
 If you prefer the raw format, you can quickly get it using the "Display full chain json" or "Display full record json" buttons at the bottom of the page.
 
@@ -193,63 +140,6 @@ Note: Feedback functions evaluated in the deferred manner can be seen in the "Pr
 ```python
 tru.get_records_and_feedback(chain_ids=[])[0] # pass an empty list of chain_ids to get all
 ```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>record_id</th>
-      <th>chain_id</th>
-      <th>input</th>
-      <th>output</th>
-      <th>record_json</th>
-      <th>tags</th>
-      <th>ts</th>
-      <th>total_tokens</th>
-      <th>total_cost</th>
-      <th>chain_json</th>
-      <th>feedback_id</th>
-      <th>language_match</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>record_hash_c6e856f362dc9a30bc823182eeb335b4</td>
-      <td>Chain3_ChatApplication</td>
-      <td>¿que hora es?</td>
-      <td>\n\nLa hora actual es la hora exacta del reloj...</td>
-      <td>{"chain": {"_call": {"args": {"inputs": {"prom...</td>
-      <td>dev</td>
-      <td>2023-05-30 13:31:25.534667</td>
-      <td>84</td>
-      <td>0.00168</td>
-      <td>{"memory": null, "callbacks": null, "callback_...</td>
-      <td>feedback_hash_26c84c76d907d808c36028e024af63c0</td>
-      <td>0.993324</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
 
 # Logging
 
@@ -288,7 +178,7 @@ truchain("This will be automatically logged.")
 
 
 ```python
-tc = tru_chain.TruChain(chain, chain_id='Chain1_ChatApplication)
+tc = tru_chain.TruChain(chain, chain_id='Chain1_ChatApplication')
 ```
 
 ### Set up logging and instrumentation
