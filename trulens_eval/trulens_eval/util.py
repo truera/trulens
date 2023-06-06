@@ -141,9 +141,9 @@ def json_default(obj: Any) -> str:
 
     #if isinstance(obj, Enum):
     #    return obj.name
-    
+
     #if isinstance(obj, dict):
-    #    return 
+    #    return
 
     #if isinstance(obj, pydantic.BaseModel):
     #    try:
