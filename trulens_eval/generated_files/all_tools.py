@@ -176,7 +176,7 @@ print(feedback_results)
 
 # After capturing feedback, you can then log it to your local database.
 
-tru.add_feedback(feedback_results)
+tru.add_feedbacks(feedback_results)
 
 # ### Out-of-band Feedback evaluation
 # 
