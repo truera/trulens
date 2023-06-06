@@ -219,7 +219,7 @@ truchain("This will be automatically logged.")
 
 
 ```python
-tc = tru_chain.TruChain(chain, chain_id='Chain1_ChatApplication')
+tc = TruChain(chain, chain_id='Chain1_ChatApplication')
 ```
 
 ### Set up logging and instrumentation
