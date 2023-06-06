@@ -159,7 +159,7 @@ tru.add_chain(chain=truchain)
 
 tru.add_record(
     prompt=prompt_input, # prompt input
-    response=gpt3_response['text'], # LLM response
+    response=gpt3_response, # LLM response
     record_json=record # record is returned by the TruChain wrapper
 )
 
