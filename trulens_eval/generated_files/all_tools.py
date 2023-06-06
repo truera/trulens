@@ -153,7 +153,7 @@ gpt3_response, record = tc(prompt_input)
 
 # We can log the records but first we need to log the chain itself.
 
-tru.add_chain(chain_json=truchain.json)
+tru.add_chain(chain=truchain)
 
 # Then we can log the record:
 
