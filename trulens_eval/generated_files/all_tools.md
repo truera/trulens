@@ -20,7 +20,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru
+from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
 tru = Tru()
 
 # imports from langchain to build app
@@ -74,7 +74,7 @@ hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
 f_lang_match = Feedback(hugs.language_match).on(
-    text1="prompt", text2="response"
+    text1=Query.RecordInput, text2=Query.RecordOutput
 )
 ```
 
