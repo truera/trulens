@@ -383,18 +383,19 @@ class LocalSQLite(TruDB):
         """
 
         vals = (
-                feedback_result.feedback_result_id,
-                feedback_result.record_id,
-                feedback_result.chain_id, 
-                feedback_result.feedback_definition_id, 
-                feedback_result.last_ts.timestamp(),
-                feedback_result.status.value,
-                feedback_result.error,
-                json_str_of_obj(dict(calls=feedback_result.calls)), # extra dict is needed json's root must be a dict
-                feedback_result.result,
-                feedback_result.name,
-                json_str_of_obj(feedback_result.cost)
-            )
+            feedback_result.feedback_result_id,
+            feedback_result.record_id,
+            feedback_result.chain_id,
+            feedback_result.feedback_definition_id,
+            feedback_result.last_ts.timestamp(),
+            feedback_result.status.value,
+            feedback_result.error,
+            json_str_of_obj(dict(calls=feedback_result.calls)
+                           ),  # extra dict is needed json's root must be a dict
+            feedback_result.result,
+            feedback_result.name,
+            json_str_of_obj(feedback_result.cost)
+        )
 
         self._insert_or_replace_vals(table=self.TABLE_FEEDBACKS, vals=vals)
 
@@ -485,8 +486,10 @@ class LocalSQLite(TruDB):
         def map_row(row):
             # NOTE: pandas dataframe will take in the various classes below but the
             # agg table used in UI will not like it. Sending it JSON/dicts instead.
-            
-            row.calls_json = json.loads(row.calls_json)['calls']  # calls_json (sequence of FeedbackCall)
+
+            row.calls_json = json.loads(
+                row.calls_json
+            )['calls']  # calls_json (sequence of FeedbackCall)
             row.cost_json = json.loads(row.cost_json)  # cost_json (Cost)
             row.feedback_json = json.loads(
                 row.feedback_json
@@ -578,7 +581,9 @@ class LocalSQLite(TruDB):
         def expand_results(row):
             result_cols.add(row['name'])
             row[row['name']] = row.result
-            row[row['name'] + "_calls"] = json.loads(row.calls_json)['calls'] # extra step to keep json root a dict
+            row[row['name'] + "_calls"] = json.loads(
+                row.calls_json
+            )['calls']  # extra step to keep json root a dict
             return pd.Series(row)
 
         df_results = df_results.apply(expand_results, axis=1)
@@ -596,10 +601,9 @@ class LocalSQLite(TruDB):
             else:
                 return np.nan
 
-        df_results = df_results.groupby("record_id").agg(
-            merge_feedbacks
-        ).reset_index()
-            
+        df_results = df_results.groupby("record_id").agg(merge_feedbacks
+                                                        ).reset_index()
+
         assert "record_id" in df_results.columns
         assert "record_id" in df_records.columns
 

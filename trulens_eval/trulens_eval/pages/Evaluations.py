@@ -22,7 +22,6 @@ from trulens_eval import Tru
 from trulens_eval.ux.styles import cellstyle_jscode
 from trulens_eval.tru_feedback import default_pass_fail_color_threshold
 
-
 st.set_page_config(page_title="Evaluations", layout="wide")
 
 st.title("Evaluations")
@@ -91,8 +90,12 @@ else:
         for feedback_col in evaluations_df.columns.drop(['chain_id', 'ts',
                                                          'total_tokens',
                                                          'total_cost']):
-            gb.configure_column(feedback_col, cellStyle=cellstyle_jscode, hide=feedback_col.endswith("_calls"))
-        
+            gb.configure_column(
+                feedback_col,
+                cellStyle=cellstyle_jscode,
+                hide=feedback_col.endswith("_calls")
+            )
+
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
@@ -135,19 +138,31 @@ else:
                 feedback_result = row[fcol]
                 feedback_calls = row[f"{fcol}_calls"]
 
-
                 def display_feedback_call(call):
+
                     def highlight(s):
-                        return ['background-color: #4CAF50']*len(s) if s.result >= default_pass_fail_color_threshold else ['background-color: #FCE6E6']*len(s)
+                        return ['background-color: #4CAF50'] * len(
+                            s
+                        ) if s.result >= default_pass_fail_color_threshold else [
+                            'background-color: #FCE6E6'
+                        ] * len(s)
+
                     if (len(call) > 0):
-                        df = pd.DataFrame.from_records([call[i]["args"] for i in range(len(call))])
-                        df["result"] = pd.DataFrame([float(call[i]["ret"]) for i in range(len(call))])
-                        st.dataframe(df.style.apply(highlight, axis=1).format("{:.2}", subset=["result"]))
+                        df = pd.DataFrame.from_records(
+                            [call[i]["args"] for i in range(len(call))]
+                        )
+                        df["result"] = pd.DataFrame(
+                            [float(call[i]["ret"]) for i in range(len(call))]
+                        )
+                        st.dataframe(
+                            df.style.apply(highlight, axis=1
+                                          ).format("{:.2}", subset=["result"])
+                        )
                     else:
                         st.text("No feedback details.")
 
-                    
-                with st.expander(f"{feedback_name} = {feedback_result}", expanded=True):
+                with st.expander(f"{feedback_name} = {feedback_result}",
+                                 expanded=True):
                     display_feedback_call(feedback_calls)
 
             record_str = selected_rows['record_json'][0]

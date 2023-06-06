@@ -12,7 +12,6 @@ from trulens_eval import tru_db
 from trulens_eval.ux import styles
 from trulens_eval.tru_feedback import default_pass_fail_color_threshold
 
-
 st.set_page_config(page_title="Leaderboard", layout="wide")
 
 from trulens_eval.ux.add_logo import add_logo

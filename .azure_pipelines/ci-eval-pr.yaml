@@ -1,15 +1,7 @@
-trigger:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - trulens_eval
-      - docs/trulens_eval/*.ipynb
-
 pr:
   branches:
     include:
+      - main
       - releases/*
   paths:
     include:
@@ -18,17 +10,15 @@ pr:
 
 
 jobs:
-  - job: quickstartTests
+  - job: PRBranchProtect
     pool:
       vmImage: "ubuntu-latest"
     timeoutInMinutes: 30
 
     strategy:
       matrix:
-        docs_notebooks:
+        default:
           condaEnvFileSuffix: "trulens-llm"
-          requirementsFile: "tests/docs_notebooks/requirements.txt"
-          testSubdirectory: "tests/docs_notebooks"
 
     steps:
       - checkout: self
@@ -48,16 +38,7 @@ jobs:
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
-          cd ./trulens_eval
-          pip install -e .
-          pip install -r $(requirementsFile)
           pip install yapf==0.32.0
-          pip install ipykernel
-          python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
-        displayName: Install pip package
-      - bash: |
-          set -e
-          source activate $(condaEnvFileSuffix)
           ./format.sh
         displayName: Format Code
       - bash: |
@@ -69,12 +50,3 @@ jobs:
             git diff
           fi
         displayName: NoDiffCheck
-      - bash: |
-          source activate $(condaEnvFileSuffix)
-          pip install pytest==7.0.1 pytest-azurepipelines
-          cd ./trulens_eval
-          python -m pytest $(testSubdirectory)
-        displayName: Run unit tests
-        env:
-          OPENAI_API_KEY: $(OPENAI_API_KEY)
-          HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
