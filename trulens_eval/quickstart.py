@@ -1,1 +1,1 @@
-../../trulens_eval/generated_files/quickstart.py
+./generated_files/quickstart.py
