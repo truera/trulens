@@ -98,10 +98,10 @@ class Tru(SingletonPerName):
 
         Parameters:
 
-            record_json (JSON): The record on which to evaluate the feedback
+            record (Record): The record on which to evaluate the feedback
             functions.
 
-            chain_json (JSON, optional): The chain that produced the given record.
+            chain (Model, optional): The chain that produced the given record.
             If not provided, it is looked up from the given database `db`.
 
             feedback_functions (Sequence[Feedback]): A collection of feedback
