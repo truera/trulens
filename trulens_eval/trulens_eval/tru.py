@@ -17,6 +17,8 @@ from trulens_eval.tru_feedback import Feedback
 from trulens_eval.schema import FeedbackResult, Model, Record
 from trulens_eval.util import TP, SingletonPerName
 
+logger = logging.getLogger(__name__)
+
 
 class Tru(SingletonPerName):
     """
@@ -134,7 +136,7 @@ class Tru(SingletonPerName):
         for func in feedback_functions:
             evals.append(
                 TP().promise(
-                    lambda f: f.run_on_record(chain=chain, record=record), func
+                    lambda f: f.run(chain=chain, record=record), func
                 )
             )
 
