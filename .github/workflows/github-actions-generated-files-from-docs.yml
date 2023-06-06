@@ -30,7 +30,7 @@ jobs:
         with:
           commit_message: Automated File Generation from Docs Notebook Changes 
           branch: generated_files_branch_${{ steps.date.outputs.date }}
-          file_pattern: 'docs/trulens_eval/*'
+          file_pattern: 'trulens_eval/generated_files/*'
           status_options: '--untracked-files=normal'
           add_options: '-A'
           skip_dirty_check: true   
