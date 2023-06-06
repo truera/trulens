@@ -141,7 +141,7 @@ truchain("This will be automatically logged.")
 # 
 # ### Wrap with TruChain to instrument your chain
 
-tc = tru_chain.TruChain(chain, chain_id='Chain1_ChatApplication')
+tc = TruChain(chain, chain_id='Chain1_ChatApplication')
 
 # ### Set up logging and instrumentation
 # 
