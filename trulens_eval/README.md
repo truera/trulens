@@ -61,7 +61,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru
+from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query, FeedbackMode
 tru = Tru()
 
 # imports from langchain to build app
@@ -115,7 +115,7 @@ hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
 f_lang_match = Feedback(hugs.language_match).on(
-    text1="prompt", text2="response"
+    text1=Query.RecordInput, text2=Query.RecordOutput
 )
 ```
 
@@ -235,13 +235,11 @@ gpt3_response, record = tc(prompt_input)
 
 We can log the records but first we need to log the chain itself.
 
-
 ```python
 tru.add_chain(chain_json=truchain.json)
 ```
 
 Then we can log the record:
-
 
 ```python
 tru.add_record(
@@ -259,11 +257,9 @@ To get feedback on the quality of your LLM, you can use any of the provided feed
 
 To assess your LLM quality, you can provide the feedback functions to `tru.run_feedback()` in a list provided to `feedback_functions`.
 
-
-
 ```python
 feedback_results = tru.run_feedback_functions(
-    record_json=record,
+    record=record,
     feedback_functions=[f_lang_match]
 )
 display(feedback_results)
@@ -289,7 +285,7 @@ truchain: TruChain = TruChain(
     chain_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match],
     tru=tru,
-    feedback_mode="deferred"
+    feedback_mode=FeedbackMode.DEFERRED
 )
 
 tru.start_evaluator()
