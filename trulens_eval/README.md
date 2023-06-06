@@ -244,11 +244,7 @@ Then we can log the record:
 
 
 ```python
-tru.add_record(
-    prompt=prompt_input, # prompt input
-    response=gpt3_response, # LLM response
-    record_json=record # record is returned by the TruChain wrapper
-)
+tru.add_record(record)
 ```
 
 ### Evaluate Quality
