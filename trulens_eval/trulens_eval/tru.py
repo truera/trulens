@@ -151,25 +151,25 @@ class Tru(SingletonPerName):
 
         self.db.insert_chain(chain=chain)
 
-    def add_feedback(self, result: FeedbackResult, **kwargs) -> None:
+    def add_feedback(self, feedback_result: FeedbackResult, **kwargs) -> None:
         """
         Add a single feedback result to the database.
         """
 
-        if result is None:
-            result = FeedbackResult(**kwargs)
+        if feedback_result is None:
+            feedback_result = FeedbackResult(**kwargs)
         else:
-            result.update(**kwargs)
+            feedback_result.update(**kwargs)
 
-        self.db.insert_feedback(result=result)
+        self.db.insert_feedback(feedback_result=feedback_result)
 
-    def add_feedbacks(self, results: Iterable[FeedbackResult]) -> None:
+    def add_feedbacks(self, feedback_results: Iterable[FeedbackResult]) -> None:
         """
         Add multiple feedback results to the database.
         """
 
-        for result in results:
-            self.add_feedback(result=result)
+        for feedback_result in feedback_results:
+            self.add_feedback(feedback_result=feedback_result)
 
     def get_chain(self, chain_id: Optional[str] = None) -> JSON:
         """
