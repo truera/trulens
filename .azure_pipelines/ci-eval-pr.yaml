@@ -17,10 +17,8 @@ jobs:
 
     strategy:
       matrix:
-        docs_notebooks:
+        default:
           condaEnvFileSuffix: "trulens-llm"
-          requirementsFile: "tests/docs_notebooks/requirements.txt"
-          testSubdirectory: "tests/docs_notebooks"
 
     steps:
       - checkout: self
@@ -41,15 +39,7 @@ jobs:
           set -e
           source activate $(condaEnvFileSuffix)
           cd ./trulens_eval
-          pip install -e .
-          pip install -r $(requirementsFile)
           pip install yapf==0.32.0
-          pip install ipykernel
-          python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
-        displayName: Install pip package
-      - bash: |
-          set -e
-          source activate $(condaEnvFileSuffix)
           ./format.sh
         displayName: Format Code
       - bash: |
