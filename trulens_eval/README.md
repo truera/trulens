@@ -61,7 +61,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
+from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query, Provider
 tru = Tru()
 
 # imports from langchain to build app
@@ -344,8 +344,7 @@ The process for adding new feedback functions is:
 
 ```python
 class StandAlone(Provider):
-    def __init__(self):
-        pass
+    pass
 ```
 
 2. Add a new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).
