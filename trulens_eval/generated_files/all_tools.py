@@ -16,7 +16,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 # ### Import from LangChain and TruLens
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
+from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query, Provider
 tru = Tru()
 
 # imports from langchain to build app
@@ -245,8 +245,7 @@ tru.stop_evaluator()
 # 1. Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class:
 
 class StandAlone(Provider):
-    def __init__(self):
-        pass
+    pass
 
 # 2. Add a new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).
 
