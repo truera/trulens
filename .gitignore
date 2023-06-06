@@ -38,8 +38,3 @@ imagenet_class_index.json.*
 
 config.toml
 credentials.toml
-
-# Generated Files
-docs/trulens_eval/all_tools*
-docs/trulens_eval/quickstart.py
-docs/trulens_eval/break.md

@@ -25,3 +25,6 @@ sed -i "/\#$/d" quickstart.py all_tools.py
 ## Collapse multiple empty line from sed replacements with a single line
 sed -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" quickstart.py all_tools.py
 
+# Move all generated files to the generated_files folder
+mv all_tools* ../../trulens_eval/generated_files/
+mv quickstart.py ../../trulens_eval/generated_files/
