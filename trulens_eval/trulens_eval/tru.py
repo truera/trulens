@@ -287,7 +287,7 @@ class Tru(SingletonPerName):
             Tru.dashboard_proc = None
 
     def run_dashboard(
-        self, force: bool, _dev: Optional[Path] = None
+        self, force: bool = False, _dev: Optional[Path] = None
     ) -> Process:
         """ Runs a streamlit dashboard to view logged results and chains
 
