@@ -17,6 +17,7 @@ from multiprocessing.context import TimeoutError
 from multiprocessing.pool import AsyncResult
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
+from pprint import PrettyPrinter
 from queue import Queue
 from threading import Thread
 from time import sleep
@@ -32,6 +33,7 @@ import pandas as pd
 import pydantic
 
 logger = logging.getLogger(__name__)
+pp = PrettyPrinter()
 
 T = TypeVar("T")
 
@@ -166,6 +168,9 @@ def jsonify(obj: Any, dicted=None) -> JSON:
 
     dicted = dicted or dict()
 
+    if id(obj) in dicted:
+        return {'_TRULENS_CIRCULAR_REFERENCE': id(obj)}
+
     if isinstance(obj, JSON_BASES):
         return obj
 
@@ -174,12 +179,7 @@ def jsonify(obj: Any, dicted=None) -> JSON:
 
     if type(obj) in pydantic.json.ENCODERS_BY_TYPE:
         return obj
-    # if isinstance(obj, Enum):
-    #    return str(obj)
-
-    if id(obj) in dicted:
-        return {'_CIRCULAR_REFERENCE': id(obj)}
-
+    
     new_dicted = {k: v for k, v in dicted.items()}
 
     if isinstance(obj, Enum):
@@ -206,15 +206,24 @@ def jsonify(obj: Any, dicted=None) -> JSON:
         return temp
 
     elif isinstance(obj, pydantic.BaseModel):
-        temp = {}
-        new_dicted[id(obj)] = temp
-        temp.update(
-            {
-                k: jsonify(getattr(obj, k), dicted=new_dicted)
-                for k in obj.__fields__
-            }
-        )
-        return temp
+        try:
+            if not hasattr(obj.dict, "_instrumented"):
+                temp = obj.dict()
+                return temp
+            else:
+                raise Exception()
+        
+        except Exception:
+            logger.warning(f"pydantic model of type {type(obj)} refuses to be turned into dict.")
+            temp = {}
+            new_dicted[id(obj)] = temp
+            temp.update(
+                {
+                    k: jsonify(getattr(obj, k), dicted=new_dicted)
+                    for k in obj.__fields__
+                }
+            )
+            return temp
 
     else:
         logger.debug(
@@ -297,12 +306,12 @@ def all_objects(obj: Any,
 
     query = query or JSONPath()
 
+    yield (query, obj)
+
     if isinstance(obj, JSON_BASES):
-        yield (query, obj)
+        pass
 
     elif isinstance(obj, pydantic.BaseModel):
-        yield (query, obj)
-
         for k in obj.__fields__:
             v = getattr(obj, k)
             sub_query = query[k]
@@ -310,38 +319,31 @@ def all_objects(obj: Any,
                 yield res
 
     elif isinstance(obj, Dict):
-        yield (query, obj)
-
         for k, v in obj.items():
             sub_query = query[k]
             for res in all_objects(obj[k], sub_query):
                 yield res
 
     elif isinstance(obj, Sequence):
-        yield (query, obj)
-
         for i, v in enumerate(obj):
             sub_query = query[i]
             for res in all_objects(obj[i], sub_query):
                 yield res
 
+    elif isinstance(obj, Iterable):
+        print(f"Cannot create query for Iterable types like {obj.__class__.__name__} at query {query}. Convert the iterable to a sequence first.")
+        #raise RuntimeError(f"Cannot create query for Iterable types like {obj.__class__.__name__} at query {query}. Convert the iterable to a sequence first.")
+        
     else:
-        yield (query, obj)
+        print(f"Unhandled object type {obj} {type(obj)}")
+        # raise RuntimeError(f"Unhandled object type {obj} {type(obj)}")
 
 
 def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
     for q in leaf_queries(obj):
-        path_str = _query_str(q)
-        val = _project(q._path, obj)
+        path_str = str(q)
+        val = q(obj)
         yield (path_str, val)
-
-
-def matching_queries(obj: Any, match: Callable) -> Iterable[JSONPath]:
-    for q in all_queries(obj):
-        val = _project(q._path, obj)
-        if match(q, val):
-            yield q
-
 
 def matching_objects(obj: Any,
                      match: Callable) -> Iterable[Tuple[JSONPath, Any]]:
@@ -349,94 +351,9 @@ def matching_objects(obj: Any,
         if match(q, val):
             yield (q, val)
 
-
-def _query_str(query: JSONPath) -> str:
-
-    def render(ks):
-        if len(ks) == 0:
-            return ""
-
-        first = ks[0]
-        if len(ks) > 1:
-            rest = ks[1:]
-        else:
-            rest = ()
-
-        if isinstance(first, str):
-            return f".{first}{render(rest)}"
-        elif isinstance(first, int):
-            return f"[{first}]{render(rest)}"
-        else:
-            RuntimeError(
-                f"Don't know how to render path element {first} of type {type(first)}."
-            )
-
-    return "Record" + render(query._path)
-
-
-@staticmethod
-def set_in_json(query: JSONPath, in_json: JSON, val: JSON) -> JSON:
-    return _set_in_json(query._path, in_json=in_json, val=val)
-
-
-@staticmethod
-def _set_in_json(path, in_json: JSON, val: JSON) -> JSON:
-    if len(path) == 0:
-        if isinstance(in_json, Dict):
-            assert isinstance(val, Dict)
-            in_json = {k: v for k, v in in_json.items()}
-            in_json.update(val)
-            return in_json
-
-        assert in_json is None, f"Cannot set non-None json object: {in_json}"
-
-        return val
-
-    if len(path) == 1:
-        first = path[0]
-        rest = []
-    else:
-        first = path[0]
-        rest = path[1:]
-
-    if isinstance(first, str):
-        if isinstance(in_json, Dict):
-            in_json = {k: v for k, v in in_json.items()}
-            if not first in in_json:
-                in_json[first] = None
-        elif in_json is None:
-            in_json = {first: None}
-        else:
-            raise RuntimeError(
-                f"Do not know how to set path {path} in {in_json}."
-            )
-
-        in_json[first] = _set_in_json(
-            path=rest, in_json=in_json[first], val=val
-        )
-        return in_json
-
-    elif isinstance(first, int):
-        if isinstance(in_json, Sequence):
-            # In case it is some immutable sequence. Also copy.
-            in_json = list(in_json)
-        elif in_json is None:
-            in_json = []
-        else:
-            raise RuntimeError(
-                f"Do not know how to set path {path} in {in_json}."
-            )
-
-        while len(in_json) <= first:
-            in_json.append(None)
-
-        in_json[first] = _set_in_json(
-            path=rest, in_json=in_json[first], val=val
-        )
-        return in_json
-
-    else:
-        raise RuntimeError(f"Do not know how to set path {path} in {in_json}.")
+def matching_queries(obj: Any, match: Callable) -> Iterable[JSONPath]:
+    for q, _ in matching_objects(obj, match=match):
+        yield q
 
 
 # TODO: remove
@@ -489,6 +406,20 @@ class SerialModel(pydantic.BaseModel):
     """
     Trulens-specific additions on top of pydantic models. Includes utilities to help serialization mostly.
     """
+
+    @classmethod
+    def model_validate(cls, obj: Any, **kwargs):
+        print("serial_model.model_validate")
+        if isinstance(obj, dict):
+            if "class_info" in obj:
+                print(f"creating model with class info from {obj}")
+                cls = Class(**obj['class_info'])
+                del obj['class_info']
+                model = cls.model_validate(obj, **kwargs)
+
+                return WithClassInfo.of_model(model=model, cls=cls)
+            else:
+                return super().model_validate(obj, **kwargs)
 
     def update(self, **d):
         for k, v in d.items():
@@ -809,6 +740,19 @@ class JSONPath(SerialModel):
     def __len__(self):
         return len(self.path)
 
+    def is_prefix_of(self, other: JSONPath):
+        p = self.path
+        pother = other.path
+
+        if len(p) > len(pother):
+            return False
+        
+        for s1, s2 in zip(p, pother):
+            if s1 != s2:
+                return False
+            
+        return True
+
     #@staticmethod
     #def parse_obj(d):
     #    path = tuple(map(Step.parse_obj, d['path']))
@@ -971,17 +915,11 @@ class TP(SingletonPerName):  # "thread processing"
         )
         return prom
 
-        # thread = Thread(target=func, args=args, kwargs=kwargs)
-        # thread.start()
-        # self.pre_run_stacks[thread_id] = stack()
-
     def runlater(self, func: Callable, *args, **kwargs) -> None:
-        # prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
         prom = self._thread_starter(func, args, kwargs)
         self.promises.put(prom)
 
     def promise(self, func: Callable[..., T], *args, **kwargs) -> AsyncResult:
-        # prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
         prom = self._thread_starter(func, args, kwargs)
         self.promises.put(prom)
 
@@ -1049,7 +987,7 @@ def get_local_in_call_stack(
         if id(fi.frame.f_code) == id(TP()._thread_target_wrapper.__code__):
             logger.debug(
                 "Found thread starter frame. "
-                "Will walk over frames in prior to thread start."
+                "Will walk over frames prior to thread start."
             )
             locs = fi.frame.f_locals
             assert "pre_start_stack" in locs, "Pre thread start stack expected but not found."
@@ -1058,13 +996,12 @@ def get_local_in_call_stack(
             continue
 
         if func(fi.frame.f_code):
-            logger.debug(f"looking {func.__name__} found: {fi}")
+            logger.debug(f"looking via {func.__name__}; found {fi}")
             locs = fi.frame.f_locals
             if key in locs:
                 return locs[key]
             else:
-                raise RuntimeError(f"No local named {key} in {func} found.")
-        logger.debug(f"looking {func.__name__}, pass : {fi}")
+                raise RuntimeError(f"No local named {key} found.")
 
     return None
 
@@ -1073,10 +1010,10 @@ class Module(SerialModel):
     package_name: str
     module_name: str
 
-    def of_module(mod: ModuleType) -> 'Module':
+    def of_module(mod: ModuleType, loadable: bool = False) -> 'Module':
         return Module(package_name=mod.__package__, module_name=mod.__name__)
 
-    def of_module_name(module_name: str) -> 'Module':
+    def of_module_name(module_name: str, loadable: bool = False) -> 'Module':
         mod = importlib.import_module(module_name)
         package_name = mod.__package__
         return Module(package_name=package_name, module_name=module_name)
@@ -1098,16 +1035,36 @@ class Class(SerialModel):
 
     module: Module
 
-    bases: Sequence[Class] # TODO: make optional
+    bases: Optional[Sequence[Class]]
+
+    """
+    @staticmethod
+    def bases_of_obj(obj: object) -> Iterable[type]:
+        return obj.__class__.mro(obj)
 
     @staticmethod
-    def of_class(cls: type) -> 'Class':
+    def bases_of_class(cls: type) -> Iterable[type]:
+        return cls.__bases__
+    """
+
+    @staticmethod
+    def of_class(cls: type, with_bases: bool = False, loadable: bool = False) -> 'Class':
         return Class(
             name=cls.__name__, 
             module=Module.of_module_name(cls.__module__),
-            bases=map(lambda base: Class.of_class(cls=base), cls.__bases__)
+            bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__)) if with_bases else None
         )
-        
+
+    """
+    @staticmethod
+    def of_object(obj: object, with_bases: bool = False, loadable: bool = False) -> 'Class':
+        cls = type(obj)
+        return Class(
+            name=cls.__name__, 
+            module=Module.of_module_name(cls.__module__),
+            bases=list(map(lambda base: Class.of_class(cls=base), Class.bases_of_obj(obj))) if with_bases else None
+        )
+    """
 
     def load(self) -> type:  # class
         try:
@@ -1117,6 +1074,16 @@ class Class(SerialModel):
         except Exception as e:
             raise RuntimeError(f"Could not load class {self} because {e}.")
 
+    def noserio_issubclass(self, class_name: str, module_name: str):
+        bases = self.bases
+
+        assert bases is not None, "Cannot do subclass check without bases. Serialize me with `Class.of_class(with_bases=True ...)`."
+
+        for base in bases:
+            if base.name == class_name and base.module.module_name == module_name:
+                return True
+        
+        return False
 
 class Obj(SerialModel):
     """
@@ -1129,6 +1096,39 @@ class Obj(SerialModel):
     # From id(obj), identifiers memory location of a python object. Use this for
     # handling loops in JSON objects.
     id: int
+
+    @classmethod
+    def validate(cls, d) -> 'Obj':
+        if isinstance(d, Obj):
+            return d
+        elif isinstance(d, ObjSerial):
+            return d
+        elif isinstance(d, Dict):
+            return Obj.pick(**d)
+        else:
+            raise RuntimeError(f"Unhandled Obj source of type {type(d)}.")
+
+    @staticmethod
+    def pick(**d):
+        if 'init_kwargs' in d:
+            return ObjSerial(**d)
+        else:
+            return Obj(**d)
+
+    @staticmethod
+    def of_object(obj: object, cls: Optional[type] = None, loadable: bool = False) -> Union['Obj', 'ObjSerial']:
+        if loadable:
+            return ObjSerial.of_object(obj=obj, cls=cls, loadable=loadable)
+        
+        if cls is None:
+            cls = obj.__class__
+
+        return Obj(cls=Class.of_class(cls), id=id(obj))
+
+    def load(self) -> object:
+        pp.pprint("Trying to load an object not intended to be loaded.")
+        pp.pprint(self.dict())
+        raise RuntimeError("Trying to load an object not intended to be loaded.")
 
 
 class ObjSerial(Obj):
@@ -1151,7 +1151,7 @@ class ObjSerial(Obj):
         else:
             init_kwargs = None
 
-        return Obj(cls=Class.of_class(cls), id=id(obj), init_kwargs=init_kwargs)
+        return ObjSerial(cls=Class.of_class(cls), id=id(obj), init_kwargs=init_kwargs)
 
     def load(self) -> object:
         cls = self.cls.load()
@@ -1162,11 +1162,11 @@ class ObjSerial(Obj):
             raise RuntimeError(f"Do not know how to load object {self}.")
 
 
-# FunctionOrMethod = Union[Function, Method]
-
 class FunctionOrMethod(SerialModel):  #, abc.ABC):
     @staticmethod
     def pick(**kwargs):
+        # Temporary hack to deserialization of a class with more than one subclass.
+
         if 'obj' in kwargs:
             return Method(**kwargs)
         elif 'cls' in kwargs:
@@ -1188,47 +1188,16 @@ class FunctionOrMethod(SerialModel):  #, abc.ABC):
             raise RuntimeError(f"Unhandled FunctionOrMethod source of type {type(d)}.")
 
     @staticmethod
-    def of_callable(c: Callable) -> 'FunctionOrMethod':
+    def of_callable(c: Callable, loadable: bool = False) -> 'FunctionOrMethod':
         if hasattr(c, "__self__"):
-            return Method.of_method(c, obj=getattr(c, "__self__"))
+            return Method.of_method(c, obj=getattr(c, "__self__"), loadable=loadable)
         else:
-            return Function.of_function(c)
+            return Function.of_function(c, loadable=loadable)
 
     #@abc.abstractmethod
     def load(self) -> Callable:
         raise NotImplementedError()
-
-"""
-class MethodIdent(SerialModel):
-   
-    module_name: str
-    class_name: str
-
-    method_name: str
-
-    @staticmethod
-    def of_method(
-        method: Callable,
-        cls: Optional[type] = None,
-        obj: Optional[object] = None
-    ) -> 'Method':
-        if obj is None:
-            assert hasattr(
-                method, "__self__"
-            ), f"Expected a method (maybe it is a function?): {method}"
-            obj = method.__self__
-
-        if cls is None:
-            cls = obj.__class__
-
-        module_name = cls.__module__
-
-        return MethodIdent(
-            module_name=module_name,
-            class_name=cls.__name__,
-            method_name=method.__name__
-        )
-"""
+    
 
 class Method(FunctionOrMethod):
     """
@@ -1244,7 +1213,8 @@ class Method(FunctionOrMethod):
     def of_method(
         meth: Callable,
         cls: Optional[type] = None,
-        obj: Optional[object] = None
+        obj: Optional[object] = None,
+        loadable: bool = False
     ) -> 'Method':
         if obj is None:
             assert hasattr(
@@ -1255,17 +1225,13 @@ class Method(FunctionOrMethod):
         if cls is None:
             cls = obj.__class__
 
-        obj_json = ObjSerial.of_object(obj, cls=cls)
+        obj_json = (ObjSerial if loadable else Obj).of_object(obj, cls=cls)
 
         return Method(obj=obj_json, name=meth.__name__)
 
     def load(self) -> Callable:
         obj = self.obj.load()
         return getattr(obj, self.name)
-
-    # @staticmethod
-    # def parse_obj(o: Dict) -> 'Method':
-    #    return Method(obj=Obj.parse_obj(o['obj']), name=o['name'])
 
 
 class Function(FunctionOrMethod):
@@ -1281,14 +1247,15 @@ class Function(FunctionOrMethod):
     def of_function(
         func: Callable,
         module: Optional[ModuleType] = None,
-        cls: Optional[type] = None
+        cls: Optional[type] = None,
+        loadable: bool = False
     ) -> 'Function':  # actually: class
 
         if module is None:
-            module = Module.of_module_name(func.__module__)
+            module = Module.of_module_name(func.__module__, loadable=loadable)
 
         if cls is not None:
-            cls = Class.of_class(cls)
+            cls = Class.of_class(cls, loadable=loadable)
 
         return Function(cls=cls, module=module, name=func.__name__)
 
@@ -1300,48 +1267,52 @@ class Function(FunctionOrMethod):
             mod = self.module.load()
             return getattr(mod, self.name)
 
-    # @staticmethod
-    # def parse_obj(o: Dict) -> 'Function':
-    #    return Function(
-    #        module=Module.parse_obj(o['module']),
-    #        cls=Obj.parse_obj(o['cls']) if o['cls'] is not None else None,
-    #        name=o['name']
-    #    )
 
-"""
-class ModuleIdent(pydantic.BaseModel):
-
-class ClassIdent(pydantic.BaseModel):
-    class_name: str
-
-    module_name: str
-    package_name: str
-
-    bases: Sequence[ClassIdent]
-"""
-    
 class WithClassInfo(pydantic.BaseModel):
     """
     Mixin to track class information to aid in querying serialized components
-    without having to deserialize them.
+    without having to load them.
     """
 
     class_info: Class
 
-    def __init__(self, obj: Optional[object] = None, cls: Optional[type] = None, **kwargs):
+    def __init__(self, class_info: Optional[Class] = None, obj: Optional[object] = None, cls: Optional[type] = None, **kwargs):
         if obj is not None:
-            print(f"got object: {obj}")
             cls = type(obj)
-            print(f"cls={cls}")
 
-        assert cls is not None, "Either `obj` or `cls` need to be specified."
+        if class_info is None:
+            assert cls is not None, "Either `class_info`, `obj` or `cls` need to be specified."
+            class_info = Class.of_class(cls, with_bases=True)
 
-        super().__init__(class_info = Class.of_class(cls), **kwargs)
+        else:
+            pass
+
+        super().__init__(class_info = class_info, **kwargs)
 
     @staticmethod
     def of_object(obj: object):
-        return WithClassInfo(_ = Class.of_class(obj.__class__))
+        return WithClassInfo(class_info = Class.of_class(obj.__class__))
 
     @staticmethod
     def of_class(cls: type): # class
-        return WithClassInfo(_ = Class.of_class(cls))
+        return WithClassInfo(class_info = Class.of_class(cls))
+    
+    @staticmethod
+    def of_model(model: pydantic.BaseModel, cls: Class):
+        return WithClassInfo(class_info=cls, **model.dict())
+
+
+def instrumented_classes(obj: object) -> Iterable[Tuple[JSONPath, Class, Any]]:
+    """
+    Iterate over contents of `obj` that are annotated with the `class_info`
+    attribute/key. Returns triples with the accessor/query, the Class object
+    instantiated from class_info, and the annotated object itself.
+    """
+
+    for q, o in all_objects(obj):
+        if isinstance(o, pydantic.BaseModel) and "class_info" in o.__fields__:
+            yield q, o.class_info, o
+
+        if isinstance(o, dict) and "class_info" in o:
+            ci = Class(**o['class_info'])
+            yield q, ci, o

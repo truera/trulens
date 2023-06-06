@@ -15,7 +15,7 @@ from typing import (
 import langchain
 from munch import Munch as Bunch
 import pydantic
-from trulens_eval.util import Function, Method, MethodIdent
+from trulens_eval.util import Function, Method
 
 from trulens_eval.util import GetItemOrAttribute, SerialModel, json_str_of_obj
 from trulens_eval.util import JSON
@@ -41,7 +41,7 @@ FeedbackResultID = str
 
 class RecordChainCallMethod(SerialModel):
     path: JSONPath
-    method: MethodIdent
+    method: Method
 
 
 class Cost(SerialModel):
@@ -136,7 +136,7 @@ class Record(SerialModel):
             )  # info about the method call is at the top of the stack
             path = frame_info.path._append(
                 GetItemOrAttribute(
-                    item_or_attribute=frame_info.method.method_name
+                    item_or_attribute=frame_info.method.name
                 )
             )  # adds another attribute to path, from method name
             # TODO: append if already there
