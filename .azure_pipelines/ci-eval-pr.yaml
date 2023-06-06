@@ -10,7 +10,7 @@ pr:
 
 
 jobs:
-  - job: PR-Branch-Protect
+  - job: PRBranchProtect
     pool:
       vmImage: "ubuntu-latest"
     timeoutInMinutes: 30
