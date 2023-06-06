@@ -259,7 +259,7 @@ To assess your LLM quality, you can provide the feedback functions to `tru.run_f
 
 ```python
 feedback_results = tru.run_feedback_functions(
-    record_json=record,
+    record=record,
     feedback_functions=[f_lang_match]
 )
 display(feedback_results)

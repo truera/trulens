@@ -169,7 +169,7 @@ tru.add_record(record)
 # 
 
 feedback_results = tru.run_feedback_functions(
-    record_json=record,
+    record=record,
     feedback_functions=[f_lang_match]
 )
 print(feedback_results)
