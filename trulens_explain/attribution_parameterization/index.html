@@ -280,23 +280,51 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../trulens_eval/logging/" class="md-nav__link">
+        Logging
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../trulens_eval/feedback_functions/" class="md-nav__link">
+        Out-of-the-box Feedback Functions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
     
     <li class="md-nav__item md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
       
       
       
-        <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+        <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
           API Reference
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_3_3">
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_5">
           <span class="md-nav__icon md-icon"></span>
           API Reference
         </label>
@@ -470,10 +498,10 @@
         
           <li class="md-nav__item">
   <a href="#how-to-use-trulens" class="md-nav__link">
-    How to use Trulens?
+    How to use TruLens?
   </a>
   
-    <nav class="md-nav" aria-label="How to use Trulens?">
+    <nav class="md-nav" aria-label="How to use TruLens?">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -532,8 +560,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#case-7-putting-it-together-the-most-complex-one-one-we-can-do-with-our-trulens" class="md-nav__link">
-    Case 7: Putting it together - The most complex one one we can do with our Trulens
+  <a href="#case-7-putting-it-together-the-most-complex-case-we-can-perform-with-trulens" class="md-nav__link">
+    Case 7: Putting it together - The most complex case we can perform with TruLens
   </a>
   
 </li>
@@ -736,10 +764,10 @@
         
           <li class="md-nav__item">
   <a href="#how-to-use-trulens" class="md-nav__link">
-    How to use Trulens?
+    How to use TruLens?
   </a>
   
-    <nav class="md-nav" aria-label="How to use Trulens?">
+    <nav class="md-nav" aria-label="How to use TruLens?">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -798,8 +826,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#case-7-putting-it-together-the-most-complex-one-one-we-can-do-with-our-trulens" class="md-nav__link">
-    Case 7: Putting it together - The most complex one one we can do with our Trulens
+  <a href="#case-7-putting-it-together-the-most-complex-case-we-can-perform-with-trulens" class="md-nav__link">
+    Case 7: Putting it together - The most complex case we can perform with TruLens
   </a>
   
 </li>
@@ -846,7 +874,7 @@
   <h1>Attributions for Different Use Cases</h1>
 
 <h2 id="attribution-parameterization">Attribution Parameterization<a class="headerlink" href="#attribution-parameterization" title="Permanent link">&para;</a></h2>
-<p>Attributions for different models and use cases can range from simple to more complex. This will help see how to set the various parameters to get what you need.</p>
+<p>Attributions for different models and use cases can range from simple to more complex. This page provides guidelines on how to set various attribution parameters to achieve your LLM explainability goals.</p>
 <h3 id="basic-definitions-and-terminology">Basic Definitions and Terminology<a class="headerlink" href="#basic-definitions-and-terminology" title="Permanent link">&para;</a></h3>
 <p><strong>What is a tensor?</strong>
 A tensor is a multidimensional object that can be model inputs, or layer activations.</p>
@@ -854,30 +882,40 @@ A tensor is a multidimensional object that can be model inputs, or layer activat
 A layer is a set of neurons that can be thought of as a function on input tensors. Layer inputs are tensors. Layer outputs are modified tensors.</p>
 <p><strong>What are anchors?</strong>
 Anchors are ways of specifying which tensors you want. You may want the input tensor of a layer, or the output tensor of a layer. </p>
-<p>Eg: Say you have a concat layer and you want to explain the 2 concatenated tensors. The concat operation is not usually a layer tracked by the model. If you try the 'in' anchor of the layer after the operation, you get a single tensor with all the information you need.</p>
+<blockquote>
+<p>E.g. Say you have a concat layer and you want to explain the 2 concatenated tensors. The concat operation is not usually a layer tracked by the model. If you try the 'in' anchor of the layer after the operation, you get a single tensor with all the information you need.</p>
+</blockquote>
 <p><strong>What is a Quantity of Interest (QoI)?</strong>
 A QoI is a scalar number that is being explained. </p>
-<p>Eg: With saliency maps, you get <code>dx/dy</code> (i.e the effect of input on output). <code>y</code> in this case is the QoI scalar. It is usually the output of a neuron, but could be a sum of multiple neurons.</p>
+<blockquote>
+<p>E.g. With saliency maps, you get <code>dx/dy</code> (i.e. the effect of input on output). <code>y</code> in this case is the QoI scalar. It is usually the output of a neuron, but could be a sum of multiple neurons.</p>
+</blockquote>
 <p><strong>What is an attribution?</strong>
 An attribution is a numerical value associated with every element in a tensor that explains a QoI. </p>
-<p>Eg: With saliency maps, you get <code>dx/dy</code>. <code>x</code> is the associated tensor. The entirety of <code>dx/dy</code> is the explanation.</p>
+<blockquote>
+<p>E.g. With saliency maps, you get <code>dx/dy</code>. <code>x</code> is the associated tensor. The entirety of <code>dx/dy</code> is the explanation.</p>
+</blockquote>
 <p><strong>What are cuts?</strong>
 Cuts are tensors that cut a network into two parts. They are composed of a layer and an anchor.</p>
 <p><strong>What are slices?</strong>
 Slices are two cuts leaving a <code>slice</code> of the network. The attribution will be on the first cut, explaining the QoI on the second cut of the slice.</p>
-<p>Eg: With saliency maps, the trulens slice would be AttributionCut:<code>Cut(x)</code> to QoICut:<code>Cut(y)</code> denoted by <code>Slice(Cut(x),Cut(y))</code>.</p>
-<h3 id="how-to-use-trulens">How to use Trulens?<a class="headerlink" href="#how-to-use-trulens" title="Permanent link">&para;</a></h3>
-<p>This section will cover different use cases from the most basic to the most complex.</p>
+<blockquote>
+<p>E.g. With saliency maps, the TruLens slice would be AttributionCut: <code>Cut(x)</code> to QoICut: <code>Cut(y)</code>, denoted by <code>Slice(Cut(x),Cut(y))</code>.</p>
+</blockquote>
+<h3 id="how-to-use-trulens">How to use TruLens?<a class="headerlink" href="#how-to-use-trulens" title="Permanent link">&para;</a></h3>
+<p>This section will cover different use cases from the most basic to the most complex. For the following use cases, it may help to refer to <a href="#summary">Summary</a>.</p>
 <h4 id="case-1-input-output-cut-basic-configuration">Case 1: Input-Output cut (Basic configuration)<a class="headerlink" href="#case-1-input-output-cut-basic-configuration" title="Permanent link">&para;</a></h4>
 <p><strong>Use case:</strong> Explain the input given the output.<br />
-<strong>Cuts needed:</strong> Trulens Defaults.<br />
-<strong>Attribution Cut</strong> (The tensor we would like to assign importance) → InputCut aka model args/kwargs<br />
+<strong>Cuts needed:</strong> TruLens defaults.<br />
+<strong>Attribution Cut</strong> (The tensor we would like to assign importance) → InputCut (model args / kwargs)<br />
 <strong>QoI Cut</strong> (The tensor that we are interested to explain) → OutputCut</p>
 <h4 id="case-2-the-qoi-cut">Case 2: The QoI Cut<a class="headerlink" href="#case-2-the-qoi-cut" title="Permanent link">&para;</a></h4>
-<p>Now suppose you want to explain some internal layer’s output (intermediate output). i.e how the input is affecting the output at some intermediate layer.</p>
-<p><strong>Use case:</strong> Explain something that isn't the default model output.<br />
-Eg: If you want to explain a logit layer instead of the probit layer (the final layer).<br />
-<strong>Cuts needed:</strong> As you want to explain something different than the default output, you need to change the QoI from the default to the layer that you are interested.<br />
+<p>Now suppose you want to explain some internal (intermediate) layer’s output (i.e. how the input is affecting the output at some intermediate layer).</p>
+<p><strong>Use case:</strong> Explain something that isn't the default model output. </p>
+<blockquote>
+<p>E.g. If you want to explain a logit layer instead of the probit (final) layer.</p>
+</blockquote>
+<p><strong>Cuts needed:</strong> As you want to explain something different than the default output, you need to change the QoI from the default to the layer that you are interested.<br />
 <strong>Attribution Cut</strong> → InputCut<br />
 <strong>QoI Cut</strong> → Your logit layer, anchor:'out'</p>
 <h4 id="case-3-the-attribution-cut">Case 3: The Attribution Cut<a class="headerlink" href="#case-3-the-attribution-cut" title="Permanent link">&para;</a></h4>
@@ -885,24 +923,26 @@ Eg: If you want to explain a logit layer instead of the probit layer (the final 
 <p><strong>Use cases:</strong> </p>
 <ul>
 <li>As a preprocessing step, you drop a feature, so do not need attributions on that.</li>
-<li>For torch models, model inputs are not tensors. so you'd want the 'in' anchor of the first layer.  </li>
+<li>For PyTorch models, model inputs are not tensors, so you'd want the 'in' anchor of the first layer.  </li>
 </ul>
 <p><strong>Cuts needed:</strong> As you want to know the affect of some other layer rather than the input layer, you need to customize the attribution cut.<br />
 <strong>Model inputs</strong> → InputCut<br />
 <strong>Attribution Cut</strong> → Your attribution layer (The layer you want to assign importance/attributions with respect to output), anchor:'in'<br />
 <strong>QoI Cut</strong> → OutputCut</p>
 <h3 id="advanced-use-cases">Advanced Use Cases<a class="headerlink" href="#advanced-use-cases" title="Permanent link">&para;</a></h3>
-<p>For the following use cases, it may help to see the <a href="#advanced-definitions">Advanced Definitions</a></p>
+<p>For the following use cases, it may help to refer to <a href="#advanced-definitions">Advanced Definitions</a>.</p>
 <h4 id="case-4-the-distribution-of-interest-doi-cut-explanation-flexibility">Case 4: The Distribution of Interest (DoI) Cut / Explanation flexibility<a class="headerlink" href="#case-4-the-distribution-of-interest-doi-cut-explanation-flexibility" title="Permanent link">&para;</a></h4>
-<p>Usually, we explain the output with respect to each point in the input. All cases up to now were using a default called PointDoI. Now, suppose you want to explain using an aggregate over samples of points.  </p>
-<p><strong>Use case:</strong> You want to do integrated gradients, gradcam, shapley values instead of saliency maps. These only differ by sampling strategies.<br />
-Eg: Integrated gradients is a sample from a straight line from a baseline to a value.<br />
-<strong>Cuts needed:</strong> Define a DoI that samples from the default attribution cut.<br />
+<p>Usually, we explain the output with respect to each point in the input. All cases up to now were using a default called <code>PointDoI</code>. Now, suppose you want to explain using an aggregate over samples of points.  </p>
+<p><strong>Use case:</strong> You want to perform approaches like Integrated Gradients, Grad-CAM, Shapley values instead of saliency maps. These only differ by sampling strategies.</p>
+<blockquote>
+<p>E.g. Integrated Gradients is a sample from a straight line from a baseline to a value.</p>
+</blockquote>
+<p><strong>Cuts needed:</strong> Define a DoI that samples from the default attribution cut.<br />
 <strong>Model inputs</strong> → InputCut<br />
 <strong>DoI/Attribution Cut</strong> → Your baseline/DoI/attribution layer, anchor:'in'<br />
 <strong>QoI Cut</strong> → OutputCut</p>
 <h4 id="case-5-internal-explanations">Case 5: Internal explanations<a class="headerlink" href="#case-5-internal-explanations" title="Permanent link">&para;</a></h4>
-<p><strong>Use case:</strong> You want to explain an internal layer. Things like integrated gradients are a DoI on the baseline to the value, but it is on the layer the baseline is defined.
+<p><strong>Use case:</strong> You want to explain an internal layer. Methods like Integrated Gradients are a DoI on the baseline to the value, but it is located on the layer the baseline is defined.
 If you want to explain an internal layer, you do not move the DoI layer.<br />
 <strong>Cuts needed:</strong> Attribution layer different from DoI.<br />
 <strong>Model inputs</strong> → InputCut<br />
@@ -913,37 +953,39 @@ If you want to explain an internal layer, you do not move the DoI layer.<br />
 <p><strong>Use Case:</strong> in NLP, baselines are tokens, but the interpolation is on the embedding layer.<br />
 <strong>Cuts needed:</strong> Baseline different from DoI.<br />
 <strong>Model inputs</strong> → InputCut<br />
-<strong>Baseline Cut</strong> →  tokens, anchor:'out'<br />
-<strong>DoI/Attribution Cut</strong> → embeddings, anchor:'out'<br />
+<strong>Baseline Cut</strong> → Tokens, anchor:'out'<br />
+<strong>DoI/Attribution Cut</strong> → Embeddings, anchor:'out'<br />
 <strong>QoI Cut</strong> → OutputCut</p>
-<h4 id="case-7-putting-it-together-the-most-complex-one-one-we-can-do-with-our-trulens">Case 7: Putting it together - The most complex one one we can do with our Trulens<a class="headerlink" href="#case-7-putting-it-together-the-most-complex-one-one-we-can-do-with-our-trulens" title="Permanent link">&para;</a></h4>
+<h4 id="case-7-putting-it-together-the-most-complex-case-we-can-perform-with-trulens">Case 7: Putting it together - The most complex case we can perform with TruLens<a class="headerlink" href="#case-7-putting-it-together-the-most-complex-case-we-can-perform-with-trulens" title="Permanent link">&para;</a></h4>
 <p><strong>Use Case:</strong> Internal layer explanations of NLP, on the logit layer of a model with probit outputs.<br />
 <strong>Model inputs</strong> → InputCut<br />
-<strong>Baseline Cut</strong> → tokens, anchor:'out'<br />
-<strong>DoI Cut</strong> → embeddings, anchor:'out'<br />
+<strong>Baseline Cut</strong> → Tokens, anchor:'out'<br />
+<strong>DoI Cut</strong> → Embeddings, anchor:'out'<br />
 <strong>Attribution Cut</strong> → Internal layer, anchor:'out'<br />
-<strong>QoI Cut</strong> → logit layer, anchor:'out'</p>
+<strong>QoI Cut</strong> → Logit layer, anchor:'out'</p>
 <h3 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h3>
 <p><strong>InputCut</strong> is model args / kwargs.<br />
 <strong>OutputCut</strong> is the model output.</p>
-<p><strong>Baseline Cut</strong> is the tensor associated with the Integrated gradients baseline. Can be the InputCut or later.<br />
+<p><strong>Baseline Cut</strong> is the tensor associated with the Integrated Gradients baseline. Can be the InputCut or later.<br />
 <strong>DoI Cut</strong> is the tensor associated with explanation sampling. Can be the BaselineCut or later.<br />
 <strong>Attribution Cut</strong> is the tensor that should be explained. Can be the DoICut or later.<br />
-<strong>QoI Cut</strong> is what is being explained with a QoI. Must be after the AttributionCut.  </p>
+<strong>QoI Cut</strong> is what is being explained with a QoI. Must be after the AttributionCut.</p>
 <h3 id="advanced-definitions">Advanced Definitions<a class="headerlink" href="#advanced-definitions" title="Permanent link">&para;</a></h3>
 <p><strong>What is a Distribution of Interest (DoI)?</strong></p>
 <p>The distribution of interest is a concept of aggregating attributions over a sample or distribution. </p>
 <ul>
-<li>GradCam does this over a guassian distribution of inputs. </li>
-<li>Shapley values do this over different background data. </li>
-<li>Integrated gradients does this over an interpolation from a baseline to the input.</li>
+<li>Grad-CAM (<a href="https://ieeexplore.ieee.org/document/8237336">Paper</a>, <a href="https://github.com/jacobgil/pytorch-grad-cam">GitHub</a>, <a href="https://jacobgil.github.io/pytorch-gradcam-book/introduction.html">Docs</a>) does this over a Gaussian distribution of inputs. </li>
+<li>Shapley values (<a href="https://github.com/slundberg/shap">GitHub</a>, <a href="https://shap.readthedocs.io/en/latest/">Docs</a>) do this over different background data. </li>
+<li>Integrated Gradients (<a href="https://arxiv.org/abs/1703.01365">Paper</a>, <a href="https://www.tensorflow.org/tutorials/interpretability/integrated_gradients">Tutorial</a>) do this over an interpolation from a baseline to the input.</li>
 </ul>
 <p><strong><em>How does this relate to the Attribution Cut?</em></strong></p>
-<p>The sample or distributions are taken at a place that is humanly considered the input, even if this differs from the programatic model input.</p>
-<p>For attributions, all parts of a network can have have an attribution towards the QoI. It is that the most common use case is to explain the tensors that are also the humanly considered input (which is where the DoI occurs).</p>
+<p>The sample or distributions are taken at a place that is humanly considered the input, even if this differs from the programmatic model input.</p>
+<p>For attributions, all parts of a network can have an attribution towards the QoI. The most common use case is to explain the tensors that are also humanly considered the input (which is where the DoI occurs).</p>
 <p><strong><em>How does this relate to the Baseline Cut?</em></strong></p>
 <p>The Baseline Cut is only applicable to the Integrated Gradients method. It is also only needed when there is no mathematical way to interpolate the baseline to the input.</p>
-<p>Eg. if the input is 'Hello', but the baseline is a '[MASK]' token, we cannot interpolate that. We define the baseline at the token layer, but interpolate on a numeric layer like the embeddings.</p>
+<blockquote>
+<p>E.g. if the input is <code>'Hello'</code>, but the baseline is a <code>'[MASK]'</code> token, we cannot interpolate that. We define the baseline at the token layer, but interpolate on a numeric layer like the embeddings.</p>
+</blockquote>
 
 
 

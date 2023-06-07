@@ -267,12 +267,18 @@
     TruLens-Explain
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#getting-going-with-trulens-explain" class="md-nav__link">
-    Getting going with TruLens-Explain
+    <nav class="md-nav" aria-label="TruLens-Explain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-going-with-trulens-explain" class="md-nav__link">
+    Get going with TruLens-Explain
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -348,23 +354,51 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../trulens_eval/logging/" class="md-nav__link">
+        Logging
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trulens_eval/feedback_functions/" class="md-nav__link">
+        Out-of-the-box Feedback Functions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
     
     <li class="md-nav__item md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
       
       
       
-        <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+        <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
           API Reference
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_3_3">
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_5">
           <span class="md-nav__icon md-icon"></span>
           API Reference
         </label>
@@ -673,12 +707,18 @@
     TruLens-Explain
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#getting-going-with-trulens-explain" class="md-nav__link">
-    Getting going with TruLens-Explain
+    <nav class="md-nav" aria-label="TruLens-Explain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-going-with-trulens-explain" class="md-nav__link">
+    Get going with TruLens-Explain
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -702,17 +742,17 @@
 <p>TruLens provides a set of tools for developing and monitoring neural nets, including large language models. This includes both tools for evaluation of LLMs and LLM-based applications with TruLens-Eval and deep learning explainability with TruLens-Explain. TruLens-Eval and TruLens-Explain are housed in separate packages and can be used independently.</p>
 <h2 id="trulens-eval">TruLens-Eval<a class="headerlink" href="#trulens-eval" title="Permanent link">&para;</a></h2>
 <p><strong>TruLens-Eval</strong> contains instrumentation and evaluation tools for large language model (LLM) based applications. It supports the iterative development and monitoring of a wide range of LLM applications by wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine. Importantly, it also gives you the tools you need to evaluate the quality of your LLM-based applications.</p>
-<p><img alt="Architecture Diagram" src="https://www.trulens.org/Assets/image/TruLens_Architecture.png" /></p>
+<p><img alt="Architecture Diagram" src="docs/Assets/image/TruLens_Architecture.png" /></p>
 <h3 id="get-going-with-trulens-eval">Get going with TruLens-Eval<a class="headerlink" href="#get-going-with-trulens-eval" title="Permanent link">&para;</a></h3>
-<p>Install trulens-eval from pypi.</p>
+<p>Install trulens-eval from PyPI.</p>
 <div class="highlight"><pre><span></span><code>pip install trulens-eval
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">tru</span>
 <span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">tru_chain</span>
 <span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
 </code></pre></div>
-<p>This example uses langchain and OpenAI, but the same process can be followed with any framework and model provider.</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># imports from langchain to build app</span>
+<p>This example uses LangChain and OpenAI, but the same process can be followed with any framework and model provider.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># imports from LangChain to build app</span>
 <span class="kn">from</span> <span class="nn">langchain</span> <span class="kn">import</span> <span class="n">PromptTemplate</span>
 <span class="kn">from</span> <span class="nn">langchain.chains</span> <span class="kn">import</span> <span class="n">LLMChain</span>
 <span class="kn">from</span> <span class="nn">langchain.chat_models</span> <span class="kn">import</span> <span class="n">ChatOpenAI</span>
@@ -743,7 +783,7 @@
 
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HUGGINGFACE_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
 
-<span class="c1"># Initialize Huggingface-based feedback function collection class:</span>
+<span class="c1"># Initialize HuggingFace-based feedback function collection class:</span>
 <span class="n">hugs</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
 
 <span class="c1"># Define a language match feedback function using HuggingFace.</span>
@@ -763,12 +803,12 @@
 </code></pre></div>
 <p>Now you can explore your LLM-based application!</p>
 <p>Doing so will help you understand how your LLM application is performing at a glance. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up. You'll also be able to view evaluations at a record level, and explore the chain metadata for each record.</p>
-<div class="highlight"><pre><span></span><code><span class="n">tru</span><span class="o">.</span><span class="n">run_dashboard</span><span class="p">()</span> <span class="c1"># open a streamlit app to explore</span>
+<div class="highlight"><pre><span></span><code><span class="n">tru</span><span class="o">.</span><span class="n">run_dashboard</span><span class="p">()</span> <span class="c1"># open a Streamlit app to explore</span>
 </code></pre></div>
 <p>For more information, see <a href="https://www.trulens.org/trulens_eval/quickstart/">TruLens-Eval Documentation</a>.</p>
 <h2 id="trulens-explain">TruLens-Explain<a class="headerlink" href="#trulens-explain" title="Permanent link">&para;</a></h2>
 <p><strong>TruLens-Explain</strong> is a cross-framework library for deep learning explainability. It provides a uniform abstraction over a number of different frameworks. It provides a uniform abstraction layer over TensorFlow, Pytorch, and Keras and allows input and internal explanations.</p>
-<h2 id="getting-going-with-trulens-explain">Getting going with TruLens-Explain<a class="headerlink" href="#getting-going-with-trulens-explain" title="Permanent link">&para;</a></h2>
+<h3 id="get-going-with-trulens-explain">Get going with TruLens-Explain<a class="headerlink" href="#get-going-with-trulens-explain" title="Permanent link">&para;</a></h3>
 <p>These installation instructions assume that you have conda installed and added to your path.</p>
 <ol>
 <li>
@@ -785,18 +825,18 @@ conda install matplotlib        # For visualizations.
 </code></pre></div></p>
 </li>
 <li>
-<p>[Pip installation] Install the trulens pip package.
+<p>[Pip installation] Install the trulens pip package from PyPI.
 <div class="highlight"><pre><span></span><code>pip install trulens
 </code></pre></div></p>
 </li>
 <li>
 <p>Get started!
-To quickly play around with the TruLens library, check out the following CoLab notebooks:</p>
+To quickly play around with the TruLens library, check out the following Colab notebooks:</p>
 </li>
 <li>
 <p>PyTorch: <a href="https://colab.research.google.com/drive/1n77IGrPDO2XpeIVo_LQW0gY78enV-tY9?usp=sharing"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
 </li>
-<li>Tensorflow 2 / Keras: <a href="https://colab.research.google.com/drive/1f-ETsdlppODJGQCdMXG-jmGmfyWyW2VD?usp=sharing"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></li>
+<li>TensorFlow 2 / Keras: <a href="https://colab.research.google.com/drive/1f-ETsdlppODJGQCdMXG-jmGmfyWyW2VD?usp=sharing"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></li>
 </ol>
 <p>For more information, see <a href="https://www.trulens.org/trulens_explain/quickstart/">TruLens-Explain Documentation</a>.</p>
 
