@@ -174,15 +174,11 @@ else:
                 details
             )  # chains may not be deserializable, don't try to, keep it json.
 
-            step_llm = GetItemOrAttribute(item_or_attribute="llm")
-            step_prompt = GetItemOrAttribute(item_or_attribute="prompt")
-            step_call = GetItemOrAttribute(item_or_attribute="_call")
-
             classes: Iterable[Tuple[JSONPath, Class, Any]] = instrumented_classes(chain_json)
 
             for query, cls, component_json in classes:
                 if len(query.path) == 0:
-                    # Skip TruChain, will still list TruChain.chain.
+                    # Skip TruChain, will still list TruChain.chain under "chain" below.
                     continue
 
                 if Is.chain(cls):
