@@ -24,7 +24,7 @@
     - util.py keys.py
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_feedback import Feedback
