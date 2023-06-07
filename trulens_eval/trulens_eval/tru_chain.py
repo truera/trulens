@@ -128,7 +128,8 @@ class TruChain(LangChainModel):
 
     def __init__(
         self,
-        chain: langchain.chains.base.Chain, # normally pydantic does not like positional args but this one is important
+        chain: langchain.chains.base.
+        Chain,  # normally pydantic does not like positional args but this one is important
         tru: Optional[Tru] = None,
         feedbacks: Optional[Sequence[Feedback]] = None,
         feedback_mode: FeedbackMode = FeedbackMode.WITH_CHAIN_THREAD,

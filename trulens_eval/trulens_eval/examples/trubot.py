@@ -32,7 +32,6 @@ from trulens_eval.util import TP
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 from trulens_eval.schema import FeedbackMode
 
-
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 pp = PrettyPrinter()
@@ -86,7 +85,8 @@ f_qa_relevance = Feedback(openai.relevance).on(
 # Question/statement relevance between question and each context chunk.
 f_qs_relevance = Feedback(openai.qs_relevance).on(
     question=Query.RecordInput,
-    statement=Query.Record.chain.combine_docs_chain._call.args.inputs.input_documents[:].page_content
+    statement=Query.Record.chain.combine_docs_chain._call.args.inputs.
+    input_documents[:].page_content
 ).aggregate(np.min)
 
 
@@ -121,7 +121,7 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     if "filtered" in chain_id:
         # Better contexts fix, filter contexts with relevance:
         retriever = WithFeedbackFilterDocuments.of_retriever(
-            retriever=retriever, feedback=f_qs_relevance, threshold = 0.5
+            retriever=retriever, feedback=f_qs_relevance, threshold=0.5
         )
 
     # LLM for completing prompts, and other tasks.
