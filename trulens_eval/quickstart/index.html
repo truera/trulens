@@ -1976,7 +1976,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">JSON</span>
 
 <span class="c1"># Imports main tools:</span>
-<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruChain</span><span class="p">,</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Huggingface</span><span class="p">,</span> <span class="n">Tru</span>
+<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruChain</span><span class="p">,</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Huggingface</span><span class="p">,</span> <span class="n">Tru</span><span class="p">,</span> <span class="n">Query</span>
 <span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
 
 <span class="c1"># imports from langchain to build app</span>
@@ -1988,7 +1988,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
 <div id="cell-2" class="clipboard-copy-txt">from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru
+from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
 tru = Tru()
 
 # imports from langchain to build app
@@ -2188,7 +2188,7 @@ display(llm_response)</div>
 
 <span class="c1"># Define a language match feedback function using HuggingFace.</span>
 <span class="n">f_lang_match</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">hugs</span><span class="o">.</span><span class="n">language_match</span><span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
-    <span class="n">text1</span><span class="o">=</span><span class="s2">&quot;prompt&quot;</span><span class="p">,</span> <span class="n">text2</span><span class="o">=</span><span class="s2">&quot;response&quot;</span>
+    <span class="n">text1</span><span class="o">=</span><span class="n">Query</span><span class="o">.</span><span class="n">RecordInput</span><span class="p">,</span> <span class="n">text2</span><span class="o">=</span><span class="n">Query</span><span class="o">.</span><span class="n">RecordOutput</span>
 <span class="p">)</span>
 </pre></div>
 <div id="cell-6" class="clipboard-copy-txt"># Initialize Huggingface-based feedback function collection class:
@@ -2196,7 +2196,7 @@ hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
 f_lang_match = Feedback(hugs.language_match).on(
-    text1="prompt", text2="response"
+    text1=Query.RecordInput, text2=Query.RecordOutput
 )</div>
         
         </div>

@@ -895,9 +895,7 @@
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 21</span>
-<span class="normal"> 22</span>
-<span class="normal"> 23</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 23</span>
 <span class="normal"> 24</span>
 <span class="normal"> 25</span>
 <span class="normal"> 26</span>
@@ -1303,10 +1301,10 @@
 
 <span class="sd">        Parameters:</span>
 
-<span class="sd">            record_json (JSON): The record on which to evaluate the feedback</span>
+<span class="sd">            record (Record): The record on which to evaluate the feedback</span>
 <span class="sd">            functions.</span>
 
-<span class="sd">            chain_json (JSON, optional): The chain that produced the given record.</span>
+<span class="sd">            chain (Model, optional): The chain that produced the given record.</span>
 <span class="sd">            If not provided, it is looked up from the given database `db`.</span>
 
 <span class="sd">            feedback_functions (Sequence[Feedback]): A collection of feedback</span>
@@ -1338,9 +1336,7 @@
 
         <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">feedback_functions</span><span class="p">:</span>
             <span class="n">evals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">promise</span><span class="p">(</span>
-                    <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">run_on_record</span><span class="p">(</span><span class="n">chain</span><span class="o">=</span><span class="n">chain</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">),</span> <span class="n">func</span>
-                <span class="p">)</span>
+                <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">promise</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">chain</span><span class="o">=</span><span class="n">chain</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">),</span> <span class="n">func</span><span class="p">)</span>
             <span class="p">)</span>
 
         <span class="n">evals</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">evals</span><span class="p">)</span>
@@ -1354,25 +1350,25 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">insert_chain</span><span class="p">(</span><span class="n">chain</span><span class="o">=</span><span class="n">chain</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">add_feedback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">FeedbackResult</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">add_feedback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feedback_result</span><span class="p">:</span> <span class="n">FeedbackResult</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a single feedback result to the database.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">FeedbackResult</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">feedback_result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">feedback_result</span> <span class="o">=</span> <span class="n">FeedbackResult</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">feedback_result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">insert_feedback</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">insert_feedback</span><span class="p">(</span><span class="n">feedback_result</span><span class="o">=</span><span class="n">feedback_result</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">add_feedbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">FeedbackResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">add_feedbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feedback_results</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">FeedbackResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add multiple feedback results to the database.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">add_feedback</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">feedback_result</span> <span class="ow">in</span> <span class="n">feedback_results</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_feedback</span><span class="p">(</span><span class="n">feedback_result</span><span class="o">=</span><span class="n">feedback_result</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chain_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSON</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1492,7 +1488,7 @@
             <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_proc</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">run_dashboard</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">_dev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">_dev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Process</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Runs a streamlit dashboard to view logged results and chains</span>
 
@@ -1583,14 +1579,14 @@
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">42</span>
 <span class="normal">43</span>
 <span class="normal">44</span>
 <span class="normal">45</span>
 <span class="normal">46</span>
-<span class="normal">47</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">Chain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">Chain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create a TruChain with database managed by self.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1621,9 +1617,7 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">51</span>
 <span class="normal">52</span>
 <span class="normal">53</span>
 <span class="normal">54</span>
@@ -1631,7 +1625,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 <span class="normal">56</span>
 <span class="normal">57</span>
 <span class="normal">58</span>
-<span class="normal">59</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    TruLens instrumentation, logging, and feedback functions for chains.</span>
 <span class="sd">    Creates a local database &#39;default.sqlite&#39; in current working directory.</span>
@@ -1686,7 +1682,7 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
 
 <h2 id="trulens_eval.trulens_eval.tru.Tru.add_feedback" class="doc doc-heading">
-<code class="codehilite language-python"><span class="n">add_feedback</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="codehilite language-python"><span class="n">add_feedback</span><span class="p">(</span><span class="n">feedback_result</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 <a href="#trulens_eval.trulens_eval.tru.Tru.add_feedback" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -1707,17 +1703,17 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 <span class="normal">159</span>
 <span class="normal">160</span>
 <span class="normal">161</span>
-<span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_feedback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">FeedbackResult</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_feedback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feedback_result</span><span class="p">:</span> <span class="n">FeedbackResult</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Add a single feedback result to the database.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">FeedbackResult</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">feedback_result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">feedback_result</span> <span class="o">=</span> <span class="n">FeedbackResult</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">feedback_result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">insert_feedback</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">insert_feedback</span><span class="p">(</span><span class="n">feedback_result</span><span class="o">=</span><span class="n">feedback_result</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
       </details>
   </div>
@@ -1729,7 +1725,7 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
 
 <h2 id="trulens_eval.trulens_eval.tru.Tru.add_feedbacks" class="doc doc-heading">
-<code class="codehilite language-python"><span class="n">add_feedbacks</span><span class="p">(</span><span class="n">results</span><span class="p">)</span></code>
+<code class="codehilite language-python"><span class="n">add_feedbacks</span><span class="p">(</span><span class="n">feedback_results</span><span class="p">)</span></code>
 
 <a href="#trulens_eval.trulens_eval.tru.Tru.add_feedbacks" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -1746,13 +1742,13 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 <span class="normal">167</span>
 <span class="normal">168</span>
 <span class="normal">169</span>
-<span class="normal">170</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_feedbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">FeedbackResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">170</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_feedbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feedback_results</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">FeedbackResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Add multiple feedback results to the database.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">add_feedback</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">feedback_result</span> <span class="ow">in</span> <span class="n">feedback_results</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_feedback</span><span class="p">(</span><span class="n">feedback_result</span><span class="o">=</span><span class="n">feedback_result</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
       </details>
   </div>
@@ -1800,9 +1796,7 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">70</span>
 <span class="normal">71</span>
 <span class="normal">72</span>
 <span class="normal">73</span>
@@ -1820,7 +1814,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 <span class="normal">85</span>
 <span class="normal">86</span>
 <span class="normal">87</span>
-<span class="normal">88</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Record</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Record</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Add a record to the database.</span>
 
@@ -1935,12 +1931,12 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">63</span>
 <span class="normal">64</span>
 <span class="normal">65</span>
-<span class="normal">66</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">reset_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">reset_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reset the database. Clears all tables.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1957,7 +1953,7 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
 
 <h2 id="trulens_eval.trulens_eval.tru.Tru.run_dashboard" class="doc doc-heading">
-<code class="codehilite language-python"><span class="n">run_dashboard</span><span class="p">(</span><span class="n">force</span><span class="p">,</span> <span class="n">_dev</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="codehilite language-python"><span class="n">run_dashboard</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">_dev</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#trulens_eval.trulens_eval.tru.Tru.run_dashboard" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -2063,7 +2059,7 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 <span class="normal">345</span>
 <span class="normal">346</span>
 <span class="normal">347</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_dashboard</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">_dev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">_dev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Process</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Runs a streamlit dashboard to view logged results and chains</span>
 
@@ -2153,9 +2149,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
     </thead>
     <tbody>
         <tr>
-          <td><code>record_json</code></td>
+          <td><code>record</code></td>
           <td>
-                <code><span title="trulens_eval.tru_db.JSON">JSON</span></code>
+                <code><span title="trulens_eval.schema.Record">Record</span></code>
           </td>
           <td><p>The record on which to evaluate the feedback</p></td>
           <td>
@@ -2163,13 +2159,13 @@ Creates a local database 'default.sqlite' in current working directory.</p>
           </td>
         </tr>
         <tr>
-          <td><code>chain_json</code></td>
+          <td><code>chain</code></td>
           <td>
-                <code><span title="trulens_eval.tru_db.JSON">JSON</span></code>
+                <code><span title="trulens_eval.schema.Model">Model</span></code>
           </td>
           <td><p>The chain that produced the given record.</p></td>
           <td>
-              <em>required</em>
+                <code>None</code>
           </td>
         </tr>
         <tr>
@@ -2188,9 +2184,7 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 90</span>
-<span class="normal"> 91</span>
-<span class="normal"> 92</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 92</span>
 <span class="normal"> 93</span>
 <span class="normal"> 94</span>
 <span class="normal"> 95</span>
@@ -2252,10 +2246,10 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
 <span class="sd">    Parameters:</span>
 
-<span class="sd">        record_json (JSON): The record on which to evaluate the feedback</span>
+<span class="sd">        record (Record): The record on which to evaluate the feedback</span>
 <span class="sd">        functions.</span>
 
-<span class="sd">        chain_json (JSON, optional): The chain that produced the given record.</span>
+<span class="sd">        chain (Model, optional): The chain that produced the given record.</span>
 <span class="sd">        If not provided, it is looked up from the given database `db`.</span>
 
 <span class="sd">        feedback_functions (Sequence[Feedback]): A collection of feedback</span>
@@ -2287,9 +2281,7 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
     <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">feedback_functions</span><span class="p">:</span>
         <span class="n">evals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">promise</span><span class="p">(</span>
-                <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">run_on_record</span><span class="p">(</span><span class="n">chain</span><span class="o">=</span><span class="n">chain</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">),</span> <span class="n">func</span>
-            <span class="p">)</span>
+            <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">promise</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">chain</span><span class="o">=</span><span class="n">chain</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">),</span> <span class="n">func</span><span class="p">)</span>
         <span class="p">)</span>
 
     <span class="n">evals</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">evals</span><span class="p">)</span>

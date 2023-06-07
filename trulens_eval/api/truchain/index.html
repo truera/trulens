@@ -1404,7 +1404,10 @@
 <span class="normal">611</span>
 <span class="normal">612</span>
 <span class="normal">613</span>
-<span class="normal">614</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruChain</span><span class="p">(</span><span class="n">LangChainModel</span><span class="p">):</span>
+<span class="normal">614</span>
+<span class="normal">615</span>
+<span class="normal">616</span>
+<span class="normal">617</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruChain</span><span class="p">(</span><span class="n">LangChainModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrap a langchain Chain to capture its configuration and evaluation steps. </span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1427,6 +1430,8 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
+        <span class="n">chain</span><span class="p">:</span> <span class="n">langchain</span><span class="o">.</span><span class="n">chains</span><span class="o">.</span><span class="n">base</span><span class="o">.</span>
+        <span class="n">Chain</span><span class="p">,</span>  <span class="c1"># normally pydantic does not like positional args but this one is important</span>
         <span class="n">tru</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tru</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">feedbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Feedback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">feedback_mode</span><span class="p">:</span> <span class="n">FeedbackMode</span> <span class="o">=</span> <span class="n">FeedbackMode</span><span class="o">.</span><span class="n">WITH_CHAIN_THREAD</span><span class="p">,</span>
@@ -1462,6 +1467,7 @@
                 <span class="p">)</span>
                 <span class="n">feedback_mode</span> <span class="o">=</span> <span class="n">FeedbackMode</span><span class="o">.</span><span class="n">NONE</span>
 
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">chain</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;tru&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tru</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;feedbacks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">feedbacks</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;feedback_mode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">feedback_mode</span>
@@ -1609,12 +1615,12 @@
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">feedback_mode</span> <span class="ow">in</span> <span class="p">[</span><span class="n">FeedbackMode</span><span class="o">.</span><span class="n">WITH_CHAIN</span><span class="p">,</span>
                                     <span class="n">FeedbackMode</span><span class="o">.</span><span class="n">WITH_CHAIN_THREAD</span><span class="p">]:</span>
 
-            <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tru</span><span class="o">.</span><span class="n">run_feedback_functions</span><span class="p">(</span>
+            <span class="n">feedback_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tru</span><span class="o">.</span><span class="n">run_feedback_functions</span><span class="p">(</span>
                 <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">,</span> <span class="n">feedback_functions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">feedbacks</span><span class="p">,</span> <span class="n">chain</span><span class="o">=</span><span class="bp">self</span>
             <span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">tru</span><span class="o">.</span><span class="n">add_feedback</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">feedback_result</span> <span class="ow">in</span> <span class="n">feedback_results</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">tru</span><span class="o">.</span><span class="n">add_feedback</span><span class="p">(</span><span class="n">feedback_result</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_handle_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Record</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1943,15 +1949,15 @@ get the record, use <code>call_with_record</code> instead.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">275</span>
-<span class="normal">276</span>
-<span class="normal">277</span>
-<span class="normal">278</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">278</span>
 <span class="normal">279</span>
 <span class="normal">280</span>
 <span class="normal">281</span>
 <span class="normal">282</span>
-<span class="normal">283</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrapped call to self.chain.__call__ with instrumentation. If you need to</span>
 <span class="sd">    get the record, use `call_with_record` instead. </span>
@@ -1971,7 +1977,7 @@ get the record, use <code>call_with_record</code> instead.</p>
 
 
 <h3 id="trulens_eval.trulens_eval.tru_chain.TruChain.__init__" class="doc doc-heading">
-<code class="codehilite language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">tru</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">feedback_mode</span><span class="o">=</span><span class="n">FeedbackMode</span><span class="o">.</span><span class="n">WITH_CHAIN_THREAD</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="codehilite language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">tru</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">feedback_mode</span><span class="o">=</span><span class="n">FeedbackMode</span><span class="o">.</span><span class="n">WITH_CHAIN_THREAD</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 <a href="#trulens_eval.trulens_eval.tru_chain.TruChain.__init__" class="headerlink" title="Permanent link">&para;</a></h3>
 
@@ -2038,8 +2044,13 @@ get the record, use <code>call_with_record</code> instead.</p>
 <span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
-<span class="normal">180</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
+    <span class="n">chain</span><span class="p">:</span> <span class="n">langchain</span><span class="o">.</span><span class="n">chains</span><span class="o">.</span><span class="n">base</span><span class="o">.</span>
+    <span class="n">Chain</span><span class="p">,</span>  <span class="c1"># normally pydantic does not like positional args but this one is important</span>
     <span class="n">tru</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tru</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">feedbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Feedback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">feedback_mode</span><span class="p">:</span> <span class="n">FeedbackMode</span> <span class="o">=</span> <span class="n">FeedbackMode</span><span class="o">.</span><span class="n">WITH_CHAIN_THREAD</span><span class="p">,</span>
@@ -2075,6 +2086,7 @@ get the record, use <code>call_with_record</code> instead.</p>
             <span class="p">)</span>
             <span class="n">feedback_mode</span> <span class="o">=</span> <span class="n">FeedbackMode</span><span class="o">.</span><span class="n">NONE</span>
 
+    <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">chain</span>
     <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;tru&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tru</span>
     <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;feedbacks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">feedbacks</span>
     <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;feedback_mode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">feedback_mode</span>
@@ -2134,10 +2146,7 @@ get the record, use <code>call_with_record</code> instead.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">198</span>
-<span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">201</span>
 <span class="normal">202</span>
 <span class="normal">203</span>
 <span class="normal">204</span>
@@ -2208,7 +2217,10 @@ get the record, use <code>call_with_record</code> instead.</p>
 <span class="normal">269</span>
 <span class="normal">270</span>
 <span class="normal">271</span>
-<span class="normal">272</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Run the chain and also return a record metadata object.</span>
 
 <span class="sd">    Returns:</span>

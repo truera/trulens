@@ -745,10 +745,12 @@
 <p><img alt="Architecture Diagram" src="docs/Assets/image/TruLens_Architecture.png" /></p>
 <h3 id="get-going-with-trulens-eval">Get going with TruLens-Eval<a class="headerlink" href="#get-going-with-trulens-eval" title="Permanent link">&para;</a></h3>
 <p>Install trulens-eval from PyPI.</p>
-<div class="highlight"><pre><span></span><code>pip install trulens-eval
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>trulens-eval
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">tru</span>
 <span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">tru_chain</span>
+<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Query</span>
+
 <span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
 </code></pre></div>
 <p>This example uses LangChain and OpenAI, but the same process can be followed with any framework and model provider.</p>
@@ -788,7 +790,7 @@
 
 <span class="c1"># Define a language match feedback function using HuggingFace.</span>
 <span class="n">f_lang_match</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">hugs</span><span class="o">.</span><span class="n">language_match</span><span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
-    <span class="n">text1</span><span class="o">=</span><span class="s2">&quot;prompt&quot;</span><span class="p">,</span> <span class="n">text2</span><span class="o">=</span><span class="s2">&quot;response&quot;</span>
+    <span class="n">text1</span><span class="o">=</span><span class="n">Query</span><span class="o">.</span><span class="n">RecordInput</span><span class="p">,</span> <span class="n">text2</span><span class="o">=</span><span class="n">Query</span><span class="o">.</span><span class="n">RecordOutput</span>
 <span class="p">)</span>
 
 <span class="c1"># wrap your chain with TruChain</span>
@@ -813,20 +815,20 @@
 <ol>
 <li>
 <p>Create a virtual environment (or modify an existing one).
-<div class="highlight"><pre><span></span><code>conda create -n &quot;&lt;my_name&gt;&quot; python=3.7  # Skip if using existing environment.
-conda activate &lt;my_name&gt;
+<div class="highlight"><pre><span></span><code>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;&lt;my_name&gt;&quot;</span><span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.7<span class="w">  </span><span class="c1"># Skip if using existing environment.</span>
+conda<span class="w"> </span>activate<span class="w"> </span>&lt;my_name&gt;
 </code></pre></div></p>
 </li>
 <li>
 <p>Install dependencies.
-<div class="highlight"><pre><span></span><code>conda install tensorflow-gpu=1  # Or whatever backend you&#39;re using.
-conda install keras             # Or whatever backend you&#39;re using.
-conda install matplotlib        # For visualizations.
+<div class="highlight"><pre><span></span><code>conda<span class="w"> </span>install<span class="w"> </span>tensorflow-gpu<span class="o">=</span><span class="m">1</span><span class="w">  </span><span class="c1"># Or whatever backend you&#39;re using.</span>
+conda<span class="w"> </span>install<span class="w"> </span>keras<span class="w">             </span><span class="c1"># Or whatever backend you&#39;re using.</span>
+conda<span class="w"> </span>install<span class="w"> </span>matplotlib<span class="w">        </span><span class="c1"># For visualizations.</span>
 </code></pre></div></p>
 </li>
 <li>
 <p>[Pip installation] Install the trulens pip package from PyPI.
-<div class="highlight"><pre><span></span><code>pip install trulens
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>trulens
 </code></pre></div></p>
 </li>
 <li>

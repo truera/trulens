@@ -1928,9 +1928,9 @@ truchain("This will be automatically logged.")</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tc</span> <span class="o">=</span> <span class="n">tru_chain</span><span class="o">.</span><span class="n">TruChain</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">chain_id</span><span class="o">=</span><span class="s1">&#39;Chain1_ChatApplication&#39;</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tc</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">chain_id</span><span class="o">=</span><span class="s1">&#39;Chain1_ChatApplication&#39;</span><span class="p">)</span>
 </pre></div>
-<div id="cell-3" class="clipboard-copy-txt">tc = tru_chain.TruChain(chain, chain_id='Chain1_ChatApplication')</div>
+<div id="cell-3" class="clipboard-copy-txt">tc = TruChain(chain, chain_id='Chain1_ChatApplication')</div>
         
         </div>
     </div>
@@ -1973,10 +1973,10 @@ truchain("This will be automatically logged.")</div>
                 </clipboard-copy>
             </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">prompt_input</span> <span class="o">=</span> <span class="s1">&#39;que hora es?&#39;</span>
-<span class="n">gpt3_response</span><span class="p">,</span> <span class="n">record</span> <span class="o">=</span> <span class="n">tc</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span>
+<span class="n">gpt3_response</span><span class="p">,</span> <span class="n">record</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span>
 </pre></div>
 <div id="cell-4" class="clipboard-copy-txt">prompt_input = 'que hora es?'
-gpt3_response, record = tc(prompt_input)</div>
+gpt3_response, record = tc.call_with_record(prompt_input)</div>
         
         </div>
     </div>
@@ -2018,9 +2018,9 @@ gpt3_response, record = tc(prompt_input)</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">add_chain</span><span class="p">(</span><span class="n">chain_json</span><span class="o">=</span><span class="n">truchain</span><span class="o">.</span><span class="n">json</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">add_chain</span><span class="p">(</span><span class="n">chain</span><span class="o">=</span><span class="n">truchain</span><span class="p">)</span>
 </pre></div>
-<div id="cell-5" class="clipboard-copy-txt">tru.add_chain(chain_json=truchain.json)</div>
+<div id="cell-5" class="clipboard-copy-txt">tru.add_chain(chain=truchain)</div>
         
         </div>
     </div>
@@ -2062,17 +2062,9 @@ gpt3_response, record = tc(prompt_input)</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">add_record</span><span class="p">(</span>
-    <span class="n">prompt</span><span class="o">=</span><span class="n">prompt_input</span><span class="p">,</span> <span class="c1"># prompt input</span>
-    <span class="n">response</span><span class="o">=</span><span class="n">gpt3_response</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">],</span> <span class="c1"># LLM response</span>
-    <span class="n">record_json</span><span class="o">=</span><span class="n">record</span> <span class="c1"># record is returned by the TruChain wrapper</span>
-<span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">add_record</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
 </pre></div>
-<div id="cell-6" class="clipboard-copy-txt">tru.add_record(
-    prompt=prompt_input, # prompt input
-    response=gpt3_response['text'], # LLM response
-    record_json=record # record is returned by the TruChain wrapper
-)</div>
+<div id="cell-6" class="clipboard-copy-txt">tru.add_record(record)</div>
         
         </div>
     </div>
@@ -2117,13 +2109,13 @@ gpt3_response, record = tc(prompt_input)</div>
                 </clipboard-copy>
             </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">feedback_results</span> <span class="o">=</span> <span class="n">tru</span><span class="o">.</span><span class="n">run_feedback_functions</span><span class="p">(</span>
-    <span class="n">record_json</span><span class="o">=</span><span class="n">record</span><span class="p">,</span>
+    <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">,</span>
     <span class="n">feedback_functions</span><span class="o">=</span><span class="p">[</span><span class="n">f_lang_match</span><span class="p">]</span>
 <span class="p">)</span>
 <span class="n">display</span><span class="p">(</span><span class="n">feedback_results</span><span class="p">)</span>
 </pre></div>
 <div id="cell-7" class="clipboard-copy-txt">feedback_results = tru.run_feedback_functions(
-    record_json=record,
+    record=record,
     feedback_functions=[f_lang_match]
 )
 display(feedback_results)</div>
@@ -2168,9 +2160,9 @@ display(feedback_results)</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">add_feedback</span><span class="p">(</span><span class="n">feedback_results</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">add_feedbacks</span><span class="p">(</span><span class="n">feedback_results</span><span class="p">)</span>
 </pre></div>
-<div id="cell-8" class="clipboard-copy-txt">tru.add_feedback(feedback_results)</div>
+<div id="cell-8" class="clipboard-copy-txt">tru.add_feedbacks(feedback_results)</div>
         
         </div>
     </div>
