@@ -50,9 +50,9 @@ f_qa_relevance = Feedback(openai.relevance).on(
 
 f_qs_relevance = Feedback(openai.qs_relevance).on(
     question=Query.RecordInput,
-    statement=Query.Record.chain.combine_docs_chain._call.args.inputs.input_documents[:].page_content
+    statement=Query.Record.chain.combine_docs_chain._call.args.inputs.
+    input_documents[:].page_content
 ).aggregate(np.min)
-
 
 
 # @st.cache_data
