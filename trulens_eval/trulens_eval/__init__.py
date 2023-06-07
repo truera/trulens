@@ -35,5 +35,7 @@ from trulens_eval.tru_db import Query
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.tru_feedback import Provider
 
-
-__all__ = ['TruChain', 'Feedback', 'OpenAI', 'Huggingface', 'Tru', 'Query', 'FeedbackMode', 'Provider']
+__all__ = [
+    'TruChain', 'Feedback', 'OpenAI', 'Huggingface', 'Tru', 'Query',
+    'FeedbackMode', 'Provider'
+]

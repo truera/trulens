@@ -20,7 +20,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query, Provider
+from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
 tru = Tru()
 
 # imports from langchain to build app
@@ -302,6 +302,8 @@ The process for adding new feedback functions is:
 
 
 ```python
+from trulens_eval import Provider
+
 class StandAlone(Provider):
     pass
 ```
