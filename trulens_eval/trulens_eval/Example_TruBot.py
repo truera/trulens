@@ -15,6 +15,7 @@ import streamlit as st
 from trulens_eval import tru
 from trulens_eval import tru_chain
 from trulens_eval import tru_feedback
+from trulens_eval import Query
 from trulens_eval.keys import *
 from trulens_eval.keys import PINECONE_API_KEY
 from trulens_eval.keys import PINECONE_ENV
@@ -40,19 +41,18 @@ hugs = tru_feedback.Huggingface()
 openai = tru_feedback.OpenAI()
 
 f_lang_match = Feedback(hugs.language_match).on(
-    text1="prompt", text2="response"
+    text1=Query.RecordInput, text2=Query.RecordOutput
 )
 
 f_qa_relevance = Feedback(openai.relevance).on(
-    prompt="input", response="output"
+    prompt=Query.RecordInput, response=Query.RecordOutput
 )
 
 f_qs_relevance = Feedback(openai.qs_relevance).on(
-    question="input",
-    statement=Record.chain.combine_docs_chain._call.args.inputs.input_documents
-).on_multiple(
-    multiarg="statement", each_query=Record.page_content, agg=np.min
-)
+    question=Query.RecordInput,
+    statement=Query.Record.chain.combine_docs_chain._call.args.inputs.input_documents[:].page_content
+).aggregate(np.min)
+
 
 
 # @st.cache_data
