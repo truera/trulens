@@ -134,31 +134,13 @@ def json_default(obj: Any) -> str:
     Produce a representation of an object which cannot be json-serialized.
     """
 
-    # obj = jsonify(obj)
-
     # Try the encoders included with pydantic first (should handle things like
     # Datetime):
     try:
         return pydantic.json.pydantic_encoder(obj)
     except:
-        pass
-
-    #if isinstance(obj, Enum):
-    #    return obj.name
-
-    #if isinstance(obj, dict):
-    #    return
-
-    #if isinstance(obj, pydantic.BaseModel):
-    #    try:
-    #        return json.dumps(obj.json())
-    #    except Exception as e:
-    #        return noserio(obj, exception=e)
-
-    # Intentionally not including much in this indicator to make sure the model
-    # hashing procedure does not get randomized due to something here.
-
-    return noserio(obj)
+        # Otherwise give up and indicate a non-serialization.
+        return noserio(obj)
 
 # def jsonify_with_class_info(obj: Any):
  #   return jsonify(obj=obj, dicted=dict(), with_class_info=True)
@@ -209,7 +191,7 @@ def jsonify(obj: Any, dicted=None) -> JSON:
 
     elif isinstance(obj, pydantic.BaseModel):
         from trulens_eval.utils.langchain import CLASSES_TO_INSTRUMENT
-        
+
         # Not even trying to use pydantic.dict here.
         temp = {}
         new_dicted[id(obj)] = temp
@@ -221,20 +203,6 @@ def jsonify(obj: Any, dicted=None) -> JSON:
             temp['class_info'] = Class.of_class(cls=obj.__class__, with_bases=True).dict()
 
         return temp
-
-        """    
-        except Exception as e:
-            logger.warning(f"pydantic model of type {type(obj)} refuses to be turned into dict: {type(e)}={e}")
-            temp = {}
-            new_dicted[id(obj)] = temp
-            temp.update(
-                {
-                    k: jsonify(getattr(obj, k), dicted=new_dicted)
-                    for k in obj.__fields__
-                }
-            )
-            return temp
-        """
 
     else:
         logger.debug(
