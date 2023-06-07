@@ -135,9 +135,7 @@ class Tru(SingletonPerName):
 
         for func in feedback_functions:
             evals.append(
-                TP().promise(
-                    lambda f: f.run(chain=chain, record=record), func
-                )
+                TP().promise(lambda f: f.run(chain=chain, record=record), func)
             )
 
         evals = map(lambda p: p.get(), evals)

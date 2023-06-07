@@ -582,9 +582,8 @@ class LocalSQLite(TruDB):
             if row['name'] is not None:
                 result_cols.add(row['name'])
                 row[row['name']] = row.result
-                row[row['name'] + "_calls"] = json.loads(
-                    row.calls_json
-                )['calls']
+                row[row['name'] + "_calls"] = json.loads(row.calls_json
+                                                        )['calls']
 
             return pd.Series(row)
 
