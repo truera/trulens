@@ -573,6 +573,9 @@ class LangChainModel(langchain.chains.base.Chain, Model):
     chain: langchain.chains.base.Chain
 
 class LlamaIndexModel(Model):
+
+    class Config:
+        arbitrary_types_allowed = True
     
     # Other engine types or whatever is the typical root of a llama index 
     engine: llama_index.indices.query.base.BaseQueryEngine
