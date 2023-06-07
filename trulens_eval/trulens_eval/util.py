@@ -160,6 +160,8 @@ def json_default(obj: Any) -> str:
 
     return noserio(obj)
 
+# def jsonify_with_class_info(obj: Any):
+ #   return jsonify(obj=obj, dicted=dict(), with_class_info=True)
 
 def jsonify(obj: Any, dicted=None) -> JSON:
     """
@@ -206,15 +208,23 @@ def jsonify(obj: Any, dicted=None) -> JSON:
         return temp
 
     elif isinstance(obj, pydantic.BaseModel):
-        try:
-            if not hasattr(obj.dict, "_instrumented"):
-                temp = obj.dict()
-                return temp
-            else:
-                raise Exception()
+        from trulens_eval.utils.langchain import CLASSES_TO_INSTRUMENT
         
-        except Exception:
-            logger.warning(f"pydantic model of type {type(obj)} refuses to be turned into dict.")
+        # Not even trying to use pydantic.dict here.
+        temp = {}
+        new_dicted[id(obj)] = temp
+        temp.update({
+            k: jsonify(getattr(obj, k), dicted=new_dicted)
+            for k in obj.__fields__
+        })
+        if any(isinstance(obj, cls) for cls in CLASSES_TO_INSTRUMENT):
+            temp['class_info'] = Class.of_class(cls=obj.__class__, with_bases=True).dict()
+
+        return temp
+
+        """    
+        except Exception as e:
+            logger.warning(f"pydantic model of type {type(obj)} refuses to be turned into dict: {type(e)}={e}")
             temp = {}
             new_dicted[id(obj)] = temp
             temp.update(
@@ -224,6 +234,7 @@ def jsonify(obj: Any, dicted=None) -> JSON:
                 }
             )
             return temp
+        """
 
     else:
         logger.debug(
@@ -331,12 +342,12 @@ def all_objects(obj: Any,
                 yield res
 
     elif isinstance(obj, Iterable):
-        print(f"Cannot create query for Iterable types like {obj.__class__.__name__} at query {query}. Convert the iterable to a sequence first.")
-        #raise RuntimeError(f"Cannot create query for Iterable types like {obj.__class__.__name__} at query {query}. Convert the iterable to a sequence first.")
+        pass
+        # print(f"Cannot create query for Iterable types like {obj.__class__.__name__} at query {query}. Convert the iterable to a sequence first.")
         
     else:
-        print(f"Unhandled object type {obj} {type(obj)}")
-        # raise RuntimeError(f"Unhandled object type {obj} {type(obj)}")
+        pass
+        # print(f"Unhandled object type {obj} {type(obj)}")
 
 
 def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
@@ -404,7 +415,8 @@ def _project(path: List, obj: Any):
 
 class SerialModel(pydantic.BaseModel):
     """
-    Trulens-specific additions on top of pydantic models. Includes utilities to help serialization mostly.
+    Trulens-specific additions on top of pydantic models. Includes utilities to
+    help serialization mostly.
     """
 
     @classmethod
@@ -412,7 +424,7 @@ class SerialModel(pydantic.BaseModel):
         print("serial_model.model_validate")
         if isinstance(obj, dict):
             if "class_info" in obj:
-                print(f"creating model with class info from {obj}")
+                print(f"Creating model with class info from {obj}.")
                 cls = Class(**obj['class_info'])
                 del obj['class_info']
                 model = cls.model_validate(obj, **kwargs)
@@ -1313,6 +1325,6 @@ def instrumented_classes(obj: object) -> Iterable[Tuple[JSONPath, Class, Any]]:
         if isinstance(o, pydantic.BaseModel) and "class_info" in o.__fields__:
             yield q, o.class_info, o
 
-        if isinstance(o, dict) and "class_info" in o:
+        if isinstance(o, Dict) and "class_info" in o:
             ci = Class(**o['class_info'])
             yield q, ci, o

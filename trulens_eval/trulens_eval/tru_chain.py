@@ -26,6 +26,7 @@ from datetime import datetime
 from inspect import BoundArguments
 from inspect import signature
 from inspect import stack
+import inspect
 import logging
 import os
 from pprint import PrettyPrinter
@@ -49,6 +50,7 @@ from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru import Tru
 from trulens_eval.schema import FeedbackResult
+from trulens_eval.utils.langchain import CLASSES_TO_INSTRUMENT, METHODS_TO_INSTRUMENT
 from trulens_eval.util import SerialModel
 from trulens_eval.util import Class
 from trulens_eval.util import WithClassInfo
@@ -289,6 +291,11 @@ class TruChain(LangChainModel, WithClassInfo):
         non-serialization situations.
         """
 
+        if with_class_info:
+            return jsonify_with_class_info
+        else:
+            return jsonify
+
         if isinstance(obj, SerialModel):
             # Don't need to instrument these as the propr handling is done in SerialModel.dict already.
             return SerialModel.dict
@@ -480,25 +487,20 @@ class TruChain(LangChainModel, WithClassInfo):
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
 
-        # Instrument only methods with these names and of these classes.
-        methods_to_instrument = {
-            "_call": lambda o: isinstance(o, langchain.chains.base.Chain),
-            "get_relevant_documents": lambda o: True,  # VectorStoreRetriever
-            "__call__":
-                lambda o: isinstance(o, Feedback)  # Feedback
-        }
-
         for base in [cls] + cls.mro():
             # All of mro() may need instrumentation here if some subchains call
             # superchains, and we want to capture the intermediate steps.
+
+            if not any(issubclass(base, c) for c in CLASSES_TO_INSTRUMENT):
+                continue
 
             if not base.__module__.startswith(
                     "langchain.") and not base.__module__.startswith("trulens"):
                 continue
 
-            for method_name in methods_to_instrument:
+            for method_name in METHODS_TO_INSTRUMENT:
                 if hasattr(base, method_name):
-                    check_class = methods_to_instrument[method_name]
+                    check_class = METHODS_TO_INSTRUMENT[method_name]
                     if not check_class(obj):
                         continue
 
@@ -517,6 +519,7 @@ class TruChain(LangChainModel, WithClassInfo):
                         )
                     )
 
+            """
             # Instrument special langchain methods that may cause serialization
             # failures.
             if hasattr(base, "_chain_type"):
@@ -541,8 +544,9 @@ class TruChain(LangChainModel, WithClassInfo):
             # serialization failures.
             if hasattr(base, "dict"):# and not hasattr(base.dict, "_instrumented"):
                 logger.debug(f"instrumenting {base}.dict")
-
                 setattr(base, "dict", self._instrument_dict(cls=base, obj=obj, with_class_info=True))
+            """
+
 
         # Not using chain.dict() here as that recursively converts subchains to
         # dicts but we want to traverse the instantiations here.
