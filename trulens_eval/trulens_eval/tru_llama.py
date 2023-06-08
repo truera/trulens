@@ -13,9 +13,6 @@ from pprint import PrettyPrinter
 import threading as th
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
-import langchain
-from langchain.callbacks import get_openai_callback
-from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
 
@@ -34,6 +31,8 @@ from trulens_eval.schema import LlamaIndexModel
 from trulens_eval.tru_model import TruModel
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import TP, JSONPath, jsonify, noserio
+
+import llama_index
 
 logger = logging.getLogger(__name__)
 
@@ -61,3 +60,13 @@ class TruLlama(LlamaIndexModel, TruModel):
     db: Optional[TruDB] = Field(exclude=True)
 
     # TODO:
+
+    def query(self, *args, **kwargs) -> llama_index.response.schema.Response:
+        res, _ = self.query_with_record(*args, **kwargs)
+
+        return res
+    
+    def query_with_record(self, *args, **kwargs) -> Tuple[llama_index.response.schema.Response, Record]:
+        res = self.engine.query(*args, **kwargs)
+
+
