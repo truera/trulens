@@ -8,22 +8,6 @@ from trulens_eval.tru_feedback import Feedback
 from trulens_eval.util import Class
 from trulens_eval.util import TP, first, second
 
-CLASSES_TO_INSTRUMENT = {
-    langchain.chains.base.Chain,
-    langchain.vectorstores.base.BaseRetriever,
-    langchain.schema.BaseRetriever,
-    langchain.llms.base.BaseLLM,
-    langchain.prompts.base.BasePromptTemplate,
-    langchain.schema.BaseMemory,
-    langchain.schema.BaseChatMessageHistory
-}
-
-# Instrument only methods with these names and of these classes.
-METHODS_TO_INSTRUMENT = {
-    "_call": lambda o: isinstance(o, langchain.chains.base.Chain),
-    "get_relevant_documents": lambda o: True,  # VectorStoreRetriever
-    "__call__": lambda o: isinstance(o, Feedback)  # Feedback
-}
 
 class Is:
     """
