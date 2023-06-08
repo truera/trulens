@@ -32,10 +32,11 @@ from trulens_eval.tru_feedback import OpenAI
 from trulens_eval.tru_feedback import Huggingface
 from trulens_eval.tru import Tru
 from trulens_eval.tru_db import Query
+from trulens_eval.tru_db import Record
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.tru_feedback import Provider
 
 __all__ = [
-    'TruChain', 'Feedback', 'OpenAI', 'Huggingface', 'Tru', 'Query',
+    'TruChain', 'Feedback', 'OpenAI', 'Huggingface', 'Tru', 'Query', 'Record',
     'FeedbackMode', 'Provider'
 ]

@@ -320,6 +320,16 @@ class LocalSQLite(TruDB):
 
         return chain_id
 
+    def insert_chain_id(self, chain_id: str) -> ChainID:
+        chain_str = ""
+
+        vals = (chain_id, chain_str)
+        self._insert_or_replace_vals(table=self.TABLE_CHAINS, vals=vals)
+
+        print(f"{UNICODE_CHECK} chain {chain_id} -> {self.filename}")
+
+        return chain_id
+
     def insert_feedback_definition(
         self, feedback: FeedbackDefinition
     ) -> FeedbackDefinitionID:

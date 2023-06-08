@@ -317,6 +317,8 @@ class RecordChainCall(SerialModel):
 
 class Record(SerialModel):
     record_id: RecordID
+
+    #Todo: rename chain_id if its not langchain. app_id??
     chain_id: ChainID
 
     cost: Cost = pydantic.Field(default_factory=Cost)
@@ -458,7 +460,6 @@ class FeedbackDefinition(SerialModel):
         - feedback_definition_id: Optional[str] - unique identifier.
 
         """
-
         super().__init__(
             feedback_definition_id="temporary",
             selectors=selectors,
