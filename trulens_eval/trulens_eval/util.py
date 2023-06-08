@@ -124,6 +124,7 @@ def json_str_of_obj(obj: Any, *args, **kwargs) -> str:
 
     return json.dumps(obj, default=json_default)
 
+
 def json_default(obj: Any) -> str:
     """
     Produce a representation of an object which cannot be json-serialized.
@@ -140,9 +141,9 @@ def json_default(obj: Any) -> str:
 
     #if isinstance(obj, Enum):
     #    return obj.name
-    
+
     #if isinstance(obj, dict):
-    #    return 
+    #    return
 
     #if isinstance(obj, pydantic.BaseModel):
     #    try:
@@ -493,22 +494,23 @@ class SerialModel(pydantic.BaseModel):
 
         return self
 
+
 # JSONPath, a container for selector/accessors/setters of data stored in a json
 # structure. Cannot make abstract since pydantic will try to initialize it.
-class Step(SerialModel):#, abc.ABC):
+class Step(SerialModel):  #, abc.ABC):
     """
     A step in a selection path.
-    """                          
+    """
 
     @classmethod
     def __get_validator__(cls):
         yield cls.validate
 
     @classmethod
-    def validate(cls, d):        
+    def validate(cls, d):
         if not isinstance(d, Dict):
             return d
-        
+
         ATTRIBUTE_TYPE_MAP = {
             'item': GetItem,
             'index': GetIndex,
@@ -540,6 +542,7 @@ class Step(SerialModel):#, abc.ABC):
         Set the value(s) indicated by self in `obj` to value `val`.
         """
         raise NotImplementedError()
+
 
 class GetAttribute(Step):
     attribute: str
@@ -634,7 +637,7 @@ class GetItem(Step):
 class GetItemOrAttribute(Step):
     # For item/attribute agnostic addressing.
 
-    item_or_attribute: str # distinct from "item" for deserialization
+    item_or_attribute: str  # distinct from "item" for deserialization
 
     def __hash__(self):
         return hash(self.item)
@@ -644,7 +647,9 @@ class GetItemOrAttribute(Step):
             if self.item_or_attribute in obj:
                 yield obj[self.item_or_attribute]
             else:
-                raise KeyError(f"Key not in dictionary: {self.item_or_attribute}")
+                raise KeyError(
+                    f"Key not in dictionary: {self.item_or_attribute}"
+                )
         else:
             if hasattr(obj, self.item_or_attribute):
                 yield getattr(obj, self.item_or_attribute)
@@ -957,13 +962,17 @@ class TP(SingletonPerName):  # "thread processing"
     def _thread_starter(self, func, args, kwargs):
         present_stack = stack()
 
-        prom = self.thread_pool.apply_async(self._thread_target_wrapper, args=(present_stack, func) + args, kwds=kwargs)
+        prom = self.thread_pool.apply_async(
+            self._thread_target_wrapper,
+            args=(present_stack, func) + args,
+            kwds=kwargs
+        )
         return prom
 
         # thread = Thread(target=func, args=args, kwargs=kwargs)
         # thread.start()
         # self.pre_run_stacks[thread_id] = stack()
-        
+
     def runlater(self, func: Callable, *args, **kwargs) -> None:
         # prom = self.thread_pool.apply_async(func, args=args, kwds=kwargs)
         prom = self._thread_starter(func, args, kwargs)
@@ -1008,7 +1017,9 @@ class TP(SingletonPerName):  # "thread processing"
 
 
 def get_local_in_call_stack(
-    key: str, func: Callable[[Callable], bool], offset: int = 1
+    key: str,
+    func: Callable[[Callable], bool],
+    offset: int = 1
 ) -> Optional[Any]:
     """
     Get the value of the local variable named `key` in the stack at the nearest
@@ -1022,7 +1033,7 @@ def get_local_in_call_stack(
 
     """
 
-    frames = stack()[offset + 1:] # + 1 to skip this method itself
+    frames = stack()[offset + 1:]  # + 1 to skip this method itself
 
     # Using queue for frames as additional frames may be added due to handling threads.
     q = Queue()
@@ -1042,7 +1053,7 @@ def get_local_in_call_stack(
             for f in locs['pre_start_stack']:
                 q.put(f)
             continue
-        
+
         if func(fi.frame.f_code):
             logger.debug(f"looking {func.__name__} found: {fi}")
             locs = fi.frame.f_locals

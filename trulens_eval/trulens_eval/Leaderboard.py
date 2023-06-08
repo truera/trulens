@@ -10,6 +10,7 @@ st.runtime.legacy_caching.clear_cache()
 from trulens_eval import Tru
 from trulens_eval import tru_db
 from trulens_eval.ux import styles
+from trulens_eval.tru_feedback import default_pass_fail_color_threshold
 
 st.set_page_config(page_title="Leaderboard", layout="wide")
 
@@ -64,18 +65,31 @@ def app():
                 precision=2
             )
         )
-
         for i, col_name in enumerate(feedback_col_names):
             mean = chain_df[col_name].mean()
 
-            if math.isnan(mean):
-                pass
-            else:
-                feedback_cols[i].metric(col_name, round(mean, 2))
             st.write(
                 styles.stmetricdelta_hidearrow,
                 unsafe_allow_html=True,
             )
+
+            if math.isnan(mean):
+                pass
+
+            else:
+                if mean >= default_pass_fail_color_threshold:
+                    feedback_cols[i].metric(
+                        label=col_name,
+                        value=f'{round(mean, 2)}',
+                        delta='✅ High'
+                    )
+                else:
+                    feedback_cols[i].metric(
+                        label=col_name,
+                        value=f'{round(mean, 2)}',
+                        delta='⚠️ Low ',
+                        delta_color="inverse"
+                    )
 
         with col99:
             if st.button('Select Chain', key=f"model-selector-{chain}"):

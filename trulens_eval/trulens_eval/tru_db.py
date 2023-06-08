@@ -41,6 +41,7 @@ pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
 
+
 class Query:
 
     # Typing for type hints.
@@ -65,7 +66,8 @@ def get_calls(record: Record) -> Iterable[RecordChainCall]:
 
     for q in all_queries(record):
         print("consider query", q)
-        if len(q.path) > 0 and q.path[-1] == GetItemOrAttribute(item_or_attribute="_call"):
+        if len(q.path) > 0 and q.path[-1] == GetItemOrAttribute(
+                item_or_attribute="_call"):
             yield q
 
 
@@ -102,6 +104,7 @@ def get_calls_by_stack(
 
 
 class TruDB(SerialModel, abc.ABC):
+
     @abc.abstractmethod
     def reset_database(self):
         """
@@ -292,10 +295,10 @@ class LocalSQLite(TruDB):
         record_json_str = json_str_of_obj(record)
         cost_json_str = json_str_of_obj(record.cost)
         vals = (
-                record.record_id, record.chain_id, record.main_input,
-                record.main_output, record_json_str, record.tags, record.ts,
-                cost_json_str
-            )
+            record.record_id, record.chain_id, record.main_input,
+            record.main_output, record_json_str, record.tags, record.ts,
+            cost_json_str
+        )
 
         self._insert_or_replace_vals(table=self.TABLE_RECORDS, vals=vals)
 
@@ -311,7 +314,7 @@ class LocalSQLite(TruDB):
         chain_str = chain.json()
 
         vals = (chain_id, chain_str)
-        self._insert_or_replace_vals(table = self.TABLE_CHAINS, vals=vals)
+        self._insert_or_replace_vals(table=self.TABLE_CHAINS, vals=vals)
 
         print(f"{UNICODE_CHECK} chain {chain_id} -> {self.filename}")
 
@@ -328,8 +331,8 @@ class LocalSQLite(TruDB):
         feedback_str = feedback.json()
         vals = (feedback_definition_id, feedback_str)
 
-        self._insert_or_replace_vals(table = self.TABLE_FEEDBACK_DEFS, vals=vals)
-        
+        self._insert_or_replace_vals(table=self.TABLE_FEEDBACK_DEFS, vals=vals)
+
         print(
             f"{UNICODE_CHECK} feedback def. {feedback_definition_id} -> {self.filename}"
         )
@@ -368,10 +371,9 @@ class LocalSQLite(TruDB):
         conn, c = self._connect()
         c.execute(
             f"""INSERT OR REPLACE INTO {table}
-                VALUES ({','.join('?' for _ in vals)})""", vals 
+                VALUES ({','.join('?' for _ in vals)})""", vals
         )
         self._close(conn)
-
 
     def insert_feedback(
         self, feedback_result: FeedbackResult
@@ -381,18 +383,19 @@ class LocalSQLite(TruDB):
         """
 
         vals = (
-                feedback_result.feedback_result_id,
-                feedback_result.record_id,
-                feedback_result.chain_id, 
-                feedback_result.feedback_definition_id, 
-                feedback_result.last_ts.timestamp(),
-                feedback_result.status.value,
-                feedback_result.error,
-                json_str_of_obj(dict(calls=feedback_result.calls)), # extra dict is needed json's root must be a dict
-                feedback_result.result,
-                feedback_result.name,
-                json_str_of_obj(feedback_result.cost)
-            )
+            feedback_result.feedback_result_id,
+            feedback_result.record_id,
+            feedback_result.chain_id,
+            feedback_result.feedback_definition_id,
+            feedback_result.last_ts.timestamp(),
+            feedback_result.status.value,
+            feedback_result.error,
+            json_str_of_obj(dict(calls=feedback_result.calls)
+                           ),  # extra dict is needed json's root must be a dict
+            feedback_result.result,
+            feedback_result.name,
+            json_str_of_obj(feedback_result.cost)
+        )
 
         self._insert_or_replace_vals(table=self.TABLE_FEEDBACKS, vals=vals)
 
@@ -483,11 +486,17 @@ class LocalSQLite(TruDB):
         def map_row(row):
             # NOTE: pandas dataframe will take in the various classes below but the
             # agg table used in UI will not like it. Sending it JSON/dicts instead.
-            
-            row.calls_json = json.loads(row.calls_json)['calls']  # calls_json (sequence of FeedbackCall)
+
+            row.calls_json = json.loads(
+                row.calls_json
+            )['calls']  # calls_json (sequence of FeedbackCall)
             row.cost_json = json.loads(row.cost_json)  # cost_json (Cost)
-            row.feedback_json = json.loads(row.feedback_json)  # feedback_json (FeedbackDefinition)
-            row.record_json = json.loads(row.record_json)  # record_json (Record)
+            row.feedback_json = json.loads(
+                row.feedback_json
+            )  # feedback_json (FeedbackDefinition)
+            row.record_json = json.loads(
+                row.record_json
+            )  # record_json (Record)
             row.chain_json = json.loads(row.chain_json)  # chain_json (Model)
 
             row.status = FeedbackResultStatus(row.status)
@@ -513,7 +522,8 @@ class LocalSQLite(TruDB):
         return json.loads(result)
 
     def get_records_and_feedback(
-        self, chain_ids: Optional[List[str]] = None
+        self,
+        chain_ids: Optional[List[str]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         # This returns all models if the list of chain_ids is empty.
         chain_ids = chain_ids or []
@@ -569,9 +579,12 @@ class LocalSQLite(TruDB):
         result_cols = set()
 
         def expand_results(row):
-            result_cols.add(row['name'])
-            row[row['name']] = row.result
-            row[row['name'] + "_calls"] = json.loads(row.calls_json)['calls'] # extra step to keep json root a dict
+            if row['name'] is not None:
+                result_cols.add(row['name'])
+                row[row['name']] = row.result
+                row[row['name'] + "_calls"] = json.loads(row.calls_json
+                                                        )['calls']
+
             return pd.Series(row)
 
         df_results = df_results.apply(expand_results, axis=1)
@@ -581,14 +594,6 @@ class LocalSQLite(TruDB):
             if isinstance(val, np.float):
                 return not np.isnan(val)
             return True
-            """
-            elif isinstance(val, str):
-                return val != ""
-            elif isinstance(val, dict):
-                return len(val) > 0
-            elif isinstance(val, Sequence):
-                return len(val) > 0
-            """
 
         def merge_feedbacks(vals):
             ress = list(filter(nonempty, vals))
@@ -597,10 +602,9 @@ class LocalSQLite(TruDB):
             else:
                 return np.nan
 
-        df_results = df_results.groupby("record_id").agg(
-            merge_feedbacks
-        ).reset_index()
-            
+        df_results = df_results.groupby("record_id").agg(merge_feedbacks
+                                                        ).reset_index()
+
         assert "record_id" in df_results.columns
         assert "record_id" in df_records.columns
 

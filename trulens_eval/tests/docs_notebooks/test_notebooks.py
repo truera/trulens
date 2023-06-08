@@ -33,7 +33,7 @@ class VariableSettingPreprocessor(ExecutePreprocessor):
 def get_unit_test_for_filename(filename):
 
     def test(self):
-        with open(f'../docs/trulens_eval/{filename}') as f:
+        with open(f'./generated_files/{filename}') as f:
             OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
             HUGGINGFACE_API_KEY = os.environ['HUGGINGFACE_API_KEY']
             nb = read(f, as_version=4)
@@ -50,8 +50,8 @@ def get_unit_test_for_filename(filename):
     return test
 
 
-for filename in listdir('../docs/trulens_eval'):
-    if filename.endswith('.ipynb'):
+for filename in listdir('./generated_files/'):
+    if filename.endswith('all_tools.ipynb'):
         setattr(
             DocsNotebookTests, 'test_' + filename.split('.ipynb')[0],
             get_unit_test_for_filename(filename)
