@@ -3,8 +3,6 @@
 
 ## Limitations
 
-- Uncertain thread safety.
-
 - If the same wrapped sub-chain is called multiple times within a single call to
   the root chain, the record of this execution will not be exact with regards to
   the path to the call information. All call dictionaries will appear in a list
@@ -16,54 +14,8 @@
 - Some chains cannot be serialized/jsonized. Sequential chain is an example.
   This is a limitation of langchain itself.
 
-## Basic Usage
-
-- Wrap an existing chain:
-
-```python
-
-    tc = TruChain(t.llm_chain)
-
-```
-
-- Retrieve the parameters of the wrapped chain:
-
-```python
-
-    tc.chain
-
-```
-
-Output:
-
-```json
-
-{'memory': None,
- 'verbose': False,
- 'chain': {'memory': None,
-  'verbose': True,
-  'prompt': {'input_variables': ['question'],
-   'output_parser': None,
-   'partial_variables': {},
-   'template': 'Q: {question} A:',
-   'template_format': 'f-string',
-   'validate_template': True,
-   '_type': 'prompt'},
-  'llm': {'model_id': 'gpt2',
-   'model_kwargs': None,
-   '_type': 'huggingface_pipeline'},
-  'output_key': 'text',
-  '_type': 'llm_chain'},
- '_type': 'TruChain'}
- 
- ```
-
-- Make calls like you would to the wrapped chain.
-
-```python
-
-    rec1: dict = tc("hello there")
-    rec2: dict = tc("hello there general kanobi")
+- Instrumentation relies on CPython specifics, making heavy use of the `inspect`
+  module which is not expected to work with other Python implementations.
 
 ```
 
@@ -74,6 +26,7 @@ from datetime import datetime
 from inspect import BoundArguments
 from inspect import signature
 from inspect import stack
+import inspect
 import logging
 import os
 from pprint import PrettyPrinter
@@ -86,7 +39,7 @@ from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_eval.schema import FeedbackMode, Method, MethodIdent
+from trulens_eval.schema import FeedbackMode, Method
 from trulens_eval.schema import LangChainModel
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
@@ -97,6 +50,10 @@ from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru import Tru
 from trulens_eval.schema import FeedbackResult
+from trulens_eval.utils.langchain import CLASSES_TO_INSTRUMENT, METHODS_TO_INSTRUMENT
+from trulens_eval.util import SerialModel
+from trulens_eval.util import Class
+from trulens_eval.util import WithClassInfo
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import TP, JSONPath, jsonify, noserio
 
@@ -105,7 +62,7 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 
-class TruChain(LangChainModel):
+class TruChain(LangChainModel, WithClassInfo):
     """
     Wrap a langchain Chain to capture its configuration and evaluation steps. 
     """
@@ -170,8 +127,9 @@ class TruChain(LangChainModel):
         kwargs['feedbacks'] = feedbacks
         kwargs['feedback_mode'] = feedback_mode
 
-        super().__init__(**kwargs)
-
+        super().update_forward_refs()
+        super().__init__(obj=self, **kwargs)
+        
         if tru is not None and feedback_mode != FeedbackMode.NONE:
             logger.debug(
                 "Inserting chain and feedback function definitions to db."
@@ -244,7 +202,8 @@ class TruChain(LangChainModel):
         output_key = self.output_keys[0]
 
         ret_record_args['main_input'] = inputs[input_key]
-        ret_record_args['main_output'] = ret[output_key]
+        if ret is not None:
+            ret_record_args['main_output'] = ret[output_key]
 
         ret_record_args['main_error'] = str(error)
         ret_record_args['calls'] = record
