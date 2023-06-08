@@ -1,37 +1,5 @@
 """
 # Feedback Functions
-
-Initialize feedback function providers:
-
-```python
-    hugs = Huggingface()
-    openai = OpenAI()
-```
-
-Run feedback functions. See examples below on how to create them:
-
-```python
-    feedbacks = tru.run_feedback_functions(
-        chain=chain,
-        record=record,
-        feedback_functions=[f_lang_match, f_qs_relevance]
-    )
-```
-
-## Examples:
-
-Non-toxicity of response:
-
-```python
-    f_non_toxic = Feedback(hugs.not_toxic).on_response()
-```
-
-Language match feedback function:
-
-```python
-    f_lang_match = Feedback(hugs.language_match).on(text1="prompt", text2="response")
-```
-
 """
 
 from datetime import datetime
@@ -41,8 +9,9 @@ import itertools
 import logging
 from multiprocessing.pool import AsyncResult
 import re
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
-                    Tuple, Type, Union)
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
+)
 from time import sleep
 from typing import (
     Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
@@ -77,6 +46,10 @@ from trulens_eval.util import TP
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
+default_pass_fail_color_threshold = 0.5
+
+logger = logging.getLogger(__name__)
+
 
 def check_provider(cls_or_name: Union[Type, str]) -> None:
     if isinstance(cls_or_name, str):
@@ -87,7 +60,6 @@ def check_provider(cls_or_name: Union[Type, str]) -> None:
     assert cls_name in PROVIDER_CLASS_NAMES, f"Unsupported provider class {cls_name}"
 
 
-
 class Feedback(FeedbackDefinition):
     # Implementation, not serializable, note that FeedbackDefinition contains
     # `implementation` mean to serialize the below.
@@ -96,7 +68,7 @@ class Feedback(FeedbackDefinition):
     # Aggregator method for feedback functions that produce more than one
     # result.
     agg: Optional[Callable] = pydantic.Field(exclude=True)
-    
+
     def __init__(
         self,
         imp: Optional[Callable] = None,
@@ -118,13 +90,16 @@ class Feedback(FeedbackDefinition):
             kwargs['implementation'] = FunctionOrMethod.of_callable(imp)
         else:
             if "implementation" in kwargs:
-                imp: Callable = FunctionOrMethod.pick(**(kwargs['implementation'])).load()
+                imp: Callable = FunctionOrMethod.pick(
+                    **(kwargs['implementation'])
+                ).load()
 
         if agg is not None:
             kwargs['aggregator'] = FunctionOrMethod.of_callable(agg)
         else:
             if 'arrgregator' in kwargs:
-                agg: Callable = FunctionOrMethod.pick(**(kwargs['aggregator'])).load()
+                agg: Callable = FunctionOrMethod.pick(**(kwargs['aggregator'])
+                                                     ).load()
 
         super().__init__(**kwargs)
 
@@ -151,7 +126,12 @@ class Feedback(FeedbackDefinition):
             chain_json = row.chain_json
 
             feedback = Feedback(**row.feedback_json)
-            feedback.run_and_log(record=record, chain=chain_json, tru=tru, feedback_result_id=row.feedback_result_id)
+            feedback.run_and_log(
+                record=record,
+                chain=chain_json,
+                tru=tru,
+                feedback_result_id=row.feedback_result_id
+            )
 
         feedbacks = db.get_feedback()
 
@@ -193,7 +173,7 @@ class Feedback(FeedbackDefinition):
     def __call__(self, *args, **kwargs) -> Any:
         assert self.imp is not None, "Feedback definition needs an implementation to call."
         return self.imp(*args, **kwargs)
-        
+
     def aggregate(self, func: Callable) -> 'Feedback':
         return Feedback(imp=self.imp, selectors=self.selectors, agg=func)
 
@@ -213,7 +193,9 @@ class Feedback(FeedbackDefinition):
         "prompt" as input, sending it as an argument `arg` to implementation.
         """
 
-        return Feedback(imp=self.imp, selectors={arg: Query.RecordInput}, agg=self.agg)
+        return Feedback(
+            imp=self.imp, selectors={arg: Query.RecordInput}, agg=self.agg
+        )
 
     on_input = on_prompt
 
@@ -223,7 +205,9 @@ class Feedback(FeedbackDefinition):
         "response" as input, sending it as an argument `arg` to implementation.
         """
 
-        return Feedback(imp=self.imp, selectors={arg: Query.RecordOutput}, agg=self.agg)
+        return Feedback(
+            imp=self.imp, selectors={arg: Query.RecordOutput}, agg=self.agg
+        )
 
     on_output = on_response
 
@@ -234,7 +218,7 @@ class Feedback(FeedbackDefinition):
 
         return Feedback(imp=self.imp, selectors=selectors, agg=self.agg)
 
-    def run(self, chain: Union[Model,JSON], record: Record) -> FeedbackResult:
+    def run(self, chain: Union[Model, JSON], record: Record) -> FeedbackResult:
         """
         Run the feedback function on the given `record`. The `chain` that
         produced the record is also required to determine input/output argument
@@ -253,8 +237,8 @@ class Feedback(FeedbackDefinition):
         feedback_calls = []
 
         feedback_result = FeedbackResult(
-            feedback_definition_id = self.feedback_definition_id,
-            record_id = record.record_id,
+            feedback_definition_id=self.feedback_definition_id,
+            record_id=record.record_id,
             chain_id=chain_json['chain_id'],
             name=self.name
         )
@@ -262,7 +246,7 @@ class Feedback(FeedbackDefinition):
         try:
             total_tokens = 0
             total_cost = 0.0
-            
+
             for ins in self.extract_selection(chain=chain_json, record=record):
 
                 # TODO: Do this only if there is an openai model inside the chain:
@@ -276,24 +260,29 @@ class Feedback(FeedbackDefinition):
 
                     total_tokens += cb.total_tokens
                     total_cost += cb.total_cost
-                
+
             result_vals = np.array(result_vals)
             result = self.agg(result_vals)
 
             feedback_result.update(
-                result = result,
+                result=result,
                 status=FeedbackResultStatus.DONE,
                 cost=Cost(n_tokens=total_tokens, cost=total_cost),
-                calls = feedback_calls
+                calls=feedback_calls
             )
 
             return feedback_result
-        
+
         except Exception as e:
             raise e
 
-
-    def run_and_log(self, record: Record, tru: 'Tru', chain: Union[Model, JSON] = None, feedback_result_id: Optional[FeedbackResultID] = None) -> FeedbackResult:
+    def run_and_log(
+        self,
+        record: Record,
+        tru: 'Tru',
+        chain: Union[Model, JSON] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None
+    ) -> FeedbackResult:
         record_id = record.record_id
         chain_id = record.chain_id
 
@@ -301,11 +290,11 @@ class Feedback(FeedbackDefinition):
 
         # Placeholder result to indicate a run.
         feedback_result = FeedbackResult(
-            feedback_definition_id = self.feedback_definition_id,
-            feedback_result_id = feedback_result_id,
-            record_id = record_id,
-            chain_id = chain_id,
-            name = self.name
+            feedback_definition_id=self.feedback_definition_id,
+            feedback_result_id=feedback_result_id,
+            record_id=record_id,
+            chain_id=chain_id,
+            name=self.name
         )
 
         if feedback_result_id is None:
@@ -314,25 +303,27 @@ class Feedback(FeedbackDefinition):
         try:
             db.insert_feedback(
                 feedback_result.update(
-                    status = FeedbackResultStatus.RUNNING # in progress
+                    status=FeedbackResultStatus.RUNNING  # in progress
                 )
             )
-    
-            feedback_result = self.run(chain=chain, record=record).update(feedback_result_id=feedback_result_id)
+
+            feedback_result = self.run(
+                chain=chain, record=record
+            ).update(feedback_result_id=feedback_result_id)
 
         except Exception as e:
             db.insert_feedback(
-                feedback_result.update(error=str(e), status=FeedbackResultStatus.FAILED)
+                feedback_result.update(
+                    error=str(e), status=FeedbackResultStatus.FAILED
+                )
             )
             return
-        
+
         # Otherwise update based on what Feedback.run produced (could be success or failure).
-        db.insert_feedback(
-            feedback_result
-        )
+        db.insert_feedback(feedback_result)
 
         return feedback_result
-    
+
     @property
     def name(self):
         """
@@ -342,11 +333,8 @@ class Feedback(FeedbackDefinition):
 
         return self.imp.__name__
 
-    def extract_selection(
-            self,
-            chain: Union[Model,JSON],
-            record: Record
-        ) -> Iterable[Dict[str, Any]]:
+    def extract_selection(self, chain: Union[Model, JSON],
+                          record: Record) -> Iterable[Dict[str, Any]]:
         """
         Given the `chain` that produced the given `record`, extract from
         `record` the values that will be sent as arguments to the implementation
@@ -367,7 +355,9 @@ class Feedback(FeedbackDefinition):
             elif q.path[0] == Query.Chain.path[0]:
                 o = chain
             else:
-                raise ValueError(f"Query {q} does not indicate whether it is about a record or about a chain.")
+                raise ValueError(
+                    f"Query {q} does not indicate whether it is about a record or about a chain."
+                )
 
             q_within_o = Query.Query(path=q.path[1:])
             arg_vals[k] = list(q_within_o(o))
@@ -379,7 +369,6 @@ class Feedback(FeedbackDefinition):
 
         for assignment in assignments:
             yield {k: v for k, v in zip(keys, assignment)}
-
 
 
 pat_1_10 = re.compile(r"\s*([1-9][0-9]*)\s*")
@@ -403,11 +392,15 @@ class Provider(SerialModel):
     @staticmethod
     def of_json(obj: Dict) -> 'Provider':
         cls_name = obj['class_name']
-        mod_name = obj['module_name'] # ignored for now
+        mod_name = obj['module_name']  # ignored for now
         check_provider(cls_name)
 
         cls = eval(cls_name)
-        kwargs = {k: v for k, v in obj.items() if k not in ['class_name', 'module_name']}
+        kwargs = {
+            k: v
+            for k, v in obj.items()
+            if k not in ['class_name', 'module_name']
+        }
 
         return cls(**kwargs)
 
@@ -415,7 +408,7 @@ class Provider(SerialModel):
         obj = {
             'class_name': self.__class__.__name__,
             'module_name': self.__class__.__module__
-            }
+        }
         obj.update(**extras)
         return obj
 
@@ -432,7 +425,7 @@ class OpenAI(Provider):
         - model_engine (str, optional): The specific model version. Defaults to
           "gpt-3.5-turbo".
         """
-        super().__init__() # need to include pydantic.BaseModel.__init__
+        super().__init__()  # need to include pydantic.BaseModel.__init__
 
         set_openai_key()
         self.model_engine = model_engine
@@ -732,20 +725,23 @@ def _get_answer_agreement(prompt, response, check_response, model_engine):
     )
     return oai_chat_response
 
+
 # Cannot put these inside Huggingface since it interferes with pydantic.BaseModel.
 HUGS_SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
 HUGS_TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
 HUGS_CHAT_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-3B"
 HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
 
-class Huggingface(Provider):    
+
+class Huggingface(Provider):
+
     def __init__(self):
         """
         A set of Huggingface Feedback Functions. Utilizes huggingface
         api-inference.
         """
 
-        super().__init__() # need to include pydantic.BaseModel.__init__
+        super().__init__()  # need to include pydantic.BaseModel.__init__
 
         self.endpoint = Endpoint(
             name="huggingface", post_headers=get_huggingface_headers()
@@ -851,7 +847,7 @@ class Cohere(Provider):
     model_engine: str = "large"
 
     def __init__(self, model_engine='large'):
-        super().__init__() # need to include pydantic.BaseModel.__init__
+        super().__init__()  # need to include pydantic.BaseModel.__init__
 
         Cohere().endpoint = Endpoint(name="cohere")
         self.model_engine = model_engine

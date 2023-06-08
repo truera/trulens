@@ -13,12 +13,16 @@ from trulens_eval.schema import Record
 from trulens_eval.util import GetItemOrAttribute
 from ux.add_logo import add_logo
 
+import streamlit.components.v1 as components
+
 from trulens_eval import Tru
 from trulens_eval import tru_db
 from trulens_eval.util import is_empty, matching_objects
 from trulens_eval.util import is_noserio
 from trulens_eval.tru_db import TruDB
 from trulens_eval.ux.components import draw_calls
+from trulens_eval.ux.styles import cellstyle_jscode
+from trulens_eval.tru_feedback import default_pass_fail_color_threshold
 
 st.set_page_config(page_title="Evaluations", layout="wide")
 
@@ -66,28 +70,7 @@ else:
         evaluations_df = chain_df
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
-        cellstyle_jscode = JsCode(
-            """
-        function(params) {
-            if (parseFloat(params.value) < 0.5) {
-                return {
-                    'color': 'black',
-                    'backgroundColor': '#FCE6E6'
-                }
-            } else if (parseFloat(params.value) >= 0.5) {
-                return {
-                    'color': 'black',
-                    'backgroundColor': '#4CAF50'
-                }
-            } else {
-                return {
-                    'color': 'black',
-                    'backgroundColor': 'white'
-                }
-            }
-        };
-        """
-        )
+        cellstyle_jscode = JsCode(cellstyle_jscode)
 
         gb.configure_column('record_json', header_name='Record JSON', hide=True)
         gb.configure_column('chain_json', header_name='Chain JSON', hide=True)
@@ -109,8 +92,12 @@ else:
         for feedback_col in evaluations_df.columns.drop(['chain_id', 'ts',
                                                          'total_tokens',
                                                          'total_cost']):
-            gb.configure_column(feedback_col, cellStyle=cellstyle_jscode, hide=feedback_col.endswith("_calls"))
-        
+            gb.configure_column(
+                feedback_col,
+                cellStyle=cellstyle_jscode,
+                hide=feedback_col.endswith("_calls")
+            )
+
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
@@ -152,18 +139,43 @@ else:
                 feedback_name = fcol
                 feedback_result = row[fcol]
                 feedback_calls = row[f"{fcol}_calls"]
-                    
-                with st.expander(f"{feedback_name} = {feedback_result}", expanded=True):
-                    for call in feedback_calls:
-                        st.write(call)
+
+                def display_feedback_call(call):
+
+                    def highlight(s):
+                        return ['background-color: #4CAF50'] * len(
+                            s
+                        ) if s.result >= default_pass_fail_color_threshold else [
+                            'background-color: #FCE6E6'
+                        ] * len(s)
+
+                    if (len(call) > 0):
+                        df = pd.DataFrame.from_records(
+                            [call[i]["args"] for i in range(len(call))]
+                        )
+                        df["result"] = pd.DataFrame(
+                            [float(call[i]["ret"]) for i in range(len(call))]
+                        )
+                        st.dataframe(
+                            df.style.apply(highlight, axis=1
+                                          ).format("{:.2}", subset=["result"])
+                        )
+                    else:
+                        st.text("No feedback details.")
+
+                with st.expander(f"{feedback_name} = {feedback_result}",
+                                 expanded=True):
+                    display_feedback_call(feedback_calls)
 
             record_str = selected_rows['record_json'][0]
             record_json = json.loads(record_str)
             record = Record(**record_json)
 
             details = selected_rows['chain_json'][0]
-            chain_json = json.loads(details) # chains may not be deserializable, don't try to, keep it json.
-            
+            chain_json = json.loads(
+                details
+            )  # chains may not be deserializable, don't try to, keep it json.
+
             step_llm = GetItemOrAttribute(item_or_attribute="llm")
             step_prompt = GetItemOrAttribute(item_or_attribute="prompt")
             step_call = GetItemOrAttribute(item_or_attribute="_call")
@@ -171,14 +183,16 @@ else:
             llm_queries = list(
                 matching_objects(
                     chain_json,
-                    match=lambda q, o: len(q.path) > 0 and step_llm == q.path[-1]
+                    match=lambda q, o: len(q.path) > 0 and step_llm == q.path[-1
+                                                                             ]
                 )
             )
 
             prompt_queries = list(
                 matching_objects(
                     chain_json,
-                    match=lambda q, o: len(q.path) > 0 and step_prompt == q.path[-1] and step_call not in q._path
+                    match=lambda q, o: len(q.path) > 0 and step_prompt == q.
+                    path[-1] and step_call not in q._path
                 )
             )
 
