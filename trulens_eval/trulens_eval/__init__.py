@@ -24,7 +24,7 @@
     - util.py keys.py
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_feedback import Feedback
@@ -32,5 +32,10 @@ from trulens_eval.tru_feedback import OpenAI
 from trulens_eval.tru_feedback import Huggingface
 from trulens_eval.tru import Tru
 from trulens_eval.tru_db import Query
+from trulens_eval.schema import FeedbackMode
+from trulens_eval.tru_feedback import Provider
 
-__all__ = ['TruChain', 'Feedback', 'OpenAI', 'Huggingface', 'Tru', 'Query']
+__all__ = [
+    'TruChain', 'Feedback', 'OpenAI', 'Huggingface', 'Tru', 'Query',
+    'FeedbackMode', 'Provider'
+]

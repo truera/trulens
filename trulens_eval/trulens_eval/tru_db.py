@@ -579,11 +579,12 @@ class LocalSQLite(TruDB):
         result_cols = set()
 
         def expand_results(row):
-            result_cols.add(row['name'])
-            row[row['name']] = row.result
-            row[row['name'] + "_calls"] = json.loads(
-                row.calls_json
-            )['calls']  # extra step to keep json root a dict
+            if row['name'] is not None:
+                result_cols.add(row['name'])
+                row[row['name']] = row.result
+                row[row['name'] + "_calls"] = json.loads(row.calls_json
+                                                        )['calls']
+
             return pd.Series(row)
 
         df_results = df_results.apply(expand_results, axis=1)

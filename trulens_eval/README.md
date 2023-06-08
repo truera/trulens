@@ -9,7 +9,7 @@ Using feedback functions, you can objectively evaluate the quality of the respon
 ![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
 
 ## Quick Usage
-To quickly play around with the TruLens Eval library, download this notebook: [quickstart.ipynb](https://github.com/truera/trulens/blob/main/docs/trulens_eval/quickstart.ipynb).
+To quickly play around with the TruLens Eval library, download this notebook: [quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-0.1.2/docs/trulens_eval/quickstart.ipynb).
 
 
 
@@ -61,7 +61,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru
+from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
 tru = Tru()
 
 # imports from langchain to build app
@@ -115,7 +115,7 @@ hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
 f_lang_match = Feedback(hugs.language_match).on(
-    text1="prompt", text2="response"
+    text1=Query.RecordInput, text2=Query.RecordOutput
 )
 ```
 
@@ -219,7 +219,7 @@ truchain("This will be automatically logged.")
 
 
 ```python
-tc = tru_chain.TruChain(chain, chain_id='Chain1_ChatApplication')
+tc = TruChain(chain, chain_id='Chain1_ChatApplication')
 ```
 
 ### Set up logging and instrumentation
@@ -230,25 +230,21 @@ Making the first call to your wrapped LLM Application will now also produce a lo
 
 ```python
 prompt_input = 'que hora es?'
-gpt3_response, record = tc(prompt_input)
+gpt3_response, record = tc.call_with_record(prompt_input)
 ```
 
 We can log the records but first we need to log the chain itself.
 
 
 ```python
-tru.add_chain(chain_json=truchain.json)
+tru.add_chain(chain=truchain)
 ```
 
 Then we can log the record:
 
 
 ```python
-tru.add_record(
-    prompt=prompt_input, # prompt input
-    response=gpt3_response['text'], # LLM response
-    record_json=record # record is returned by the TruChain wrapper
-)
+tru.add_record(record)
 ```
 
 ### Evaluate Quality
@@ -263,7 +259,7 @@ To assess your LLM quality, you can provide the feedback functions to `tru.run_f
 
 ```python
 feedback_results = tru.run_feedback_functions(
-    record_json=record,
+    record=record,
     feedback_functions=[f_lang_match]
 )
 display(feedback_results)
@@ -273,7 +269,7 @@ After capturing feedback, you can then log it to your local database.
 
 
 ```python
-tru.add_feedback(feedback_results)
+tru.add_feedbacks(feedback_results)
 ```
 
 ### Out-of-band Feedback evaluation
@@ -347,9 +343,10 @@ The process for adding new feedback functions is:
 
 
 ```python
+from trulens_eval import Provider
+
 class StandAlone(Provider):
-    def __init__(self):
-        pass
+    pass
 ```
 
 2. Add a new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).

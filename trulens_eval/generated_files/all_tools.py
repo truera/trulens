@@ -17,7 +17,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 # ### Import from LangChain and TruLens
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru
+from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
 
 tru = Tru()
 
@@ -60,7 +60,7 @@ hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
 f_lang_match = Feedback(hugs.language_match).on(
-    text1="prompt", text2="response"
+    text1=Query.RecordInput, text2=Query.RecordOutput
 )
 
 # ## Instrument chain for logging with TruLens
@@ -139,7 +139,7 @@ truchain("This will be automatically logged.")
 #
 # ### Wrap with TruChain to instrument your chain
 
-tc = tru_chain.TruChain(chain, chain_id='Chain1_ChatApplication')
+tc = TruChain(chain, chain_id='Chain1_ChatApplication')
 
 # ### Set up logging and instrumentation
 #
@@ -147,19 +147,15 @@ tc = tru_chain.TruChain(chain, chain_id='Chain1_ChatApplication')
 #
 
 prompt_input = 'que hora es?'
-gpt3_response, record = tc(prompt_input)
+gpt3_response, record = tc.call_with_record(prompt_input)
 
 # We can log the records but first we need to log the chain itself.
 
-tru.add_chain(chain_json=truchain.json)
+tru.add_chain(chain=truchain)
 
 # Then we can log the record:
 
-tru.add_record(
-    prompt=prompt_input,  # prompt input
-    response=gpt3_response['text'],  # LLM response
-    record_json=record  # record is returned by the TruChain wrapper
-)
+tru.add_record(record)
 
 # ### Evaluate Quality
 #
@@ -171,13 +167,13 @@ tru.add_record(
 #
 
 feedback_results = tru.run_feedback_functions(
-    record_json=record, feedback_functions=[f_lang_match]
+    record=record, feedback_functions=[f_lang_match]
 )
 print(feedback_results)
 
 # After capturing feedback, you can then log it to your local database.
 
-tru.add_feedback(feedback_results)
+tru.add_feedbacks(feedback_results)
 
 # ### Out-of-band Feedback evaluation
 #
@@ -245,11 +241,11 @@ tru.stop_evaluator()
 # The process for adding new feedback functions is:
 # 1. Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class:
 
+from trulens_eval import Provider
+
 
 class StandAlone(Provider):
-
-    def __init__(self):
-        pass
+    pass
 
 
 # 2. Add a new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).
