@@ -71,6 +71,7 @@ Output:
 
 from collections import defaultdict
 from datetime import datetime
+from datetime import timedelta
 from inspect import BoundArguments
 from inspect import signature
 from inspect import stack
@@ -86,19 +87,25 @@ from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_eval.schema import FeedbackMode, Method, MethodIdent
+from trulens_eval.schema import Cost
+from trulens_eval.schema import FeedbackMode
+from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import LangChainModel
+from trulens_eval.schema import Latency
+from trulens_eval.schema import Method
+from trulens_eval.schema import MethodIdent
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
 from trulens_eval.schema import RecordChainCallMethod
-from trulens_eval.schema import Cost
+from trulens_eval.tru import Tru
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru import Tru
-from trulens_eval.schema import FeedbackResult
 from trulens_eval.util import get_local_in_call_stack
-from trulens_eval.util import TP, JSONPath, jsonify, noserio
+from trulens_eval.util import jsonify
+from trulens_eval.util import JSONPath
+from trulens_eval.util import noserio
+from trulens_eval.util import TP
 
 logger = logging.getLogger(__name__)
 
@@ -476,6 +483,8 @@ class TruChain(LangChainModel):
 
             end_time = datetime.now()
 
+            latency = end_time - start_time
+
             # Don't include self in the recorded arguments.
             nonself = {
                 k: jsonify(v)
@@ -487,6 +496,7 @@ class TruChain(LangChainModel):
                 args=nonself,
                 start_time=start_time,
                 end_time=end_time,
+                latency=latency,
                 pid=os.getpid(),
                 tid=th.get_native_id(),
                 chain_stack=chain_stack,

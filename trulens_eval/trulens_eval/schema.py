@@ -4,6 +4,7 @@ Serializable objects and their schemas.
 
 import abc
 from datetime import datetime
+from datetime import timedelta
 from enum import Enum
 import importlib
 import json
@@ -16,12 +17,14 @@ import langchain
 from munch import Munch as Bunch
 import pydantic
 
-from trulens_eval.util import GetItemOrAttribute, SerialModel, json_str_of_obj
+from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
 from trulens_eval.util import json_default
+from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.util import obj_id_of_obj
+from trulens_eval.util import SerialModel
 
 T = TypeVar("T")
 
@@ -280,6 +283,10 @@ class Cost(SerialModel):
     cost: Optional[float] = None
 
 
+class Latency(SerialModel):
+    latency: Optional[float] = None
+
+
 class RecordChainCall(SerialModel):
     """
     Info regarding each instrumented method call is put into this container.
@@ -301,6 +308,7 @@ class RecordChainCall(SerialModel):
     # Timestamps tracking entrance and exit of the instrumented method.
     start_time: datetime
     end_time: datetime
+    latency: timedelta
 
     # Process id.
     pid: int
@@ -320,6 +328,7 @@ class Record(SerialModel):
     chain_id: ChainID
 
     cost: Cost = pydantic.Field(default_factory=Cost)
+    latency: Latency = pydantic.Field(default_factory=Latency)
 
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
