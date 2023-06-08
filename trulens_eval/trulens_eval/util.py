@@ -142,8 +142,6 @@ def json_default(obj: Any) -> str:
         # Otherwise give up and indicate a non-serialization.
         return noserio(obj)
 
-# def jsonify_with_class_info(obj: Any):
- #   return jsonify(obj=obj, dicted=dict(), with_class_info=True)
 
 def jsonify(obj: Any, dicted=None) -> JSON:
     """
@@ -190,6 +188,7 @@ def jsonify(obj: Any, dicted=None) -> JSON:
         return temp
 
     elif isinstance(obj, pydantic.BaseModel):
+        # TODO: generalize
         from trulens_eval.utils.langchain import CLASSES_TO_INSTRUMENT
 
         # Not even trying to use pydantic.dict here.
