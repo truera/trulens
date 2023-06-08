@@ -1,6 +1,5 @@
 """
 # Feedback Functions
-
 """
 
 from datetime import datetime
@@ -48,6 +47,8 @@ from trulens_eval.util import TP
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
 default_pass_fail_color_threshold = 0.5
+
+logger = logging.getLogger(__name__)
 
 
 logger = logging.getLogger(__name__)
