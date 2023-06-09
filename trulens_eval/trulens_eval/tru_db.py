@@ -241,8 +241,7 @@ class LocalSQLite(TruDB):
                 record_json TEXT NOT NULL,
                 tags TEXT NOT NULL,
                 ts {self.TYPE_TIMESTAMP} NOT NULL,
-                cost_json TEXT NOT NULL,
-                latency_json TEXT NOT NULL
+                cost_json TEXT NOT NULL
             )'''
         )
         c.execute(
@@ -257,8 +256,7 @@ class LocalSQLite(TruDB):
                 calls_json TEXT NOT NULL,
                 result FLOAT,
                 name TEXT NOT NULL,
-                cost_json TEXT NOT NULL,
-                latency_json TEXT NOT NULL
+                cost_json TEXT NOT NULL
             )'''
         )
         c.execute(
@@ -284,7 +282,7 @@ class LocalSQLite(TruDB):
         conn.commit()
         conn.close()
 
-    # TruDB requirement
+    # TruDB requirement-
     def insert_record(
         self,
         record: Record,
@@ -296,11 +294,11 @@ class LocalSQLite(TruDB):
 
         record_json_str = json_str_of_obj(record)
         cost_json_str = json_str_of_obj(record.cost)
-        latency_json_str = json_str_of_obj(record.latency)
+
         vals = (
             record.record_id, record.chain_id, record.main_input,
             record.main_output, record_json_str, record.tags, record.ts,
-            cost_json_str, latency_json_str
+            cost_json_str
         )
 
         self._insert_or_replace_vals(table=self.TABLE_RECORDS, vals=vals)
@@ -464,7 +462,6 @@ class LocalSQLite(TruDB):
                 f.name,
                 f.result, 
                 f.cost_json,
-                f.latency_json,
                 f.calls_json,
                 fd.feedback_json, 
                 r.record_json, 
@@ -496,9 +493,6 @@ class LocalSQLite(TruDB):
                 row.calls_json
             )['calls']  # calls_json (sequence of FeedbackCall)
             row.cost_json = json.loads(row.cost_json)  # cost_json (Cost)
-            row.latency_json = json.loads(
-                row.latency_json
-            )  # latency_json (Latency)
             row.feedback_json = json.loads(
                 row.feedback_json
             )  # feedback_json (FeedbackDefinition)
@@ -511,7 +505,6 @@ class LocalSQLite(TruDB):
 
             row['total_tokens'] = row.cost_json['n_tokens']
             row['total_cost'] = row.cost_json['cost']
-            row['latency'] = row.latency_json['latency']
 
             return row
 
@@ -577,12 +570,11 @@ class LocalSQLite(TruDB):
         df_records = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
-
         cost = df_records['cost_json'].map(Cost.parse_raw)
-        latency = df_records['latency_json'].map(Latency.parse_raw)
         df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
         df_records['total_cost'] = cost.map(lambda v: v.cost)
-        df_records['latency'] = latency.map(lambda v: v.latency)
+        df_records['latency'] = json.loads(df_records["record_json"][0]
+                                          )["calls"][0]["latency"]
 
         if len(df_records) == 0:
             return df_records, []
