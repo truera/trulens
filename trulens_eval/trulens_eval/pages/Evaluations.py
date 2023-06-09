@@ -85,7 +85,7 @@ else:
         gb.configure_column('total_tokens', header_name='Total Tokens (#)')
         gb.configure_column('total_cost', header_name='Total Cost (USD)')
         gb.configure_column('tags', header_name='Tags')
-        gb.configure_column('ts', header_name='Time Stamp')
+        gb.configure_column('ts', header_name='Time Stamp', sort="desc")
 
         for feedback_col in evaluations_df.columns.drop(['chain_id', 'ts',
                                                          'total_tokens',
@@ -95,7 +95,6 @@ else:
                 cellStyle=cellstyle_jscode,
                 hide=feedback_col.endswith("_calls")
             )
-
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
