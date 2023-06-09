@@ -58,7 +58,7 @@ def draw_calls(record: Record, index: int) -> None:
 
         draw_call(call)
 
-        
+
 def draw_prompt_info(query, prompt_details_json) -> None:
 
     path_str = str(query)
@@ -66,10 +66,8 @@ def draw_prompt_info(query, prompt_details_json) -> None:
     st.text(path_str)
 
     prompt_types = {
-        k: v
-        for k, v in prompt_details_json.items()
-        if (v is not None) and not is_empty(v) and
-        not is_noserio(v) and k != "class_info"
+        k: v for k, v in prompt_details_json.items() if (v is not None) and
+        not is_empty(v) and not is_noserio(v) and k != "class_info"
     }
 
     for key, value in prompt_types.items():
@@ -89,10 +87,8 @@ def draw_llm_info(query, llm_details_json) -> None:
     st.text(path_str[:-4])
 
     llm_kv = {
-        k: v
-        for k, v in llm_details_json.items()
-        if (v is not None) and not is_empty(v) and
-        not is_noserio(v) and k != "class_info"
+        k: v for k, v in llm_details_json.items() if (v is not None) and
+        not is_empty(v) and not is_noserio(v) and k != "class_info"
     }
     # CSS to inject contained in a string
     hide_table_row_index = """
@@ -101,9 +97,7 @@ def draw_llm_info(query, llm_details_json) -> None:
                 tbody th {display:none}
                 </style>
                 """
-    df = pd.DataFrame.from_dict(
-        llm_kv, orient='index'
-    ).transpose()
+    df = pd.DataFrame.from_dict(llm_kv, orient='index').transpose()
 
     # Iterate over each column of the DataFrame
     for column in df.columns:
@@ -111,23 +105,17 @@ def draw_llm_info(query, llm_details_json) -> None:
         if any(isinstance(cell, dict) for cell in df[column]):
             # Create new columns for each key in the dictionary
             new_columns = df[column].apply(
-                lambda x: pd.Series(x)
-                if isinstance(x, dict) else pd.Series()
+                lambda x: pd.Series(x) if isinstance(x, dict) else pd.Series()
             )
-            new_columns.columns = [
-                f"{key}" for key in new_columns.columns
-            ]
+            new_columns.columns = [f"{key}" for key in new_columns.columns]
 
             # Remove extra zeros after the decimal point
             new_columns = new_columns.applymap(
-                lambda x: '{0:g}'.format(x)
-                if isinstance(x, float) else x
+                lambda x: '{0:g}'.format(x) if isinstance(x, float) else x
             )
 
             # Add the new columns to the original DataFrame
-            df = pd.concat(
-                [df.drop(column, axis=1), new_columns], axis=1
-            )
+            df = pd.concat([df.drop(column, axis=1), new_columns], axis=1)
     # Inject CSS with Markdown
     st.markdown(hide_table_row_index, unsafe_allow_html=True)
     st.table(df)
