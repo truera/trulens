@@ -87,7 +87,7 @@ else:
         gb.configure_column('total_cost', header_name='Total Cost (USD)')
         gb.configure_column('latency', header_name='Latency (Seconds)')
         gb.configure_column('tags', header_name='Tags')
-        gb.configure_column('ts', header_name='Time Stamp')
+        gb.configure_column('ts', header_name='Time Stamp', sort="desc")
 
         non_feedback_cols = [
             'chain_id', 'ts', 'total_tokens', 'total_cost', 'record_json',
@@ -101,7 +101,6 @@ else:
                 cellStyle=cellstyle_jscode,
                 hide=feedback_col.endswith("_calls")
             )
-
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
