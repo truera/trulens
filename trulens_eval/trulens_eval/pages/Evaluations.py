@@ -139,7 +139,6 @@ else:
                 feedback_calls = row[f"{fcol}_calls"]
 
                 def display_feedback_call(call):
-
                     def highlight(s):
                         return ['background-color: #4CAF50'] * len(
                             s
@@ -147,7 +146,7 @@ else:
                             'background-color: #FCE6E6'
                         ] * len(s)
 
-                    if (len(call) > 0):
+                    if call is not None and len(call) > 0:
                         df = pd.DataFrame.from_records(
                             [call[i]["args"] for i in range(len(call))]
                         )
@@ -178,7 +177,7 @@ else:
 
             for query, cls, component_json in classes:
                 if len(query.path) == 0:
-                    # Skip TruChain, will still list TruChain.chain under "chain" below.
+                    # Skip TruChain, will still list TruChain.model under "chain" below.
                     continue
 
                 if Is.chain(cls):

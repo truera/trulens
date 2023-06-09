@@ -1,144 +1,136 @@
 """
 # Langchain instrumentation and monitoring. 
-
-## Limitations
-
-- If the same wrapped sub-chain is called multiple times within a single call to
-  the root chain, the record of this execution will not be exact with regards to
-  the path to the call information. All call dictionaries will appear in a list
-  addressed by the last subchain (by order in which it is instrumented). For
-  example, in a sequential chain containing two of the same chain, call records
-  will be addressed to the second of the (same) chains and contain a list
-  describing calls of both the first and second.
-
-- Some chains cannot be serialized/jsonized. Sequential chain is an example.
-  This is a limitation of langchain itself.
-
-- Instrumentation relies on CPython specifics, making heavy use of the `inspect`
-  module which is not expected to work with other Python implementations.
-
 ```
 
 """
 
-from collections import defaultdict
-from datetime import datetime
-from inspect import BoundArguments
-from inspect import signature
-from inspect import stack
-import inspect
 import logging
-import os
+
 from pprint import PrettyPrinter
-import threading as th
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import langchain
 from langchain.callbacks import get_openai_callback
-from langchain.chains.base import Chain
-from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_eval.schema import FeedbackMode, Method
-from trulens_eval.schema import LangChainModel
+from trulens_eval.tru_model import FeedbackMode
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
-from trulens_eval.schema import RecordChainCallMethod
 from trulens_eval.schema import Cost
-from trulens_eval.tru_db import Query
+from trulens_eval.schema import Query
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru import Tru
 from trulens_eval.schema import FeedbackResult
-from trulens_eval.utils.langchain import CLASSES_TO_INSTRUMENT, METHODS_TO_INSTRUMENT
-from trulens_eval.util import SerialModel
-from trulens_eval.util import Class
+
+from trulens_eval.tru_model import TruModel
+from trulens_eval.instruments import Instrument
+from trulens_eval.util import jsonify, noserio
 from trulens_eval.util import WithClassInfo
-from trulens_eval.util import get_local_in_call_stack
-from trulens_eval.util import TP, JSONPath, jsonify, noserio
+
+from trulens_eval.util import TP
 
 logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
 
-class TruChain(LangChainModel, WithClassInfo):
+class LangChainInstrument(Instrument):
+    class Default:
+        MODULES = {"langchain."}
+
+        CLASSES = {
+            langchain.chains.base.Chain,
+            langchain.vectorstores.base.BaseRetriever,
+            langchain.schema.BaseRetriever,
+            langchain.llms.base.BaseLLM,
+            langchain.prompts.base.BasePromptTemplate,
+            langchain.schema.BaseMemory,
+            langchain.schema.BaseChatMessageHistory
+        }
+
+        # Instrument only methods with these names and of these classes.
+        METHODS = {
+            "_call": lambda o: isinstance(o, langchain.chains.base.Chain),
+            "get_relevant_documents": lambda o: True,  # VectorStoreRetriever
+        }
+
+    def __init__(self):
+        super().__init__(
+            root_method=TruChain.call_with_record,
+            modules=LangChainInstrument.Default.MODULES,
+            classes=LangChainInstrument.Default.CLASSES,
+            methods=LangChainInstrument.Default.METHODS
+        )
+
+    def _instrument_dict(self, cls, obj: Any, with_class_info: bool = False):
+        """
+        Replacement for langchain's dict method to one that does not fail under
+        non-serialization situations.
+        """
+
+        return jsonify
+
+    def _instrument_type_method(self, obj, prop):
+        """
+        Instrument the Langchain class's method _*_type which is presently used
+        to control chain saving. Override the exception behaviour. Note that
+        _chain_type is defined as a property in langchain.
+        """
+
+        # Properties doesn't let us new define new attributes like "_instrument"
+        # so we put it on fget instead.
+        if hasattr(prop.fget, Instrument.INSTRUMENT):
+            prop = getattr(prop.fget, Instrument.INSTRUMENT)
+
+        def safe_type(s) -> Union[str, Dict]:
+            # self should be chain
+            try:
+                ret = prop.fget(s)
+                return ret
+
+            except NotImplementedError as e:
+
+                return noserio(obj, error=f"{e.__class__.__name__}='{str(e)}'")
+
+        safe_type._instrumented = prop
+        new_prop = property(fget=safe_type)
+
+        return new_prop
+    
+
+class TruChain(TruModel):
     """
     Wrap a langchain Chain to capture its configuration and evaluation steps. 
     """
 
-    class Config:
-        arbitrary_types_allowed = True
+    model: langchain.chains.base.Chain
 
-    # See LangChainModel for serializable fields.
-
-    # Feedback functions to evaluate on each record.
-    feedbacks: Sequence[Feedback] = Field(exclude=True)
-
-    # Database interfaces for models/records/feedbacks.
-    # NOTE: Maybe move to schema.Model .
-    tru: Optional[Tru] = Field(exclude=True)
-
-    # Database interfaces for models/records/feedbacks.
-    # NOTE: Maybe mobe to schema.Model .
-    db: Optional[TruDB] = Field(exclude=True)
-
+     # Normally pydantic does not like positional args but chain here is
+     # important enough to make an exception.
     def __init__(
         self,
-        chain: langchain.chains.base.
-        Chain,  # normally pydantic does not like positional args but this one is important
-        tru: Optional[Tru] = None,
-        feedbacks: Optional[Sequence[Feedback]] = None,
-        feedback_mode: FeedbackMode = FeedbackMode.WITH_CHAIN_THREAD,
+        model: langchain.chains.base.Chain,
         **kwargs
     ):
         """
-        Wrap a chain for monitoring.
+        Wrap a langchain chain for monitoring.
 
         Arguments:
-        
         - chain: Chain -- the chain to wrap.
-        - chain_id: Optional[str] -- chain name or id. If not given, the
-          name is constructed from wrapped chain parameters.
+        - More args in TruModel
+        - More args in LangChainModel
+        - More args in WithClassInfo
         """
 
-        if feedbacks is not None and tru is None:
-            raise ValueError("Feedback logging requires `tru` to be specified.")
-        feedbacks = feedbacks or []
-
-        if tru is not None:
-            kwargs['db'] = tru.db
-
-            if feedback_mode == FeedbackMode.NONE:
-                logger.warn(
-                    "`tru` is specified but `feedback_mode` is FeedbackMode.NONE. "
-                    "No feedback evaluation and logging will occur."
-                )
-        else:
-
-            if feedback_mode != FeedbackMode.NONE:
-                logger.warn(
-                    f"`feedback_mode` is {feedback_mode} but `tru` was not specified. Reverting to FeedbackMode.NONE ."
-                )
-                feedback_mode = FeedbackMode.NONE
-
-        kwargs['chain'] = chain
-        kwargs['tru'] = tru
-        kwargs['feedbacks'] = feedbacks
-        kwargs['feedback_mode'] = feedback_mode
-
         super().update_forward_refs()
-        super().__init__(obj=self, **kwargs)
-        
-        if tru is not None and feedback_mode != FeedbackMode.NONE:
-            logger.debug(
-                "Inserting chain and feedback function definitions to db."
-            )
-            self.db.insert_chain(chain=self)
-            for f in self.feedbacks:
-                self.db.insert_feedback_definition(f)
 
-        self._instrument_object(obj=self.chain, query=Query.Query().chain)
+        # TruChain specific:
+        kwargs['model'] = model
+        kwargs['instrument'] = LangChainInstrument()
+
+        super().__init__(**kwargs)
 
     # Chain requirement
     @property
@@ -148,12 +140,12 @@ class TruChain(LangChainModel, WithClassInfo):
     # Chain requirement
     @property
     def input_keys(self) -> List[str]:
-        return self.chain.input_keys
+        return self.model.input_keys
 
     # Chain requirement
     @property
     def output_keys(self) -> List[str]:
-        return self.chain.output_keys
+        return self.model.output_keys
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
     def call_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs):
@@ -163,10 +155,7 @@ class TruChain(LangChainModel, WithClassInfo):
             Any: chain output
             dict: record metadata
         """
-        # Mark us as recording calls. Should be sufficient for non-threaded
-        # cases.
-        self.recording = True
-
+        
         # Wrapped calls will look this up by traversing the call stack. This
         # should work with threads.
         record: Sequence[RecordChainCall] = []
@@ -180,21 +169,19 @@ class TruChain(LangChainModel, WithClassInfo):
         try:
             # TODO: do this only if there is an openai model inside the chain:
             with get_openai_callback() as cb:
-                ret = self.chain.__call__(inputs=inputs, **kwargs)
+                ret = self.model.__call__(inputs=inputs, **kwargs)
                 total_tokens = cb.total_tokens
                 total_cost = cb.total_cost
 
         except BaseException as e:
             error = e
             logger.error(f"Chain raised an exception: {e}")
-
-        self.recording = False
-
+        
         assert len(record) > 0, "No information recorded in call."
 
         ret_record_args = dict()
 
-        inputs = self.chain.prep_inputs(inputs)
+        inputs = self.model.prep_inputs(inputs)
 
         # Figure out the content of the "inputs" arg that __call__ constructs
         # for _call so we can lookup main input and output.
@@ -236,7 +223,7 @@ class TruChain(LangChainModel, WithClassInfo):
     # langchain.chains.base.py:Chain
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         """
-        Wrapped call to self.chain.__call__ with instrumentation. If you need to
+        Wrapped call to self.model.__call__ with instrumentation. If you need to
         get the record, use `call_with_record` instead. 
         """
 
@@ -244,46 +231,7 @@ class TruChain(LangChainModel, WithClassInfo):
 
         return ret
 
-    def _handle_record(self, record: Record):
-        """
-        Write out record-related info to database if set.
-        """
-
-        if self.tru is None or self.feedback_mode is None:
-            return
-
-        record_id = self.tru.add_record(record=record)
-
-        if len(self.feedbacks) == 0:
-            return
-
-        # Add empty (to run) feedback to db.
-        if self.feedback_mode == FeedbackMode.DEFERRED:
-            for f in self.feedbacks:
-                self.db.insert_feedback(
-                    FeedbackResult(
-                        name=f.name,
-                        chain_id=self.chain_id,
-                        record_id=record_id,
-                        feedback_definition_id=f.feedback_definition_id
-                    )
-                )
-
-        elif self.feedback_mode in [FeedbackMode.WITH_CHAIN,
-                                    FeedbackMode.WITH_CHAIN_THREAD]:
-
-            feedback_results = self.tru.run_feedback_functions(
-                record=record, feedback_functions=self.feedbacks, chain=self
-            )
-
-            for feedback_result in feedback_results:
-                self.tru.add_feedback(feedback_result)
-
-    def _handle_error(self, record: Record, error: Exception):
-        if self.db is None:
-            return
-
     # Chain requirement
     # TODO(piotrm): figure out whether the combination of _call and __call__ is working right.
     def _call(self, *args, **kwargs) -> Any:
-        return self.chain._call(*args, **kwargs)
+        return self.model._call(*args, **kwargs)

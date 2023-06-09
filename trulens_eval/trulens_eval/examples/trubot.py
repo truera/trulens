@@ -85,7 +85,7 @@ f_qa_relevance = Feedback(openai.relevance).on(
 # Question/statement relevance between question and each context chunk.
 f_qs_relevance = Feedback(openai.qs_relevance).on(
     question=Query.RecordInput,
-    statement=Query.Record.chain.combine_docs_chain._call.args.inputs.
+    statement=Query.Record.model.combine_docs_chain._call.args.inputs.
     input_documents[:].page_content
 ).aggregate(np.min)
 

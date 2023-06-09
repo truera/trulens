@@ -119,6 +119,69 @@ tools as Model Data (see above).
   stack for call instrumentation we need to preserve the stack before a thread
   start which python does not do.  See `util.py:TP._thread_starter`.
 
+- If the same wrapped sub-chain is called multiple times within a single call to
+  the root chain, the record of this execution will not be exact with regards to
+  the path to the call information. All call paths will address the last
+  subchain (by order in which it is instrumented). For example, in a sequential
+  chain containing two of the same chain, call records will be addressed to the
+  second of the (same) chains and contain a list describing calls of both the
+  first and second.
+
+- Some chains cannot be serialized/jsonized. Sequential chain is an example.
+  This is a limitation of langchain itself.
+
+- Instrumentation relies on CPython specifics, making heavy use of the `inspect`
+  module which is not expected to work with other Python implementations.
+
+## To Decide / To discuss
+
+### Naming
+
+Rename anything with "chain" to use "model". Chain is langchain specific.
+
+### Mirroring wrapped model behaviour and disabling instrumentation
+
+Should our wrappers behave like the wrapped models? Current design is like this:
+
+```python
+chain = ... # some langchain chain
+
+tru = Tru()
+truchain = tru.Chain(chain, ...)
+
+plain_result = chain(...) # will not be recorded
+
+plain_result = truchain(...) # will be recorded
+
+plain_result, record = truchain.call_with_record(...) # will be recorded, and you get the record too
+
+```
+
+The problem with the above is that "call_" part of "call_with_record" is
+langchain specific and implicitly so is __call__ whose behaviour we are
+replicating in TruChaib. Other wrapped models may not implement their core
+functionality in "_call" or "__call__".
+
+Alternative #1:
+
+```python
+
+plain_result = chain(...) # will not be recorded
+
+truchain = tru.Chain(chain, ...)
+
+with truchain.record() as recorder:
+    plain_result = chain(...) # will be recorded
+
+records = recorder.records # can get records
+
+truchain(...) # NOT SUPPORTED, use chain instead
+```
+
+Here we have the benefit of not having a special method for each model type like
+call_with_record. We instead use a context to indicate that we want to collect
+records and retrieve them afterwards.
+
 """
 
 from datetime import datetime
@@ -126,39 +189,68 @@ from inspect import BoundArguments, signature
 import os
 from pprint import PrettyPrinter
 import logging
-from typing import Any, Callable, Dict, Sequence, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Union
 import threading as th
 
 from pydantic import BaseModel
-from trulens_eval.trulens_eval.schema import LangChainModel, MethodIdent, RecordChainCall, RecordChainCallMethod
-from trulens_eval.trulens_eval.tru_chain import TruChain
 
-from trulens_eval.trulens_eval.tru_db import Query
-
-import langchain
-from trulens_eval.trulens_eval.tru_feedback import Feedback
-from trulens_eval.trulens_eval.util import Method, get_local_in_call_stack, jsonify, noserio
+from trulens_eval.schema import RecordChainCall, RecordChainCallMethod
+from trulens_eval.tru_feedback import Feedback
+from trulens_eval.schema import Query
+from trulens_eval.util import Method, get_local_in_call_stack, jsonify, noserio
 
 logger = logging.getLogger(__name__)
+pp = PrettyPrinter()
 
 class Instrument(object):
-
+    # Attribute name to be used to flag instrumented objects/methods/others.
     INSTRUMENT = "__tru_instrumented"
 
-    CLASSES_TO_INSTRUMENT = set()
+    # For marking queries that address model components.
+    QUERY = "__tru_query"
 
-    # Instrument only methods with these names and of these classes.
-    METHODS_TO_INSTRUMENT = {
-        "__call__": lambda o: isinstance(o, Feedback)  # Feedback
-    }
+    class Default:
+        # Default instrumentation configuration. Additional components are
+        # included in subclasses of `Instrument`.
 
-    def _instrument_tracked_method(
+        # Modules to instrument.
+        MODULES = {"trulens_eval."}
+
+        # Classes to instrument.
+        CLASSES = set()
+
+        # Methods to instrument. Methods matching name have to pass the filter
+        # to be instrumented. TODO: redesign this to be a dict with classes
+        # leading to method names instead.
+        METHODS = {
+            "__call__": lambda o: isinstance(o, Feedback)  # Feedback
+        }
+
+    def __init__(
+        self,
+        root_method: Optional[Callable] = None,
+        modules: Iterable[str] = [],
+        classes: Iterable[type] = [],
+        methods: Dict[str, Callable] = {},
+    ):
+        self.root_method = root_method
+
+        self.modules = Instrument.Default.MODULES.union(set(modules))
+
+        self.classes = Instrument.Default.CLASSES.union(set(classes))
+
+        self.methods = Instrument.Default.METHODS
+        self.methods.update(methods)
+
+    def instrument_tracked_method(
         self, query: Query, func: Callable, method_name: str, cls: type,
         obj: object
     ):
         """
         Instrument a method to capture its inputs/outputs/errors.
         """
+
+        assert self.root_method is not None, "Cannot instrument method without a `root_method`."
 
         logger.debug(f"instrumenting {method_name}={func} in {query}")
 
@@ -169,9 +261,11 @@ class Instrument(object):
             # operation when the same chain is used multiple times as part of a
             # larger chain.
 
+            return func
+
             # TODO: How to consistently address calls to chains that appear more
             # than once in the wrapped chain or are called more than once.
-            func = getattr(func, Instrument.INSTRUMENT)
+            # func = getattr(func, Instrument.INSTRUMENT)
 
         sig = signature(func)
 
@@ -186,14 +280,15 @@ class Instrument(object):
 
             logger.debug(f"Calling instrumented method {func} on {query}")
 
-            def find_call_with_record(f):
-                return id(f) == id(TruChain.call_with_record.__code__)
+            def find_root_method(f):
+                # TODO: generalize
+                return id(f) == id(self.root_method.__code__)
 
-            # Look up whether TruChain._call was called earlier in the stack and
-            # "record" variable was defined there. Will use that for recording
-            # the wrapped call.
+            # Look up whether the root instrumented method was called earlier in
+            # the stack and "record" variable was defined there. Will use that
+            # for recording the wrapped call.
             record = get_local_in_call_stack(
-                key="record", func=find_call_with_record
+                key="record", func=find_root_method
             )
 
             if record is None:
@@ -209,7 +304,6 @@ class Instrument(object):
 
             def find_instrumented(f):
                 return id(f) == id(wrapper.__code__)
-                # return hasattr(f, "_instrumented")
 
             # If a wrapped method was called in this call stack, get the prior
             # calls from this variable. Otherwise create a new chain stack.
@@ -259,17 +353,19 @@ class Instrument(object):
 
             return rets
 
-        wrapper._instrumented = func
+        # Indicate that the wrapper is an instrumented method so that we dont
+        # further instrument it in another layer accidentally.
+        setattr(wrapper, Instrument.INSTRUMENT, func)
 
         # Put the address of the instrumented chain in the wrapper so that we
         # don't pollute its list of fields. Note that this address may be
         # deceptive if the same subchain appears multiple times in the wrapped
         # chain.
-        wrapper._query = query
+        setattr(wrapper, Instrument.QUERY, query)
 
         return wrapper
 
-    def _instrument_object(self, obj, query: Query):
+    def instrument_object(self, obj, query: Query):
 
         cls = type(obj)
 
@@ -283,21 +379,20 @@ class Instrument(object):
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
 
-        for base in [cls] + cls.mro():
+        for base in [cls] + list(cls.__mro__):
             # All of mro() may need instrumentation here if some subchains call
             # superchains, and we want to capture the intermediate steps.
 
-            if not any(issubclass(base, c) for c in Instrument.CLASSES_TO_INSTRUMENT):
+            if not any(issubclass(base, c) for c in self.classes):
                 continue
 
             # TODO: generalize
-            if not base.__module__.startswith(
-                    "langchain.") and not base.__module__.startswith("trulens"):
+            if not any (base.__module__.startswith(module_name) for module_name in self.modules):
                 continue
 
-            for method_name in Instrument.METHODS_TO_INSTRUMENT:
+            for method_name in self.methods:
                 if hasattr(base, method_name):
-                    check_class = Instrument.METHODS_TO_INSTRUMENT[method_name]
+                    check_class = self.methods[method_name]
                     if not check_class(obj):
                         continue
 
@@ -307,7 +402,7 @@ class Instrument(object):
 
                     setattr(
                         base, method_name,
-                        self._instrument_tracked_method(
+                        self.instrument_tracked_method(
                             query=query,
                             func=original_fun,
                             method_name=method_name,
@@ -347,6 +442,8 @@ class Instrument(object):
 
         # Not using chain.dict() here as that recursively converts subchains to
         # dicts but we want to traverse the instantiations here.
+        
+        # TODO: generalize:
         if isinstance(obj, BaseModel):
 
             for k in obj.__fields__:
@@ -356,15 +453,13 @@ class Instrument(object):
                 if isinstance(v, str):
                     pass
 
-                # TODO: generalize
-                elif type(v).__module__.startswith("langchain.") or type(
-                        v).__module__.startswith("trulens"):
-                    self._instrument_object(obj=v, query=query[k])
+                elif any(type(v).__module__.startswith(module_name) for module_name in self.modules):
+                    self.instrument_object(obj=v, query=query[k])
 
                 elif isinstance(v, Sequence):
                     for i, sv in enumerate(v):
-                        if isinstance(sv, langchain.chains.base.Chain):
-                            self._instrument_object(obj=sv, query=query[k][i])
+                        if any(isinstance(sv, cls) for cls in self.classes):
+                            self.instrument_object(obj=sv, query=query[k][i])
 
                 # TODO: check if we want to instrument anything not accessible through __fields__ .
         else:
@@ -372,57 +467,3 @@ class Instrument(object):
                 f"Do not know how to instrument object {str(obj)[:32]} of type {cls}."
             )
 
-class LlamaInstrument(Instrument):
-    pass
-
-class LangChainInstrument(Instrument):
-    CLASSES_TO_INSTRUMENT = {
-        langchain.chains.base.Chain,
-        langchain.vectorstores.base.BaseRetriever,
-        langchain.schema.BaseRetriever,
-        langchain.llms.base.BaseLLM,
-        langchain.prompts.base.BasePromptTemplate,
-        langchain.schema.BaseMemory,
-        langchain.schema.BaseChatMessageHistory
-    }
-
-    # Instrument only methods with these names and of these classes.
-    METHODS_TO_INSTRUMENT = {
-        "_call": lambda o: isinstance(o, langchain.chains.base.Chain),
-        "get_relevant_documents": lambda o: True,  # VectorStoreRetriever
-    }
-
-    def _instrument_dict(self, cls, obj: Any, with_class_info: bool = False):
-        """
-        Replacement for langchain's dict method to one that does not fail under
-        non-serialization situations.
-        """
-
-        return jsonify
-
-    def _instrument_type_method(self, obj, prop):
-        """
-        Instrument the Langchain class's method _*_type which is presently used
-        to control chain saving. Override the exception behaviour. Note that
-        _chain_type is defined as a property in langchain.
-        """
-
-        # Properties doesn't let us new define new attributes like "_instrument"
-        # so we put it on fget instead.
-        if hasattr(prop.fget, "_instrumented"):
-            prop = prop.fget._instrumented
-
-        def safe_type(s) -> Union[str, Dict]:
-            # self should be chain
-            try:
-                ret = prop.fget(s)
-                return ret
-
-            except NotImplementedError as e:
-
-                return noserio(obj, error=f"{e.__class__.__name__}='{str(e)}'")
-
-        safe_type._instrumented = prop
-        new_prop = property(fget=safe_type)
-
-        return new_prop
