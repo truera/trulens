@@ -43,6 +43,7 @@ from pydantic import Field
 
 from trulens_eval.schema import FeedbackMode, Method
 from trulens_eval.schema import LangChainModel
+from trulens_eval.schema import Cost
 from trulens_eval.schema import Latency
 from trulens_eval.schema import Method
 from trulens_eval.schema import MethodIdent
