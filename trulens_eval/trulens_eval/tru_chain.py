@@ -129,7 +129,7 @@ class TruChain(LangChainModel, WithClassInfo):
 
         super().update_forward_refs()
         super().__init__(obj=self, **kwargs)
-        
+
         if tru is not None and feedback_mode != FeedbackMode.NONE:
             logger.debug(
                 "Inserting chain and feedback function definitions to db."
@@ -311,7 +311,7 @@ class TruChain(LangChainModel, WithClassInfo):
 
         def safe_dict(s, **kwargs: Any) -> Dict:
             _dict = jsonify(s)
-            
+
             #try:
             #    _dict = dict_original(s, **kwargs)
 
@@ -324,7 +324,9 @@ class TruChain(LangChainModel, WithClassInfo):
             # automatically.
             if with_class_info and not isinstance(obj, WithClassInfo):
                 # print(f"instrumenting class_info in {type(obj)} < {cls}")
-                _dict['class_info'] = Class.of_class(cls=cls, with_bases=True).dict()
+                _dict['class_info'] = Class.of_class(
+                    cls=cls, with_bases=True
+                ).dict()
 
             return _dict
 
@@ -521,7 +523,6 @@ class TruChain(LangChainModel, WithClassInfo):
                             obj=obj
                         )
                     )
-
             """
             # Instrument special langchain methods that may cause serialization
             # failures.
@@ -549,7 +550,6 @@ class TruChain(LangChainModel, WithClassInfo):
                 logger.debug(f"instrumenting {base}.dict")
                 setattr(base, "dict", self._instrument_dict(cls=base, obj=obj, with_class_info=True))
             """
-
 
         # Not using chain.dict() here as that recursively converts subchains to
         # dicts but we want to traverse the instantiations here.
