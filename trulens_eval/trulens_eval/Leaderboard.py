@@ -48,12 +48,16 @@ def app():
             5 + len(feedback_col_names)
         )
         chain_df = df.loc[df.chain_id == chain]
+        latency_mean = chain_df['latency'].mean()
         #model_df_feedback = df.loc[df.chain_id == model]
 
         col1.metric("Records", len(chain_df))
-        col2.metric("Average Latency", "1m:35s")
+        col2.metric(
+            "Average Latency (Seconds)",
+            f"{millify(round(latency_mean, 5), precision=2)}"
+        )
         col3.metric(
-            "Cost",
+            "Total Cost",
             f"${millify(round(sum(cost for cost in chain_df.total_cost if cost is not None), 5), precision = 2)}"
         )
         col4.metric(
