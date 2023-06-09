@@ -61,7 +61,7 @@ def app():
             f"${millify(round(sum(cost for cost in chain_df.total_cost if cost is not None), 5), precision = 2)}"
         )
         col4.metric(
-            "Tokens",
+            "Total Tokens",
             millify(
                 sum(
                     tokens for tokens in chain_df.total_tokens
