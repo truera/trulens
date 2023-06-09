@@ -401,7 +401,7 @@ class LocalSQLite(TruDB):
 
         self._insert_or_replace_vals(table=self.TABLE_FEEDBACKS, vals=vals)
 
-        if feedback_result.status == 2:
+        if feedback_result.status == FeedbackResultStatus.DONE:
             print(
                 f"{UNICODE_CHECK} feedback {feedback_result.feedback_result_id} on {feedback_result.record_id} -> {self.filename}"
             )
