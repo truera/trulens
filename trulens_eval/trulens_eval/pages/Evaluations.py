@@ -89,10 +89,13 @@ else:
         gb.configure_column('tags', header_name='Tags')
         gb.configure_column('ts', header_name='Time Stamp')
 
-        for feedback_col in evaluations_df.columns.drop(
-            ['chain_id', 'ts', 'total_tokens', 'total_cost', 'record_json',
-             'latency', 'record_id', 'chain_id', 'cost_json', 'chain_json',
-             'input', 'output']):
+        non_feedback_cols = [
+            'chain_id', 'ts', 'total_tokens', 'total_cost', 'record_json',
+            'latency', 'record_id', 'chain_id', 'cost_json', 'chain_json',
+            'input', 'output'
+        ]
+
+        for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
             gb.configure_column(
                 feedback_col,
                 cellStyle=cellstyle_jscode,
