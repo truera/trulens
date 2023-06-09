@@ -5,28 +5,28 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 import sqlite3
-from typing import (Dict, Iterable, List, Optional, Sequence, Tuple)
-
-import numpy as np
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from frozendict import frozendict
 from merkle_json import MerkleJson
+import numpy as np
 import pandas as pd
 
 from trulens_eval.schema import ChainID
+from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
+from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import JSONPath
+from trulens_eval.schema import Latency
 from trulens_eval.schema import Model
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
 from trulens_eval.schema import RecordID
-from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import all_queries
+from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import JSONPath
@@ -282,7 +282,7 @@ class LocalSQLite(TruDB):
         conn.commit()
         conn.close()
 
-    # TruDB requirement
+    # TruDB requirement-
     def insert_record(
         self,
         record: Record,
@@ -294,6 +294,7 @@ class LocalSQLite(TruDB):
 
         record_json_str = json_str_of_obj(record)
         cost_json_str = json_str_of_obj(record.cost)
+
         vals = (
             record.record_id, record.chain_id, record.main_input,
             record.main_output, record_json_str, record.tags, record.ts,
@@ -394,7 +395,8 @@ class LocalSQLite(TruDB):
                            ),  # extra dict is needed json's root must be a dict
             feedback_result.result,
             feedback_result.name,
-            json_str_of_obj(feedback_result.cost)
+            json_str_of_obj(feedback_result.cost),
+            json_str_of_obj(feedback_result.latency)
         )
 
         self._insert_or_replace_vals(table=self.TABLE_FEEDBACKS, vals=vals)
@@ -568,10 +570,12 @@ class LocalSQLite(TruDB):
         df_records = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
-
         cost = df_records['cost_json'].map(Cost.parse_raw)
         df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
         df_records['total_cost'] = cost.map(lambda v: v.cost)
+        df_records['latency'] = df_records['record_json'].apply(
+            lambda x: json.loads(x)["calls"][0]["latency"]
+        )
 
         if len(df_records) == 0:
             return df_records, []
@@ -591,7 +595,7 @@ class LocalSQLite(TruDB):
         df_results = df_results.drop(columns=["name", "result", "calls_json"])
 
         def nonempty(val):
-            if isinstance(val, np.float):
+            if isinstance(val, float):
                 return not np.isnan(val)
             return True
 
