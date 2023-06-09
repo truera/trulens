@@ -573,8 +573,9 @@ class LocalSQLite(TruDB):
         cost = df_records['cost_json'].map(Cost.parse_raw)
         df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
         df_records['total_cost'] = cost.map(lambda v: v.cost)
-        df_records['latency'] = json.loads(df_records["record_json"][0]
-                                          )["calls"][0]["latency"]
+        df_records['latency'] = df_records['record_json'].apply(
+            lambda x: json.loads(x)["calls"][0]["latency"]
+        )
 
         if len(df_records) == 0:
             return df_records, []
