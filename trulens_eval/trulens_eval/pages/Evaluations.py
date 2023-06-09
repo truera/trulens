@@ -174,7 +174,8 @@ else:
                 details
             )  # chains may not be deserializable, don't try to, keep it json.
 
-            classes: Iterable[Tuple[JSONPath, Class, Any]] = instrumented_classes(chain_json)
+            classes: Iterable[Tuple[JSONPath, Class,
+                                    Any]] = instrumented_classes(chain_json)
 
             for query, cls, component_json in classes:
                 if len(query.path) == 0:
@@ -201,24 +202,30 @@ else:
                     # st.write("TODO")
                     continue
 
-                st.header(f"Component {query} (__{cls.module.module_name}.{cls.name}__)")
+                st.header(
+                    f"Component {query} (__{cls.module.module_name}.{cls.name}__)"
+                )
 
-                if Is.llm(cls):    
+                if Is.llm(cls):
                     draw_llm_info(llm_details_json=component_json, query=query)
 
                 elif Is.prompt(cls):
-                    draw_prompt_info(prompt_details_json=component_json, query=query)
-    
+                    draw_prompt_info(
+                        prompt_details_json=component_json, query=query
+                    )
+
                 else:
                     with st.expander("Details:"):
                         st.json(component_json)
 
-                calls = [call for call in record.calls if query.is_prefix_of(call.chain_stack[-1].path)]
+                calls = [
+                    call for call in record.calls
+                    if query.is_prefix_of(call.chain_stack[-1].path)
+                ]
                 if len(calls) > 0:
                     st.subheader("Calls to component:")
                     for call in calls:
                         draw_call(call)
-
 
             st.header("More options:")
 
