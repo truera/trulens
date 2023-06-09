@@ -157,6 +157,17 @@ tru.add_chain(chain=truchain)
 
 tru.add_record(record)
 
+# ### Log App Feedback
+# Capturing app feedback such as user feedback of the responses can be added with one call.
+
+thumb_result = True
+tru.add_feedback(
+    name="thumbs up result",
+    record_id=record.record_id,
+    chain_id=truchain.chain_id,
+    result=thumb_result
+)
+
 # ### Evaluate Quality
 #
 # Following the request to your app, you can then evaluate LLM quality using feedback functions. This is completed in a sequential call to minimize latency for your application, and evaluations will also be logged to your local machine.
