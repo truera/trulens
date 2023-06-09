@@ -57,7 +57,7 @@ def app():
             f"{millify(round(latency_mean, 5), precision=2)}"
         )
         col3.metric(
-            "Total Cost",
+            "Total Cost (USD)",
             f"${millify(round(sum(cost for cost in chain_df.total_cost if cost is not None), 5), precision = 2)}"
         )
         col4.metric(
