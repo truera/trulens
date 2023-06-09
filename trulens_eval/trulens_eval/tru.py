@@ -149,7 +149,9 @@ class Tru(SingletonPerName):
 
         self.db.insert_chain(chain=chain)
 
-    def add_feedback(self, feedback_result: FeedbackResult, **kwargs) -> None:
+    def add_feedback(
+        self, feedback_result: FeedbackResult = None, **kwargs
+    ) -> None:
         """
         Add a single feedback result to the database.
         """
