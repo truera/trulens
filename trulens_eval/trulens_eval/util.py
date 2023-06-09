@@ -142,8 +142,10 @@ def json_default(obj: Any) -> str:
         # Otherwise give up and indicate a non-serialization.
         return noserio(obj)
 
+
 # def jsonify_with_class_info(obj: Any):
- #   return jsonify(obj=obj, dicted=dict(), with_class_info=True)
+#   return jsonify(obj=obj, dicted=dict(), with_class_info=True)
+
 
 def jsonify(obj: Any, dicted=None) -> JSON:
     """
@@ -163,7 +165,7 @@ def jsonify(obj: Any, dicted=None) -> JSON:
 
     if type(obj) in pydantic.json.ENCODERS_BY_TYPE:
         return obj
-    
+
     new_dicted = {k: v for k, v in dicted.items()}
 
     if isinstance(obj, Enum):
@@ -195,12 +197,16 @@ def jsonify(obj: Any, dicted=None) -> JSON:
         # Not even trying to use pydantic.dict here.
         temp = {}
         new_dicted[id(obj)] = temp
-        temp.update({
-            k: jsonify(getattr(obj, k), dicted=new_dicted)
-            for k in obj.__fields__
-        })
+        temp.update(
+            {
+                k: jsonify(getattr(obj, k), dicted=new_dicted)
+                for k in obj.__fields__
+            }
+        )
         if any(isinstance(obj, cls) for cls in CLASSES_TO_INSTRUMENT):
-            temp['class_info'] = Class.of_class(cls=obj.__class__, with_bases=True).dict()
+            temp['class_info'] = Class.of_class(
+                cls=obj.__class__, with_bases=True
+            ).dict()
 
         return temp
 
@@ -312,7 +318,7 @@ def all_objects(obj: Any,
     elif isinstance(obj, Iterable):
         pass
         # print(f"Cannot create query for Iterable types like {obj.__class__.__name__} at query {query}. Convert the iterable to a sequence first.")
-        
+
     else:
         pass
         # print(f"Unhandled object type {obj} {type(obj)}")
@@ -324,11 +330,13 @@ def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
         val = q(obj)
         yield (path_str, val)
 
+
 def matching_objects(obj: Any,
                      match: Callable) -> Iterable[Tuple[JSONPath, Any]]:
     for q, val in all_objects(obj):
         if match(q, val):
             yield (q, val)
+
 
 def matching_queries(obj: Any, match: Callable) -> Iterable[JSONPath]:
     for q, _ in matching_objects(obj, match=match):
@@ -726,11 +734,11 @@ class JSONPath(SerialModel):
 
         if len(p) > len(pother):
             return False
-        
+
         for s1, s2 in zip(p, pother):
             if s1 != s2:
                 return False
-            
+
         return True
 
     #@staticmethod
@@ -935,7 +943,9 @@ class TP(SingletonPerName):  # "thread processing"
 
         return pd.DataFrame(rows, columns=["alive", "thread"])
 
+
 # python instrumentation utilities
+
 
 def get_local_in_call_stack(
     key: str,
@@ -1016,7 +1026,6 @@ class Class(SerialModel):
     module: Module
 
     bases: Optional[Sequence[Class]]
-
     """
     @staticmethod
     def bases_of_obj(obj: object) -> Iterable[type]:
@@ -1028,11 +1037,14 @@ class Class(SerialModel):
     """
 
     @staticmethod
-    def of_class(cls: type, with_bases: bool = False, loadable: bool = False) -> 'Class':
+    def of_class(
+        cls: type, with_bases: bool = False, loadable: bool = False
+    ) -> 'Class':
         return Class(
-            name=cls.__name__, 
+            name=cls.__name__,
             module=Module.of_module_name(cls.__module__),
-            bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__)) if with_bases else None
+            bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__))
+            if with_bases else None
         )
 
     """
@@ -1062,8 +1074,9 @@ class Class(SerialModel):
         for base in bases:
             if base.name == class_name and base.module.module_name == module_name:
                 return True
-        
+
         return False
+
 
 class Obj(SerialModel):
     """
@@ -1096,10 +1109,14 @@ class Obj(SerialModel):
             return Obj(**d)
 
     @staticmethod
-    def of_object(obj: object, cls: Optional[type] = None, loadable: bool = False) -> Union['Obj', 'ObjSerial']:
+    def of_object(
+        obj: object,
+        cls: Optional[type] = None,
+        loadable: bool = False
+    ) -> Union['Obj', 'ObjSerial']:
         if loadable:
             return ObjSerial.of_object(obj=obj, cls=cls, loadable=loadable)
-        
+
         if cls is None:
             cls = obj.__class__
 
@@ -1108,7 +1125,9 @@ class Obj(SerialModel):
     def load(self) -> object:
         pp.pprint("Trying to load an object not intended to be loaded.")
         pp.pprint(self.dict())
-        raise RuntimeError("Trying to load an object not intended to be loaded.")
+        raise RuntimeError(
+            "Trying to load an object not intended to be loaded."
+        )
 
 
 class ObjSerial(Obj):
@@ -1131,7 +1150,9 @@ class ObjSerial(Obj):
         else:
             init_kwargs = None
 
-        return ObjSerial(cls=Class.of_class(cls), id=id(obj), init_kwargs=init_kwargs)
+        return ObjSerial(
+            cls=Class.of_class(cls), id=id(obj), init_kwargs=init_kwargs
+        )
 
     def load(self) -> object:
         cls = self.cls.load()
@@ -1143,6 +1164,7 @@ class ObjSerial(Obj):
 
 
 class FunctionOrMethod(SerialModel):  #, abc.ABC):
+
     @staticmethod
     def pick(**kwargs):
         # Temporary hack to deserialization of a class with more than one subclass.
@@ -1155,7 +1177,7 @@ class FunctionOrMethod(SerialModel):  #, abc.ABC):
     @classmethod
     def __get_validator__(cls):
         yield cls.validate
-    
+
     @classmethod
     def validate(cls, d) -> 'FunctionOrMethod':
         if isinstance(d, Function):
@@ -1165,19 +1187,23 @@ class FunctionOrMethod(SerialModel):  #, abc.ABC):
         elif isinstance(d, Dict):
             return FunctionOrMethod.pick(**d)
         else:
-            raise RuntimeError(f"Unhandled FunctionOrMethod source of type {type(d)}.")
+            raise RuntimeError(
+                f"Unhandled FunctionOrMethod source of type {type(d)}."
+            )
 
     @staticmethod
     def of_callable(c: Callable, loadable: bool = False) -> 'FunctionOrMethod':
         if hasattr(c, "__self__"):
-            return Method.of_method(c, obj=getattr(c, "__self__"), loadable=loadable)
+            return Method.of_method(
+                c, obj=getattr(c, "__self__"), loadable=loadable
+            )
         else:
             return Function.of_function(c, loadable=loadable)
 
     #@abc.abstractmethod
     def load(self) -> Callable:
         raise NotImplementedError()
-    
+
 
 class Method(FunctionOrMethod):
     """
@@ -1256,7 +1282,13 @@ class WithClassInfo(pydantic.BaseModel):
 
     class_info: Class
 
-    def __init__(self, class_info: Optional[Class] = None, obj: Optional[object] = None, cls: Optional[type] = None, **kwargs):
+    def __init__(
+        self,
+        class_info: Optional[Class] = None,
+        obj: Optional[object] = None,
+        cls: Optional[type] = None,
+        **kwargs
+    ):
         if obj is not None:
             cls = type(obj)
 
@@ -1267,16 +1299,16 @@ class WithClassInfo(pydantic.BaseModel):
         else:
             pass
 
-        super().__init__(class_info = class_info, **kwargs)
+        super().__init__(class_info=class_info, **kwargs)
 
     @staticmethod
     def of_object(obj: object):
-        return WithClassInfo(class_info = Class.of_class(obj.__class__))
+        return WithClassInfo(class_info=Class.of_class(obj.__class__))
 
     @staticmethod
-    def of_class(cls: type): # class
-        return WithClassInfo(class_info = Class.of_class(cls))
-    
+    def of_class(cls: type):  # class
+        return WithClassInfo(class_info=Class.of_class(cls))
+
     @staticmethod
     def of_model(model: pydantic.BaseModel, cls: Class):
         return WithClassInfo(class_info=cls, **model.dict())
