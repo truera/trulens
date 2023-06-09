@@ -27,7 +27,7 @@ from trulens_eval import tru_feedback
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_db import LocalSQLite
-from trulens_eval.tru_db import Query
+from trulens_eval.schema import Query
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.util import TP
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments

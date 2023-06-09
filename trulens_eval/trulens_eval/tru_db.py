@@ -42,67 +42,6 @@ pp = PrettyPrinter()
 logger = logging.getLogger(__name__)
 
 
-class Query:
-
-    # Typing for type hints.
-    Query = JSONPath
-
-    # Instance for constructing queries for record json like `Record.chain.llm`.
-    Record = Query().__record__
-
-    # Instance for constructing queries for chain json.
-    Chain = Query().__chain__
-
-    # A Chain's main input and main output.
-    # TODO: Chain input/output generalization.
-    RecordInput = Record.main_input
-    RecordOutput = Record.main_output
-
-
-def get_calls(record: Record) -> Iterable[RecordChainCall]:
-    """
-    Iterate over the call parts of the record.
-    """
-
-    for q in all_queries(record):
-        print("consider query", q)
-        if len(q.path) > 0 and q.path[-1] == GetItemOrAttribute(
-                item_or_attribute="_call"):
-            yield q
-
-
-def get_calls_by_stack(
-    record: Record
-) -> Dict[Tuple[str, ...], RecordChainCall]:
-    """
-    Get a dictionary mapping chain call stack to the call information.
-    """
-
-    def frozen_frame(frame):
-        frame['path'] = tuple(frame['path'])
-        return frozendict(frame)
-
-    ret = dict()
-
-    for c in get_calls(record):
-        print("call", c)
-
-        obj = TruDB.project(c, record_json=record, chain_json=None)
-        if isinstance(obj, Sequence):
-            for o in obj:
-                call_stack = tuple(map(frozen_frame, o['chain_stack']))
-                if call_stack not in ret:
-                    ret[call_stack] = []
-                ret[call_stack].append(o)
-        else:
-            call_stack = tuple(map(frozen_frame, obj['chain_stack']))
-            if call_stack not in ret:
-                ret[call_stack] = []
-            ret[call_stack].append(obj)
-
-    return ret
-
-
 class TruDB(SerialModel, abc.ABC):
 
     @abc.abstractmethod

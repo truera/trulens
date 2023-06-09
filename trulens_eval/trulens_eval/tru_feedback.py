@@ -34,9 +34,9 @@ from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.schema import Model
 from trulens_eval.tru_db import JSON
-from trulens_eval.tru_db import Query
+from trulens_eval.schema import Query
 from trulens_eval.tru_db import JSON
-from trulens_eval.tru_db import Query
+from trulens_eval.schema import Query
 
 from trulens_eval.tru_db import Record
 from trulens_eval.schema import FeedbackCall

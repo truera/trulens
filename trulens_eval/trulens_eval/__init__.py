@@ -1,41 +1,50 @@
 """
-# Imports of most common parts of the library.
+# Trulens-eval LLM Evaluation Library
 
-    Should include everything to get started.
+This top-level import should include everything to get started.
 
-# Module organization/dependency
+## Module organization/dependency
 
-    Modules on lower lines should not import modules on same or above lines:
+Modules on lower lines should not import modules on same or above lines as
+otherwise you might get circular import errors.
 
-    - __init__.py
+    - `__init__.py`
 
-    - tru_chain.py
+    - all UI/dashboard components
 
-    - tru.py
+    - `tru_chain.py` `tru_llama.py`
 
-    - tru_feedback.py
+    - `tru.py`
 
-    - tru_db.py
+    - `tru_feedback.py`
 
-    - provider_apis.py feedback_prompts.py
+    - `tru_model.py`
 
-    - schema.py
+    - `tru_db.py`
 
-    - util.py keys.py
+    - `instruments.py`
+
+    - `provider_apis.py` `feedback_prompts.py`
+
+    - `schema.py`
+
+    - `util.py` `keys.py`
 """
 
 __version__ = "0.1.2"
 
 from trulens_eval.tru_chain import TruChain
+from trulens_eval.tru_llama import TruLlama
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru_feedback import OpenAI
 from trulens_eval.tru_feedback import Huggingface
 from trulens_eval.tru import Tru
-from trulens_eval.tru_db import Query
+from trulens_eval.schema import Query
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.tru_feedback import Provider
 
 __all__ = [
-    'TruChain', 'Feedback', 'OpenAI', 'Huggingface', 'Tru', 'Query',
-    'FeedbackMode', 'Provider'
+    'Tru',
+    'TruChain', 'TruLlama',
+    'Feedback', 'OpenAI', 'Huggingface', 'FeedbackMode', 'Provider', 'Query',
 ]
