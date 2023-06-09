@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List
+from typing import Any, Dict, Iterable, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,20 +9,20 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
-from trulens_eval.schema import Record
-from trulens_eval.util import GetItemOrAttribute
 from ux.add_logo import add_logo
-
-import streamlit.components.v1 as components
+from ux.styles import default_pass_fail_color_threshold
 
 from trulens_eval import Tru
-from trulens_eval import tru_db
-from trulens_eval.util import is_empty, matching_objects
-from trulens_eval.util import is_noserio
-from trulens_eval.tru_db import TruDB
-from trulens_eval.ux.components import draw_calls
+from trulens_eval.schema import Record
+from trulens_eval.util import Class
+from trulens_eval.util import GetItemOrAttribute
+from trulens_eval.util import instrumented_classes
+from trulens_eval.util import JSONPath
+from trulens_eval.utils.langchain import Is
+from trulens_eval.ux.components import draw_call
+from trulens_eval.ux.components import draw_llm_info
+from trulens_eval.ux.components import draw_prompt_info
 from trulens_eval.ux.styles import cellstyle_jscode
-from trulens_eval.tru_feedback import default_pass_fail_color_threshold
 
 st.set_page_config(page_title="Evaluations", layout="wide")
 
@@ -71,7 +71,6 @@ else:
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
         cellstyle_jscode = JsCode(cellstyle_jscode)
-
         gb.configure_column('record_json', header_name='Record JSON', hide=True)
         gb.configure_column('chain_json', header_name='Chain JSON', hide=True)
         gb.configure_column('cost_json', header_name='Cost JSON', hide=True)
@@ -86,12 +85,17 @@ else:
         )
         gb.configure_column('total_tokens', header_name='Total Tokens (#)')
         gb.configure_column('total_cost', header_name='Total Cost (USD)')
+        gb.configure_column('latency', header_name='Latency (Seconds)')
         gb.configure_column('tags', header_name='Tags')
         gb.configure_column('ts', header_name='Time Stamp')
 
-        for feedback_col in evaluations_df.columns.drop(['chain_id', 'ts',
-                                                         'total_tokens',
-                                                         'total_cost']):
+        non_feedback_cols = [
+            'chain_id', 'ts', 'total_tokens', 'total_cost', 'record_json',
+            'latency', 'record_id', 'chain_id', 'cost_json', 'chain_json',
+            'input', 'output'
+        ]
+
+        for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
             gb.configure_column(
                 feedback_col,
                 cellStyle=cellstyle_jscode,
@@ -101,7 +105,6 @@ else:
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
-
         #gb.configure_default_column(groupable=True, value=True, enableRowGroup=True, aggFunc="sum", editable=True)
         gridOptions = gb.build()
         data = AgGrid(
@@ -176,106 +179,61 @@ else:
                 details
             )  # chains may not be deserializable, don't try to, keep it json.
 
-            step_llm = GetItemOrAttribute(item_or_attribute="llm")
-            step_prompt = GetItemOrAttribute(item_or_attribute="prompt")
-            step_call = GetItemOrAttribute(item_or_attribute="_call")
+            classes: Iterable[Tuple[JSONPath, Class,
+                                    Any]] = instrumented_classes(chain_json)
 
-            llm_queries = list(
-                matching_objects(
-                    chain_json,
-                    match=lambda q, o: len(q.path) > 0 and step_llm == q.path[-1
-                                                                             ]
+            for query, cls, component_json in classes:
+                if len(query.path) == 0:
+                    # Skip TruChain, will still list TruChain.chain under "chain" below.
+                    continue
+
+                if Is.chain(cls):
+                    # st.write("TODO")
+                    continue
+
+                elif Is.memory(cls):
+                    # st.write("TODO")
+                    continue
+
+                elif Is.chathistory(cls):
+                    # st.write("TODO")
+                    continue
+
+                elif Is.vector_store(cls):
+                    # st.write("TODO")
+                    continue
+
+                elif Is.retriever(cls):
+                    # st.write("TODO")
+                    continue
+
+                st.header(
+                    f"Component {query} (__{cls.module.module_name}.{cls.name}__)"
                 )
-            )
 
-            prompt_queries = list(
-                matching_objects(
-                    chain_json,
-                    match=lambda q, o: len(q.path) > 0 and step_prompt == q.
-                    path[-1] and step_call not in q._path
-                )
-            )
+                if Is.llm(cls):
+                    draw_llm_info(llm_details_json=component_json, query=query)
 
-            max_len = max(len(llm_queries), len(prompt_queries))
+                elif Is.prompt(cls):
+                    draw_prompt_info(
+                        prompt_details_json=component_json, query=query
+                    )
 
-            for i in range(max_len + 1):
-                st.header(f"Component {i+1}")
-                draw_calls(record, index=i + 1)
+                else:
+                    with st.expander("Details:"):
+                        st.json(component_json)
 
-                if i < len(llm_queries):
-                    query, llm_details_json = llm_queries[i]
-                    st.subheader(f"LLM Details:")
-                    path_str = str(query)
-                    st.text(path_str[:-4])
-
-                    llm_kv = {
-                        k: v
-                        for k, v in llm_details_json.items()
-                        if (v is not None) and not is_empty(v) and
-                        not is_noserio(v)
-                    }
-                    # CSS to inject contained in a string
-                    hide_table_row_index = """
-                                <style>
-                                thead tr th:first-child {display:none}
-                                tbody th {display:none}
-                                </style>
-                                """
-                    df = pd.DataFrame.from_dict(
-                        llm_kv, orient='index'
-                    ).transpose()
-
-                    # Iterate over each column of the DataFrame
-                    for column in df.columns:
-                        # Check if any cell in the column is a dictionary
-                        if any(isinstance(cell, dict) for cell in df[column]):
-                            # Create new columns for each key in the dictionary
-                            new_columns = df[column].apply(
-                                lambda x: pd.Series(x)
-                                if isinstance(x, dict) else pd.Series()
-                            )
-                            new_columns.columns = [
-                                f"{key}" for key in new_columns.columns
-                            ]
-
-                            # Remove extra zeros after the decimal point
-                            new_columns = new_columns.applymap(
-                                lambda x: '{0:g}'.format(x)
-                                if isinstance(x, float) else x
-                            )
-
-                            # Add the new columns to the original DataFrame
-                            df = pd.concat(
-                                [df.drop(column, axis=1), new_columns], axis=1
-                            )
-                    # Inject CSS with Markdown
-                    st.markdown(hide_table_row_index, unsafe_allow_html=True)
-                    st.table(df)
-
-                if i < len(prompt_queries):
-                    query, prompt_details_json = prompt_queries[i]
-                    path_str = str(query)
-                    st.subheader(f"Prompt Details:")
-                    st.text(path_str)
-
-                    prompt_types = {
-                        k: v
-                        for k, v in prompt_details_json.items()
-                        if (v is not None) and not is_empty(v) and
-                        not is_noserio(v)
-                    }
-
-                    for key, value in prompt_types.items():
-                        with st.expander(key.capitalize(), expanded=True):
-                            if isinstance(value, (Dict, List)):
-                                st.write(value)
-                            else:
-                                if isinstance(value, str) and len(value) > 32:
-                                    st.text(value)
-                                else:
-                                    st.write(value)
+                calls = [
+                    call for call in record.calls
+                    if query.is_prefix_of(call.chain_stack[-1].path)
+                ]
+                if len(calls) > 0:
+                    st.subheader("Calls to component:")
+                    for call in calls:
+                        draw_call(call)
 
             st.header("More options:")
+
             if st.button("Display full chain json"):
 
                 st.write(chain_json)

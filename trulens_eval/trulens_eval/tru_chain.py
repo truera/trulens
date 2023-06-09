@@ -3,8 +3,6 @@
 
 ## Limitations
 
-- Uncertain thread safety.
-
 - If the same wrapped sub-chain is called multiple times within a single call to
   the root chain, the record of this execution will not be exact with regards to
   the path to the call information. All call dictionaries will appear in a list
@@ -16,54 +14,8 @@
 - Some chains cannot be serialized/jsonized. Sequential chain is an example.
   This is a limitation of langchain itself.
 
-## Basic Usage
-
-- Wrap an existing chain:
-
-```python
-
-    tc = TruChain(t.llm_chain)
-
-```
-
-- Retrieve the parameters of the wrapped chain:
-
-```python
-
-    tc.chain
-
-```
-
-Output:
-
-```json
-
-{'memory': None,
- 'verbose': False,
- 'chain': {'memory': None,
-  'verbose': True,
-  'prompt': {'input_variables': ['question'],
-   'output_parser': None,
-   'partial_variables': {},
-   'template': 'Q: {question} A:',
-   'template_format': 'f-string',
-   'validate_template': True,
-   '_type': 'prompt'},
-  'llm': {'model_id': 'gpt2',
-   'model_kwargs': None,
-   '_type': 'huggingface_pipeline'},
-  'output_key': 'text',
-  '_type': 'llm_chain'},
- '_type': 'TruChain'}
- 
- ```
-
-- Make calls like you would to the wrapped chain.
-
-```python
-
-    rec1: dict = tc("hello there")
-    rec2: dict = tc("hello there general kanobi")
+- Instrumentation relies on CPython specifics, making heavy use of the `inspect`
+  module which is not expected to work with other Python implementations.
 
 ```
 
@@ -71,6 +23,8 @@ Output:
 
 from collections import defaultdict
 from datetime import datetime
+from datetime import timedelta
+import inspect
 from inspect import BoundArguments
 from inspect import signature
 from inspect import stack
@@ -86,26 +40,35 @@ from langchain.chains.base import Chain
 from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_eval.schema import FeedbackMode, Method, MethodIdent
+from trulens_eval.schema import Cost
+from trulens_eval.schema import FeedbackMode
+from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import LangChainModel
+from trulens_eval.schema import Method
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
 from trulens_eval.schema import RecordChainCallMethod
-from trulens_eval.schema import Cost
+from trulens_eval.tru import Tru
 from trulens_eval.tru_db import Query
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru import Tru
-from trulens_eval.schema import FeedbackResult
+from trulens_eval.util import Class
 from trulens_eval.util import get_local_in_call_stack
-from trulens_eval.util import TP, JSONPath, jsonify, noserio
+from trulens_eval.util import jsonify
+from trulens_eval.util import JSONPath
+from trulens_eval.util import noserio
+from trulens_eval.util import SerialModel
+from trulens_eval.util import TP
+from trulens_eval.util import WithClassInfo
+from trulens_eval.utils.langchain import CLASSES_TO_INSTRUMENT
+from trulens_eval.utils.langchain import METHODS_TO_INSTRUMENT
 
 logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
 
-class TruChain(LangChainModel):
+class TruChain(LangChainModel, WithClassInfo):
     """
     Wrap a langchain Chain to capture its configuration and evaluation steps. 
     """
@@ -170,7 +133,8 @@ class TruChain(LangChainModel):
         kwargs['feedbacks'] = feedbacks
         kwargs['feedback_mode'] = feedback_mode
 
-        super().__init__(**kwargs)
+        super().update_forward_refs()
+        super().__init__(obj=self, **kwargs)
 
         if tru is not None and feedback_mode != FeedbackMode.NONE:
             logger.debug(
@@ -244,7 +208,8 @@ class TruChain(LangChainModel):
         output_key = self.output_keys[0]
 
         ret_record_args['main_input'] = inputs[input_key]
-        ret_record_args['main_output'] = ret[output_key]
+        if ret is not None:
+            ret_record_args['main_output'] = ret[output_key]
 
         ret_record_args['main_error'] = str(error)
         ret_record_args['calls'] = record
@@ -329,42 +294,49 @@ class TruChain(LangChainModel):
     def _call(self, *args, **kwargs) -> Any:
         return self.chain._call(*args, **kwargs)
 
-    def _instrument_dict(self, cls, obj: Any):
+    def _instrument_dict(self, cls, obj: Any, with_class_info: bool = False):
         """
         Replacement for langchain's dict method to one that does not fail under
         non-serialization situations.
         """
 
-        if hasattr(obj, "memory"):
-            if obj.memory is not None:
-                # logger.warn(
-                #     f"Will not be able to serialize object of type {cls} because it has memory."
-                # )
-                pass
+        if with_class_info:
+            return jsonify_with_class_info
+        else:
+            return jsonify
 
-        def safe_dict(s, json: bool = True, **kwargs: Any) -> Dict:
-            """
-            Return dictionary representation `s`. If `json` is set, will make
-            sure output can be serialized.
-            """
+        if isinstance(obj, SerialModel):
+            # Don't need to instrument these as the propr handling is done in SerialModel.dict already.
+            return SerialModel.dict
 
-            # if s.memory is not None:
-            # continue anyway
-            # raise ValueError("Saving of memory is not yet supported.")
+        dict_original = cls.dict
 
-            sup = super(cls, s)
-            if hasattr(sup, "dict"):
-                _dict = super(cls, s).dict(**kwargs)
-            else:
-                _dict = {"_base_type": cls.__name__}
-            # _dict = cls.dict(s, **kwargs)
-            # _dict["_type"] = s._chain_type
+        if hasattr(dict_original, "_instrumented"):
+            print("dict already instrumented")
+            return dict_original
 
-            # TODO: json
+        def safe_dict(s, **kwargs: Any) -> Dict:
+            _dict = jsonify(s)
+
+            #try:
+            #    _dict = dict_original(s, **kwargs)
+
+            #except Exception as e:
+            #    print(f"object of type {type(s)} refuses to be dictified.")
+            #    _dict = jsonify(s.__fields__)
+
+            # Attach some class information on the side if needed and when the
+            # object didn't already include the mixin that does it
+            # automatically.
+            if with_class_info and not isinstance(obj, WithClassInfo):
+                # print(f"instrumenting class_info in {type(obj)} < {cls}")
+                _dict['class_info'] = Class.of_class(
+                    cls=cls, with_bases=True
+                ).dict()
 
             return _dict
 
-        safe_dict._instrumented = getattr(cls, "dict")
+        safe_dict._instrumented = dict_original
 
         return safe_dict
 
@@ -460,7 +432,7 @@ class TruChain(LangChainModel):
                 key="chain_stack", func=find_instrumented, offset=1
             ) or ()
             frame_ident = RecordChainCallMethod(
-                path=query, method=MethodIdent.of_method(func, obj=obj)
+                path=query, method=Method.of_method(func, obj=obj)
             )
             chain_stack = chain_stack + (frame_ident,)
 
@@ -476,6 +448,8 @@ class TruChain(LangChainModel):
 
             end_time = datetime.now()
 
+            latency = end_time - start_time
+
             # Don't include self in the recorded arguments.
             nonself = {
                 k: jsonify(v)
@@ -487,6 +461,7 @@ class TruChain(LangChainModel):
                 args=nonself,
                 start_time=start_time,
                 end_time=end_time,
+                latency=latency,
                 pid=os.getpid(),
                 tid=th.get_native_id(),
                 chain_stack=chain_stack,
@@ -526,25 +501,20 @@ class TruChain(LangChainModel):
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
 
-        # Instrument only methods with these names and of these classes.
-        methods_to_instrument = {
-            "_call": lambda o: isinstance(o, langchain.chains.base.Chain),
-            "get_relevant_documents": lambda o: True,  # VectorStoreRetriever
-            "__call__":
-                lambda o: isinstance(o, Feedback)  # Feedback
-        }
-
         for base in [cls] + cls.mro():
             # All of mro() may need instrumentation here if some subchains call
             # superchains, and we want to capture the intermediate steps.
+
+            if not any(issubclass(base, c) for c in CLASSES_TO_INSTRUMENT):
+                continue
 
             if not base.__module__.startswith(
                     "langchain.") and not base.__module__.startswith("trulens"):
                 continue
 
-            for method_name in methods_to_instrument:
+            for method_name in METHODS_TO_INSTRUMENT:
                 if hasattr(base, method_name):
-                    check_class = methods_to_instrument[method_name]
+                    check_class = METHODS_TO_INSTRUMENT[method_name]
                     if not check_class(obj):
                         continue
 
@@ -562,7 +532,7 @@ class TruChain(LangChainModel):
                             obj=obj
                         )
                     )
-
+            """
             # Instrument special langchain methods that may cause serialization
             # failures.
             if hasattr(base, "_chain_type"):
@@ -585,10 +555,10 @@ class TruChain(LangChainModel):
 
             # Instrument a pydantic.BaseModel method that may cause
             # serialization failures.
-            if hasattr(base, "dict"):
+            if hasattr(base, "dict"):# and not hasattr(base.dict, "_instrumented"):
                 logger.debug(f"instrumenting {base}.dict")
-
-                setattr(base, "dict", self._instrument_dict(cls=base, obj=obj))
+                setattr(base, "dict", self._instrument_dict(cls=base, obj=obj, with_class_info=True))
+            """
 
         # Not using chain.dict() here as that recursively converts subchains to
         # dicts but we want to traverse the instantiations here.

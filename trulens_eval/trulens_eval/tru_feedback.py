@@ -31,7 +31,7 @@ from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.schema import FunctionOrMethod
+from trulens_eval.util import FunctionOrMethod
 from trulens_eval.schema import Model
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import Query
@@ -47,6 +47,8 @@ from trulens_eval.util import TP
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
 default_pass_fail_color_threshold = 0.5
+
+logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +89,9 @@ class Feedback(FeedbackDefinition):
 
         if imp is not None:
             # These are for serialization to/from json and for db storage.
-            kwargs['implementation'] = FunctionOrMethod.of_callable(imp)
+            kwargs['implementation'] = FunctionOrMethod.of_callable(
+                imp, loadable=True
+            )
         else:
             if "implementation" in kwargs:
                 imp: Callable = FunctionOrMethod.pick(
@@ -388,7 +392,7 @@ def _re_1_10_rating(str_val):
 
 class Provider(SerialModel):
     endpoint: Any = pydantic.Field(exclude=True)
-
+    """
     @staticmethod
     def of_json(obj: Dict) -> 'Provider':
         cls_name = obj['class_name']
@@ -411,6 +415,7 @@ class Provider(SerialModel):
         }
         obj.update(**extras)
         return obj
+    """
 
 
 class OpenAI(Provider):
@@ -431,8 +436,10 @@ class OpenAI(Provider):
         self.model_engine = model_engine
         self.endpoint = Endpoint(name="openai")
 
+    """
     def to_json(self) -> Dict:
         return Provider.to_json(self, model_engine=self.model_engine)
+    """
 
     def _moderation(self, text: str):
         return self.endpoint.run_me(
@@ -852,8 +859,10 @@ class Cohere(Provider):
         Cohere().endpoint = Endpoint(name="cohere")
         self.model_engine = model_engine
 
+    """
     def to_json(self) -> Dict:
         return Provider.to_json(self, model_engine=self.model_engine)
+    """
 
     def sentiment(
         self,

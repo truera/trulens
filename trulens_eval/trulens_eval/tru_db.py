@@ -20,6 +20,7 @@ from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import JSONPath
+from trulens_eval.schema import Latency
 from trulens_eval.schema import Model
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
@@ -281,7 +282,7 @@ class LocalSQLite(TruDB):
         conn.commit()
         conn.close()
 
-    # TruDB requirement
+    # TruDB requirement-
     def insert_record(
         self,
         record: Record,
@@ -293,6 +294,7 @@ class LocalSQLite(TruDB):
 
         record_json_str = json_str_of_obj(record)
         cost_json_str = json_str_of_obj(record.cost)
+
         vals = (
             record.record_id, record.chain_id, record.main_input,
             record.main_output, record_json_str, record.tags, record.ts,
@@ -393,12 +395,13 @@ class LocalSQLite(TruDB):
                            ),  # extra dict is needed json's root must be a dict
             feedback_result.result,
             feedback_result.name,
-            json_str_of_obj(feedback_result.cost)
+            json_str_of_obj(feedback_result.cost),
+            json_str_of_obj(feedback_result.latency)
         )
 
         self._insert_or_replace_vals(table=self.TABLE_FEEDBACKS, vals=vals)
 
-        if feedback_result.status == 2:
+        if feedback_result.status == FeedbackResultStatus.DONE:
             print(
                 f"{UNICODE_CHECK} feedback {feedback_result.feedback_result_id} on {feedback_result.record_id} -> {self.filename}"
             )
@@ -567,10 +570,12 @@ class LocalSQLite(TruDB):
         df_records = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
-
         cost = df_records['cost_json'].map(Cost.parse_raw)
         df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
         df_records['total_cost'] = cost.map(lambda v: v.cost)
+        df_records['latency'] = df_records['record_json'].apply(
+            lambda x: json.loads(x)["calls"][0]["latency"]
+        )
 
         if len(df_records) == 0:
             return df_records, []

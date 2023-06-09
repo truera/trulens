@@ -17,6 +17,9 @@ jupyter nbconvert --to script all_tools.ipynb
 # gnu sed/gsed needed on mac:
 SED=`which -a gsed sed | head -n1`
 
+# Fix nbmerge ids field invalid for ipynb
+$SED -i "/id\"\:/d" all_tools.ipynb
+
 ## Remove ipynb JSON calls
 $SED -i "/JSON/d" quickstart.py all_tools.py
 ## Replace jupyter display with python print

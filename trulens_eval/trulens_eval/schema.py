@@ -4,6 +4,7 @@ Serializable objects and their schemas.
 
 import abc
 from datetime import datetime
+from datetime import timedelta
 from enum import Enum
 import importlib
 import json
@@ -15,13 +16,16 @@ from typing import (
 import langchain
 from munch import Munch as Bunch
 import pydantic
+from trulens_eval.util import Function, Method
 
-from trulens_eval.util import GetItemOrAttribute, SerialModel, json_str_of_obj
+from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
 from trulens_eval.util import json_default
+from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.util import obj_id_of_obj
+from trulens_eval.util import SerialModel
 
 T = TypeVar("T")
 
@@ -35,249 +39,21 @@ FeedbackResultID = str
 # Serialization of python objects/methods. Not using pickling here so we can
 # inspect the contents a little better before unserializaing.
 
-
-class Module(SerialModel):
-    package_name: str
-    module_name: str
-
-    def of_module(mod: ModuleType) -> 'Module':
-        return Module(package_name=mod.__package__, module_name=mod.__name__)
-
-    def of_module_name(module_name: str) -> 'Module':
-        mod = importlib.import_module(module_name)
-        package_name = mod.__package__
-        return Module(package_name=package_name, module_name=module_name)
-
-    def load(self) -> ModuleType:
-        return importlib.import_module(
-            self.module_name, package=self.package_name
-        )
-
-
-class Class(SerialModel):
-    """
-    A python class by name.
-    """
-
-    name: str
-
-    module: Module
-
-    @staticmethod
-    def of_class(cls: type) -> 'Class':
-        return Class(
-            name=cls.__name__, module=Module.of_module_name(cls.__module__)
-        )
-
-    def load(self) -> type:  # class
-        try:
-            mod = self.module.load()
-            return getattr(mod, self.name)
-
-        except Exception as e:
-            raise RuntimeError(f"Could not load class {self} because {e}.")
-
-
-class Obj(SerialModel):
-    """
-    An object that may or may not be serializable. Do not use for base types
-    that don't have a class.
-    """
-
-    cls: Class
-
-    # From id(obj), identifiers memory location of a python object. Use this for
-    # handling loops in JSON objects.
-    id: int
-
-    # For objects that can be easily reconstructed, provide their kwargs here.
-    init_kwargs: Optional[Dict] = None
-
-    @staticmethod
-    def of_object(obj: object, cls: Optional[type] = None) -> 'Obj':
-        if cls is None:
-            cls = obj.__class__
-
-        if isinstance(obj, pydantic.BaseModel):
-            init_kwargs = obj.dict()
-        else:
-            init_kwargs = None
-
-        return Obj(cls=Class.of_class(cls), id=id(obj), init_kwargs=init_kwargs)
-
-    def load(self) -> object:
-        cls = self.cls.load()
-
-        if issubclass(cls, pydantic.BaseModel) and self.init_kwargs is not None:
-            return cls(**self.init_kwargs)
-        else:
-            raise RuntimeError(f"Do not know how to load object {self}.")
-
-
-# FunctionOrMethod = Union[Function, Method]
-
-
-class FunctionOrMethod(SerialModel):  #, abc.ABC):
-
-    @staticmethod
-    def pick(**kwargs):
-        if 'obj' in kwargs:
-            return Method(**kwargs)
-        elif 'cls' in kwargs:
-            return Function(**kwargs)
-
-    @classmethod
-    def __get_validator__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, d) -> 'FunctionOrMethod':
-        if isinstance(d, Function):
-            return d
-        elif isinstance(d, Method):
-            return d
-        elif isinstance(d, Dict):
-            return FunctionOrMethod.pick(**d)
-        else:
-            raise RuntimeError(
-                f"Unhandled FunctionOrMethod source of type {type(d)}."
-            )
-
-    @staticmethod
-    def of_callable(c: Callable) -> 'FunctionOrMethod':
-        if hasattr(c, "__self__"):
-            return Method.of_method(c, obj=getattr(c, "__self__"))
-        else:
-            return Function.of_function(c)
-
-    #@abc.abstractmethod
-    def load(self) -> Callable:
-        raise NotImplementedError()
-
-
-class MethodIdent(SerialModel):
-    """
-    Identifier of a method (as opposed to a serialization of the method itself).
-    """
-
-    module_name: str
-    class_name: str
-    method_name: str
-
-    @staticmethod
-    def of_method(
-        method: Callable,
-        cls: Optional[type] = None,
-        obj: Optional[object] = None
-    ) -> 'Method':
-        if obj is None:
-            assert hasattr(
-                method, "__self__"
-            ), f"Expected a method (maybe it is a function?): {method}"
-            obj = method.__self__
-
-        if cls is None:
-            cls = obj.__class__
-
-        module_name = cls.__module__
-
-        return MethodIdent(
-            module_name=module_name,
-            class_name=cls.__name__,
-            method_name=method.__name__
-        )
-
-
-class Method(FunctionOrMethod):
-    """
-    A python method. A method belongs to some class in some module and must have
-    a pre-bound self object. The location of the method is encoded in `obj`
-    alongside self.
-    """
-
-    obj: Obj
-    name: str
-
-    @staticmethod
-    def of_method(
-        meth: Callable,
-        cls: Optional[type] = None,
-        obj: Optional[object] = None
-    ) -> 'Method':
-        if obj is None:
-            assert hasattr(
-                meth, "__self__"
-            ), f"Expected a method (maybe it is a function?): {meth}"
-            obj = meth.__self__
-
-        if cls is None:
-            cls = obj.__class__
-
-        obj_json = Obj.of_object(obj, cls=cls)
-
-        return Method(obj=obj_json, name=meth.__name__)
-
-    def load(self) -> Callable:
-        obj = self.obj.load()
-        return getattr(obj, self.name)
-
-    # @staticmethod
-    # def parse_obj(o: Dict) -> 'Method':
-    #    return Method(obj=Obj.parse_obj(o['obj']), name=o['name'])
-
-
-class Function(FunctionOrMethod):
-    """
-    A python function.
-    """
-
-    module: Module
-    cls: Optional[Class]
-    name: str
-
-    @staticmethod
-    def of_function(
-        func: Callable,
-        module: Optional[ModuleType] = None,
-        cls: Optional[type] = None
-    ) -> 'Function':  # actually: class
-
-        if module is None:
-            module = Module.of_module_name(func.__module__)
-
-        if cls is not None:
-            cls = Class.of_class(cls)
-
-        return Function(cls=cls, module=module, name=func.__name__)
-
-    def load(self) -> Callable:
-        if self.cls is not None:
-            cls = self.cls.load()
-            return getattr(cls, self.name)
-        else:
-            mod = self.module.load()
-            return getattr(mod, self.name)
-
-    # @staticmethod
-    # def parse_obj(o: Dict) -> 'Function':
-    #    return Function(
-    #        module=Module.parse_obj(o['module']),
-    #        cls=Obj.parse_obj(o['cls']) if o['cls'] is not None else None,
-    #        name=o['name']
-    #    )
-
-
 # Record related:
 
 
 class RecordChainCallMethod(SerialModel):
     path: JSONPath
-    method: MethodIdent
+    method: Method
 
 
 class Cost(SerialModel):
     n_tokens: Optional[int] = None
     cost: Optional[float] = None
+
+
+class Latency(SerialModel):
+    latency: Optional[float] = None
 
 
 class RecordChainCall(SerialModel):
@@ -301,6 +77,7 @@ class RecordChainCall(SerialModel):
     # Timestamps tracking entrance and exit of the instrumented method.
     start_time: datetime
     end_time: datetime
+    latency: timedelta
 
     # Process id.
     pid: int
@@ -320,6 +97,7 @@ class Record(SerialModel):
     chain_id: ChainID
 
     cost: Cost = pydantic.Field(default_factory=Cost)
+    latency: Latency = pydantic.Field(default_factory=Latency)
 
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
@@ -366,9 +144,7 @@ class Record(SerialModel):
             frame_info = call.top(
             )  # info about the method call is at the top of the stack
             path = frame_info.path._append(
-                GetItemOrAttribute(
-                    item_or_attribute=frame_info.method.method_name
-                )
+                GetItemOrAttribute(item_or_attribute=frame_info.method.name)
             )  # adds another attribute to path, from method name
             # TODO: append if already there
             ret = path.set(obj=ret, val=call)
