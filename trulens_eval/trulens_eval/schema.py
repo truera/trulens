@@ -135,9 +135,7 @@ class Record(SerialModel):
             frame_info = call.top(
             )  # info about the method call is at the top of the stack
             path = frame_info.path._append(
-                GetItemOrAttribute(
-                    item_or_attribute=frame_info.method.name
-                )
+                GetItemOrAttribute(item_or_attribute=frame_info.method.name)
             )  # adds another attribute to path, from method name
             # TODO: append if already there
             ret = path.set(obj=ret, val=call)
