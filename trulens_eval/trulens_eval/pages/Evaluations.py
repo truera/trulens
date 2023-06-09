@@ -202,7 +202,7 @@ else:
 
                 st.header(f"Component {query} (__{cls.module.module_name}.{cls.name}__)")
 
-                if Is.llm(cls):    
+                if Is.llm(cls):
                     draw_llm_info(llm_details_json=component_json, query=query)
 
                 elif Is.prompt(cls):
