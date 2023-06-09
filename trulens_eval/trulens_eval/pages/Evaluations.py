@@ -9,18 +9,19 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
-
-from trulens_eval.schema import Record
-from trulens_eval.ux.components import draw_call
-from trulens_eval.ux.components import draw_prompt_info
-from trulens_eval.ux.components import draw_llm_info
-from trulens_eval.utils.langchain import Is
-from trulens_eval.util import Class, JSONPath, instrumented_classes
-from trulens_eval.util import GetItemOrAttribute
 from ux.add_logo import add_logo
+from ux.styles import default_pass_fail_color_threshold
 
 from trulens_eval import Tru
-
+from trulens_eval.schema import Record
+from trulens_eval.util import Class
+from trulens_eval.util import GetItemOrAttribute
+from trulens_eval.util import instrumented_classes
+from trulens_eval.util import JSONPath
+from trulens_eval.utils.langchain import Is
+from trulens_eval.ux.components import draw_call
+from trulens_eval.ux.components import draw_llm_info
+from trulens_eval.ux.components import draw_prompt_info
 from trulens_eval.ux.styles import cellstyle_jscode
 
 st.set_page_config(page_title="Evaluations", layout="wide")
