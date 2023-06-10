@@ -192,31 +192,7 @@ class TruChain(TruModel):
         if ret is not None:
             ret_record_args['main_output'] = ret[output_key]
 
-        ret_record_args['main_error'] = str(error)
-        ret_record_args['calls'] = record
-        ret_record_args['cost'] = Cost(n_tokens=total_tokens, cost=total_cost)
-        ret_record_args['chain_id'] = self.chain_id
-
-        ret_record = Record(**ret_record_args)
-
-        if error is not None:
-            if self.feedback_mode == FeedbackMode.WITH_CHAIN:
-                self._handle_error(record=ret_record, error=error)
-
-            elif self.feedback_mode in [FeedbackMode.DEFERRED,
-                                        FeedbackMode.WITH_CHAIN_THREAD]:
-                TP().runlater(
-                    self._handle_error, record=ret_record, error=error
-                )
-
-            raise error
-
-        if self.feedback_mode == FeedbackMode.WITH_CHAIN:
-            self._handle_record(record=ret_record)
-
-        elif self.feedback_mode in [FeedbackMode.DEFERRED,
-                                    FeedbackMode.WITH_CHAIN_THREAD]:
-            TP().runlater(self._handle_record, record=ret_record)
+        ret_record = self._post_record(ret_record_args, error, total_tokens, total_cost, record)
 
         return ret, ret_record
 

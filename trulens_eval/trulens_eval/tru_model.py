@@ -21,6 +21,8 @@ from trulens_eval.schema import ChainID, FeedbackDefinition
 from trulens_eval.schema import FeedbackMode, Model
 from trulens_eval.schema import Query
 from trulens_eval.instruments import Instrument
+from trulens_eval.trulens_eval.schema import Cost
+from trulens_eval.trulens_eval.util import TP
 from trulens_eval.util import SerialModel, WithClassInfo, json_str_of_obj, obj_id_of_obj
 from trulens_eval.util import jsonify
 
@@ -107,6 +109,38 @@ class TruModel(Model, SerialModel):
         # Same problem as in json.
         return jsonify(self, instrument=self.instrument)
 
+    def _post_record(self, ret_record_args, error, total_tokens, total_cost, record):
+        """
+        Final steps of record construction common among model types.
+        """
+
+        ret_record_args['main_error'] = str(error)
+        ret_record_args['calls'] = record
+        ret_record_args['cost'] = Cost(n_tokens=total_tokens, cost=total_cost)
+        ret_record_args['chain_id'] = self.chain_id
+
+        ret_record = Record(**ret_record_args)
+       
+        if error is not None:
+            if self.feedback_mode == FeedbackMode.WITH_CHAIN:
+                self._handle_error(record=ret_record, error=error)
+
+            elif self.feedback_mode in [FeedbackMode.DEFERRED,
+                                        FeedbackMode.WITH_CHAIN_THREAD]:
+                TP().runlater(
+                    self._handle_error, record=ret_record, error=error
+                )
+
+            raise error
+
+        if self.feedback_mode == FeedbackMode.WITH_CHAIN:
+            self._handle_record(record=ret_record)
+
+        elif self.feedback_mode in [FeedbackMode.DEFERRED,
+                                    FeedbackMode.WITH_CHAIN_THREAD]:
+            TP().runlater(self._handle_record, record=ret_record)
+
+        return ret_record
 
     def _handle_record(self, record: Record):
         """
