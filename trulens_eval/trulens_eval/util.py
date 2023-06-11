@@ -150,6 +150,12 @@ def json_default(obj: Any) -> str:
 CIRCLE = "__tru_circular_reference"
 
 
+def _safe_getattr(obj, k):
+    try:
+        return getattr(obj, k)
+    except Exception as e:
+        return dict(error=str(e))
+
 # TODO: refactor to somewhere else or change instrument to a generic filter
 def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
     """
@@ -173,6 +179,7 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
     if type(obj) in pydantic.json.ENCODERS_BY_TYPE:
         return obj
 
+    # TODO: should we include duplicates? If so, dicted needs to be adjusted.
     new_dicted = {k: v for k, v in dicted.items()}
 
     recur = lambda o: jsonify(obj=o, dicted=new_dicted, instrument=instrument)
@@ -205,10 +212,28 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
         temp = {}
         new_dicted[id(obj)] = temp
         temp.update({
-            k: recur(getattr(obj, k))
+            k: recur(_safe_getattr(obj, k))
             for k, v in obj.__fields__.items() if not v.field_info.exclude
         })
-        if any(isinstance(obj, cls) for cls in instrument.classes):
+        if instrument.to_instrument_object(obj):
+            temp['class_info'] = Class.of_class(cls=obj.__class__, with_bases=True).dict()
+
+        return temp
+
+    elif obj.__class__.__module__.startswith("llama_index."):
+        temp = {}
+        new_dicted[id(obj)] = temp
+
+        kvs = {k: _safe_getattr(obj, k) for k in dir(obj)}
+
+        temp.update({
+            k: recur(v) # TODO: static
+            for k, v in kvs.items() 
+            if not k.startswith("__") and 
+            (isinstance(v, JSON_BASES) or isinstance(v, Dict) or isinstance(v, Sequence) or instrument.to_instrument_object(v))
+        })
+
+        if instrument.to_instrument_object(obj):
             temp['class_info'] = Class.of_class(cls=obj.__class__, with_bases=True).dict()
 
         return temp
@@ -837,15 +862,15 @@ class SingletonPerName():
         Create the singleton instance if it doesn't already exist and return it.
         """
 
-        key = cls.__name__, name
+        k = cls.__name__, name
 
-        if key not in cls.instances:
+        if k not in cls.instances:
             logger.debug(
                 f"*** Creating new {cls.__name__} singleton instance for name = {name} ***"
             )
-            SingletonPerName.instances[key] = super().__new__(cls)
+            SingletonPerName.instances[k] = super().__new__(cls)
 
-        return SingletonPerName.instances[key]
+        return SingletonPerName.instances[k]
 
 
 # Threading utilities

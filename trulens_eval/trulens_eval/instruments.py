@@ -227,6 +227,15 @@ class Instrument(object):
             "__call__": lambda o: isinstance(o, Feedback)  # Feedback
         }
 
+    def to_instrument_object(self, obj):
+        return self.to_instrument_class(type(obj))
+
+    def to_instrument_class(self, cls):
+        return any(issubclass(cls, parent) for parent in self.classes)
+
+    def to_instrument_module(self, mod):
+        return any(mod.startswith(mod2) for mod2 in self.modules)
+
     def __init__(
         self,
         root_method: Optional[Callable] = None,
@@ -482,6 +491,10 @@ class Instrument(object):
 
         elif obj.__class__.__module__.startswith("llama_index"):
             for k in dir(obj):
+                if k.startswith("_") and k[1:] in dir(obj):
+                    # Skip those starting with _ that also have non-_ versions.
+                    continue
+                
                 sv = getattr(obj, k) # static get ?
 
                 if any(isinstance(sv, cls) for cls in self.classes):

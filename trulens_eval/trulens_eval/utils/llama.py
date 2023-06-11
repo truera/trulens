@@ -16,13 +16,27 @@ class Is:
     @staticmethod
     def engine(cls: Class):
         return cls.noserio_issubclass(
-            module_name="llama_index.query_engine.retriever_query_engine", class_name="RetrieverQueryEngine"
+            module_name="llama_index.indices.query.base", class_name="BaseQueryEngine"
         )
+
+    @staticmethod
+    def retriever(cls: Class):
+        return cls.noserio_issubclass(
+            module_name="llama_index.indices.base_retriever", class_name="BaseRetriever"
+        )
+
+
+    @staticmethod
+    def selector(cls: Class):
+        return cls.noserio_issubclass(
+            module_name="llama_index.selectors.types", class_name="BaseSelector"
+        )
+
 
     @staticmethod
     def what(cls: Class) -> Iterable[COMPONENT_CATEGORY]:
         CHECKERS = [
-            Is.engine
+            Is.engine, Is.retriever, Is.selector
         ]
 
         for checker in CHECKERS:
