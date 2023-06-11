@@ -50,7 +50,6 @@ default_pass_fail_color_threshold = 0.5
 
 logger = logging.getLogger(__name__)
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -90,7 +89,9 @@ class Feedback(FeedbackDefinition):
 
         if imp is not None:
             # These are for serialization to/from json and for db storage.
-            kwargs['implementation'] = FunctionOrMethod.of_callable(imp, loadable=True)
+            kwargs['implementation'] = FunctionOrMethod.of_callable(
+                imp, loadable=True
+            )
         else:
             if "implementation" in kwargs:
                 imp: Callable = FunctionOrMethod.pick(
@@ -391,7 +392,6 @@ def _re_1_10_rating(str_val):
 
 class Provider(SerialModel):
     endpoint: Any = pydantic.Field(exclude=True)
-
     """
     @staticmethod
     def of_json(obj: Dict) -> 'Provider':

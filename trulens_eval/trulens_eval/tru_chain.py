@@ -14,6 +14,7 @@ import langchain
 from langchain.callbacks import get_openai_callback
 from pydantic import Field
 
+from datetime import datetime
 from trulens_eval.tru_model import FeedbackMode
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
@@ -166,14 +167,21 @@ class TruChain(TruModel):
         total_tokens = None
         total_cost = None
 
+        start_time = None
+        end_time = None
+
         try:
             # TODO: do this only if there is an openai model inside the chain:
             with get_openai_callback() as cb:
+                start_time = datetime.now()
                 ret = self.model.__call__(inputs=inputs, **kwargs)
-                total_tokens = cb.total_tokens
-                total_cost = cb.total_cost
+                end_time = datetime.now()
+                
+            total_tokens = cb.total_tokens
+            total_cost = cb.total_cost
 
         except BaseException as e:
+            end_time = datetime.now()
             error = e
             logger.error(f"Chain raised an exception: {e}")
         
@@ -192,7 +200,7 @@ class TruChain(TruModel):
         if ret is not None:
             ret_record_args['main_output'] = ret[output_key]
 
-        ret_record = self._post_record(ret_record_args, error, total_tokens, total_cost, record)
+        ret_record = self._post_record(ret_record_args, error, total_tokens, total_cost, start_time, end_time, record)
 
         return ret, ret_record
 

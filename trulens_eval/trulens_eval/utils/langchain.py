@@ -9,6 +9,7 @@ from trulens_eval.util import Class
 from trulens_eval.util import TP, first, second
 
 
+
 class Is:
     """
     Various checks for typical langchain components based on their names (i.e.
@@ -17,35 +18,54 @@ class Is:
 
     @staticmethod
     def chain(cls: Class):
-        return cls.noserio_issubclass(module_name="langchain.chains.base", class_name="Chain")
+        return cls.noserio_issubclass(
+            module_name="langchain.chains.base", class_name="Chain"
+        )
 
     @staticmethod
     def vector_store(cls: Class):
-        return cls.noserio_issubclass(module_name="langchain.vectorstores", class_name="VectorStoreRetriever")
+        return cls.noserio_issubclass(
+            module_name="langchain.vectorstores",
+            class_name="VectorStoreRetriever"
+        )
 
     @staticmethod
     def retriever(cls: Class):
-        return cls.noserio_issubclass(module_name="langchain.schema", class_name="BaseRetriever")
+        return cls.noserio_issubclass(
+            module_name="langchain.schema", class_name="BaseRetriever"
+        )
 
     @staticmethod
     def llm(cls: Class):
-        return cls.noserio_issubclass(module_name="langchain.llms.base", class_name="BaseLLM")
+        return cls.noserio_issubclass(
+            module_name="langchain.llms.base", class_name="BaseLLM"
+        )
 
     @staticmethod
     def prompt(cls: Class):
-        return cls.noserio_issubclass(module_name="langchain.prompts.base", class_name="BasePromptTemplate")
+        return cls.noserio_issubclass(
+            module_name="langchain.prompts.base",
+            class_name="BasePromptTemplate"
+        )
 
     @staticmethod
     def memory(cls: Class):
-        return cls.noserio_issubclass(module_name="langchain.schema", class_name="BaseMemory")
+        return cls.noserio_issubclass(
+            module_name="langchain.schema", class_name="BaseMemory"
+        )
 
     @staticmethod
     def chathistory(cls: Class):
-        return cls.noserio_issubclass(module_name="langchain.schema", class_name="BaseChatMessageHistory")
-    
+        return cls.noserio_issubclass(
+            module_name="langchain.schema", class_name="BaseChatMessageHistory"
+        )
+
     @staticmethod
     def what(cls: Class) -> Iterable[str]:
-        CHECKERS = [Is.chain, Is.vector_store, Is.retriever, Is.llm, Is.prompt, Is.memory, Is.chathistory]
+        CHECKERS = [
+            Is.chain, Is.vector_store, Is.retriever, Is.llm, Is.prompt,
+            Is.memory, Is.chathistory
+        ]
 
         for checker in CHECKERS:
             if checker(cls):
