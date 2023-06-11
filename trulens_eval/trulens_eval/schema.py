@@ -53,8 +53,13 @@ class Cost(SerialModel):
     cost: Optional[float] = None
 
 
-class Latency(SerialModel):
-    latency: Optional[float] = None
+class Perf(SerialModel):
+    start_time: datetime
+    end_time: datetime
+
+    @property
+    def latency(self):
+        return self.end_time - self.start_time
 
 
 class RecordChainCall(SerialModel):
@@ -76,9 +81,7 @@ class RecordChainCall(SerialModel):
     error: Optional[str] = None
 
     # Timestamps tracking entrance and exit of the instrumented method.
-    start_time: datetime
-    end_time: datetime
-    latency: timedelta
+    perf: Perf = pydantic.Field(default_factory=Perf)
 
     # Process id.
     pid: int
@@ -98,7 +101,7 @@ class Record(SerialModel):
     chain_id: ChainID
 
     cost: Cost = pydantic.Field(default_factory=Cost)
-    latency: Latency = pydantic.Field(default_factory=Latency)
+    perf: Perf = pydantic.Field(default_factory=Perf)
 
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
