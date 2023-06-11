@@ -46,13 +46,14 @@ class LlamaInstrument(Instrument):
 
         CLASSES = {
             llama_index.indices.query.base.BaseQueryEngine,
+            llama_index.indices.base_retriever.BaseRetriever
             # query_engine.retriever_query_engine.RetrieverQueryEngine
         }
 
         # Instrument only methods with these names and of these classes.
         METHODS = {
             "query": lambda o: isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
-            "retrieve": lambda o: isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
+            "retrieve": lambda o: isinstance(o, (llama_index.indices.query.base.BaseQueryEngine, llama_index.indices.base_retriever.BaseRetriever)),
             "synthesize": lambda o: isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
         }
 
