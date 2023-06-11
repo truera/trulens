@@ -27,6 +27,7 @@ from trulens_eval.schema import FeedbackResult
 
 from trulens_eval.tru_model import TruModel
 from trulens_eval.instruments import Instrument
+from trulens_eval.utils.langchain import Is
 from trulens_eval.util import jsonify, noserio
 from trulens_eval.util import WithClassInfo
 
@@ -176,7 +177,7 @@ class TruChain(TruModel):
                 start_time = datetime.now()
                 ret = self.model.__call__(inputs=inputs, **kwargs)
                 end_time = datetime.now()
-                
+
             total_tokens = cb.total_tokens
             total_cost = cb.total_cost
 
@@ -219,3 +220,7 @@ class TruChain(TruModel):
     # TODO(piotrm): figure out whether the combination of _call and __call__ is working right.
     def _call(self, *args, **kwargs) -> Any:
         return self.model._call(*args, **kwargs)
+
+    def instrumented(self):
+        return super().instrumented(categorizer=Is.what)
+        

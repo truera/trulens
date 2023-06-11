@@ -189,7 +189,7 @@ from inspect import BoundArguments, signature
 import os
 from pprint import PrettyPrinter
 import logging
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Union
 import threading as th
 
 from pydantic import BaseModel
@@ -197,6 +197,7 @@ from pydantic import BaseModel
 from trulens_eval.schema import RecordChainCall, RecordChainCallMethod
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.schema import Query
+from trulens_eval.schema import Perf
 from trulens_eval.util import Method, get_local_in_call_stack, jsonify, noserio
 
 logger = logging.getLogger(__name__)
@@ -252,10 +253,8 @@ class Instrument(object):
 
         assert self.root_method is not None, "Cannot instrument method without a `root_method`."
 
-        logger.debug(f"instrumenting {method_name}={func} in {query}")
-
         if hasattr(func, Instrument.INSTRUMENT):
-            logger.debug(f"{func} is already instrumented")
+            logger.debug(f"\t\t\t{query}: {func} is already instrumented")
 
             # Already instrumented. Note that this may happen under expected
             # operation when the same chain is used multiple times as part of a
@@ -266,6 +265,8 @@ class Instrument(object):
             # TODO: How to consistently address calls to chains that appear more
             # than once in the wrapped chain or are called more than once.
             # func = getattr(func, Instrument.INSTRUMENT)
+
+        logger.debug(f"\t\t\t{query}: instrumenting {method_name}={func}")
 
         sig = signature(func)
 
@@ -278,7 +279,7 @@ class Instrument(object):
             #if not self.recording:
             #    return func(*args, **kwargs)
 
-            logger.debug(f"Calling instrumented method {func} on {query}")
+            logger.debug(f"{query}: calling instrumented method {func}")
 
             def find_root_method(f):
                 # TODO: generalize
@@ -292,15 +293,13 @@ class Instrument(object):
             )
 
             if record is None:
-                logger.debug("No record found, not recording.")
+                logger.debug(f"{query}: no record found, not recording.")
                 return func(*args, **kwargs)
 
             # Otherwise keep track of inputs and outputs (or exception).
 
             error = None
             rets = None
-
-            start_time = datetime.now()
 
             def find_instrumented(f):
                 return id(f) == id(wrapper.__code__)
@@ -315,17 +314,21 @@ class Instrument(object):
             )
             chain_stack = chain_stack + (frame_ident,)
 
+            start_time = None
+            end_time = None
+
             try:
                 # Using sig bind here so we can produce a list of key-value
                 # pairs even if positional arguments were provided.
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
+                start_time = datetime.now()
                 rets = func(*bindings.args, **bindings.kwargs)
+                end_time = datetime.now()
 
             except BaseException as e:
+                end_time = datetime.now()
                 error = e
                 error_str = str(e)
-
-            end_time = datetime.now()
 
             # Don't include self in the recorded arguments.
             nonself = {
@@ -336,9 +339,7 @@ class Instrument(object):
 
             row_args = dict(
                 args=nonself,
-                start_time=start_time,
-                end_time=end_time,
-                latency = end_time-start_time,
+                perf=Perf(start_time=start_time, end_time=end_time),
                 pid=os.getpid(),
                 tid=th.get_native_id(),
                 chain_stack=chain_stack,
@@ -366,13 +367,24 @@ class Instrument(object):
 
         return wrapper
 
-    def instrument_object(self, obj, query: Query):
+    def instrument_object(self, obj, query: Query, done: Set[int] = None):
+
+        done = done or set([])
 
         cls = type(obj)
 
         logger.debug(
-            f"instrumenting {query} {cls.__name__}, bases={cls.__bases__}"
+            f"{query}: instrumenting object at {id(obj):x} of class {cls.__name__} with mro:\n\t" +
+            '\n\t'.join(map(str, cls.__mro__))
         )
+
+        if id(obj) in done:
+            logger.debug(
+                f"\t{query}: already instrumented"
+            )
+            return
+        
+        done.add(id(obj))
 
         # NOTE: We cannot instrument chain directly and have to instead
         # instrument its class. The pydantic BaseModel does not allow instance
@@ -380,12 +392,16 @@ class Instrument(object):
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
 
-        for base in [cls] + list(cls.__mro__):
+        for base in list(cls.__mro__):
             # All of mro() may need instrumentation here if some subchains call
             # superchains, and we want to capture the intermediate steps.
-
+            
             if not any(issubclass(base, c) for c in self.classes):
                 continue
+
+            logger.debug(
+                f"\t{query}: instrumenting base {base.__name__}"
+            )
 
             # TODO: generalize
             if not any (base.__module__.startswith(module_name) for module_name in self.modules):
@@ -399,7 +415,7 @@ class Instrument(object):
 
                     original_fun = getattr(base, method_name)
 
-                    logger.debug(f"instrumenting {base}.{method_name}")
+                    logger.debug(f"\t\t{query}: instrumenting {method_name}")
 
                     setattr(
                         base, method_name,
@@ -455,16 +471,24 @@ class Instrument(object):
                     pass
 
                 elif any(type(v).__module__.startswith(module_name) for module_name in self.modules):
-                    self.instrument_object(obj=v, query=query[k])
+                    self.instrument_object(obj=v, query=query[k], done=done)
 
                 elif isinstance(v, Sequence):
                     for i, sv in enumerate(v):
                         if any(isinstance(sv, cls) for cls in self.classes):
-                            self.instrument_object(obj=sv, query=query[k][i])
+                            self.instrument_object(obj=sv, query=query[k][i], done=done)
 
                 # TODO: check if we want to instrument anything not accessible through __fields__ .
+
+        elif obj.__class__.__module__.startswith("llama_index"):
+            for k in dir(obj):
+                sv = getattr(obj, k) # static get ?
+
+                if any(isinstance(sv, cls) for cls in self.classes):
+                    self.instrument_object(obj=sv, query=query[k], done=done)
+
         else:
             logger.debug(
-                f"Do not know how to instrument object {str(obj)[:32]} of type {cls}."
+                f"{query}: Do not know how to instrument object of type {cls}."
             )
 

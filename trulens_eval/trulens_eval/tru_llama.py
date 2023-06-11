@@ -29,6 +29,7 @@ from trulens_eval.tru import Tru
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.tru_model import TruModel
 from trulens_eval.instruments import Instrument
+from trulens_eval.utils.llama import Is
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import TP, JSONPath, jsonify, noserio
 import llama_index
@@ -44,12 +45,15 @@ class LlamaInstrument(Instrument):
         MODULES = {"llama_index."}
 
         CLASSES = {
-            query_engine.retriever_query_engine.RetrieverQueryEngine
+            llama_index.indices.query.base.BaseQueryEngine,
+            # query_engine.retriever_query_engine.RetrieverQueryEngine
         }
 
         # Instrument only methods with these names and of these classes.
         METHODS = {
-            "query": lambda o: isinstance(o, query_engine.retriever_query_engine.RetrieverQueryEngine),
+            "query": lambda o: isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
+            "retrieve": lambda o: isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
+            "synthesize": lambda o: isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
         }
 
     def __init__(self):
@@ -75,7 +79,7 @@ class TruLlama(TruModel):
     class Config:
         arbitrary_types_allowed = True
 
-    model: query_engine.retriever_query_engine.RetrieverQueryEngine = Field(exclude=True)
+    model: query_engine.retriever_query_engine.RetrieverQueryEngine # = Field(exclude=True)
 
     def __init__(self, **kwargs):
     
@@ -85,9 +89,6 @@ class TruLlama(TruModel):
         kwargs['instrument'] = LlamaInstrument()
 
         super().__init__(**kwargs)
-
-        i = LlamaInstrument()
-        i.instrument_object(obj=self.model, query=Query.Query().model)
 
     def query(self, *args, **kwargs) -> llama_index.response.schema.Response:
         res, _ = self.query_with_record(*args, **kwargs)
@@ -105,16 +106,22 @@ class TruLlama(TruModel):
         total_tokens = None
         total_cost = None
 
+        start_time = None
+        end_time = None
+
         try:
             # TODO: do this only if there is an openai model inside the chain:
             # with get_openai_callback() as cb:
+            start_time = datetime.now()
             ret = self.model.query(str_or_query_bundle)
+            end_time = datetime.now()
             # total_tokens = cb.total_tokens
             # total_cost = cb.total_cost
             total_tokens = 0
             total_cost = 0
 
         except BaseException as e:
+            end_time = datetime.now()
             error = e
             logger.error(f"Engine raised an exception: {e}")
         
@@ -128,7 +135,11 @@ class TruLlama(TruModel):
             # TODO: generalize and error check
             ret_record_args['main_output'] = ret.response
 
-        ret_record = self._post_record(ret_record_args, error, total_tokens, total_cost, record)
+        ret_record = self._post_record(ret_record_args, error, total_tokens, total_cost, start_time, end_time, record)
 
         return ret, ret_record
 
+
+    def instrumented(self):
+        return super().instrumented(categorizer=Is.what)
+        
