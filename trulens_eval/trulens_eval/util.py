@@ -172,7 +172,7 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
 
     if type(obj) in pydantic.json.ENCODERS_BY_TYPE:
         return obj
-    
+
     new_dicted = {k: v for k, v in dicted.items()}
 
     recur = lambda o: jsonify(obj=o, dicted=new_dicted, instrument=instrument)
@@ -321,7 +321,7 @@ def all_objects(obj: Any,
     elif isinstance(obj, Iterable):
         pass
         # print(f"Cannot create query for Iterable types like {obj.__class__.__name__} at query {query}. Convert the iterable to a sequence first.")
-        
+
     else:
         pass
         # print(f"Unhandled object type {obj} {type(obj)}")
@@ -333,11 +333,13 @@ def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
         val = q(obj)
         yield (path_str, val)
 
+
 def matching_objects(obj: Any,
                      match: Callable) -> Iterable[Tuple[JSONPath, Any]]:
     for q, val in all_objects(obj):
         if match(q, val):
             yield (q, val)
+
 
 def matching_queries(obj: Any, match: Callable) -> Iterable[JSONPath]:
     for q, _ in matching_objects(obj, match=match):
@@ -735,11 +737,11 @@ class JSONPath(SerialModel):
 
         if len(p) > len(pother):
             return False
-        
+
         for s1, s2 in zip(p, pother):
             if s1 != s2:
                 return False
-            
+
         return True
 
     def set(self, obj: Any, val: Any) -> Any:
@@ -939,7 +941,9 @@ class TP(SingletonPerName):  # "thread processing"
 
         return pd.DataFrame(rows, columns=["alive", "thread"])
 
+
 # python instrumentation utilities
+
 
 def get_local_in_call_stack(
     key: str,
@@ -1022,11 +1026,14 @@ class Class(SerialModel):
     bases: Optional[Sequence[Class]]
 
     @staticmethod
-    def of_class(cls: type, with_bases: bool = False, loadable: bool = False) -> 'Class':
+    def of_class(
+        cls: type, with_bases: bool = False, loadable: bool = False
+    ) -> 'Class':
         return Class(
-            name=cls.__name__, 
+            name=cls.__name__,
             module=Module.of_module_name(cls.__module__),
-            bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__)) if with_bases else None
+            bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__))
+            if with_bases else None
         )
 
     def load(self) -> type:  # class
@@ -1045,8 +1052,9 @@ class Class(SerialModel):
         for base in bases:
             if base.name == class_name and base.module.module_name == module_name:
                 return True
-        
+
         return False
+
 
 class Obj(SerialModel):
     """
@@ -1079,10 +1087,14 @@ class Obj(SerialModel):
             return Obj(**d)
 
     @staticmethod
-    def of_object(obj: object, cls: Optional[type] = None, loadable: bool = False) -> Union['Obj', 'ObjSerial']:
+    def of_object(
+        obj: object,
+        cls: Optional[type] = None,
+        loadable: bool = False
+    ) -> Union['Obj', 'ObjSerial']:
         if loadable:
             return ObjSerial.of_object(obj=obj, cls=cls, loadable=loadable)
-        
+
         if cls is None:
             cls = obj.__class__
 
@@ -1091,7 +1103,9 @@ class Obj(SerialModel):
     def load(self) -> object:
         pp.pprint("Trying to load an object not intended to be loaded.")
         pp.pprint(self.dict())
-        raise RuntimeError("Trying to load an object not intended to be loaded.")
+        raise RuntimeError(
+            "Trying to load an object not intended to be loaded."
+        )
 
 
 class ObjSerial(Obj):
@@ -1114,7 +1128,9 @@ class ObjSerial(Obj):
         else:
             init_kwargs = None
 
-        return ObjSerial(cls=Class.of_class(cls), id=id(obj), init_kwargs=init_kwargs)
+        return ObjSerial(
+            cls=Class.of_class(cls), id=id(obj), init_kwargs=init_kwargs
+        )
 
     def load(self) -> object:
         cls = self.cls.load()
@@ -1139,7 +1155,7 @@ class FunctionOrMethod(SerialModel):
     @classmethod
     def __get_validator__(cls):
         yield cls.validate
-    
+
     @classmethod
     def validate(cls, d) -> 'FunctionOrMethod':
         if isinstance(d, Dict):
@@ -1150,13 +1166,15 @@ class FunctionOrMethod(SerialModel):
     @staticmethod
     def of_callable(c: Callable, loadable: bool = False) -> 'FunctionOrMethod':
         if hasattr(c, "__self__"):
-            return Method.of_method(c, obj=getattr(c, "__self__"), loadable=loadable)
+            return Method.of_method(
+                c, obj=getattr(c, "__self__"), loadable=loadable
+            )
         else:
             return Function.of_function(c, loadable=loadable)
 
     def load(self) -> Callable:
         raise NotImplementedError()
-    
+
 
 class Method(FunctionOrMethod):
     """
@@ -1253,12 +1271,12 @@ class WithClassInfo(pydantic.BaseModel):
 
     @staticmethod
     def of_object(obj: object):
-        return WithClassInfo(class_info = Class.of_class(obj.__class__))
+        return WithClassInfo(class_info=Class.of_class(obj.__class__))
 
     @staticmethod
-    def of_class(cls: type): # class
-        return WithClassInfo(class_info = Class.of_class(cls))
-    
+    def of_class(cls: type):  # class
+        return WithClassInfo(class_info=Class.of_class(cls))
+
     @staticmethod
     def of_model(model: pydantic.BaseModel, cls: Class):
         return WithClassInfo(class_info=cls, **model.dict())
