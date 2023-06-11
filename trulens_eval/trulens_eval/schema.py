@@ -100,16 +100,16 @@ class Record(SerialModel):
     record_id: RecordID
     chain_id: ChainID
 
-    cost: Cost = pydantic.Field(default_factory=Cost)
-    perf: Perf = pydantic.Field(default_factory=Perf)
+    cost: Optional[Cost] = None # pydantic.Field(default_factory=Cost)
+    perf: Optional[Perf] = None # pydantic.Field(default_factory=Perf)
 
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
     tags: str = ""
 
-    main_input: Optional[str]
-    main_output: Optional[str]  # if no error
-    main_error: Optional[str]  # if error
+    main_input: Optional[str] = None
+    main_output: Optional[str] = None # if no error
+    main_error: Optional[str] = None # if error
 
     # The collection of calls recorded. Note that these can be converted into a
     # json structure with the same paths as the chain that generated this record

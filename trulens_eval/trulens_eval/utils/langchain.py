@@ -5,6 +5,7 @@ from langchain.schema import Document
 from langchain.vectorstores.base import VectorStoreRetriever
 from pydantic import Field
 from trulens_eval.tru_feedback import Feedback
+from trulens_eval.tru_model import COMPONENT_CATEGORY
 from trulens_eval.util import Class
 from trulens_eval.util import TP, first, second
 
@@ -61,7 +62,7 @@ class Is:
         )
 
     @staticmethod
-    def what(cls: Class) -> Iterable[str]:
+    def what(cls: Class) -> Iterable[COMPONENT_CATEGORY]:
         CHECKERS = [
             Is.chain, Is.vector_store, Is.retriever, Is.llm, Is.prompt,
             Is.memory, Is.chathistory

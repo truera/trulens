@@ -441,7 +441,7 @@ class LocalSQLite(TruDB):
 
             row.status = FeedbackResultStatus(row.status)
 
-            row['latency'] = Perf.parse(row.perf_json).latency
+            row['latency'] = Perf(**row.perf_json).latency
             row['total_tokens'] = row.cost_json['n_tokens']
             row['total_cost'] = row.cost_json['cost']
 
