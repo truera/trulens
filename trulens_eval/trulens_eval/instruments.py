@@ -338,6 +338,7 @@ class Instrument(object):
                 args=nonself,
                 start_time=start_time,
                 end_time=end_time,
+                latency = end_time-start_time,
                 pid=os.getpid(),
                 tid=th.get_native_id(),
                 chain_stack=chain_stack,

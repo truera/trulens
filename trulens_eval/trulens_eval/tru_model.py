@@ -21,8 +21,9 @@ from trulens_eval.schema import ChainID, FeedbackDefinition
 from trulens_eval.schema import FeedbackMode, Model
 from trulens_eval.schema import Query
 from trulens_eval.instruments import Instrument
-from trulens_eval.trulens_eval.schema import Cost
-from trulens_eval.trulens_eval.util import TP
+from trulens_eval.schema import Cost
+from trulens_eval.trulens_eval.schema import Perf
+from trulens_eval.util import TP
 from trulens_eval.util import SerialModel, WithClassInfo, json_str_of_obj, obj_id_of_obj
 from trulens_eval.util import jsonify
 
@@ -109,7 +110,7 @@ class TruModel(Model, SerialModel):
         # Same problem as in json.
         return jsonify(self, instrument=self.instrument)
 
-    def _post_record(self, ret_record_args, error, total_tokens, total_cost, record):
+    def _post_record(self, ret_record_args, error, total_tokens, total_cost, start_time, end_time, record):
         """
         Final steps of record construction common among model types.
         """
@@ -117,6 +118,7 @@ class TruModel(Model, SerialModel):
         ret_record_args['main_error'] = str(error)
         ret_record_args['calls'] = record
         ret_record_args['cost'] = Cost(n_tokens=total_tokens, cost=total_cost)
+        ret_record_args['perf'] = Perf(start_time=start_time, end_time=end_time)
         ret_record_args['chain_id'] = self.chain_id
 
         ret_record = Record(**ret_record_args)
