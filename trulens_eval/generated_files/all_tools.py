@@ -17,15 +17,20 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 # ### Import from LangChain and TruLens
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
+from trulens_eval import Feedback
+from trulens_eval import Huggingface
+from trulens_eval import Query
+from trulens_eval import Tru
+from trulens_eval import TruChain
 
 tru = Tru()
 
 # imports from langchain to build app
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
-from langchain.prompts.chat import ChatPromptTemplate, PromptTemplate
+from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
+from langchain.prompts.chat import PromptTemplate
 
 # ### Create Simple LLM Application
 #
@@ -156,6 +161,17 @@ tru.add_chain(chain=truchain)
 # Then we can log the record:
 
 tru.add_record(record)
+
+# ### Log App Feedback
+# Capturing app feedback such as user feedback of the responses can be added with one call.
+
+thumb_result = True
+tru.add_feedback(
+    name="thumbs up result",
+    record_id=record.record_id,
+    chain_id=truchain.chain_id,
+    result=thumb_result
+)
 
 # ### Evaluate Quality
 #

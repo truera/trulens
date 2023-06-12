@@ -9,18 +9,20 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
-from trulens_eval.schema import Record
-from trulens_eval.ux.components import draw_call
-from trulens_eval.ux.components import draw_prompt_info
-from trulens_eval.ux.components import draw_llm_info
-from trulens_eval.utils.langchain import Is
-from trulens_eval.util import Class, JSONPath, instrumented_classes
-from trulens_eval.util import GetItemOrAttribute
 from ux.add_logo import add_logo
+from ux.styles import default_pass_fail_color_threshold
 
 from trulens_eval import Tru
+from trulens_eval.schema import Record
+from trulens_eval.util import Class
+from trulens_eval.util import GetItemOrAttribute
+from trulens_eval.util import instrumented_classes
+from trulens_eval.util import JSONPath
+from trulens_eval.utils.langchain import Is
+from trulens_eval.ux.components import draw_call
+from trulens_eval.ux.components import draw_llm_info
+from trulens_eval.ux.components import draw_prompt_info
 from trulens_eval.ux.styles import cellstyle_jscode
-from trulens_eval.tru_feedback import default_pass_fail_color_threshold
 
 st.set_page_config(page_title="Evaluations", layout="wide")
 
@@ -69,13 +71,15 @@ else:
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
         cellstyle_jscode = JsCode(cellstyle_jscode)
-
+        gb.configure_column('type', header_name='Chain Type')
         gb.configure_column('record_json', header_name='Record JSON', hide=True)
         gb.configure_column('chain_json', header_name='Chain JSON', hide=True)
         gb.configure_column('cost_json', header_name='Cost JSON', hide=True)
+        gb.configure_column('perf_json', header_name='Perf. JSON', hide=True)
 
         gb.configure_column('record_id', header_name='Record ID', hide=True)
         gb.configure_column('chain_id', header_name='Chain ID')
+
         gb.configure_column('feedback_id', header_name='Feedback ID', hide=True)
         gb.configure_column('input', header_name='User Input')
         gb.configure_column(
@@ -84,12 +88,17 @@ else:
         )
         gb.configure_column('total_tokens', header_name='Total Tokens (#)')
         gb.configure_column('total_cost', header_name='Total Cost (USD)')
+        gb.configure_column('latency', header_name='Latency (Seconds)')
         gb.configure_column('tags', header_name='Tags')
         gb.configure_column('ts', header_name='Time Stamp', sort="desc")
 
-        for feedback_col in evaluations_df.columns.drop(['chain_id', 'ts',
-                                                         'total_tokens',
-                                                         'total_cost']):
+        non_feedback_cols = [
+            'chain_id', 'type', 'ts', 'total_tokens', 'total_cost',
+            'record_json', 'latency', 'record_id', 'chain_id', 'cost_json',
+            'chain_json', 'input', 'output', 'perf_json'
+        ]
+
+        for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
             gb.configure_column(
                 feedback_col,
                 cellStyle=cellstyle_jscode,
@@ -98,7 +107,6 @@ else:
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
-
         #gb.configure_default_column(groupable=True, value=True, enableRowGroup=True, aggFunc="sum", editable=True)
         gridOptions = gb.build()
         data = AgGrid(
@@ -146,7 +154,7 @@ else:
                             'background-color: #FCE6E6'
                         ] * len(s)
 
-                    if (len(call) > 0):
+                    if call is not None and len(call) > 0:
                         df = pd.DataFrame.from_records(
                             [call[i]["args"] for i in range(len(call))]
                         )
@@ -178,7 +186,7 @@ else:
 
             for query, cls, component_json in classes:
                 if len(query.path) == 0:
-                    # Skip TruChain, will still list TruChain.chain under "chain" below.
+                    # Skip TruChain, will still list TruChain.model under "chain" below.
                     continue
 
                 if Is.chain(cls):

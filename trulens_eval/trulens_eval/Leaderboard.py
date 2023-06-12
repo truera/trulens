@@ -9,8 +9,8 @@ st.runtime.legacy_caching.clear_cache()
 
 from trulens_eval import Tru
 from trulens_eval import tru_db
-from trulens_eval.ux import styles
 from trulens_eval.tru_feedback import default_pass_fail_color_threshold
+from trulens_eval.ux import styles
 
 st.set_page_config(page_title="Leaderboard", layout="wide")
 
@@ -44,19 +44,24 @@ def app():
 
     for chain in chains:
         st.header(chain)
-        col1, col2, col3, *feedback_cols, col99 = st.columns(
-            4 + len(feedback_col_names)
+        col1, col2, col3, col4, *feedback_cols, col99 = st.columns(
+            5 + len(feedback_col_names)
         )
         chain_df = df.loc[df.chain_id == chain]
+        latency_mean = chain_df['latency'].apply(lambda td: td.seconds).mean()
         #model_df_feedback = df.loc[df.chain_id == model]
 
         col1.metric("Records", len(chain_df))
         col2.metric(
-            "Cost",
-            f"${millify(round(sum(cost for cost in chain_df.total_cost if cost is not None), 5), precision = 2)}"
+            "Average Latency (Seconds)",
+            f"{millify(round(latency_mean, 5), precision=2)}"
         )
         col3.metric(
-            "Tokens",
+            "Total Cost (USD)",
+            f"${millify(round(sum(cost for cost in chain_df.total_cost if cost is not None), 5), precision = 2)}"
+        )
+        col4.metric(
+            "Total Tokens",
             millify(
                 sum(
                     tokens for tokens in chain_df.total_tokens
