@@ -86,6 +86,7 @@ def is_empty(obj):
 # Key for indicating non-serialized objects in json dumps.
 NOSERIO = "__tru_non_serialized_object"
 
+
 def is_noserio(obj):
     """
     Determines whether the given json object represents some non-serializable
@@ -156,6 +157,7 @@ def _safe_getattr(obj, k):
     except Exception as e:
         return dict(error=str(e))
 
+
 # TODO: refactor to somewhere else or change instrument to a generic filter
 def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
     """
@@ -211,12 +213,17 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
         # Not even trying to use pydantic.dict here.
         temp = {}
         new_dicted[id(obj)] = temp
-        temp.update({
-            k: recur(_safe_getattr(obj, k))
-            for k, v in obj.__fields__.items() if not v.field_info.exclude
-        })
+        temp.update(
+            {
+                k: recur(_safe_getattr(obj, k))
+                for k, v in obj.__fields__.items()
+                if not v.field_info.exclude
+            }
+        )
         if instrument.to_instrument_object(obj):
-            temp['class_info'] = Class.of_class(cls=obj.__class__, with_bases=True).dict()
+            temp['class_info'] = Class.of_class(
+                cls=obj.__class__, with_bases=True
+            ).dict()
 
         return temp
 
@@ -226,15 +233,22 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
 
         kvs = {k: _safe_getattr(obj, k) for k in dir(obj)}
 
-        temp.update({
-            k: recur(v) # TODO: static
-            for k, v in kvs.items() 
-            if not k.startswith("__") and 
-            (isinstance(v, JSON_BASES) or isinstance(v, Dict) or isinstance(v, Sequence) or instrument.to_instrument_object(v))
-        })
+        temp.update(
+            {
+                k: recur(v)  # TODO: static
+                for k, v in kvs.items()
+                if not k.startswith("__") and (
+                    isinstance(v, JSON_BASES) or isinstance(v, Dict) or
+                    isinstance(v, Sequence) or
+                    instrument.to_instrument_object(v)
+                )
+            }
+        )
 
         if instrument.to_instrument_object(obj):
-            temp['class_info'] = Class.of_class(cls=obj.__class__, with_bases=True).dict()
+            temp['class_info'] = Class.of_class(
+                cls=obj.__class__, with_bases=True
+            ).dict()
 
         return temp
 
@@ -1068,8 +1082,12 @@ class Class(SerialModel):
         )
 
     @staticmethod
-    def of_object(obj: object, with_bases: bool = False, loadable: bool = False):
-        return Class.of_class(cls=obj.__class__, with_bases=with_bases, loadable=loadable)
+    def of_object(
+        obj: object, with_bases: bool = False, loadable: bool = False
+    ):
+        return Class.of_class(
+            cls=obj.__class__, with_bases=with_bases, loadable=loadable
+        )
 
     def load(self) -> type:  # class
         try:
@@ -1177,13 +1195,14 @@ class ObjSerial(Obj):
 
 
 class FunctionOrMethod(SerialModel):
+
     @staticmethod
     def pick(**kwargs):
         # Temporary hack to deserialization of a class with more than one subclass.
 
         if 'obj' in kwargs:
             return Method(**kwargs)
-        
+
         elif 'cls' in kwargs:
             return Function(**kwargs)
 
@@ -1302,7 +1321,7 @@ class WithClassInfo(pydantic.BaseModel):
             assert cls is not None, "Either `class_info`, `obj` or `cls` need to be specified."
             class_info = Class.of_class(cls, with_bases=True)
 
-        super().__init__(class_info = class_info, **kwargs)
+        super().__init__(class_info=class_info, **kwargs)
 
     @staticmethod
     def of_object(obj: object):
@@ -1327,8 +1346,10 @@ def get_owner_of_method(cls, method_name) -> type:
 
     return cls
 
+
 # key/attribute indicating instrumented class information.
 CLASS_INFO = "class_info"
+
 
 def instrumented_classes(obj: object) -> Iterable[Tuple[JSONPath, Class, Any]]:
     """

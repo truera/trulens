@@ -4,35 +4,32 @@
 
 """
 
+from datetime import datetime
 import logging
-
 from pprint import PrettyPrinter
-
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 import langchain
 from langchain.callbacks import get_openai_callback
 from pydantic import Field
 
-from datetime import datetime
-from trulens_eval.tru_model import FeedbackMode
+from trulens_eval.instruments import Instrument
+from trulens_eval.schema import Cost
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import Query
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
-from trulens_eval.schema import Cost
-from trulens_eval.schema import Query
+from trulens_eval.tru import Tru
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru import Tru
-from trulens_eval.schema import FeedbackResult
-
+from trulens_eval.tru_model import FeedbackMode
 from trulens_eval.tru_model import TruModel
-from trulens_eval.instruments import Instrument
 from trulens_eval.util import Class
-from trulens_eval.utils.langchain import Is
-from trulens_eval.util import jsonify, noserio
-from trulens_eval.util import WithClassInfo
-
+from trulens_eval.util import jsonify
+from trulens_eval.util import noserio
 from trulens_eval.util import TP
+from trulens_eval.util import WithClassInfo
+from trulens_eval.utils.langchain import Is
 
 logger = logging.getLogger(__name__)
 
@@ -40,17 +37,16 @@ pp = PrettyPrinter()
 
 
 class LangChainInstrument(Instrument):
+
     class Default:
         MODULES = {"langchain."}
 
         CLASSES = {
             langchain.chains.base.Chain,
             langchain.vectorstores.base.BaseRetriever,
-            langchain.schema.BaseRetriever,
-            langchain.llms.base.BaseLLM,
+            langchain.schema.BaseRetriever, langchain.llms.base.BaseLLM,
             langchain.prompts.base.BasePromptTemplate,
-            langchain.schema.BaseMemory,
-            langchain.schema.BaseChatMessageHistory
+            langchain.schema.BaseMemory, langchain.schema.BaseChatMessageHistory
         }
 
         # Instrument only methods with these names and of these classes.
@@ -101,7 +97,7 @@ class LangChainInstrument(Instrument):
         new_prop = property(fget=safe_type)
 
         return new_prop
-    
+
 
 class TruChain(TruModel):
     """
@@ -110,13 +106,9 @@ class TruChain(TruModel):
 
     model: langchain.chains.base.Chain
 
-     # Normally pydantic does not like positional args but chain here is
-     # important enough to make an exception.
-    def __init__(
-        self,
-        model: langchain.chains.base.Chain,
-        **kwargs
-    ):
+    # Normally pydantic does not like positional args but chain here is
+    # important enough to make an exception.
+    def __init__(self, model: langchain.chains.base.Chain, **kwargs):
         """
         Wrap a langchain chain for monitoring.
 
@@ -159,7 +151,7 @@ class TruChain(TruModel):
             Any: chain output
             dict: record metadata
         """
-        
+
         # Wrapped calls will look this up by traversing the call stack. This
         # should work with threads.
         record: Sequence[RecordChainCall] = []
@@ -187,7 +179,7 @@ class TruChain(TruModel):
             end_time = datetime.now()
             error = e
             logger.error(f"Chain raised an exception: {e}")
-        
+
         assert len(record) > 0, "No information recorded in call."
 
         ret_record_args = dict()
@@ -203,7 +195,10 @@ class TruChain(TruModel):
         if ret is not None:
             ret_record_args['main_output'] = ret[output_key]
 
-        ret_record = self._post_record(ret_record_args, error, total_tokens, total_cost, start_time, end_time, record)
+        ret_record = self._post_record(
+            ret_record_args, error, total_tokens, total_cost, start_time,
+            end_time, record
+        )
 
         return ret, ret_record
 
@@ -225,4 +220,3 @@ class TruChain(TruModel):
 
     def instrumented(self):
         return super().instrumented(categorizer=Is.what)
-        

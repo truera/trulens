@@ -15,19 +15,20 @@ from typing import (
 
 from munch import Munch as Bunch
 import pydantic
-from trulens_eval.util import Class
-from trulens_eval.util import all_queries
-from trulens_eval.util import WithClassInfo
-from trulens_eval.util import Function, Method
 
+from trulens_eval.util import all_queries
+from trulens_eval.util import Class
+from trulens_eval.util import Function
 from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
 from trulens_eval.util import json_default
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
+from trulens_eval.util import Method
 from trulens_eval.util import obj_id_of_obj
 from trulens_eval.util import SerialModel
+from trulens_eval.util import WithClassInfo
 
 T = TypeVar("T")
 
@@ -101,16 +102,16 @@ class Record(SerialModel):
     record_id: RecordID
     chain_id: ChainID
 
-    cost: Optional[Cost] = None # pydantic.Field(default_factory=Cost)
-    perf: Optional[Perf] = None # pydantic.Field(default_factory=Perf)
+    cost: Optional[Cost] = None  # pydantic.Field(default_factory=Cost)
+    perf: Optional[Perf] = None  # pydantic.Field(default_factory=Perf)
 
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
     tags: str = ""
 
     main_input: Optional[str] = None
-    main_output: Optional[str] = None # if no error
-    main_error: Optional[str] = None # if error
+    main_output: Optional[str] = None  # if no error
+    main_error: Optional[str] = None  # if error
 
     # The collection of calls recorded. Note that these can be converted into a
     # json structure with the same paths as the chain that generated this record
@@ -158,6 +159,7 @@ class Record(SerialModel):
 
 
 # Feedback related:
+
 
 class Query:
 
@@ -276,7 +278,9 @@ class FeedbackDefinition(SerialModel):
 
         self.feedback_definition_id = feedback_definition_id
 
+
 # Model related:
+
 
 class FeedbackMode(str, Enum):
     # No evaluation will happen even if feedback functions are specified.
@@ -295,6 +299,7 @@ class FeedbackMode(str, Enum):
     # Evaluate later via the process started by
     # `tru.start_deferred_feedback_evaluator`.
     DEFERRED = "deferred"
+
 
 class Model(SerialModel, WithClassInfo):
     # Serialized fields here whereas tru_model.py:TruMode contains
@@ -323,7 +328,7 @@ class Model(SerialModel, WithClassInfo):
         feedback_mode: FeedbackMode = FeedbackMode.WITH_CHAIN_THREAD,
         **kwargs
     ):
-        
+
         # for us:
         kwargs['chain_id'] = "temporary"  # will be adjusted below
         kwargs['feedback_mode'] = feedback_mode

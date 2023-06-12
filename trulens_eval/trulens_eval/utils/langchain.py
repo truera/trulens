@@ -4,11 +4,13 @@ import langchain
 from langchain.schema import Document
 from langchain.vectorstores.base import VectorStoreRetriever
 from pydantic import Field
+
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru_model import COMPONENT_CATEGORY
 from trulens_eval.util import Class
-from trulens_eval.util import TP, first, second
-
+from trulens_eval.util import first
+from trulens_eval.util import second
+from trulens_eval.util import TP
 
 
 class Is:

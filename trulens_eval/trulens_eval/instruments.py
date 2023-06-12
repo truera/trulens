@@ -185,23 +185,31 @@ records and retrieve them afterwards.
 """
 
 from datetime import datetime
-from inspect import BoundArguments, signature
+from inspect import BoundArguments
+from inspect import signature
+import logging
 import os
 from pprint import PrettyPrinter
-import logging
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Union
 import threading as th
+from typing import (
+    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Union
+)
 
 from pydantic import BaseModel
 
-from trulens_eval.schema import RecordChainCall, RecordChainCallMethod
-from trulens_eval.tru_feedback import Feedback
-from trulens_eval.schema import Query
 from trulens_eval.schema import Perf
-from trulens_eval.util import Method, get_local_in_call_stack, jsonify, noserio
+from trulens_eval.schema import Query
+from trulens_eval.schema import RecordChainCall
+from trulens_eval.schema import RecordChainCallMethod
+from trulens_eval.tru_feedback import Feedback
+from trulens_eval.util import get_local_in_call_stack
+from trulens_eval.util import jsonify
+from trulens_eval.util import Method
+from trulens_eval.util import noserio
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
+
 
 class Instrument(object):
     # Attribute name to be used to flag instrumented objects/methods/others.
@@ -224,7 +232,8 @@ class Instrument(object):
         # to be instrumented. TODO: redesign this to be a dict with classes
         # leading to method names instead.
         METHODS = {
-            "__call__": lambda o: isinstance(o, Feedback)  # Feedback
+            "__call__":
+                lambda o: isinstance(o, Feedback)  # Feedback
         }
 
     def to_instrument_object(self, obj):
@@ -383,16 +392,14 @@ class Instrument(object):
         cls = type(obj)
 
         logger.debug(
-            f"{query}: instrumenting object at {id(obj):x} of class {cls.__name__} with mro:\n\t" +
-            '\n\t'.join(map(str, cls.__mro__))
+            f"{query}: instrumenting object at {id(obj):x} of class {cls.__name__} with mro:\n\t"
+            + '\n\t'.join(map(str, cls.__mro__))
         )
 
         if id(obj) in done:
-            logger.debug(
-                f"\t{query}: already instrumented"
-            )
+            logger.debug(f"\t{query}: already instrumented")
             return
-        
+
         done.add(id(obj))
 
         # NOTE: We cannot instrument chain directly and have to instead
@@ -404,16 +411,15 @@ class Instrument(object):
         for base in list(cls.__mro__):
             # All of mro() may need instrumentation here if some subchains call
             # superchains, and we want to capture the intermediate steps.
-            
+
             if not any(issubclass(base, c) for c in self.classes):
                 continue
 
-            logger.debug(
-                f"\t{query}: instrumenting base {base.__name__}"
-            )
+            logger.debug(f"\t{query}: instrumenting base {base.__name__}")
 
             # TODO: generalize
-            if not any (base.__module__.startswith(module_name) for module_name in self.modules):
+            if not any(base.__module__.startswith(module_name)
+                       for module_name in self.modules):
                 continue
 
             for method_name in self.methods:
@@ -436,7 +442,6 @@ class Instrument(object):
                             obj=obj
                         )
                     )
-
             """
             # Instrument special langchain methods that may cause serialization
             # failures.
@@ -465,10 +470,9 @@ class Instrument(object):
                 setattr(base, "dict", self._instrument_dict(cls=base, obj=obj, with_class_info=True))
             """
 
-
         # Not using chain.dict() here as that recursively converts subchains to
         # dicts but we want to traverse the instantiations here.
-        
+
         # TODO: generalize:
         if isinstance(obj, BaseModel):
 
@@ -479,13 +483,16 @@ class Instrument(object):
                 if isinstance(v, str):
                     pass
 
-                elif any(type(v).__module__.startswith(module_name) for module_name in self.modules):
+                elif any(type(v).__module__.startswith(module_name)
+                         for module_name in self.modules):
                     self.instrument_object(obj=v, query=query[k], done=done)
 
                 elif isinstance(v, Sequence):
                     for i, sv in enumerate(v):
                         if any(isinstance(sv, cls) for cls in self.classes):
-                            self.instrument_object(obj=sv, query=query[k][i], done=done)
+                            self.instrument_object(
+                                obj=sv, query=query[k][i], done=done
+                            )
 
                 # TODO: check if we want to instrument anything not accessible through __fields__ .
 
@@ -494,8 +501,8 @@ class Instrument(object):
                 if k.startswith("_") and k[1:] in dir(obj):
                     # Skip those starting with _ that also have non-_ versions.
                     continue
-                
-                sv = getattr(obj, k) # static get ?
+
+                sv = getattr(obj, k)  # static get ?
 
                 if any(isinstance(sv, cls) for cls in self.classes):
                     self.instrument_object(obj=sv, query=query[k], done=done)
@@ -504,4 +511,3 @@ class Instrument(object):
             logger.debug(
                 f"{query}: Do not know how to instrument object of type {cls}."
             )
-
