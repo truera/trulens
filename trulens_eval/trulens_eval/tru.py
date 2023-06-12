@@ -384,11 +384,17 @@ class Tru(SingletonPerName):
         out_stderr = widgets.Output()
 
         from IPython.display import display
-        acc = widgets.Accordion(children=[
-            widgets.HBox([
-                widgets.VBox([widgets.Label("STDOUT"), out_stdout]),
-                widgets.VBox([widgets.Label("STDERR"), out_stderr])
-            ])], open=True)
+        acc = widgets.Accordion(
+            children=[
+                widgets.HBox(
+                    [
+                        widgets.VBox([widgets.Label("STDOUT"), out_stdout]),
+                        widgets.VBox([widgets.Label("STDERR"), out_stderr])
+                    ]
+                )
+            ],
+            open=True
+        )
         acc.set_title(0, "Dashboard log")
         display(acc)
 
@@ -407,9 +413,15 @@ class Tru(SingletonPerName):
                 out.append_stdout(line)
 
             out.append_stdout("Dashboard closed.")
-        
-        Tru.dashboard_listener_stdout = Thread(target=listen_to_dashboard, args=(proc, proc.stdout, out_stdout, started))
-        Tru.dashboard_listener_stderr = Thread(target=listen_to_dashboard, args=(proc, proc.stderr, out_stderr, started))
+
+        Tru.dashboard_listener_stdout = Thread(
+            target=listen_to_dashboard,
+            args=(proc, proc.stdout, out_stdout, started)
+        )
+        Tru.dashboard_listener_stderr = Thread(
+            target=listen_to_dashboard,
+            args=(proc, proc.stderr, out_stderr, started)
+        )
         Tru.dashboard_listener_stdout.start()
         Tru.dashboard_listener_stderr.start()
 
