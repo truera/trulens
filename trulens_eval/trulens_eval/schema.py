@@ -13,19 +13,22 @@ from typing import (
     Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, TypeVar, Union
 )
 
-import langchain
 from munch import Munch as Bunch
 import pydantic
-from trulens_eval.util import Function, Method
 
+from trulens_eval.util import all_queries
+from trulens_eval.util import Class
+from trulens_eval.util import Function
 from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
 from trulens_eval.util import json_default
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
+from trulens_eval.util import Method
 from trulens_eval.util import obj_id_of_obj
 from trulens_eval.util import SerialModel
+from trulens_eval.util import WithClassInfo
 
 T = TypeVar("T")
 
@@ -52,8 +55,13 @@ class Cost(SerialModel):
     cost: Optional[float] = None
 
 
-class Latency(SerialModel):
-    latency: Optional[float] = None
+class Perf(SerialModel):
+    start_time: datetime
+    end_time: datetime
+
+    @property
+    def latency(self):
+        return self.end_time - self.start_time
 
 
 class RecordChainCall(SerialModel):
@@ -75,9 +83,7 @@ class RecordChainCall(SerialModel):
     error: Optional[str] = None
 
     # Timestamps tracking entrance and exit of the instrumented method.
-    start_time: datetime
-    end_time: datetime
-    latency: timedelta
+    perf: Perf = pydantic.Field(default_factory=Perf)
 
     # Process id.
     pid: int
@@ -96,16 +102,16 @@ class Record(SerialModel):
     record_id: RecordID
     chain_id: ChainID
 
-    cost: Cost = pydantic.Field(default_factory=Cost)
-    latency: Latency = pydantic.Field(default_factory=Latency)
+    cost: Optional[Cost] = None  # pydantic.Field(default_factory=Cost)
+    perf: Optional[Perf] = None  # pydantic.Field(default_factory=Perf)
 
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
     tags: str = ""
 
-    main_input: Optional[str]
-    main_output: Optional[str]  # if no error
-    main_error: Optional[str]  # if error
+    main_input: Optional[str] = None
+    main_output: Optional[str] = None  # if no error
+    main_error: Optional[str] = None  # if error
 
     # The collection of calls recorded. Note that these can be converted into a
     # json structure with the same paths as the chain that generated this record
@@ -153,6 +159,23 @@ class Record(SerialModel):
 
 
 # Feedback related:
+
+
+class Query:
+
+    # Typing for type hints.
+    Query = JSONPath
+
+    # Instance for constructing queries for record json like `Record.chain.llm`.
+    Record = Query().__record__
+
+    # Instance for constructing queries for chain json.
+    Chain = Query().__chain__
+
+    # A Chain's main input and main output.
+    # TODO: Chain input/output generalization.
+    RecordInput = Record.main_input
+    RecordOutput = Record.main_output
 
 
 class FeedbackResultStatus(Enum):
@@ -233,6 +256,9 @@ class FeedbackDefinition(SerialModel):
 
         - feedback_definition_id: Optional[str] - unique identifier.
 
+        - implementation:
+
+        - aggregator:
         """
 
         super().__init__(
@@ -252,23 +278,8 @@ class FeedbackDefinition(SerialModel):
 
         self.feedback_definition_id = feedback_definition_id
 
-    """
-    def parse_obj(o: Dict) -> 'FeedbackDefinition':
-        implementation = o['implementation']
-        if implementation is not None:
-            o['implementation'] = FunctionOrMethod.parse_obj(implementation)
 
-        aggregator = o['aggregator']
-        if aggregator is not None:
-            o['aggregator'] = FunctionOrMethod.parse_obj(aggregator)
-
-        o['selectors'] = {k: JSONPath.parse_obj(v) for k, v in o['selectors'].items()}
-
-        return FeedbackDefinition(**o)
-    """
-
-
-# Model/chain related:
+# Model related:
 
 
 class FeedbackMode(str, Enum):
@@ -277,10 +288,12 @@ class FeedbackMode(str, Enum):
 
     # Try to run feedback functions immediately and before chain returns a
     # record.
+    # TODO: rename
     WITH_CHAIN = "with_chain"
 
     # Try to run feedback functions in the same process as the chain but after
     # it produces a record.
+    # TODO: rename
     WITH_CHAIN_THREAD = "with_chain_thread"
 
     # Evaluate later via the process started by
@@ -288,73 +301,44 @@ class FeedbackMode(str, Enum):
     DEFERRED = "deferred"
 
 
-class Model(SerialModel):
-    """
-    Base container for any model that can be instrumented with trulens.
-    """
+class Model(SerialModel, WithClassInfo):
+    # Serialized fields here whereas tru_model.py:TruMode contains
+    # non-serialized fields.
 
+    class Config:
+        arbitrary_types_allowed = True
+
+    # TODO: rename to model_id
     chain_id: ChainID
+
+    # Feedback functions to evaluate on each record. Unlike the above, these are
+    # meant to be serialized.
+    feedback_definitions: Sequence[FeedbackDefinition] = []
 
     # NOTE: Custom feedback functions cannot be run deferred and will be run as
     # if "withchainthread" was set.
     feedback_mode: FeedbackMode = FeedbackMode.WITH_CHAIN_THREAD
 
-    # Flag of whether the chain is currently recording records. This is set
-    # automatically but is imperfect in threaded situations. The second check
-    # for recording is based on the call stack, see _call.
-    recording: bool = False
-
-    # Feedback functions to evaluate on each record.
-    feedback_definitions: Sequence[FeedbackDefinition] = []
+    # Class of the main instrumented object.
+    root_class: Class
 
     def __init__(
         self,
         chain_id: Optional[ChainID] = None,
         feedback_mode: FeedbackMode = FeedbackMode.WITH_CHAIN_THREAD,
-        feedback_definitions: Sequence[FeedbackDefinition] = [],
-        recording: bool = False,
         **kwargs
     ):
 
-        super().__init__(
-            chain_id="temporary",  # temporary for validation
-            feedback_mode=feedback_mode,
-            feedback_definitions=feedback_definitions,
-            recording=recording,
-            **kwargs
-        )
+        # for us:
+        kwargs['chain_id'] = "temporary"  # will be adjusted below
+        kwargs['feedback_mode'] = feedback_mode
 
-        # Create a chain_id from entire serializable structure, even stuff
-        # coming from subclass.
+        # for WithClassInfo:
+        kwargs['obj'] = self
+
+        super().__init__(**kwargs)
+
         if chain_id is None:
             chain_id = obj_id_of_obj(obj=self.dict(), prefix="chain")
 
         self.chain_id = chain_id
-
-    def json(self, *args, **kwargs):
-        # Need custom jsonification here because it is likely the model
-        # structure contains loops.
-
-        return json_str_of_obj(self.dict(), *args, **kwargs)
-
-    def dict(self):
-        # Same problem as in json.
-        return jsonify(self)
-
-
-class LangChainModel(langchain.chains.base.Chain, Model):
-    """
-    Instrumented langchain chain.
-    """
-
-    # The wrapped/instrumented chain.
-    chain: langchain.chains.base.Chain
-
-    # TODO: Consider
-
-
-class LlamaIndexModel(Model):
-    """
-    TODO: Instrumented llama index model.
-    """
-    pass

@@ -1,13 +1,13 @@
 from typing import Dict, List
 
 import pandas as pd
-
 import streamlit as st
 
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
 from trulens_eval.tru_db import JSON
-from trulens_eval.util import is_empty, is_noserio
+from trulens_eval.util import is_empty
+from trulens_eval.util import is_noserio
 
 
 def render_call_frame(frame: RecordChainCall) -> str:  # markdown

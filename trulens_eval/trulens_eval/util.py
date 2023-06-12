@@ -83,12 +83,16 @@ def is_empty(obj):
         return False
 
 
+# Key for indicating non-serialized objects in json dumps.
+NOSERIO = "__tru_non_serialized_object"
+
+
 def is_noserio(obj):
     """
     Determines whether the given json object represents some non-serializable
     object. See `noserio`.
     """
-    return isinstance(obj, dict) and "_NON_SERIALIZED_OBJECT" in obj
+    return isinstance(obj, dict) and NOSERIO in obj
 
 
 def noserio(obj, **extra: Dict) -> dict:
@@ -105,7 +109,7 @@ def noserio(obj, **extra: Dict) -> dict:
     }
     inner.update(extra)
 
-    return {'_NON_SERIALIZED_OBJECT': inner}
+    return {NOSERIO: inner}
 
 
 def obj_id_of_obj(obj: dict, prefix="obj"):
@@ -143,19 +147,30 @@ def json_default(obj: Any) -> str:
         return noserio(obj)
 
 
-# def jsonify_with_class_info(obj: Any):
-#   return jsonify(obj=obj, dicted=dict(), with_class_info=True)
+# Field/key name used to indicate a circular reference in jsonified objects.
+CIRCLE = "__tru_circular_reference"
 
 
-def jsonify(obj: Any, dicted=None) -> JSON:
+def _safe_getattr(obj, k):
+    try:
+        return getattr(obj, k)
+    except Exception as e:
+        return dict(error=str(e))
+
+
+# TODO: refactor to somewhere else or change instrument to a generic filter
+def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
     """
     Convert the given object into types that can be serialized in json.
     """
 
+    from trulens_eval.instruments import Instrument
+
+    instrument = instrument or Instrument()
     dicted = dicted or dict()
 
     if id(obj) in dicted:
-        return {'_TRULENS_CIRCULAR_REFERENCE': id(obj)}
+        return {CIRCLE: id(obj)}
 
     if isinstance(obj, JSON_BASES):
         return obj
@@ -166,7 +181,10 @@ def jsonify(obj: Any, dicted=None) -> JSON:
     if type(obj) in pydantic.json.ENCODERS_BY_TYPE:
         return obj
 
+    # TODO: should we include duplicates? If so, dicted needs to be adjusted.
     new_dicted = {k: v for k, v in dicted.items()}
+
+    recur = lambda o: jsonify(obj=o, dicted=new_dicted, instrument=instrument)
 
     if isinstance(obj, Enum):
         return obj.name
@@ -174,36 +192,60 @@ def jsonify(obj: Any, dicted=None) -> JSON:
     if isinstance(obj, Dict):
         temp = {}
         new_dicted[id(obj)] = temp
-        temp.update({k: jsonify(v, dicted=new_dicted) for k, v in obj.items()})
+        temp.update({k: recur(v) for k, v in obj.items()})
         return temp
 
     elif isinstance(obj, Sequence):
         temp = []
         new_dicted[id(obj)] = temp
-        for x in (jsonify(v, dicted=new_dicted) for v in obj):
+        for x in (recur(v) for v in obj):
             temp.append(x)
         return temp
 
     elif isinstance(obj, Set):
         temp = []
         new_dicted[id(obj)] = temp
-        for x in (jsonify(v, dicted=new_dicted) for v in obj):
+        for x in (recur(v) for v in obj):
             temp.append(x)
         return temp
 
     elif isinstance(obj, pydantic.BaseModel):
-        from trulens_eval.utils.langchain import CLASSES_TO_INSTRUMENT
-
         # Not even trying to use pydantic.dict here.
         temp = {}
         new_dicted[id(obj)] = temp
         temp.update(
             {
-                k: jsonify(getattr(obj, k), dicted=new_dicted)
-                for k in obj.__fields__
+                k: recur(_safe_getattr(obj, k))
+                for k, v in obj.__fields__.items()
+                if not v.field_info.exclude
             }
         )
-        if any(isinstance(obj, cls) for cls in CLASSES_TO_INSTRUMENT):
+        if instrument.to_instrument_object(obj):
+            temp['class_info'] = Class.of_class(
+                cls=obj.__class__, with_bases=True
+            ).dict()
+
+        return temp
+
+    elif obj.__class__.__module__.startswith("llama_index."):
+        temp = {}
+        new_dicted[id(obj)] = temp
+
+        kvs = {k: _safe_getattr(obj, k) for k in dir(obj)}
+
+        temp.update(
+            {
+                k: recur(v)  # TODO: static
+                for k, v in kvs.items()
+                if not k.startswith("__") and (
+                    isinstance(v, JSON_BASES) or isinstance(v, Dict) or
+                    isinstance(v, Sequence) or
+                    instrument.to_instrument_object(v)
+                )
+            }
+        )
+
+        if instrument.to_instrument_object(obj):
             temp['class_info'] = Class.of_class(
                 cls=obj.__class__, with_bases=True
             ).dict()
@@ -741,11 +783,6 @@ class JSONPath(SerialModel):
 
         return True
 
-    #@staticmethod
-    #def parse_obj(d):
-    #    path = tuple(map(Step.parse_obj, d['path']))
-    #    return JSONPath(path=path)
-
     def set(self, obj: Any, val: Any) -> Any:
         if len(self.path) == 0:
             return val
@@ -839,15 +876,15 @@ class SingletonPerName():
         Create the singleton instance if it doesn't already exist and return it.
         """
 
-        key = cls.__name__, name
+        k = cls.__name__, name
 
-        if key not in cls.instances:
+        if k not in cls.instances:
             logger.debug(
                 f"*** Creating new {cls.__name__} singleton instance for name = {name} ***"
             )
-            SingletonPerName.instances[key] = super().__new__(cls)
+            SingletonPerName.instances[k] = super().__new__(cls)
 
-        return SingletonPerName.instances[key]
+        return SingletonPerName.instances[k]
 
 
 # Threading utilities
@@ -1026,15 +1063,12 @@ class Class(SerialModel):
     module: Module
 
     bases: Optional[Sequence[Class]]
-    """
-    @staticmethod
-    def bases_of_obj(obj: object) -> Iterable[type]:
-        return obj.__class__.mro(obj)
 
-    @staticmethod
-    def bases_of_class(cls: type) -> Iterable[type]:
-        return cls.__bases__
-    """
+    def __repr__(self):
+        return self.module.module_name + "." + self.name
+
+    def __str__(self):
+        return f"{self.name}({self.module.module_name})"
 
     @staticmethod
     def of_class(
@@ -1047,16 +1081,13 @@ class Class(SerialModel):
             if with_bases else None
         )
 
-    """
     @staticmethod
-    def of_object(obj: object, with_bases: bool = False, loadable: bool = False) -> 'Class':
-        cls = type(obj)
-        return Class(
-            name=cls.__name__, 
-            module=Module.of_module_name(cls.__module__),
-            bases=list(map(lambda base: Class.of_class(cls=base), Class.bases_of_obj(obj))) if with_bases else None
+    def of_object(
+        obj: object, with_bases: bool = False, loadable: bool = False
+    ):
+        return Class.of_class(
+            cls=obj.__class__, with_bases=with_bases, loadable=loadable
         )
-    """
 
     def load(self) -> type:  # class
         try:
@@ -1163,7 +1194,7 @@ class ObjSerial(Obj):
             raise RuntimeError(f"Do not know how to load object {self}.")
 
 
-class FunctionOrMethod(SerialModel):  #, abc.ABC):
+class FunctionOrMethod(SerialModel):
 
     @staticmethod
     def pick(**kwargs):
@@ -1171,6 +1202,7 @@ class FunctionOrMethod(SerialModel):  #, abc.ABC):
 
         if 'obj' in kwargs:
             return Method(**kwargs)
+
         elif 'cls' in kwargs:
             return Function(**kwargs)
 
@@ -1180,16 +1212,10 @@ class FunctionOrMethod(SerialModel):  #, abc.ABC):
 
     @classmethod
     def validate(cls, d) -> 'FunctionOrMethod':
-        if isinstance(d, Function):
-            return d
-        elif isinstance(d, Method):
-            return d
-        elif isinstance(d, Dict):
+        if isinstance(d, Dict):
             return FunctionOrMethod.pick(**d)
         else:
-            raise RuntimeError(
-                f"Unhandled FunctionOrMethod source of type {type(d)}."
-            )
+            return d
 
     @staticmethod
     def of_callable(c: Callable, loadable: bool = False) -> 'FunctionOrMethod':
@@ -1200,7 +1226,6 @@ class FunctionOrMethod(SerialModel):  #, abc.ABC):
         else:
             return Function.of_function(c, loadable=loadable)
 
-    #@abc.abstractmethod
     def load(self) -> Callable:
         raise NotImplementedError()
 
@@ -1296,9 +1321,6 @@ class WithClassInfo(pydantic.BaseModel):
             assert cls is not None, "Either `class_info`, `obj` or `cls` need to be specified."
             class_info = Class.of_class(cls, with_bases=True)
 
-        else:
-            pass
-
         super().__init__(class_info=class_info, **kwargs)
 
     @staticmethod
@@ -1314,6 +1336,21 @@ class WithClassInfo(pydantic.BaseModel):
         return WithClassInfo(class_info=cls, **model.dict())
 
 
+def get_owner_of_method(cls, method_name) -> type:
+    """
+    Get the actual defining class of the given method whether it is cls or one
+    of its parent classes.
+    """
+
+    # TODO
+
+    return cls
+
+
+# key/attribute indicating instrumented class information.
+CLASS_INFO = "class_info"
+
+
 def instrumented_classes(obj: object) -> Iterable[Tuple[JSONPath, Class, Any]]:
     """
     Iterate over contents of `obj` that are annotated with the `class_info`
@@ -1322,9 +1359,9 @@ def instrumented_classes(obj: object) -> Iterable[Tuple[JSONPath, Class, Any]]:
     """
 
     for q, o in all_objects(obj):
-        if isinstance(o, pydantic.BaseModel) and "class_info" in o.__fields__:
-            yield q, o.class_info, o
+        if isinstance(o, pydantic.BaseModel) and CLASS_INFO in o.__fields__:
+            yield q, getattr(o, CLASS_INFO), o
 
-        if isinstance(o, Dict) and "class_info" in o:
-            ci = Class(**o['class_info'])
+        if isinstance(o, Dict) and CLASS_INFO in o:
+            ci = Class(**o[CLASS_INFO])
             yield q, ci, o

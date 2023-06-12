@@ -4,18 +4,21 @@ from multiprocessing import Process
 import os
 from pathlib import Path
 import subprocess
-from threading import Thread
 import threading
+from threading import Thread
 from time import sleep
 from typing import Iterable, List, Optional, Sequence, Union
 
 import pkg_resources
 
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import Model
+from trulens_eval.schema import Record
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import LocalSQLite
 from trulens_eval.tru_feedback import Feedback
-from trulens_eval.schema import FeedbackResult, Model, Record
-from trulens_eval.util import TP, SingletonPerName
+from trulens_eval.util import SingletonPerName
+from trulens_eval.util import TP
 
 logger = logging.getLogger(__name__)
 
@@ -39,14 +42,23 @@ class Tru(SingletonPerName):
     # Process of the dashboard app.
     dashboard_proc = None
 
-    def Chain(self, **kwargs):
+    def Chain(self, chain, **kwargs):
         """
         Create a TruChain with database managed by self.
         """
 
         from trulens_eval.tru_chain import TruChain
 
-        return TruChain(tru=self, **kwargs)
+        return TruChain(tru=self, model=chain, **kwargs)
+
+    def Llama(self, engine, **kwargs):
+        """
+        Create a llama_index engine with database managed by self.
+        """
+
+        from trulens_eval.tru_llama import TruLlama
+
+        return TruLlama(tru=self, model=engine, **kwargs)
 
     def __init__(self):
         """
@@ -270,9 +282,10 @@ class Tru(SingletonPerName):
 
             else:
                 print("Force stopping dashboard ...")
-                import psutil
-                import pwd
                 import os
+                import pwd
+
+                import psutil
                 username = pwd.getpwuid(os.getuid())[0]
                 for p in psutil.process_iter():
                     try:
