@@ -371,8 +371,6 @@ class Tru(SingletonPerName):
             env_opts['env'] = os.environ
             env_opts['env']['PYTHONPATH'] = str(_dev)
 
-        # read = Pipe()
-
         proc = subprocess.Popen(
             ["streamlit", "run", "--server.headless=True", leaderboard_path],
             stdout=subprocess.PIPE,
