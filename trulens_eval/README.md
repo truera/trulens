@@ -143,7 +143,6 @@ display(llm_response)
 ```python
 tru.run_dashboard() # open a local streamlit app to explore
 
-# tru.run_dashboard(_dev=True) # if running from repo
 # tru.stop_dashboard() # stop if needed
 ```
 
@@ -253,7 +252,7 @@ Capturing app feedback such as user feedback of the responses can be added with 
 
 ```python
 thumb_result = True
-tru.add_feedback(name="thumbs up result", 
+tru.add_feedback(name="👍 (1) or 👎 (0)", 
                   record_id=record.record_id,
                   chain_id=truchain.chain_id, 
                   result=thumb_result)
