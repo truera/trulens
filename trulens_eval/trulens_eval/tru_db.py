@@ -7,11 +7,13 @@ from pprint import PrettyPrinter
 import sqlite3
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
+import pydantic
 from frozendict import frozendict
 from merkle_json import MerkleJson
 import numpy as np
 import pandas as pd
 
+from trulens_eval import __version__
 from trulens_eval.schema import ChainID
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackDefinition
@@ -40,6 +42,14 @@ NoneType = type(None)
 pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
+
+class DBMeta(pydantic.BaseModel):
+    """
+    Databasae meta data mostly used for migrating from old db schemas.
+    """
+
+    trulens_version: Optional[str]
+    attributes: dict
 
 
 class TruDB(SerialModel, abc.ABC):
@@ -118,6 +128,7 @@ class TruDB(SerialModel, abc.ABC):
 class LocalSQLite(TruDB):
     filename: Path
 
+    TABLE_META = "meta"
     TABLE_RECORDS = "records"
     TABLE_FEEDBACKS = "feedbacks"
     TABLE_FEEDBACK_DEFS = "feedback_defs"
@@ -166,11 +177,48 @@ class LocalSQLite(TruDB):
 
         self._close(conn)
 
+    def get_meta(self):
+        conn, c = self._connect()
+
+        try:
+            c.execute(f'''SELECT key, value from {self.TABLE_META}''')
+            rows = c.fetchall()
+            
+            ret = {}
+
+            for row in rows:
+                ret[row[0]] = row[1]
+
+            if 'trulens_version' in ret:
+                trulens_version = ret['trulens_version']
+            else:
+                trulens_version = None
+
+            return DBMeta(trulens_version=trulens_version, attributes=ret)
+
+        except Exception as e:
+            return DBMeta(trulens_version = None, attributes = {})
+        
     def _build_tables(self):
         conn, c = self._connect()
 
         # Create table if it does not exist. Note that the record_json column
         # also encodes inside it all other columns.
+
+        meta = self.get_meta()
+
+        c.execute(
+            f'''CREATE TABLE IF NOT EXISTS {self.TABLE_META} (
+                key TEXT NOT NULL PRIMARY KEY,
+                value TEXT
+            )'''
+        )
+
+        if meta.trulens_version is None:
+            # migrate from pre-version-tracked database
+            # print(f"Migrating DB {self.filename} from trulens_version {meta.trulens_version} to {__version__}.")
+            c.execute(f'''INSERT INTO {self.TABLE_META} VALUES (?, ?)''', ('trulens_version', __version__))
+
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_RECORDS} (
                 record_id TEXT NOT NULL PRIMARY KEY,
