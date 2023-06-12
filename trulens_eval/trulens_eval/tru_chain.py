@@ -27,6 +27,7 @@ from trulens_eval.schema import FeedbackResult
 
 from trulens_eval.tru_model import TruModel
 from trulens_eval.instruments import Instrument
+from trulens_eval.util import Class
 from trulens_eval.utils.langchain import Is
 from trulens_eval.util import jsonify, noserio
 from trulens_eval.util import WithClassInfo
@@ -130,6 +131,7 @@ class TruChain(TruModel):
 
         # TruChain specific:
         kwargs['model'] = model
+        kwargs['root_class'] = Class.of_object(model)
         kwargs['instrument'] = LangChainInstrument()
 
         super().__init__(**kwargs)

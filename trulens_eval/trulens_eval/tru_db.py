@@ -426,6 +426,8 @@ class LocalSQLite(TruDB):
             # NOTE: pandas dataframe will take in the various classes below but the
             # agg table used in UI will not like it. Sending it JSON/dicts instead.
 
+            
+
             row.calls_json = json.loads(
                 row.calls_json
             )['calls']  # calls_json (sequence of FeedbackCall)
@@ -438,12 +440,15 @@ class LocalSQLite(TruDB):
                 row.record_json
             )  # record_json (Record)
             row.chain_json = json.loads(row.chain_json)  # chain_json (Model)
+            chain = Model(**row.chain_json)
 
             row.status = FeedbackResultStatus(row.status)
 
             row['latency'] = Perf(**row.perf_json).latency
             row['total_tokens'] = row.cost_json['n_tokens']
             row['total_cost'] = row.cost_json['cost']
+
+            row['type'] = chain.root_class
 
             return row
 
@@ -509,10 +514,14 @@ class LocalSQLite(TruDB):
         df_records = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
+        chains = df_records['chain_json'].apply(Model.parse_raw)
+        df_records['type'] = chains.apply(lambda row: str(row.root_class))
+
         cost = df_records['cost_json'].map(Cost.parse_raw)
         df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
         df_records['total_cost'] = cost.map(lambda v: v.cost)
 
+        
         perf = df_records['perf_json'].apply(Perf.parse_raw)
         df_records['latency'] = perf.apply(lambda p: p.latency)
 

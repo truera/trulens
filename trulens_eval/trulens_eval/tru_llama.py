@@ -29,6 +29,7 @@ from trulens_eval.tru import Tru
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.tru_model import TruModel
 from trulens_eval.instruments import Instrument
+from trulens_eval.util import Class
 from trulens_eval.utils.llama import Is
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import TP, JSONPath, jsonify, noserio
@@ -80,13 +81,15 @@ class TruLlama(TruModel):
     class Config:
         arbitrary_types_allowed = True
 
-    model: query_engine.retriever_query_engine.RetrieverQueryEngine # = Field(exclude=True)
+    model: llama_index.indices.query.base.BaseQueryEngine
 
-    def __init__(self, **kwargs):
+    def __init__(self, model: llama_index.indices.query.base.BaseQueryEngine, **kwargs):
     
         super().update_forward_refs()
 
         # TruLlama specific:
+        kwargs['model'] = model
+        kwargs['root_class'] = Class.of_object(model)
         kwargs['instrument'] = LlamaInstrument()
 
         super().__init__(**kwargs)
