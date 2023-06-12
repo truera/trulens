@@ -143,7 +143,6 @@ display(llm_response)
 ```python
 tru.run_dashboard() # open a local streamlit app to explore
 
-# tru.run_dashboard(_dev=True) # if running from repo
 # tru.stop_dashboard() # stop if needed
 ```
 

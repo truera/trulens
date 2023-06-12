@@ -268,10 +268,17 @@ class Tru(SingletonPerName):
         self.evaluator_proc = None
 
     def stop_dashboard(self, force: bool = False) -> None:
-        """Stop existing dashboard if running.
+        """
+        Stop existing dashboard(s) if running.
+
+        Args:
+            
+            - force: bool: Also try to find any other dashboard processes not
+              started in this notebook and shut them down too.
 
         Raises:
-            ValueError: Dashboard is already running.
+
+            - ValueError: Dashboard is not running.
         """
         if Tru.dashboard_proc is None:
             if not force:
@@ -304,13 +311,24 @@ class Tru(SingletonPerName):
     def run_dashboard(
         self, force: bool = False, _dev: Optional[Path] = None
     ) -> Process:
-        """ Runs a streamlit dashboard to view logged results and chains
+        """
+        Run a streamlit dashboard to view logged results and apps.
+
+        Args:
+
+            - force: bool: Stop existing dashboard(s) first.
+
+            - _dev: Optional[Path]: If given, run dashboard with the given
+              PYTHONPATH. This can be used to run the dashboard from outside of
+              its pip package installation folder.
 
         Raises:
-            ValueError: Dashboard is already running.
+
+            - ValueError: Dashboard is already running.
 
         Returns:
-            Process: Process containing streamlit dashboard.
+
+            - Process: Process containing streamlit dashboard.
         """
 
         if force:
@@ -318,7 +336,8 @@ class Tru(SingletonPerName):
 
         if Tru.dashboard_proc is not None:
             raise ValueError(
-                "Dashboard already running. Run tru.stop_dashboard() to stop existing dashboard."
+                "Dashboard already running. "
+                "Run tru.stop_dashboard() to stop existing dashboard."
             )
 
         print("Starting dashboard ...")
@@ -352,12 +371,57 @@ class Tru(SingletonPerName):
             env_opts['env'] = os.environ
             env_opts['env']['PYTHONPATH'] = str(_dev)
 
+        # read = Pipe()
+
         proc = subprocess.Popen(
             ["streamlit", "run", "--server.headless=True", leaderboard_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
             **env_opts
         )
 
+        from ipywidgets import widgets
+        out_stdout = widgets.Output()
+        out_stderr = widgets.Output()
+
+        from IPython.display import display
+        acc = widgets.Accordion(children=[
+            widgets.HBox([
+                widgets.VBox([widgets.Label("STDOUT"), out_stdout]),
+                widgets.VBox([widgets.Label("STDERR"), out_stderr])
+            ])], open=True)
+        acc.set_title(0, "Dashboard log")
+        display(acc)
+
+        started = threading.Event()
+
+        def listen_to_dashboard(proc: subprocess.Popen, pipe, out, started):
+            while proc.poll() is None:
+                line = pipe.readline()
+
+                if "Network URL: " in line:
+                    url = line.split(": ")[1]
+                    url = url.rstrip()
+                    print(f"Dashboard started at {url} .")
+                    started.set()
+
+                out.append_stdout(line)
+
+            out.append_stdout("Dashboard closed.")
+        
+        Tru.dashboard_listener_stdout = Thread(target=listen_to_dashboard, args=(proc, proc.stdout, out_stdout, started))
+        Tru.dashboard_listener_stderr = Thread(target=listen_to_dashboard, args=(proc, proc.stderr, out_stderr, started))
+        Tru.dashboard_listener_stdout.start()
+        Tru.dashboard_listener_stderr.start()
+
         Tru.dashboard_proc = proc
+
+        if not started.wait(timeout=5):
+            raise RuntimeError(
+                "Dashboard failed to start in time. "
+                "Please inspect dashboard logs for additional information."
+            )
 
         return proc
 
