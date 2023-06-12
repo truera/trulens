@@ -83,7 +83,6 @@ print(llm_response)
 
 tru.run_dashboard()  # open a local streamlit app to explore
 
-# tru.run_dashboard(_dev=True) # if running from repo
 # tru.stop_dashboard() # stop if needed
 
 # ### Chain Leaderboard
@@ -167,7 +166,7 @@ tru.add_record(record)
 
 thumb_result = True
 tru.add_feedback(
-    name="thumbs up result",
+    name="👍 (1) or 👎 (0)",
     record_id=record.record_id,
     chain_id=truchain.chain_id,
     result=thumb_result
