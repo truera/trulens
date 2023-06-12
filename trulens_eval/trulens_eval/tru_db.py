@@ -20,7 +20,6 @@ from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import JSONPath
-from trulens_eval.schema import Latency
 from trulens_eval.schema import Model
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
@@ -395,8 +394,7 @@ class LocalSQLite(TruDB):
                            ),  # extra dict is needed json's root must be a dict
             feedback_result.result,
             feedback_result.name,
-            json_str_of_obj(feedback_result.cost),
-            json_str_of_obj(feedback_result.latency)
+            json_str_of_obj(feedback_result.cost)
         )
 
         self._insert_or_replace_vals(table=self.TABLE_FEEDBACKS, vals=vals)
@@ -575,6 +573,7 @@ class LocalSQLite(TruDB):
         df_records['total_cost'] = cost.map(lambda v: v.cost)
         df_records['latency'] = df_records['record_json'].apply(
             lambda x: json.loads(x)["calls"][0]["latency"]
+            if "latency" in json.loads(x)["calls"][0] else 0
         )
 
         if len(df_records) == 0:
