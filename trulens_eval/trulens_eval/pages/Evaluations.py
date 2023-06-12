@@ -71,12 +71,15 @@ else:
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
         cellstyle_jscode = JsCode(cellstyle_jscode)
+        gb.configure_column('type', header_name='Chain Type')
         gb.configure_column('record_json', header_name='Record JSON', hide=True)
         gb.configure_column('chain_json', header_name='Chain JSON', hide=True)
         gb.configure_column('cost_json', header_name='Cost JSON', hide=True)
+        gb.configure_column('perf_json', header_name='Perf. JSON', hide=True)
 
         gb.configure_column('record_id', header_name='Record ID', hide=True)
         gb.configure_column('chain_id', header_name='Chain ID')
+
         gb.configure_column('feedback_id', header_name='Feedback ID', hide=True)
         gb.configure_column('input', header_name='User Input')
         gb.configure_column(
@@ -90,9 +93,9 @@ else:
         gb.configure_column('ts', header_name='Time Stamp', sort="desc")
 
         non_feedback_cols = [
-            'chain_id', 'ts', 'total_tokens', 'total_cost', 'record_json',
-            'latency', 'record_id', 'chain_id', 'cost_json', 'chain_json',
-            'input', 'output'
+            'chain_id', 'type', 'ts', 'total_tokens', 'total_cost',
+            'record_json', 'latency', 'record_id', 'chain_id', 'cost_json',
+            'chain_json', 'input', 'output', 'perf_json'
         ]
 
         for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
@@ -151,7 +154,7 @@ else:
                             'background-color: #FCE6E6'
                         ] * len(s)
 
-                    if (len(call) > 0):
+                    if call is not None and len(call) > 0:
                         df = pd.DataFrame.from_records(
                             [call[i]["args"] for i in range(len(call))]
                         )
@@ -183,7 +186,7 @@ else:
 
             for query, cls, component_json in classes:
                 if len(query.path) == 0:
-                    # Skip TruChain, will still list TruChain.chain under "chain" below.
+                    # Skip TruChain, will still list TruChain.model under "chain" below.
                     continue
 
                 if Is.chain(cls):

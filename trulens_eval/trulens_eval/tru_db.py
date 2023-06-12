@@ -20,8 +20,8 @@ from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import JSONPath
-from trulens_eval.schema import Latency
 from trulens_eval.schema import Model
+from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
 from trulens_eval.schema import RecordID
@@ -40,67 +40,6 @@ NoneType = type(None)
 pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
-
-
-class Query:
-
-    # Typing for type hints.
-    Query = JSONPath
-
-    # Instance for constructing queries for record json like `Record.chain.llm`.
-    Record = Query().__record__
-
-    # Instance for constructing queries for chain json.
-    Chain = Query().__chain__
-
-    # A Chain's main input and main output.
-    # TODO: Chain input/output generalization.
-    RecordInput = Record.main_input
-    RecordOutput = Record.main_output
-
-
-def get_calls(record: Record) -> Iterable[RecordChainCall]:
-    """
-    Iterate over the call parts of the record.
-    """
-
-    for q in all_queries(record):
-        print("consider query", q)
-        if len(q.path) > 0 and q.path[-1] == GetItemOrAttribute(
-                item_or_attribute="_call"):
-            yield q
-
-
-def get_calls_by_stack(
-    record: Record
-) -> Dict[Tuple[str, ...], RecordChainCall]:
-    """
-    Get a dictionary mapping chain call stack to the call information.
-    """
-
-    def frozen_frame(frame):
-        frame['path'] = tuple(frame['path'])
-        return frozendict(frame)
-
-    ret = dict()
-
-    for c in get_calls(record):
-        print("call", c)
-
-        obj = TruDB.project(c, record_json=record, chain_json=None)
-        if isinstance(obj, Sequence):
-            for o in obj:
-                call_stack = tuple(map(frozen_frame, o['chain_stack']))
-                if call_stack not in ret:
-                    ret[call_stack] = []
-                ret[call_stack].append(o)
-        else:
-            call_stack = tuple(map(frozen_frame, obj['chain_stack']))
-            if call_stack not in ret:
-                ret[call_stack] = []
-            ret[call_stack].append(obj)
-
-    return ret
 
 
 class TruDB(SerialModel, abc.ABC):
@@ -241,7 +180,8 @@ class LocalSQLite(TruDB):
                 record_json TEXT NOT NULL,
                 tags TEXT NOT NULL,
                 ts {self.TYPE_TIMESTAMP} NOT NULL,
-                cost_json TEXT NOT NULL
+                cost_json TEXT NOT NULL,
+                perf_json TEXT NOT NULL
             )'''
         )
         c.execute(
@@ -292,13 +232,10 @@ class LocalSQLite(TruDB):
         # other columns. Might want to keep this so we can query on the columns
         # within sqlite.
 
-        record_json_str = json_str_of_obj(record)
-        cost_json_str = json_str_of_obj(record.cost)
-
         vals = (
             record.record_id, record.chain_id, record.main_input,
-            record.main_output, record_json_str, record.tags, record.ts,
-            cost_json_str
+            record.main_output, json_str_of_obj(record), record.tags, record.ts,
+            json_str_of_obj(record.cost), json_str_of_obj(record.perf)
         )
 
         self._insert_or_replace_vals(table=self.TABLE_RECORDS, vals=vals)
@@ -395,8 +332,7 @@ class LocalSQLite(TruDB):
                            ),  # extra dict is needed json's root must be a dict
             feedback_result.result,
             feedback_result.name,
-            json_str_of_obj(feedback_result.cost),
-            json_str_of_obj(feedback_result.latency)
+            json_str_of_obj(feedback_result.cost)
         )
 
         self._insert_or_replace_vals(table=self.TABLE_FEEDBACKS, vals=vals)
@@ -462,6 +398,7 @@ class LocalSQLite(TruDB):
                 f.name,
                 f.result, 
                 f.cost_json,
+                r.perf_json,
                 f.calls_json,
                 fd.feedback_json, 
                 r.record_json, 
@@ -493,6 +430,7 @@ class LocalSQLite(TruDB):
                 row.calls_json
             )['calls']  # calls_json (sequence of FeedbackCall)
             row.cost_json = json.loads(row.cost_json)  # cost_json (Cost)
+            row.perf_json = json.loads(row.perf_json)  # perf_json (Perf)
             row.feedback_json = json.loads(
                 row.feedback_json
             )  # feedback_json (FeedbackDefinition)
@@ -500,11 +438,15 @@ class LocalSQLite(TruDB):
                 row.record_json
             )  # record_json (Record)
             row.chain_json = json.loads(row.chain_json)  # chain_json (Model)
+            chain = Model(**row.chain_json)
 
             row.status = FeedbackResultStatus(row.status)
 
+            row['latency'] = Perf(**row.perf_json).latency
             row['total_tokens'] = row.cost_json['n_tokens']
             row['total_cost'] = row.cost_json['cost']
+
+            row['type'] = chain.root_class
 
             return row
 
@@ -570,12 +512,15 @@ class LocalSQLite(TruDB):
         df_records = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
+        chains = df_records['chain_json'].apply(Model.parse_raw)
+        df_records['type'] = chains.apply(lambda row: str(row.root_class))
+
         cost = df_records['cost_json'].map(Cost.parse_raw)
         df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
         df_records['total_cost'] = cost.map(lambda v: v.cost)
-        df_records['latency'] = df_records['record_json'].apply(
-            lambda x: json.loads(x)["calls"][0]["latency"]
-        )
+
+        perf = df_records['perf_json'].apply(Perf.parse_raw)
+        df_records['latency'] = perf.apply(lambda p: p.latency)
 
         if len(df_records) == 0:
             return df_records, []

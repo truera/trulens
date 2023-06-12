@@ -7,8 +7,8 @@ from typing import Any, Optional, Sequence
 
 import requests
 from tqdm.auto import tqdm
-from trulens_eval.tru_db import JSON
 
+from trulens_eval.tru_db import JSON
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import TP
 
