@@ -31,5 +31,6 @@ setup(
         'typing_extensions==4.5.0',  # langchain with python < 3.9 fix
         'frozendict>=2.3.8',
         'munch>=3.0.0',
+        'ipywidgets>=8.0.6',
     ],
 )
