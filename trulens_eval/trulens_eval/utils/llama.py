@@ -7,8 +7,9 @@ from trulens_eval.tru_model import COMPONENT_CATEGORY
 from trulens_eval.util import Class
 from trulens_eval.util import first
 from trulens_eval.util import second
-from trulens_eval.util import TP
+from trulens_eval.util import TP, REQUIREMENT_LLAMA, import_optional
 
+llama_index = import_optional(mod="llama_index", message=REQUIREMENT_LLAMA)
 
 class Is:
     """

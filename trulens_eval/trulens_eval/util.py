@@ -26,6 +26,7 @@ from typing import (
     Any, Callable, Dict, Hashable, Iterable, Iterator, List, Optional, Sequence,
     Set, Tuple, TypeVar, Union
 )
+import importlib
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -39,6 +40,51 @@ T = TypeVar("T")
 
 UNICODE_CHECK = "✅"
 UNCIODE_YIELD = "⚡"
+
+# Optional requirements.
+
+REQUIREMENT_LLAMA = (
+    "llama_index module is required for instrumenting llama_index apps. "
+    "Please install it before use: `pip install llama_index`."
+)
+REQUIREMENT_LANGCHAIN = (
+    "langchain module is required for instrumenting langchain apps. "
+    "Please install it before use: `pip install langchain`."
+)
+
+class Dummy(object):
+    """
+    Class to pretend to be a module or some other imported object. Will raise an
+    error if accessed in any way.
+    """
+
+    def __init__(self, message: str):
+        self.message = message
+
+    def __getattr__(self, name):
+        raise RuntimeError(self.message)
+
+def import_optional(mod=None, what=None, message: str = None):
+    """
+    Try to import `what` from module `mod` or the module `mod` itself if
+    `what` is None. If this cannot be imported, returns a dummy module which
+    will fail at first access with the given `message`.
+    """
+
+    try:
+        mod = importlib.import_module(mod)
+
+        if mod is None:
+            raise RuntimeError()
+
+        if what is None:
+            return mod
+
+    except Exception as e:
+        return Dummy(message if message is not None else f"Module {mod} is not installed. Please install before using this functionality.")
+
+    ele = getattr(mod, what)
+    return ele
 
 # Collection utilities
 
@@ -859,7 +905,6 @@ class JSONPath(SerialModel):
 
 
 # Python utilities
-
 
 class SingletonPerName():
     """

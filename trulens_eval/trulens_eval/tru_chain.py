@@ -1,7 +1,5 @@
 """
-# Langchain instrumentation and monitoring. 
-```
-
+# Langchain instrumentation and monitoring.
 """
 
 from datetime import datetime
@@ -9,8 +7,6 @@ import logging
 from pprint import PrettyPrinter
 from typing import Any, Dict, List, Optional, Sequence, Union
 
-import langchain
-from langchain.callbacks import get_openai_callback
 from pydantic import Field
 
 from trulens_eval.instruments import Instrument
@@ -27,7 +23,7 @@ from trulens_eval.tru_model import TruModel
 from trulens_eval.util import Class
 from trulens_eval.util import jsonify
 from trulens_eval.util import noserio
-from trulens_eval.util import TP
+from trulens_eval.util import TP, REQUIREMENT_LANGCHAIN, import_optional
 from trulens_eval.util import WithClassInfo
 from trulens_eval.utils.langchain import Is
 
@@ -35,13 +31,17 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
+langchain = import_optional(mod='langchain', message=REQUIREMENT_LANGCHAIN)
+Chain = import_optional(mod='langchain.chains.base', what='Chain', message=REQUIREMENT_LANGCHAIN)
+get_openai_callback = import_optional(mod='langchain.callbacks', what='get_openai_callback', message=REQUIREMENT_LANGCHAIN)
 
 class LangChainInstrument(Instrument):
 
     class Default:
         MODULES = {"langchain."}
 
-        CLASSES = {
+        # Thunk because langchain is optional.
+        CLASSES = lambda: {
             langchain.chains.base.Chain,
             langchain.vectorstores.base.BaseRetriever,
             langchain.schema.BaseRetriever, langchain.llms.base.BaseLLM,
@@ -59,7 +59,7 @@ class LangChainInstrument(Instrument):
         super().__init__(
             root_method=TruChain.call_with_record,
             modules=LangChainInstrument.Default.MODULES,
-            classes=LangChainInstrument.Default.CLASSES,
+            classes=LangChainInstrument.Default.CLASSES(),
             methods=LangChainInstrument.Default.METHODS
         )
 
@@ -104,11 +104,11 @@ class TruChain(TruModel):
     Wrap a langchain Chain to capture its configuration and evaluation steps. 
     """
 
-    model: langchain.chains.base.Chain
+    model: Chain
 
     # Normally pydantic does not like positional args but chain here is
     # important enough to make an exception.
-    def __init__(self, model: langchain.chains.base.Chain, **kwargs):
+    def __init__(self, model: Chain, **kwargs):
         """
         Wrap a langchain chain for monitoring.
 
