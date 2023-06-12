@@ -22,15 +22,16 @@ from pydantic import Field
 from slack_bolt import App
 from slack_sdk import WebClient
 
-from trulens_eval import Tru, Query
+from trulens_eval import Query
+from trulens_eval import Tru
 from trulens_eval import tru_feedback
+from trulens_eval.schema import FeedbackMode
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_db import LocalSQLite
 from trulens_eval.tru_db import Record
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.util import TP
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
-from trulens_eval.schema import FeedbackMode
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
@@ -85,7 +86,7 @@ f_qa_relevance = Feedback(openai.relevance).on(
 # Question/statement relevance between question and each context chunk.
 f_qs_relevance = Feedback(openai.qs_relevance).on(
     question=Query.RecordInput,
-    statement=Query.Record.chain.combine_docs_chain._call.args.inputs.
+    statement=Query.Record.model.combine_docs_chain._call.args.inputs.
     input_documents[:].page_content
 ).aggregate(np.min)
 

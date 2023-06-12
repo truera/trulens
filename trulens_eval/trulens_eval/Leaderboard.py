@@ -48,7 +48,7 @@ def app():
             5 + len(feedback_col_names)
         )
         chain_df = df.loc[df.chain_id == chain]
-        latency_mean = chain_df['latency'].mean()
+        latency_mean = chain_df['latency'].apply(lambda td: td.seconds).mean()
         #model_df_feedback = df.loc[df.chain_id == model]
 
         col1.metric("Records", len(chain_df))
