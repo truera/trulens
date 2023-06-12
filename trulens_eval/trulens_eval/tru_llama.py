@@ -13,35 +13,39 @@ from pprint import PrettyPrinter
 import threading as th
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
+import llama_index
+from llama_index import query_engine
 from pydantic import BaseModel
 from pydantic import Field
 
-from trulens_eval.schema import FeedbackMode, Method
-
+from trulens_eval.instruments import Instrument
+from trulens_eval.schema import Cost
+from trulens_eval.schema import FeedbackMode
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import Method
+from trulens_eval.schema import Query
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
 from trulens_eval.schema import RecordChainCallMethod
-from trulens_eval.schema import Cost
-from trulens_eval.schema import Query
+from trulens_eval.tru import Tru
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru import Tru
-from trulens_eval.schema import FeedbackResult
 from trulens_eval.tru_model import TruModel
-from trulens_eval.instruments import Instrument
 from trulens_eval.util import Class
-from trulens_eval.utils.llama import Is
 from trulens_eval.util import get_local_in_call_stack
-from trulens_eval.util import TP, JSONPath, jsonify, noserio
-import llama_index
-from llama_index import query_engine
+from trulens_eval.util import jsonify
+from trulens_eval.util import JSONPath
+from trulens_eval.util import noserio
+from trulens_eval.util import TP
+from trulens_eval.utils.llama import Is
 
 logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
+
 class LlamaInstrument(Instrument):
-    
+
     class Default:
         MODULES = {"llama_index."}
 
@@ -53,9 +57,19 @@ class LlamaInstrument(Instrument):
 
         # Instrument only methods with these names and of these classes.
         METHODS = {
-            "query": lambda o: isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
-            "retrieve": lambda o: isinstance(o, (llama_index.indices.query.base.BaseQueryEngine, llama_index.indices.base_retriever.BaseRetriever)),
-            "synthesize": lambda o: isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
+            "query":
+                lambda o:
+                isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
+            "retrieve":
+                lambda o: isinstance(
+                    o, (
+                        llama_index.indices.query.base.BaseQueryEngine,
+                        llama_index.indices.base_retriever.BaseRetriever
+                    )
+                ),
+            "synthesize":
+                lambda o:
+                isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
         }
 
     def __init__(self):
@@ -83,8 +97,10 @@ class TruLlama(TruModel):
 
     model: llama_index.indices.query.base.BaseQueryEngine
 
-    def __init__(self, model: llama_index.indices.query.base.BaseQueryEngine, **kwargs):
-    
+    def __init__(
+        self, model: llama_index.indices.query.base.BaseQueryEngine, **kwargs
+    ):
+
         super().update_forward_refs()
 
         # TruLlama specific:
@@ -98,8 +114,10 @@ class TruLlama(TruModel):
         res, _ = self.query_with_record(*args, **kwargs)
 
         return res
-    
-    def query_with_record(self, str_or_query_bundle) -> Tuple[llama_index.response.schema.Response, Record]:
+
+    def query_with_record(
+        self, str_or_query_bundle
+    ) -> Tuple[llama_index.response.schema.Response, Record]:
         # Wrapped calls will look this up by traversing the call stack. This
         # should work with threads.
         record: Sequence[RecordChainCall] = []
@@ -128,7 +146,7 @@ class TruLlama(TruModel):
             end_time = datetime.now()
             error = e
             logger.error(f"Engine raised an exception: {e}")
-        
+
         assert len(record) > 0, "No information recorded in call."
 
         ret_record_args = dict()
@@ -139,11 +157,12 @@ class TruLlama(TruModel):
             # TODO: generalize and error check
             ret_record_args['main_output'] = ret.response
 
-        ret_record = self._post_record(ret_record_args, error, total_tokens, total_cost, start_time, end_time, record)
+        ret_record = self._post_record(
+            ret_record_args, error, total_tokens, total_cost, start_time,
+            end_time, record
+        )
 
         return ret, ret_record
 
-
     def instrumented(self):
         return super().instrumented(categorizer=Is.what)
-        

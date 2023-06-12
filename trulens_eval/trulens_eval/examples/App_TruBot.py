@@ -12,10 +12,10 @@ import numpy as np
 import pinecone
 import streamlit as st
 
+from trulens_eval import Query
 from trulens_eval import tru
 from trulens_eval import tru_chain
 from trulens_eval import tru_feedback
-from trulens_eval import Query
 from trulens_eval.keys import *
 from trulens_eval.keys import PINECONE_API_KEY
 from trulens_eval.keys import PINECONE_ENV

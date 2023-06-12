@@ -21,10 +21,10 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import JSONPath
 from trulens_eval.schema import Model
+from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
 from trulens_eval.schema import RecordID
-from trulens_eval.schema import Perf
 from trulens_eval.util import all_queries
 from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
@@ -426,8 +426,6 @@ class LocalSQLite(TruDB):
             # NOTE: pandas dataframe will take in the various classes below but the
             # agg table used in UI will not like it. Sending it JSON/dicts instead.
 
-            
-
             row.calls_json = json.loads(
                 row.calls_json
             )['calls']  # calls_json (sequence of FeedbackCall)
@@ -521,7 +519,6 @@ class LocalSQLite(TruDB):
         df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
         df_records['total_cost'] = cost.map(lambda v: v.cost)
 
-        
         perf = df_records['perf_json'].apply(Perf.parse_raw)
         df_records['latency'] = perf.apply(lambda p: p.latency)
 

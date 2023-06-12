@@ -3,32 +3,34 @@ Generalized root type for various libraries like llama_index and langchain .
 """
 
 from enum import Enum
-
 import logging
-
 from pprint import PrettyPrinter
-
 from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple
 
 from pydantic import Field
 
+from trulens_eval.instruments import Instrument
+from trulens_eval.schema import ChainID
+from trulens_eval.schema import Cost
+from trulens_eval.schema import FeedbackDefinition
+from trulens_eval.schema import FeedbackMode
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import Model
+from trulens_eval.schema import Perf
+from trulens_eval.schema import Query
 from trulens_eval.schema import Record
+from trulens_eval.tru import Tru
 from trulens_eval.tru_db import TruDB
 from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru import Tru
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import ChainID, FeedbackDefinition
-from trulens_eval.schema import FeedbackMode, Model
-from trulens_eval.schema import Query
-from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Cost
-from trulens_eval.schema import Perf
 from trulens_eval.util import Class
-from trulens_eval.util import JSONPath
 from trulens_eval.util import instrumented_classes
-from trulens_eval.util import TP
-from trulens_eval.util import SerialModel, WithClassInfo, json_str_of_obj, obj_id_of_obj
+from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import jsonify
+from trulens_eval.util import JSONPath
+from trulens_eval.util import obj_id_of_obj
+from trulens_eval.util import SerialModel
+from trulens_eval.util import TP
+from trulens_eval.util import WithClassInfo
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,7 @@ COMPONENT = Any
 # Component category.
 # TODO: Enum
 COMPONENT_CATEGORY = str
+
 
 class TruModel(Model, SerialModel):
     """
@@ -68,7 +71,7 @@ class TruModel(Model, SerialModel):
 
     def __init__(
         self,
-        tru: Optional[Tru] = None,    
+        tru: Optional[Tru] = None,
         feedbacks: Optional[Sequence[Feedback]] = None,
         **kwargs
     ):
@@ -107,7 +110,9 @@ class TruModel(Model, SerialModel):
             for f in self.feedbacks:
                 self.db.insert_feedback_definition(f)
 
-        self.instrument.instrument_object(obj=self.model, query=Query.Query().model)
+        self.instrument.instrument_object(
+            obj=self.model, query=Query.Query().model
+        )
 
     def json(self, *args, **kwargs):
         # Need custom jsonification here because it is likely the model
@@ -119,7 +124,10 @@ class TruModel(Model, SerialModel):
         # Same problem as in json.
         return jsonify(self, instrument=self.instrument)
 
-    def _post_record(self, ret_record_args, error, total_tokens, total_cost, start_time, end_time, record):
+    def _post_record(
+        self, ret_record_args, error, total_tokens, total_cost, start_time,
+        end_time, record
+    ):
         """
         Final steps of record construction common among model types.
         """
@@ -131,7 +139,7 @@ class TruModel(Model, SerialModel):
         ret_record_args['chain_id'] = self.chain_id
 
         ret_record = Record(**ret_record_args)
-       
+
         if error is not None:
             if self.feedback_mode == FeedbackMode.WITH_CHAIN:
                 self._handle_error(record=ret_record, error=error)
@@ -161,9 +169,7 @@ class TruModel(Model, SerialModel):
         if self.tru is None or self.feedback_mode is None:
             return
 
-        record_id = self.tru.add_record(
-            record=record
-        )
+        record_id = self.tru.add_record(record=record)
 
         if len(self.feedbacks) == 0:
             return
@@ -184,9 +190,7 @@ class TruModel(Model, SerialModel):
                                     FeedbackMode.WITH_CHAIN_THREAD]:
 
             results = self.tru.run_feedback_functions(
-                record=record,
-                feedback_functions=self.feedbacks,
-                chain=self
+                record=record, feedback_functions=self.feedbacks, chain=self
             )
 
             for result in results:
@@ -196,10 +200,13 @@ class TruModel(Model, SerialModel):
         if self.db is None:
             return
 
-    def instrumented(self, categorizer: Callable[[Class], Iterable[COMPONENT_CATEGORY]]) -> Iterable[Tuple[JSONPath, List[COMPONENT_CATEGORY]]]:
+    def instrumented(
+        self, categorizer: Callable[[Class], Iterable[COMPONENT_CATEGORY]]
+    ) -> Iterable[Tuple[JSONPath, List[COMPONENT_CATEGORY]]]:
         # Enumerate instrumented components:
 
         from trulens_eval.utils.langchain import Is
 
-        for q, ci, obj in instrumented_classes(jsonify(self.model, instrument=self.instrument)):
-            yield(q, list(categorizer(ci)))
+        for q, ci, obj in instrumented_classes(jsonify(
+                self.model, instrument=self.instrument)):
+            yield (q, list(categorizer(ci)))

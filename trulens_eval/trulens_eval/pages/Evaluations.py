@@ -79,7 +79,7 @@ else:
 
         gb.configure_column('record_id', header_name='Record ID', hide=True)
         gb.configure_column('chain_id', header_name='Chain ID')
-        
+
         gb.configure_column('feedback_id', header_name='Feedback ID', hide=True)
         gb.configure_column('input', header_name='User Input')
         gb.configure_column(
@@ -93,9 +93,9 @@ else:
         gb.configure_column('ts', header_name='Time Stamp', sort="desc")
 
         non_feedback_cols = [
-            'chain_id', 'type', 'ts', 'total_tokens', 'total_cost', 'record_json',
-            'latency', 'record_id', 'chain_id', 'cost_json', 'chain_json',
-            'input', 'output', 'perf_json'
+            'chain_id', 'type', 'ts', 'total_tokens', 'total_cost',
+            'record_json', 'latency', 'record_id', 'chain_id', 'cost_json',
+            'chain_json', 'input', 'output', 'perf_json'
         ]
 
         for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
@@ -146,6 +146,7 @@ else:
                 feedback_calls = row[f"{fcol}_calls"]
 
                 def display_feedback_call(call):
+
                     def highlight(s):
                         return ['background-color: #4CAF50'] * len(
                             s

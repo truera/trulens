@@ -1,10 +1,13 @@
 from typing import Callable, Iterable, List
+
 from pydantic import Field
+
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru_model import COMPONENT_CATEGORY
 from trulens_eval.util import Class
-from trulens_eval.util import TP, first, second
-
+from trulens_eval.util import first
+from trulens_eval.util import second
+from trulens_eval.util import TP
 
 
 class Is:
@@ -16,28 +19,27 @@ class Is:
     @staticmethod
     def engine(cls: Class):
         return cls.noserio_issubclass(
-            module_name="llama_index.indices.query.base", class_name="BaseQueryEngine"
+            module_name="llama_index.indices.query.base",
+            class_name="BaseQueryEngine"
         )
 
     @staticmethod
     def retriever(cls: Class):
         return cls.noserio_issubclass(
-            module_name="llama_index.indices.base_retriever", class_name="BaseRetriever"
+            module_name="llama_index.indices.base_retriever",
+            class_name="BaseRetriever"
         )
-
 
     @staticmethod
     def selector(cls: Class):
         return cls.noserio_issubclass(
-            module_name="llama_index.selectors.types", class_name="BaseSelector"
+            module_name="llama_index.selectors.types",
+            class_name="BaseSelector"
         )
-
 
     @staticmethod
     def what(cls: Class) -> Iterable[COMPONENT_CATEGORY]:
-        CHECKERS = [
-            Is.engine, Is.retriever, Is.selector
-        ]
+        CHECKERS = [Is.engine, Is.retriever, Is.selector]
 
         for checker in CHECKERS:
             if checker(cls):
@@ -46,7 +48,5 @@ class Is:
 
 # TODO: same for llama index:
 # class WithFeedbackFilterDocuments(VectorStoreRetriever):
-    #feedback: Feedback
-    #threshold: float
-
-  
+#feedback: Feedback
+#threshold: float

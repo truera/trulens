@@ -9,12 +9,9 @@ import itertools
 import logging
 from multiprocessing.pool import AsyncResult
 import re
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
-)
 from time import sleep
 from typing import (
-    Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 )
 
 from langchain.callbacks import get_openai_callback
@@ -27,19 +24,16 @@ from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
 from trulens_eval.schema import Cost
+from trulens_eval.schema import FeedbackCall
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.util import FunctionOrMethod
 from trulens_eval.schema import Model
-from trulens_eval.tru_db import JSON
 from trulens_eval.schema import Query
 from trulens_eval.tru_db import JSON
-from trulens_eval.schema import Query
-
 from trulens_eval.tru_db import Record
-from trulens_eval.schema import FeedbackCall
+from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP

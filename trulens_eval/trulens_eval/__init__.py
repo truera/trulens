@@ -33,18 +33,24 @@ otherwise you might get circular import errors.
 
 __version__ = "0.1.2"
 
-from trulens_eval.tru_chain import TruChain
-from trulens_eval.tru_llama import TruLlama
-from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru_feedback import OpenAI
-from trulens_eval.tru_feedback import Huggingface
-from trulens_eval.tru import Tru
-from trulens_eval.schema import Query
 from trulens_eval.schema import FeedbackMode
+from trulens_eval.schema import Query
+from trulens_eval.tru import Tru
+from trulens_eval.tru_chain import TruChain
+from trulens_eval.tru_feedback import Feedback
+from trulens_eval.tru_feedback import Huggingface
+from trulens_eval.tru_feedback import OpenAI
 from trulens_eval.tru_feedback import Provider
+from trulens_eval.tru_llama import TruLlama
 
 __all__ = [
     'Tru',
-    'TruChain', 'TruLlama',
-    'Feedback', 'OpenAI', 'Huggingface', 'FeedbackMode', 'Provider', 'Query',
+    'TruChain',
+    'TruLlama',
+    'Feedback',
+    'OpenAI',
+    'Huggingface',
+    'FeedbackMode',
+    'Provider',
+    'Query',
 ]
