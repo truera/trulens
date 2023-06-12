@@ -1050,6 +1050,12 @@ class Class(SerialModel):
 
     bases: Optional[Sequence[Class]]
 
+    def __repr__(self):
+        return self.module.module_name + "." + self.name
+
+    def __str__(self):
+        return f"{self.name}({self.module.module_name})"
+
     @staticmethod
     def of_class(
         cls: type, with_bases: bool = False, loadable: bool = False
@@ -1060,6 +1066,10 @@ class Class(SerialModel):
             bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__))
             if with_bases else None
         )
+
+    @staticmethod
+    def of_object(obj: object, with_bases: bool = False, loadable: bool = False):
+        return Class.of_class(cls=obj.__class__, with_bases=with_bases, loadable=loadable)
 
     def load(self) -> type:  # class
         try:

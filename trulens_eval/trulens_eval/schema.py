@@ -15,6 +15,7 @@ from typing import (
 
 from munch import Munch as Bunch
 import pydantic
+from trulens_eval.util import Class
 from trulens_eval.util import all_queries
 from trulens_eval.util import WithClassInfo
 from trulens_eval.util import Function, Method
@@ -313,6 +314,9 @@ class Model(SerialModel, WithClassInfo):
     # if "withchainthread" was set.
     feedback_mode: FeedbackMode = FeedbackMode.WITH_CHAIN_THREAD
 
+    # Class of the main instrumented object.
+    root_class: Class
+
     def __init__(
         self,
         chain_id: Optional[ChainID] = None,
@@ -333,4 +337,3 @@ class Model(SerialModel, WithClassInfo):
             chain_id = obj_id_of_obj(obj=self.dict(), prefix="chain")
 
         self.chain_id = chain_id
-
