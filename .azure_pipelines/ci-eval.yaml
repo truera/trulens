@@ -71,9 +71,10 @@ jobs:
         displayName: NoDiffCheck
       - bash: |
           source activate $(condaEnvFileSuffix)
+          cd ./docs/trulens_eval
           pip install jupyter
           pip install nbmerge
-          ./.github/workflows/combine_nb_to_docs_testing.sh
+          ../../.github/workflows/combine_nb_to_docs_testing.sh
         displayName: Run combine docs for testing
       - bash: |
           source activate $(condaEnvFileSuffix)
