@@ -24,8 +24,9 @@ tru = Tru()
 # ! pip install langchain>=0.0.170
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
-from langchain.prompts.chat import ChatPromptTemplate, PromptTemplate
+from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
+from langchain.prompts.chat import PromptTemplate
 
 # ### Create Simple LLM Application
 # 
@@ -79,7 +80,6 @@ print(llm_response)
 
 tru.run_dashboard() # open a local streamlit app to explore
 
-# tru.run_dashboard(_dev=True) # if running from repo
 # tru.stop_dashboard() # stop if needed
 
 # ### Chain Leaderboard
