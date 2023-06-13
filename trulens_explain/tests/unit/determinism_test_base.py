@@ -1,7 +1,8 @@
 import numpy as np
-from trulens.nn.backend import get_backend
 from trulens.nn.quantities import LambdaQoI
 from trulens.nn.quantities import MaxClassQoI
+
+from trulens.nn.backend import get_backend
 
 
 class DeterminismTestBase(object):
