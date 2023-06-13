@@ -163,10 +163,7 @@ tru.add_record(record)
 
 thumb_result = True
 tru.add_feedback(
-    name="👍 (1) or 👎 (0)",
-    record_id=record.record_id,
-    chain_id=truchain.chain_id,
-    result=thumb_result
+    name="👍 (1) or 👎 (0)", record_id=record.record_id, result=thumb_result
 )
 
 # ### Evaluate Quality
@@ -251,27 +248,36 @@ tru.stop_evaluator()
 # Feedback functions are organized by model provider into Provider classes.
 #
 # The process for adding new feedback functions is:
-# 1. Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class:
+# 1. Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class. Add the new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).
 
 from trulens_eval import Provider
 
 
 class StandAlone(Provider):
-    pass
 
-
-# 2. Add a new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).
-
-
-def feedback(self, text: str) -> float:
-    """
-        Describe how the model works
+    def my_custom_feedback(self, my_text_field: str) -> float:
+        """
+        A dummy function of text inputs to float outputs.
 
         Parameters:
-            text (str): Text to evaluate.
-            Can also be prompt (str) and response (str).
+            my_text_field (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 (worst) and 1 (best).
+            float: square length of the text
         """
-    return float
+        return 1.0 / (1.0 + len(my_text_field) * len(my_text_field))
+
+
+# 2. Instantiate your provider and feedback functions. The feedback function is wrapped by the trulens-eval Feedback class which helps specify what will get sent to your function parameters (For example: Query.RecordInput or Query.RecordOutput)
+
+my_standalone = StandAlone()
+my_feedback_function_standalone = Feedback(
+    my_standalone.my_custom_feedback
+).on(my_text_field=Query.RecordOutput)
+
+# 3. Your feedback function is now ready to use just like the out of the box feedback functions. Below is an example of it being used.
+
+feedback_results = tru.run_feedback_functions(
+    record=record, feedback_functions=[my_feedback_function_standalone]
+)
+tru.add_feedbacks(feedback_results)
