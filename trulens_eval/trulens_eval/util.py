@@ -104,8 +104,9 @@ class OptionalImports(object):
             return self.imp(*args, **kwargs)
         
         except ModuleNotFoundError as e:
-            # Check if the import error was from an import in trulens_eval as otherwise we don't want to 
-            # intercept the error as some modules rely on import failures for various things.
+            # Check if the import error was from an import in trulens_eval as
+            # otherwise we don't want to intercept the error as some modules
+            # rely on import failures for various things.
             module_name = inspect.currentframe().f_back.f_globals["__name__"]
             if not module_name.startswith("trulens_eval"):
                 raise e
