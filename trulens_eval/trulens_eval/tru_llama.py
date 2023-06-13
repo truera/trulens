@@ -2,50 +2,29 @@
 # Llama_index instrumentation and monitoring. 
 """
 
-from collections import defaultdict
 from datetime import datetime
-from inspect import BoundArguments
-from inspect import signature
-from inspect import stack
 import logging
-import os
 from pprint import PrettyPrinter
-import threading as th
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
-
-
-from pydantic import BaseModel
-from pydantic import Field
+from typing import Sequence, Tuple
 
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackMode
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import Method
-from trulens_eval.schema import Query
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
-from trulens_eval.schema import RecordChainCallMethod
-from trulens_eval.tru import Tru
-from trulens_eval.tru_db import TruDB
-from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru_model import TruModel
 from trulens_eval.util import Class
-from trulens_eval.util import get_local_in_call_stack
-from trulens_eval.util import jsonify
-from trulens_eval.util import JSONPath
-from trulens_eval.util import noserio, REQUIREMENT_LLAMA
-from trulens_eval.util import TP, import_optional
+from trulens_eval.util import OptionalImports
+from trulens_eval.util import REQUIREMENT_LLAMA
 from trulens_eval.utils.llama import Is
 
 logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-llama_index = import_optional(mod="llama_index", message=REQUIREMENT_LLAMA)
-query_engine = import_optional(mod="llama_index.query_engine", message=REQUIREMENT_LLAMA)
-BaseQueryEngine = import_optional(mod='llama_index.indices.query.base', what='BaseQueryEngine', message=REQUIREMENT_LLAMA)
-Response = import_optional(mod="llama_index.response.schema", what="Response", message=REQUIREMENT_LLAMA)
+with OptionalImports(message=REQUIREMENT_LLAMA):
+    import llama_index
+    from llama_index.indices.query.base import BaseQueryEngine
+    from llama_index.response.schema import Response
+
 
 class LlamaInstrument(Instrument):
 
@@ -54,8 +33,8 @@ class LlamaInstrument(Instrument):
 
         # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
-            llama_index.indices.query.base.BaseQueryEngine,
-            llama_index.indices.base_retriever.BaseRetriever
+            llama_index.indices.query.base.BaseQueryEngine, llama_index.indices.
+            base_retriever.BaseRetriever
             # query_engine.retriever_query_engine.RetrieverQueryEngine
         }
 
@@ -81,7 +60,7 @@ class LlamaInstrument(Instrument):
         super().__init__(
             root_method=TruLlama.query_with_record,
             modules=LlamaInstrument.Default.MODULES,
-            classes=LlamaInstrument.Default.CLASSES(), # was thunk
+            classes=LlamaInstrument.Default.CLASSES(),  # was thunk
             methods=LlamaInstrument.Default.METHODS
         )
 
@@ -102,9 +81,7 @@ class TruLlama(TruModel):
 
     model: BaseQueryEngine
 
-    def __init__(
-        self, model: BaseQueryEngine, **kwargs
-    ):
+    def __init__(self, model: BaseQueryEngine, **kwargs):
 
         super().update_forward_refs()
 
@@ -120,9 +97,7 @@ class TruLlama(TruModel):
 
         return res
 
-    def query_with_record(
-        self, str_or_query_bundle
-    ) -> Tuple[Response, Record]:
+    def query_with_record(self, str_or_query_bundle) -> Tuple[Response, Record]:
         # Wrapped calls will look this up by traversing the call stack. This
         # should work with threads.
         record: Sequence[RecordChainCall] = []

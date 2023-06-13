@@ -1,15 +1,14 @@
-from typing import Callable, Iterable, List
+from typing import Iterable
 
-from pydantic import Field
-
-from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru_model import COMPONENT_CATEGORY
 from trulens_eval.util import Class
-from trulens_eval.util import first
-from trulens_eval.util import second
-from trulens_eval.util import TP, REQUIREMENT_LLAMA, import_optional
+from trulens_eval.util import OptionalImports
+from trulens_eval.util import REQUIREMENT_LLAMA
+from trulens_eval.util import TP
 
-llama_index = import_optional(mod="llama_index", message=REQUIREMENT_LLAMA)
+with OptionalImports(message=REQUIREMENT_LLAMA):
+    import llama_index
+
 
 class Is:
     """

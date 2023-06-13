@@ -5,35 +5,27 @@
 from datetime import datetime
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Dict, List, Optional, Sequence, Union
-
-from pydantic import Field
+from typing import Any, Dict, List, Sequence, Union
 
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import Query
-from trulens_eval.schema import Record
 from trulens_eval.schema import RecordChainCall
-from trulens_eval.tru import Tru
-from trulens_eval.tru_db import TruDB
-from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru_model import FeedbackMode
 from trulens_eval.tru_model import TruModel
 from trulens_eval.util import Class
 from trulens_eval.util import jsonify
 from trulens_eval.util import noserio
-from trulens_eval.util import TP, REQUIREMENT_LANGCHAIN, import_optional
-from trulens_eval.util import WithClassInfo
+from trulens_eval.util import OptionalImports
+from trulens_eval.util import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.langchain import Is
 
 logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-langchain = import_optional(mod='langchain', message=REQUIREMENT_LANGCHAIN)
-Chain = import_optional(mod='langchain.chains.base', what='Chain', message=REQUIREMENT_LANGCHAIN)
-get_openai_callback = import_optional(mod='langchain.callbacks', what='get_openai_callback', message=REQUIREMENT_LANGCHAIN)
+with OptionalImports(message=REQUIREMENT_LANGCHAIN):
+    import langchain
+    from langchain.callbacks import get_openai_callback
+    from langchain.chains.base import Chain
+
 
 class LangChainInstrument(Instrument):
 
@@ -42,11 +34,10 @@ class LangChainInstrument(Instrument):
 
         # Thunk because langchain is optional.
         CLASSES = lambda: {
-            langchain.chains.base.Chain,
-            langchain.vectorstores.base.BaseRetriever,
-            langchain.schema.BaseRetriever, langchain.llms.base.BaseLLM,
-            langchain.prompts.base.BasePromptTemplate,
-            langchain.schema.BaseMemory, langchain.schema.BaseChatMessageHistory
+            langchain.chains.base.Chain, langchain.vectorstores.base.
+            BaseRetriever, langchain.schema.BaseRetriever, langchain.llms.base.
+            BaseLLM, langchain.prompts.base.BasePromptTemplate, langchain.schema
+            .BaseMemory, langchain.schema.BaseChatMessageHistory
         }
 
         # Instrument only methods with these names and of these classes.
