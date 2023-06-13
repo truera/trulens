@@ -35,7 +35,7 @@ T = TypeVar("T")
 # Identifier types.
 
 RecordID = str
-ChainID = str
+AppID = str
 FeedbackDefinitionID = str
 FeedbackResultID = str
 
@@ -45,7 +45,7 @@ FeedbackResultID = str
 # Record related:
 
 
-class RecordChainCallMethod(SerialModel):
+class RecordAppCallMethod(SerialModel):
     path: JSONPath
     method: Method
 
@@ -64,13 +64,13 @@ class Perf(SerialModel):
         return self.end_time - self.start_time
 
 
-class RecordChainCall(SerialModel):
+class RecordAppCall(SerialModel):
     """
     Info regarding each instrumented method call is put into this container.
     """
 
-    # Call stack but only containing paths of instrumented chains/other objects.
-    chain_stack: Sequence[RecordChainCallMethod]
+    # Call stack but only containing paths of instrumented apps/other objects.
+    stack: Sequence[RecordAppCallMethod]
 
     # Arguments to the instrumented method.
     args: JSON
@@ -92,7 +92,7 @@ class RecordChainCall(SerialModel):
     tid: int
 
     def top(self):
-        return self.chain_stack[-1]
+        return self.stack[-1]
 
     def method(self):
         return self.top().method
@@ -100,7 +100,7 @@ class RecordChainCall(SerialModel):
 
 class Record(SerialModel):
     record_id: RecordID
-    chain_id: ChainID
+    app_id: AppID
 
     cost: Optional[Cost] = None  # pydantic.Field(default_factory=Cost)
     perf: Optional[Perf] = None  # pydantic.Field(default_factory=Perf)
@@ -114,9 +114,9 @@ class Record(SerialModel):
     main_error: Optional[str] = None  # if error
 
     # The collection of calls recorded. Note that these can be converted into a
-    # json structure with the same paths as the chain that generated this record
-    # via `layout_calls_as_chain`.
-    calls: Sequence[RecordChainCall] = []
+    # json structure with the same paths as the app that generated this record
+    # via `layout_calls_as_app`.
+    calls: Sequence[RecordAppCall] = []
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
         super().__init__(record_id="temporay", **kwargs)
@@ -127,20 +127,20 @@ class Record(SerialModel):
         self.record_id = record_id
 
     # TODO: typing
-    def layout_calls_as_chain(self) -> Any:
+    def layout_calls_as_app(self) -> Any:
         """
         Layout the calls in this record into the structure that follows that of
-        the chain that created this record. This uses the paths stored in each
-        `RecordChainCall` which are paths into the chain.
+        the app that created this record. This uses the paths stored in each
+        `RecordAppCall` which are paths into the app.
 
-        Note: We cannot create a validated schema.py:Chain class (or subclass)
+        Note: We cannot create a validated schema.py:App class (or subclass)
         object here as the layout of records differ in these ways:
 
             - Records do not include anything that is not an instrumented method
-              hence have most of the structure of a chain missing.
+              hence have most of the structure of a app missing.
         
-            - Records have RecordChainCall as their leafs where method
-              definitions would be in the Chain structure.
+            - Records have RecordAppCall as their leafs where method
+              definitions would be in the App structure.
         """
 
         # TODO: problem: collissions
@@ -166,14 +166,14 @@ class Query:
     # Typing for type hints.
     Query = JSONPath
 
-    # Instance for constructing queries for record json like `Record.chain.llm`.
+    # Instance for constructing queries for record json like `Record.app.llm`.
     Record = Query().__record__
 
-    # Instance for constructing queries for chain json.
-    Chain = Query().__chain__
+    # Instance for constructing queries for app json.
+    App = Query().__app__
 
-    # A Chain's main input and main output.
-    # TODO: Chain input/output generalization.
+    # A App's main input and main output.
+    # TODO: App input/output generalization.
     RecordInput = Record.main_input
     RecordOutput = Record.main_output
 
@@ -194,8 +194,6 @@ class FeedbackResult(SerialModel):
     feedback_result_id: FeedbackResultID
 
     record_id: RecordID
-
-    chain_id: ChainID
 
     feedback_definition_id: Optional[FeedbackDefinitionID] = None
 
@@ -251,7 +249,7 @@ class FeedbackDefinition(SerialModel):
         selectors: Dict[str, JSONPath] = None
     ):
         """
-        - selectors: Optional[Dict[str, Selection]] -- mapping of implementation
+        - selectors: Optional[Dict[str, JSONPath]] -- mapping of implementation
           argument names to where to get them from a record.
 
         - feedback_definition_id: Optional[str] - unique identifier.
@@ -279,58 +277,55 @@ class FeedbackDefinition(SerialModel):
         self.feedback_definition_id = feedback_definition_id
 
 
-# Model related:
+# App related:
 
 
 class FeedbackMode(str, Enum):
     # No evaluation will happen even if feedback functions are specified.
     NONE = "none"
 
-    # Try to run feedback functions immediately and before chain returns a
+    # Try to run feedback functions immediately and before app returns a
     # record.
-    # TODO: rename
-    WITH_CHAIN = "with_chain"
+    WITH_APP = "with_app"
 
-    # Try to run feedback functions in the same process as the chain but after
+    # Try to run feedback functions in the same process as the app but after
     # it produces a record.
-    # TODO: rename
-    WITH_CHAIN_THREAD = "with_chain_thread"
+    WITH_APP_THREAD = "with_app_thread"
 
     # Evaluate later via the process started by
     # `tru.start_deferred_feedback_evaluator`.
     DEFERRED = "deferred"
 
 
-class Model(SerialModel, WithClassInfo):
-    # Serialized fields here whereas tru_model.py:TruMode contains
+class App(SerialModel, WithClassInfo):
+    # Serialized fields here whereas tru_app.py:TruApp contains
     # non-serialized fields.
 
     class Config:
         arbitrary_types_allowed = True
 
-    # TODO: rename to model_id
-    chain_id: ChainID
+    app_id: AppID
 
     # Feedback functions to evaluate on each record. Unlike the above, these are
     # meant to be serialized.
     feedback_definitions: Sequence[FeedbackDefinition] = []
 
     # NOTE: Custom feedback functions cannot be run deferred and will be run as
-    # if "withchainthread" was set.
-    feedback_mode: FeedbackMode = FeedbackMode.WITH_CHAIN_THREAD
+    # if "withappthread" was set.
+    feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD
 
     # Class of the main instrumented object.
     root_class: Class
 
     def __init__(
         self,
-        chain_id: Optional[ChainID] = None,
-        feedback_mode: FeedbackMode = FeedbackMode.WITH_CHAIN_THREAD,
+        app_id: Optional[AppID] = None,
+        feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
         **kwargs
     ):
 
         # for us:
-        kwargs['chain_id'] = "temporary"  # will be adjusted below
+        kwargs['app_id'] = "temporary"  # will be adjusted below
         kwargs['feedback_mode'] = feedback_mode
 
         # for WithClassInfo:
@@ -338,7 +333,7 @@ class Model(SerialModel, WithClassInfo):
 
         super().__init__(**kwargs)
 
-        if chain_id is None:
-            chain_id = obj_id_of_obj(obj=self.dict(), prefix="chain")
+        if app_id is None:
+            app_id = obj_id_of_obj(obj=self.dict(), prefix="app")
 
-        self.chain_id = chain_id
+        self.app_id = app_id

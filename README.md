@@ -74,9 +74,8 @@ f_lang_match = Feedback(hugs.language_match).on(
 # wrap your chain with TruChain
 truchain = TruChain(
     chain,
-    chain_id='Chain1_ChatApplication',
-    feedbacks=[f_lang_match],
-    tru=tru
+    app_id='Chain1_ChatApplication',
+    feedbacks=[f_lang_match]
 )
 # Note: any `feedbacks` specified here will be evaluated and logged whenever the chain is used.
 truchain("que hora es?")

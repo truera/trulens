@@ -25,9 +25,9 @@ from trulens_eval.tru_feedback import Feedback
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
 
-chain_id = "TruBot"
-# chain_id = "TruBot_langprompt"
-# chain_id = "TruBot_relevance"
+app_id = "TruBot"
+# app_id = "TruBot_langprompt"
+# app_id = "TruBot_relevance"
 
 # Pinecone configuration.
 pinecone.init(
@@ -86,7 +86,7 @@ def generate_response(prompt):
     )
 
     # Language mismatch fix:
-    if "langprompt" in chain_id:
+    if "langprompt" in app_id:
         chain.combine_docs_chain.llm_chain.prompt.template = \
             "Use the following pieces of CONTEXT to answer the question at the end " \
             "in the same language as the question. If you don't know the answer, " \
@@ -97,7 +97,7 @@ def generate_response(prompt):
             "Question: {question}\n" \
             "Helpful Answer: "
 
-    elif "relevance" in chain_id:
+    elif "relevance" in app_id:
         # Contexts fix
         chain.combine_docs_chain.llm_chain.prompt.template = \
             "Use only the relevant contexts to answer the question at the end " \
@@ -115,7 +115,7 @@ def generate_response(prompt):
         chain.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
 
     # Trulens instrumentation.
-    tc = tru_chain.TruChain(chain, chain_id=chain_id)
+    tc = tru_chain.TruChain(chain, app_id=app_id)
 
     return tc, tc.call_with_record(dict(question=prompt))
 
@@ -140,7 +140,7 @@ if user_input:
     st.write(answer)
 
     record_id = tru.add_data(
-        chain_id=chain_id,
+        app_id=app_id,
         prompt=prompt_input,
         response=answer,
         record=record,
@@ -151,7 +151,7 @@ if user_input:
 
     # Run feedback function and get value
     feedbacks = tru.run_feedback_functions(
-        chain=chain,
+        app=app,
         record=record,
         feedback_functions=[f_lang_match, f_qa_relevance, f_qs_relevance]
     )

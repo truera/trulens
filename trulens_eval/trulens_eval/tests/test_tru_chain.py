@@ -1,13 +1,5 @@
 # from llama.hf import LLaMATokenizer
 
-from langchain import LLMChain
-from langchain import PromptTemplate
-from langchain.chains import ConversationalRetrievalChain
-from langchain.chains import SimpleSequentialChain
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.llms import HuggingFacePipeline
-from langchain.memory import ConversationBufferWindowMemory
-from langchain.vectorstores import Pinecone
 import pinecone
 import pytest
 import torch
@@ -18,6 +10,18 @@ from transformers import pipeline
 from trulens_eval.keys import PINECONE_API_KEY
 from trulens_eval.keys import PINECONE_ENV
 from trulens_eval.tru_chain import TruChain
+from trulens_eval.util import OptionalImports
+from trulens_eval.util import REQUIREMENT_LANGCHAIN
+
+with OptionalImports(message=REQUIREMENT_LANGCHAIN):
+    from langchain import LLMChain
+    from langchain import PromptTemplate
+    from langchain.chains import ConversationalRetrievalChain
+    from langchain.chains import SimpleSequentialChain
+    from langchain.embeddings.openai import OpenAIEmbeddings
+    from langchain.llms import HuggingFacePipeline
+    from langchain.memory import ConversationBufferWindowMemory
+    from langchain.vectorstores import Pinecone
 
 
 class TestTruChain():
@@ -55,25 +59,25 @@ class TestTruChain():
         self.llm = HuggingFacePipeline(pipeline=self.pipe)
 
     def test_qa_prompt(self):
-        # Test of a small q/a chain using a prompt and a single call to an llm.
+        # Test of a small q/a app using a prompt and a single call to an llm.
 
         # llm = OpenAI()
 
         template = """Q: {question} A:"""
         prompt = PromptTemplate(template=template, input_variables=["question"])
-        llm_chain = LLMChain(prompt=prompt, llm=self.llm)
+        llm_app = LLMChain(prompt=prompt, llm=self.llm)
 
-        tru_chain = TruChain(chain=llm_chain)
+        tru_app = TruChain(app=llm_app)
 
-        assert tru_chain.model is not None
+        assert tru_app.app is not None
 
-        tru_chain.run(dict(question="How are you?"))
-        tru_chain.run(dict(question="How are you today?"))
+        tru_app.run(dict(question="How are you?"))
+        tru_app.run(dict(question="How are you today?"))
 
-        assert len(tru_chain.db.select()) == 2
+        assert len(tru_app.db.select()) == 2
 
     def test_qa_prompt_with_memory(self):
-        # Test of a small q/a chain using a prompt and a single call to an llm.
+        # Test of a small q/a app using a prompt and a single call to an llm.
         # Also has memory.
 
         # llm = OpenAI()
@@ -83,20 +87,20 @@ class TestTruChain():
 
         memory = ConversationBufferWindowMemory(k=2)
 
-        llm_chain = LLMChain(prompt=prompt, llm=self.llm, memory=memory)
+        llm_app = LLMChain(prompt=prompt, llm=self.llm, memory=memory)
 
-        tru_chain = TruChain(chain=llm_chain)
+        tru_app = TruChain(app=llm_app)
 
-        assert tru_chain.model is not None
+        assert tru_app.app is not None
 
-        tru_chain.run(dict(question="How are you?"))
-        tru_chain.run(dict(question="How are you today?"))
+        tru_app.run(dict(question="How are you?"))
+        tru_app.run(dict(question="How are you today?"))
 
-        assert len(tru_chain.db.select()) == 2
+        assert len(tru_app.db.select()) == 2
 
     @pytest.mark.nonfree
     def test_qa_db(self):
-        # Test a q/a chain that uses a vector store to look up context to include in
+        # Test a q/a app that uses a vector store to look up context to include in
         # llm prompt.
 
         # WARNING: this test incurs calls to pinecone and openai APIs and may cost money.
@@ -118,55 +122,55 @@ class TestTruChain():
         # llm = OpenAI(temperature=0,max_tokens=128)
 
         retriever = docsearch.as_retriever()
-        chain = ConversationalRetrievalChain.from_llm(
+        app = ConversationalRetrievalChain.from_llm(
             llm=self.llm, retriever=retriever, return_source_documents=True
         )
 
-        tru_chain = TruChain(chain)
-        assert tru_chain.model is not None
-        tru_chain(dict(question="How do I add a model?", chat_history=[]))
+        tru_app = TruChain(app)
+        assert tru_app.app is not None
+        tru_app(dict(question="How do I add a model?", chat_history=[]))
 
-        assert len(tru_chain.db.select()) == 1
+        assert len(tru_app.db.select()) == 1
 
     def test_sequential(self):
-        # Test of a sequential chain that contains the same llm twice with
+        # Test of a sequential app that contains the same llm twice with
         # different prompts.
 
         template = """Q: {question} A:"""
         prompt = PromptTemplate(template=template, input_variables=["question"])
-        llm_chain = LLMChain(prompt=prompt, llm=self.llm)
+        llm_app = LLMChain(prompt=prompt, llm=self.llm)
 
         template_2 = """Reverse this sentence: {sentence}."""
         prompt_2 = PromptTemplate(
             template=template_2, input_variables=["sentence"]
         )
-        llm_chain_2 = LLMChain(prompt=prompt_2, llm=self.llm)
+        llm_app_2 = LLMChain(prompt=prompt_2, llm=self.llm)
 
-        seq_chain = SimpleSequentialChain(
-            chains=[llm_chain, llm_chain_2],
+        seq_app = SimpleSequentialChain(
+            apps=[llm_app, llm_app_2],
             input_key="question",
             output_key="answer"
         )
-        seq_chain.run(
+        seq_app.run(
             question="What is the average air speed velocity of a laden swallow?"
         )
 
-        tru_chain = TruChain(seq_chain)
-        assert tru_chain.model is not None
+        tru_app = TruChain(seq_app)
+        assert tru_app.app is not None
 
         # This run should not be recorded.
-        seq_chain.run(
+        seq_app.run(
             question="What is the average air speed velocity of a laden swallow?"
         )
 
         # These two should.
-        tru_chain.run(
+        tru_app.run(
             question=
             "What is the average air speed velocity of a laden european swallow?"
         )
-        tru_chain.run(
+        tru_app.run(
             question=
             "What is the average air speed velocity of a laden african swallow?"
         )
 
-        assert len(tru_chain.db.select()) == 2
+        assert len(tru_app.db.select()) == 2
