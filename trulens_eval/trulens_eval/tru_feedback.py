@@ -84,10 +84,12 @@ class Feedback(FeedbackDefinition):
         agg = agg or np.mean
 
         if imp is not None:
-            # These are for serialization to/from json and for db storage.
-            kwargs['implementation'] = FunctionOrMethod.of_callable(
-                imp, loadable=True
-            )
+            try:
+                # These are for serialization to/from json and for db storage.
+                kwargs['implementation'] = FunctionOrMethod.of_callable(imp)
+            except:
+                # User defined functions in script do not have a module so cannot be serialized
+                pass
         else:
             if "implementation" in kwargs:
                 imp: Callable = FunctionOrMethod.pick(
@@ -95,7 +97,12 @@ class Feedback(FeedbackDefinition):
                 ).load()
 
         if agg is not None:
-            kwargs['aggregator'] = FunctionOrMethod.of_callable(agg)
+            try:
+                # These are for serialization to/from json and for db storage.
+                kwargs['aggregator'] = FunctionOrMethod.of_callable(agg)
+            except:
+                # User defined functions in script do not have a module so cannot be serialized
+                pass
         else:
             if 'arrgregator' in kwargs:
                 agg: Callable = FunctionOrMethod.pick(**(kwargs['aggregator'])
