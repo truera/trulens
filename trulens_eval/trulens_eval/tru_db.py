@@ -507,8 +507,7 @@ class LocalSQLite(TruDB):
     def get_app(self, app_id: str) -> JSON:
         conn, c = self._connect()
         c.execute(
-            f"SELECT app_json FROM {self.TABLE_APPS} WHERE app_id=?",
-            (app_id,)
+            f"SELECT app_json FROM {self.TABLE_APPS} WHERE app_id=?", (app_id,)
         )
         result = c.fetchone()[0]
         conn.close()
