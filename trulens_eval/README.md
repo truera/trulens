@@ -237,7 +237,7 @@ We can log the records but first we need to log the chain itself.
 
 
 ```python
-tru.add_chain(chain=truchain)
+tru.add_app(chain=truchain)
 ```
 
 Then we can log the record:
