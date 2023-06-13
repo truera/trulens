@@ -76,12 +76,11 @@ class TruModel(Model, SerialModel):
         **kwargs
     ):
         
+        feedbacks = feedbacks or []
+
         # for us:
         kwargs['tru'] = tru
         kwargs['feedbacks'] = feedbacks
-
-        if tru is not None:
-            kwargs['db'] = tru.db
 
         super().__init__(**kwargs)
         
@@ -97,22 +96,22 @@ class TruModel(Model, SerialModel):
                 )
 
         self.tru = tru
-        self.db = tru.db
+        if self.tru is not None:
+            self.db = tru.db
 
-        if feedbacks is not None and tru is None:
-            raise ValueError("Feedback logging requires `tru` to be specified.")
-        feedbacks = feedbacks or []
+            if self.feedback_mode != FeedbackMode.NONE:
+                logger.debug(
+                    "Inserting chain and feedback function definitions to db."
+                )
+                self.db.insert_chain(chain=self)
+                for f in self.feedbacks:
+                    self.db.insert_feedback_definition(f)
 
+        else:
+            if len(feedbacks) > 0:
+                raise ValueError("Feedback logging requires `tru` to be specified.")
 
-
-        if tru is not None and self.feedback_mode != FeedbackMode.NONE:
-            logger.debug(
-                "Inserting chain and feedback function definitions to db."
-            )
-            self.db.insert_chain(chain=self)
-            for f in self.feedbacks:
-                self.db.insert_feedback_definition(f)
-
+        
         self.instrument.instrument_object(
             obj=self.model, query=Query.Query().model
         )
