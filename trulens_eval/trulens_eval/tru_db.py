@@ -43,6 +43,7 @@ pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
 
+
 class DBMeta(pydantic.BaseModel):
     """
     Databasae meta data mostly used for migrating from old db schemas.
@@ -183,7 +184,7 @@ class LocalSQLite(TruDB):
         try:
             c.execute(f'''SELECT key, value from {self.TABLE_META}''')
             rows = c.fetchall()
-            
+
             ret = {}
 
             for row in rows:
@@ -197,8 +198,8 @@ class LocalSQLite(TruDB):
             return DBMeta(trulens_version=trulens_version, attributes=ret)
 
         except Exception as e:
-            return DBMeta(trulens_version = None, attributes = {})
-        
+            return DBMeta(trulens_version=None, attributes={})
+
     def _build_tables(self):
         conn, c = self._connect()
 
@@ -217,7 +218,10 @@ class LocalSQLite(TruDB):
         if meta.trulens_version is None:
             # migrate from pre-version-tracked database
             # print(f"Migrating DB {self.filename} from trulens_version {meta.trulens_version} to {__version__}.")
-            c.execute(f'''INSERT INTO {self.TABLE_META} VALUES (?, ?)''', ('trulens_version', __version__))
+            c.execute(
+                f'''INSERT INTO {self.TABLE_META} VALUES (?, ?)''',
+                ('trulens_version', __version__)
+            )
 
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_RECORDS} (
