@@ -75,6 +75,16 @@ class TruModel(Model, SerialModel):
         feedbacks: Optional[Sequence[Feedback]] = None,
         **kwargs
     ):
+        
+        # for us:
+        kwargs['tru'] = tru
+        kwargs['feedbacks'] = feedbacks
+
+        if tru is not None:
+            kwargs['db'] = tru.db
+
+        super().__init__(**kwargs)
+        
         if tru is None:
             if self.feedback_mode != FeedbackMode.NONE:
                 logger.debug("Creating default tru.")
@@ -86,19 +96,14 @@ class TruModel(Model, SerialModel):
                     "No feedback evaluation and logging will occur."
                 )
 
+        self.tru = tru
+        self.db = tru.db
 
         if feedbacks is not None and tru is None:
             raise ValueError("Feedback logging requires `tru` to be specified.")
         feedbacks = feedbacks or []
 
-        # for us:
-        kwargs['tru'] = tru
-        kwargs['feedbacks'] = feedbacks
 
-        if tru is not None:
-            kwargs['db'] = tru.db
-
-        super().__init__(**kwargs)
 
         if tru is not None and self.feedback_mode != FeedbackMode.NONE:
             logger.debug(
