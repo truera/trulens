@@ -195,8 +195,6 @@ class FeedbackResult(SerialModel):
 
     record_id: RecordID
 
-    chain_id: ChainID
-
     feedback_definition_id: Optional[FeedbackDefinitionID] = None
 
     # "last timestamp"
