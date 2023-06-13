@@ -44,12 +44,12 @@ UNCIODE_YIELD = "⚡"
 # Optional requirements.
 
 REQUIREMENT_LLAMA = (
-    "llama_index module is required for instrumenting llama_index apps. "
-    "Please install it before use: `pip install llama_index`."
+    "llama_index 0.6.19 or above is required for instrumenting llama_index apps. "
+    "Please install it before use: `pip install llama_index>=0.6.19`."
 )
 REQUIREMENT_LANGCHAIN = (
-    "langchain module is required for instrumenting langchain apps. "
-    "Please install it before use: `pip install langchain`."
+    "langchain 0.0.170 or above is required for instrumenting langchain apps. "
+    "Please install it before use: `pip install langchain>=0.0.170`."
 )
 
 
@@ -82,14 +82,15 @@ class OptionalImports(object):
 
     ```python
 
-        with OptionalImport(mod='llama_index', message='Please install llama_index first') as llama_index:
-            query_engine = llama_index.query_engine
+        with OptionalImports(message='Please install llama_index first'):
+            import llama_index
+            from llama_index import query_engine
 
     ```
 
     The above python block will not raise any errors but once anything else
     about llama_index or query_engine gets accessed, an error is raised with the
-    specified message (unless llama_index is installed).
+    specified message (unless llama_index is installed of course).
     """
 
     def __init__(self, message: str = None):
