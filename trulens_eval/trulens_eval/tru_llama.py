@@ -9,8 +9,8 @@ from typing import Sequence, Tuple
 
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
-from trulens_eval.schema import RecordChainCall
-from trulens_eval.tru_model import TruModel
+from trulens_eval.schema import RecordAppCall
+from trulens_eval.tru_app import TruApp
 from trulens_eval.util import Class
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LLAMA
@@ -65,14 +65,13 @@ class LlamaInstrument(Instrument):
         )
 
 
-class TruLlama(TruModel):
+class TruLlama(TruApp):
     """
     Wrap a llama index engine for monitoring.
 
     Arguments:
     - model: RetrieverQueryEngine -- the engine to wrap.
-    - More args in TruModel
-    - More args in LlamaModel
+    - More args in TruApp
     - More args in WithClassInfo
     """
 
@@ -100,7 +99,7 @@ class TruLlama(TruModel):
     def query_with_record(self, str_or_query_bundle) -> Tuple[Response, Record]:
         # Wrapped calls will look this up by traversing the call stack. This
         # should work with threads.
-        record: Sequence[RecordChainCall] = []
+        record: Sequence[RecordAppCall] = []
 
         ret = None
         error = None
@@ -112,7 +111,7 @@ class TruLlama(TruModel):
         end_time = None
 
         try:
-            # TODO: do this only if there is an openai model inside the chain:
+            # TODO: do this only if there is an openai model inside the app:
             # with get_openai_callback() as cb:
             start_time = datetime.now()
             ret = self.model.query(str_or_query_bundle)

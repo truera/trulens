@@ -40,7 +40,7 @@ pp = PrettyPrinter()
 PORT = 3000
 verb = False
 
-# create a conversational chain with relevant models and vector store
+# create a conversational app with relevant models and vector store
 
 # Pinecone configuration.
 pinecone.init(
@@ -61,7 +61,7 @@ tru = Tru()
 
 ident = lambda h: h
 
-chain_ids = {
+app_ids = {
     0: "0/default",
     1: "1/lang_prompt",
     2: "2/relevance_prompt",
@@ -91,10 +91,10 @@ f_qs_relevance = Feedback(openai.qs_relevance).on(
 ).aggregate(np.min)
 
 
-def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
+def get_or_make_app(cid: str, selector: int = 0) -> TruChain:
     """
-    Create a new chain for the given conversation id `cid` or return an existing
-    one. Return the new or existing chain. `selector` determines which chain
+    Create a new app for the given conversation id `cid` or return an existing
+    one. Return the new or existing app. `selector` determines which app
     variant to return.
     """
 
@@ -104,12 +104,12 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     if cid in convos:
         return convos[cid]
 
-    if selector not in chain_ids:
+    if selector not in app_ids:
         selector = 0
 
-    chain_id = chain_ids[selector]
+    app_id = app_ids[selector]
 
-    pp.pprint(f"Starting a new conversation with {chain_id}.")
+    pp.pprint(f"Starting a new conversation with {app_id}.")
 
     # Embedding needed for Pinecone vector db.
     embedding = OpenAIEmbeddings(model='text-embedding-ada-002')  # 1536 dims
@@ -119,7 +119,7 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
 
     retriever = docsearch.as_retriever()
 
-    if "filtered" in chain_id:
+    if "filtered" in app_id:
         # Better contexts fix, filter contexts with relevance:
         retriever = WithFeedbackFilterDocuments.of_retriever(
             retriever=retriever, feedback=f_qs_relevance, threshold=0.5
@@ -136,8 +136,8 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
         output_key='answer'
     )
 
-    # Conversational chain puts it all together.
-    chain = ConversationalRetrievalChain.from_llm(
+    # Conversational app puts it all together.
+    app = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
         verbose=verb,
@@ -149,14 +149,14 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
 
     # Need to copy these otherwise various chains will feature templates that
     # point to the same objects.
-    chain.combine_docs_chain.llm_chain.prompt = \
-        chain.combine_docs_chain.llm_chain.prompt.copy()
-    chain.combine_docs_chain.document_prompt = \
-        chain.combine_docs_chain.document_prompt.copy()
+    app.combine_docs_chain.llm_chain.prompt = \
+        app.combine_docs_chain.llm_chain.prompt.copy()
+    app.combine_docs_chain.document_prompt = \
+        app.combine_docs_chain.document_prompt.copy()
 
-    if "lang" in chain_id:
+    if "lang" in app_id:
         # Language mismatch fix:
-        chain.combine_docs_chain.llm_chain.prompt.template = \
+        app.combine_docs_chain.llm_chain.prompt.template = \
             "Use the following pieces of context to answer the question at the end " \
             "in the same language as the question. If you don't know the answer, " \
             "just say that you don't know, don't try to make up an answer.\n" \
@@ -166,11 +166,11 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
             "Question: {question}\n" \
             "Helpful Answer: "
 
-    elif "relevance" in chain_id:
+    elif "relevance" in app_id:
         # Contexts fix
 
         # whitespace important in "Contexts! "
-        chain.combine_docs_chain.llm_chain.prompt.template = \
+        app.combine_docs_chain.llm_chain.prompt.template = \
             "Use only the relevant contexts to answer the question at the end " \
             ". Some pieces of context may not be relevant. If you don't know the answer, " \
             "just say that you don't know, don't try to make up an answer.\n" \
@@ -182,12 +182,12 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
             "Helpful Answer: "
 
         # "\t" important here:
-        chain.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
+        app.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
 
     # Trulens instrumentation.
     tc = tru.Chain(
-        chain=chain,
-        chain_id=chain_id,
+        chain=app,
+        app_id=app_id,
         feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance],
         feedback_mode=FeedbackMode.DEFERRED
     )
@@ -197,13 +197,13 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     return tc
 
 
-def get_answer(chain: TruChain, question: str) -> Tuple[str, str]:
+def get_answer(app: TruChain, question: str) -> Tuple[str, str]:
     """
-    Use the given `chain` to respond to `question`. Return the answer text and
+    Use the given `app` to respond to `question`. Return the answer text and
     sources elaboration text.
     """
 
-    outs = chain(dict(question=question))
+    outs = app(dict(question=question))
 
     result = outs['answer']
     sources = outs['source_documents']
@@ -252,7 +252,7 @@ def answer_message(client, body: dict, logger):
 
         convo_id = body['event']['thread_ts']
 
-        chain = get_or_make_chain(convo_id)
+        app = get_or_make_app(convo_id)
 
     else:
         convo_id = ts
@@ -261,12 +261,12 @@ def answer_message(client, body: dict, logger):
                 "0", "1", "2", "3", "4", "5"
         ]:
             selector = int(message[1])
-            chain = get_or_make_chain(convo_id, selector=selector)
+            app = get_or_make_app(convo_id, selector=selector)
 
             client.chat_postMessage(
                 channel=channel,
                 thread_ts=ts,
-                text=f"I will use chain {chain.chain_id} for this conversation."
+                text=f"I will use app {app.app_id} for this conversation."
             )
 
             if len(message) == 2:
@@ -275,7 +275,7 @@ def answer_message(client, body: dict, logger):
                 message = message[2:]
 
         else:
-            chain = get_or_make_chain(convo_id)
+            app = get_or_make_app(convo_id)
 
             client.chat_postMessage(
                 channel=channel,
@@ -283,7 +283,7 @@ def answer_message(client, body: dict, logger):
                 text=f"Hi. Let me check that for you..."
             )
 
-    res, res_sources = get_answer(chain, message)
+    res, res_sources = get_answer(app, message)
 
     client.chat_postMessage(
         channel=channel,

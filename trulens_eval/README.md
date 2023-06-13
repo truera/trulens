@@ -126,7 +126,7 @@ f_lang_match = Feedback(hugs.language_match).on(
 
 ```python
 truchain = TruChain(chain,
-    chain_id='Chain3_ChatApplication',
+    app_id='Chain3_ChatApplication',
     feedbacks=[f_lang_match])
 ```
 
@@ -179,7 +179,7 @@ Note: Feedback functions evaluated in the deferred manner can be seen in the "Pr
 
 
 ```python
-tru.get_records_and_feedback(chain_ids=[])[0] # pass an empty list of chain_ids to get all
+tru.get_records_and_feedback(app_ids=[])[0] # pass an empty list of app_ids to get all
 ```
 
 # Logging
@@ -194,7 +194,7 @@ This is done like so:
 ```python
 truchain = TruChain(
     chain,
-    chain_id='Chain1_ChatApplication',
+    app_id='Chain1_ChatApplication',
     tru=tru
 )
 truchain("This will be automatically logged.")
@@ -206,7 +206,7 @@ Feedback functions can also be logged automatically by providing them in a list 
 ```python
 truchain = TruChain(
     chain,
-    chain_id='Chain1_ChatApplication',
+    app_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match], # feedback functions
     tru=tru
 )
@@ -219,7 +219,7 @@ truchain("This will be automatically logged.")
 
 
 ```python
-tc = TruChain(chain, chain_id='Chain1_ChatApplication')
+tc = TruChain(chain, app_id='Chain1_ChatApplication')
 ```
 
 ### Set up logging and instrumentation
@@ -255,7 +255,7 @@ Capturing app feedback such as user feedback of the responses can be added with 
 thumb_result = True
 tru.add_feedback(name="👍 (1) or 👎 (0)", 
                   record_id=record.record_id,
-                  chain_id=truchain.chain_id, 
+                  app_id=truchain.app_id, 
                   result=thumb_result)
 ```
 
@@ -294,7 +294,7 @@ For demonstration purposes, we start the evaluator here but it can be started in
 ```python
 truchain: TruChain = TruChain(
     chain,
-    chain_id='Chain1_ChatApplication',
+    app_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match],
     tru=tru,
     feedback_mode="deferred"
