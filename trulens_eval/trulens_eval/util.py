@@ -94,7 +94,6 @@ class OptionalImports(object):
     """
 
     def __init__(self, message: str = None):
-        # self.mod = import_optional(mod=mod, message=message, importer=self)
         self.message = message
         self.importing = False
         self.imp = builtins.__import__
@@ -120,33 +119,6 @@ class OptionalImports(object):
         print(self.message)
         # Will re-raise exception unless True is returned.
         return None
-
-
-def import_optional(mod=None, what=None, message: str = None, importer=None):
-    """
-    Try to import `what` from module `mod` or the module `mod` itself if
-    `what` is None. If this cannot be imported, returns a dummy module which
-    will fail at first access with the given `message`.
-    """
-
-    try:
-        mod = importlib.import_module(mod)
-
-        if mod is None:
-            raise RuntimeError()
-
-        if what is None:
-            return mod
-
-    except Exception as e:
-        return Dummy(
-            importer=importer,
-            message=message if message is not None else
-            f"Module {mod} is not installed. Please install before using this functionality."
-        )
-
-    ele = getattr(mod, what)
-    return ele
 
 
 # Collection utilities
