@@ -44,8 +44,8 @@ UNCIODE_YIELD = "⚡"
 # Optional requirements.
 
 REQUIREMENT_LLAMA = (
-    "llama_index 0.6.19 or above is required for instrumenting llama_index apps. "
-    "Please install it before use: `pip install llama_index>=0.6.19`."
+    "llama_index 0.6.24 or above is required for instrumenting llama_index apps. "
+    "Please install it before use: `pip install llama_index>=0.6.24`."
 )
 REQUIREMENT_LANGCHAIN = (
     "langchain 0.0.170 or above is required for instrumenting langchain apps. "
