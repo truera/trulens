@@ -18,6 +18,8 @@ from llama_index import query_engine
 from pydantic import BaseModel
 from pydantic import Field
 
+
+
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackMode
@@ -166,3 +168,4 @@ class TruLlama(TruModel):
 
     def instrumented(self):
         return super().instrumented(categorizer=Is.what)
+
