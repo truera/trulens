@@ -83,7 +83,7 @@ if user_input:
         thumb_result = False
     if thumb_result is not None:
         tru.add_feedback(
-            name="thumbs up result",
+            name="👍 (1) or 👎 (0)",
             record_id=record.record_id,
             chain_id=tc.chain_id,
             result=thumb_result
