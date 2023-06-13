@@ -7,6 +7,7 @@ Do not import anything from trulens_eval here.
 from __future__ import annotations
 
 import abc
+import builtins
 from enum import Enum
 import importlib
 from inspect import stack
@@ -26,7 +27,6 @@ from typing import (
     Any, Callable, Dict, Hashable, Iterable, Iterator, List, Optional, Sequence,
     Set, Tuple, TypeVar, Union
 )
-import importlib
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -52,19 +52,76 @@ REQUIREMENT_LANGCHAIN = (
     "Please install it before use: `pip install langchain`."
 )
 
+
 class Dummy(object):
     """
     Class to pretend to be a module or some other imported object. Will raise an
     error if accessed in any way.
     """
 
-    def __init__(self, message: str):
+    def __init__(self, message: str, importer=None):
         self.message = message
+        self.importer = importer
+
+    def __call__(self, *args, **kwargs):
+        raise ModuleNotFoundError(self.message)
 
     def __getattr__(self, name):
-        raise RuntimeError(self.message)
+        # If in OptionalImport context, create a new dummy for the requested
+        # attribute. Otherwise raise error.
 
-def import_optional(mod=None, what=None, message: str = None):
+        if self.importer is not None and self.importer.importing:
+            return Dummy(message=self.message, importer=self.importer)
+
+        raise ModuleNotFoundError(self.message)
+
+
+class OptionalImports(object):
+    """
+    Helper context manager for doing multiple imports from an optional module:
+
+    ```python
+
+        with OptionalImport(mod='llama_index', message='Please install llama_index first') as llama_index:
+            query_engine = llama_index.query_engine
+
+    ```
+
+    The above python block will not raise any errors but once anything else
+    about llama_index or query_engine gets accessed, an error is raised with the
+    specified message (unless llama_index is installed).
+    """
+
+    def __init__(self, message: str = None):
+        # self.mod = import_optional(mod=mod, message=message, importer=self)
+        self.message = message
+        self.importing = False
+        self.imp = builtins.__import__
+
+    def __import__(self, *args, **kwargs):
+        try:
+            return self.imp(*args, **kwargs)
+        except ModuleNotFoundError:
+            return Dummy(message=self.message, importer=self)
+
+    def __enter__(self):
+        builtins.__import__ = self.__import__
+        self.importing = True
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        self.importing = False
+        builtins.__import__ = self.imp
+
+        if exc_value is None:
+            return None
+
+        print(self.message)
+        # Will re-raise exception unless True is returned.
+        return None
+
+
+def import_optional(mod=None, what=None, message: str = None, importer=None):
     """
     Try to import `what` from module `mod` or the module `mod` itself if
     `what` is None. If this cannot be imported, returns a dummy module which
@@ -81,10 +138,15 @@ def import_optional(mod=None, what=None, message: str = None):
             return mod
 
     except Exception as e:
-        return Dummy(message if message is not None else f"Module {mod} is not installed. Please install before using this functionality.")
+        return Dummy(
+            importer=importer,
+            message=message if message is not None else
+            f"Module {mod} is not installed. Please install before using this functionality."
+        )
 
     ele = getattr(mod, what)
     return ele
+
 
 # Collection utilities
 
@@ -905,6 +967,7 @@ class JSONPath(SerialModel):
 
 
 # Python utilities
+
 
 class SingletonPerName():
     """

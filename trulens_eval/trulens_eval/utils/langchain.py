@@ -4,12 +4,16 @@ from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru_model import COMPONENT_CATEGORY
 from trulens_eval.util import Class
 from trulens_eval.util import first
+from trulens_eval.util import OptionalImports
+from trulens_eval.util import REQUIREMENT_LANGCHAIN
 from trulens_eval.util import second
-from trulens_eval.util import TP, import_optional, REQUIREMENT_LANGCHAIN
+from trulens_eval.util import TP
 
-langchain = import_optional(mod='langchain', message=REQUIREMENT_LANGCHAIN)
-Document = import_optional(mod='langchain.schema', what='Document', message=REQUIREMENT_LANGCHAIN)
-VectorStoreRetriever = import_optional(mod='langchain.vectorstores.base', what='VectorStoreRetriever', message=REQUIREMENT_LANGCHAIN)
+with OptionalImports(message=REQUIREMENT_LANGCHAIN):
+    import langchain
+    from langchain.schema import Document
+    from langchain.vectorstores.base import VectorStoreRetriever
+
 
 class Is:
     """
