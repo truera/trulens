@@ -68,7 +68,7 @@ f_lang_match = Feedback(hugs.language_match).on(
 # ## Instrument chain for logging with TruLens
 
 truchain = TruChain(
-    chain, app_idChain3_ChatApplication', feedbacks=[f_lang_match]
+    chain, app_id='Chain3_ChatApplication', feedbacks=[f_lang_match]
 )
 
 # Instrumented chain can operate like the original:
