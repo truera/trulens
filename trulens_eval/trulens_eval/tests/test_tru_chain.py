@@ -1,13 +1,5 @@
 # from llama.hf import LLaMATokenizer
 
-from langchain import LLMChain
-from langchain import PromptTemplate
-from langchain.chains import ConversationalRetrievalChain
-from langchain.chains import SimpleSequentialChain
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.llms import HuggingFacePipeline
-from langchain.memory import ConversationBufferWindowMemory
-from langchain.vectorstores import Pinecone
 import pinecone
 import pytest
 import torch
@@ -18,6 +10,18 @@ from transformers import pipeline
 from trulens_eval.keys import PINECONE_API_KEY
 from trulens_eval.keys import PINECONE_ENV
 from trulens_eval.tru_chain import TruChain
+from trulens_eval.util import OptionalImports
+from trulens_eval.util import REQUIREMENT_LANGCHAIN
+
+with OptionalImports(message=REQUIREMENT_LANGCHAIN):
+    from langchain import LLMChain
+    from langchain import PromptTemplate
+    from langchain.chains import ConversationalRetrievalChain
+    from langchain.chains import SimpleSequentialChain
+    from langchain.embeddings.openai import OpenAIEmbeddings
+    from langchain.llms import HuggingFacePipeline
+    from langchain.memory import ConversationBufferWindowMemory
+    from langchain.vectorstores import Pinecone
 
 
 class TestTruChain():

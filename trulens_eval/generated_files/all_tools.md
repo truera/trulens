@@ -23,7 +23,9 @@ from IPython.display import JSON
 from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
 tru = Tru()
 
-# imports from langchain to build app
+# Imports from langchain to build app. You may need to install langchain first
+# with the following:
+# ! pip install langchain>=0.0.170
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
 from langchain.prompts.chat import ChatPromptTemplate, PromptTemplate
