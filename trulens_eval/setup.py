@@ -13,7 +13,7 @@ setup(
         'datasets>=2.12.0',
         'python-dotenv>=1.0.0',
         'kaggle>=1.5.13',
-        'langchain>=0.0.170',
+        # 'langchain>=0.0.170', optional
         'merkle-json>=1.0.0',
         'millify>=0.1.1',
         'openai>=0.27.6',
@@ -31,5 +31,6 @@ setup(
         'typing_extensions==4.5.0',  # langchain with python < 3.9 fix
         'frozendict>=2.3.8',
         'munch>=3.0.0',
+        'ipywidgets>=8.0.6',
     ],
 )

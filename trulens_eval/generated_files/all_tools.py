@@ -17,20 +17,17 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 # ### Import from LangChain and TruLens
 
 # Imports main tools:
-from trulens_eval import Feedback
-from trulens_eval import Huggingface
-from trulens_eval import Query
-from trulens_eval import Tru
-from trulens_eval import TruChain
+from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
 
 tru = Tru()
 
-# imports from langchain to build app
+# Imports from langchain to build app. You may need to install langchain first
+# with the following:
+# ! pip install langchain>=0.0.170
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
-from langchain.prompts.chat import ChatPromptTemplate
+from langchain.prompts.chat import ChatPromptTemplate, PromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
-from langchain.prompts.chat import PromptTemplate
 
 # ### Create Simple LLM Application
 #
@@ -71,7 +68,7 @@ f_lang_match = Feedback(hugs.language_match).on(
 # ## Instrument chain for logging with TruLens
 
 truchain = TruChain(
-    chain, chain_id='Chain3_ChatApplication', feedbacks=[f_lang_match], tru=tru
+    chain, chain_id='Chain3_ChatApplication', feedbacks=[f_lang_match]
 )
 
 # Instrumented chain can operate like the original:
@@ -83,7 +80,6 @@ print(llm_response)
 
 tru.run_dashboard()  # open a local streamlit app to explore
 
-# tru.run_dashboard(_dev=True) # if running from repo
 # tru.stop_dashboard() # stop if needed
 
 # ### Chain Leaderboard
@@ -167,7 +163,7 @@ tru.add_record(record)
 
 thumb_result = True
 tru.add_feedback(
-    name="thumbs up result",
+    name="👍 (1) or 👎 (0)",
     record_id=record.record_id,
     chain_id=truchain.chain_id,
     result=thumb_result
