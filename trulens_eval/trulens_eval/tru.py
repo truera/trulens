@@ -13,7 +13,7 @@ from typing import Iterable, List, Optional, Sequence, Union
 import pkg_resources
 
 from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import Model
+from trulens_eval.schema import App
 from trulens_eval.schema import Record
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import LocalSQLite
@@ -29,8 +29,8 @@ class Tru(SingletonPerName):
     """
     Tru is the main class that provides an entry points to trulens-eval. Tru lets you:
 
-    * Log chain prompts and outputs
-    * Log chain Metadata
+    * Log app prompts and outputs
+    * Log app Metadata
     * Run and log feedback functions
     * Run streamlit dashboard to view experiment results
 
@@ -51,7 +51,7 @@ class Tru(SingletonPerName):
 
         from trulens_eval.tru_chain import TruChain
 
-        return TruChain(tru=self, model=chain, **kwargs)
+        return TruChain(tru=self, app=chain, **kwargs)
 
     def Llama(self, engine, **kwargs):
         """
@@ -60,11 +60,11 @@ class Tru(SingletonPerName):
 
         from trulens_eval.tru_llama import TruLlama
 
-        return TruLlama(tru=self, model=engine, **kwargs)
+        return TruLlama(tru=self, app=engine, **kwargs)
 
     def __init__(self):
         """
-        TruLens instrumentation, logging, and feedback functions for chains.
+        TruLens instrumentation, logging, and feedback functions for apps.
         Creates a local database 'default.sqlite' in current working directory.
         """
 
@@ -107,7 +107,7 @@ class Tru(SingletonPerName):
         self,
         record: Record,
         feedback_functions: Sequence[Feedback],
-        chain: Optional[Model] = None,
+        app: Optional[App] = None,
     ) -> Sequence[JSON]:
         """
         Run a collection of feedback functions and report their result.
@@ -117,7 +117,7 @@ class Tru(SingletonPerName):
             record (Record): The record on which to evaluate the feedback
             functions.
 
-            chain (Model, optional): The chain that produced the given record.
+            app (App, optional): The app that produced the given record.
             If not provided, it is looked up from the given database `db`.
 
             feedback_functions (Sequence[Feedback]): A collection of feedback
@@ -126,42 +126,42 @@ class Tru(SingletonPerName):
         Returns nothing.
         """
 
-        chain_id = record.chain_id
+        app_id = record.app_id
 
-        if chain is None:
-            chain = self.db.get_chain(chain_id=chain_id)
-            if chain is None:
+        if app is None:
+            app = self.db.get_app(app_id=app_id)
+            if app is None:
                 raise RuntimeError(
-                    "Chain {chain_id} not present in db. "
-                    "Either add it with `tru.add_chain` or provide `chain_json` to `tru.run_feedback_functions`."
+                    "App {app_id} not present in db. "
+                    "Either add it with `tru.add_app` or provide `app_json` to `tru.run_feedback_functions`."
                 )
 
         else:
-            assert chain_id == chain.chain_id, "Record was produced by a different chain."
+            assert app_id == app.app_id, "Record was produced by a different app."
 
-            if self.db.get_chain(chain_id=chain.chain_id) is None:
+            if self.db.get_app(app_id=app.app_id) is None:
                 logger.warn(
-                    "Chain {chain_id} was not present in database. Adding it."
+                    "App {app_id} was not present in database. Adding it."
                 )
-                self.add_chain(chain=chain)
+                self.add_app(app=app)
 
         evals = []
 
         for func in feedback_functions:
             evals.append(
-                TP().promise(lambda f: f.run(chain=chain, record=record), func)
+                TP().promise(lambda f: f.run(app=app, record=record), func)
             )
 
         evals = map(lambda p: p.get(), evals)
 
         return list(evals)
 
-    def add_chain(self, chain: Model) -> None:
+    def add_app(self, app: App) -> None:
         """
-        Add a chain to the database.        
+        Add a app to the database.        
         """
 
-        self.db.insert_chain(chain=chain)
+        self.db.insert_app(app=app)
 
     def add_feedback(
         self, feedback_result: FeedbackResult = None, **kwargs
@@ -185,20 +185,20 @@ class Tru(SingletonPerName):
         for feedback_result in feedback_results:
             self.add_feedback(feedback_result=feedback_result)
 
-    def get_chain(self, chain_id: Optional[str] = None) -> JSON:
+    def get_app(self, app_id: Optional[str] = None) -> JSON:
         """
-        Look up a chain from the database.
+        Look up a app from the database.
         """
 
         # TODO: unserialize
-        return self.db.get_chain(chain_id)
+        return self.db.get_app(app_id)
 
-    def get_records_and_feedback(self, chain_ids: List[str]):
+    def get_records_and_feedback(self, app_ids: List[str]):
         """
         Get records, their feeback results, and feedback names from the database.
         """
 
-        df, feedback_columns = self.db.get_records_and_feedback(chain_ids)
+        df, feedback_columns = self.db.get_records_and_feedback(app_ids)
 
         return df, feedback_columns
 

@@ -20,7 +20,7 @@ def setup_widget_stdout_stderr():
     from IPython.display import display
     acc = widgets.Accordion(
         children=[
-            widgets.HBox(
+            widgets.VBox(
                 [
                     widgets.VBox([widgets.Label("STDOUT"), out_stdout]),
                     widgets.VBox([widgets.Label("STDERR"), out_stderr])

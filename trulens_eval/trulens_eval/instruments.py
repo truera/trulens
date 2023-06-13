@@ -1,11 +1,11 @@
 """
-# Model Instrumentation
+# App Instrumentation
 
 ## Designs and Choices
 
-### Model Data
+### App Data
 
-We collect model components and parameters by walking over its structure and
+We collect app components and parameters by walking over its structure and
 producing a json reprensentation with everything we deem relevant to track. The
 function `util.py:jsonify` is the root of this process.
 
@@ -36,9 +36,9 @@ Work in progress.
 
 #### TruLens-specific Data
 
-In addition to collecting model parameters, we also collect:
+In addition to collecting app parameters, we also collect:
 
-- (subset of components) Model class information:
+- (subset of components) App class information:
 
     - This allows us to deserialize some objects. Pydantic models can be
       deserialized once we know their class and fields, for example.
@@ -86,25 +86,25 @@ dict, for examople). Presently, we override methods with instrumented versions.
 ### Calls
 
 The instrumented versions of functions/methods record the inputs/outputs and
-some additional data (see `schema.py:RecordChainCall`). As more then one
-instrumented call may take place as part of a model invokation, they are
+some additional data (see `schema.py:RecordAppCall`). As more then one
+instrumented call may take place as part of a app invokation, they are
 collected and returned together in the `calls` field of `schema.py:Record`.
 
 Calls can be connected to the components containing the called method via the
-`path` field of `schema.py:RecordChainCallMethod`. This class also holds
+`path` field of `schema.py:RecordAppCallMethod`. This class also holds
 information about the instrumented method.
 
 #### Call Data (Arguments/Returns)
 
 The arguments to a call and its return are converted to json using the same
-tools as Model Data (see above).
+tools as App Data (see above).
 
 #### Tricky
 
 - The same method call with the same `path` may be recorded multiple times in a
   `Record` if the method makes use of multiple of its versions in the class
   hierarchy (i.e. an extended class calls its parents for part of its task). In
-  these circumstances, the `method` field of `RecordChainCallMethod` will
+  these circumstances, the `method` field of `RecordAppCallMethod` will
   distinguish the different versions of the method.
 
 - Thread-safety -- it is tricky to use global data to keep track of instrumented
@@ -119,15 +119,15 @@ tools as Model Data (see above).
   stack for call instrumentation we need to preserve the stack before a thread
   start which python does not do.  See `util.py:TP._thread_starter`.
 
-- If the same wrapped sub-chain is called multiple times within a single call to
-  the root chain, the record of this execution will not be exact with regards to
+- If the same wrapped sub-app is called multiple times within a single call to
+  the root app, the record of this execution will not be exact with regards to
   the path to the call information. All call paths will address the last
-  subchain (by order in which it is instrumented). For example, in a sequential
-  chain containing two of the same chain, call records will be addressed to the
-  second of the (same) chains and contain a list describing calls of both the
+  subapp (by order in which it is instrumented). For example, in a sequential
+  app containing two of the same app, call records will be addressed to the
+  second of the (same) apps and contain a list describing calls of both the
   first and second.
 
-- Some chains cannot be serialized/jsonized. Sequential chain is an example.
+- Some apps cannot be serialized/jsonized. Sequential app is an example.
   This is a limitation of langchain itself.
 
 - Instrumentation relies on CPython specifics, making heavy use of the `inspect`
@@ -135,13 +135,9 @@ tools as Model Data (see above).
 
 ## To Decide / To discuss
 
-### Naming
+### Mirroring wrapped app behaviour and disabling instrumentation
 
-Rename anything with "chain" to use "model". Chain is langchain specific.
-
-### Mirroring wrapped model behaviour and disabling instrumentation
-
-Should our wrappers behave like the wrapped models? Current design is like this:
+Should our wrappers behave like the wrapped apps? Current design is like this:
 
 ```python
 chain = ... # some langchain chain
@@ -159,7 +155,7 @@ plain_result, record = truchain.call_with_record(...) # will be recorded, and yo
 
 The problem with the above is that "call_" part of "call_with_record" is
 langchain specific and implicitly so is __call__ whose behaviour we are
-replicating in TruChaib. Other wrapped models may not implement their core
+replicating in TruChaib. Other wrapped apps may not implement their core
 functionality in "_call" or "__call__".
 
 Alternative #1:
@@ -178,7 +174,7 @@ records = recorder.records # can get records
 truchain(...) # NOT SUPPORTED, use chain instead
 ```
 
-Here we have the benefit of not having a special method for each model type like
+Here we have the benefit of not having a special method for each app type like
 call_with_record. We instead use a context to indicate that we want to collect
 records and retrieve them afterwards.
 
@@ -199,8 +195,8 @@ from pydantic import BaseModel
 
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Query
-from trulens_eval.schema import RecordChainCall
-from trulens_eval.schema import RecordChainCallMethod
+from trulens_eval.schema import RecordAppCall
+from trulens_eval.schema import RecordAppCallMethod
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import jsonify
@@ -215,7 +211,7 @@ class Instrument(object):
     # Attribute name to be used to flag instrumented objects/methods/others.
     INSTRUMENT = "__tru_instrumented"
 
-    # For marking queries that address model components.
+    # For marking queries that address app components.
     QUERY = "__tru_query"
 
     class Default:
@@ -324,13 +320,13 @@ class Instrument(object):
 
             # If a wrapped method was called in this call stack, get the prior
             # calls from this variable. Otherwise create a new chain stack.
-            chain_stack = get_local_in_call_stack(
-                key="chain_stack", func=find_instrumented, offset=1
+            stack = get_local_in_call_stack(
+                key="stack", func=find_instrumented, offset=1
             ) or ()
-            frame_ident = RecordChainCallMethod(
+            frame_ident = RecordAppCallMethod(
                 path=query, method=Method.of_method(func, obj=obj)
             )
-            chain_stack = chain_stack + (frame_ident,)
+            stack = stack + (frame_ident,)
 
             start_time = None
             end_time = None
@@ -360,12 +356,12 @@ class Instrument(object):
                 perf=Perf(start_time=start_time, end_time=end_time),
                 pid=os.getpid(),
                 tid=th.get_native_id(),
-                chain_stack=chain_stack,
+                stack=stack,
                 rets=rets,
                 error=error_str if error is not None else None
             )
 
-            row = RecordChainCall(**row_args)
+            row = RecordAppCall(**row_args)
             record.append(row)
 
             if error is not None:
