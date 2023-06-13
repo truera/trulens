@@ -25,7 +25,9 @@ from trulens_eval import TruChain
 
 tru = Tru()
 
-# imports from langchain to build app
+# Imports from langchain to build app. You may need to install langchain first
+# with the following:
+# ! pip install langchain>=0.0.170
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
 from langchain.prompts.chat import ChatPromptTemplate
@@ -83,7 +85,6 @@ print(llm_response)
 
 tru.run_dashboard()  # open a local streamlit app to explore
 
-# tru.run_dashboard(_dev=True) # if running from repo
 # tru.stop_dashboard() # stop if needed
 
 # ### Chain Leaderboard

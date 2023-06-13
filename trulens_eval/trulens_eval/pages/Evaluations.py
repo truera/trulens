@@ -66,6 +66,7 @@ else:
     tab1, tab2 = st.tabs(["Records", "Feedback Functions"])
 
     with tab1:
+
         gridOptions = {'alwaysShowHorizontalScroll': True}
         evaluations_df = chain_df
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
