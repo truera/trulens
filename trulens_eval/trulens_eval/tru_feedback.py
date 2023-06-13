@@ -14,7 +14,6 @@ from typing import (
     Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 )
 
-from langchain.callbacks import get_openai_callback
 import numpy as np
 import openai
 import pydantic
@@ -29,20 +28,23 @@ from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.schema import Model
+from trulens_eval.schema import App
 from trulens_eval.schema import Query
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import Record
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
+from trulens_eval.util import OptionalImports
+from trulens_eval.util import REQUIREMENT_LANGCHAIN
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
+
+with OptionalImports(message=REQUIREMENT_LANGCHAIN):
+    from langchain.callbacks import get_openai_callback
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
 default_pass_fail_color_threshold = 0.5
-
-logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
@@ -82,10 +84,12 @@ class Feedback(FeedbackDefinition):
         agg = agg or np.mean
 
         if imp is not None:
-            # These are for serialization to/from json and for db storage.
-            kwargs['implementation'] = FunctionOrMethod.of_callable(
-                imp, loadable=True
-            )
+            try:
+                # These are for serialization to/from json and for db storage.
+                kwargs['implementation'] = FunctionOrMethod.of_callable(imp, loadable=True)
+            except:
+                # User defined functions in script do not have a module so cannot be serialized
+                pass
         else:
             if "implementation" in kwargs:
                 imp: Callable = FunctionOrMethod.pick(
@@ -93,7 +97,12 @@ class Feedback(FeedbackDefinition):
                 ).load()
 
         if agg is not None:
-            kwargs['aggregator'] = FunctionOrMethod.of_callable(agg)
+            try:
+                # These are for serialization to/from json and for db storage.
+                kwargs['aggregator'] = FunctionOrMethod.of_callable(agg, loadable=True)
+            except:
+                # User defined functions in script do not have a module so cannot be serialized
+                pass
         else:
             if 'arrgregator' in kwargs:
                 agg: Callable = FunctionOrMethod.pick(**(kwargs['aggregator'])
@@ -121,12 +130,12 @@ class Feedback(FeedbackDefinition):
             record_json = row.record_json
             record = Record(**record_json)
 
-            chain_json = row.chain_json
+            app_json = row.app_json
 
             feedback = Feedback(**row.feedback_json)
             feedback.run_and_log(
                 record=record,
-                chain=chain_json,
+                app=app_json,
                 tru=tru,
                 feedback_result_id=row.feedback_result_id
             )
@@ -187,7 +196,7 @@ class Feedback(FeedbackDefinition):
 
     def on_prompt(self, arg: str = "text"):
         """
-        Create a variant of `self` that will take in the main chain input or
+        Create a variant of `self` that will take in the main app input or
         "prompt" as input, sending it as an argument `arg` to implementation.
         """
 
@@ -199,7 +208,7 @@ class Feedback(FeedbackDefinition):
 
     def on_response(self, arg: str = "text"):
         """
-        Create a variant of `self` that will take in the main chain output or
+        Create a variant of `self` that will take in the main app output or
         "response" as input, sending it as an argument `arg` to implementation.
         """
 
@@ -216,19 +225,19 @@ class Feedback(FeedbackDefinition):
 
         return Feedback(imp=self.imp, selectors=selectors, agg=self.agg)
 
-    def run(self, chain: Union[Model, JSON], record: Record) -> FeedbackResult:
+    def run(self, app: Union[App, JSON], record: Record) -> FeedbackResult:
         """
-        Run the feedback function on the given `record`. The `chain` that
+        Run the feedback function on the given `record`. The `app` that
         produced the record is also required to determine input/output argument
         names.
 
-        Might not have a Chain here but only the serialized chain_json .
+        Might not have a App here but only the serialized app_json .
         """
 
-        if isinstance(chain, Model):
-            chain_json = jsonify(chain)
+        if isinstance(app, App):
+            app_json = jsonify(app)
         else:
-            chain_json = chain
+            app_json = app
 
         result_vals = []
 
@@ -237,7 +246,6 @@ class Feedback(FeedbackDefinition):
         feedback_result = FeedbackResult(
             feedback_definition_id=self.feedback_definition_id,
             record_id=record.record_id,
-            chain_id=chain_json['chain_id'],
             name=self.name
         )
 
@@ -245,9 +253,9 @@ class Feedback(FeedbackDefinition):
             total_tokens = 0
             total_cost = 0.0
 
-            for ins in self.extract_selection(chain=chain_json, record=record):
+            for ins in self.extract_selection(app=app_json, record=record):
 
-                # TODO: Do this only if there is an openai model inside the chain:
+                # TODO: Do this only if there is an openai model inside the app:
                 # NODE: This only works for langchain uses of openai.
                 with get_openai_callback() as cb:
                     result_val = self.imp(**ins)
@@ -278,11 +286,11 @@ class Feedback(FeedbackDefinition):
         self,
         record: Record,
         tru: 'Tru',
-        chain: Union[Model, JSON] = None,
+        app: Union[App, JSON] = None,
         feedback_result_id: Optional[FeedbackResultID] = None
     ) -> FeedbackResult:
         record_id = record.record_id
-        chain_id = record.chain_id
+        app_id = record.app_id
 
         db = tru.db
 
@@ -291,7 +299,6 @@ class Feedback(FeedbackDefinition):
             feedback_definition_id=self.feedback_definition_id,
             feedback_result_id=feedback_result_id,
             record_id=record_id,
-            chain_id=chain_id,
             name=self.name
         )
 
@@ -306,7 +313,7 @@ class Feedback(FeedbackDefinition):
             )
 
             feedback_result = self.run(
-                chain=chain, record=record
+                app=app, record=record
             ).update(feedback_result_id=feedback_result_id)
 
         except Exception as e:
@@ -331,10 +338,10 @@ class Feedback(FeedbackDefinition):
 
         return self.imp.__name__
 
-    def extract_selection(self, chain: Union[Model, JSON],
+    def extract_selection(self, app: Union[App, JSON],
                           record: Record) -> Iterable[Dict[str, Any]]:
         """
-        Given the `chain` that produced the given `record`, extract from
+        Given the `app` that produced the given `record`, extract from
         `record` the values that will be sent as arguments to the implementation
         as specified by `self.selectors`.
         """
@@ -349,12 +356,12 @@ class Feedback(FeedbackDefinition):
                 raise RuntimeError(f"Unhandled selection type {type(v)}.")
 
             if q.path[0] == Query.Record.path[0]:
-                o = record.layout_calls_as_chain()
-            elif q.path[0] == Query.Chain.path[0]:
-                o = chain
+                o = record.layout_calls_as_app()
+            elif q.path[0] == Query.App.path[0]:
+                o = app
             else:
                 raise ValueError(
-                    f"Query {q} does not indicate whether it is about a record or about a chain."
+                    f"Query {q} does not indicate whether it is about a record or about a app."
                 )
 
             q_within_o = Query.Query(path=q.path[1:])
@@ -567,7 +574,7 @@ class OpenAI(Provider):
 
     def qs_relevance(self, question: str, statement: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses OpenAI's Chat Completion App. A function that completes a
         template to check the relevance of the statement to the question.
 
         Parameters:

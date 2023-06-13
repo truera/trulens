@@ -71,7 +71,17 @@ jobs:
         displayName: NoDiffCheck
       - bash: |
           source activate $(condaEnvFileSuffix)
-          pip install pytest==7.0.1 pytest-azurepipelines
+          cd ./docs/trulens_eval
+          pip install jupyter
+          pip install nbmerge
+          ../../.github/workflows/combine_nb_to_docs_testing.sh
+        displayName: Run combine docs for testing
+      - bash: |
+          source activate $(condaEnvFileSuffix)
+          pip install pytest==7.0.1 pytest-azurepipelines langchain>=0.0.170 llama_index>=0.6.24
+          echo '::group::piplist'
+          echo "$(pip list)"
+          echo '::endgroup::'
           cd ./trulens_eval
           python -m pytest $(testSubdirectory)
         displayName: Run unit tests

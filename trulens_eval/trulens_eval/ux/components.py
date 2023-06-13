@@ -4,13 +4,13 @@ import pandas as pd
 import streamlit as st
 
 from trulens_eval.schema import Record
-from trulens_eval.schema import RecordChainCall
+from trulens_eval.schema import RecordAppCall
 from trulens_eval.tru_db import JSON
 from trulens_eval.util import is_empty
 from trulens_eval.util import is_noserio
 
 
-def render_call_frame(frame: RecordChainCall) -> str:  # markdown
+def render_call_frame(frame: RecordAppCall) -> str:  # markdown
 
     return (
         f"{frame.path}.___{frame.method.name}___\n"
@@ -19,13 +19,13 @@ def render_call_frame(frame: RecordChainCall) -> str:  # markdown
 
 
 def draw_call(call) -> None:
-    top = call.chain_stack[-1]
+    top = call.stack[-1]
 
     with st.expander(label=render_call_frame(top)):
         args = call.args
         rets = call.rets
 
-        for frame in call.chain_stack[0:-2]:
+        for frame in call.stack[0:-2]:
             st.write("Via " + render_call_frame(frame))
 
         st.subheader(f"Inputs:")
@@ -48,12 +48,12 @@ def draw_calls(record: Record, index: int) -> None:
 
     calls = record.calls
 
-    chain_step = 0
+    app_step = 0
 
     for call in calls:
-        chain_step += 1
+        app_step += 1
 
-        if chain_step != index:
+        if app_step != index:
             continue
 
         draw_call(call)

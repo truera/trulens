@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, List
+from typing import Iterable
 
 from llama_index.data_structs.node import NodeType
 from llama_index.data_structs.node import NodeWithScore
@@ -8,11 +8,14 @@ from pydantic import Field
 
 from trulens_eval import Feedback
 from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru_model import COMPONENT_CATEGORY
+from trulens_eval.tru_app import COMPONENT_CATEGORY
 from trulens_eval.util import Class
-from trulens_eval.util import first
-from trulens_eval.util import second
+from trulens_eval.util import OptionalImports
+from trulens_eval.util import REQUIREMENT_LLAMA
 from trulens_eval.util import TP
+
+with OptionalImports(message=REQUIREMENT_LLAMA):
+    import llama_index
 
 
 class Is:

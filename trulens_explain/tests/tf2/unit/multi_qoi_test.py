@@ -13,6 +13,7 @@ from tensorflow.keras.layers import GRU
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
 from tests.unit.multi_qoi_test_base import MultiQoiTestBase
+
 from trulens.nn.backend import get_backend
 from trulens.nn.models import get_model_wrapper
 

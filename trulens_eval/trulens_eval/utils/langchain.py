@@ -1,16 +1,18 @@
-from typing import Callable, Iterable, List
-
-import langchain
-from langchain.schema import Document
-from langchain.vectorstores.base import VectorStoreRetriever
-from pydantic import Field
+from typing import Iterable, List
 
 from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru_model import COMPONENT_CATEGORY
+from trulens_eval.tru_app import COMPONENT_CATEGORY
 from trulens_eval.util import Class
 from trulens_eval.util import first
+from trulens_eval.util import OptionalImports
+from trulens_eval.util import REQUIREMENT_LANGCHAIN
 from trulens_eval.util import second
 from trulens_eval.util import TP
+
+with OptionalImports(message=REQUIREMENT_LANGCHAIN):
+    import langchain
+    from langchain.schema import Document
+    from langchain.vectorstores.base import VectorStoreRetriever
 
 
 class Is:

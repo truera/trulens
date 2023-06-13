@@ -2,46 +2,28 @@
 # Llama_index instrumentation and monitoring. 
 """
 
-from collections import defaultdict
 from datetime import datetime
-from inspect import BoundArguments
-from inspect import signature
-from inspect import stack
 import logging
-import os
 from pprint import PrettyPrinter
-import threading as th
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
-
-import llama_index
-from llama_index import query_engine
-from pydantic import BaseModel
-from pydantic import Field
+from typing import Sequence, Tuple
 
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackMode
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import Method
-from trulens_eval.schema import Query
 from trulens_eval.schema import Record
-from trulens_eval.schema import RecordChainCall
-from trulens_eval.schema import RecordChainCallMethod
-from trulens_eval.tru import Tru
-from trulens_eval.tru_db import TruDB
-from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru_model import TruModel
+from trulens_eval.schema import RecordAppCall
+from trulens_eval.tru_app import TruApp
 from trulens_eval.util import Class
-from trulens_eval.util import get_local_in_call_stack
-from trulens_eval.util import jsonify
-from trulens_eval.util import JSONPath
-from trulens_eval.util import noserio
-from trulens_eval.util import TP
+from trulens_eval.util import OptionalImports
+from trulens_eval.util import REQUIREMENT_LLAMA
 from trulens_eval.utils.llama import Is
 
 logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
+
+with OptionalImports(message=REQUIREMENT_LLAMA):
+    import llama_index
+    from llama_index.indices.query.base import BaseQueryEngine
+    from llama_index.response.schema import Response
 
 
 class LlamaInstrument(Instrument):
@@ -49,13 +31,15 @@ class LlamaInstrument(Instrument):
     class Default:
         MODULES = {"llama_index."}
 
-        CLASSES = {
-            llama_index.indices.query.base.BaseQueryEngine,
-            llama_index.indices.base_retriever.BaseRetriever
+        # Putting these inside thunk as llama_index is optional.
+        CLASSES = lambda: {
+            llama_index.indices.query.base.BaseQueryEngine, llama_index.indices.
+            base_retriever.BaseRetriever
             # query_engine.retriever_query_engine.RetrieverQueryEngine
         }
 
-        # Instrument only methods with these names and of these classes.
+        # Instrument only methods with these names and of these classes. Ok to
+        # include llama_index inside methods.
         METHODS = {
             "query":
                 lambda o:
@@ -76,30 +60,27 @@ class LlamaInstrument(Instrument):
         super().__init__(
             root_method=TruLlama.query_with_record,
             modules=LlamaInstrument.Default.MODULES,
-            classes=LlamaInstrument.Default.CLASSES,
+            classes=LlamaInstrument.Default.CLASSES(),  # was thunk
             methods=LlamaInstrument.Default.METHODS
         )
 
 
-class TruLlama(TruModel):
+class TruLlama(TruApp):
     """
     Wrap a llama index engine for monitoring.
 
     Arguments:
     - model: RetrieverQueryEngine -- the engine to wrap.
-    - More args in TruModel
-    - More args in LlamaModel
+    - More args in TruApp
     - More args in WithClassInfo
     """
 
     class Config:
         arbitrary_types_allowed = True
 
-    model: llama_index.indices.query.base.BaseQueryEngine
+    model: BaseQueryEngine
 
-    def __init__(
-        self, model: llama_index.indices.query.base.BaseQueryEngine, **kwargs
-    ):
+    def __init__(self, model: BaseQueryEngine, **kwargs):
 
         super().update_forward_refs()
 
@@ -110,17 +91,15 @@ class TruLlama(TruModel):
 
         super().__init__(**kwargs)
 
-    def query(self, *args, **kwargs) -> llama_index.response.schema.Response:
+    def query(self, *args, **kwargs) -> Response:
         res, _ = self.query_with_record(*args, **kwargs)
 
         return res
 
-    def query_with_record(
-        self, str_or_query_bundle
-    ) -> Tuple[llama_index.response.schema.Response, Record]:
+    def query_with_record(self, str_or_query_bundle) -> Tuple[Response, Record]:
         # Wrapped calls will look this up by traversing the call stack. This
         # should work with threads.
-        record: Sequence[RecordChainCall] = []
+        record: Sequence[RecordAppCall] = []
 
         ret = None
         error = None
@@ -132,7 +111,7 @@ class TruLlama(TruModel):
         end_time = None
 
         try:
-            # TODO: do this only if there is an openai model inside the chain:
+            # TODO: do this only if there is an openai model inside the app:
             # with get_openai_callback() as cb:
             start_time = datetime.now()
             ret = self.model.query(str_or_query_bundle)

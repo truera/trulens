@@ -22,9 +22,9 @@ tru = Tru()
 lms = tru.db
 
 
-def app():
+def streamlit_app():
     # Set the title and subtitle of the app
-    st.title('Chain Leaderboard')
+    st.title('App Leaderboard')
     st.write(
         'Average feedback values displayed in the range from 0 (worst) to 1 (best).'
     )
@@ -34,44 +34,44 @@ def app():
         st.write("No records yet...")
         return
 
-    df = df.sort_values(by="chain_id")
+    df = df.sort_values(by="app_id")
 
     if df.empty:
         st.write("No records yet...")
 
-    chains = list(df.chain_id.unique())
+    apps = list(df.app_id.unique())
     st.markdown("""---""")
 
-    for chain in chains:
-        st.header(chain)
+    for app in apps:
+        st.header(app)
         col1, col2, col3, col4, *feedback_cols, col99 = st.columns(
             5 + len(feedback_col_names)
         )
-        chain_df = df.loc[df.chain_id == chain]
-        latency_mean = chain_df['latency'].apply(lambda td: td.seconds).mean()
-        #model_df_feedback = df.loc[df.chain_id == model]
+        app_df = df.loc[df.app_id == app]
+        latency_mean = app_df['latency'].apply(lambda td: td.seconds).mean()
+        #app_df_feedback = df.loc[df.app_id == app]
 
-        col1.metric("Records", len(chain_df))
+        col1.metric("Records", len(app_df))
         col2.metric(
             "Average Latency (Seconds)",
             f"{millify(round(latency_mean, 5), precision=2)}"
         )
         col3.metric(
             "Total Cost (USD)",
-            f"${millify(round(sum(cost for cost in chain_df.total_cost if cost is not None), 5), precision = 2)}"
+            f"${millify(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision = 2)}"
         )
         col4.metric(
             "Total Tokens",
             millify(
                 sum(
-                    tokens for tokens in chain_df.total_tokens
+                    tokens for tokens in app_df.total_tokens
                     if tokens is not None
                 ),
                 precision=2
             )
         )
         for i, col_name in enumerate(feedback_col_names):
-            mean = chain_df[col_name].mean()
+            mean = app_df[col_name].mean()
 
             st.write(
                 styles.stmetricdelta_hidearrow,
@@ -97,8 +97,8 @@ def app():
                     )
 
         with col99:
-            if st.button('Select Chain', key=f"model-selector-{chain}"):
-                st.session_state.chain = chain
+            if st.button('Select App', key=f"app-selector-{app}"):
+                st.session_state.app = app
                 switch_page('Evaluations')
 
         st.markdown("""---""")
@@ -106,7 +106,7 @@ def app():
 
 # Define the main function to run the app
 def main():
-    app()
+    streamlit_app()
 
 
 if __name__ == '__main__':

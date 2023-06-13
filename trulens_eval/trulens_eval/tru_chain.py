@@ -1,39 +1,31 @@
 """
-# Langchain instrumentation and monitoring. 
-```
-
+# Langchain instrumentation and monitoring.
 """
 
 from datetime import datetime
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Dict, List, Optional, Sequence, Union
-
-import langchain
-from langchain.callbacks import get_openai_callback
-from pydantic import Field
+from typing import Any, Dict, List, Sequence, Union
 
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import Query
-from trulens_eval.schema import Record
-from trulens_eval.schema import RecordChainCall
-from trulens_eval.tru import Tru
-from trulens_eval.tru_db import TruDB
-from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru_model import FeedbackMode
-from trulens_eval.tru_model import TruModel
+from trulens_eval.schema import RecordAppCall
+from trulens_eval.tru_app import TruApp
 from trulens_eval.util import Class
 from trulens_eval.util import jsonify
 from trulens_eval.util import noserio
-from trulens_eval.util import TP
-from trulens_eval.util import WithClassInfo
+from trulens_eval.util import OptionalImports
+from trulens_eval.util import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.langchain import Is
 
 logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
+
+with OptionalImports(message=REQUIREMENT_LANGCHAIN):
+    import langchain
+    from langchain.callbacks import get_openai_callback
+    from langchain.chains.base import Chain
+    import test_this_does_not_exist
 
 
 class LangChainInstrument(Instrument):
@@ -41,12 +33,12 @@ class LangChainInstrument(Instrument):
     class Default:
         MODULES = {"langchain."}
 
-        CLASSES = {
-            langchain.chains.base.Chain,
-            langchain.vectorstores.base.BaseRetriever,
-            langchain.schema.BaseRetriever, langchain.llms.base.BaseLLM,
-            langchain.prompts.base.BasePromptTemplate,
-            langchain.schema.BaseMemory, langchain.schema.BaseChatMessageHistory
+        # Thunk because langchain is optional.
+        CLASSES = lambda: {
+            langchain.chains.base.Chain, langchain.vectorstores.base.
+            BaseRetriever, langchain.schema.BaseRetriever, langchain.llms.base.
+            BaseLLM, langchain.prompts.base.BasePromptTemplate, langchain.schema
+            .BaseMemory, langchain.schema.BaseChatMessageHistory
         }
 
         # Instrument only methods with these names and of these classes.
@@ -59,7 +51,7 @@ class LangChainInstrument(Instrument):
         super().__init__(
             root_method=TruChain.call_with_record,
             modules=LangChainInstrument.Default.MODULES,
-            classes=LangChainInstrument.Default.CLASSES,
+            classes=LangChainInstrument.Default.CLASSES(),
             methods=LangChainInstrument.Default.METHODS
         )
 
@@ -99,31 +91,30 @@ class LangChainInstrument(Instrument):
         return new_prop
 
 
-class TruChain(TruModel):
+class TruChain(TruApp):
     """
     Wrap a langchain Chain to capture its configuration and evaluation steps. 
     """
 
-    model: langchain.chains.base.Chain
+    app: Chain
 
     # Normally pydantic does not like positional args but chain here is
     # important enough to make an exception.
-    def __init__(self, model: langchain.chains.base.Chain, **kwargs):
+    def __init__(self, app: Chain, **kwargs):
         """
         Wrap a langchain chain for monitoring.
 
         Arguments:
-        - chain: Chain -- the chain to wrap.
-        - More args in TruModel
-        - More args in LangChainModel
+        - app: Chain -- the chain to wrap.
+        - More args in TruApp
         - More args in WithClassInfo
         """
 
         super().update_forward_refs()
 
         # TruChain specific:
-        kwargs['model'] = model
-        kwargs['root_class'] = Class.of_object(model)
+        kwargs['app'] = app
+        kwargs['root_class'] = Class.of_object(app)
         kwargs['instrument'] = LangChainInstrument()
 
         super().__init__(**kwargs)
@@ -136,12 +127,12 @@ class TruChain(TruModel):
     # Chain requirement
     @property
     def input_keys(self) -> List[str]:
-        return self.model.input_keys
+        return self.app.input_keys
 
     # Chain requirement
     @property
     def output_keys(self) -> List[str]:
-        return self.model.output_keys
+        return self.app.output_keys
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
     def call_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs):
@@ -154,7 +145,7 @@ class TruChain(TruModel):
 
         # Wrapped calls will look this up by traversing the call stack. This
         # should work with threads.
-        record: Sequence[RecordChainCall] = []
+        record: Sequence[RecordAppCall] = []
 
         ret = None
         error = None
@@ -169,7 +160,7 @@ class TruChain(TruModel):
             # TODO: do this only if there is an openai model inside the chain:
             with get_openai_callback() as cb:
                 start_time = datetime.now()
-                ret = self.model.__call__(inputs=inputs, **kwargs)
+                ret = self.app.__call__(inputs=inputs, **kwargs)
                 end_time = datetime.now()
 
             total_tokens = cb.total_tokens
@@ -178,13 +169,13 @@ class TruChain(TruModel):
         except BaseException as e:
             end_time = datetime.now()
             error = e
-            logger.error(f"Chain raised an exception: {e}")
+            logger.error(f"App raised an exception: {e}")
 
         assert len(record) > 0, "No information recorded in call."
 
         ret_record_args = dict()
 
-        inputs = self.model.prep_inputs(inputs)
+        inputs = self.app.prep_inputs(inputs)
 
         # Figure out the content of the "inputs" arg that __call__ constructs
         # for _call so we can lookup main input and output.
@@ -205,7 +196,7 @@ class TruChain(TruModel):
     # langchain.chains.base.py:Chain
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         """
-        Wrapped call to self.model.__call__ with instrumentation. If you need to
+        Wrapped call to self.app.__call__ with instrumentation. If you need to
         get the record, use `call_with_record` instead. 
         """
 
@@ -216,7 +207,7 @@ class TruChain(TruModel):
     # Chain requirement
     # TODO(piotrm): figure out whether the combination of _call and __call__ is working right.
     def _call(self, *args, **kwargs) -> Any:
-        return self.model._call(*args, **kwargs)
+        return self.app._call(*args, **kwargs)
 
     def instrumented(self):
         return super().instrumented(categorizer=Is.what)
