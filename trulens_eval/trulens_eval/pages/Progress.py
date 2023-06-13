@@ -47,7 +47,10 @@ with tab1:
             FeedbackResultStatus.FAILED
         ]
     )
-    st.write(feedbacks)
+    data = AgGrid(
+        feedbacks,
+        allow_unsafe_jscode=True
+    )
 
 with tab2:
     for e in endpoints:
@@ -57,4 +60,8 @@ with tab2:
 
 with tab3:
     feedbacks = lms.get_feedback_defs()
-    st.write(feedbacks)
+    data = AgGrid(
+        feedbacks,
+        allow_unsafe_jscode=True
+    )
+    

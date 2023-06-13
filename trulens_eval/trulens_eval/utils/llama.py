@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from trulens_eval.tru_model import COMPONENT_CATEGORY
+from trulens_eval.tru_app import COMPONENT_CATEGORY
 from trulens_eval.util import Class
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LLAMA
