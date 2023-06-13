@@ -1,7 +1,12 @@
 from typing import Callable, Iterable, List
 
+from llama_index.data_structs.node import NodeType
+from llama_index.data_structs.node import NodeWithScore
+from llama_index.indices.query.schema import QueryBundle
+from llama_index.indices.vector_store.retrievers import VectorIndexRetriever
 from pydantic import Field
 
+from trulens_eval import Feedback
 from trulens_eval.tru_feedback import Feedback
 from trulens_eval.tru_model import COMPONENT_CATEGORY
 from trulens_eval.util import Class
@@ -9,13 +14,6 @@ from trulens_eval.util import first
 from trulens_eval.util import second
 from trulens_eval.util import TP
 
-
-from llama_index.data_structs.node import NodeType, NodeWithScore
-from llama_index.indices.query.schema import QueryBundle
-from typing import List
-from trulens_eval.util import first, second, TP
-from llama_index.indices.vector_store.retrievers import VectorIndexRetriever
-from trulens_eval import Feedback
 
 class Is:
     """
@@ -53,7 +51,6 @@ class Is:
                 yield checker.__name__
 
 
-
 class WithFeedbackFilterNodes(VectorIndexRetriever):
     feedback: Feedback
     threshold: float
@@ -70,12 +67,10 @@ class WithFeedbackFilterNodes(VectorIndexRetriever):
           at least this threshold.
         """
 
-        super().__init__(
-            *args, **kwargs
-        )
+        super().__init__(*args, **kwargs)
 
-        self.feedback=feedback
-        self.threshold=threshold
+        self.feedback = feedback
+        self.threshold = threshold
 
     def _retrieve(self, query_bundle: QueryBundle) -> List[NodeWithScore]:
         # Get relevant docs using super class:
@@ -85,8 +80,9 @@ class WithFeedbackFilterNodes(VectorIndexRetriever):
         promises = (
             (
                 node, TP().promise(
-                    lambda query, node: self.feedback(query.query_str, node.node.get_text()) >
-                    self.threshold,
+                    lambda query, node: self.feedback(
+                        query.query_str, node.node.get_text()
+                    ) > self.threshold,
                     query=query_bundle,
                     node=node
                 )
@@ -102,10 +98,10 @@ class WithFeedbackFilterNodes(VectorIndexRetriever):
     def of_index_retriever(retriever: VectorIndexRetriever, **kwargs):
         return WithFeedbackFilterNodes(
             index=retriever._index,
-            similarty_top_k = retriever._similarity_top_k,
-            vectore_store_query_mode = retriever._vector_store_query_mode,
+            similarty_top_k=retriever._similarity_top_k,
+            vectore_store_query_mode=retriever._vector_store_query_mode,
             filters=retriever._filters,
-            alpha = retriever._alpha,
-            doc_ids = retriever._doc_ids,
+            alpha=retriever._alpha,
+            doc_ids=retriever._doc_ids,
             **kwargs
         )
