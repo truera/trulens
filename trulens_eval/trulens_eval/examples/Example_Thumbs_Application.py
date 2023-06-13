@@ -1,4 +1,4 @@
-# Run with command: streamlit run Example_Application.py
+# Run with command: streamlit run Example_Thumbs_Application.py
 import langchain
 from langchain.callbacks import get_openai_callback
 from langchain.chains import LLMChain
@@ -11,16 +11,19 @@ import streamlit as st
 import sys
 import os
 from pathlib import Path
+
 dev_path = str(Path(__file__).resolve().parent.parent)
-sys.path.insert(0,dev_path)
+sys.path.insert(0, dev_path)
 os.environ["OPENAI_API_KEY"] = "..."
 
 from trulens_eval import TruChain, Tru
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
 tru = Tru()
+
+
 # Define function to generate GPT-3 response
-@st.cache_data
+@st.cache_resource
 def setup_chain():
     full_prompt = HumanMessagePromptTemplate(
         prompt=PromptTemplate(
@@ -40,8 +43,10 @@ def setup_chain():
     tru.run_dashboard(_dev=dev_path)
     return tc
 
+
 def generate_response(prompt, tc):
     return tc.call_with_record(prompt)
+
 
 tc = setup_chain()
 
@@ -53,11 +58,7 @@ if user_input:
     # Generate GPT-3 response
     prompt_input = user_input
     # add context manager to capture tokens and cost of the chain
-    with get_openai_callback() as cb:
-        gpt3_response, record = generate_response(prompt_input, tc)
-        tru.add_record(record)
-        total_tokens = cb.total_tokens
-        total_cost = cb.total_cost
+    gpt3_response, record = generate_response(prompt_input, tc)
 
     # Display response
     st.write("Here's some help for you:")
@@ -72,19 +73,18 @@ if user_input:
 
     thumb_result = None
     if thumbs_up:
-        # Save rating to database or file
         st.write("Thank you for your feedback! We're glad we could help.")
-        thumb_result=True
+        thumb_result = True
     elif thumbs_down:
         # Save rating to database or file
         st.write(
             "We're sorry we couldn't be more helpful. Please try again with a different question."
         )
-        thumb_result=False
+        thumb_result = False
     if thumb_result is not None:
-        tru.add_feedback(name="thumbs up result", 
-                    record_id=record.record_id,
-                    chain_id=tc.chain_id, 
-                    result=thumb_result)
-
-    
+        tru.add_feedback(
+            name="thumbs up result",
+            record_id=record.record_id,
+            chain_id=tc.chain_id,
+            result=thumb_result
+        )
