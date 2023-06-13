@@ -240,7 +240,6 @@ class LocalSQLite(TruDB):
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_FEEDBACKS} (
                 feedback_result_id TEXT NOT NULL PRIMARY KEY,
                 record_id TEXT NOT NULL,
-                chain_id TEXT NOT NULL,
                 feedback_definition_id TEXT,
                 last_ts {self.TYPE_TIMESTAMP} NOT NULL,
                 status {self.TYPE_ENUM} NOT NULL,
@@ -375,7 +374,6 @@ class LocalSQLite(TruDB):
         vals = (
             feedback_result.feedback_result_id,
             feedback_result.record_id,
-            feedback_result.chain_id,
             feedback_result.feedback_definition_id,
             feedback_result.last_ts.timestamp(),
             feedback_result.status.value,
