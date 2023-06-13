@@ -4,6 +4,7 @@ from multiprocessing import Process
 import os
 from pathlib import Path
 import subprocess
+import sys
 import threading
 from threading import Thread
 from time import sleep
@@ -17,6 +18,7 @@ from trulens_eval.schema import Record
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import LocalSQLite
 from trulens_eval.tru_feedback import Feedback
+from trulens_eval.utils.notebook_utils import is_notebook, setup_widget_stdout_stderr
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import TP
 
@@ -379,40 +381,29 @@ class Tru(SingletonPerName):
             **env_opts
         )
 
-        from ipywidgets import widgets
-        out_stdout = widgets.Output()
-        out_stderr = widgets.Output()
-
-        from IPython.display import display
-        acc = widgets.Accordion(
-            children=[
-                widgets.HBox(
-                    [
-                        widgets.VBox([widgets.Label("STDOUT"), out_stdout]),
-                        widgets.VBox([widgets.Label("STDERR"), out_stderr])
-                    ]
-                )
-            ],
-            open=True
-        )
-        acc.set_title(0, "Dashboard log")
-        display(acc)
-
         started = threading.Event()
+        if is_notebook():
+            out_stdout, out_stderr = setup_widget_stdout_stderr()
+        else:
+            out_stdout = None
+            out_stderr = None
 
         def listen_to_dashboard(proc: subprocess.Popen, pipe, out, started):
             while proc.poll() is None:
                 line = pipe.readline()
-
                 if "Network URL: " in line:
                     url = line.split(": ")[1]
                     url = url.rstrip()
                     print(f"Dashboard started at {url} .")
                     started.set()
-
-                out.append_stdout(line)
-
-            out.append_stdout("Dashboard closed.")
+                if out is not None:
+                    out.append_stdout(line)
+                else:
+                    print(line)
+            if out is not None:
+                out.append_stdout("Dashboard closed.")
+            else:
+                print("Dashboard closed.")
 
         Tru.dashboard_listener_stdout = Thread(
             target=listen_to_dashboard,
