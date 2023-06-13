@@ -14,7 +14,6 @@ from typing import (
     Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 )
 
-
 import numpy as np
 import openai
 import pydantic
@@ -33,9 +32,10 @@ from trulens_eval.schema import Model
 from trulens_eval.schema import Query
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import Record
-from trulens_eval.util import REQUIREMENT_LANGCHAIN, OptionalImports
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
+from trulens_eval.util import OptionalImports
+from trulens_eval.util import REQUIREMENT_LANGCHAIN
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
 
