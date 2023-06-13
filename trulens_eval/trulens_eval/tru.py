@@ -4,6 +4,7 @@ from multiprocessing import Process
 import os
 from pathlib import Path
 import subprocess
+import sys
 import threading
 from threading import Thread
 from time import sleep
@@ -17,6 +18,7 @@ from trulens_eval.schema import Record
 from trulens_eval.tru_db import JSON
 from trulens_eval.tru_db import LocalSQLite
 from trulens_eval.tru_feedback import Feedback
+from trulens_eval.utils.notebook_utils import is_notebook, setup_widget_stdout_stderr
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import TP
 
@@ -268,10 +270,17 @@ class Tru(SingletonPerName):
         self.evaluator_proc = None
 
     def stop_dashboard(self, force: bool = False) -> None:
-        """Stop existing dashboard if running.
+        """
+        Stop existing dashboard(s) if running.
+
+        Args:
+            
+            - force: bool: Also try to find any other dashboard processes not
+              started in this notebook and shut them down too.
 
         Raises:
-            ValueError: Dashboard is already running.
+
+            - ValueError: Dashboard is not running.
         """
         if Tru.dashboard_proc is None:
             if not force:
@@ -304,13 +313,24 @@ class Tru(SingletonPerName):
     def run_dashboard(
         self, force: bool = False, _dev: Optional[Path] = None
     ) -> Process:
-        """ Runs a streamlit dashboard to view logged results and chains
+        """
+        Run a streamlit dashboard to view logged results and apps.
+
+        Args:
+
+            - force: bool: Stop existing dashboard(s) first.
+
+            - _dev: Optional[Path]: If given, run dashboard with the given
+              PYTHONPATH. This can be used to run the dashboard from outside of
+              its pip package installation folder.
 
         Raises:
-            ValueError: Dashboard is already running.
+
+            - ValueError: Dashboard is already running.
 
         Returns:
-            Process: Process containing streamlit dashboard.
+
+            - Process: Process containing streamlit dashboard.
         """
 
         if force:
@@ -318,7 +338,8 @@ class Tru(SingletonPerName):
 
         if Tru.dashboard_proc is not None:
             raise ValueError(
-                "Dashboard already running. Run tru.stop_dashboard() to stop existing dashboard."
+                "Dashboard already running. "
+                "Run tru.stop_dashboard() to stop existing dashboard."
             )
 
         print("Starting dashboard ...")
@@ -354,10 +375,54 @@ class Tru(SingletonPerName):
 
         proc = subprocess.Popen(
             ["streamlit", "run", "--server.headless=True", leaderboard_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
             **env_opts
         )
 
+        started = threading.Event()
+        if is_notebook():
+            out_stdout, out_stderr = setup_widget_stdout_stderr()
+        else:
+            out_stdout = None
+            out_stderr = None
+
+        def listen_to_dashboard(proc: subprocess.Popen, pipe, out, started):
+            while proc.poll() is None:
+                line = pipe.readline()
+                if "Network URL: " in line:
+                    url = line.split(": ")[1]
+                    url = url.rstrip()
+                    print(f"Dashboard started at {url} .")
+                    started.set()
+                if out is not None:
+                    out.append_stdout(line)
+                else:
+                    print(line)
+            if out is not None:
+                out.append_stdout("Dashboard closed.")
+            else:
+                print("Dashboard closed.")
+
+        Tru.dashboard_listener_stdout = Thread(
+            target=listen_to_dashboard,
+            args=(proc, proc.stdout, out_stdout, started)
+        )
+        Tru.dashboard_listener_stderr = Thread(
+            target=listen_to_dashboard,
+            args=(proc, proc.stderr, out_stderr, started)
+        )
+        Tru.dashboard_listener_stdout.start()
+        Tru.dashboard_listener_stderr.start()
+
         Tru.dashboard_proc = proc
+
+        if not started.wait(timeout=5):
+            raise RuntimeError(
+                "Dashboard failed to start in time. "
+                "Please inspect dashboard logs for additional information."
+            )
 
         return proc
 

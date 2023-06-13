@@ -11,7 +11,6 @@ from abc import abstractmethod
 from typing import Callable, Optional
 
 import numpy as np
-from trulens.nn.backend import get_backend
 from trulens.nn.slices import Cut
 from trulens.utils.typing import accepts_model_inputs
 from trulens.utils.typing import BaselineLike
@@ -29,6 +28,8 @@ from trulens.utils.typing import render_object
 from trulens.utils.typing import TensorAKs
 from trulens.utils.typing import TensorLike
 from trulens.utils.typing import Uniform
+
+from trulens.nn.backend import get_backend
 
 
 class DoiCutSupportError(ValueError):

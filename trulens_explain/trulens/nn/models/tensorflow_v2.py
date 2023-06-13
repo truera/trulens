@@ -1,7 +1,6 @@
 from typing import Tuple
 
 import tensorflow as tf
-from trulens.nn.backend import get_backend
 from trulens.nn.models.keras import \
     KerasModelWrapper  # dangerous to have this here if tf-less keras gets imported
 from trulens.nn.quantities import QoI
@@ -9,7 +8,6 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
-from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import many_of_om
@@ -20,6 +18,9 @@ from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import TensorArgs
 from trulens.utils.typing import TensorLike
+
+from trulens.nn.backend import get_backend
+from trulens.utils import tru_logger
 
 if tf.executing_eagerly():
     tf.config.run_functions_eagerly(True)

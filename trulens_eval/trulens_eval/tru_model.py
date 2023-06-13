@@ -76,39 +76,42 @@ class TruModel(Model, SerialModel):
         **kwargs
     ):
 
-        if feedbacks is not None and tru is None:
-            raise ValueError("Feedback logging requires `tru` to be specified.")
         feedbacks = feedbacks or []
 
         # for us:
         kwargs['tru'] = tru
         kwargs['feedbacks'] = feedbacks
 
-        if tru is not None:
-            kwargs['db'] = tru.db
-
         super().__init__(**kwargs)
 
-        if tru is not None:
+        if tru is None:
+            if self.feedback_mode != FeedbackMode.NONE:
+                logger.debug("Creating default tru.")
+                tru = Tru()
+        else:
             if self.feedback_mode == FeedbackMode.NONE:
                 logger.warn(
                     "`tru` is specified but `feedback_mode` is FeedbackMode.NONE. "
                     "No feedback evaluation and logging will occur."
                 )
-        else:
-            if self.feedback_mode != FeedbackMode.NONE:
-                logger.warn(
-                    f"`feedback_mode` is {self.feedback_mode} but `tru` was not specified. Reverting to FeedbackMode.NONE ."
-                )
-                self.feedback_mode = FeedbackMode.NONE
 
-        if tru is not None and self.feedback_mode != FeedbackMode.NONE:
-            logger.debug(
-                "Inserting chain and feedback function definitions to db."
-            )
-            self.db.insert_chain(chain=self)
-            for f in self.feedbacks:
-                self.db.insert_feedback_definition(f)
+        self.tru = tru
+        if self.tru is not None:
+            self.db = tru.db
+
+            if self.feedback_mode != FeedbackMode.NONE:
+                logger.debug(
+                    "Inserting chain and feedback function definitions to db."
+                )
+                self.db.insert_chain(chain=self)
+                for f in self.feedbacks:
+                    self.db.insert_feedback_definition(f)
+
+        else:
+            if len(feedbacks) > 0:
+                raise ValueError(
+                    "Feedback logging requires `tru` to be specified."
+                )
 
         self.instrument.instrument_object(
             obj=self.model, query=Query.Query().model
