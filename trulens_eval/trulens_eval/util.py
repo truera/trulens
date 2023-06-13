@@ -11,6 +11,7 @@ import builtins
 from enum import Enum
 import importlib
 from inspect import stack
+import inspect
 import itertools
 import json
 import logging
@@ -101,7 +102,14 @@ class OptionalImports(object):
     def __import__(self, *args, **kwargs):
         try:
             return self.imp(*args, **kwargs)
-        except ModuleNotFoundError:
+        
+        except ModuleNotFoundError as e:
+            # Check if the import error was from an import in trulens_eval as otherwise we don't want to 
+            # intercept the error as some modules rely on import failures for various things.
+            module_name = inspect.currentframe().f_back.f_globals["__name__"]
+            if not module_name.startswith("trulens_eval"):
+                raise e
+            logger.debug(f"Could not import {args[0]}.")
             return Dummy(message=self.message, importer=self)
 
     def __enter__(self):

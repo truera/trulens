@@ -25,6 +25,7 @@ with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     import langchain
     from langchain.callbacks import get_openai_callback
     from langchain.chains.base import Chain
+    import test_this_does_not_exist
 
 
 class LangChainInstrument(Instrument):
