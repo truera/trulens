@@ -239,7 +239,6 @@ class Feedback(FeedbackDefinition):
         feedback_result = FeedbackResult(
             feedback_definition_id=self.feedback_definition_id,
             record_id=record.record_id,
-            chain_id=chain_json['chain_id'],
             name=self.name
         )
 
@@ -293,7 +292,6 @@ class Feedback(FeedbackDefinition):
             feedback_definition_id=self.feedback_definition_id,
             feedback_result_id=feedback_result_id,
             record_id=record_id,
-            chain_id=chain_id,
             name=self.name
         )
 
