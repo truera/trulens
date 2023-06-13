@@ -127,8 +127,7 @@ f_lang_match = Feedback(hugs.language_match).on(
 ```python
 truchain = TruChain(chain,
     chain_id='Chain3_ChatApplication',
-    feedbacks=[f_lang_match],
-    tru = tru)
+    feedbacks=[f_lang_match])
 ```
 
 
