@@ -68,7 +68,7 @@ f_lang_match = Feedback(hugs.language_match).on(
 # ## Instrument chain for logging with TruLens
 
 truchain = TruChain(
-    chain, chain_id='Chain3_ChatApplication', feedbacks=[f_lang_match]
+    chain, app_id='Chain3_ChatApplication', feedbacks=[f_lang_match]
 )
 
 # Instrumented chain can operate like the original:
@@ -112,8 +112,8 @@ tru.run_dashboard()  # open a local streamlit app to explore
 
 # ## Or view results directly in your notebook
 
-tru.get_records_and_feedback(chain_ids=[]
-                            )[0]  # pass an empty list of chain_ids to get all
+tru.get_records_and_feedback(app_ids=[]
+                            )[0]  # pass an empty list of app_ids to get all
 
 # # Logging
 #
@@ -123,14 +123,14 @@ tru.get_records_and_feedback(chain_ids=[]
 #
 # This is done like so:
 
-truchain = TruChain(chain, chain_id='Chain1_ChatApplication', tru=tru)
+truchain = TruChain(chain, app_id='Chain1_ChatApplication', tru=tru)
 truchain("This will be automatically logged.")
 
 # Feedback functions can also be logged automatically by providing them in a list to the feedbacks arg.
 
 truchain = TruChain(
     chain,
-    chain_id='Chain1_ChatApplication',
+    app_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match],  # feedback functions
     tru=tru
 )
@@ -140,7 +140,7 @@ truchain("This will be automatically logged.")
 #
 # ### Wrap with TruChain to instrument your chain
 
-tc = TruChain(chain, chain_id='Chain1_ChatApplication')
+tc = TruChain(chain, app_id='Chain1_ChatApplication')
 
 # ### Set up logging and instrumentation
 #
@@ -152,7 +152,7 @@ gpt3_response, record = tc.call_with_record(prompt_input)
 
 # We can log the records but first we need to log the chain itself.
 
-tru.add_chain(chain=truchain)
+tru.add_app(app=truchain)
 
 # Then we can log the record:
 
@@ -192,7 +192,7 @@ tru.add_feedbacks(feedback_results)
 
 truchain: TruChain = TruChain(
     chain,
-    chain_id='Chain1_ChatApplication',
+    app_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match],
     tru=tru,
     feedback_mode="deferred"

@@ -1,7 +1,7 @@
 from typing import Iterable, List
 
 from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru_model import COMPONENT_CATEGORY
+from trulens_eval.tru_app import COMPONENT_CATEGORY
 from trulens_eval.util import Class
 from trulens_eval.util import first
 from trulens_eval.util import OptionalImports
