@@ -39,7 +39,7 @@ def setup_chain():
     chain = LLMChain(llm=chat, prompt=chat_prompt_template)
 
     tc = TruChain(chain, app_id='Streamlit App')
-    tru.add_chain(chain=tc)
+    tru.add_app(app=tc)
     tru.run_dashboard(_dev=dev_path)
     return tc
 
