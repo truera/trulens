@@ -21,7 +21,7 @@ resources:
   - repository: trulens
     type: git
     name: trulens/trulens
-    ref: releases/rc-0.1.2
+    ref: releases/rc_0.1.2
 
 jobs:
   - job: quickstartTests
