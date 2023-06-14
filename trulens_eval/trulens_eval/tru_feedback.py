@@ -580,7 +580,12 @@ class OpenAI(Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
             "relevant".
         """
-        return _re_1_10_rating(
+        print(str.format(
+                            feedback_prompts.QS_RELEVANCE,
+                            question=question,
+                            statement=statement
+                        ))
+        ret = _re_1_10_rating(
             self.endpoint.run_me(
                 lambda: openai.ChatCompletion.create(
                     model=self.model_engine,
@@ -600,6 +605,8 @@ class OpenAI(Provider):
                 )["choices"][0]["message"]["content"]
             )
         ) / 10
+        print("Model result: " + ret + "|")
+        return ret
 
     def relevance(self, prompt: str, response: str) -> float:
         """
