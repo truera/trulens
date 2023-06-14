@@ -18,9 +18,9 @@ pr:
       
 resources:
   repositories:
-  - repository: trulens
+  - repository: truera/trulens
     type: git
-    name: trulens/trulens
+    name: trulens/truera/trulens
     ref: releases/rc_0.1.2
 
 jobs:
@@ -64,7 +64,7 @@ jobs:
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
 
         displayName: Install pip package
-      - checkout: trulens
+      - checkout: truera/trulens
         clean: true
       - bash: |
           source activate $(condaEnvFileSuffix)
