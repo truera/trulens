@@ -15,7 +15,7 @@
         <link rel="next" href="../slices/">
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.14">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
     
     
       
@@ -23,10 +23,10 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.85bb2934.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.26e3688c.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.a6bdf11c.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ecc896b0.min.css">
       
       
 
@@ -751,8 +751,12 @@ in the parameter descriptions.</p>
           <td>
                 <code><span title="trulens.utils.typing.ModelLike">ModelLike</span></code>
           </td>
-          <td><p>The model to wrap. If using the TensorFlow 1 backend, this is 
-expected to be a graph object.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The model to wrap. If using the TensorFlow 1 backend, this is 
+expected to be a graph object.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -761,9 +765,13 @@ expected to be a graph object.</p></td>
           <td><code>logit_layer</code></td>
           <td>
           </td>
-          <td><p><em>Supported for Keras and Pytorch models.</em> 
+          <td>
+            <div class="doc-md-description">
+              <p><em>Supported for Keras and Pytorch models.</em> 
 Specifies the name or index of the layer that produces the
-logit predictions. </p></td>
+logit predictions. </p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -773,9 +781,13 @@ logit predictions. </p></td>
           <td>
                 <code>bool</code>
           </td>
-          <td><p><em>Supported for Keras models only.</em> If true, the activation
+          <td>
+            <div class="doc-md-description">
+              <p><em>Supported for Keras models only.</em> If true, the activation
 function in the softmax layer (specified by <code>softmax_layer</code>) 
-will be changed to a <code>'linear'</code> activation. </p></td>
+will be changed to a <code>'linear'</code> activation. </p>
+            </div>
+          </td>
           <td>
                 <code>False</code>
           </td>
@@ -784,9 +796,13 @@ will be changed to a <code>'linear'</code> activation. </p></td>
           <td><code>softmax_layer</code></td>
           <td>
           </td>
-          <td><p><em>Supported for Keras models only.</em> Specifies the layer that
+          <td>
+            <div class="doc-md-description">
+              <p><em>Supported for Keras models only.</em> Specifies the layer that
 performs the softmax. This layer should have an <code>activation</code>
-attribute. Only used when <code>replace_softmax</code> is true.</p></td>
+attribute. Only used when <code>replace_softmax</code> is true.</p>
+            </div>
+          </td>
           <td>
                 <code>-1</code>
           </td>
@@ -795,8 +811,12 @@ attribute. Only used when <code>replace_softmax</code> is true.</p></td>
           <td><code>custom_objects</code></td>
           <td>
           </td>
-          <td><p><em>Optional, for use with Keras models only.</em> A dictionary of
-custom objects used by the Keras model.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p><em>Optional, for use with Keras models only.</em> A dictionary of
+custom objects used by the Keras model.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -806,8 +826,12 @@ custom objects used by the Keras model.</p></td>
           <td>
                 <code>str</code>
           </td>
-          <td><p><em>Optional, for use with Pytorch models only.</em> A string
-specifying the device to run the model on.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p><em>Optional, for use with Pytorch models only.</em> A string
+specifying the device to run the model on.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -816,8 +840,12 @@ specifying the device to run the model on.</p></td>
           <td><code>input_tensors</code></td>
           <td>
           </td>
-          <td><p><em>Required for use with TensorFlow 1 graph models only.</em> A list
-of tensors representing the input to the model graph.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p><em>Required for use with TensorFlow 1 graph models only.</em> A list
+of tensors representing the input to the model graph.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -826,8 +854,12 @@ of tensors representing the input to the model graph.</p></td>
           <td><code>output_tensors</code></td>
           <td>
           </td>
-          <td><p><em>Required for use with TensorFlow 1 graph models only.</em> A list
-of tensors representing the output to the model graph.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p><em>Required for use with TensorFlow 1 graph models only.</em> A list
+of tensors representing the output to the model graph.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -836,12 +868,16 @@ of tensors representing the output to the model graph.</p></td>
           <td><code>internal_tensor_dict</code></td>
           <td>
           </td>
-          <td><p><em>Optional, for use with TensorFlow 1 graph models only.</em> A
+          <td>
+            <div class="doc-md-description">
+              <p><em>Optional, for use with TensorFlow 1 graph models only.</em> A
 dictionary mapping user-selected layer names to the internal
 tensors in the model graph that the user would like to expose.
 This is provided to give more human-readable names to the layers
 if desired. Internal tensors can also be accessed via the name
-given to them by tensorflow.</p></td>
+given to them by tensorflow.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -850,9 +886,13 @@ given to them by tensorflow.</p></td>
           <td><code>default_feed_dict</code></td>
           <td>
           </td>
-          <td><p><em>Optional, for use with TensorFlow 1 graph models only.</em> A
+          <td>
+            <div class="doc-md-description">
+              <p><em>Optional, for use with TensorFlow 1 graph models only.</em> A
 dictionary of default values to give to tensors in the model
-graph.</p></td>
+graph.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -861,9 +901,13 @@ graph.</p></td>
           <td><code>session</code></td>
           <td>
           </td>
-          <td><p><em>Optional, for use with TensorFlow 1 graph models only.</em> A 
+          <td>
+            <div class="doc-md-description">
+              <p><em>Optional, for use with TensorFlow 1 graph models only.</em> A 
 <code>tf.Session</code> object to run the model graph in. If <code>None</code>, a new
-temporary session will be generated every time the model is run.</p></td>
+temporary session will be generated every time the model is run.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -872,8 +916,12 @@ temporary session will be generated every time the model is run.</p></td>
           <td><code>backend</code></td>
           <td>
           </td>
-          <td><p><em>Optional, for forcing a specific backend.</em> String values recognized
-are pytorch, tensorflow, keras, or tf.keras.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p><em>Optional, for forcing a specific backend.</em> String values recognized
+are pytorch, tensorflow, keras, or tf.keras.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -882,8 +930,12 @@ are pytorch, tensorflow, keras, or tf.keras.</p></td>
           <td><code>force_eval</code></td>
           <td>
           </td>
-          <td><p>_Optional, True will force a model.eval() call for PyTorch models. False
-will retain current model state</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>_Optional, True will force a model.eval() call for PyTorch models. False
+will retain current model state</p>
+            </div>
+          </td>
           <td>
                 <code>True</code>
           </td>
@@ -893,8 +945,7 @@ will retain current model state</p></td>
 
       <details class="quote">
         <summary>Source code in <code>trulens_explain/trulens/nn/models/__init__.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 63</span>
-<span class="normal"> 64</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 64</span>
 <span class="normal"> 65</span>
 <span class="normal"> 66</span>
 <span class="normal"> 67</span>
@@ -1059,7 +1110,8 @@ will retain current model state</p></td>
 <span class="normal">226</span>
 <span class="normal">227</span>
 <span class="normal">228</span>
-<span class="normal">229</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_model_wrapper</span><span class="p">(</span>
+<span class="normal">229</span>
+<span class="normal">230</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_model_wrapper</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">ModelLike</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">logit_layer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>

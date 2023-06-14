@@ -15,7 +15,7 @@
         <link rel="next" href="../logging/">
       
       <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.14">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
     
     
       
@@ -23,10 +23,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.85bb2934.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.a6bdf11c.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
       
       
 
@@ -1979,7 +1979,9 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
 <span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruChain</span><span class="p">,</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Huggingface</span><span class="p">,</span> <span class="n">Tru</span><span class="p">,</span> <span class="n">Query</span>
 <span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
 
-<span class="c1"># imports from langchain to build app</span>
+<span class="c1"># Imports from langchain to build app. You may need to install langchain first</span>
+<span class="c1"># with the following:</span>
+<span class="c1"># ! pip install langchain&gt;=0.0.170</span>
 <span class="kn">from</span> <span class="nn">langchain.chains</span> <span class="kn">import</span> <span class="n">LLMChain</span>
 <span class="kn">from</span> <span class="nn">langchain.llms</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="kn">from</span> <span class="nn">langchain.prompts.chat</span> <span class="kn">import</span> <span class="n">ChatPromptTemplate</span><span class="p">,</span> <span class="n">PromptTemplate</span>
@@ -1991,7 +1993,9 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
 from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
 tru = Tru()
 
-# imports from langchain to build app
+# Imports from langchain to build app. You may need to install langchain first
+# with the following:
+# ! pip install langchain>=0.0.170
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
 from langchain.prompts.chat import ChatPromptTemplate, PromptTemplate
@@ -2239,14 +2243,12 @@ f_lang_match = Feedback(hugs.language_match).on(
                 </clipboard-copy>
             </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">truchain</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span>
-    <span class="n">chain_id</span><span class="o">=</span><span class="s1">&#39;Chain3_ChatApplication&#39;</span><span class="p">,</span>
-    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_lang_match</span><span class="p">],</span>
-    <span class="n">tru</span> <span class="o">=</span> <span class="n">tru</span><span class="p">)</span>
+    <span class="n">app_id</span><span class="o">=</span><span class="s1">&#39;Chain3_ChatApplication&#39;</span><span class="p">,</span>
+    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_lang_match</span><span class="p">])</span>
 </pre></div>
 <div id="cell-7" class="clipboard-copy-txt">truchain = TruChain(chain,
-    chain_id='Chain3_ChatApplication',
-    feedbacks=[f_lang_match],
-    tru = tru)</div>
+    app_id='Chain3_ChatApplication',
+    feedbacks=[f_lang_match])</div>
         
         </div>
     </div>
@@ -2327,12 +2329,10 @@ display(llm_response)</div>
             </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">run_dashboard</span><span class="p">()</span> <span class="c1"># open a local streamlit app to explore</span>
 
-<span class="c1"># tru.run_dashboard(_dev=True) # if running from repo</span>
 <span class="c1"># tru.stop_dashboard() # stop if needed</span>
 </pre></div>
 <div id="cell-9" class="clipboard-copy-txt">tru.run_dashboard() # open a local streamlit app to explore
 
-# tru.run_dashboard(_dev=True) # if running from repo
 # tru.stop_dashboard() # stop if needed</div>
         
         </div>
@@ -2407,9 +2407,9 @@ display(llm_response)</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">get_records_and_feedback</span><span class="p">(</span><span class="n">chain_ids</span><span class="o">=</span><span class="p">[])[</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># pass an empty list of chain_ids to get all</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">get_records_and_feedback</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[])[</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># pass an empty list of app_ids to get all</span>
 </pre></div>
-<div id="cell-10" class="clipboard-copy-txt">tru.get_records_and_feedback(chain_ids=[])[0] # pass an empty list of chain_ids to get all</div>
+<div id="cell-10" class="clipboard-copy-txt">tru.get_records_and_feedback(app_ids=[])[0] # pass an empty list of app_ids to get all</div>
         
         </div>
     </div>

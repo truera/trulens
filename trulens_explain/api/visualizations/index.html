@@ -13,7 +13,7 @@
       
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.14">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
     
     
       
@@ -21,10 +21,10 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.85bb2934.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.26e3688c.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.a6bdf11c.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ecc896b0.min.css">
       
       
 
@@ -1103,8 +1103,7 @@ towards a particular internal channel or neuron.</p>
 
         <details class="quote">
           <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 846</span>
-<span class="normal"> 847</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 847</span>
 <span class="normal"> 848</span>
 <span class="normal"> 849</span>
 <span class="normal"> 850</span>
@@ -1267,7 +1266,8 @@ towards a particular internal channel or neuron.</p>
 <span class="normal">1007</span>
 <span class="normal">1008</span>
 <span class="normal">1009</span>
-<span class="normal">1010</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">ChannelMaskVisualizer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">1010</span>
+<span class="normal">1011</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">ChannelMaskVisualizer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses internal influence to visualize the pixels that are most salient</span>
 <span class="sd">    towards a particular internal channel or neuron.</span>
@@ -1514,8 +1514,7 @@ defaults to the value supplied to the constructor. Default None.</p>
 </details>
       <details class="quote">
         <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 945</span>
-<span class="normal"> 946</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 946</span>
 <span class="normal"> 947</span>
 <span class="normal"> 948</span>
 <span class="normal"> 949</span>
@@ -1579,7 +1578,8 @@ defaults to the value supplied to the constructor. Default None.</p>
 <span class="normal">1007</span>
 <span class="normal">1008</span>
 <span class="normal">1009</span>
-<span class="normal">1010</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+<span class="normal">1010</span>
+<span class="normal">1011</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">x</span><span class="p">,</span>
     <span class="n">x_preprocessed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1681,7 +1681,11 @@ be overridden by passing in values to <code>__call__</code>).</p>
           <td><code>model</code></td>
           <td>
           </td>
-          <td><p>The wrapped model whose channel we're visualizing.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The wrapped model whose channel we're visualizing.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1690,8 +1694,12 @@ be overridden by passing in values to <code>__call__</code>).</p>
           <td><code>layer</code></td>
           <td>
           </td>
-          <td><p>The identifier (either index or name) of the layer in which the 
-channel we're visualizing resides.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The identifier (either index or name) of the layer in which the 
+channel we're visualizing resides.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1700,8 +1708,12 @@ channel we're visualizing resides.</p></td>
           <td><code>channel</code></td>
           <td>
           </td>
-          <td><p>Index of the channel (for convolutional layers) or internal 
-neuron (for fully-connected layers) that we'd like to visualize.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Index of the channel (for convolutional layers) or internal 
+neuron (for fully-connected layers) that we'd like to visualize.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1710,9 +1722,13 @@ neuron (for fully-connected layers) that we'd like to visualize.</p></td>
           <td><code>channel_axis</code></td>
           <td>
           </td>
-          <td><p>If different from the channel axis specified by the backend, the
+          <td>
+            <div class="doc-md-description">
+              <p>If different from the channel axis specified by the backend, the
 supplied <code>channel_axis</code> will be used if operating on a 
-convolutional layer with 4-D image format.</p></td>
+convolutional layer with 4-D image format.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -1721,11 +1737,15 @@ convolutional layer with 4-D image format.</p></td>
           <td><code>agg_fn</code></td>
           <td>
           </td>
-          <td><p>Function with which to aggregate the remaining dimensions 
+          <td>
+            <div class="doc-md-description">
+              <p>Function with which to aggregate the remaining dimensions 
 (except the batch dimension) in order to get a single scalar 
 value for each channel; If <code>None</code>, a sum over each neuron in the
 channel will be taken. This argument is not used when the 
-channels are scalars, e.g., for dense layers.</p></td>
+channels are scalars, e.g., for dense layers.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -1734,9 +1754,13 @@ channels are scalars, e.g., for dense layers.</p></td>
           <td><code>doi</code></td>
           <td>
           </td>
-          <td><p>The distribution of interest to use when computing the input
+          <td>
+            <div class="doc-md-description">
+              <p>The distribution of interest to use when computing the input
 attributions towards the specified channel. If <code>None</code>, 
-<code>PointDoI</code> will be used.</p></td>
+<code>PointDoI</code> will be used.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -1745,9 +1769,13 @@ attributions towards the specified channel. If <code>None</code>,
           <td><code>blur</code></td>
           <td>
           </td>
-          <td><p>Gives the radius of a Gaussian blur to be applied to the 
+          <td>
+            <div class="doc-md-description">
+              <p>Gives the radius of a Gaussian blur to be applied to the 
 attributions before visualizing. This can be used to help focus
-on salient regions rather than specific salient pixels.</p></td>
+on salient regions rather than specific salient pixels.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -1756,9 +1784,13 @@ on salient regions rather than specific salient pixels.</p></td>
           <td><code>threshold</code></td>
           <td>
           </td>
-          <td><p>Value in the range [0, 1]. Attribution values at or  below the 
+          <td>
+            <div class="doc-md-description">
+              <p>Value in the range [0, 1]. Attribution values at or  below the 
 percentile given by <code>threshold</code> (after normalization, blurring,
-etc.) will be masked.</p></td>
+etc.) will be masked.</p>
+            </div>
+          </td>
           <td>
                 <code>0.5</code>
           </td>
@@ -1767,8 +1799,12 @@ etc.) will be masked.</p></td>
           <td><code>masked_opacity</code></td>
           <td>
           </td>
-          <td><p>Value in the range [0, 1] specifying the opacity for the parts
-of the image that are masked.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Value in the range [0, 1] specifying the opacity for the parts
+of the image that are masked.</p>
+            </div>
+          </td>
           <td>
                 <code>0.2</code>
           </td>
@@ -1778,8 +1814,12 @@ of the image that are masked.</p></td>
           <td>
                 <code>bool</code>
           </td>
-          <td><p>If <code>True</code>, the attributions will be averaged across the channel
-dimension, resulting in a 1-channel attribution map.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code>, the attributions will be averaged across the channel
+dimension, resulting in a 1-channel attribution map.</p>
+            </div>
+          </td>
           <td>
                 <code>True</code>
           </td>
@@ -1788,9 +1828,13 @@ dimension, resulting in a 1-channel attribution map.</p></td>
           <td><code>use_attr_as_opacity</code></td>
           <td>
           </td>
-          <td><p>If <code>True</code>, instead of using <code>threshold</code> and <code>masked_opacity</code>,
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code>, instead of using <code>threshold</code> and <code>masked_opacity</code>,
 the opacity of each pixel is given by the 0-1-normalized 
-attribution value.</p></td>
+attribution value.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -1799,9 +1843,13 @@ attribution value.</p></td>
           <td><code>positive_only</code></td>
           <td>
           </td>
-          <td><p>If <code>True</code>, only pixels with positive attribution will be 
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code>, only pixels with positive attribution will be 
 unmasked (or given nonzero opacity when <code>use_attr_as_opacity</code> is
-true).</p></td>
+true).</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -1811,8 +1859,7 @@ true).</p></td>
 
       <details class="quote">
         <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">852</span>
-<span class="normal">853</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">853</span>
 <span class="normal">854</span>
 <span class="normal">855</span>
 <span class="normal">856</span>
@@ -1902,7 +1949,8 @@ true).</p></td>
 <span class="normal">940</span>
 <span class="normal">941</span>
 <span class="normal">942</span>
-<span class="normal">943</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">943</span>
+<span class="normal">944</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">model</span><span class="p">,</span>
     <span class="n">layer</span><span class="p">,</span>
@@ -2029,8 +2077,7 @@ true).</p></td>
 
         <details class="quote">
           <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1073</span>
-<span class="normal">1074</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1074</span>
 <span class="normal">1075</span>
 <span class="normal">1076</span>
 <span class="normal">1077</span>
@@ -2075,7 +2122,8 @@ true).</p></td>
 <span class="normal">1116</span>
 <span class="normal">1117</span>
 <span class="normal">1118</span>
-<span class="normal">1119</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">HTML</span><span class="p">(</span><span class="n">Output</span><span class="p">):</span>
+<span class="normal">1119</span>
+<span class="normal">1120</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">HTML</span><span class="p">(</span><span class="n">Output</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;HTML visualization output format.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -2167,8 +2215,7 @@ original image, similar to how GradCAM visualizes attributions.</p>
 
         <details class="quote">
           <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">456</span>
-<span class="normal">457</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">457</span>
 <span class="normal">458</span>
 <span class="normal">459</span>
 <span class="normal">460</span>
@@ -2391,7 +2438,8 @@ original image, similar to how GradCAM visualizes attributions.</p>
 <span class="normal">677</span>
 <span class="normal">678</span>
 <span class="normal">679</span>
-<span class="normal">680</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">HeatmapVisualizer</span><span class="p">(</span><span class="n">Visualizer</span><span class="p">):</span>
+<span class="normal">680</span>
+<span class="normal">681</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">HeatmapVisualizer</span><span class="p">(</span><span class="n">Visualizer</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Visualizes attributions by overlaying an attribution heatmap over the</span>
 <span class="sd">    original image, similar to how GradCAM visualizes attributions.</span>
@@ -2661,7 +2709,11 @@ over the given image.</p>
           <td><code>attributions</code></td>
           <td>
           </td>
-          <td><p>A <code>np.ndarray</code> containing the attributions to be visualized.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A <code>np.ndarray</code> containing the attributions to be visualized.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -2670,10 +2722,14 @@ over the given image.</p>
           <td><code>x</code></td>
           <td>
           </td>
-          <td><p>A <code>np.ndarray</code> of items in the same shape as <code>attributions</code>
+          <td>
+            <div class="doc-md-description">
+              <p>A <code>np.ndarray</code> of items in the same shape as <code>attributions</code>
 corresponding to the records explained by the given 
 attributions. The visualization will be superimposed onto the
-corresponding set of records.</p></td>
+corresponding set of records.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -2682,8 +2738,12 @@ corresponding set of records.</p></td>
           <td><code>output_file</code></td>
           <td>
           </td>
-          <td><p>File name to save the visualization image to. If <code>None</code>, no
-image will be saved, but the figure can still be displayed.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>File name to save the visualization image to. If <code>None</code>, no
+image will be saved, but the figure can still be displayed.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -2692,8 +2752,12 @@ image will be saved, but the figure can still be displayed.</p></td>
           <td><code>imshow</code></td>
           <td>
           </td>
-          <td><p>If true, a the visualization will be displayed. Otherwise the
-figure will not be displayed, but the figure can still be saved.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>If true, a the visualization will be displayed. Otherwise the
+figure will not be displayed, but the figure can still be saved.</p>
+            </div>
+          </td>
           <td>
                 <code>True</code>
           </td>
@@ -2702,8 +2766,12 @@ figure will not be displayed, but the figure can still be saved.</p></td>
           <td><code>fig</code></td>
           <td>
           </td>
-          <td><p>The <code>pyplot</code> figure to display the visualization in. If <code>None</code>,
-a new figure will be created.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The <code>pyplot</code> figure to display the visualization in. If <code>None</code>,
+a new figure will be created.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -2712,10 +2780,14 @@ a new figure will be created.</p></td>
           <td><code>return_tiled</code></td>
           <td>
           </td>
-          <td><p>If true, the returned array will be in the same shape as the
+          <td>
+            <div class="doc-md-description">
+              <p>If true, the returned array will be in the same shape as the
 visualization, with no batch dimension and the samples in the
 batch tiled along the width and height dimensions. If false, the
-returned array will be reshaped to match <code>attributions</code>.</p></td>
+returned array will be reshaped to match <code>attributions</code>.</p>
+            </div>
+          </td>
           <td>
                 <code>False</code>
           </td>
@@ -2724,10 +2796,14 @@ returned array will be reshaped to match <code>attributions</code>.</p></td>
           <td><code>overlay_opacity</code></td>
           <td>
           </td>
-          <td><p>float
+          <td>
+            <div class="doc-md-description">
+              <p>float
 Value in the range [0, 1] specifying the opacity for the heatmap
 overlay. If <code>None</code>, defaults to the value supplied to the 
-constructor.</p></td>
+constructor.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -2736,7 +2812,9 @@ constructor.</p></td>
           <td><code>normalization_type</code></td>
           <td>
           </td>
-          <td><p>Specifies one of the following configurations for normalizing
+          <td>
+            <div class="doc-md-description">
+              <p>Specifies one of the following configurations for normalizing
 the attributions (each item is normalized separately):</p>
 <ul>
 <li><code>'unsigned_max'</code>: normalizes the attributions to the range 
@@ -2768,7 +2846,9 @@ the attributions (each item is normalized separately):</p>
   maximum attribution value.</li>
 <li><code>'unnormalized'</code>: leaves the attributions unaffected.</li>
 </ul>
-<p>If <code>None</code>, defaults to the value supplied to the constructor.</p></td>
+<p>If <code>None</code>, defaults to the value supplied to the constructor.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -2777,10 +2857,14 @@ the attributions (each item is normalized separately):</p>
           <td><code>blur</code></td>
           <td>
           </td>
-          <td><p>Gives the radius of a Gaussian blur to be applied to the 
+          <td>
+            <div class="doc-md-description">
+              <p>Gives the radius of a Gaussian blur to be applied to the 
 attributions before visualizing. This can be used to help focus
 on salient regions rather than specific salient pixels. If
-<code>None</code>, defaults to the value supplied to the constructor.</p></td>
+<code>None</code>, defaults to the value supplied to the constructor.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -2789,9 +2873,13 @@ on salient regions rather than specific salient pixels. If
           <td><code>cmap</code></td>
           <td>
           </td>
-          <td><p>matplotlib.colors.Colormap | str, optional
+          <td>
+            <div class="doc-md-description">
+              <p>matplotlib.colors.Colormap | str, optional
 Colormap or name of a Colormap to use for the visualization. If
-<code>None</code>, defaults to the value supplied to the constructor.</p></td>
+<code>None</code>, defaults to the value supplied to the constructor.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -2810,29 +2898,40 @@ Colormap or name of a Colormap to use for the visualization. If
     <tbody>
         <tr>
           <td>
-                <code><span title="numpy">np</span>.<span title="np.ndarray">ndarray</span></code>
+                <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td><p>A <code>np.ndarray</code> array of the numerical representation of the</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A <code>np.ndarray</code> array of the numerical representation of the</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
-                <code><span title="numpy">np</span>.<span title="np.ndarray">ndarray</span></code>
+                <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td><p>attributions as modified for the visualization. This includes </p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>attributions as modified for the visualization. This includes </p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
-                <code><span title="numpy">np</span>.<span title="np.ndarray">ndarray</span></code>
+                <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td><p>normalization, blurring, etc.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>normalization, blurring, etc.</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">536</span>
-<span class="normal">537</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">537</span>
 <span class="normal">538</span>
 <span class="normal">539</span>
 <span class="normal">540</span>
@@ -2975,7 +3074,8 @@ Colormap or name of a Colormap to use for the visualization. If
 <span class="normal">677</span>
 <span class="normal">678</span>
 <span class="normal">679</span>
-<span class="normal">680</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+<span class="normal">680</span>
+<span class="normal">681</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">attributions</span><span class="p">,</span>
     <span class="n">x</span><span class="p">,</span>
@@ -3156,9 +3256,13 @@ be overridden by passing in values to <code>__call__</code>).</p>
           <td><code>overlay_opacity</code></td>
           <td>
           </td>
-          <td><p>float
+          <td>
+            <div class="doc-md-description">
+              <p>float
 Value in the range [0, 1] specifying the opacity for the heatmap
-overlay.</p></td>
+overlay.</p>
+            </div>
+          </td>
           <td>
                 <code>0.5</code>
           </td>
@@ -3167,7 +3271,9 @@ overlay.</p></td>
           <td><code>normalization_type</code></td>
           <td>
           </td>
-          <td><p>Specifies one of the following configurations for normalizing
+          <td>
+            <div class="doc-md-description">
+              <p>Specifies one of the following configurations for normalizing
 the attributions (each item is normalized separately):</p>
 <ul>
 <li><code>'unsigned_max'</code>: normalizes the attributions to the range 
@@ -3201,7 +3307,9 @@ the attributions (each item is normalized separately):</p>
 </ul>
 <p>If <code>None</code>, either <code>'unsigned_max'</code> (for single-channel data) or 
 <code>'unsigned_max_positive_centered'</code> (for multi-channel data) is
-used.</p></td>
+used.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -3210,9 +3318,13 @@ used.</p></td>
           <td><code>blur</code></td>
           <td>
           </td>
-          <td><p>Gives the radius of a Gaussian blur to be applied to the 
+          <td>
+            <div class="doc-md-description">
+              <p>Gives the radius of a Gaussian blur to be applied to the 
 attributions before visualizing. This can be used to help focus
-on salient regions rather than specific salient pixels.</p></td>
+on salient regions rather than specific salient pixels.</p>
+            </div>
+          </td>
           <td>
                 <code>10.0</code>
           </td>
@@ -3221,11 +3333,15 @@ on salient regions rather than specific salient pixels.</p></td>
           <td><code>cmap</code></td>
           <td>
           </td>
-          <td><p>matplotlib.colors.Colormap | str, optional
+          <td>
+            <div class="doc-md-description">
+              <p>matplotlib.colors.Colormap | str, optional
 Colormap or name of a Colormap to use for the visualization. If 
 <code>None</code>, the colormap will be chosen based on the normalization 
 type. This argument is only used for single-channel data
-(including when <code>combine_channels</code> is True).</p></td>
+(including when <code>combine_channels</code> is True).</p>
+            </div>
+          </td>
           <td>
                 <code>&#39;jet&#39;</code>
           </td>
@@ -3235,8 +3351,7 @@ type. This argument is only used for single-channel data
 
       <details class="quote">
         <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">462</span>
-<span class="normal">463</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">463</span>
 <span class="normal">464</span>
 <span class="normal">465</span>
 <span class="normal">466</span>
@@ -3307,7 +3422,8 @@ type. This argument is only used for single-channel data
 <span class="normal">531</span>
 <span class="normal">532</span>
 <span class="normal">533</span>
-<span class="normal">534</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">534</span>
+<span class="normal">535</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">overlay_opacity</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
     <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -3415,8 +3531,7 @@ type. This argument is only used for single-channel data
 
         <details class="quote">
           <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1122</span>
-<span class="normal">1123</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1123</span>
 <span class="normal">1124</span>
 <span class="normal">1125</span>
 <span class="normal">1126</span>
@@ -3429,7 +3544,8 @@ type. This argument is only used for single-channel data
 <span class="normal">1133</span>
 <span class="normal">1134</span>
 <span class="normal">1135</span>
-<span class="normal">1136</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">IPython</span><span class="p">(</span><span class="n">HTML</span><span class="p">):</span>
+<span class="normal">1136</span>
+<span class="normal">1137</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">IPython</span><span class="p">(</span><span class="n">HTML</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Interactive python visualization output format.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -3490,8 +3606,7 @@ particularly for use with input-attributions.</p>
 
         <details class="quote">
           <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">683</span>
-<span class="normal">684</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">684</span>
 <span class="normal">685</span>
 <span class="normal">686</span>
 <span class="normal">687</span>
@@ -3650,7 +3765,8 @@ particularly for use with input-attributions.</p>
 <span class="normal">840</span>
 <span class="normal">841</span>
 <span class="normal">842</span>
-<span class="normal">843</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">MaskVisualizer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">843</span>
+<span class="normal">844</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">MaskVisualizer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Visualizes attributions by masking the original image to highlight the</span>
 <span class="sd">    regions with influence above a given threshold percentile. Intended </span>
@@ -3856,9 +3972,13 @@ be overridden by passing in values to <code>__call__</code>).</p>
           <td><code>blur</code></td>
           <td>
           </td>
-          <td><p>Gives the radius of a Gaussian blur to be applied to the 
+          <td>
+            <div class="doc-md-description">
+              <p>Gives the radius of a Gaussian blur to be applied to the 
 attributions before visualizing. This can be used to help focus
-on salient regions rather than specific salient pixels.</p></td>
+on salient regions rather than specific salient pixels.</p>
+            </div>
+          </td>
           <td>
                 <code>5.0</code>
           </td>
@@ -3867,9 +3987,13 @@ on salient regions rather than specific salient pixels.</p></td>
           <td><code>threshold</code></td>
           <td>
           </td>
-          <td><p>Value in the range [0, 1]. Attribution values at or  below the 
+          <td>
+            <div class="doc-md-description">
+              <p>Value in the range [0, 1]. Attribution values at or  below the 
 percentile given by <code>threshold</code> (after normalization, blurring,
-etc.) will be masked.</p></td>
+etc.) will be masked.</p>
+            </div>
+          </td>
           <td>
                 <code>0.5</code>
           </td>
@@ -3878,8 +4002,12 @@ etc.) will be masked.</p></td>
           <td><code>masked_opacity</code></td>
           <td>
           </td>
-          <td><p>Value in the range [0, 1] specifying the opacity for the parts
-of the image that are masked.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Value in the range [0, 1] specifying the opacity for the parts
+of the image that are masked.</p>
+            </div>
+          </td>
           <td>
                 <code>0.2</code>
           </td>
@@ -3888,8 +4016,12 @@ of the image that are masked.</p></td>
           <td><code>combine_channels</code></td>
           <td>
           </td>
-          <td><p>If <code>True</code>, the attributions will be averaged across the channel
-dimension, resulting in a 1-channel attribution map.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code>, the attributions will be averaged across the channel
+dimension, resulting in a 1-channel attribution map.</p>
+            </div>
+          </td>
           <td>
                 <code>True</code>
           </td>
@@ -3898,9 +4030,13 @@ dimension, resulting in a 1-channel attribution map.</p></td>
           <td><code>use_attr_as_opacity</code></td>
           <td>
           </td>
-          <td><p>If <code>True</code>, instead of using <code>threshold</code> and <code>masked_opacity</code>,
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code>, instead of using <code>threshold</code> and <code>masked_opacity</code>,
 the opacity of each pixel is given by the 0-1-normalized 
-attribution value.</p></td>
+attribution value.</p>
+            </div>
+          </td>
           <td>
                 <code>False</code>
           </td>
@@ -3909,9 +4045,13 @@ attribution value.</p></td>
           <td><code>positive_only</code></td>
           <td>
           </td>
-          <td><p>If <code>True</code>, only pixels with positive attribution will be 
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code>, only pixels with positive attribution will be 
 unmasked (or given nonzero opacity when <code>use_attr_as_opacity</code> is
-true).</p></td>
+true).</p>
+            </div>
+          </td>
           <td>
                 <code>True</code>
           </td>
@@ -3921,8 +4061,7 @@ true).</p></td>
 
       <details class="quote">
         <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">690</span>
-<span class="normal">691</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">691</span>
 <span class="normal">692</span>
 <span class="normal">693</span>
 <span class="normal">694</span>
@@ -3971,7 +4110,8 @@ true).</p></td>
 <span class="normal">737</span>
 <span class="normal">738</span>
 <span class="normal">739</span>
-<span class="normal">740</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">740</span>
+<span class="normal">741</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">blur</span><span class="o">=</span><span class="mf">5.</span><span class="p">,</span>
     <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
@@ -4057,8 +4197,7 @@ true).</p></td>
 
         <details class="quote">
           <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1139</span>
-<span class="normal">1140</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1140</span>
 <span class="normal">1141</span>
 <span class="normal">1142</span>
 <span class="normal">1143</span>
@@ -4242,7 +4381,8 @@ true).</p></td>
 <span class="normal">1321</span>
 <span class="normal">1322</span>
 <span class="normal">1323</span>
-<span class="normal">1324</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">NLP</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">1324</span>
+<span class="normal">1325</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">NLP</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;NLP Visualization tools.&quot;&quot;&quot;</span>
 
     <span class="c1"># Batches of text inputs not yet tokenized.</span>
@@ -4473,8 +4613,12 @@ true).</p></td>
           <td>
                 <code><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></code>
           </td>
-          <td><p>ModelWrapper
-The wrapped model whose channel we're visualizing.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>ModelWrapper
+The wrapped model whose channel we're visualizing.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4484,10 +4628,14 @@ The wrapped model whose channel we're visualizing.</p></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" title="trulens_explain.trulens.visualizations.Output" href="#trulens_explain.trulens.visualizations.Output">Output</a>]</code>
           </td>
-          <td><p>Output, optional
+          <td>
+            <div class="doc-md-description">
+              <p>Output, optional
 Visualization output format. Defaults to PlainText unless
 ipython is detected and in which case defaults to IPython
-format.</p></td>
+format.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -4497,8 +4645,12 @@ format.</p></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Iterable">Iterable</span>[str]]</code>
           </td>
-          <td><p>Iterable[str], optional
-Names of prediction classes for classification models.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Iterable[str], optional
+Names of prediction classes for classification models.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -4508,8 +4660,12 @@ Names of prediction classes for classification models.</p></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Callable">Callable</span>[[<span title="trulens_explain.trulens.visualizations.NLP.TextBatch">TextBatch</span>], <span title="trulens.utils.typing.ModelInputs">ModelInputs</span>]]</code>
           </td>
-          <td><p>Callable[[TextBatch], ModelInput], optional
-Method to tokenize an instance.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Callable[[TextBatch], ModelInput], optional
+Method to tokenize an instance.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -4519,8 +4675,12 @@ Method to tokenize an instance.</p></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Callable">Callable</span>[[<span title="trulens.utils.typing.Tensor">Tensor</span>], str]]</code>
           </td>
-          <td><p>Callable[[Tensor], str], optional
-Method to invert/decode the tokenization.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Callable[[Tensor], str], optional
+Method to invert/decode the tokenization.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -4530,9 +4690,13 @@ Method to invert/decode the tokenization.</p></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Callable">Callable</span>[[<span title="trulens.utils.typing.ModelInputs">ModelInputs</span>], <span title="typing.Iterable">Iterable</span>[<span title="trulens.utils.typing.Tensor">Tensor</span>]]]</code>
           </td>
-          <td><p>Callable[[ModelInputs], Iterable[Tensor]], optional
+          <td>
+            <div class="doc-md-description">
+              <p>Callable[[ModelInputs], Iterable[Tensor]], optional
 Method to extract input/token ids from model inputs (tokenize
-output) if needed.</p></td>
+output) if needed.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -4542,9 +4706,13 @@ output) if needed.</p></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Callable">Callable</span>[[<span title="trulens_explain.trulens.visualizations.NLP.ModelOutput">ModelOutput</span>], <span title="typing.Iterable">Iterable</span>[<span title="trulens.utils.typing.Tensor">Tensor</span>]]]</code>
           </td>
-          <td><p>Callable[[ModelOutput], Iterable[Tensor]], optional
+          <td>
+            <div class="doc-md-description">
+              <p>Callable[[ModelOutput], Iterable[Tensor]], optional
 Method to extract outout logits from output structures if
-needed.</p></td>
+needed.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -4554,9 +4722,13 @@ needed.</p></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Callable">Callable</span>[[<span title="trulens.utils.typing.Tensor">Tensor</span>], <span title="trulens.utils.typing.Tensor">Tensor</span>]]</code>
           </td>
-          <td><p>Callable[[Tensor], Tensor], optional
+          <td>
+            <div class="doc-md-description">
+              <p>Callable[[Tensor], Tensor], optional
 Method to aggregate attribution for embedding into a single
-value. Defaults to sum.</p></td>
+value. Defaults to sum.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -4566,8 +4738,12 @@ value. Defaults to sum.</p></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Set">Set</span>[int]]</code>
           </td>
-          <td><p>Set[int], optional
-For token-based visualizations, which tokens to hide.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Set[int], optional
+For token-based visualizations, which tokens to hide.</p>
+            </div>
+          </td>
           <td>
                 <code>set()</code>
           </td>
@@ -4577,8 +4753,7 @@ For token-based visualizations, which tokens to hide.</p></td>
 
       <details class="quote">
         <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1153</span>
-<span class="normal">1154</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1154</span>
 <span class="normal">1155</span>
 <span class="normal">1156</span>
 <span class="normal">1157</span>
@@ -4657,7 +4832,8 @@ For token-based visualizations, which tokens to hide.</p></td>
 <span class="normal">1230</span>
 <span class="normal">1231</span>
 <span class="normal">1232</span>
-<span class="normal">1233</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">1233</span>
+<span class="normal">1234</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">wrapper</span><span class="p">:</span> <span class="n">ModelWrapper</span><span class="p">,</span>
     <span class="n">output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Output</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -4774,8 +4950,12 @@ For token-based visualizations, which tokens to hide.</p></td>
           <td>
                 <code><span title="typing.Iterable">Iterable</span>[str]</code>
           </td>
-          <td><p>Iterable[str]
-The input texts to visualize.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Iterable[str]
+The input texts to visualize.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4785,8 +4965,12 @@ The input texts to visualize.</p></td>
           <td>
                 <code><span title="trulens.nn.attribution.AttributionMethod">AttributionMethod</span></code>
           </td>
-          <td><p>AttributionMethod
-The attribution method to generate the token importances with.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>AttributionMethod
+The attribution method to generate the token importances with.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4806,15 +4990,18 @@ The attribution method to generate the token importances with.</p></td>
         <tr>
           <td>
           </td>
-          <td><p>The visualization in the format specified by this class's <code>output</code> parameter.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The visualization in the format specified by this class's <code>output</code> parameter.</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1235</span>
-<span class="normal">1236</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1236</span>
 <span class="normal">1237</span>
 <span class="normal">1238</span>
 <span class="normal">1239</span>
@@ -4902,7 +5089,8 @@ The attribution method to generate the token importances with.</p></td>
 <span class="normal">1321</span>
 <span class="normal">1322</span>
 <span class="normal">1323</span>
-<span class="normal">1324</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">token_attribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">attr</span><span class="p">:</span> <span class="n">AttributionMethod</span><span class="p">):</span>
+<span class="normal">1324</span>
+<span class="normal">1325</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">token_attribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">attr</span><span class="p">:</span> <span class="n">AttributionMethod</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize a token-based input attribution on given `texts` inputs via the attribution method `attr`.</span>
 
 <span class="sd">    Parameters:</span>
@@ -5027,8 +5215,7 @@ The attribution method to generate the token importances with.</p></td>
 
         <details class="quote">
           <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1013</span>
-<span class="normal">1014</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1014</span>
 <span class="normal">1015</span>
 <span class="normal">1016</span>
 <span class="normal">1017</span>
@@ -5056,7 +5243,8 @@ The attribution method to generate the token importances with.</p></td>
 <span class="normal">1039</span>
 <span class="normal">1040</span>
 <span class="normal">1041</span>
-<span class="normal">1042</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Output</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="normal">1042</span>
+<span class="normal">1043</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Output</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for visualization output formats.&quot;&quot;&quot;</span>
 
     <span class="nd">@abstractmethod</span>
@@ -5130,8 +5318,7 @@ The attribution method to generate the token importances with.</p></td>
 
         <details class="quote">
           <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1048</span>
-<span class="normal">1049</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1049</span>
 <span class="normal">1050</span>
 <span class="normal">1051</span>
 <span class="normal">1052</span>
@@ -5152,7 +5339,8 @@ The attribution method to generate the token importances with.</p></td>
 <span class="normal">1067</span>
 <span class="normal">1068</span>
 <span class="normal">1069</span>
-<span class="normal">1070</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">PlainText</span><span class="p">(</span><span class="n">Output</span><span class="p">):</span>
+<span class="normal">1070</span>
+<span class="normal">1071</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">PlainText</span><span class="p">(</span><span class="n">Output</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Plain text visualization output format.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">blank</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -5219,8 +5407,7 @@ The attribution method to generate the token importances with.</p></td>
 
         <details class="quote">
           <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">44</span>
-<span class="normal">45</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">45</span>
 <span class="normal">46</span>
 <span class="normal">47</span>
 <span class="normal">48</span>
@@ -5256,7 +5443,8 @@ The attribution method to generate the token importances with.</p></td>
 <span class="normal">78</span>
 <span class="normal">79</span>
 <span class="normal">80</span>
-<span class="normal">81</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Tiler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">81</span>
+<span class="normal">82</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Tiler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Used to tile batched images or attributions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -5337,9 +5525,13 @@ The attribution method to generate the token importances with.</p></td>
         <tr>
           <td><code>a</code></td>
           <td>
-                <code><span title="numpy">np</span>.<span title="np.ndarray">ndarray</span></code>
+                <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td><p>An array of 4D batched image data.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>An array of 4D batched image data.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -5358,41 +5550,60 @@ The attribution method to generate the token importances with.</p></td>
     <tbody>
         <tr>
           <td>
-                <code><span title="numpy">np</span>.<span title="np.ndarray">ndarray</span></code>
+                <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td><p>A tiled array of the images from <code>a</code>. The resulting array has rank</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A tiled array of the images from <code>a</code>. The resulting array has rank</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
-                <code><span title="numpy">np</span>.<span title="np.ndarray">ndarray</span></code>
+                <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td><p>3 for color images, and 2 for grayscale images (the batch dimension</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>3 for color images, and 2 for grayscale images (the batch dimension</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
-                <code><span title="numpy">np</span>.<span title="np.ndarray">ndarray</span></code>
+                <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td><p>is removed, as well as the channel dimension for grayscale images).</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>is removed, as well as the channel dimension for grayscale images).</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
-                <code><span title="numpy">np</span>.<span title="np.ndarray">ndarray</span></code>
+                <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td><p>The resulting array has its color channel dimension ordered last to</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The resulting array has its color channel dimension ordered last to</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
-                <code><span title="numpy">np</span>.<span title="np.ndarray">ndarray</span></code>
+                <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td><p>fit the requirements of the <code>matplotlib</code> library.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>fit the requirements of the <code>matplotlib</code> library.</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">49</span>
-<span class="normal">50</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">50</span>
 <span class="normal">51</span>
 <span class="normal">52</span>
 <span class="normal">53</span>
@@ -5423,7 +5634,8 @@ The attribution method to generate the token importances with.</p></td>
 <span class="normal">78</span>
 <span class="normal">79</span>
 <span class="normal">80</span>
-<span class="normal">81</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">tile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="normal">81</span>
+<span class="normal">82</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">tile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Tiles the given array into a grid that is as square as possible.</span>
 
@@ -5493,8 +5705,7 @@ use with input-attributions.</p>
 
         <details class="quote">
           <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 84</span>
-<span class="normal"> 85</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 85</span>
 <span class="normal"> 86</span>
 <span class="normal"> 87</span>
 <span class="normal"> 88</span>
@@ -5862,7 +6073,8 @@ use with input-attributions.</p>
 <span class="normal">450</span>
 <span class="normal">451</span>
 <span class="normal">452</span>
-<span class="normal">453</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Visualizer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">453</span>
+<span class="normal">454</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Visualizer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Visualizes attributions directly as a color image. Intended particularly for</span>
 <span class="sd">    use with input-attributions.</span>
@@ -6276,7 +6488,11 @@ use with input-attributions.</p>
           <td><code>attributions</code></td>
           <td>
           </td>
-          <td><p>A <code>np.ndarray</code> containing the attributions to be visualized.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A <code>np.ndarray</code> containing the attributions to be visualized.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -6285,8 +6501,12 @@ use with input-attributions.</p>
           <td><code>output_file</code></td>
           <td>
           </td>
-          <td><p>File name to save the visualization image to. If <code>None</code>, no
-image will be saved, but the figure can still be displayed.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>File name to save the visualization image to. If <code>None</code>, no
+image will be saved, but the figure can still be displayed.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -6295,8 +6515,12 @@ image will be saved, but the figure can still be displayed.</p></td>
           <td><code>imshow</code></td>
           <td>
           </td>
-          <td><p>If true, a the visualization will be displayed. Otherwise the
-figure will not be displayed, but the figure can still be saved.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>If true, a the visualization will be displayed. Otherwise the
+figure will not be displayed, but the figure can still be saved.</p>
+            </div>
+          </td>
           <td>
                 <code>True</code>
           </td>
@@ -6305,8 +6529,12 @@ figure will not be displayed, but the figure can still be saved.</p></td>
           <td><code>fig</code></td>
           <td>
           </td>
-          <td><p>The <code>pyplot</code> figure to display the visualization in. If <code>None</code>,
-a new figure will be created.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The <code>pyplot</code> figure to display the visualization in. If <code>None</code>,
+a new figure will be created.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -6315,10 +6543,14 @@ a new figure will be created.</p></td>
           <td><code>return_tiled</code></td>
           <td>
           </td>
-          <td><p>If true, the returned array will be in the same shape as the
+          <td>
+            <div class="doc-md-description">
+              <p>If true, the returned array will be in the same shape as the
 visualization, with no batch dimension and the samples in the
 batch tiled along the width and height dimensions. If false, the
-returned array will be reshaped to match <code>attributions</code>.</p></td>
+returned array will be reshaped to match <code>attributions</code>.</p>
+            </div>
+          </td>
           <td>
                 <code>False</code>
           </td>
@@ -6327,9 +6559,13 @@ returned array will be reshaped to match <code>attributions</code>.</p></td>
           <td><code>combine_channels</code></td>
           <td>
           </td>
-          <td><p>If <code>True</code>, the attributions will be averaged across the channel
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code>, the attributions will be averaged across the channel
 dimension, resulting in a 1-channel attribution map. If <code>None</code>,
-defaults to the value supplied to the constructor.</p></td>
+defaults to the value supplied to the constructor.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -6338,7 +6574,9 @@ defaults to the value supplied to the constructor.</p></td>
           <td><code>normalization_type</code></td>
           <td>
           </td>
-          <td><p>Specifies one of the following configurations for normalizing
+          <td>
+            <div class="doc-md-description">
+              <p>Specifies one of the following configurations for normalizing
 the attributions (each item is normalized separately):</p>
 <ul>
 <li><code>'unsigned_max'</code>: normalizes the attributions to the range 
@@ -6370,7 +6608,9 @@ the attributions (each item is normalized separately):</p>
   maximum attribution value.</li>
 <li><code>'unnormalized'</code>: leaves the attributions unaffected.</li>
 </ul>
-<p>If <code>None</code>, defaults to the value supplied to the constructor.</p></td>
+<p>If <code>None</code>, defaults to the value supplied to the constructor.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -6379,10 +6619,14 @@ the attributions (each item is normalized separately):</p>
           <td><code>blur</code></td>
           <td>
           </td>
-          <td><p>Gives the radius of a Gaussian blur to be applied to the 
+          <td>
+            <div class="doc-md-description">
+              <p>Gives the radius of a Gaussian blur to be applied to the 
 attributions before visualizing. This can be used to help focus
 on salient regions rather than specific salient pixels. If
-<code>None</code>, defaults to the value supplied to the constructor.</p></td>
+<code>None</code>, defaults to the value supplied to the constructor.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -6391,9 +6635,13 @@ on salient regions rather than specific salient pixels. If
           <td><code>cmap</code></td>
           <td>
           </td>
-          <td><p>matplotlib.colors.Colormap | str, optional
+          <td>
+            <div class="doc-md-description">
+              <p>matplotlib.colors.Colormap | str, optional
 Colormap or name of a Colormap to use for the visualization. If
-<code>None</code>, defaults to the value supplied to the constructor.</p></td>
+<code>None</code>, defaults to the value supplied to the constructor.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -6412,29 +6660,40 @@ Colormap or name of a Colormap to use for the visualization. If
     <tbody>
         <tr>
           <td>
-                <code><span title="numpy">np</span>.<span title="np.ndarray">ndarray</span></code>
+                <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td><p>A <code>np.ndarray</code> array of the numerical representation of the</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A <code>np.ndarray</code> array of the numerical representation of the</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
-                <code><span title="numpy">np</span>.<span title="np.ndarray">ndarray</span></code>
+                <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td><p>attributions as modified for the visualization. This includes </p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>attributions as modified for the visualization. This includes </p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
-                <code><span title="numpy">np</span>.<span title="np.ndarray">ndarray</span></code>
+                <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td><p>normalization, blurring, etc.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>normalization, blurring, etc.</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">165</span>
-<span class="normal">166</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">166</span>
 <span class="normal">167</span>
 <span class="normal">168</span>
 <span class="normal">169</span>
@@ -6559,7 +6818,8 @@ Colormap or name of a Colormap to use for the visualization. If
 <span class="normal">288</span>
 <span class="normal">289</span>
 <span class="normal">290</span>
-<span class="normal">291</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+<span class="normal">291</span>
+<span class="normal">292</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">attributions</span><span class="p">,</span>
     <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -6723,8 +6983,12 @@ be overridden by passing in values to <code>__call__</code>).</p>
           <td>
                 <code>bool</code>
           </td>
-          <td><p>If <code>True</code>, the attributions will be averaged across the channel
-dimension, resulting in a 1-channel attribution map.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code>, the attributions will be averaged across the channel
+dimension, resulting in a 1-channel attribution map.</p>
+            </div>
+          </td>
           <td>
                 <code>False</code>
           </td>
@@ -6734,7 +6998,9 @@ dimension, resulting in a 1-channel attribution map.</p></td>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Specifies one of the following configurations for normalizing
+          <td>
+            <div class="doc-md-description">
+              <p>Specifies one of the following configurations for normalizing
 the attributions (each item is normalized separately):</p>
 <ul>
 <li><code>'unsigned_max'</code>: normalizes the attributions to the range 
@@ -6768,7 +7034,9 @@ the attributions (each item is normalized separately):</p>
 </ul>
 <p>If <code>None</code>, either <code>'unsigned_max'</code> (for single-channel data) or 
 <code>'unsigned_max_positive_centered'</code> (for multi-channel data) is
-used.</p></td>
+used.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -6778,9 +7046,13 @@ used.</p></td>
           <td>
                 <code>float</code>
           </td>
-          <td><p>Gives the radius of a Gaussian blur to be applied to the 
+          <td>
+            <div class="doc-md-description">
+              <p>Gives the radius of a Gaussian blur to be applied to the 
 attributions before visualizing. This can be used to help focus
-on salient regions rather than specific salient pixels.</p></td>
+on salient regions rather than specific salient pixels.</p>
+            </div>
+          </td>
           <td>
                 <code>0.0</code>
           </td>
@@ -6790,11 +7062,15 @@ on salient regions rather than specific salient pixels.</p></td>
           <td>
                 <code><span title="matplotlib.colors.Colormap">Colormap</span></code>
           </td>
-          <td><p>matplotlib.colors.Colormap | str, optional
+          <td>
+            <div class="doc-md-description">
+              <p>matplotlib.colors.Colormap | str, optional
 Colormap or name of a Colormap to use for the visualization. If 
 <code>None</code>, the colormap will be chosen based on the normalization 
 type. This argument is only used for single-channel data
-(including when <code>combine_channels</code> is True).</p></td>
+(including when <code>combine_channels</code> is True).</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -6804,8 +7080,7 @@ type. This argument is only used for single-channel data
 
       <details class="quote">
         <summary>Source code in <code>trulens_explain/trulens/visualizations.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 92</span>
-<span class="normal"> 93</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 93</span>
 <span class="normal"> 94</span>
 <span class="normal"> 95</span>
 <span class="normal"> 96</span>
@@ -6875,7 +7150,8 @@ type. This argument is only used for single-channel data
 <span class="normal">160</span>
 <span class="normal">161</span>
 <span class="normal">162</span>
-<span class="normal">163</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">163</span>
+<span class="normal">164</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">combine_channels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">normalization_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>

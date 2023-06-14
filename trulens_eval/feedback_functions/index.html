@@ -15,7 +15,7 @@
         <link rel="next" href="../api/tru/">
       
       <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.14">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
     
     
       
@@ -23,10 +23,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.85bb2934.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.a6bdf11c.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
       
       
 
@@ -1800,7 +1800,7 @@ Licensed under the Apache License, Version 2.0.
 <p>Feedback functions are organized by model provider into Provider classes.</p>
 <p>The process for adding new feedback functions is:</p>
 <ol>
-<li>Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class:</li>
+<li>Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class. Add the new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).</li>
 </ol>
 
 </div>
@@ -1830,12 +1830,33 @@ Licensed under the Apache License, Version 2.0.
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Provider</span>
 
 <span class="k">class</span> <span class="nc">StandAlone</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
-    <span class="k">pass</span>
+    <span class="k">def</span> <span class="nf">my_custom_feedback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">my_text_field</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A dummy function of text inputs to float outputs.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            my_text_field (str): Text to evaluate.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: square length of the text</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">my_text_field</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">my_text_field</span><span class="p">))</span>
 </pre></div>
 <div id="cell-1" class="clipboard-copy-txt">from trulens_eval import Provider
 
 class StandAlone(Provider):
-    pass</div>
+    def my_custom_feedback(self, my_text_field: str) -> float:
+        """
+        A dummy function of text inputs to float outputs.
+
+        Parameters:
+            my_text_field (str): Text to evaluate.
+
+        Returns:
+            float: square length of the text
+        """
+        return 1.0 / (1.0 + len(my_text_field) * len(my_text_field))
+</div>
         
         </div>
     </div>
@@ -1852,7 +1873,7 @@ class StandAlone(Provider):
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <ol start="2">
-<li>Add a new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).</li>
+<li>Instantiate your provider and feedback functions. The feedback function is wrapped by the trulens-eval Feedback class which helps specify what will get sent to your function parameters (For example: Query.RecordInput or Query.RecordOutput)</li>
 </ol>
 
 </div>
@@ -1879,31 +1900,101 @@ class StandAlone(Provider):
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">feedback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Describe how the model works</span>
-
-<span class="sd">        Parameters:</span>
-<span class="sd">            text (str): Text to evaluate.</span>
-<span class="sd">            Can also be prompt (str) and response (str).</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            float: A value between 0 (worst) and 1 (best).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">float</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">my_standalone</span> <span class="o">=</span> <span class="n">StandAlone</span><span class="p">()</span>
+<span class="n">my_feedback_function_standalone</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">my_standalone</span><span class="o">.</span><span class="n">my_custom_feedback</span><span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
+    <span class="n">my_text_field</span><span class="o">=</span><span class="n">Query</span><span class="o">.</span><span class="n">RecordOutput</span>
+<span class="p">)</span>
 </pre></div>
-<div id="cell-2" class="clipboard-copy-txt">def feedback(self, text: str) -> float:
-        """
-        Describe how the model works
+<div id="cell-2" class="clipboard-copy-txt">my_standalone = StandAlone()
+my_feedback_function_standalone = Feedback(my_standalone.my_custom_feedback).on(
+    my_text_field=Query.RecordOutput
+)</div>
+        
+        </div>
+    </div>
 
-        Parameters:
-            text (str): Text to evaluate.
-            Can also be prompt (str) and response (str).
+</div>
+</div>
 
-        Returns:
-            float: A value between 0 (worst) and 1 (best).
-        """
-        return float</div>
+</div>
+</div>
+<div id="cell-id=66987343" class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol start="3">
+<li>Your feedback function is now ready to use just like the out of the box feedback functions. Below is an example of it being used.</li>
+</ol>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div id="cell-id=8db425de" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-3">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">feedback_results</span> <span class="o">=</span> <span class="n">tru</span><span class="o">.</span><span class="n">run_feedback_functions</span><span class="p">(</span>
+    <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">,</span>
+    <span class="n">feedback_functions</span><span class="o">=</span><span class="p">[</span><span class="n">my_feedback_function_standalone</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="n">tru</span><span class="o">.</span><span class="n">add_feedbacks</span><span class="p">(</span><span class="n">feedback_results</span><span class="p">)</span>
+</pre></div>
+<div id="cell-3" class="clipboard-copy-txt">feedback_results = tru.run_feedback_functions(
+    record=record,
+    feedback_functions=[my_feedback_function_standalone]
+)
+tru.add_feedbacks(feedback_results)</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div id="cell-id=706356d5" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-4">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span>
+</pre></div>
+<div id="cell-4" class="clipboard-copy-txt"></div>
         
         </div>
     </div>

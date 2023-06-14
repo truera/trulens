@@ -15,7 +15,7 @@
         <link rel="next" href="../../../trulens_explain/install/">
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.14">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
     
     
       
@@ -23,10 +23,10 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.85bb2934.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.26e3688c.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.a6bdf11c.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ecc896b0.min.css">
       
       
 
@@ -615,6 +615,26 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.tru_feedback.Provider" class="md-nav__link">
+    Provider
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.tru_feedback.Provider.endpoint" class="md-nav__link">
+    endpoint
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1074,6 +1094,26 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.tru_feedback.Provider" class="md-nav__link">
+    Provider
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.tru_feedback.Provider.endpoint" class="md-nav__link">
+    endpoint
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1130,7 +1170,9 @@
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 63</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
 <span class="normal"> 64</span>
 <span class="normal"> 65</span>
 <span class="normal"> 66</span>
@@ -1438,7 +1480,16 @@
 <span class="normal">368</span>
 <span class="normal">369</span>
 <span class="normal">370</span>
-<span class="normal">371</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Feedback</span><span class="p">(</span><span class="n">FeedbackDefinition</span><span class="p">):</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Feedback</span><span class="p">(</span><span class="n">FeedbackDefinition</span><span class="p">):</span>
     <span class="c1"># Implementation, not serializable, note that FeedbackDefinition contains</span>
     <span class="c1"># `implementation` mean to serialize the below.</span>
     <span class="n">imp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="n">pydantic</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1464,8 +1515,14 @@
         <span class="n">agg</span> <span class="o">=</span> <span class="n">agg</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span>
 
         <span class="k">if</span> <span class="n">imp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># These are for serialization to/from json and for db storage.</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;implementation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span><span class="n">imp</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># These are for serialization to/from json and for db storage.</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;implementation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span>
+                    <span class="n">imp</span><span class="p">,</span> <span class="n">loadable</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="c1"># User defined functions in script do not have a module so cannot be serialized</span>
+                <span class="k">pass</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="s2">&quot;implementation&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
                 <span class="n">imp</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">pick</span><span class="p">(</span>
@@ -1473,7 +1530,14 @@
                 <span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">agg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;aggregator&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span><span class="n">agg</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># These are for serialization to/from json and for db storage.</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;aggregator&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span>
+                    <span class="n">agg</span><span class="p">,</span> <span class="n">loadable</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="c1"># User defined functions in script do not have a module so cannot be serialized</span>
+                <span class="k">pass</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="s1">&#39;arrgregator&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
                 <span class="n">agg</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">pick</span><span class="p">(</span><span class="o">**</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;aggregator&#39;</span><span class="p">])</span>
@@ -1501,12 +1565,12 @@
             <span class="n">record_json</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">record_json</span>
             <span class="n">record</span> <span class="o">=</span> <span class="n">Record</span><span class="p">(</span><span class="o">**</span><span class="n">record_json</span><span class="p">)</span>
 
-            <span class="n">chain_json</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">chain_json</span>
+            <span class="n">app_json</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">app_json</span>
 
             <span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="o">**</span><span class="n">row</span><span class="o">.</span><span class="n">feedback_json</span><span class="p">)</span>
             <span class="n">feedback</span><span class="o">.</span><span class="n">run_and_log</span><span class="p">(</span>
                 <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">,</span>
-                <span class="n">chain</span><span class="o">=</span><span class="n">chain_json</span><span class="p">,</span>
+                <span class="n">app</span><span class="o">=</span><span class="n">app_json</span><span class="p">,</span>
                 <span class="n">tru</span><span class="o">=</span><span class="n">tru</span><span class="p">,</span>
                 <span class="n">feedback_result_id</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">feedback_result_id</span>
             <span class="p">)</span>
@@ -1567,7 +1631,7 @@
 
     <span class="k">def</span> <span class="nf">on_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;text&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create a variant of `self` that will take in the main chain input or</span>
+<span class="sd">        Create a variant of `self` that will take in the main app input or</span>
 <span class="sd">        &quot;prompt&quot; as input, sending it as an argument `arg` to implementation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
@@ -1579,7 +1643,7 @@
 
     <span class="k">def</span> <span class="nf">on_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;text&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create a variant of `self` that will take in the main chain output or</span>
+<span class="sd">        Create a variant of `self` that will take in the main app output or</span>
 <span class="sd">        &quot;response&quot; as input, sending it as an argument `arg` to implementation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
@@ -1596,19 +1660,19 @@
 
         <span class="k">return</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">imp</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">imp</span><span class="p">,</span> <span class="n">selectors</span><span class="o">=</span><span class="n">selectors</span><span class="p">,</span> <span class="n">agg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">agg</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chain</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Model</span><span class="p">,</span> <span class="n">JSON</span><span class="p">],</span> <span class="n">record</span><span class="p">:</span> <span class="n">Record</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FeedbackResult</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">App</span><span class="p">,</span> <span class="n">JSON</span><span class="p">],</span> <span class="n">record</span><span class="p">:</span> <span class="n">Record</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FeedbackResult</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Run the feedback function on the given `record`. The `chain` that</span>
+<span class="sd">        Run the feedback function on the given `record`. The `app` that</span>
 <span class="sd">        produced the record is also required to determine input/output argument</span>
 <span class="sd">        names.</span>
 
-<span class="sd">        Might not have a Chain here but only the serialized chain_json .</span>
+<span class="sd">        Might not have a App here but only the serialized app_json .</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">Model</span><span class="p">):</span>
-            <span class="n">chain_json</span> <span class="o">=</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">App</span><span class="p">):</span>
+            <span class="n">app_json</span> <span class="o">=</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">chain_json</span> <span class="o">=</span> <span class="n">chain</span>
+            <span class="n">app_json</span> <span class="o">=</span> <span class="n">app</span>
 
         <span class="n">result_vals</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -1617,7 +1681,6 @@
         <span class="n">feedback_result</span> <span class="o">=</span> <span class="n">FeedbackResult</span><span class="p">(</span>
             <span class="n">feedback_definition_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">feedback_definition_id</span><span class="p">,</span>
             <span class="n">record_id</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">record_id</span><span class="p">,</span>
-            <span class="n">chain_id</span><span class="o">=</span><span class="n">chain_json</span><span class="p">[</span><span class="s1">&#39;chain_id&#39;</span><span class="p">],</span>
             <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span>
         <span class="p">)</span>
 
@@ -1625,9 +1688,9 @@
             <span class="n">total_tokens</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">total_cost</span> <span class="o">=</span> <span class="mf">0.0</span>
 
-            <span class="k">for</span> <span class="n">ins</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_selection</span><span class="p">(</span><span class="n">chain</span><span class="o">=</span><span class="n">chain_json</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">ins</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_selection</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="n">app_json</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">):</span>
 
-                <span class="c1"># TODO: Do this only if there is an openai model inside the chain:</span>
+                <span class="c1"># TODO: Do this only if there is an openai model inside the app:</span>
                 <span class="c1"># NODE: This only works for langchain uses of openai.</span>
                 <span class="k">with</span> <span class="n">get_openai_callback</span><span class="p">()</span> <span class="k">as</span> <span class="n">cb</span><span class="p">:</span>
                     <span class="n">result_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">imp</span><span class="p">(</span><span class="o">**</span><span class="n">ins</span><span class="p">)</span>
@@ -1658,11 +1721,11 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">record</span><span class="p">:</span> <span class="n">Record</span><span class="p">,</span>
         <span class="n">tru</span><span class="p">:</span> <span class="s1">&#39;Tru&#39;</span><span class="p">,</span>
-        <span class="n">chain</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Model</span><span class="p">,</span> <span class="n">JSON</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">app</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">App</span><span class="p">,</span> <span class="n">JSON</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">feedback_result_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FeedbackResultID</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FeedbackResult</span><span class="p">:</span>
         <span class="n">record_id</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">record_id</span>
-        <span class="n">chain_id</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">chain_id</span>
+        <span class="n">app_id</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">app_id</span>
 
         <span class="n">db</span> <span class="o">=</span> <span class="n">tru</span><span class="o">.</span><span class="n">db</span>
 
@@ -1671,7 +1734,6 @@
             <span class="n">feedback_definition_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">feedback_definition_id</span><span class="p">,</span>
             <span class="n">feedback_result_id</span><span class="o">=</span><span class="n">feedback_result_id</span><span class="p">,</span>
             <span class="n">record_id</span><span class="o">=</span><span class="n">record_id</span><span class="p">,</span>
-            <span class="n">chain_id</span><span class="o">=</span><span class="n">chain_id</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span>
         <span class="p">)</span>
 
@@ -1686,7 +1748,7 @@
             <span class="p">)</span>
 
             <span class="n">feedback_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-                <span class="n">chain</span><span class="o">=</span><span class="n">chain</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="n">record</span>
+                <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="n">record</span>
             <span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">feedback_result_id</span><span class="o">=</span><span class="n">feedback_result_id</span><span class="p">)</span>
 
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -1711,10 +1773,10 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">imp</span><span class="o">.</span><span class="vm">__name__</span>
 
-    <span class="k">def</span> <span class="nf">extract_selection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chain</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Model</span><span class="p">,</span> <span class="n">JSON</span><span class="p">],</span>
+    <span class="k">def</span> <span class="nf">extract_selection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">App</span><span class="p">,</span> <span class="n">JSON</span><span class="p">],</span>
                           <span class="n">record</span><span class="p">:</span> <span class="n">Record</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Given the `chain` that produced the given `record`, extract from</span>
+<span class="sd">        Given the `app` that produced the given `record`, extract from</span>
 <span class="sd">        `record` the values that will be sent as arguments to the implementation</span>
 <span class="sd">        as specified by `self.selectors`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1729,12 +1791,12 @@
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unhandled selection type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">q</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">Query</span><span class="o">.</span><span class="n">Record</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-                <span class="n">o</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">layout_calls_as_chain</span><span class="p">()</span>
-            <span class="k">elif</span> <span class="n">q</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">Query</span><span class="o">.</span><span class="n">Chain</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-                <span class="n">o</span> <span class="o">=</span> <span class="n">chain</span>
+                <span class="n">o</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">layout_calls_as_app</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">q</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">Query</span><span class="o">.</span><span class="n">App</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="n">o</span> <span class="o">=</span> <span class="n">app</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Query </span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2"> does not indicate whether it is about a record or about a chain.&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Query </span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2"> does not indicate whether it is about a record or about a app.&quot;</span>
                 <span class="p">)</span>
 
             <span class="n">q_within_o</span> <span class="o">=</span> <span class="n">Query</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">q</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
@@ -1803,7 +1865,9 @@ function implementing it.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 72</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
 <span class="normal"> 73</span>
 <span class="normal"> 74</span>
 <span class="normal"> 75</span>
@@ -1847,7 +1911,18 @@ function implementing it.</p>
 <span class="normal">113</span>
 <span class="normal">114</span>
 <span class="normal">115</span>
-<span class="normal">116</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">imp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">agg</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1864,8 +1939,14 @@ function implementing it.</p>
     <span class="n">agg</span> <span class="o">=</span> <span class="n">agg</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span>
 
     <span class="k">if</span> <span class="n">imp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># These are for serialization to/from json and for db storage.</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;implementation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span><span class="n">imp</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># These are for serialization to/from json and for db storage.</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;implementation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span>
+                <span class="n">imp</span><span class="p">,</span> <span class="n">loadable</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="c1"># User defined functions in script do not have a module so cannot be serialized</span>
+            <span class="k">pass</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="s2">&quot;implementation&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="n">imp</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">pick</span><span class="p">(</span>
@@ -1873,7 +1954,14 @@ function implementing it.</p>
             <span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">agg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;aggregator&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span><span class="n">agg</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># These are for serialization to/from json and for db storage.</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;aggregator&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span>
+                <span class="n">agg</span><span class="p">,</span> <span class="n">loadable</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="c1"># User defined functions in script do not have a module so cannot be serialized</span>
+            <span class="k">pass</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="s1">&#39;arrgregator&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="n">agg</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">pick</span><span class="p">(</span><span class="o">**</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;aggregator&#39;</span><span class="p">])</span>
@@ -1903,29 +1991,20 @@ function implementing it.</p>
 
 
 <h3 id="trulens_eval.trulens_eval.tru_feedback.Feedback.extract_selection" class="doc doc-heading">
-<code class="codehilite language-python"><span class="n">extract_selection</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span></code>
+<code class="codehilite language-python"><span class="n">extract_selection</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span></code>
 
 <a href="#trulens_eval.trulens_eval.tru_feedback.Feedback.extract_selection" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
   <div class="doc doc-contents ">
   
-      <p>Given the <code>chain</code> that produced the given <code>record</code>, extract from
+      <p>Given the <code>app</code> that produced the given <code>record</code>, extract from
 <code>record</code> the values that will be sent as arguments to the implementation
 as specified by <code>self.selectors</code>.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">336</span>
-<span class="normal">337</span>
-<span class="normal">338</span>
-<span class="normal">339</span>
-<span class="normal">340</span>
-<span class="normal">341</span>
-<span class="normal">342</span>
-<span class="normal">343</span>
-<span class="normal">344</span>
-<span class="normal">345</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">345</span>
 <span class="normal">346</span>
 <span class="normal">347</span>
 <span class="normal">348</span>
@@ -1951,10 +2030,19 @@ as specified by <code>self.selectors</code>.</p>
 <span class="normal">368</span>
 <span class="normal">369</span>
 <span class="normal">370</span>
-<span class="normal">371</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">extract_selection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chain</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Model</span><span class="p">,</span> <span class="n">JSON</span><span class="p">],</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">extract_selection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">App</span><span class="p">,</span> <span class="n">JSON</span><span class="p">],</span>
                       <span class="n">record</span><span class="p">:</span> <span class="n">Record</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Given the `chain` that produced the given `record`, extract from</span>
+<span class="sd">    Given the `app` that produced the given `record`, extract from</span>
 <span class="sd">    `record` the values that will be sent as arguments to the implementation</span>
 <span class="sd">    as specified by `self.selectors`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1969,12 +2057,12 @@ as specified by <code>self.selectors</code>.</p>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unhandled selection type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">q</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">Query</span><span class="o">.</span><span class="n">Record</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-            <span class="n">o</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">layout_calls_as_chain</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="n">q</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">Query</span><span class="o">.</span><span class="n">Chain</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-            <span class="n">o</span> <span class="o">=</span> <span class="n">chain</span>
+            <span class="n">o</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">layout_calls_as_app</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">q</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">Query</span><span class="o">.</span><span class="n">App</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">o</span> <span class="o">=</span> <span class="n">app</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Query </span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2"> does not indicate whether it is about a record or about a chain.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Query </span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2"> does not indicate whether it is about a record or about a app.&quot;</span>
             <span class="p">)</span>
 
         <span class="n">q_within_o</span> <span class="o">=</span> <span class="n">Query</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">q</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
@@ -2009,12 +2097,12 @@ as specified by <code>self.selectors</code>.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">214</span>
-<span class="normal">215</span>
-<span class="normal">216</span>
-<span class="normal">217</span>
-<span class="normal">218</span>
-<span class="normal">219</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">selectors</span><span class="p">):</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">selectors</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create a variant of `self` with the same implementation but the given `selectors`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -2038,22 +2126,22 @@ as specified by <code>self.selectors</code>.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Create a variant of <code>self</code> that will take in the main chain input or
+      <p>Create a variant of <code>self</code> that will take in the main app input or
 "prompt" as input, sending it as an argument <code>arg</code> to implementation.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">190</span>
-<span class="normal">191</span>
-<span class="normal">192</span>
-<span class="normal">193</span>
-<span class="normal">194</span>
-<span class="normal">195</span>
-<span class="normal">196</span>
-<span class="normal">197</span>
-<span class="normal">198</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">on_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;text&quot;</span><span class="p">):</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">on_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;text&quot;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Create a variant of `self` that will take in the main chain input or</span>
+<span class="sd">    Create a variant of `self` that will take in the main app input or</span>
 <span class="sd">    &quot;prompt&quot; as input, sending it as an argument `arg` to implementation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -2078,22 +2166,22 @@ as specified by <code>self.selectors</code>.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Create a variant of <code>self</code> that will take in the main chain output or
+      <p>Create a variant of <code>self</code> that will take in the main app output or
 "response" as input, sending it as an argument <code>arg</code> to implementation.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
-<span class="normal">209</span>
-<span class="normal">210</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">on_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;text&quot;</span><span class="p">):</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">on_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;text&quot;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Create a variant of `self` that will take in the main chain output or</span>
+<span class="sd">    Create a variant of `self` that will take in the main app output or</span>
 <span class="sd">    &quot;response&quot; as input, sending it as an argument `arg` to implementation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -2111,32 +2199,21 @@ as specified by <code>self.selectors</code>.</p>
 
 
 <h3 id="trulens_eval.trulens_eval.tru_feedback.Feedback.run" class="doc doc-heading">
-<code class="codehilite language-python"><span class="n">run</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span></code>
+<code class="codehilite language-python"><span class="n">run</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span></code>
 
 <a href="#trulens_eval.trulens_eval.tru_feedback.Feedback.run" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
   <div class="doc doc-contents ">
   
-      <p>Run the feedback function on the given <code>record</code>. The <code>chain</code> that
+      <p>Run the feedback function on the given <code>record</code>. The <code>app</code> that
 produced the record is also required to determine input/output argument
 names.</p>
-<p>Might not have a Chain here but only the serialized chain_json .</p>
+<p>Might not have a App here but only the serialized app_json .</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">221</span>
-<span class="normal">222</span>
-<span class="normal">223</span>
-<span class="normal">224</span>
-<span class="normal">225</span>
-<span class="normal">226</span>
-<span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span>
-<span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">232</span>
 <span class="normal">233</span>
 <span class="normal">234</span>
 <span class="normal">235</span>
@@ -2181,19 +2258,29 @@ names.</p>
 <span class="normal">274</span>
 <span class="normal">275</span>
 <span class="normal">276</span>
-<span class="normal">277</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chain</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Model</span><span class="p">,</span> <span class="n">JSON</span><span class="p">],</span> <span class="n">record</span><span class="p">:</span> <span class="n">Record</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FeedbackResult</span><span class="p">:</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">App</span><span class="p">,</span> <span class="n">JSON</span><span class="p">],</span> <span class="n">record</span><span class="p">:</span> <span class="n">Record</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FeedbackResult</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Run the feedback function on the given `record`. The `chain` that</span>
+<span class="sd">    Run the feedback function on the given `record`. The `app` that</span>
 <span class="sd">    produced the record is also required to determine input/output argument</span>
 <span class="sd">    names.</span>
 
-<span class="sd">    Might not have a Chain here but only the serialized chain_json .</span>
+<span class="sd">    Might not have a App here but only the serialized app_json .</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">Model</span><span class="p">):</span>
-        <span class="n">chain_json</span> <span class="o">=</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">App</span><span class="p">):</span>
+        <span class="n">app_json</span> <span class="o">=</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">chain_json</span> <span class="o">=</span> <span class="n">chain</span>
+        <span class="n">app_json</span> <span class="o">=</span> <span class="n">app</span>
 
     <span class="n">result_vals</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -2202,7 +2289,6 @@ names.</p>
     <span class="n">feedback_result</span> <span class="o">=</span> <span class="n">FeedbackResult</span><span class="p">(</span>
         <span class="n">feedback_definition_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">feedback_definition_id</span><span class="p">,</span>
         <span class="n">record_id</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">record_id</span><span class="p">,</span>
-        <span class="n">chain_id</span><span class="o">=</span><span class="n">chain_json</span><span class="p">[</span><span class="s1">&#39;chain_id&#39;</span><span class="p">],</span>
         <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span>
     <span class="p">)</span>
 
@@ -2210,9 +2296,9 @@ names.</p>
         <span class="n">total_tokens</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">total_cost</span> <span class="o">=</span> <span class="mf">0.0</span>
 
-        <span class="k">for</span> <span class="n">ins</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_selection</span><span class="p">(</span><span class="n">chain</span><span class="o">=</span><span class="n">chain_json</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">ins</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_selection</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="n">app_json</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">):</span>
 
-            <span class="c1"># TODO: Do this only if there is an openai model inside the chain:</span>
+            <span class="c1"># TODO: Do this only if there is an openai model inside the app:</span>
             <span class="c1"># NODE: This only works for langchain uses of openai.</span>
             <span class="k">with</span> <span class="n">get_openai_callback</span><span class="p">()</span> <span class="k">as</span> <span class="n">cb</span><span class="p">:</span>
                 <span class="n">result_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">imp</span><span class="p">(</span><span class="o">**</span><span class="n">ins</span><span class="p">)</span>
@@ -2265,25 +2351,13 @@ names.</p>
 
   <div class="doc doc-contents ">
       <p class="doc doc-class-bases">
-        Bases: <code><span title="trulens_eval.trulens_eval.tru_feedback.Provider">Provider</span></code></p>
+        Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.trulens_eval.tru_feedback.Provider" href="#trulens_eval.trulens_eval.tru_feedback.Provider">Provider</a></code></p>
 
 
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">736</span>
-<span class="normal">737</span>
-<span class="normal">738</span>
-<span class="normal">739</span>
-<span class="normal">740</span>
-<span class="normal">741</span>
-<span class="normal">742</span>
-<span class="normal">743</span>
-<span class="normal">744</span>
-<span class="normal">745</span>
-<span class="normal">746</span>
-<span class="normal">747</span>
-<span class="normal">748</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">748</span>
 <span class="normal">749</span>
 <span class="normal">750</span>
 <span class="normal">751</span>
@@ -2377,7 +2451,19 @@ names.</p>
 <span class="normal">839</span>
 <span class="normal">840</span>
 <span class="normal">841</span>
-<span class="normal">842</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Huggingface</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
+<span class="normal">842</span>
+<span class="normal">843</span>
+<span class="normal">844</span>
+<span class="normal">845</span>
+<span class="normal">846</span>
+<span class="normal">847</span>
+<span class="normal">848</span>
+<span class="normal">849</span>
+<span class="normal">850</span>
+<span class="normal">851</span>
+<span class="normal">852</span>
+<span class="normal">853</span>
+<span class="normal">854</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Huggingface</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -2516,17 +2602,17 @@ api-inference.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">738</span>
-<span class="normal">739</span>
-<span class="normal">740</span>
-<span class="normal">741</span>
-<span class="normal">742</span>
-<span class="normal">743</span>
-<span class="normal">744</span>
-<span class="normal">745</span>
-<span class="normal">746</span>
-<span class="normal">747</span>
-<span class="normal">748</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">750</span>
+<span class="normal">751</span>
+<span class="normal">752</span>
+<span class="normal">753</span>
+<span class="normal">754</span>
+<span class="normal">755</span>
+<span class="normal">756</span>
+<span class="normal">757</span>
+<span class="normal">758</span>
+<span class="normal">759</span>
+<span class="normal">760</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A set of Huggingface Feedback Functions. Utilizes huggingface</span>
 <span class="sd">    api-inference.</span>
@@ -2577,7 +2663,11 @@ probit_language_text1(text2))</code></p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -2587,7 +2677,11 @@ probit_language_text1(text2))</code></p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Comparative text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Comparative text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -2608,32 +2702,28 @@ probit_language_text1(text2))</code></p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "different languages" and 1</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "different languages" and 1</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>being "same languages".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>being "same languages".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">750</span>
-<span class="normal">751</span>
-<span class="normal">752</span>
-<span class="normal">753</span>
-<span class="normal">754</span>
-<span class="normal">755</span>
-<span class="normal">756</span>
-<span class="normal">757</span>
-<span class="normal">758</span>
-<span class="normal">759</span>
-<span class="normal">760</span>
-<span class="normal">761</span>
-<span class="normal">762</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">762</span>
 <span class="normal">763</span>
 <span class="normal">764</span>
 <span class="normal">765</span>
@@ -2666,7 +2756,19 @@ probit_language_text1(text2))</code></p>
 <span class="normal">792</span>
 <span class="normal">793</span>
 <span class="normal">794</span>
-<span class="normal">795</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">language_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">795</span>
+<span class="normal">796</span>
+<span class="normal">797</span>
+<span class="normal">798</span>
+<span class="normal">799</span>
+<span class="normal">800</span>
+<span class="normal">801</span>
+<span class="normal">802</span>
+<span class="normal">803</span>
+<span class="normal">804</span>
+<span class="normal">805</span>
+<span class="normal">806</span>
+<span class="normal">807</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">language_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses Huggingface&#39;s papluca/xlm-roberta-base-language-detection model. A</span>
 <span class="sd">    function that uses language detection on `text1` and `text2` and</span>
@@ -2749,7 +2851,11 @@ uses a toxic comment classifier on <code>text</code>.</p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -2770,32 +2876,28 @@ uses a toxic comment classifier on <code>text</code>.</p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "toxic" and 1 being "not</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "toxic" and 1 being "not</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>toxic".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>toxic".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">821</span>
-<span class="normal">822</span>
-<span class="normal">823</span>
-<span class="normal">824</span>
-<span class="normal">825</span>
-<span class="normal">826</span>
-<span class="normal">827</span>
-<span class="normal">828</span>
-<span class="normal">829</span>
-<span class="normal">830</span>
-<span class="normal">831</span>
-<span class="normal">832</span>
-<span class="normal">833</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">833</span>
 <span class="normal">834</span>
 <span class="normal">835</span>
 <span class="normal">836</span>
@@ -2804,7 +2906,19 @@ uses a toxic comment classifier on <code>text</code>.</p>
 <span class="normal">839</span>
 <span class="normal">840</span>
 <span class="normal">841</span>
-<span class="normal">842</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">not_toxic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">842</span>
+<span class="normal">843</span>
+<span class="normal">844</span>
+<span class="normal">845</span>
+<span class="normal">846</span>
+<span class="normal">847</span>
+<span class="normal">848</span>
+<span class="normal">849</span>
+<span class="normal">850</span>
+<span class="normal">851</span>
+<span class="normal">852</span>
+<span class="normal">853</span>
+<span class="normal">854</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">not_toxic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses Huggingface&#39;s martin-ha/toxic-comment-model model. A function that</span>
 <span class="sd">    uses a toxic comment classifier on `text`.</span>
@@ -2863,7 +2977,11 @@ function that uses a sentiment classifier on <code>text</code>.</p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -2884,32 +3002,28 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "negative sentiment" and 1</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "negative sentiment" and 1</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>being "positive sentiment".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>being "positive sentiment".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">797</span>
-<span class="normal">798</span>
-<span class="normal">799</span>
-<span class="normal">800</span>
-<span class="normal">801</span>
-<span class="normal">802</span>
-<span class="normal">803</span>
-<span class="normal">804</span>
-<span class="normal">805</span>
-<span class="normal">806</span>
-<span class="normal">807</span>
-<span class="normal">808</span>
-<span class="normal">809</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">809</span>
 <span class="normal">810</span>
 <span class="normal">811</span>
 <span class="normal">812</span>
@@ -2919,7 +3033,19 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 <span class="normal">816</span>
 <span class="normal">817</span>
 <span class="normal">818</span>
-<span class="normal">819</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">positive_sentiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">819</span>
+<span class="normal">820</span>
+<span class="normal">821</span>
+<span class="normal">822</span>
+<span class="normal">823</span>
+<span class="normal">824</span>
+<span class="normal">825</span>
+<span class="normal">826</span>
+<span class="normal">827</span>
+<span class="normal">828</span>
+<span class="normal">829</span>
+<span class="normal">830</span>
+<span class="normal">831</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">positive_sentiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses Huggingface&#39;s cardiffnlp/twitter-roberta-base-sentiment model. A</span>
 <span class="sd">    function that uses a sentiment classifier on `text`.</span>
@@ -2969,23 +3095,13 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
   <div class="doc doc-contents ">
       <p class="doc doc-class-bases">
-        Bases: <code><span title="trulens_eval.trulens_eval.tru_feedback.Provider">Provider</span></code></p>
+        Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.trulens_eval.tru_feedback.Provider" href="#trulens_eval.trulens_eval.tru_feedback.Provider">Provider</a></code></p>
 
 
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">416</span>
-<span class="normal">417</span>
-<span class="normal">418</span>
-<span class="normal">419</span>
-<span class="normal">420</span>
-<span class="normal">421</span>
-<span class="normal">422</span>
-<span class="normal">423</span>
-<span class="normal">424</span>
-<span class="normal">425</span>
-<span class="normal">426</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">426</span>
 <span class="normal">427</span>
 <span class="normal">428</span>
 <span class="normal">429</span>
@@ -3259,7 +3375,19 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 <span class="normal">697</span>
 <span class="normal">698</span>
 <span class="normal">699</span>
-<span class="normal">700</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">OpenAI</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
+<span class="normal">700</span>
+<span class="normal">701</span>
+<span class="normal">702</span>
+<span class="normal">703</span>
+<span class="normal">704</span>
+<span class="normal">705</span>
+<span class="normal">706</span>
+<span class="normal">707</span>
+<span class="normal">708</span>
+<span class="normal">709</span>
+<span class="normal">710</span>
+<span class="normal">711</span>
+<span class="normal">712</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">OpenAI</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
     <span class="n">model_engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gpt-3.5-turbo&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gpt-3.5-turbo&quot;</span><span class="p">):</span>
@@ -3277,8 +3405,10 @@ function that uses a sentiment classifier on <code>text</code>.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">model_engine</span> <span class="o">=</span> <span class="n">model_engine</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span> <span class="o">=</span> <span class="n">Endpoint</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;openai&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Provider</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_engine</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_engine</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    def to_json(self) -&gt; Dict:</span>
+<span class="sd">        return Provider.to_json(self, model_engine=self.model_engine)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">_moderation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">run_me</span><span class="p">(</span>
@@ -3412,7 +3542,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
     <span class="k">def</span> <span class="nf">qs_relevance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Uses OpenAI&#39;s Chat Completion Model. A function that completes a</span>
+<span class="sd">        Uses OpenAI&#39;s Chat Completion App. A function that completes a</span>
 <span class="sd">        template to check the relevance of the statement to the question.</span>
 
 <span class="sd">        Parameters:</span>
@@ -3579,20 +3709,20 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">419</span>
-<span class="normal">420</span>
-<span class="normal">421</span>
-<span class="normal">422</span>
-<span class="normal">423</span>
-<span class="normal">424</span>
-<span class="normal">425</span>
-<span class="normal">426</span>
-<span class="normal">427</span>
-<span class="normal">428</span>
-<span class="normal">429</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">429</span>
 <span class="normal">430</span>
 <span class="normal">431</span>
-<span class="normal">432</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gpt-3.5-turbo&quot;</span><span class="p">):</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gpt-3.5-turbo&quot;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A set of OpenAI Feedback Functions.</span>
 
@@ -3645,7 +3775,11 @@ correct, and measures whether previous Chat GPT's response is similar.</p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>A text prompt to an agent. response (str): The agent's</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A text prompt to an agent. response (str): The agent's</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -3666,32 +3800,28 @@ correct, and measures whether previous Chat GPT's response is similar.</p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "not in agreement" and 1</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "not in agreement" and 1</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>being "in agreement".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>being "in agreement".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">635</span>
-<span class="normal">636</span>
-<span class="normal">637</span>
-<span class="normal">638</span>
-<span class="normal">639</span>
-<span class="normal">640</span>
-<span class="normal">641</span>
-<span class="normal">642</span>
-<span class="normal">643</span>
-<span class="normal">644</span>
-<span class="normal">645</span>
-<span class="normal">646</span>
-<span class="normal">647</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">647</span>
 <span class="normal">648</span>
 <span class="normal">649</span>
 <span class="normal">650</span>
@@ -3712,7 +3842,19 @@ correct, and measures whether previous Chat GPT's response is similar.</p>
 <span class="normal">665</span>
 <span class="normal">666</span>
 <span class="normal">667</span>
-<span class="normal">668</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">model_agreement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">668</span>
+<span class="normal">669</span>
+<span class="normal">670</span>
+<span class="normal">671</span>
+<span class="normal">672</span>
+<span class="normal">673</span>
+<span class="normal">674</span>
+<span class="normal">675</span>
+<span class="normal">676</span>
+<span class="normal">677</span>
+<span class="normal">678</span>
+<span class="normal">679</span>
+<span class="normal">680</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">model_agreement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Chat GPT Model. A function that gives Chat GPT the same</span>
 <span class="sd">    prompt and gets a response, encouraging truthfulness. A second template</span>
@@ -3783,7 +3925,11 @@ speech.</p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -3804,35 +3950,43 @@ speech.</p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "hate" and 1 being "not</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "hate" and 1 being "not</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>hate".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>hate".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">442</span>
-<span class="normal">443</span>
-<span class="normal">444</span>
-<span class="normal">445</span>
-<span class="normal">446</span>
-<span class="normal">447</span>
-<span class="normal">448</span>
-<span class="normal">449</span>
-<span class="normal">450</span>
-<span class="normal">451</span>
-<span class="normal">452</span>
-<span class="normal">453</span>
-<span class="normal">454</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">454</span>
 <span class="normal">455</span>
 <span class="normal">456</span>
-<span class="normal">457</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_hate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_hate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is hate</span>
 <span class="sd">    speech.</span>
@@ -3885,7 +4039,11 @@ threatening speech.</p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -3906,36 +4064,44 @@ threatening speech.</p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "threatening" and 1 being</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "threatening" and 1 being</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>"not threatening".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>"not threatening".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">459</span>
-<span class="normal">460</span>
-<span class="normal">461</span>
-<span class="normal">462</span>
-<span class="normal">463</span>
-<span class="normal">464</span>
-<span class="normal">465</span>
-<span class="normal">466</span>
-<span class="normal">467</span>
-<span class="normal">468</span>
-<span class="normal">469</span>
-<span class="normal">470</span>
-<span class="normal">471</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">471</span>
 <span class="normal">472</span>
 <span class="normal">473</span>
 <span class="normal">474</span>
-<span class="normal">475</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_hatethreatening</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span>
+<span class="normal">481</span>
+<span class="normal">482</span>
+<span class="normal">483</span>
+<span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_hatethreatening</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is</span>
 <span class="sd">    threatening speech.</span>
@@ -3989,7 +4155,11 @@ self harm.</p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4010,36 +4180,44 @@ self harm.</p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "self harm" and 1 being "not</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "self harm" and 1 being "not</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>self harm".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>self harm".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">477</span>
-<span class="normal">478</span>
-<span class="normal">479</span>
-<span class="normal">480</span>
-<span class="normal">481</span>
-<span class="normal">482</span>
-<span class="normal">483</span>
-<span class="normal">484</span>
-<span class="normal">485</span>
-<span class="normal">486</span>
-<span class="normal">487</span>
-<span class="normal">488</span>
-<span class="normal">489</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">489</span>
 <span class="normal">490</span>
 <span class="normal">491</span>
 <span class="normal">492</span>
-<span class="normal">493</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_selfharm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span>
+<span class="normal">499</span>
+<span class="normal">500</span>
+<span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_selfharm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is about</span>
 <span class="sd">    self harm.</span>
@@ -4093,7 +4271,11 @@ speech.</p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4114,36 +4296,44 @@ speech.</p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "sexual" and 1 being "not</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "sexual" and 1 being "not</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>sexual".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>sexual".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">495</span>
-<span class="normal">496</span>
-<span class="normal">497</span>
-<span class="normal">498</span>
-<span class="normal">499</span>
-<span class="normal">500</span>
-<span class="normal">501</span>
-<span class="normal">502</span>
-<span class="normal">503</span>
-<span class="normal">504</span>
-<span class="normal">505</span>
-<span class="normal">506</span>
-<span class="normal">507</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">507</span>
 <span class="normal">508</span>
 <span class="normal">509</span>
 <span class="normal">510</span>
-<span class="normal">511</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_sexual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">511</span>
+<span class="normal">512</span>
+<span class="normal">513</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
+<span class="normal">516</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span>
+<span class="normal">521</span>
+<span class="normal">522</span>
+<span class="normal">523</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_sexual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is sexual</span>
 <span class="sd">    speech.</span>
@@ -4197,7 +4387,11 @@ sexual minors.</p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4218,36 +4412,44 @@ sexual minors.</p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "sexual minors" and 1 being</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "sexual minors" and 1 being</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>"not sexual minors".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>"not sexual minors".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">513</span>
-<span class="normal">514</span>
-<span class="normal">515</span>
-<span class="normal">516</span>
-<span class="normal">517</span>
-<span class="normal">518</span>
-<span class="normal">519</span>
-<span class="normal">520</span>
-<span class="normal">521</span>
-<span class="normal">522</span>
-<span class="normal">523</span>
-<span class="normal">524</span>
-<span class="normal">525</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">525</span>
 <span class="normal">526</span>
 <span class="normal">527</span>
 <span class="normal">528</span>
-<span class="normal">529</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_sexualminors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">529</span>
+<span class="normal">530</span>
+<span class="normal">531</span>
+<span class="normal">532</span>
+<span class="normal">533</span>
+<span class="normal">534</span>
+<span class="normal">535</span>
+<span class="normal">536</span>
+<span class="normal">537</span>
+<span class="normal">538</span>
+<span class="normal">539</span>
+<span class="normal">540</span>
+<span class="normal">541</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_sexualminors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is about</span>
 <span class="sd">    sexual minors.</span>
@@ -4301,7 +4503,11 @@ violence.</p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4322,36 +4528,44 @@ violence.</p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "violence" and 1 being "not</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "violence" and 1 being "not</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>violence".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>violence".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">531</span>
-<span class="normal">532</span>
-<span class="normal">533</span>
-<span class="normal">534</span>
-<span class="normal">535</span>
-<span class="normal">536</span>
-<span class="normal">537</span>
-<span class="normal">538</span>
-<span class="normal">539</span>
-<span class="normal">540</span>
-<span class="normal">541</span>
-<span class="normal">542</span>
-<span class="normal">543</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">543</span>
 <span class="normal">544</span>
 <span class="normal">545</span>
 <span class="normal">546</span>
-<span class="normal">547</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_violence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">547</span>
+<span class="normal">548</span>
+<span class="normal">549</span>
+<span class="normal">550</span>
+<span class="normal">551</span>
+<span class="normal">552</span>
+<span class="normal">553</span>
+<span class="normal">554</span>
+<span class="normal">555</span>
+<span class="normal">556</span>
+<span class="normal">557</span>
+<span class="normal">558</span>
+<span class="normal">559</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_violence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is about</span>
 <span class="sd">    violence.</span>
@@ -4405,7 +4619,11 @@ graphic violence.</p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4426,36 +4644,44 @@ graphic violence.</p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "graphic violence" and 1</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "graphic violence" and 1</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>being "not graphic violence".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>being "not graphic violence".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">549</span>
-<span class="normal">550</span>
-<span class="normal">551</span>
-<span class="normal">552</span>
-<span class="normal">553</span>
-<span class="normal">554</span>
-<span class="normal">555</span>
-<span class="normal">556</span>
-<span class="normal">557</span>
-<span class="normal">558</span>
-<span class="normal">559</span>
-<span class="normal">560</span>
-<span class="normal">561</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">561</span>
 <span class="normal">562</span>
 <span class="normal">563</span>
 <span class="normal">564</span>
-<span class="normal">565</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_violencegraphic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">565</span>
+<span class="normal">566</span>
+<span class="normal">567</span>
+<span class="normal">568</span>
+<span class="normal">569</span>
+<span class="normal">570</span>
+<span class="normal">571</span>
+<span class="normal">572</span>
+<span class="normal">573</span>
+<span class="normal">574</span>
+<span class="normal">575</span>
+<span class="normal">576</span>
+<span class="normal">577</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_violencegraphic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is about</span>
 <span class="sd">    graphic violence.</span>
@@ -4490,7 +4716,7 @@ graphic violence.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Uses OpenAI's Chat Completion Model. A function that completes a
+      <p>Uses OpenAI's Chat Completion App. A function that completes a
 template to check the relevance of the statement to the question.</p>
 
   <p><strong>Parameters:</strong></p>
@@ -4509,7 +4735,11 @@ template to check the relevance of the statement to the question.</p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>A question being asked. statement (str): A statement</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A question being asked. statement (str): A statement</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4530,32 +4760,28 @@ template to check the relevance of the statement to the question.</p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "not relevant" and 1 being</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "not relevant" and 1 being</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>"relevant".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>"relevant".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">567</span>
-<span class="normal">568</span>
-<span class="normal">569</span>
-<span class="normal">570</span>
-<span class="normal">571</span>
-<span class="normal">572</span>
-<span class="normal">573</span>
-<span class="normal">574</span>
-<span class="normal">575</span>
-<span class="normal">576</span>
-<span class="normal">577</span>
-<span class="normal">578</span>
-<span class="normal">579</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">579</span>
 <span class="normal">580</span>
 <span class="normal">581</span>
 <span class="normal">582</span>
@@ -4575,9 +4801,21 @@ template to check the relevance of the statement to the question.</p>
 <span class="normal">596</span>
 <span class="normal">597</span>
 <span class="normal">598</span>
-<span class="normal">599</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">qs_relevance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">599</span>
+<span class="normal">600</span>
+<span class="normal">601</span>
+<span class="normal">602</span>
+<span class="normal">603</span>
+<span class="normal">604</span>
+<span class="normal">605</span>
+<span class="normal">606</span>
+<span class="normal">607</span>
+<span class="normal">608</span>
+<span class="normal">609</span>
+<span class="normal">610</span>
+<span class="normal">611</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">qs_relevance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Uses OpenAI&#39;s Chat Completion Model. A function that completes a</span>
+<span class="sd">    Uses OpenAI&#39;s Chat Completion App. A function that completes a</span>
 <span class="sd">    template to check the relevance of the statement to the question.</span>
 
 <span class="sd">    Parameters:</span>
@@ -4645,7 +4883,11 @@ template to check the relevance of the response to a prompt.</p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>A text prompt to an agent. response (str): The agent's</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A text prompt to an agent. response (str): The agent's</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4666,32 +4908,28 @@ template to check the relevance of the response to a prompt.</p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "not relevant" and 1 being</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "not relevant" and 1 being</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>"relevant".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>"relevant".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">601</span>
-<span class="normal">602</span>
-<span class="normal">603</span>
-<span class="normal">604</span>
-<span class="normal">605</span>
-<span class="normal">606</span>
-<span class="normal">607</span>
-<span class="normal">608</span>
-<span class="normal">609</span>
-<span class="normal">610</span>
-<span class="normal">611</span>
-<span class="normal">612</span>
-<span class="normal">613</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">613</span>
 <span class="normal">614</span>
 <span class="normal">615</span>
 <span class="normal">616</span>
@@ -4711,7 +4949,19 @@ template to check the relevance of the response to a prompt.</p>
 <span class="normal">630</span>
 <span class="normal">631</span>
 <span class="normal">632</span>
-<span class="normal">633</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">relevance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">633</span>
+<span class="normal">634</span>
+<span class="normal">635</span>
+<span class="normal">636</span>
+<span class="normal">637</span>
+<span class="normal">638</span>
+<span class="normal">639</span>
+<span class="normal">640</span>
+<span class="normal">641</span>
+<span class="normal">642</span>
+<span class="normal">643</span>
+<span class="normal">644</span>
+<span class="normal">645</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">relevance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Chat Completion Model. A function that completes a</span>
 <span class="sd">    template to check the relevance of the response to a prompt.</span>
@@ -4781,7 +5031,11 @@ template to check the sentiment of some text.</p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>A prompt to an agent. response (str): The agent's</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A prompt to an agent. response (str): The agent's</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4802,32 +5056,28 @@ template to check the sentiment of some text.</p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "negative sentiment" and 1</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "negative sentiment" and 1</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>being "positive sentiment".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>being "positive sentiment".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">670</span>
-<span class="normal">671</span>
-<span class="normal">672</span>
-<span class="normal">673</span>
-<span class="normal">674</span>
-<span class="normal">675</span>
-<span class="normal">676</span>
-<span class="normal">677</span>
-<span class="normal">678</span>
-<span class="normal">679</span>
-<span class="normal">680</span>
-<span class="normal">681</span>
-<span class="normal">682</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">682</span>
 <span class="normal">683</span>
 <span class="normal">684</span>
 <span class="normal">685</span>
@@ -4845,7 +5095,19 @@ template to check the sentiment of some text.</p>
 <span class="normal">697</span>
 <span class="normal">698</span>
 <span class="normal">699</span>
-<span class="normal">700</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">sentiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">700</span>
+<span class="normal">701</span>
+<span class="normal">702</span>
+<span class="normal">703</span>
+<span class="normal">704</span>
+<span class="normal">705</span>
+<span class="normal">706</span>
+<span class="normal">707</span>
+<span class="normal">708</span>
+<span class="normal">709</span>
+<span class="normal">710</span>
+<span class="normal">711</span>
+<span class="normal">712</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">sentiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Chat Completion Model. A function that completes a</span>
 <span class="sd">    template to check the sentiment of some text.</span>
@@ -4881,6 +5143,142 @@ template to check the sentiment of some text.</p>
   </div>
 
 </div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="trulens_eval.trulens_eval.tru_feedback.Provider" class="doc doc-heading">
+        <code>Provider</code>
+
+
+<a href="#trulens_eval.trulens_eval.tru_feedback.Provider" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents ">
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="trulens_eval.util.SerialModel">SerialModel</span></code></p>
+
+
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_eval/trulens_eval/tru_feedback.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Provider</span><span class="p">(</span><span class="n">SerialModel</span><span class="p">):</span>
+    <span class="n">endpoint</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">pydantic</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    @staticmethod</span>
+<span class="sd">    def of_json(obj: Dict) -&gt; &#39;Provider&#39;:</span>
+<span class="sd">        cls_name = obj[&#39;class_name&#39;]</span>
+<span class="sd">        mod_name = obj[&#39;module_name&#39;]  # ignored for now</span>
+<span class="sd">        check_provider(cls_name)</span>
+
+<span class="sd">        cls = eval(cls_name)</span>
+<span class="sd">        kwargs = {</span>
+<span class="sd">            k: v</span>
+<span class="sd">            for k, v in obj.items()</span>
+<span class="sd">            if k not in [&#39;class_name&#39;, &#39;module_name&#39;]</span>
+<span class="sd">        }</span>
+
+<span class="sd">        return cls(**kwargs)</span>
+
+<span class="sd">    def to_json(self: &#39;Provider&#39;, **extras) -&gt; Dict:</span>
+<span class="sd">        obj = {</span>
+<span class="sd">            &#39;class_name&#39;: self.__class__.__name__,</span>
+<span class="sd">            &#39;module_name&#39;: self.__class__.__module__</span>
+<span class="sd">        }</span>
+<span class="sd">        obj.update(**extras)</span>
+<span class="sd">        return obj</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</code></pre></div></td></tr></table></div>
+        </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="trulens_eval.trulens_eval.tru_feedback.Provider.endpoint" class="doc doc-heading">
+<code class="codehilite language-python"><span class="n">endpoint</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">pydantic</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.trulens_eval.tru_feedback.Provider.endpoint" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>@staticmethod
+def of_json(obj: Dict) -&gt; 'Provider':
+    cls_name = obj['class_name']
+    mod_name = obj['module_name']  # ignored for now
+    check_provider(cls_name)</p>
+<div class="codehilite"><pre><span></span><code>cls = eval(cls_name)
+kwargs = {
+    k: v
+    for k, v in obj.items()
+    if k not in [&#39;class_name&#39;, &#39;module_name&#39;]
+}
+
+return cls(**kwargs)
+</code></pre></div>
+
+<p>def to_json(self: 'Provider', **extras) -&gt; Dict:
+    obj = {
+        'class_name': self.<strong>class</strong>.<strong>name</strong>,
+        'module_name': self.<strong>class</strong>.<strong>module</strong>
+    }
+    obj.update(**extras)
+    return obj</p>
+  </div>
+
+</div>
+
+
 
 
 
