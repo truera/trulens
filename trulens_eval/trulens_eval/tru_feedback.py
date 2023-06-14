@@ -375,6 +375,7 @@ pat_1_10 = re.compile(r"\s*([1-9][0-9]*)\s*")
 
 
 def _re_1_10_rating(str_val):
+    print(f"matching 1_10, final parts=|{str_val[-20:]}|")
     matches = pat_1_10.fullmatch(str_val)
     if not matches:
         # Try soft match
@@ -580,11 +581,13 @@ class OpenAI(Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
             "relevant".
         """
+        """
         print(str.format(
                             feedback_prompts.QS_RELEVANCE,
                             question=question,
                             statement=statement
                         ))
+        """
         ret = _re_1_10_rating(
             self.endpoint.run_me(
                 lambda: openai.ChatCompletion.create(
@@ -605,7 +608,7 @@ class OpenAI(Provider):
                 )["choices"][0]["message"]["content"]
             )
         ) / 10
-        print("Model result: " + ret + "|")
+        print(f"Model result: {ret}|")
         return ret
 
     def relevance(self, prompt: str, response: str) -> float:
