@@ -86,7 +86,9 @@ class Feedback(FeedbackDefinition):
         if imp is not None:
             try:
                 # These are for serialization to/from json and for db storage.
-                kwargs['implementation'] = FunctionOrMethod.of_callable(imp, loadable=True)
+                kwargs['implementation'] = FunctionOrMethod.of_callable(
+                    imp, loadable=True
+                )
             except:
                 # User defined functions in script do not have a module so cannot be serialized
                 pass
@@ -99,7 +101,9 @@ class Feedback(FeedbackDefinition):
         if agg is not None:
             try:
                 # These are for serialization to/from json and for db storage.
-                kwargs['aggregator'] = FunctionOrMethod.of_callable(agg, loadable=True)
+                kwargs['aggregator'] = FunctionOrMethod.of_callable(
+                    agg, loadable=True
+                )
             except:
                 # User defined functions in script do not have a module so cannot be serialized
                 pass

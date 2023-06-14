@@ -94,9 +94,9 @@ else:
         gb.configure_column('ts', header_name='Time Stamp', sort="desc")
 
         non_feedback_cols = [
-            'app_id', 'type', 'ts', 'total_tokens', 'total_cost',
-            'record_json', 'latency', 'record_id', 'app_id', 'cost_json',
-            'app_json', 'input', 'output', 'perf_json'
+            'app_id', 'type', 'ts', 'total_tokens', 'total_cost', 'record_json',
+            'latency', 'record_id', 'app_id', 'cost_json', 'app_json', 'input',
+            'output', 'perf_json'
         ]
 
         for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
@@ -124,9 +124,7 @@ else:
             st.write("Hint: select a row to display app metadata")
 
         else:
-            st.header(
-                f"Selected LLM Application: {selected_rows['app_id'][0]}"
-            )
+            st.header(f"Selected LLM Application: {selected_rows['app_id'][0]}")
             st.text(f"Selected Record ID: {selected_rows['record_id'][0]}")
 
             prompt = selected_rows['input'][0]
