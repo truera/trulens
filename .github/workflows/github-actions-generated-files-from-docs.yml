@@ -5,9 +5,9 @@ on:
     branches:
       - main
     paths:
-      - 'docs/trulens_eval/quickstart.ipynb'
-      - 'docs/trulens_eval/logging.ipynb'
-      - 'docs/trulens_eval/feedback_functions.ipynb'
+      - 'trulens_eval/examples/quickstart.ipynb'
+      - 'trulens_eval/examples/logging.ipynb'
+      - 'trulens_eval/examples/feedback_functions.ipynb'
       - '.github/workflows/*'
 jobs:
   Generate-Docs-and-Testing-Files:
