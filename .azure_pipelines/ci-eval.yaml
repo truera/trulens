@@ -74,15 +74,15 @@ jobs:
             git diff
           fi
         displayName: NoDiffCheck
-      - checkout: trulens@releases/rc-0.1.2
       - bash: |
           source activate $(condaEnvFileSuffix)
+          git checkout releases/rc-0.1.2
           cd ./trulens_eval
           python -m pytest $(testSubdirectory)
         displayName: Backwards Compatibility Run Last Release
-      - checkout: self
       - bash: |
           source activate $(condaEnvFileSuffix)
+          git checkout main
           cd ./docs/trulens_eval
           pip install jupyter
           pip install nbmerge
