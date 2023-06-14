@@ -38,8 +38,8 @@ def setup_chain():
 
     chain = LLMChain(llm=chat, prompt=chat_prompt_template)
 
-    tc = TruChain(chain, chain_id='Streamlit App')
-    tru.add_chain(chain=tc)
+    tc = TruChain(chain, app_id='Streamlit App')
+    tru.add_app(app=tc)
     tru.run_dashboard(_dev=dev_path)
     return tc
 
@@ -85,6 +85,6 @@ if user_input:
         tru.add_feedback(
             name="👍 (1) or 👎 (0)",
             record_id=record.record_id,
-            chain_id=tc.chain_id,
+            app_id=tc.app_id,
             result=thumb_result
         )

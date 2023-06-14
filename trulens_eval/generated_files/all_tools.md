@@ -85,7 +85,7 @@ f_lang_match = Feedback(hugs.language_match).on(
 
 ```python
 truchain = TruChain(chain,
-    chain_id='Chain3_ChatApplication',
+    app_id='Chain3_ChatApplication',
     feedbacks=[f_lang_match])
 ```
 
@@ -138,7 +138,7 @@ Note: Feedback functions evaluated in the deferred manner can be seen in the "Pr
 
 
 ```python
-tru.get_records_and_feedback(chain_ids=[])[0] # pass an empty list of chain_ids to get all
+tru.get_records_and_feedback(app_ids=[])[0] # pass an empty list of app_ids to get all
 ```
 
 # Logging
@@ -153,7 +153,7 @@ This is done like so:
 ```python
 truchain = TruChain(
     chain,
-    chain_id='Chain1_ChatApplication',
+    app_id='Chain1_ChatApplication',
     tru=tru
 )
 truchain("This will be automatically logged.")
@@ -165,7 +165,7 @@ Feedback functions can also be logged automatically by providing them in a list 
 ```python
 truchain = TruChain(
     chain,
-    chain_id='Chain1_ChatApplication',
+    app_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match], # feedback functions
     tru=tru
 )
@@ -178,7 +178,7 @@ truchain("This will be automatically logged.")
 
 
 ```python
-tc = TruChain(chain, chain_id='Chain1_ChatApplication')
+tc = TruChain(chain, app_id='Chain1_ChatApplication')
 ```
 
 ### Set up logging and instrumentation
@@ -196,7 +196,7 @@ We can log the records but first we need to log the chain itself.
 
 
 ```python
-tru.add_chain(chain=truchain)
+tru.add_app(app=truchain)
 ```
 
 Then we can log the record:
@@ -213,8 +213,7 @@ Capturing app feedback such as user feedback of the responses can be added with 
 ```python
 thumb_result = True
 tru.add_feedback(name="👍 (1) or 👎 (0)", 
-                  record_id=record.record_id,
-                  chain_id=truchain.chain_id, 
+                  record_id=record.record_id, 
                   result=thumb_result)
 ```
 
@@ -253,7 +252,7 @@ For demonstration purposes, we start the evaluator here but it can be started in
 ```python
 truchain: TruChain = TruChain(
     chain,
-    chain_id='Chain1_ChatApplication',
+    app_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match],
     tru=tru,
     feedback_mode="deferred"
@@ -310,30 +309,49 @@ Feedback functions are an extensible framework for evaluating LLMs. You can add 
 Feedback functions are organized by model provider into Provider classes.
 
 The process for adding new feedback functions is:
-1. Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class:
+1. Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class. Add the new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).
 
 
 ```python
 from trulens_eval import Provider
 
 class StandAlone(Provider):
-    pass
+    def my_custom_feedback(self, my_text_field: str) -> float:
+        """
+        A dummy function of text inputs to float outputs.
+
+        Parameters:
+            my_text_field (str): Text to evaluate.
+
+        Returns:
+            float: square length of the text
+        """
+        return 1.0 / (1.0 + len(my_text_field) * len(my_text_field))
+
 ```
 
-2. Add a new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).
+2. Instantiate your provider and feedback functions. The feedback function is wrapped by the trulens-eval Feedback class which helps specify what will get sent to your function parameters (For example: Query.RecordInput or Query.RecordOutput)
 
 
 ```python
-def feedback(self, text: str) -> float:
-        """
-        Describe how the model works
+my_standalone = StandAlone()
+my_feedback_function_standalone = Feedback(my_standalone.my_custom_feedback).on(
+    my_text_field=Query.RecordOutput
+)
+```
 
-        Parameters:
-            text (str): Text to evaluate.
-            Can also be prompt (str) and response (str).
+3. Your feedback function is now ready to use just like the out of the box feedback functions. Below is an example of it being used.
 
-        Returns:
-            float: A value between 0 (worst) and 1 (best).
-        """
-        return float
+
+```python
+feedback_results = tru.run_feedback_functions(
+    record=record,
+    feedback_functions=[my_feedback_function_standalone]
+)
+tru.add_feedbacks(feedback_results)
+```
+
+
+```python
+
 ```

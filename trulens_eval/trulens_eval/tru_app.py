@@ -10,12 +10,12 @@ from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple
 from pydantic import Field
 
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import ChainID
+from trulens_eval.schema import AppID
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import Model
+from trulens_eval.schema import App
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Query
 from trulens_eval.schema import Record
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-# Model component.
+# App component.
 COMPONENT = Any
 
 # Component category.
@@ -44,27 +44,27 @@ COMPONENT = Any
 COMPONENT_CATEGORY = str
 
 
-class TruModel(Model, SerialModel):
+class TruApp(App, SerialModel):
     """
     Generalization of wrapped model.
     """
 
     # Non-serialized fields here while the serialized ones are defined in
-    # `schema.py:Model`.
+    # `schema.py:App`.
 
     # Feedback functions to evaluate on each record.
     feedbacks: Sequence[Feedback] = Field(exclude=True)
 
     # Database interfaces for models/records/feedbacks.
-    # NOTE: Maybe move to schema.Model .
+    # NOTE: Maybe move to schema.App .
     tru: Optional[Tru] = Field(exclude=True)
 
     # Database interfaces for models/records/feedbacks.
-    # NOTE: Maybe mobe to schema.Model .
+    # NOTE: Maybe mobe to schema.App .
     db: Optional[TruDB] = Field(exclude=True)
 
-    # The wrapped model.
-    model: Any = Field(exclude=True)
+    # The wrapped app.
+    app: Any = Field(exclude=True)
 
     # Instrumentation class.
     instrument: Instrument = Field(exclude=True)
@@ -101,9 +101,9 @@ class TruModel(Model, SerialModel):
 
             if self.feedback_mode != FeedbackMode.NONE:
                 logger.debug(
-                    "Inserting chain and feedback function definitions to db."
+                    "Inserting app and feedback function definitions to db."
                 )
-                self.db.insert_chain(chain=self)
+                self.db.insert_app(app=self)
                 for f in self.feedbacks:
                     self.db.insert_feedback_definition(f)
 
@@ -114,7 +114,7 @@ class TruModel(Model, SerialModel):
                 )
 
         self.instrument.instrument_object(
-            obj=self.model, query=Query.Query().model
+            obj=self.app, query=Query.Query().model
         )
 
     def json(self, *args, **kwargs):
@@ -139,27 +139,27 @@ class TruModel(Model, SerialModel):
         ret_record_args['calls'] = record
         ret_record_args['cost'] = Cost(n_tokens=total_tokens, cost=total_cost)
         ret_record_args['perf'] = Perf(start_time=start_time, end_time=end_time)
-        ret_record_args['chain_id'] = self.chain_id
+        ret_record_args['app_id'] = self.app_id
 
         ret_record = Record(**ret_record_args)
 
         if error is not None:
-            if self.feedback_mode == FeedbackMode.WITH_CHAIN:
+            if self.feedback_mode == FeedbackMode.WITH_APP:
                 self._handle_error(record=ret_record, error=error)
 
             elif self.feedback_mode in [FeedbackMode.DEFERRED,
-                                        FeedbackMode.WITH_CHAIN_THREAD]:
+                                        FeedbackMode.WITH_APP_THREAD]:
                 TP().runlater(
                     self._handle_error, record=ret_record, error=error
                 )
 
             raise error
 
-        if self.feedback_mode == FeedbackMode.WITH_CHAIN:
+        if self.feedback_mode == FeedbackMode.WITH_APP:
             self._handle_record(record=ret_record)
 
         elif self.feedback_mode in [FeedbackMode.DEFERRED,
-                                    FeedbackMode.WITH_CHAIN_THREAD]:
+                                    FeedbackMode.WITH_APP_THREAD]:
             TP().runlater(self._handle_record, record=ret_record)
 
         return ret_record
@@ -183,17 +183,16 @@ class TruModel(Model, SerialModel):
                 self.db.insert_feedback(
                     FeedbackResult(
                         name=f.name,
-                        chain_id=self.chain_id,
                         record_id=record_id,
                         feedback_definition_id=f.feedback_definition_id
                     )
                 )
 
-        elif self.feedback_mode in [FeedbackMode.WITH_CHAIN,
-                                    FeedbackMode.WITH_CHAIN_THREAD]:
+        elif self.feedback_mode in [FeedbackMode.WITH_APP,
+                                    FeedbackMode.WITH_APP_THREAD]:
 
             results = self.tru.run_feedback_functions(
-                record=record, feedback_functions=self.feedbacks, chain=self
+                record=record, feedback_functions=self.feedbacks, app=self
             )
 
             for result in results:
@@ -211,5 +210,5 @@ class TruModel(Model, SerialModel):
         from trulens_eval.utils.langchain import Is
 
         for q, ci, obj in instrumented_classes(jsonify(
-                self.model, instrument=self.instrument)):
+                self.app, instrument=self.instrument)):
             yield (q, list(categorizer(ci)))

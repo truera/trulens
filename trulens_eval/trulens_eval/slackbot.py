@@ -60,7 +60,7 @@ tru = Tru()  #LocalSQLite("trubot.sqlite"))
 
 ident = lambda h: h
 
-chain_ids = {
+app_ids = {
     0: "0/default",
     1: "1/lang_prompt",
     2: "2/relevance_prompt",
@@ -107,12 +107,12 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     if cid in convos:
         return convos[cid]
 
-    if selector not in chain_ids:
+    if selector not in app_ids:
         selector = 0
 
-    chain_id = chain_ids[selector]
+    app_id = app_ids[selector]
 
-    pp.pprint(f"Starting a new conversation with {chain_id}.")
+    pp.pprint(f"Starting a new conversation with {app_id}.")
 
     # Embedding needed for Pinecone vector db.
     embedding = OpenAIEmbeddings(model='text-embedding-ada-002')  # 1536 dims
@@ -122,7 +122,7 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
 
     retriever = docsearch.as_retriever()
 
-    if "filtered" in chain_id:
+    if "filtered" in app_id:
         retriever = WithFeedbackFilterDocuments.of_retriever(
             retriever=retriever, feedback=f_qs_relevance, threshold=0.5
         )
@@ -156,7 +156,7 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     chain.combine_docs_chain.document_prompt = \
         chain.combine_docs_chain.document_prompt.copy()
 
-    if "lang" in chain_id:
+    if "lang" in app_id:
         # Language mismatch fix:
         chain.combine_docs_chain.llm_chain.prompt.template = \
             "Use the following pieces of context to answer the question at the end " \
@@ -168,7 +168,7 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
             "Question: {question}\n" \
             "Helpful Answer: "
 
-    elif "relevance" in chain_id:
+    elif "relevance" in app_id:
         # Contexts fix
 
         # whitespace important in "Contexts! "
@@ -189,7 +189,7 @@ def get_or_make_chain(cid: str, selector: int = 0) -> TruChain:
     # Trulens instrumentation.
     tc = tru.Chain(
         chain=chain,
-        chain_id=chain_id,
+        app_id=app_id,
         feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance],
         feedback_mode=FeedbackMode.DEFERRED
     )
@@ -272,7 +272,7 @@ def answer_message(client, body: dict, logger):
             client.chat_postMessage(
                 channel=channel,
                 thread_ts=ts,
-                text=f"I will use chain {chain.chain_id} for this conversation."
+                text=f"I will use chain {chain.app_id} for this conversation."
             )
 
             if len(message) == 2:

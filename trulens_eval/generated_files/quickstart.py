@@ -68,7 +68,7 @@ f_lang_match = Feedback(hugs.language_match).on(
 # ## Instrument chain for logging with TruLens
 
 truchain = TruChain(
-    chain, chain_id='Chain3_ChatApplication', feedbacks=[f_lang_match]
+    chain, app_id='Chain3_ChatApplication', feedbacks=[f_lang_match]
 )
 
 # Instrumented chain can operate like the original:
@@ -112,5 +112,5 @@ tru.run_dashboard()  # open a local streamlit app to explore
 
 # ## Or view results directly in your notebook
 
-tru.get_records_and_feedback(chain_ids=[]
-                            )[0]  # pass an empty list of chain_ids to get all
+tru.get_records_and_feedback(app_ids=[]
+                            )[0]  # pass an empty list of app_ids to get all

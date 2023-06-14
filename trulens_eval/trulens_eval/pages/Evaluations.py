@@ -41,45 +41,45 @@ if df_results.empty:
     st.write("No records yet...")
 
 else:
-    chains = list(df_results.chain_id.unique())
-    if 'chain' in st.session_state:
-        chain = st.session_state.chain
+    apps = list(df_results.app_id.unique())
+    if 'app' in st.session_state:
+        app = st.session_state.app
     else:
-        chain = chains
+        app = apps
 
-    options = st.multiselect('Filter Applications', chains, default=chain)
+    options = st.multiselect('Filter Applications', apps, default=app)
 
     if (len(options) == 0):
         st.header("All Applications")
-        chain_df = df_results
+        app_df = df_results
 
     elif (len(options) == 1):
         st.header(options[0])
 
-        chain_df = df_results[df_results.chain_id.isin(options)]
+        app_df = df_results[df_results.app_id.isin(options)]
 
     else:
         st.header("Multiple Applications Selected")
 
-        chain_df = df_results[df_results.chain_id.isin(options)]
+        app_df = df_results[df_results.app_id.isin(options)]
 
     tab1, tab2 = st.tabs(["Records", "Feedback Functions"])
 
     with tab1:
 
         gridOptions = {'alwaysShowHorizontalScroll': True}
-        evaluations_df = chain_df
+        evaluations_df = app_df
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
         cellstyle_jscode = JsCode(cellstyle_jscode)
-        gb.configure_column('type', header_name='Chain Type')
+        gb.configure_column('type', header_name='App Type')
         gb.configure_column('record_json', header_name='Record JSON', hide=True)
-        gb.configure_column('chain_json', header_name='Chain JSON', hide=True)
+        gb.configure_column('app_json', header_name='App JSON', hide=True)
         gb.configure_column('cost_json', header_name='Cost JSON', hide=True)
         gb.configure_column('perf_json', header_name='Perf. JSON', hide=True)
 
         gb.configure_column('record_id', header_name='Record ID', hide=True)
-        gb.configure_column('chain_id', header_name='Chain ID')
+        gb.configure_column('app_id', header_name='App ID')
 
         gb.configure_column('feedback_id', header_name='Feedback ID', hide=True)
         gb.configure_column('input', header_name='User Input')
@@ -94,9 +94,9 @@ else:
         gb.configure_column('ts', header_name='Time Stamp', sort="desc")
 
         non_feedback_cols = [
-            'chain_id', 'type', 'ts', 'total_tokens', 'total_cost',
-            'record_json', 'latency', 'record_id', 'chain_id', 'cost_json',
-            'chain_json', 'input', 'output', 'perf_json'
+            'app_id', 'type', 'ts', 'total_tokens', 'total_cost', 'record_json',
+            'latency', 'record_id', 'app_id', 'cost_json', 'app_json', 'input',
+            'output', 'perf_json'
         ]
 
         for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
@@ -121,12 +121,10 @@ else:
         selected_rows = pd.DataFrame(selected_rows)
 
         if len(selected_rows) == 0:
-            st.write("Hint: select a row to display chain metadata")
+            st.write("Hint: select a row to display app metadata")
 
         else:
-            st.header(
-                f"Selected LLM Application: {selected_rows['chain_id'][0]}"
-            )
+            st.header(f"Selected LLM Application: {selected_rows['app_id'][0]}")
             st.text(f"Selected Record ID: {selected_rows['record_id'][0]}")
 
             prompt = selected_rows['input'][0]
@@ -177,17 +175,17 @@ else:
             record_json = json.loads(record_str)
             record = Record(**record_json)
 
-            details = selected_rows['chain_json'][0]
-            chain_json = json.loads(
+            details = selected_rows['app_json'][0]
+            app_json = json.loads(
                 details
-            )  # chains may not be deserializable, don't try to, keep it json.
+            )  # apps may not be deserializable, don't try to, keep it json.
 
             classes: Iterable[Tuple[JSONPath, Class,
-                                    Any]] = instrumented_classes(chain_json)
+                                    Any]] = instrumented_classes(app_json)
 
             for query, cls, component_json in classes:
                 if len(query.path) == 0:
-                    # Skip TruChain, will still list TruChain.model under "chain" below.
+                    # Skip App, will still list A.app under "app" below.
                     continue
 
                 if Is.chain(cls):
@@ -228,7 +226,7 @@ else:
 
                 calls = [
                     call for call in record.calls
-                    if query.is_prefix_of(call.chain_stack[-1].path)
+                    if query.is_prefix_of(call.stack[-1].path)
                 ]
                 if len(calls) > 0:
                     st.subheader("Calls to component:")
@@ -237,9 +235,9 @@ else:
 
             st.header("More options:")
 
-            if st.button("Display full chain json"):
+            if st.button("Display full app json"):
 
-                st.write(chain_json)
+                st.write(app_json)
 
             if st.button("Display full record json"):
 
@@ -263,7 +261,7 @@ else:
                                 0, 0.2, 0.4, 0.6, 0.8, 1.0
                             ]  # Quintile buckets
                             ax.hist(
-                                chain_df[feedback[ind]],
+                                app_df[feedback[ind]],
                                 bins=bins,
                                 edgecolor='black',
                                 color='#2D736D'

@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from trulens_eval import __version__
-from trulens_eval.schema import ChainID
+from trulens_eval.schema import AppID
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackDefinitionID
@@ -22,10 +22,10 @@ from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import JSONPath
-from trulens_eval.schema import Model
+from trulens_eval.schema import App
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
-from trulens_eval.schema import RecordChainCall
+from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordID
 from trulens_eval.util import all_queries
 from trulens_eval.util import GetItemOrAttribute
@@ -42,6 +42,7 @@ NoneType = type(None)
 pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
+
 
 class DBMeta(pydantic.BaseModel):
     """
@@ -68,7 +69,7 @@ class TruDB(SerialModel, abc.ABC):
         record: Record,
     ) -> RecordID:
         """
-        Insert a new `record` into db, indicating its `model` as well. Return
+        Insert a new `record` into db, indicating its `app` as well. Return
         record id.
 
         Args:
@@ -78,12 +79,12 @@ class TruDB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_chain(self, chain: Model) -> ChainID:
+    def insert_app(self, app: App) -> AppID:
         """
-        Insert a new `chain` into db under the given `chain_id`. 
+        Insert a new `app` into db under the given `app_id`. 
 
         Args:
-        - chain: Chain - Chain definition. 
+        - app: App - App definition. 
         """
 
         raise NotImplementedError()
@@ -115,10 +116,10 @@ class TruDB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def get_records_and_feedback(
-        self, chain_ids: List[str]
+        self, app_ids: List[str]
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """
-        Get the records logged for the given set of `chain_ids` (otherwise all)
+        Get the records logged for the given set of `app_ids` (otherwise all)
         alongside the names of the feedback function columns listed the
         dataframe.
         """
@@ -132,12 +133,12 @@ class LocalSQLite(TruDB):
     TABLE_RECORDS = "records"
     TABLE_FEEDBACKS = "feedbacks"
     TABLE_FEEDBACK_DEFS = "feedback_defs"
-    TABLE_CHAINS = "chains"
+    TABLE_APPS = "apps"
 
     TYPE_TIMESTAMP = "FLOAT"
     TYPE_ENUM = "TEXT"
 
-    TABLES = [TABLE_RECORDS, TABLE_FEEDBACKS, TABLE_FEEDBACK_DEFS, TABLE_CHAINS]
+    TABLES = [TABLE_RECORDS, TABLE_FEEDBACKS, TABLE_FEEDBACK_DEFS, TABLE_APPS]
 
     def __init__(self, filename: Path):
         """
@@ -183,7 +184,7 @@ class LocalSQLite(TruDB):
         try:
             c.execute(f'''SELECT key, value from {self.TABLE_META}''')
             rows = c.fetchall()
-            
+
             ret = {}
 
             for row in rows:
@@ -197,8 +198,8 @@ class LocalSQLite(TruDB):
             return DBMeta(trulens_version=trulens_version, attributes=ret)
 
         except Exception as e:
-            return DBMeta(trulens_version = None, attributes = {})
-        
+            return DBMeta(trulens_version=None, attributes={})
+
     def _build_tables(self):
         conn, c = self._connect()
 
@@ -217,12 +218,15 @@ class LocalSQLite(TruDB):
         if meta.trulens_version is None:
             # migrate from pre-version-tracked database
             # print(f"Migrating DB {self.filename} from trulens_version {meta.trulens_version} to {__version__}.")
-            c.execute(f'''INSERT INTO {self.TABLE_META} VALUES (?, ?)''', ('trulens_version', __version__))
+            c.execute(
+                f'''INSERT INTO {self.TABLE_META} VALUES (?, ?)''',
+                ('trulens_version', __version__)
+            )
 
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_RECORDS} (
                 record_id TEXT NOT NULL PRIMARY KEY,
-                chain_id TEXT NOT NULL,
+                app_id TEXT NOT NULL,
                 input TEXT,
                 output TEXT,
                 record_json TEXT NOT NULL,
@@ -236,7 +240,6 @@ class LocalSQLite(TruDB):
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_FEEDBACKS} (
                 feedback_result_id TEXT NOT NULL PRIMARY KEY,
                 record_id TEXT NOT NULL,
-                chain_id TEXT NOT NULL,
                 feedback_definition_id TEXT,
                 last_ts {self.TYPE_TIMESTAMP} NOT NULL,
                 status {self.TYPE_ENUM} NOT NULL,
@@ -254,9 +257,9 @@ class LocalSQLite(TruDB):
             )'''
         )
         c.execute(
-            f'''CREATE TABLE IF NOT EXISTS {self.TABLE_CHAINS} (
-                chain_id TEXT NOT NULL PRIMARY KEY,
-                chain_json TEXT NOT NULL
+            f'''CREATE TABLE IF NOT EXISTS {self.TABLE_APPS} (
+                app_id TEXT NOT NULL PRIMARY KEY,
+                app_json TEXT NOT NULL
             )'''
         )
         self._close(conn)
@@ -281,7 +284,7 @@ class LocalSQLite(TruDB):
         # within sqlite.
 
         vals = (
-            record.record_id, record.chain_id, record.main_input,
+            record.record_id, record.app_id, record.main_input,
             record.main_output, json_str_of_obj(record), record.tags, record.ts,
             json_str_of_obj(record.cost), json_str_of_obj(record.perf)
         )
@@ -289,22 +292,22 @@ class LocalSQLite(TruDB):
         self._insert_or_replace_vals(table=self.TABLE_RECORDS, vals=vals)
 
         print(
-            f"{UNICODE_CHECK} record {record.record_id} from {record.chain_id} -> {self.filename}"
+            f"{UNICODE_CHECK} record {record.record_id} from {record.app_id} -> {self.filename}"
         )
 
         return record.record_id
 
     # TruDB requirement
-    def insert_chain(self, chain: Model) -> ChainID:
-        chain_id = chain.chain_id
-        chain_str = chain.json()
+    def insert_app(self, app: App) -> AppID:
+        app_id = app.app_id
+        app_str = app.json()
 
-        vals = (chain_id, chain_str)
-        self._insert_or_replace_vals(table=self.TABLE_CHAINS, vals=vals)
+        vals = (app_id, app_str)
+        self._insert_or_replace_vals(table=self.TABLE_APPS, vals=vals)
 
-        print(f"{UNICODE_CHECK} chain {chain_id} -> {self.filename}")
+        print(f"{UNICODE_CHECK} app {app_id} -> {self.filename}")
 
-        return chain_id
+        return app_id
 
     def insert_feedback_definition(
         self, feedback: FeedbackDefinition
@@ -371,7 +374,6 @@ class LocalSQLite(TruDB):
         vals = (
             feedback_result.feedback_result_id,
             feedback_result.record_id,
-            feedback_result.chain_id,
             feedback_result.feedback_definition_id,
             feedback_result.last_ts.timestamp(),
             feedback_result.status.value,
@@ -450,14 +452,14 @@ class LocalSQLite(TruDB):
                 f.calls_json,
                 fd.feedback_json, 
                 r.record_json, 
-                c.chain_json
+                c.app_json
             FROM {self.TABLE_RECORDS} r
                 JOIN {self.TABLE_FEEDBACKS} f 
                 JOIN {self.TABLE_FEEDBACK_DEFS} fd
-                JOIN {self.TABLE_CHAINS} c
+                JOIN {self.TABLE_APPS} c
             WHERE f.feedback_definition_id=fd.feedback_definition_id
                 AND r.record_id=f.record_id
-                AND r.chain_id=c.chain_id
+                AND r.app_id=c.app_id
                 {where_clause}
         """
 
@@ -485,8 +487,8 @@ class LocalSQLite(TruDB):
             row.record_json = json.loads(
                 row.record_json
             )  # record_json (Record)
-            row.chain_json = json.loads(row.chain_json)  # chain_json (Model)
-            chain = Model(**row.chain_json)
+            row.app_json = json.loads(row.app_json)  # app_json (App)
+            app = App(**row.app_json)
 
             row.status = FeedbackResultStatus(row.status)
 
@@ -494,7 +496,7 @@ class LocalSQLite(TruDB):
             row['total_tokens'] = row.cost_json['n_tokens']
             row['total_cost'] = row.cost_json['cost']
 
-            row['type'] = chain.root_class
+            row['type'] = app.root_class
 
             return row
 
@@ -502,11 +504,10 @@ class LocalSQLite(TruDB):
 
         return pd.DataFrame(df)
 
-    def get_chain(self, chain_id: str) -> JSON:
+    def get_app(self, app_id: str) -> JSON:
         conn, c = self._connect()
         c.execute(
-            f"SELECT chain_json FROM {self.TABLE_CHAINS} WHERE chain_id=?",
-            (chain_id,)
+            f"SELECT app_json FROM {self.TABLE_APPS} WHERE app_id=?", (app_id,)
         )
         result = c.fetchone()[0]
         conn.close()
@@ -515,10 +516,10 @@ class LocalSQLite(TruDB):
 
     def get_records_and_feedback(
         self,
-        chain_ids: Optional[List[str]] = None
+        app_ids: Optional[List[str]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        # This returns all models if the list of chain_ids is empty.
-        chain_ids = chain_ids or []
+        # This returns all apps if the list of app_ids is empty.
+        app_ids = app_ids or []
 
         conn, c = self._connect()
         query = f"""
@@ -527,9 +528,9 @@ class LocalSQLite(TruDB):
             LEFT JOIN {self.TABLE_FEEDBACKS} f
                 ON r.record_id = f.record_id
             """
-        if len(chain_ids) > 0:
-            chain_id_list = ', '.join('?' * len(chain_ids))
-            query = query + f" WHERE r.chain_id IN ({chain_id_list})"
+        if len(app_ids) > 0:
+            app_id_list = ', '.join('?' * len(app_ids))
+            query = query + f" WHERE r.app_id IN ({app_id_list})"
 
         c.execute(query)
         rows = c.fetchall()
@@ -544,14 +545,14 @@ class LocalSQLite(TruDB):
 
         conn, c = self._connect()
         query = f"""
-            SELECT DISTINCT r.*, c.chain_json
+            SELECT DISTINCT r.*, c.app_json
             FROM {self.TABLE_RECORDS} r 
-            JOIN {self.TABLE_CHAINS} c
-                ON r.chain_id = c.chain_id
+            JOIN {self.TABLE_APPS} c
+                ON r.app_id = c.app_id
             """
-        if len(chain_ids) > 0:
-            chain_id_list = ', '.join('?' * len(chain_ids))
-            query = query + f" WHERE r.chain_id IN ({chain_id_list})"
+        if len(app_ids) > 0:
+            app_id_list = ', '.join('?' * len(app_ids))
+            query = query + f" WHERE r.app_id IN ({app_id_list})"
 
         c.execute(query)
         rows = c.fetchall()
@@ -560,8 +561,8 @@ class LocalSQLite(TruDB):
         df_records = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
-        chains = df_records['chain_json'].apply(Model.parse_raw)
-        df_records['type'] = chains.apply(lambda row: str(row.root_class))
+        apps = df_records['app_json'].apply(App.parse_raw)
+        df_records['type'] = apps.apply(lambda row: str(row.root_class))
 
         cost = df_records['cost_json'].map(Cost.parse_raw)
         df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
