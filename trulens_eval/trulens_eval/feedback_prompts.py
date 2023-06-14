@@ -1,46 +1,16 @@
 from cohere.responses.classify import Example
 
-QS_RELEVANCE = """You are an expert at measuring the relevance of statements; provide a score indicating whether some part of the STATEMENT contains information relevant to the QUESTION. 
-Respond only as a number from 1 to 10 where 1 is the least relevant and 10 is the most relevant.
-The entire STATEMENT does not have to be relevant to the QUESTION as long as some part of it is relevant. 
-Never elaborate.
-
-QUESTION: What is the capital of Indonesia?
-
-STATEMENT: Indonesia is a presidential republic with an elected legislature. It has 38 provinces, of which nine have special status. The
- country's capital, Jakarta, is the world's second-most populous urban area. Indonesia shares land borders with Papua New 
-Guinea, East Timor, and the eastern part of Malaysia, as well as maritime borders with Singapore, Vietnam, Thailand, the Philippines, Australia, Palau, and India. 
-Despite its large population and densely populated regions, Indonesia has vast 
-areas of wilderness that support one of the world's highest levels of biodiversity.
-
-RELEVANCE: 10
-
-QUESTION: What is a transformer model?
-
-STATEMENT: The general transformer architecture was initially introduced in 2017 in the well-known paper "Attention is All You Need".
- They have spread widely in the field of Natural Language Processing and have become one of the most widely used and 
-promising neural network architectures in the field.
-In 2019 the Vision Transformer architecture for processing images without the need of any convolutions was proposed by 
-Cordonnier et al., and later empirically evaluated more extensively in the well-known paper "An image is worth 16x16 
-words". The idea is basically to break down input images as a series of patches which, once transformed into vectors, are 
-seen as words in a normal transformer.
-
-RELEVANCE: 5
-
-QUESTION: Who is Pope Francis?
-
-STATEMENT: Pope John Paul II (Latin: Ioannes Paulus II; Italian: Giovanni Paolo II; Polish: Jan Paweł II; born Karol Józef Wojtyła 
-[ˈkarɔl ˈjuzɛv vɔjˈtɨwa];[a] 18 May 1920 – 2 April 2005) was head of the Catholic Church and sovereign of the Vatican City 
-State from 1978 until his death in 2005. He was later canonised as Pope Saint John Paul II.
-
-RELEVANCE: 1
-
-
+QS_RELEVANCE = """
 QUESTION: {question}
 
 STATEMENT: {statement}
 
-RELEVANCE: """
+Pretend that you are a fair expert in scoring the relevance of text to some question.
+Provide a score indicating whether some section of STATEMENT can be used to answer the QUESTION. 
+Respond only as a number from 1 to 10. If the STATEMENT has no useful information about the QUESTION respond with 1. If the STATEMENT has some part that can be helpful to answer the question, respond with 10. 
+To get a score of 10, the entire STATEMENT does not have to be useful. Some part of it is has information that can be used to answer the QUESTION. 
+Never elaborate. 
+ """
 
 PR_RELEVANCE = """
 You are a relevance classifier, providing the relevance of a given response to the given prompt.
