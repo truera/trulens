@@ -53,7 +53,12 @@ jobs:
           pip install -r $(requirementsFile)
           pip install yapf==0.32.0
           pip install ipykernel
+          pip install pytest==7.0.1 pytest-azurepipelines langchain>=0.0.170 llama_index>=0.6.24
+          echo '::group::piplist'
+          echo "$(pip list)"
+          echo '::endgroup::'
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
+
         displayName: Install pip package
       - bash: |
           set -e
@@ -69,6 +74,13 @@ jobs:
             git diff
           fi
         displayName: NoDiffCheck
+      - checkout: releases/rc-0.1.2
+      - bash: |
+          source activate $(condaEnvFileSuffix)
+          cd ./trulens_eval
+          python -m pytest $(testSubdirectory)
+        displayName: Backwards Compatibility Run Last Release
+      - checkout: self
       - bash: |
           source activate $(condaEnvFileSuffix)
           cd ./docs/trulens_eval
@@ -78,10 +90,6 @@ jobs:
         displayName: Run combine docs for testing
       - bash: |
           source activate $(condaEnvFileSuffix)
-          pip install pytest==7.0.1 pytest-azurepipelines langchain>=0.0.170 llama_index>=0.6.24
-          echo '::group::piplist'
-          echo "$(pip list)"
-          echo '::endgroup::'
           cd ./trulens_eval
           python -m pytest $(testSubdirectory)
         displayName: Run unit tests
