@@ -9,7 +9,7 @@ Using feedback functions, you can objectively evaluate the quality of the respon
 ![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
 
 ## Quick Usage
-To quickly play around with the TruLens Eval library, download this notebook: [quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-0.1.2/docs/trulens_eval/quickstart.ipynb).
+To quickly play around with the TruLens Eval library, download this notebook: [quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.2.0/trulens_eval/examples/quickstart.ipynb).
 
 
 
@@ -390,9 +390,4 @@ feedback_results = tru.run_feedback_functions(
     feedback_functions=[my_feedback_function_standalone]
 )
 tru.add_feedbacks(feedback_results)
-```
-
-
-```python
-
 ```
