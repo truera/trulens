@@ -74,7 +74,7 @@ jobs:
             git diff
           fi
         displayName: NoDiffCheck
-      - checkout: releases/rc-0.1.2
+      - checkout: git://truera/trulens@releases/rc-0.1.2
       - bash: |
           source activate $(condaEnvFileSuffix)
           cd ./trulens_eval
