@@ -33,9 +33,12 @@ class LlamaInstrument(Instrument):
 
         # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
-            llama_index.indices.query.base.BaseQueryEngine, llama_index.indices.
-            base_retriever.BaseRetriever
-            # query_engine.retriever_query_engine.RetrieverQueryEngine
+            llama_index.indices.query.base.BaseQueryEngine,
+            llama_index.indices.base_retriever.BaseRetriever,
+            llama_index.chat_engine.types.BaseChatEngine,
+            llama_index.llm_predictor.base.LLMPredictor,
+            llama_index.prompts.base.Prompt,
+            llama_index.question_gen.types.BaseQuestionGenerator,
         }
 
         # Instrument only methods with these names and of these classes. Ok to
@@ -70,7 +73,7 @@ class TruLlama(TruApp):
     Wrap a llama index engine for monitoring.
 
     Arguments:
-    - model: RetrieverQueryEngine -- the engine to wrap.
+    - app: RetrieverQueryEngine -- the engine to wrap.
     - More args in TruApp
     - More args in WithClassInfo
     """
@@ -78,15 +81,15 @@ class TruLlama(TruApp):
     class Config:
         arbitrary_types_allowed = True
 
-    model: BaseQueryEngine
+    app: BaseQueryEngine
 
-    def __init__(self, model: BaseQueryEngine, **kwargs):
+    def __init__(self, app: BaseQueryEngine, **kwargs):
 
         super().update_forward_refs()
 
         # TruLlama specific:
-        kwargs['model'] = model
-        kwargs['root_class'] = Class.of_object(model)
+        kwargs['app'] = app
+        kwargs['root_class'] = Class.of_object(app)
         kwargs['instrument'] = LlamaInstrument()
 
         super().__init__(**kwargs)
@@ -114,8 +117,9 @@ class TruLlama(TruApp):
             # TODO: do this only if there is an openai model inside the app:
             # with get_openai_callback() as cb:
             start_time = datetime.now()
-            ret = self.model.query(str_or_query_bundle)
+            ret = self.app.query(str_or_query_bundle)
             end_time = datetime.now()
+            # TODO: cost retrieval
             # total_tokens = cb.total_tokens
             # total_cost = cb.total_cost
             total_tokens = 0
