@@ -16,6 +16,12 @@ pr:
       - trulens_eval
       - docs/trulens_eval/*.ipynb
 
+resources:
+  repositories:
+  - repository: lastrelease 
+    type: git
+    name: lastrelease
+    ref: releases/rc-0.1.2
 
 jobs:
   - job: quickstartTests
@@ -31,8 +37,6 @@ jobs:
           testSubdirectory: "tests/docs_notebooks"
 
     steps:
-      - checkout: self
-        clean: true
       - bash: echo "##vso[task.prependpath]$CONDA/bin"
         displayName: Add conda to PATH
       - bash: |
@@ -60,6 +64,29 @@ jobs:
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
 
         displayName: Install pip package
+      - checkout: lastrelease
+        clean: true
+      - bash: |
+          source activate $(condaEnvFileSuffix)
+          cd ./trulens_eval
+          python -m pytest $(testSubdirectory)
+        displayName: Backwards Compatibility Run Last Release
+      - checkout: self
+      - bash: |
+          source activate $(condaEnvFileSuffix)
+          cd ./docs/trulens_eval
+          pip install jupyter
+          pip install nbmerge
+          ../../.github/workflows/combine_nb_to_docs_testing.sh
+        displayName: Run combine docs for testing
+      - bash: |
+          source activate $(condaEnvFileSuffix)
+          cd ./trulens_eval
+          python -m pytest $(testSubdirectory)
+        displayName: Run unit tests
+        env:
+          OPENAI_API_KEY: $(OPENAI_API_KEY)
+          HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
@@ -74,25 +101,3 @@ jobs:
             git diff
           fi
         displayName: NoDiffCheck
-      - bash: |
-          source activate $(condaEnvFileSuffix)
-          git checkout releases/rc-0.1.2
-          cd ./trulens_eval
-          python -m pytest $(testSubdirectory)
-        displayName: Backwards Compatibility Run Last Release
-      - bash: |
-          source activate $(condaEnvFileSuffix)
-          git checkout main
-          cd ./docs/trulens_eval
-          pip install jupyter
-          pip install nbmerge
-          ../../.github/workflows/combine_nb_to_docs_testing.sh
-        displayName: Run combine docs for testing
-      - bash: |
-          source activate $(condaEnvFileSuffix)
-          cd ./trulens_eval
-          python -m pytest $(testSubdirectory)
-        displayName: Run unit tests
-        env:
-          OPENAI_API_KEY: $(OPENAI_API_KEY)
-          HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
