@@ -350,8 +350,3 @@ feedback_results = tru.run_feedback_functions(
 )
 tru.add_feedbacks(feedback_results)
 ```
-
-
-```python
-
-```
