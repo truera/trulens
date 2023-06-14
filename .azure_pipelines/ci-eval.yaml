@@ -20,6 +20,7 @@ resources:
   repositories:
   - repository: trulens
     type: github
+    endpoint: https://github.com/
     name: truera/trulens
     ref: releases/rc-0.1.2
 
