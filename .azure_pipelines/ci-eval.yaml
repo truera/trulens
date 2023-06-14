@@ -15,6 +15,13 @@ pr:
     include:
       - trulens_eval
       - docs/trulens_eval/*.ipynb
+      
+resources:
+  repositories:
+  - repository: trulens
+    type: github
+    name: truera/trulens
+    ref: releases/rc-0.1.2
 
 jobs:
   - job: quickstartTests
@@ -57,8 +64,7 @@ jobs:
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
 
         displayName: Install pip package
-      - checkout: self
-        ref: releases/rc-0.1.2
+      - checkout: trulens
         clean: true
       - bash: |
           source activate $(condaEnvFileSuffix)
