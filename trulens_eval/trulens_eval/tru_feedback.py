@@ -396,31 +396,7 @@ def _re_1_10_rating(str_val):
 
 
 class Provider(SerialModel):
-    endpoint: Any = pydantic.Field(exclude=True)
-    """
-    @staticmethod
-    def of_json(obj: Dict) -> 'Provider':
-        cls_name = obj['class_name']
-        mod_name = obj['module_name']  # ignored for now
-        check_provider(cls_name)
-
-        cls = eval(cls_name)
-        kwargs = {
-            k: v
-            for k, v in obj.items()
-            if k not in ['class_name', 'module_name']
-        }
-
-        return cls(**kwargs)
-
-    def to_json(self: 'Provider', **extras) -> Dict:
-        obj = {
-            'class_name': self.__class__.__name__,
-            'module_name': self.__class__.__module__
-        }
-        obj.update(**extras)
-        return obj
-    """
+    endpoint: Endpoint = pydantic.Field(exclude=True)
 
 
 class OpenAI(Provider):
@@ -440,11 +416,6 @@ class OpenAI(Provider):
         set_openai_key()
         self.model_engine = model_engine
         self.endpoint = Endpoint(name="openai")
-
-    """
-    def to_json(self) -> Dict:
-        return Provider.to_json(self, model_engine=self.model_engine)
-    """
 
     def _moderation(self, text: str):
         return self.endpoint.run_me(
@@ -713,10 +684,6 @@ class OpenAI(Provider):
 
 
 def _get_answer_agreement(prompt, response, check_response, model_engine):
-    print("DEBUG")
-    print(feedback_prompts.AGREEMENT_SYSTEM_PROMPT % (prompt, response))
-    print("MODEL ANSWER")
-    print(check_response)
     oai_chat_response = OpenAI().endpoint.run_me(
         lambda: openai.ChatCompletion.create(
             model=model_engine,
@@ -854,7 +821,6 @@ class Huggingface(Provider):
                 return label['score']
 
 
-# cohere
 class Cohere(Provider):
     model_engine: str = "large"
 
@@ -864,10 +830,6 @@ class Cohere(Provider):
         Cohere().endpoint = Endpoint(name="cohere")
         self.model_engine = model_engine
 
-    """
-    def to_json(self) -> Dict:
-        return Provider.to_json(self, model_engine=self.model_engine)
-    """
 
     def sentiment(
         self,
