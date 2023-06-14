@@ -56,7 +56,7 @@ jobs:
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
 
         displayName: Install pip package
-      - checkout: git://trulens/trulens
+      - checkout: git://trulens/truera/trulens@main
         clean: true
       - bash: |
           source activate $(condaEnvFileSuffix)
