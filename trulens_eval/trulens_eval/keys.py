@@ -1,9 +1,12 @@
 """
 Read secrets from .env for exporting to python scripts. Usage:
+
 ```python
-    from keys import *
+from keys import *
 ```
-Will get you access to all of the vars defined in .env in wherever you put that import statement.
+
+Will get you access to all of the vars defined in .env in wherever you put that
+import statement.
 """
 
 import os

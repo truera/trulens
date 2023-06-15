@@ -18,7 +18,7 @@ otherwise you might get circular import errors.
 
     - `feedback.py`
 
-    - `tru_app.py`
+    - `app.py`
 
     - `db.py`
 

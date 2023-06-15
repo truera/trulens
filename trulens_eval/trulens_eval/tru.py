@@ -1,10 +1,8 @@
-from datetime import datetime
 import logging
 from multiprocessing import Process
 import os
 from pathlib import Path
 import subprocess
-import sys
 import threading
 from threading import Thread
 from time import sleep
@@ -13,7 +11,7 @@ from typing import Iterable, List, Optional, Sequence, Union
 import pkg_resources
 
 from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import App
+from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Record
 from trulens_eval.db import JSON
 from trulens_eval.db import LocalSQLite
@@ -107,7 +105,7 @@ class Tru(SingletonPerName):
         self,
         record: Record,
         feedback_functions: Sequence[Feedback],
-        app: Optional[App] = None,
+        app: Optional[AppDefinition] = None,
     ) -> Sequence[JSON]:
         """
         Run a collection of feedback functions and report their result.
@@ -156,7 +154,7 @@ class Tru(SingletonPerName):
 
         return list(evals)
 
-    def add_app(self, app: App) -> None:
+    def add_app(self, app: AppDefinition) -> None:
         """
         Add a app to the database.        
         """
