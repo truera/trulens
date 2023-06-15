@@ -264,7 +264,7 @@ tru.stop_evaluator()
 ```
 
 # Out-of-the-box Feedback Functions
-See: <https://www.trulens.org/trulens_eval/api/tru_feedback/>
+See: <https://www.trulens.org/trulens_eval/api/feedback/>
 
 ## Relevance
 
@@ -304,7 +304,7 @@ The OpenAI Moderation API is made available for use as feedback functions. This 
 
 # Adding new feedback functions
 
-Feedback functions are an extensible framework for evaluating LLMs. You can add your own feedback functions to evaluate the qualities required by your application by updating `trulens_eval/tru_feedback.py`. If your contributions would be useful for others, we encourage you to contribute to TruLens!
+Feedback functions are an extensible framework for evaluating LLMs. You can add your own feedback functions to evaluate the qualities required by your application by updating `trulens_eval/feedback.py`. If your contributions would be useful for others, we encourage you to contribute to TruLens!
 
 Feedback functions are organized by model provider into Provider classes.
 
