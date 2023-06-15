@@ -33,9 +33,12 @@ class LlamaInstrument(Instrument):
 
         # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
-            llama_index.indices.query.base.BaseQueryEngine, llama_index.indices.
-            base_retriever.BaseRetriever
-            # query_engine.retriever_query_engine.RetrieverQueryEngine
+            llama_index.indices.query.base.BaseQueryEngine,
+            llama_index.indices.base_retriever.BaseRetriever,
+            llama_index.chat_engine.types.BaseChatEngine,
+            llama_index.llm_predictor.base.LLMPredictor,
+            llama_index.prompts.base.Prompt,
+            llama_index.question_gen.types.BaseQuestionGenerator,
         }
 
         # Instrument only methods with these names and of these classes. Ok to
@@ -116,6 +119,7 @@ class TruLlama(App):
             start_time = datetime.now()
             ret = self.app.query(str_or_query_bundle)
             end_time = datetime.now()
+            # TODO: cost retrieval
             # total_tokens = cb.total_tokens
             # total_cost = cb.total_cost
             total_tokens = 0
