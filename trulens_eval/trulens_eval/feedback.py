@@ -9,9 +9,7 @@ import itertools
 import logging
 from multiprocessing.pool import AsyncResult
 import re
-from typing import (
-    Any, Callable, Dict, Iterable, Optional, Type, Union
-)
+from typing import (Any, Callable, Dict, Iterable, Optional, Type, Union)
 
 import numpy as np
 import openai
@@ -228,7 +226,9 @@ class Feedback(FeedbackDefinition):
 
         return Feedback(imp=self.imp, selectors=selectors, agg=self.agg)
 
-    def run(self, app: Union[AppDefinition, JSON], record: Record) -> FeedbackResult:
+    def run(
+        self, app: Union[AppDefinition, JSON], record: Record
+    ) -> FeedbackResult:
         """
         Run the feedback function on the given `record`. The `app` that
         produced the record is also required to determine input/output argument
@@ -341,8 +341,9 @@ class Feedback(FeedbackDefinition):
 
         return self.imp.__name__
 
-    def extract_selection(self, app: Union[AppDefinition, JSON],
-                          record: Record) -> Iterable[Dict[str, Any]]:
+    def extract_selection(
+        self, app: Union[AppDefinition, JSON], record: Record
+    ) -> Iterable[Dict[str, Any]]:
         """
         Given the `app` that produced the given `record`, extract from
         `record` the values that will be sent as arguments to the implementation
