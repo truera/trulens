@@ -7,7 +7,7 @@
 - file tru_db.py renamed to db.py
     - class TruDB renamed to DB
 
-- file tru_app.py renamed app.py
+- file tru_app.py renamed to app.py
     - class TruApp renamed to App
 
 - in file schema.py
