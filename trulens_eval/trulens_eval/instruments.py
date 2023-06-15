@@ -197,7 +197,7 @@ from trulens_eval.schema import Perf
 from trulens_eval.schema import Query
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordAppCallMethod
-from trulens_eval.tru_feedback import Feedback
+from trulens_eval.feedback import Feedback
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import jsonify
 from trulens_eval.util import Method
