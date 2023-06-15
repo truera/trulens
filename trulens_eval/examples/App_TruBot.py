@@ -15,12 +15,12 @@ import streamlit as st
 from trulens_eval import Query
 from trulens_eval import tru
 from trulens_eval import tru_chain
-from trulens_eval import tru_feedback
+from trulens_eval import feedback
 from trulens_eval.keys import *
 from trulens_eval.keys import PINECONE_API_KEY
 from trulens_eval.keys import PINECONE_ENV
-from trulens_eval.tru_db import Record
-from trulens_eval.tru_feedback import Feedback
+from trulens_eval.db import Record
+from trulens_eval.feedback import Feedback
 
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
@@ -37,8 +37,8 @@ pinecone.init(
 
 identity = lambda h: h
 
-hugs = tru_feedback.Huggingface()
-openai = tru_feedback.OpenAI()
+hugs = feedback.Huggingface()
+openai = feedback.OpenAI()
 
 f_lang_match = Feedback(hugs.language_match).on(
     text1=Query.RecordInput, text2=Query.RecordOutput
