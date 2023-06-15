@@ -23,13 +23,10 @@ about the encoded object types in the dictionary under the `class_info` key.
 from datetime import datetime
 from enum import Enum
 
-from typing import (
-    Any, Dict, Optional, Sequence, TypeVar, Union
-)
+from typing import (Any, Dict, Optional, Sequence, TypeVar, Union)
 import logging
 from munch import Munch as Bunch
 import pydantic
-
 
 from trulens_eval.util import Class
 from trulens_eval.util import Function
@@ -138,7 +135,6 @@ class Record(SerialModel):
             record_id = obj_id_of_obj(self.dict(), prefix="record")
 
         self.record_id = record_id
-
 
     def layout_calls_as_app(self) -> JSON:
         """
@@ -361,6 +357,7 @@ class AppDefinition(SerialModel, WithClassInfo):
 
 
 class App(AppDefinition):
+
     def __init__(self, *args, **kwargs):
         # Since 0.2.0
         logger.warning(
