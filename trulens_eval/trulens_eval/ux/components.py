@@ -5,7 +5,7 @@ import streamlit as st
 
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
-from trulens_eval.tru_db import JSON
+from trulens_eval.db import JSON
 from trulens_eval.util import is_empty
 from trulens_eval.util import is_noserio
 

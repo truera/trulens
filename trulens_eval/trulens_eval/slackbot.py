@@ -23,12 +23,12 @@ from slack_bolt import App
 from slack_sdk import WebClient
 
 from trulens_eval import Tru
-from trulens_eval import tru_feedback
+from trulens_eval import feedback
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Query
 from trulens_eval.tru_chain import TruChain
-from trulens_eval.tru_db import LocalSQLite
-from trulens_eval.tru_feedback import Feedback
+from trulens_eval.db import LocalSQLite
+from trulens_eval.feedback import Feedback
 from trulens_eval.util import TP
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 
@@ -70,8 +70,8 @@ app_ids = {
 
 # Construct feedback functions.
 
-hugs = tru_feedback.Huggingface()
-openai = tru_feedback.OpenAI()
+hugs = feedback.Huggingface()
+openai = feedback.OpenAI()
 
 # Language match between question/answer.
 f_lang_match = Feedback(hugs.language_match).on(
@@ -84,7 +84,7 @@ f_qa_relevance = Feedback(openai.relevance).on(
 )
 
 # Question/statement relevance between question and each context chunk.
-f_qs_relevance = tru_feedback.Feedback(openai.qs_relevance).on(
+f_qs_relevance = feedback.Feedback(openai.qs_relevance).on(
     question=Query.RecordInput,
     statement=Query.Record.chain.combine_docs_chain._call.args.inputs.
     input_documents[:].page_content

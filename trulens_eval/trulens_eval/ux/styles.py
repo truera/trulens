@@ -1,4 +1,4 @@
-from trulens_eval.tru_feedback import default_pass_fail_color_threshold
+from trulens_eval.feedback import default_pass_fail_color_threshold
 
 # These would be useful to include in our pages but don't yet see a way to do this in streamlit.
 root_js = f"""

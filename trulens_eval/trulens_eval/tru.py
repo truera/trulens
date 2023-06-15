@@ -15,9 +15,9 @@ import pkg_resources
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import App
 from trulens_eval.schema import Record
-from trulens_eval.tru_db import JSON
-from trulens_eval.tru_db import LocalSQLite
-from trulens_eval.tru_feedback import Feedback
+from trulens_eval.db import JSON
+from trulens_eval.db import LocalSQLite
+from trulens_eval.feedback import Feedback
 from trulens_eval.utils.notebook_utils import is_notebook, setup_widget_stdout_stderr
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import TP
@@ -219,7 +219,7 @@ class Tru(SingletonPerName):
                     "Evaluator is already running in this process."
                 )
 
-        from trulens_eval.tru_feedback import Feedback
+        from trulens_eval.feedback import Feedback
 
         if not fork:
             self.evaluator_stop = threading.Event()
