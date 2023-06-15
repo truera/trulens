@@ -183,6 +183,7 @@ records and retrieve them afterwards.
 from datetime import datetime
 from inspect import BoundArguments
 from inspect import signature
+import inspect
 import logging
 import os
 from pprint import PrettyPrinter
@@ -498,7 +499,12 @@ class Instrument(object):
                     # Skip those starting with _ that also have non-_ versions.
                     continue
 
-                sv = getattr(obj, k)  # static get ?
+                sv = inspect.getattr_static(obj, k)
+                if isinstance(sv, property):
+                    try:
+                        sv = sv.fget()
+                    except Exception as e:
+                        sv = None
 
                 if any(isinstance(sv, cls) for cls in self.classes):
                     self.instrument_object(obj=sv, query=query[k], done=done)
