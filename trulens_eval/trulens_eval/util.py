@@ -1,12 +1,27 @@
 """
-Utilities.
+# Utilities.
 
-Do not import anything from trulens_eval here.
+## Serialization of Python objects
+
+For deferred feedback evaluation, we need to serialize and deserialize python
+functions/methods. We feature several storage classes to accomplish this:
+
+Serializable representation | Python thing
+----------------------------+------------------
+Class                       | (python class)
+Module                      | (python module)
+Obj                         | (python object)
+ObjSerial*                  | (python object)
+Function                    | (python function)
+Method                      | (python method)
+
+* ObjSerial differs from Obj in that it contains the information necessary to
+  reconstruct the object whereas Obj does not. This information is its
+  constructor arguments.
 """
 
 from __future__ import annotations
 
-import abc
 import builtins
 from enum import Enum
 import importlib
@@ -21,11 +36,10 @@ from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from pprint import PrettyPrinter
 from queue import Queue
-from threading import Thread
 from time import sleep
 from types import ModuleType
 from typing import (
-    Any, Callable, Dict, Hashable, Iterable, Iterator, List, Optional, Sequence,
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence,
     Set, Tuple, TypeVar, Union
 )
 
@@ -473,52 +487,6 @@ def matching_objects(obj: Any,
 def matching_queries(obj: Any, match: Callable) -> Iterable[JSONPath]:
     for q, _ in matching_objects(obj, match=match):
         yield q
-
-
-# TODO: remove
-def _project(path: List, obj: Any):
-    if len(path) == 0:
-        return obj
-
-    first = path[0]
-    if len(path) > 1:
-        rest = path[1:]
-    else:
-        rest = ()
-
-    if isinstance(first, str):
-        if isinstance(obj, pydantic.BaseModel):
-            if not hasattr(obj, first):
-                logger.warn(
-                    f"Cannot project {str(obj)[0:32]} with path {path} because {first} is not an attribute here."
-                )
-                return None
-            return _project(path=rest, obj=getattr(obj, first))
-
-        elif isinstance(obj, Dict):
-            if first not in obj:
-                logger.warn(
-                    f"Cannot project {str(obj)[0:32]} with path {path} because {first} is not a key here."
-                )
-                return None
-            return _project(path=rest, obj=obj[first])
-
-        else:
-            logger.warn(
-                f"Cannot project {str(obj)[0:32]} with path {path} because object is not a dict or model."
-            )
-            return None
-
-    elif isinstance(first, int):
-        if not isinstance(obj, Sequence) or first >= len(obj):
-            logger.warn(f"Cannot project {str(obj)[0:32]} with path {path}.")
-            return None
-
-        return _project(path=rest, obj=obj[first])
-    else:
-        raise RuntimeError(
-            f"Don't know how to locate element with key of type {first}"
-        )
 
 
 class SerialModel(pydantic.BaseModel):

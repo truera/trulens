@@ -33,4 +33,6 @@ $SED -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" quickstart.py all_tools.py
 
 # Move all generated files to the generated_files folder
 mv README.md ../../trulens_eval/README.md
-mv all_tools* quickstart.py ../../trulens_eval/generated_files/
+
+mv *.py ../../trulens_eval/examples/
+mv all_tools* ../../trulens_eval/generated_files/

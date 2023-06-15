@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Sequence, Union
 
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import RecordAppCall
-from trulens_eval.tru_app import TruApp
+from trulens_eval.app import App
 from trulens_eval.util import Class
 from trulens_eval.util import jsonify
 from trulens_eval.util import noserio
@@ -91,7 +91,7 @@ class LangChainInstrument(Instrument):
         return new_prop
 
 
-class TruChain(TruApp):
+class TruChain(App):
     """
     Wrap a langchain Chain to capture its configuration and evaluation steps. 
     """

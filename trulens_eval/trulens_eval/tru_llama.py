@@ -10,7 +10,7 @@ from typing import Sequence, Tuple
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
-from trulens_eval.tru_app import TruApp
+from trulens_eval.app import App
 from trulens_eval.util import Class
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LLAMA
@@ -68,7 +68,7 @@ class LlamaInstrument(Instrument):
         )
 
 
-class TruLlama(TruApp):
+class TruLlama(App):
     """
     Wrap a llama index engine for monitoring.
 

@@ -59,7 +59,7 @@ Now that we created an LLM chain, we can set up our first feedback function. Her
 ```python
 # create a feedback function
 
-from trulens_eval.tru_feedback import Feedback, Huggingface
+from trulens_eval.feedback import Feedback, Huggingface
 
 os.environ["HUGGINGFACE_API_KEY"] = "..."
 

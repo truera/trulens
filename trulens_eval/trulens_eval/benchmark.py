@@ -5,7 +5,7 @@ from datasets import load_dataset
 from kaggle.api.kaggle_api_extended import KaggleApi
 import pandas as pd
 
-from trulens_eval import tru_feedback
+from trulens_eval import feedback
 
 
 def load_data(dataset_choice):
@@ -77,8 +77,8 @@ def get_rate_limited_feedback_function(
         if elapsed_time < interval:
             time.sleep(interval - elapsed_time)
 
-        if feedback_function_name in tru_feedback.FEEDBACK_FUNCTIONS:
-            feedback_function = tru_feedback.FEEDBACK_FUNCTIONS[
+        if feedback_function_name in feedback.FEEDBACK_FUNCTIONS:
+            feedback_function = feedback.FEEDBACK_FUNCTIONS[
                 feedback_function_name](
                     provider=provider,
                     model_engine=model_engine,
@@ -87,7 +87,7 @@ def get_rate_limited_feedback_function(
                 )
         else:
             raise ValueError(
-                f"Unrecognized feedback_function_name. Please use one of {list(tru_feedback.FEEDBACK_FUNCTIONS.keys())} "
+                f"Unrecognized feedback_function_name. Please use one of {list(feedback.FEEDBACK_FUNCTIONS.keys())} "
             )
 
         result = feedback_function(prompt=prompt, response=response, **kwargs)
@@ -101,8 +101,8 @@ def get_rate_limited_feedback_function(
 def benchmark_on_data(
     data, feedback_function_name, evaluation_choice, provider, model_engine
 ):
-    if feedback_function_name in tru_feedback.FEEDBACK_FUNCTIONS:
-        feedback_function = tru_feedback.FEEDBACK_FUNCTIONS[
+    if feedback_function_name in feedback.FEEDBACK_FUNCTIONS:
+        feedback_function = feedback.FEEDBACK_FUNCTIONS[
             feedback_function_name](
                 evaluation_choice=evaluation_choice,
                 provider=provider,
@@ -110,7 +110,7 @@ def benchmark_on_data(
             )
     else:
         raise ValueError(
-            f"Unrecognized feedback_function_name. Please use one of {list(tru_feedback.FEEDBACK_FUNCTIONS.keys())} "
+            f"Unrecognized feedback_function_name. Please use one of {list(feedback.FEEDBACK_FUNCTIONS.keys())} "
         )
     if 'prompt' in data and 'response' in data:
         data['feedback'] = data.apply(
