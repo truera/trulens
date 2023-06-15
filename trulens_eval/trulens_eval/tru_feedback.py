@@ -9,4 +9,6 @@ for attr in dir(feedback):
         globals()[attr] = getattr(feedback, attr)
 
 # Since 0.2.0
-logger.warning("`trulens_eval.tru_feedback` is deprecated, use `trulens_eval.feedback` instead.")
+logger.warning(
+    "`trulens_eval.tru_feedback` is deprecated, use `trulens_eval.feedback` instead."
+)

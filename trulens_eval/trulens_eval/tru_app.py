@@ -9,4 +9,6 @@ for attr in dir(app):
         globals()[attr] = getattr(app, attr)
 
 # Since 0.2.0
-logger.warning("`trulens_eval.tru_app` is deprecated, use `trulens_eval.app` instead.")
+logger.warning(
+    "`trulens_eval.tru_app` is deprecated, use `trulens_eval.app` instead."
+)
