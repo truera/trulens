@@ -209,7 +209,9 @@ class App(AppDefinition, SerialModel):
                 self.app, instrument=self.instrument)):
             yield q, list(categorizer(ci))
 
+
 class TruApp(App):
+
     def __init__(self, *args, **kwargs):
         # Since 0.2.0
         logger.warning(

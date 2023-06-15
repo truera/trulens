@@ -102,12 +102,11 @@ def benchmark_on_data(
     data, feedback_function_name, evaluation_choice, provider, model_engine
 ):
     if feedback_function_name in feedback.FEEDBACK_FUNCTIONS:
-        feedback_function = feedback.FEEDBACK_FUNCTIONS[
-            feedback_function_name](
-                evaluation_choice=evaluation_choice,
-                provider=provider,
-                model_engine=model_engine
-            )
+        feedback_function = feedback.FEEDBACK_FUNCTIONS[feedback_function_name](
+            evaluation_choice=evaluation_choice,
+            provider=provider,
+            model_engine=model_engine
+        )
     else:
         raise ValueError(
             f"Unrecognized feedback_function_name. Please use one of {list(feedback.FEEDBACK_FUNCTIONS.keys())} "
