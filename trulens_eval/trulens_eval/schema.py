@@ -1,29 +1,40 @@
 """
-Serializable objects and their schemas.
+# Serializable Classes
+
+Only put classes which can be serialized in this file.
+
+## Classes with non-serializable variants
+
+Many of the classes defined here extending SerialModel are meant to be
+serialized into json. Most are extended with non-serialized fields in other files.
+
+Serializable       | Non-serializable
+-------------------+---------------------------
+AppDefinition               | TruApp, TruChain, TruLlama
+FeedbackDefinition | Feedback
+
+App.app is the JSONized version of a wrapped app while TruApp.app is the actual
+wrapped app. We can thus inspect the contents of a wrapped app without having to
+construct it. Additionally, JSONized objects like App.app feature information
+about the encoded object types in the dictionary under the `class_info` key.
+
 """
 
-import abc
 from datetime import datetime
-from datetime import timedelta
 from enum import Enum
-import importlib
-import json
-from types import ModuleType
-from typing import (
-    Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, TypeVar, Union
-)
 
+from typing import (
+    Any, Dict, Optional, Sequence, TypeVar, Union
+)
+import logging
 from munch import Munch as Bunch
 import pydantic
 
-from trulens_eval.util import all_queries
+
 from trulens_eval.util import Class
 from trulens_eval.util import Function
 from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
-from trulens_eval.util import json_default
-from trulens_eval.util import json_str_of_obj
-from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.util import Method
 from trulens_eval.util import obj_id_of_obj
@@ -31,6 +42,8 @@ from trulens_eval.util import SerialModel
 from trulens_eval.util import WithClassInfo
 
 T = TypeVar("T")
+
+logger = logging.getLogger(__name__)
 
 # Identifier types.
 
@@ -126,21 +139,21 @@ class Record(SerialModel):
 
         self.record_id = record_id
 
-    # TODO: typing
-    def layout_calls_as_app(self) -> Any:
+
+    def layout_calls_as_app(self) -> JSON:
         """
         Layout the calls in this record into the structure that follows that of
         the app that created this record. This uses the paths stored in each
         `RecordAppCall` which are paths into the app.
 
-        Note: We cannot create a validated schema.py:App class (or subclass)
-        object here as the layout of records differ in these ways:
+        Note: We cannot create a validated schema.py:AppDefinitionclass (or
+        subclass) object here as the layout of records differ in these ways:
 
             - Records do not include anything that is not an instrumented method
               hence have most of the structure of a app missing.
         
-            - Records have RecordAppCall as their leafs where method
-              definitions would be in the App structure.
+            - Records have RecordAppCall as their leafs where method definitions
+              would be in the AppDefinitionstructure.
         """
 
         # TODO: problem: collissions
@@ -228,6 +241,9 @@ class FeedbackResult(SerialModel):
 
 
 class FeedbackDefinition(SerialModel):
+    # Serialized parts of a feedback function. The non-serialized parts are in
+    # the feedback.py:Feedback class.
+
     # Implementation serialization info.
     implementation: Optional[Union[Function, Method]] = None
 
@@ -254,9 +270,11 @@ class FeedbackDefinition(SerialModel):
 
         - feedback_definition_id: Optional[str] - unique identifier.
 
-        - implementation:
+        - implementation: Optional[Union[Function, Method]] -- the serialized
+          implementation function.
 
-        - aggregator:
+        - aggregator: Optional[Union[Function, Method]] -- serialized
+          aggregation function.
         """
 
         super().__init__(
@@ -297,8 +315,8 @@ class FeedbackMode(str, Enum):
     DEFERRED = "deferred"
 
 
-class App(SerialModel, WithClassInfo):
-    # Serialized fields here whereas tru_app.py:TruApp contains
+class AppDefinition(SerialModel, WithClassInfo):
+    # Serialized fields here whereas app.py:App contains
     # non-serialized fields.
 
     class Config:
@@ -316,6 +334,9 @@ class App(SerialModel, WithClassInfo):
 
     # Class of the main instrumented object.
     root_class: Class
+
+    # Wrapped app in jsonized form.
+    app: JSON
 
     def __init__(
         self,
@@ -337,3 +358,13 @@ class App(SerialModel, WithClassInfo):
             app_id = obj_id_of_obj(obj=self.dict(), prefix="app")
 
         self.app_id = app_id
+
+
+class App(AppDefinition):
+    def __init__(self, *args, **kwargs):
+        # Since 0.2.0
+        logger.warning(
+            "Class trulens_eval.schema.App is deprecated, "
+            "use trulens_eval.schema.AppDefinition instead."
+        )
+        super().__init__(*args, **kwargs)

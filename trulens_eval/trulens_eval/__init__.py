@@ -16,11 +16,11 @@ otherwise you might get circular import errors.
 
     - `tru.py`
 
-    - `tru_feedback.py`
+    - `feedback.py`
 
-    - `tru_model.py`
+    - `app.py`
 
-    - `tru_db.py`
+    - `db.py`
 
     - `instruments.py`
 
@@ -31,16 +31,16 @@ otherwise you might get circular import errors.
     - `util.py` `keys.py`
 """
 
-__version__ = "0.1.2"
+__version__ = "0.2.2"
 
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Query
 from trulens_eval.tru import Tru
 from trulens_eval.tru_chain import TruChain
-from trulens_eval.tru_feedback import Feedback
-from trulens_eval.tru_feedback import Huggingface
-from trulens_eval.tru_feedback import OpenAI
-from trulens_eval.tru_feedback import Provider
+from trulens_eval.feedback import Feedback
+from trulens_eval.feedback import Huggingface
+from trulens_eval.feedback import OpenAI
+from trulens_eval.feedback import Provider
 from trulens_eval.tru_llama import TruLlama
 
 __all__ = [

@@ -11,12 +11,12 @@ import streamlit as st
 from ux.add_logo import add_logo
 
 from trulens_eval import Tru
-from trulens_eval import tru_db
+from trulens_eval import db
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
 from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.tru_db import TruDB
-from trulens_eval.tru_feedback import Feedback
+from trulens_eval.db import DB
+from trulens_eval.feedback import Feedback
 from trulens_eval.util import is_empty
 from trulens_eval.util import is_noserio
 from trulens_eval.util import TP
@@ -47,10 +47,7 @@ with tab1:
             FeedbackResultStatus.FAILED
         ]
     )
-    data = AgGrid(
-        feedbacks,
-        allow_unsafe_jscode=True
-    )
+    data = AgGrid(feedbacks, allow_unsafe_jscode=True)
 
 with tab2:
     for e in endpoints:
@@ -60,8 +57,4 @@ with tab2:
 
 with tab3:
     feedbacks = lms.get_feedback_defs()
-    data = AgGrid(
-        feedbacks,
-        allow_unsafe_jscode=True
-    )
-    
+    data = AgGrid(feedbacks, allow_unsafe_jscode=True)
