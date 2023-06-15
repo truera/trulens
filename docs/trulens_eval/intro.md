@@ -9,7 +9,13 @@ Using feedback functions, you can objectively evaluate the quality of the respon
 ![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
 
 ## Quick Usage
-To quickly play around with the TruLens Eval library, download this notebook: [quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.2.0/trulens_eval/examples/quickstart.ipynb).
+
+To quickly play around with the TruLens Eval library:
+
+[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.2.2/trulens_eval/examples/quickstart.ipynb).
+
+[llamaindex_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.2.2/trulens_eval/examples/llama_index/quickstart.ipynb).
+
 
 
 
