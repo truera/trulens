@@ -2,7 +2,7 @@
 
 ## Changes in 0.2.2
 
-### Breaking changes
+### Breaking changes to databases
 
 - json serialization of WithClassInfo mixin
     - key "class_info" renamed to "__tru_class_info"
@@ -26,7 +26,7 @@
 - in file schema.py
     - class App renamed to AppDefinition
 
-### Breaking changes
+### Breaking changes to databases
 
 - db schema changes
 
