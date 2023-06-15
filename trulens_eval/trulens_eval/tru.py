@@ -224,10 +224,10 @@ class Tru(SingletonPerName):
 
         def runloop():
             while fork or not self.evaluator_stop.is_set():
-                print(
-                    "Looking for things to do. Stop me with `tru.stop_evaluator()`.",
-                    end=''
-                )
+                #print(
+                #    "Looking for things to do. Stop me with `tru.stop_evaluator()`.",
+                #    end=''
+                #)
                 Feedback.evaluate_deferred(tru=self)
                 TP().finish(timeout=10)
                 if fork:
