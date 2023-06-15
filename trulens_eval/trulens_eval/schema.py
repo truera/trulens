@@ -1,29 +1,40 @@
 """
-Serializable objects and their schemas.
+# Serializable Classes
+
+Only put classes which can be serialized in this file.
+
+## Classes with non-serializable variants
+
+Many of the classes defined here extending SerialModel are meant to be
+serialized into json. Most are extended with non-serialized fields in other files.
+
+Serializable       | Non-serializable
+-------------------+---------------------------
+App                | TruApp, TruChain, TruLlama
+FeedbackDefinition | Feedback
+
+App.app is the JSONized version of a wrapped app while TruApp.app is the actual
+wrapped app. We can thus inspect the contents of a wrapped app without having to
+construct it. Additionally, JSONized objects like App.app feature information
+about the encoded object types in the dictionary under the `class_info` key.
+
 """
 
-import abc
 from datetime import datetime
-from datetime import timedelta
 from enum import Enum
-import importlib
-import json
-from types import ModuleType
+
 from typing import (
-    Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, TypeVar, Union
+    Any, Dict, Optional, Sequence, TypeVar, Union
 )
 
 from munch import Munch as Bunch
 import pydantic
 
-from trulens_eval.util import all_queries
+
 from trulens_eval.util import Class
 from trulens_eval.util import Function
 from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
-from trulens_eval.util import json_default
-from trulens_eval.util import json_str_of_obj
-from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.util import Method
 from trulens_eval.util import obj_id_of_obj
@@ -228,6 +239,9 @@ class FeedbackResult(SerialModel):
 
 
 class FeedbackDefinition(SerialModel):
+    # Serialized parts of a feedback function. The non-serialized parts are in
+    # the feedback.py:Feedback class.
+
     # Implementation serialization info.
     implementation: Optional[Union[Function, Method]] = None
 
@@ -254,9 +268,11 @@ class FeedbackDefinition(SerialModel):
 
         - feedback_definition_id: Optional[str] - unique identifier.
 
-        - implementation:
+        - implementation: Optional[Union[Function, Method]] -- the serialized
+          implementation function.
 
-        - aggregator:
+        - aggregator: Optional[Union[Function, Method]] -- serialized
+          aggregation function.
         """
 
         super().__init__(
@@ -316,6 +332,9 @@ class App(SerialModel, WithClassInfo):
 
     # Class of the main instrumented object.
     root_class: Class
+
+    # Wrapped app in jsonized form.
+    app: JSON
 
     def __init__(
         self,

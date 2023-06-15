@@ -19,6 +19,7 @@ from trulens_eval.schema import Record
 from trulens_eval.tru import Tru
 from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
+from trulens_eval.util import JSON
 from trulens_eval.util import Class
 from trulens_eval.util import instrumented_classes
 from trulens_eval.util import json_str_of_obj
@@ -201,10 +202,11 @@ class TruApp(App, SerialModel):
     def instrumented(
         self, categorizer: Callable[[Class], Iterable[COMPONENT_CATEGORY]]
     ) -> Iterable[Tuple[JSONPath, List[COMPONENT_CATEGORY]]]:
-        # Enumerate instrumented components:
-
-        from trulens_eval.utils.langchain import Is
+        """
+        Enumerate instrumented components and their categories. `categorizer`
+        is used to determine the categories given a serialized `Class`.
+        """
 
         for q, ci, obj in instrumented_classes(jsonify(
                 self.app, instrument=self.instrument)):
-            yield (q, list(categorizer(ci)))
+            yield q, list(categorizer(ci))

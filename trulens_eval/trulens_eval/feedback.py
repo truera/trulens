@@ -59,7 +59,7 @@ def check_provider(cls_or_name: Union[Type, str]) -> None:
 
 class Feedback(FeedbackDefinition):
     # Implementation, not serializable, note that FeedbackDefinition contains
-    # `implementation` mean to serialize the below.
+    # `implementation` meant to serialize the below.
     imp: Optional[Callable] = pydantic.Field(exclude=True)
 
     # Aggregator method for feedback functions that produce more than one
