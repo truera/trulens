@@ -146,14 +146,14 @@ class Record(SerialModel):
         the app that created this record. This uses the paths stored in each
         `RecordAppCall` which are paths into the app.
 
-        Note: We cannot create a validated schema.py:AppDefinitionclass (or subclass)
-        object here as the layout of records differ in these ways:
+        Note: We cannot create a validated schema.py:AppDefinitionclass (or
+        subclass) object here as the layout of records differ in these ways:
 
             - Records do not include anything that is not an instrumented method
               hence have most of the structure of a app missing.
         
-            - Records have RecordAppCall as their leafs where method
-              definitions would be in the AppDefinitionstructure.
+            - Records have RecordAppCall as their leafs where method definitions
+              would be in the AppDefinitionstructure.
         """
 
         # TODO: problem: collissions
