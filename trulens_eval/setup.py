@@ -13,7 +13,6 @@ setup(
         'datasets>=2.12.0',
         'python-dotenv>=1.0.0',
         'kaggle>=1.5.13',
-        
         # 'langchain>=0.0.170', optional
         'llama_index>=0.6.24',
         'merkle-json>=1.0.0',
