@@ -27,7 +27,7 @@ from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.schema import App
+from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Query
 from trulens_eval.db import JSON
 from trulens_eval.db import Record
@@ -228,16 +228,16 @@ class Feedback(FeedbackDefinition):
 
         return Feedback(imp=self.imp, selectors=selectors, agg=self.agg)
 
-    def run(self, app: Union[App, JSON], record: Record) -> FeedbackResult:
+    def run(self, app: Union[AppDefinition, JSON], record: Record) -> FeedbackResult:
         """
         Run the feedback function on the given `record`. The `app` that
         produced the record is also required to determine input/output argument
         names.
 
-        Might not have a App here but only the serialized app_json .
+        Might not have a AppDefinitionhere but only the serialized app_json .
         """
 
-        if isinstance(app, App):
+        if isinstance(app, AppDefinition):
             app_json = jsonify(app)
         else:
             app_json = app
@@ -289,7 +289,7 @@ class Feedback(FeedbackDefinition):
         self,
         record: Record,
         tru: 'Tru',
-        app: Union[App, JSON] = None,
+        app: Union[AppDefinition, JSON] = None,
         feedback_result_id: Optional[FeedbackResultID] = None
     ) -> FeedbackResult:
         record_id = record.record_id
@@ -341,7 +341,7 @@ class Feedback(FeedbackDefinition):
 
         return self.imp.__name__
 
-    def extract_selection(self, app: Union[App, JSON],
+    def extract_selection(self, app: Union[AppDefinition, JSON],
                           record: Record) -> Iterable[Dict[str, Any]]:
         """
         Given the `app` that produced the given `record`, extract from

@@ -22,7 +22,7 @@ from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import JSONPath
-from trulens_eval.schema import App
+from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
@@ -79,12 +79,12 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_app(self, app: App) -> AppID:
+    def insert_app(self, app: AppDefinition) -> AppID:
         """
         Insert a new `app` into db under the given `app_id`. 
 
         Args:
-        - app: App - App definition. 
+        - app: AppDefinition -- App definition. 
         """
 
         raise NotImplementedError()
@@ -298,7 +298,7 @@ class LocalSQLite(DB):
         return record.record_id
 
     # DB requirement
-    def insert_app(self, app: App) -> AppID:
+    def insert_app(self, app: AppDefinition) -> AppID:
         app_id = app.app_id
         app_str = app.json()
 
@@ -488,7 +488,7 @@ class LocalSQLite(DB):
                 row.record_json
             )  # record_json (Record)
             row.app_json = json.loads(row.app_json)  # app_json (App)
-            app = App(**row.app_json)
+            app = AppDefinition(**row.app_json)
 
             row.status = FeedbackResultStatus(row.status)
 
@@ -561,7 +561,7 @@ class LocalSQLite(DB):
         df_records = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
-        apps = df_records['app_json'].apply(App.parse_raw)
+        apps = df_records['app_json'].apply(AppDefinition.parse_raw)
         df_records['type'] = apps.apply(lambda row: str(row.root_class))
 
         cost = df_records['cost_json'].map(Cost.parse_raw)
