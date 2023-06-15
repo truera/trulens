@@ -39,8 +39,8 @@ from queue import Queue
 from time import sleep
 from types import ModuleType
 from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence,
-    Set, Tuple, TypeVar, Union
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
+    Tuple, TypeVar, Union
 )
 
 from merkle_json import MerkleJson

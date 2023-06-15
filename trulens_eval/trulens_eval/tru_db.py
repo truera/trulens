@@ -9,4 +9,6 @@ for attr in dir(db):
         globals()[attr] = getattr(db, attr)
 
 # Since 0.2.0
-logger.warning("`trulens_eval.tru_db` is deprecated, use `trulens_eval.db` instead.")
+logger.warning(
+    "`trulens_eval.tru_db` is deprecated, use `trulens_eval.db` instead."
+)
