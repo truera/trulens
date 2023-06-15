@@ -25,7 +25,6 @@ with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     import langchain
     from langchain.callbacks import get_openai_callback
     from langchain.chains.base import Chain
-    import test_this_does_not_exist
 
 
 class LangChainInstrument(Instrument):
@@ -106,7 +105,8 @@ class TruChain(App):
 
         Arguments:
         - app: Chain -- the chain to wrap.
-        - More args in TruApp
+        - More args in App
+        - More args in AppDefinition
         - More args in WithClassInfo
         """
 
