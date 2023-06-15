@@ -254,12 +254,24 @@ def json_default(obj: Any) -> str:
 # Field/key name used to indicate a circular reference in jsonified objects.
 CIRCLE = "__tru_circular_reference"
 
+# Field/key name used to indicate an exception in property retrieval (properties
+# execute code in property.fget).
+ERROR = "__tru_property_error"
+
+# Key of structure where class information is stored. See WithClassInfo mixin.
+CLASS_INFO = "__tru_class_info"
 
 def _safe_getattr(obj, k):
-    try:
-        return getattr(obj, k)
-    except Exception as e:
-        return dict(error=str(e))
+    v = inspect.getattr_static(obj, k)
+
+    if isinstance(v, property):
+        try:
+            v = v.fget(obj)
+            return v
+        except Exception as e:
+            return {ERROR: ObjSerial.of_object(e)}
+    else:
+        return v
 
 
 # TODO: refactor to somewhere else or change instrument to a generic filter
@@ -325,7 +337,7 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
             }
         )
         if instrument.to_instrument_object(obj):
-            temp['class_info'] = Class.of_class(
+            temp[CLASS_INFO] = Class.of_class(
                 cls=obj.__class__, with_bases=True
             ).dict()
 
@@ -339,7 +351,7 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
 
         temp.update(
             {
-                k: recur(v)  # TODO: static
+                k: recur(v)
                 for k, v in kvs.items()
                 if not k.startswith("__") and (
                     isinstance(v, JSON_BASES) or isinstance(v, Dict) or
@@ -350,7 +362,7 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
         )
 
         if instrument.to_instrument_object(obj):
-            temp['class_info'] = Class.of_class(
+            temp[CLASS_INFO] = Class.of_class(
                 cls=obj.__class__, with_bases=True
             ).dict()
 
@@ -499,10 +511,10 @@ class SerialModel(pydantic.BaseModel):
     def model_validate(cls, obj: Any, **kwargs):
         print("serial_model.model_validate")
         if isinstance(obj, dict):
-            if "class_info" in obj:
+            if CLASS_INFO in obj:
                 print(f"Creating model with class info from {obj}.")
-                cls = Class(**obj['class_info'])
-                del obj['class_info']
+                cls = Class(**obj[CLASS_INFO])
+                del obj[CLASS_INFO]
                 model = cls.model_validate(obj, **kwargs)
 
                 return WithClassInfo.of_model(model=model, cls=cls)
@@ -1166,6 +1178,12 @@ class Class(SerialModel):
 
         return False
 
+# inspect.signature does not work on built in type constructors but they are
+# used like this method. Use it to create a signature of a built in __ini__.
+def builtin_init_dummy(self, /, *args, **kwargs):
+    pass
+
+builtin_init_sig = inspect.signature(builtin_init_dummy)
 
 class Obj(SerialModel):
     """
@@ -1219,6 +1237,29 @@ class Obj(SerialModel):
         )
 
 
+class Bindings(SerialModel):
+    args: Tuple
+    kwargs: Dict
+
+    @staticmethod
+    def of_bound_arguments(b: inspect.BoundArguments) -> Bindings:
+        return Bindings(args=b.args, kwargs=b.kwargs)
+    
+    def load(self, sig: inspect.Signature):
+        return sig.bind(*self.args, **self.kwargs)
+
+def _safe_init_sig(cls):
+    """
+    Get the signature of the constructor method of the given class `cls`. If it is
+    a builtin class, this typically raises an exeception in which case we return
+    a generic signature that seems typical of builtin constructors.
+    """
+
+    try:
+        return inspect.signature(cls)
+    except Exception as e:
+        return builtin_init_sig
+
 class ObjSerial(Obj):
     """
     Object that can be deserialized, or at least intended to be deserialized.
@@ -1226,30 +1267,46 @@ class ObjSerial(Obj):
     deserialize it.
     """
 
-    # For objects that can be easily reconstructed, provide their kwargs here.
-    init_kwargs: Optional[Dict] = None
+    init_bindings: Bindings
 
     @staticmethod
     def of_object(obj: object, cls: Optional[type] = None) -> 'Obj':
         if cls is None:
             cls = obj.__class__
 
+        # Constructor arguments for some common types.
         if isinstance(obj, pydantic.BaseModel):
+            init_args = ()
             init_kwargs = obj.dict()
+        elif isinstance(obj, Exception):
+            init_args = obj.args
+            init_kwargs = {}
         else:
-            init_kwargs = None
+            init_args = ()
+            init_kwargs = {}
+
+        sig = _safe_init_sig(cls)
+        b = sig.bind(*init_args, **init_kwargs)
+        bindings = Bindings.of_bound_arguments(b)
 
         return ObjSerial(
-            cls=Class.of_class(cls), id=id(obj), init_kwargs=init_kwargs
+            cls=Class.of_class(cls), id=id(obj), init_bindings=bindings
         )
 
     def load(self) -> object:
         cls = self.cls.load()
 
-        if issubclass(cls, pydantic.BaseModel) and self.init_kwargs is not None:
-            return cls(**self.init_kwargs)
-        else:
-            raise RuntimeError(f"Do not know how to load object {self}.")
+        sig = _safe_init_sig(cls)
+        bindings = self.init_bindings.load(sig)
+
+        return cls(*bindings.args, **bindings.kwargs)
+
+        #if issubclass(cls, pydantic.BaseModel) and self.init_bindings is not None:
+        #    return cls(*self.init_bindings.args, **self.init_bindings.kwargs)
+        #else:
+
+        #else:
+        #    raise RuntimeError(f"Do not know how to load object {self}.")
 
 
 class FunctionOrMethod(SerialModel):
@@ -1357,13 +1414,17 @@ class Function(FunctionOrMethod):
             return getattr(mod, self.name)
 
 
+
+
 class WithClassInfo(pydantic.BaseModel):
     """
     Mixin to track class information to aid in querying serialized components
     without having to load them.
     """
 
-    class_info: Class
+    # Using this odd key to not pollute attribute names in whatever class we mix
+    # this into. Should be the same as CLASS_INFO.
+    __tru_class_info: Class
 
     def __init__(
         self,
@@ -1379,7 +1440,7 @@ class WithClassInfo(pydantic.BaseModel):
             assert cls is not None, "Either `class_info`, `obj` or `cls` need to be specified."
             class_info = Class.of_class(cls, with_bases=True)
 
-        super().__init__(class_info=class_info, **kwargs)
+        super().__init__(__tru_class_info=class_info, **kwargs)
 
     @staticmethod
     def of_object(obj: object):
@@ -1405,15 +1466,11 @@ def get_owner_of_method(cls, method_name) -> type:
     return cls
 
 
-# key/attribute indicating instrumented class information.
-CLASS_INFO = "class_info"
-
-
 def instrumented_classes(obj: object) -> Iterable[Tuple[JSONPath, Class, Any]]:
     """
-    Iterate over contents of `obj` that are annotated with the `class_info`
+    Iterate over contents of `obj` that are annotated with the CLASS_INFO
     attribute/key. Returns triples with the accessor/query, the Class object
-    instantiated from class_info, and the annotated object itself.
+    instantiated from CLASS_INFO, and the annotated object itself.
     """
 
     for q, o in all_objects(obj):

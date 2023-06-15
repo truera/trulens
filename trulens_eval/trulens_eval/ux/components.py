@@ -6,6 +6,7 @@ import streamlit as st
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.db import JSON
+from trulens_eval.util import CLASS_INFO
 from trulens_eval.util import is_empty
 from trulens_eval.util import is_noserio
 
@@ -67,7 +68,7 @@ def draw_prompt_info(query, prompt_details_json) -> None:
 
     prompt_types = {
         k: v for k, v in prompt_details_json.items() if (v is not None) and
-        not is_empty(v) and not is_noserio(v) and k != "class_info"
+        not is_empty(v) and not is_noserio(v) and k != CLASS_INFO
     }
 
     for key, value in prompt_types.items():
@@ -88,7 +89,7 @@ def draw_llm_info(query, llm_details_json) -> None:
 
     llm_kv = {
         k: v for k, v in llm_details_json.items() if (v is not None) and
-        not is_empty(v) and not is_noserio(v) and k != "class_info"
+        not is_empty(v) and not is_noserio(v) and k != CLASS_INFO
     }
     # CSS to inject contained in a string
     hide_table_row_index = """

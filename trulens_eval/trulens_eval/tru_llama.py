@@ -40,7 +40,9 @@ class LlamaInstrument(Instrument):
             llama_index.llm_predictor.base.LLMPredictor,
             llama_index.prompts.base.Prompt,
             llama_index.question_gen.types.BaseQuestionGenerator,
-            llama_index.vector_stores.types.VectorStore,
+            llama_index.indices.query.response_synthesis.ResponseSynthesizer,
+            llama_index.indices.response.refine.Refine
+            # llama_index.vector_stores.types.VectorStore, # does not support issubclass 
         }
 
         # Instrument only methods with these names and of these classes. Ok to
