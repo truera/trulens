@@ -2,7 +2,6 @@
 Generalized root type for various libraries like llama_index and langchain .
 """
 
-from enum import Enum
 import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple
@@ -10,9 +9,7 @@ from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple
 from pydantic import Field
 
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import AppID
 from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import App
@@ -20,17 +17,16 @@ from trulens_eval.schema import Perf
 from trulens_eval.schema import Query
 from trulens_eval.schema import Record
 from trulens_eval.tru import Tru
-from trulens_eval.tru_db import TruDB
-from trulens_eval.tru_feedback import Feedback
+from trulens_eval.db import DB
+from trulens_eval.feedback import Feedback
 from trulens_eval.util import Class
 from trulens_eval.util import instrumented_classes
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
-from trulens_eval.util import obj_id_of_obj
+
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
-from trulens_eval.util import WithClassInfo
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +42,7 @@ COMPONENT_CATEGORY = str
 
 class TruApp(App, SerialModel):
     """
-    Generalization of wrapped model.
+    Generalization of a wrapped model.
     """
 
     # Non-serialized fields here while the serialized ones are defined in
@@ -61,7 +57,7 @@ class TruApp(App, SerialModel):
 
     # Database interfaces for models/records/feedbacks.
     # NOTE: Maybe mobe to schema.App .
-    db: Optional[TruDB] = Field(exclude=True)
+    db: Optional[DB] = Field(exclude=True)
 
     # The wrapped app.
     app: Any = Field(exclude=True)
