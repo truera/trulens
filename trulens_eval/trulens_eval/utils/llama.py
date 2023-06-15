@@ -59,7 +59,7 @@ class WithFeedbackFilterNodes(VectorIndexRetriever):
 
     def __init__(self, feedback: Feedback, threshold: float, *args, **kwargs):
         """
-        A VectorStoreRetriever that filters documents using a minimum threshold
+        A VectorIndexRetriever that filters documents using a minimum threshold
         on a feedback function before returning them.
 
         - feedback: Feedback - use this feedback function to score each
