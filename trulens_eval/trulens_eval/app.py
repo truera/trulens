@@ -241,7 +241,7 @@ class App(AppDefinition, SerialModel):
                 )
 
         self.instrument.instrument_object(
-            obj=self.app, query=Query.Query().model
+            obj=self.app, query=Query.Query().app
         )
 
     def json(self, *args, **kwargs):

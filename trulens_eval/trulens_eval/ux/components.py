@@ -7,6 +7,7 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.db import JSON
 from trulens_eval.app import ComponentView
+from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.util import CLASS_INFO
 from trulens_eval.util import is_empty
@@ -63,7 +64,7 @@ def draw_calls(record: Record, index: int) -> None:
 
 
 def draw_prompt_info(query: JSONPath, component: ComponentView) -> None:
-    prompt_details_json = component.json
+    prompt_details_json = jsonify(component.json, skip_specials=True)
 
     path_str = str(query)
     st.subheader(f"*Prompt Details*")
