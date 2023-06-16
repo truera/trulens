@@ -12,7 +12,9 @@ otherwise you might get circular import errors.
 
     - all UI/dashboard components
 
-    - `tru_chain.py` `tru_llama.py`
+    - `tru_chain.py` 
+    
+    - `tru_llama.py` (note: llama_index uses langchain internally for some things)
 
     - `tru.py`
 

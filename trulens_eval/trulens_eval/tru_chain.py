@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Sequence, Union
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.app import App
+from trulens_eval.utils.langchain import constructor_of_class
 from trulens_eval.util import Class
 from trulens_eval.util import jsonify
 from trulens_eval.util import noserio
@@ -25,7 +26,6 @@ with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     import langchain
     from langchain.callbacks import get_openai_callback
     from langchain.chains.base import Chain
-    import test_this_does_not_exist
 
 
 class LangChainInstrument(Instrument):
@@ -35,10 +35,13 @@ class LangChainInstrument(Instrument):
 
         # Thunk because langchain is optional.
         CLASSES = lambda: {
-            langchain.chains.base.Chain, langchain.vectorstores.base.
-            BaseRetriever, langchain.schema.BaseRetriever, langchain.llms.base.
-            BaseLLM, langchain.prompts.base.BasePromptTemplate, langchain.schema
-            .BaseMemory, langchain.schema.BaseChatMessageHistory
+            langchain.chains.base.Chain,
+            langchain.vectorstores.base.BaseRetriever,
+            langchain.schema.BaseRetriever,
+            langchain.llms.base.BaseLLM,
+            langchain.prompts.base.BasePromptTemplate,
+            langchain.schema.BaseMemory,
+            langchain.schema.BaseChatMessageHistory
         }
 
         # Instrument only methods with these names and of these classes.
@@ -106,7 +109,8 @@ class TruChain(App):
 
         Arguments:
         - app: Chain -- the chain to wrap.
-        - More args in TruApp
+        - More args in App
+        - More args in AppDefinition
         - More args in WithClassInfo
         """
 
@@ -208,6 +212,3 @@ class TruChain(App):
     # TODO(piotrm): figure out whether the combination of _call and __call__ is working right.
     def _call(self, *args, **kwargs) -> Any:
         return self.app._call(*args, **kwargs)
-
-    def instrumented(self):
-        return super().instrumented(categorizer=Is.what)

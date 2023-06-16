@@ -11,6 +11,8 @@ from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.app import App
+from trulens_eval.util import dict_set_with
+from trulens_eval.utils.llama import constructor_of_class
 from trulens_eval.util import Class
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LLAMA
@@ -25,25 +27,42 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.response.schema import Response
 
+from trulens_eval.tru_chain import LangChainInstrument
 
 class LlamaInstrument(Instrument):
 
     class Default:
-        MODULES = {"llama_index."}
+        MODULES = {
+            "llama_index."
+        }.union(LangChainInstrument.Default.MODULES) # NOTE: llama_index uses langchain internally for some things
 
         # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
             llama_index.indices.query.base.BaseQueryEngine,
             llama_index.indices.base_retriever.BaseRetriever,
+            llama_index.indices.base.BaseIndex,
             llama_index.chat_engine.types.BaseChatEngine,
-            llama_index.llm_predictor.base.LLMPredictor,
             llama_index.prompts.base.Prompt,
+            # llama_index.prompts.prompt_type.PromptType, # enum
             llama_index.question_gen.types.BaseQuestionGenerator,
-        }
+            llama_index.indices.query.response_synthesis.ResponseSynthesizer,
+            llama_index.indices.response.refine.Refine,
+            llama_index.llm_predictor.LLMPredictor,
+            llama_index.llm_predictor.base.LLMMetadata,
+            llama_index.llm_predictor.base.BaseLLMPredictor,
+            llama_index.vector_stores.types.VectorStore,
+            llama_index.question_gen.llm_generators.BaseQuestionGenerator,
+            llama_index.indices.service_context.ServiceContext,
+            llama_index.indices.prompt_helper.PromptHelper,
+            llama_index.embeddings.base.BaseEmbedding,
+            llama_index.node_parser.interface.NodeParser
+        }.union(LangChainInstrument.Default.CLASSES())
 
         # Instrument only methods with these names and of these classes. Ok to
         # include llama_index inside methods.
-        METHODS = {
+        METHODS = dict_set_with({
+            "get_response": lambda o: isinstance(o, llama_index.indices.response.refine.Refine),
+            "predict": lambda o: isinstance(o, llama_index.llm_predictor.base.BaseLLMPredictor),
             "query":
                 lambda o:
                 isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
@@ -57,7 +76,7 @@ class LlamaInstrument(Instrument):
             "synthesize":
                 lambda o:
                 isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
-        }
+        }, LangChainInstrument.Default.METHODS)
 
     def __init__(self):
         super().__init__(
@@ -74,7 +93,8 @@ class TruLlama(App):
 
     Arguments:
     - app: RetrieverQueryEngine -- the engine to wrap.
-    - More args in TruApp
+    - More args in App
+    - More args in AppDefinition
     - More args in WithClassInfo
     """
 
@@ -146,6 +166,3 @@ class TruLlama(App):
         )
 
         return ret, ret_record
-
-    def instrumented(self):
-        return super().instrumented(categorizer=Is.what)
