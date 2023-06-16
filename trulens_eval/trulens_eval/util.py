@@ -1253,14 +1253,19 @@ class Class(SerialModel):
 
         return False
 
-# inspect.signature does not work on built in type constructors but they are
-# used like this method. Use it to create a signature of a built in __ini__.
+# inspect.signature does not work on builtin type constructors but they are used
+# like this method. Use it to create a signature of a builtin constructor.
 def builtin_init_dummy(self, /, *args, **kwargs):
     pass
 
 builtin_init_sig = inspect.signature(builtin_init_dummy)
 
 class Obj(SerialModel):
+    # TODO: refactor this into something like WithClassInfo, perhaps
+    # WithObjectInfo, and store required constructor inputs as attributes with
+    # potentially a placeholder for additional arguments that are not
+    # attributes, under a special key like "__tru_object_info".
+
     """
     An object that may or may not be serializable. Do not use for base types
     that don't have a class.
@@ -1268,7 +1273,7 @@ class Obj(SerialModel):
 
     cls: Class
 
-    # From id(obj), identifiers memory location of a python object. Use this for
+    # From id(obj), identifies memory location of a python object. Use this for
     # handling loops in JSON objects.
     id: int
 
@@ -1305,16 +1310,14 @@ class Obj(SerialModel):
         return Obj(cls=Class.of_class(cls), id=id(obj))
 
     def load(self) -> object:
-        pp.pprint("Trying to load an object not intended to be loaded.")
-        pp.pprint(self.dict())
         raise RuntimeError(
-            "Trying to load an object not intended to be loaded."
+            f"Trying to load an object without constructor arguments: {pp.pformat(self.dict())}."
         )
 
 
 class Bindings(SerialModel):
     args: Tuple
-    kwargs: Dict
+    kwargs: Dict[str, Any]
 
     @staticmethod
     def of_bound_arguments(b: inspect.BoundArguments) -> Bindings:
@@ -1339,7 +1342,7 @@ class ObjSerial(Obj):
     """
     Object that can be deserialized, or at least intended to be deserialized.
     Stores additional information beyond the class that can be used to
-    deserialize it.
+    deserialize it, the constructor bindings.
     """
 
     init_bindings: Bindings
@@ -1359,6 +1362,8 @@ class ObjSerial(Obj):
         else:
             init_args = ()
             init_kwargs = {}
+        # TODO: dataclasses
+        # TODO: dataclasses_json
 
         sig = _safe_init_sig(cls)
         b = sig.bind(*init_args, **init_kwargs)
@@ -1375,13 +1380,6 @@ class ObjSerial(Obj):
         bindings = self.init_bindings.load(sig)
 
         return cls(*bindings.args, **bindings.kwargs)
-
-        #if issubclass(cls, pydantic.BaseModel) and self.init_bindings is not None:
-        #    return cls(*self.init_bindings.args, **self.init_bindings.kwargs)
-        #else:
-
-        #else:
-        #    raise RuntimeError(f"Do not know how to load object {self}.")
 
 
 class FunctionOrMethod(SerialModel):
