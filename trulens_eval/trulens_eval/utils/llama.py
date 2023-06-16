@@ -1,10 +1,5 @@
 from typing import Iterable, List, Type
 
-from llama_index.data_structs.node import NodeType
-from llama_index.data_structs.node import NodeWithScore
-from llama_index.indices.query.schema import QueryBundle
-from llama_index.indices.vector_store.retrievers import VectorIndexRetriever
-
 from trulens_eval import Feedback
 from trulens_eval.feedback import Feedback
 from trulens_eval.app import COMPONENT_CATEGORY
@@ -16,7 +11,9 @@ from trulens_eval.util import REQUIREMENT_LLAMA
 from trulens_eval.util import TP
 
 with OptionalImports(message=REQUIREMENT_LLAMA):
-    import llama_index
+    from llama_index.data_structs.node import NodeWithScore
+    from llama_index.indices.query.schema import QueryBundle
+    from llama_index.indices.vector_store.retrievers import VectorIndexRetriever
 
 
 class Prompt(app.Prompt, app.LangChainComponent):
