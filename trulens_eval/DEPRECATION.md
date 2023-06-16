@@ -15,7 +15,7 @@
 
 ### Backwards compatible changes
 
-Backwards compatibility will be removed in 1.0.0 at earliest.
+Backwards compatibility will be removed in 0.3.0 at earliest.
 
 - file tru_feedback.py renamed to feedback.py
 
