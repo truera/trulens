@@ -2,11 +2,13 @@
 Generalized root type for various libraries like llama_index and langchain .
 """
 
+from abc import ABC, abstractmethod
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 from pydantic import Field
+import pydantic
 
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Cost
@@ -19,8 +21,11 @@ from trulens_eval.schema import Record
 from trulens_eval.tru import Tru
 from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
+from trulens_eval.util import all_objects
+from trulens_eval.util import JSON_BASES_T
+from trulens_eval.util import CLASS_INFO
+from trulens_eval.util import JSON, JSON_BASES
 from trulens_eval.util import Class
-from trulens_eval.util import instrumented_classes
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
@@ -37,6 +42,133 @@ COMPONENT = Any
 # Component category.
 # TODO: Enum
 COMPONENT_CATEGORY = str
+
+
+class ComponentView(ABC):
+    """
+    Views of common app component types for sorting them and displaying them in
+    some unified manner in the UI. Operates on components serialized into json
+    dicts representing various components, not the components themselves.
+    """
+
+    def __init__(self, json: JSON):
+        self.json = json
+        self.cls = Class.of_json(json)
+
+    @staticmethod
+    def of_json(json: JSON) -> 'ComponentView':
+        """
+        Sort the given json into the appropriate component view type.
+        """
+
+        cls = Class.of_json(json)
+
+        if LangChainComponent.class_is(cls):
+            return LangChainComponent.of_json(json)
+        elif LlamaIndexComponent.class_is(cls):
+            return LlamaIndexComponent.of_json(json)
+        else:
+            raise TypeError(f"Unhandled component type with class {cls}")
+
+    @staticmethod
+    @abstractmethod
+    def class_is(cls: Class) -> bool:
+        """
+        Determine whether the given class representation `cls` is of the type to
+        be viewed as this component type.
+        """
+        pass
+
+    def unsorted_parameters(self, skip: Set[str]) -> Dict[str, JSON_BASES_T]:
+        """
+        All basic parameters not organized by other accessors.
+        """
+
+        ret = {}
+
+        for k, v in self.json.items():
+            if k not in skip and isinstance(v, JSON_BASES):
+                ret[k] = v
+
+        return ret
+
+class LangChainComponent(ComponentView):
+    @staticmethod
+    def class_is(cls: Class) -> bool:
+        if cls.module.module_name.startswith("langchain."):
+            return True
+        
+        if any(base.module.module_name.startswith("langchain.") for base in cls.bases):
+            return True
+        
+        return False
+    
+    @staticmethod
+    def of_json(json: JSON) -> 'LangChainComponent':
+        from trulens_eval.utils.langchain import component_of_json
+        return component_of_json(json)
+
+class LlamaIndexComponent(ComponentView):
+    @staticmethod
+    def class_is(cls: Class) -> bool:
+        if cls.module.module_name.startswith("llama_index."):
+            return True
+        
+        if any(base.module.module_name.startswith("llama_index.") for base in cls.bases):
+            return True
+        
+        return False
+    
+    @staticmethod
+    def of_json(json: JSON) -> 'LlamaIndexComponent':
+        from trulens_eval.utils.llama import component_of_json
+        return component_of_json(json)
+    
+
+class Prompt(ComponentView):
+    # langchain.prompts.base.BasePromptTemplate
+    # llama_index.prompts.base.Prompt
+
+    @property
+    @abstractmethod
+    def template(self) -> str:
+        pass
+
+
+class LLM(ComponentView):
+    # langchain.llms.base.BaseLLM
+    # llama_index ???
+
+    @property
+    @abstractmethod
+    def model_name(self) -> str:
+        pass
+
+
+class Memory(ComponentView):
+    # langchain.schema.BaseMemory
+    # llama_index ???
+    pass
+
+class Other(ComponentView):
+    # Any component that does not fit into the other named categories.
+
+    pass
+
+
+def instrumented_component_views(obj: object) -> Iterable[Tuple[JSONPath, ComponentView]]:
+    """
+    Iterate over contents of `obj` that are annotated with the CLASS_INFO
+    attribute/key. Returns triples with the accessor/query, the Class object
+    instantiated from CLASS_INFO, and the annotated object itself.
+    """
+
+    for q, o in all_objects(obj):
+        if isinstance(o, pydantic.BaseModel) and CLASS_INFO in o.__fields__:
+            yield q, ComponentView.of_json(json=o)
+
+        if isinstance(o, Dict) and CLASS_INFO in o:
+            yield q, ComponentView.of_json(json=o)
 
 
 class App(AppDefinition, SerialModel):
@@ -196,19 +328,16 @@ class App(AppDefinition, SerialModel):
     def _handle_error(self, record: Record, error: Exception):
         if self.db is None:
             return
-
+        
     def instrumented(
-        self, categorizer: Callable[[Class], Iterable[COMPONENT_CATEGORY]]
-    ) -> Iterable[Tuple[JSONPath, List[COMPONENT_CATEGORY]]]:
+        self,
+    ) -> Iterable[Tuple[JSONPath, ComponentView]]:
         """
-        Enumerate instrumented components and their categories. `categorizer`
-        is used to determine the categories given a serialized `Class`.
+        Enumerate instrumented components and their categories.
         """
 
-        for q, ci, obj in instrumented_classes(jsonify(
-                self.app, instrument=self.instrument)):
-            yield q, list(categorizer(ci))
-
+        return instrumented_component_views(self.dict())
+        
 
 class TruApp(App):
 

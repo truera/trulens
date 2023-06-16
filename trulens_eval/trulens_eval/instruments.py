@@ -183,13 +183,12 @@ records and retrieve them afterwards.
 from datetime import datetime
 from inspect import BoundArguments
 from inspect import signature
-import inspect
 import logging
 import os
 from pprint import PrettyPrinter
 import threading as th
 from typing import (
-    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Union
+    Callable, Dict, Iterable, Optional, Sequence, Set
 )
 
 from pydantic import BaseModel
@@ -199,10 +198,10 @@ from trulens_eval.schema import Query
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordAppCallMethod
 from trulens_eval.feedback import Feedback
+from trulens_eval.util import _safe_getattr
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import jsonify
 from trulens_eval.util import Method
-from trulens_eval.util import noserio
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -212,14 +211,14 @@ class Instrument(object):
     # Attribute name to be used to flag instrumented objects/methods/others.
     INSTRUMENT = "__tru_instrumented"
 
-    # For marking queries that address app components.
-    QUERY = "__tru_query"
+    # Attribute name for marking paths that address app components.
+    PATH = "__tru_path"
 
     class Default:
         # Default instrumentation configuration. Additional components are
         # included in subclasses of `Instrument`.
 
-        # Modules to instrument.
+        # Modules (by full name prefix) to instrument.
         MODULES = {"trulens_eval."}
 
         # Classes to instrument.
@@ -230,17 +229,30 @@ class Instrument(object):
         # leading to method names instead.
         METHODS = {
             "__call__":
-                lambda o: isinstance(o, Feedback)  # Feedback
+                lambda o: isinstance(o, Feedback)
         }
 
-    def to_instrument_object(self, obj):
+    def to_instrument_object(self, obj: object) -> bool:
+        """
+        Determine whether the given object should be instrumented.
+        """
+
         return self.to_instrument_class(type(obj))
 
-    def to_instrument_class(self, cls):
+    def to_instrument_class(self, cls: type) -> bool: # class
+        """
+        Determine whether the given class should be instrumented.
+        """
+
         return any(issubclass(cls, parent) for parent in self.classes)
 
-    def to_instrument_module(self, mod):
-        return any(mod.startswith(mod2) for mod2 in self.modules)
+    def to_instrument_module(self, module_name: str) -> bool:
+        """
+        Determine whether a module with the given (full) name should be
+        instrumented.
+        """
+
+        return any(module_name.startswith(mod2) for mod2 in self.modules)
 
     def __init__(
         self,
@@ -378,7 +390,7 @@ class Instrument(object):
         # don't pollute its list of fields. Note that this address may be
         # deceptive if the same subchain appears multiple times in the wrapped
         # chain.
-        setattr(wrapper, Instrument.QUERY, query)
+        setattr(wrapper, Instrument.PATH, query)
 
         return wrapper
 
@@ -439,38 +451,7 @@ class Instrument(object):
                             obj=obj
                         )
                     )
-            """
-            # Instrument special langchain methods that may cause serialization
-            # failures.
-            if hasattr(base, "_chain_type"):
-                logger.debug(f"instrumenting {base}._chain_type")
 
-                prop = getattr(base, "_chain_type")
-                setattr(
-                    base, "_chain_type",
-                    self._instrument_type_method(obj=obj, prop=prop)
-                )
-
-            if hasattr(base, "_prompt_type"):
-                logger.debug(f"instrumenting {base}._chain_prompt")
-
-                prop = getattr(base, "_prompt_type")
-                setattr(
-                    base, "_prompt_type",
-                    self._instrument_type_method(obj=obj, prop=prop)
-                )
-
-            # Instrument a pydantic.BaseModel method that may cause
-            # serialization failures.
-            if hasattr(base, "dict"):# and not hasattr(base.dict, "_instrumented"):
-                logger.debug(f"instrumenting {base}.dict")
-                setattr(base, "dict", self._instrument_dict(cls=base, obj=obj, with_class_info=True))
-            """
-
-        # Not using chain.dict() here as that recursively converts subchains to
-        # dicts but we want to traverse the instantiations here.
-
-        # TODO: generalize:
         if isinstance(obj, BaseModel):
 
             for k in obj.__fields__:
@@ -491,20 +472,19 @@ class Instrument(object):
                                 obj=sv, query=query[k][i], done=done
                             )
 
-                # TODO: check if we want to instrument anything not accessible through __fields__ .
+                # TODO: check if we want to instrument anything in langchain not
+                # accessible through __fields__ .
 
         elif obj.__class__.__module__.startswith("llama_index"):
+            # Some llama_index objects are using dataclasses_json but most do
+            # not. Have to enumerate their contents forcefully:
+
             for k in dir(obj):
                 if k.startswith("_") and k[1:] in dir(obj):
                     # Skip those starting with _ that also have non-_ versions.
                     continue
 
-                sv = inspect.getattr_static(obj, k)
-                if isinstance(sv, property):
-                    try:
-                        sv = sv.fget()
-                    except Exception as e:
-                        sv = None
+                sv = _safe_getattr(obj, k)
 
                 if any(isinstance(sv, cls) for cls in self.classes):
                     self.instrument_object(obj=sv, query=query[k], done=done)

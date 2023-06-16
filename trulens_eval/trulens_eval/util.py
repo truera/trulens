@@ -1140,6 +1140,17 @@ class Class(SerialModel):
     def __str__(self):
         return f"{self.name}({self.module.module_name})"
 
+    def base_class(self) -> 'Class':
+        """
+        Get the deepest base class in the same module as this class.
+        """
+        module_name = self.module.module_name
+        for base in self.bases[::-1]:
+            if base.module.module_name == module_name:
+                return base
+            
+        return self
+
     @staticmethod
     def of_class(
         cls: type, with_bases: bool = False, loadable: bool = False
@@ -1158,6 +1169,12 @@ class Class(SerialModel):
         return Class.of_class(
             cls=obj.__class__, with_bases=with_bases, loadable=loadable
         )
+
+    @staticmethod
+    def of_json(json: JSON):
+        assert CLASS_INFO in json, "Class info not in json."
+
+        return Class(**json[CLASS_INFO])
 
     def load(self) -> type:  # class
         try:
@@ -1464,19 +1481,3 @@ def get_owner_of_method(cls, method_name) -> type:
     # TODO
 
     return cls
-
-
-def instrumented_classes(obj: object) -> Iterable[Tuple[JSONPath, Class, Any]]:
-    """
-    Iterate over contents of `obj` that are annotated with the CLASS_INFO
-    attribute/key. Returns triples with the accessor/query, the Class object
-    instantiated from CLASS_INFO, and the annotated object itself.
-    """
-
-    for q, o in all_objects(obj):
-        if isinstance(o, pydantic.BaseModel) and CLASS_INFO in o.__fields__:
-            yield q, getattr(o, CLASS_INFO), o
-
-        if isinstance(o, Dict) and CLASS_INFO in o:
-            ci = Class(**o[CLASS_INFO])
-            yield q, ci, o

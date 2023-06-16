@@ -1,3 +1,3 @@
 # Tru
 
-::: trulens_eval.trulens_eval.tru.Tru
+::: trulens_eval.tru.Tru
