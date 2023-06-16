@@ -6,6 +6,10 @@ import streamlit as st
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.db import JSON
+from trulens_eval.app import ComponentView
+from trulens_eval.util import jsonify
+from trulens_eval.util import JSONPath
+from trulens_eval.util import CLASS_INFO
 from trulens_eval.util import is_empty
 from trulens_eval.util import is_noserio
 
@@ -59,15 +63,15 @@ def draw_calls(record: Record, index: int) -> None:
         draw_call(call)
 
 
-def draw_prompt_info(query, prompt_details_json) -> None:
+def draw_prompt_info(query: JSONPath, component: ComponentView) -> None:
+    prompt_details_json = jsonify(component.json, skip_specials=True)
 
     path_str = str(query)
-    st.subheader(f"Prompt Details:")
-    st.text(path_str)
+    st.subheader(f"*Prompt Details*")
 
     prompt_types = {
         k: v for k, v in prompt_details_json.items() if (v is not None) and
-        not is_empty(v) and not is_noserio(v) and k != "class_info"
+        not is_empty(v) and not is_noserio(v) and k != CLASS_INFO
     }
 
     for key, value in prompt_types.items():
@@ -81,14 +85,16 @@ def draw_prompt_info(query, prompt_details_json) -> None:
                     st.write(value)
 
 
-def draw_llm_info(query, llm_details_json) -> None:
-    st.subheader(f"LLM Details:")
-    path_str = str(query)
-    st.text(path_str[:-4])
+def draw_llm_info(query: JSONPath, component: ComponentView) -> None:
+    llm_details_json = component.json
+
+    st.subheader(f"*LLM Details*")
+    # path_str = str(query)
+    # st.text(path_str[:-4])
 
     llm_kv = {
         k: v for k, v in llm_details_json.items() if (v is not None) and
-        not is_empty(v) and not is_noserio(v) and k != "class_info"
+        not is_empty(v) and not is_noserio(v) and k != CLASS_INFO
     }
     # CSS to inject contained in a string
     hide_table_row_index = """
