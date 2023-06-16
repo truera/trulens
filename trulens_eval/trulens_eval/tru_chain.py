@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Sequence, Union
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.app import App
+from trulens_eval.utils.langchain import constructor_of_class
 from trulens_eval.util import Class
 from trulens_eval.util import jsonify
 from trulens_eval.util import noserio
@@ -208,6 +209,3 @@ class TruChain(App):
     # TODO(piotrm): figure out whether the combination of _call and __call__ is working right.
     def _call(self, *args, **kwargs) -> Any:
         return self.app._call(*args, **kwargs)
-
-    def instrumented(self):
-        return super().instrumented(categorizer=Is.what)

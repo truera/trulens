@@ -1,4 +1,4 @@
-from typing import Iterable, List
+from typing import Iterable, List, Type
 
 from llama_index.data_structs.node import NodeType
 from llama_index.data_structs.node import NodeWithScore
@@ -8,6 +8,8 @@ from llama_index.indices.vector_store.retrievers import VectorIndexRetriever
 from trulens_eval import Feedback
 from trulens_eval.feedback import Feedback
 from trulens_eval.app import COMPONENT_CATEGORY
+from trulens_eval import app
+from trulens_eval.util import JSON
 from trulens_eval.util import Class, first, second
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LLAMA
@@ -17,8 +19,47 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     import llama_index
 
 
+class Prompt(app.Prompt, app.LangChainComponent):
+    @property
+    def template(self) -> str:
+        return self.json['template']
+    
+    def unsorted_parameters(self):
+        return super().unsorted_parameters(skip=set(['template']))
+    
+    @staticmethod
+    def class_is(cls: Class) -> bool:
+        return cls.noserio_issubclass(
+            module_name="llama_index.prompts.base",
+            class_name="Prompt"
+        )
+
+class Other(app.Other, app.LlamaIndexComponent):
+    pass
+
+
+# All component types, keep Other as the last one since it always matches.
+COMPONENT_VIEWS = [Prompt, Other]
+
+def constructor_of_class(cls: Class) -> Type[app.LlamaIndexComponent]:
+    for view in COMPONENT_VIEWS:
+        if view.class_is(cls):
+            return view
+        
+    raise TypeError(f"Unknown llama_index component type with class {cls}")
+
+def component_of_json(json: JSON) -> app.LlamaIndexComponent:
+    cls = Class.of_json(json)
+
+    view = constructor_of_class(cls)
+    
+    return view(json)
+
+
 class Is:
     """
+    TODO: DEPRECATE: Replacing with component view types.
+
     Various checks for typical llama index components based on their names (i.e.
     without actually loading them). See util.py:WithClassInfo for more.
     """
@@ -29,6 +70,14 @@ class Is:
             module_name="llama_index.indices.query.base",
             class_name="BaseQueryEngine"
         )
+
+    @staticmethod
+    def prompt(cls: Class):
+        return cls.noserio_issubclass(
+            module_name="llama_index.prompts.base",
+            class_name="Prompt"
+        )
+
 
     @staticmethod
     def retriever(cls: Class):
@@ -46,7 +95,7 @@ class Is:
 
     @staticmethod
     def what(cls: Class) -> Iterable[COMPONENT_CATEGORY]:
-        CHECKERS = [Is.engine, Is.retriever, Is.selector]
+        CHECKERS = [Is.engine, Is.prompt, Is.retriever, Is.selector]
 
         for checker in CHECKERS:
             if checker(cls):

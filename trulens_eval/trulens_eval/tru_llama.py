@@ -11,6 +11,7 @@ from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.app import App
+from trulens_eval.utils.llama import constructor_of_class
 from trulens_eval.util import Class
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LLAMA
@@ -151,6 +152,3 @@ class TruLlama(App):
         )
 
         return ret, ret_record
-
-    def instrumented(self):
-        return super().instrumented(categorizer=Is.what)

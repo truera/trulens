@@ -9,16 +9,15 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
+from trulens_eval.app import ComponentView
+from trulens_eval.app import LLM, Memory, Other, Prompt
+from trulens_eval.app import instrumented_component_views
 from ux.add_logo import add_logo
 from ux.styles import default_pass_fail_color_threshold
 
 from trulens_eval import Tru
 from trulens_eval.schema import Record
-from trulens_eval.util import Class
-from trulens_eval.util import GetItemOrAttribute
-from trulens_eval.util import instrumented_classes
 from trulens_eval.util import JSONPath
-from trulens_eval.utils.langchain import Is
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
 from trulens_eval.ux.components import draw_prompt_info
@@ -180,49 +179,43 @@ else:
                 details
             )  # apps may not be deserializable, don't try to, keep it json.
 
-            classes: Iterable[Tuple[JSONPath, Class,
-                                    Any]] = instrumented_classes(app_json)
+            classes: Iterable[Tuple[JSONPath, List[ComponentView]]] = instrumented_component_views(app_json)
 
-            for query, cls, component_json in classes:
+            st.header("Components")
+
+            for query, component in classes:
                 if len(query.path) == 0:
                     # Skip App, will still list A.app under "app" below.
                     continue
+                
+                st.subheader(f"{query}")
 
-                if Is.chain(cls):
-                    # st.write("TODO")
-                    continue
+                cls = component.cls
+                base_cls = cls.base_class()
 
-                elif Is.memory(cls):
-                    # st.write("TODO")
-                    continue
+                label = f"`{repr(cls)}`"
+                if str(base_cls) != str(cls):
+                    label += f" < `{repr(base_cls)}`"
 
-                elif Is.chathistory(cls):
-                    # st.write("TODO")
-                    continue
+                st.write(label)
 
-                elif Is.vector_store(cls):
-                    # st.write("TODO")
-                    continue
+                if isinstance(component, LLM):
+                    draw_llm_info(component=component, query=query)
 
-                elif Is.retriever(cls):
-                    # st.write("TODO")
-                    continue
-
-                st.header(
-                    f"Component {query} (__{cls.module.module_name}.{cls.name}__)"
-                )
-
-                if Is.llm(cls):
-                    draw_llm_info(llm_details_json=component_json, query=query)
-
-                elif Is.prompt(cls):
+                elif isinstance(component, Prompt):
                     draw_prompt_info(
-                        prompt_details_json=component_json, query=query
+                        component=component, query=query
                     )
+                elif isinstance(component, Memory):
+                    st.write("TODO")
 
+                elif isinstance(component, Other):
+                    with st.expander("Uncategorized Component Details:"):
+                        st.json(component.json)
+                    
                 else:
-                    with st.expander("Details:"):
-                        st.json(component_json)
+                    with st.expander("Unhandled Component Details:"):
+                        st.json(component.json)
 
                 calls = [
                     call for call in record.calls
