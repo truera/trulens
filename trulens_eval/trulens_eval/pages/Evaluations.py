@@ -12,6 +12,7 @@ import streamlit as st
 from trulens_eval.app import ComponentView
 from trulens_eval.app import LLM, Memory, Other, Prompt
 from trulens_eval.app import instrumented_component_views
+from trulens_eval.util import jsonify
 from ux.add_logo import add_logo
 from ux.styles import default_pass_fail_color_threshold
 
@@ -184,21 +185,23 @@ else:
             st.header("Components")
 
             for query, component in classes:
+
                 if len(query.path) == 0:
                     # Skip App, will still list A.app under "app" below.
                     continue
-                
+
+                # Draw the accessor/path within the wrapped app of the component.
                 st.subheader(f"{query}")
 
+                # Draw the python class information of this component.
                 cls = component.cls
                 base_cls = cls.base_class()
-
                 label = f"`{repr(cls)}`"
                 if str(base_cls) != str(cls):
                     label += f" < `{repr(base_cls)}`"
-
                 st.write(label)
 
+                # Per-component-type drawing routines.
                 if isinstance(component, LLM):
                     draw_llm_info(component=component, query=query)
 
@@ -206,20 +209,19 @@ else:
                     draw_prompt_info(
                         component=component, query=query
                     )
-                elif isinstance(component, Memory):
-                    st.write("TODO")
 
                 elif isinstance(component, Other):
                     with st.expander("Uncategorized Component Details:"):
-                        st.json(component.json)
+                        st.json(jsonify(component.json, skip_specials=True))
                     
                 else:
                     with st.expander("Unhandled Component Details:"):
-                        st.json(component.json)
+                        st.json(jsonify(component.json, skip_specials=True))
 
+                # Draw the calls issued to component.
                 calls = [
                     call for call in record.calls
-                    if query.is_prefix_of(call.stack[-1].path)
+                    if query == call.stack[-1].path
                 ]
                 if len(calls) > 0:
                     st.subheader("Calls to component:")
@@ -230,11 +232,11 @@ else:
 
             if st.button("Display full app json"):
 
-                st.write(app_json)
+                st.write(jsonify(app_json, skip_specials=True))
 
             if st.button("Display full record json"):
 
-                st.write(record_json)
+                st.write(jsonify(record_json, skip_specials=True))
 
     with tab2:
         feedback = feedback_cols

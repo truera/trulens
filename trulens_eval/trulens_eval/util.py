@@ -159,6 +159,10 @@ def third(seq: Sequence[T]) -> T:
     return seq[2]
 
 
+def dict_set_with(dict1: Dict, dict2: Dict):
+    dict1.update(dict2)
+    return dict1
+
 # Generator utils
 
 
@@ -205,12 +209,7 @@ def noserio(obj, **extra: Dict) -> dict:
     additional keyword arguments are included.
     """
 
-    inner = {
-        "id": id(obj),
-        "class": obj.__class__.__name__,
-        "module": obj.__class__.__module__,
-        "bases": list(map(lambda b: b.__name__, obj.__class__.__bases__))
-    }
+    inner = Obj.of_object(obj).dict()
     inner.update(extra)
 
     return {NOSERIO: inner}
@@ -261,6 +260,8 @@ ERROR = "__tru_property_error"
 # Key of structure where class information is stored. See WithClassInfo mixin.
 CLASS_INFO = "__tru_class_info"
 
+ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
+
 def _safe_getattr(obj, k):
     v = inspect.getattr_static(obj, k)
 
@@ -273,11 +274,56 @@ def _safe_getattr(obj, k):
     else:
         return v
 
+def _clean_attributes(obj):
+    keys = dir(obj)
+
+    ret = {}
+
+    for k in keys:
+        if k.startswith("__"):
+            # These are typically very internal components not meant to be
+            # exposed beyond immediate definitions. Ignoring these.
+            continue
+
+        if k.startswith("_") and k[1:] in keys:
+            # Objects often have properties named `name` with their values
+            # coming from `_name`. Lets avoid including both the property and
+            # the value.
+            continue
+
+        v = _safe_getattr(obj, k)
+        ret[k] = v
+            
+    return ret
+
 
 # TODO: refactor to somewhere else or change instrument to a generic filter
-def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
+def jsonify(
+        obj: Any,
+        dicted: Optional[Dict[int, JSON]]=None,
+        instrument: Optional['Instrument'] = None,
+        skip_specials: bool = False
+    ) -> JSON:
     """
     Convert the given object into types that can be serialized in json.
+
+    Args:
+
+        - obj: Any -- the object to jsonify.
+
+        - dicted: Optional[Dict[int, JSON]] -- the mapping from addresses of
+          already jsonifed objects (via id) to their json.
+
+        - instrument: Optional[Instrument] -- instrumentation functions for
+          checking whether to recur into components of `obj`.
+
+        - skip_specials: bool (default is False) -- if set, will remove
+          specially keyed structures from the json. These have keys that start
+          with "__tru_".
+
+    Returns:
+
+        JSON | Sequence[JSON]
     """
 
     from trulens_eval.instruments import Instrument
@@ -285,8 +331,17 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
     instrument = instrument or Instrument()
     dicted = dicted or dict()
 
+    if skip_specials:
+        recur_key = lambda k: k not in ALL_SPECIAL_KEYS
+    else:
+        recur_key = lambda k: True
+
     if id(obj) in dicted:
-        return {CIRCLE: id(obj)}
+        if skip_specials:
+            return None
+        else:
+            return {CIRCLE: id(obj)}
+        
 
     if isinstance(obj, JSON_BASES):
         return obj
@@ -300,7 +355,7 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
     # TODO: should we include duplicates? If so, dicted needs to be adjusted.
     new_dicted = {k: v for k, v in dicted.items()}
 
-    recur = lambda o: jsonify(obj=o, dicted=new_dicted, instrument=instrument)
+    recur = lambda o: jsonify(obj=o, dicted=new_dicted, instrument=instrument, skip_specials=skip_specials)
 
     if isinstance(obj, Enum):
         return obj.name
@@ -308,7 +363,7 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
     if isinstance(obj, Dict):
         temp = {}
         new_dicted[id(obj)] = temp
-        temp.update({k: recur(v) for k, v in obj.items()})
+        temp.update({k: recur(v) for k, v in obj.items() if recur_key(k)})
         return temp
 
     elif isinstance(obj, Sequence):
@@ -333,7 +388,7 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
             {
                 k: recur(_safe_getattr(obj, k))
                 for k, v in obj.__fields__.items()
-                if not v.field_info.exclude
+                if not v.field_info.exclude and recur_key(k)
             }
         )
         if instrument.to_instrument_object(obj):
@@ -347,13 +402,13 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
         temp = {}
         new_dicted[id(obj)] = temp
 
-        kvs = {k: _safe_getattr(obj, k) for k in dir(obj)}
+        kvs = _clean_attributes(obj)
 
         temp.update(
             {
                 k: recur(v)
                 for k, v in kvs.items()
-                if not k.startswith("__") and (
+                if recur_key(k) and (
                     isinstance(v, JSON_BASES) or isinstance(v, Dict) or
                     isinstance(v, Sequence) or
                     instrument.to_instrument_object(v)
@@ -839,6 +894,9 @@ class JSONPath(SerialModel):
 
     def __len__(self):
         return len(self.path)
+
+    def is_immediate_prefix_of(self, other: JSONPath):
+        return self.is_prefix_of(other) and len(self.path) + 1 == len(other.path)
 
     def is_prefix_of(self, other: JSONPath):
         p = self.path

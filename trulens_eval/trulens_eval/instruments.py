@@ -237,7 +237,10 @@ class Instrument(object):
         Determine whether the given object should be instrumented.
         """
 
-        return self.to_instrument_class(type(obj))
+        # NOTE: some classes do not support issubclass but do support
+        # isinstance. It is thus preferable to do isinstance checks when we can
+        # avoid issublcass checks.
+        return any(isinstance(obj, cls) for cls in self.classes)
 
     def to_instrument_class(self, cls: type) -> bool: # class
         """
@@ -418,18 +421,14 @@ class Instrument(object):
         # .
 
         for base in list(cls.__mro__):
-            # All of mro() may need instrumentation here if some subchains call
-            # superchains, and we want to capture the intermediate steps.
-
-            if not any(issubclass(base, c) for c in self.classes):
+            # Some top part of mro() may need instrumentation here if some
+            # subchains call superchains, and we want to capture the
+            # intermediate steps. On the other hand we don't want to instrument
+            # the very base classes such as object:
+            if not self.to_instrument_module(base.__module__):
                 continue
 
             logger.debug(f"\t{query}: instrumenting base {base.__name__}")
-
-            # TODO: generalize
-            if not any(base.__module__.startswith(module_name)
-                       for module_name in self.modules):
-                continue
 
             for method_name in self.methods:
                 if hasattr(base, method_name):
