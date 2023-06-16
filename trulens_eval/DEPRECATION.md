@@ -13,7 +13,9 @@
 
 ## Changes in 0.2.0
 
-### Non-breaking changes to be breaking in 1.0.0
+### Backwards compatible changes
+
+Backwards compatibility will be removed in 1.0.0 at earliest.
 
 - file tru_feedback.py renamed to feedback.py
 
