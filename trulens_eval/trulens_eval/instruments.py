@@ -79,6 +79,11 @@ dict, for examople). Presently, we override methods with instrumented versions.
  
     intercepted and result in a callback.
 
+- langchain/llama_index callbacks. Each of these packages come with some
+  callback system that lets one get various intermediate app results. The
+  drawbacks is the need to handle different callback systems for each system and
+  potentially missing information not exposed by them.
+
 ### Tricky
 
 - 
@@ -87,8 +92,8 @@ dict, for examople). Presently, we override methods with instrumented versions.
 
 The instrumented versions of functions/methods record the inputs/outputs and
 some additional data (see `schema.py:RecordAppCall`). As more then one
-instrumented call may take place as part of a app invokation, they are
-collected and returned together in the `calls` field of `schema.py:Record`.
+instrumented call may take place as part of a app invokation, they are collected
+and returned together in the `calls` field of `schema.py:Record`.
 
 Calls can be connected to the components containing the called method via the
 `path` field of `schema.py:RecordAppCallMethod`. This class also holds
@@ -121,17 +126,23 @@ tools as App Data (see above).
 
 - If the same wrapped sub-app is called multiple times within a single call to
   the root app, the record of this execution will not be exact with regards to
-  the path to the call information. All call paths will address the last
-  subapp (by order in which it is instrumented). For example, in a sequential
-  app containing two of the same app, call records will be addressed to the
-  second of the (same) apps and contain a list describing calls of both the
-  first and second.
+  the path to the call information. All call paths will address the last subapp
+  (by order in which it is instrumented). For example, in a sequential app
+  containing two of the same app, call records will be addressed to the second
+  of the (same) apps and contain a list describing calls of both the first and
+  second.
 
-- Some apps cannot be serialized/jsonized. Sequential app is an example.
-  This is a limitation of langchain itself.
+- Some apps cannot be serialized/jsonized. Sequential app is an example. This is
+  a limitation of langchain itself.
 
 - Instrumentation relies on CPython specifics, making heavy use of the `inspect`
   module which is not expected to work with other Python implementations.
+
+#### Alternatives
+
+- langchain/llama_index callbacks. These provide information about component
+  invocations but the drawbacks are need to cover disparate callback systems and
+  possibly missing information not covered.
 
 ## To Decide / To discuss
 
@@ -139,17 +150,16 @@ tools as App Data (see above).
 
 Should our wrappers behave like the wrapped apps? Current design is like this:
 
-```python
-chain = ... # some langchain chain
+```python chain = ... # some langchain chain
 
-tru = Tru()
-truchain = tru.Chain(chain, ...)
+tru = Tru() truchain = tru.Chain(chain, ...)
 
 plain_result = chain(...) # will not be recorded
 
 plain_result = truchain(...) # will be recorded
 
-plain_result, record = truchain.call_with_record(...) # will be recorded, and you get the record too
+plain_result, record = truchain.call_with_record(...) # will be recorded, and
+you get the record too
 
 ```
 
@@ -171,12 +181,55 @@ with truchain.record() as recorder:
 
 records = recorder.records # can get records
 
-truchain(...) # NOT SUPPORTED, use chain instead
-```
+truchain(...) # NOT SUPPORTED, use chain instead ```
 
 Here we have the benefit of not having a special method for each app type like
 call_with_record. We instead use a context to indicate that we want to collect
 records and retrieve them afterwards.
+
+### Calls: Implementation Details
+
+Our tracking of calls uses instrumentated versions of methods to manage the
+recording of inputs/outputs. The instrumented methods must distinguish
+themselves from invocations of apps that are being tracked from those not being
+tracked, and of those that are tracked, where in the call stack a instrumented
+method invocation is. To achieve this, we rely on inspecting the python call
+stack for specific frames:
+
+- Root frame -- A tracked invocation of an app starts with one of the
+  main/"root" methods such as call or query. These are the bottom of the
+  relevant stack we use to manage the tracking of subsequent calls. Further
+  calls to instrumented methods check for the root method in the call stack and
+  retrieve the collection where data is to be recorded.
+  
+- Prior frame -- Each instrumented call also searches for the topmost
+  instrumented call (except itself) in the stack to check its immediate caller
+  (by immediate we mean only among instrumented methods) which forms the basis
+  of the stack information recorded alongisde the inputs/outputs.
+
+#### Drawbacks
+
+- Python call stacks are implementation dependent and we don't expect to operate
+  on anything other than CPython.
+
+- Python creates a fresh empty stack for each thread. Because of this, we need
+  special handling of each thread created to make sure it keeps a hold of the
+  stack prior to thread creation. Right now we do this in our threading utility
+  class TP but a more complete solution may be the instrumentation of
+  threading.Thread class.
+
+- We require a root method to be placed on the stack to indicate the start of
+  tracking. We therefore cannot implement something like a context-manager-based
+  setup of the tracking system as suggested in the "To discuss" above.
+
+#### Alternatives
+
+- contextvars -- langchain uses these to manage contexts such as those used for
+  instrumenting/tracking LLM usage. These can be used to manage call stack
+  information like we do. The drawback is that these are not threadsafe or at
+  least need instrumenting thread creation. We have to do a similar thing by
+  requiring threads created by our utility package which does stack management
+  instead of contextvar management.
 
 """
 
