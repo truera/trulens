@@ -59,7 +59,7 @@ class Endpoint(SerialModel, SingletonPerName):
         self, *args, name: str, callback_class: type, **kwargs
     ):
         """
-        Usage, apu usage pacing, and utilities for API endpoints.
+        API usage, pacing, and utilities for API endpoints.
         """
 
         if hasattr(self, "rpm"):
