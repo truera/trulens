@@ -396,7 +396,10 @@ def _re_1_10_rating(str_val):
 
 
 class Provider(SerialModel):
-    endpoint: Any = pydantic.Field(exclude=True)
+    class Config:
+        arbitrary_types_allowed = True
+
+    endpoint: Optional[Endpoint] = pydantic.Field(exclude=True)
     """
     @staticmethod
     def of_json(obj: Dict) -> 'Provider':

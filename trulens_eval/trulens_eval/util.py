@@ -1139,6 +1139,8 @@ def get_local_in_call_stack(
     while not q.empty():
         fi = q.get()
 
+        logger.debug(f"{fi.frame.f_code}")
+
         if id(fi.frame.f_code) == id(TP()._thread_target_wrapper.__code__):
             logger.debug(
                 "Found thread starter frame. "
