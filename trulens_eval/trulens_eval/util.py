@@ -163,6 +163,7 @@ def dict_set_with(dict1: Dict, dict2: Dict):
     dict1.update(dict2)
     return dict1
 
+
 # Generator utils
 
 
@@ -262,6 +263,7 @@ CLASS_INFO = "__tru_class_info"
 
 ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
 
+
 def _safe_getattr(obj, k):
     v = inspect.getattr_static(obj, k)
 
@@ -273,6 +275,7 @@ def _safe_getattr(obj, k):
             return {ERROR: ObjSerial.of_object(e)}
     else:
         return v
+
 
 def _clean_attributes(obj):
     keys = dir(obj)
@@ -293,17 +296,17 @@ def _clean_attributes(obj):
 
         v = _safe_getattr(obj, k)
         ret[k] = v
-            
+
     return ret
 
 
 # TODO: refactor to somewhere else or change instrument to a generic filter
 def jsonify(
-        obj: Any,
-        dicted: Optional[Dict[int, JSON]]=None,
-        instrument: Optional['Instrument'] = None,
-        skip_specials: bool = False
-    ) -> JSON:
+    obj: Any,
+    dicted: Optional[Dict[int, JSON]] = None,
+    instrument: Optional['Instrument'] = None,
+    skip_specials: bool = False
+) -> JSON:
     """
     Convert the given object into types that can be serialized in json.
 
@@ -341,7 +344,6 @@ def jsonify(
             return None
         else:
             return {CIRCLE: id(obj)}
-        
 
     if isinstance(obj, JSON_BASES):
         return obj
@@ -355,7 +357,12 @@ def jsonify(
     # TODO: should we include duplicates? If so, dicted needs to be adjusted.
     new_dicted = {k: v for k, v in dicted.items()}
 
-    recur = lambda o: jsonify(obj=o, dicted=new_dicted, instrument=instrument, skip_specials=skip_specials)
+    recur = lambda o: jsonify(
+        obj=o,
+        dicted=new_dicted,
+        instrument=instrument,
+        skip_specials=skip_specials
+    )
 
     if isinstance(obj, Enum):
         return obj.name
@@ -406,9 +413,7 @@ def jsonify(
 
         temp.update(
             {
-                k: recur(v)
-                for k, v in kvs.items()
-                if recur_key(k) and (
+                k: recur(v) for k, v in kvs.items() if recur_key(k) and (
                     isinstance(v, JSON_BASES) or isinstance(v, Dict) or
                     isinstance(v, Sequence) or
                     instrument.to_instrument_object(v)
@@ -896,7 +901,9 @@ class JSONPath(SerialModel):
         return len(self.path)
 
     def is_immediate_prefix_of(self, other: JSONPath):
-        return self.is_prefix_of(other) and len(self.path) + 1 == len(other.path)
+        return self.is_prefix_of(other) and len(self.path) + 1 == len(
+            other.path
+        )
 
     def is_prefix_of(self, other: JSONPath):
         p = self.path
@@ -1206,7 +1213,7 @@ class Class(SerialModel):
         for base in self.bases[::-1]:
             if base.module.module_name == module_name:
                 return base
-            
+
         return self
 
     @staticmethod
@@ -1253,19 +1260,21 @@ class Class(SerialModel):
 
         return False
 
+
 # inspect.signature does not work on builtin type constructors but they are used
 # like this method. Use it to create a signature of a builtin constructor.
 def builtin_init_dummy(self, /, *args, **kwargs):
     pass
 
+
 builtin_init_sig = inspect.signature(builtin_init_dummy)
+
 
 class Obj(SerialModel):
     # TODO: refactor this into something like WithClassInfo, perhaps
     # WithObjectInfo, and store required constructor inputs as attributes with
     # potentially a placeholder for additional arguments that are not
     # attributes, under a special key like "__tru_object_info".
-
     """
     An object that may or may not be serializable. Do not use for base types
     that don't have a class.
@@ -1322,9 +1331,10 @@ class Bindings(SerialModel):
     @staticmethod
     def of_bound_arguments(b: inspect.BoundArguments) -> Bindings:
         return Bindings(args=b.args, kwargs=b.kwargs)
-    
+
     def load(self, sig: inspect.Signature):
         return sig.bind(*self.args, **self.kwargs)
+
 
 def _safe_init_sig(cls):
     """
@@ -1337,6 +1347,7 @@ def _safe_init_sig(cls):
         return inspect.signature(cls)
     except Exception as e:
         return builtin_init_sig
+
 
 class ObjSerial(Obj):
     """
@@ -1485,8 +1496,6 @@ class Function(FunctionOrMethod):
         else:
             mod = self.module.load()
             return getattr(mod, self.name)
-
-
 
 
 class WithClassInfo(pydantic.BaseModel):
