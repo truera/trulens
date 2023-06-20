@@ -160,7 +160,7 @@ class Feedback(FeedbackDefinition):
                 Query.RecordOutput
             }
             self._print_guessed_selector(par_names[0], Query.RecordOutput)
-            
+
         elif len(par_names) == 2:
             # Two arguments remaining. Assume they are record input and output
             # respectively.
@@ -268,12 +268,16 @@ class Feedback(FeedbackDefinition):
         "prompt" as input, sending it as an argument `arg` to implementation.
         """
 
+        new_selectors = self.selectors.copy()
+
         if arg is None:
             arg = self._next_unselected_arg_name()
             self._print_guessed_selector(arg, Query.RecordInput)
 
+        new_selectors[arg] = Query.RecordInput
+
         return Feedback(
-            imp=self.imp, selectors={arg: Query.RecordInput}, agg=self.agg
+            imp=self.imp, selectors=new_selectors, agg=self.agg
         )
 
     on_input = on_prompt
@@ -284,12 +288,16 @@ class Feedback(FeedbackDefinition):
         "response" as input, sending it as an argument `arg` to implementation.
         """
 
+        new_selectors = self.selectors.copy()
+
         if arg is None:
             arg = self._next_unselected_arg_name()
             self._print_guessed_selector(arg, Query.RecordOutput)
 
+        new_selectors[arg] = Query.RecordOutput
+
         return Feedback(
-            imp=self.imp, selectors={arg: Query.RecordOutput}, agg=self.agg
+            imp=self.imp, selectors=new_selectors, agg=self.agg
         )
 
     on_output = on_response
