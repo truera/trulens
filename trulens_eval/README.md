@@ -14,8 +14,11 @@ To quickly play around with the TruLens Eval library:
 
 [langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.2.2/trulens_eval/examples/quickstart.ipynb).
 
+[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.2.2/trulens_eval/examples/quickstart.py).
+
 [llamaindex_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.2.2/trulens_eval/examples/llama_index/quickstart.ipynb).
 
+[llamaindex_quickstart.py](https://github.com/truera/trulens/blob/quickstart-script-links/trulens_eval/examples/llama_quickstart.py)
 
 
 
