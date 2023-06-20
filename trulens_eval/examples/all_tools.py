@@ -9,12 +9,18 @@
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
 
+# In[ ]:
+
 import os
 
 os.environ["OPENAI_API_KEY"] = "..."
 os.environ["HUGGINGFACE_API_KEY"] = "..."
 
 # ### Import from LangChain and TruLens
+
+# In[ ]:
+
+from IPython.display import JSON
 
 # Imports main tools:
 from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
@@ -33,6 +39,8 @@ from langchain.prompts.chat import HumanMessagePromptTemplate
 #
 # This example uses a LangChain framework and OpenAI LLM
 
+# In[ ]:
+
 full_prompt = HumanMessagePromptTemplate(
     prompt=PromptTemplate(
         template=
@@ -49,13 +57,19 @@ chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
 
 # ### Send your first request
 
+# In[ ]:
+
 prompt_input = '¿que hora es?'
+
+# In[ ]:
 
 llm_response = chain(prompt_input)
 
-print(llm_response)
+display(llm_response)
 
 # ## Initialize Feedback Function(s)
+
+# In[ ]:
 
 # Initialize Huggingface-based feedback function collection class:
 hugs = Huggingface()
@@ -67,16 +81,22 @@ f_lang_match = Feedback(hugs.language_match).on(
 
 # ## Instrument chain for logging with TruLens
 
+# In[ ]:
+
 truchain = TruChain(
     chain, app_id='Chain3_ChatApplication', feedbacks=[f_lang_match]
 )
 
+# In[ ]:
+
 # Instrumented chain can operate like the original:
 llm_response = truchain(prompt_input)
 
-print(llm_response)
+display(llm_response)
 
 # ## Explore in a Dashboard
+
+# In[ ]:
 
 tru.run_dashboard()  # open a local streamlit app to explore
 
@@ -86,7 +106,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 #
 # Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics including cost and average feedback value across all of your LLM apps using the chain leaderboard. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up.
 #
-# Note: Average feedback values are returned and printed in a range from 0 (worst) to 1 (best).
+# Note: Average feedback values are returned and displayed in a range from 0 (worst) to 1 (best).
 #
 # ![Chain Leaderboard](https://www.trulens.org/Assets/image/Leaderboard.png)
 #
@@ -112,6 +132,8 @@ tru.run_dashboard()  # open a local streamlit app to explore
 
 # ## Or view results directly in your notebook
 
+# In[ ]:
+
 tru.get_records_and_feedback(app_ids=[]
                             )[0]  # pass an empty list of app_ids to get all
 
@@ -123,10 +145,14 @@ tru.get_records_and_feedback(app_ids=[]
 #
 # This is done like so:
 
+# In[ ]:
+
 truchain = TruChain(chain, app_id='Chain1_ChatApplication', tru=tru)
 truchain("This will be automatically logged.")
 
 # Feedback functions can also be logged automatically by providing them in a list to the feedbacks arg.
+
+# In[ ]:
 
 truchain = TruChain(
     chain,
@@ -140,6 +166,8 @@ truchain("This will be automatically logged.")
 #
 # ### Wrap with TruChain to instrument your chain
 
+# In[ ]:
+
 tc = TruChain(chain, app_id='Chain1_ChatApplication')
 
 # ### Set up logging and instrumentation
@@ -147,19 +175,27 @@ tc = TruChain(chain, app_id='Chain1_ChatApplication')
 # Making the first call to your wrapped LLM Application will now also produce a log or "record" of the chain execution.
 #
 
+# In[ ]:
+
 prompt_input = 'que hora es?'
 gpt3_response, record = tc.call_with_record(prompt_input)
 
 # We can log the records but first we need to log the chain itself.
 
+# In[ ]:
+
 tru.add_app(app=truchain)
 
 # Then we can log the record:
+
+# In[ ]:
 
 tru.add_record(record)
 
 # ### Log App Feedback
 # Capturing app feedback such as user feedback of the responses can be added with one call.
+
+# In[ ]:
 
 thumb_result = True
 tru.add_feedback(
@@ -175,12 +211,16 @@ tru.add_feedback(
 # To assess your LLM quality, you can provide the feedback functions to `tru.run_feedback()` in a list provided to `feedback_functions`.
 #
 
+# In[ ]:
+
 feedback_results = tru.run_feedback_functions(
     record=record, feedback_functions=[f_lang_match]
 )
-print(feedback_results)
+display(feedback_results)
 
 # After capturing feedback, you can then log it to your local database.
+
+# In[ ]:
 
 tru.add_feedbacks(feedback_results)
 
@@ -189,6 +229,8 @@ tru.add_feedbacks(feedback_results)
 # In the above example, the feedback function evaluation is done in the same process as the chain evaluation. The alternative approach is the use the provided persistent evaluator started via `tru.start_deferred_feedback_evaluator`. Then specify the `feedback_mode` for `TruChain` as `deferred` to let the evaluator handle the feedback functions.
 #
 # For demonstration purposes, we start the evaluator here but it can be started in another process.
+
+# In[ ]:
 
 truchain: TruChain = TruChain(
     chain,
@@ -250,6 +292,8 @@ tru.stop_evaluator()
 # The process for adding new feedback functions is:
 # 1. Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class. Add the new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).
 
+# In[ ]:
+
 from trulens_eval import Provider
 
 
@@ -270,12 +314,16 @@ class StandAlone(Provider):
 
 # 2. Instantiate your provider and feedback functions. The feedback function is wrapped by the trulens-eval Feedback class which helps specify what will get sent to your function parameters (For example: Query.RecordInput or Query.RecordOutput)
 
+# In[ ]:
+
 my_standalone = StandAlone()
 my_feedback_function_standalone = Feedback(
     my_standalone.my_custom_feedback
 ).on(my_text_field=Query.RecordOutput)
 
 # 3. Your feedback function is now ready to use just like the out of the box feedback functions. Below is an example of it being used.
+
+# In[ ]:
 
 feedback_results = tru.run_feedback_functions(
     record=record, feedback_functions=[my_feedback_function_standalone]

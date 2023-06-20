@@ -92,38 +92,44 @@ class ComponentView(ABC):
 
         return ret
 
+
 class LangChainComponent(ComponentView):
+
     @staticmethod
     def class_is(cls: Class) -> bool:
         if cls.module.module_name.startswith("langchain."):
             return True
-        
-        if any(base.module.module_name.startswith("langchain.") for base in cls.bases):
+
+        if any(base.module.module_name.startswith("langchain.")
+               for base in cls.bases):
             return True
-        
+
         return False
-    
+
     @staticmethod
     def of_json(json: JSON) -> 'LangChainComponent':
         from trulens_eval.utils.langchain import component_of_json
         return component_of_json(json)
 
+
 class LlamaIndexComponent(ComponentView):
+
     @staticmethod
     def class_is(cls: Class) -> bool:
         if cls.module.module_name.startswith("llama_index."):
             return True
-        
-        if any(base.module.module_name.startswith("llama_index.") for base in cls.bases):
+
+        if any(base.module.module_name.startswith("llama_index.")
+               for base in cls.bases):
             return True
-        
+
         return False
-    
+
     @staticmethod
     def of_json(json: JSON) -> 'LlamaIndexComponent':
         from trulens_eval.utils.llama import component_of_json
         return component_of_json(json)
-    
+
 
 class Prompt(ComponentView):
     # langchain.prompts.base.BasePromptTemplate
@@ -150,13 +156,16 @@ class Memory(ComponentView):
     # llama_index ???
     pass
 
+
 class Other(ComponentView):
     # Any component that does not fit into the other named categories.
 
     pass
 
 
-def instrumented_component_views(obj: object) -> Iterable[Tuple[JSONPath, ComponentView]]:
+def instrumented_component_views(
+    obj: object
+) -> Iterable[Tuple[JSONPath, ComponentView]]:
     """
     Iterate over contents of `obj` that are annotated with the CLASS_INFO
     attribute/key. Returns triples with the accessor/query, the Class object
@@ -240,9 +249,7 @@ class App(AppDefinition, SerialModel):
                     "Feedback logging requires `tru` to be specified."
                 )
 
-        self.instrument.instrument_object(
-            obj=self.app, query=Query.Query().app
-        )
+        self.instrument.instrument_object(obj=self.app, query=Query.Query().app)
 
     def json(self, *args, **kwargs):
         # Need custom jsonification here because it is likely the model
@@ -328,16 +335,14 @@ class App(AppDefinition, SerialModel):
     def _handle_error(self, record: Record, error: Exception):
         if self.db is None:
             return
-        
-    def instrumented(
-        self,
-    ) -> Iterable[Tuple[JSONPath, ComponentView]]:
+
+    def instrumented(self,) -> Iterable[Tuple[JSONPath, ComponentView]]:
         """
         Enumerate instrumented components and their categories.
         """
 
         return instrumented_component_views(self.dict())
-        
+
 
 class TruApp(App):
 
