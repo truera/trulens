@@ -16,11 +16,12 @@ from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Perf
-from trulens_eval.schema import Query
+from trulens_eval.schema import Select
 from trulens_eval.schema import Record
 from trulens_eval.tru import Tru
 from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
+from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import all_objects
 from trulens_eval.util import JSON_BASES_T
 from trulens_eval.util import CLASS_INFO
@@ -168,7 +169,7 @@ def instrumented_component_views(
 ) -> Iterable[Tuple[JSONPath, ComponentView]]:
     """
     Iterate over contents of `obj` that are annotated with the CLASS_INFO
-    attribute/key. Returns triples with the accessor/query, the Class object
+    attribute/key. Returns triples with the accessor/selector, the Class object
     instantiated from CLASS_INFO, and the annotated object itself.
     """
 
@@ -249,7 +250,9 @@ class App(AppDefinition, SerialModel):
                     "Feedback logging requires `tru` to be specified."
                 )
 
-        self.instrument.instrument_object(obj=self.app, query=Query.Query().app)
+        self.instrument.instrument_object(
+            obj=self.app, query=Select.Query().app
+        )
 
     def json(self, *args, **kwargs):
         # Need custom jsonification here because it is likely the model
@@ -341,7 +344,21 @@ class App(AppDefinition, SerialModel):
         Enumerate instrumented components and their categories.
         """
 
-        return instrumented_component_views(self.dict())
+        for q, c in instrumented_component_views(self.dict()):
+            # Add the chain indicator so the resulting paths can be specified
+            # for feedback selectors.
+            q = JSONPath(path = (GetItemOrAttribute(item_or_attribute="__app__"),) + q.path)
+            yield q, c
+        
+    def print_instrumented(self) -> None:
+        """
+        Print instrumented components and their categories.
+        """
+
+        print("\n".join(
+            f"{t[1].__class__.__name__} component: "
+            f"{str(t[0])}" for t in self.instrumented()
+        ))
 
 
 class TruApp(App):

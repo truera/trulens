@@ -40,19 +40,20 @@ identity = lambda h: h
 hugs = feedback.Huggingface()
 openai = feedback.OpenAI()
 
-f_lang_match = Feedback(hugs.language_match).on(
-    text1=Query.RecordInput, text2=Query.RecordOutput
-)
+# Language match between question/answer.
+f_lang_match = Feedback(hugs.language_match).on_input_output()
+# By default this will evaluate feedback on main app input and main app output.
 
-f_qa_relevance = Feedback(openai.relevance).on(
-    prompt=Query.RecordInput, response=Query.RecordOutput
-)
+# Question/answer relevance between overall question and answer.
+f_qa_relevance = Feedback(openai.relevance).on_input_output()
+# By default this will evaluate feedback on main app input and main app output.
 
-f_qs_relevance = Feedback(openai.qs_relevance).on(
-    question=Query.RecordInput,
-    statement=Query.Record.chain.combine_docs_chain._call.args.inputs.
-    input_documents[:].page_content
+# Question/statement relevance between question and each context chunk.
+f_qs_relevance = feedback.Feedback(openai.qs_relevance).on_input().on(
+    Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[:].page_content
 ).aggregate(np.min)
+# First feedback argument is set to main app input, and the second is taken from
+# the context sources as passed to an internal `combine_docs_chain._call`.
 
 
 # @st.cache_data
