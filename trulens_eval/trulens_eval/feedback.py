@@ -249,8 +249,6 @@ class Feedback(FeedbackDefinition):
     def _next_unselected_arg_name(self):
         if self.imp is not None:
             sig = signature(self.imp)
-            # Assume prompt is to be the next not yet specified argument (in
-            # self.selectors) to self.imp.
             par_names = list(k for k in sig.parameters.keys() if ((k not in self.selectors) if self.selectors is not None else True))
             return par_names[0]
         else:
