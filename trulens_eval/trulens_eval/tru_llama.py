@@ -32,12 +32,13 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
 
 from trulens_eval.tru_chain import LangChainInstrument
 
+
 class LlamaInstrument(Instrument):
 
     class Default:
-        MODULES = {
-            "llama_index."
-        }.union(LangChainInstrument.Default.MODULES) # NOTE: llama_index uses langchain internally for some things
+        MODULES = {"llama_index."}.union(
+            LangChainInstrument.Default.MODULES
+        )  # NOTE: llama_index uses langchain internally for some things
 
         # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
@@ -63,23 +64,32 @@ class LlamaInstrument(Instrument):
 
         # Instrument only methods with these names and of these classes. Ok to
         # include llama_index inside methods.
-        METHODS = dict_set_with({
-            "get_response": lambda o: isinstance(o, llama_index.indices.response.refine.Refine),
-            "predict": lambda o: isinstance(o, llama_index.llm_predictor.base.BaseLLMPredictor),
-            "query":
-                lambda o:
-                isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
-            "retrieve":
-                lambda o: isinstance(
-                    o, (
-                        llama_index.indices.query.base.BaseQueryEngine,
-                        llama_index.indices.base_retriever.BaseRetriever
-                    )
-                ),
-            "synthesize":
-                lambda o:
-                isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
-        }, LangChainInstrument.Default.METHODS)
+        METHODS = dict_set_with(
+            {
+                "get_response":
+                    lambda o:
+                    isinstance(o, llama_index.indices.response.refine.Refine),
+                "predict":
+                    lambda o: isinstance(
+                        o, llama_index.llm_predictor.base.BaseLLMPredictor
+                    ),
+                "query":
+                    lambda o: isinstance(
+                        o, llama_index.indices.query.base.BaseQueryEngine
+                    ),
+                "retrieve":
+                    lambda o: isinstance(
+                        o, (
+                            llama_index.indices.query.base.BaseQueryEngine,
+                            llama_index.indices.base_retriever.BaseRetriever
+                        )
+                    ),
+                "synthesize":
+                    lambda o: isinstance(
+                        o, llama_index.indices.query.base.BaseQueryEngine
+                    ),
+            }, LangChainInstrument.Default.METHODS
+        )
 
     def __init__(self):
         super().__init__(
