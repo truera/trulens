@@ -24,7 +24,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 
-from typing import (Any, Dict, Optional, Sequence, TypeVar, Union)
+from typing import (Any, ClassVar, Dict, Optional, Sequence, TypeVar, Union)
 import logging
 from munch import Munch as Bunch
 import pydantic
@@ -337,14 +337,11 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
     feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD
 
     # Class of the main instrumented object.
-    root_class: Class
+    root_class: Class # TODO: make classvar
 
-    # App's main method. To be filled in by subclass.
-    @property
-    @abstractmethod
-    def root_callable(self) -> FunctionOrMethod:
-        return None
-        # root_method: Method
+    # App's main method. To be filled in by subclass. Want to make this abstract
+    # but this causes problems when trying to load an AppDefinition from json.
+    root_callable: ClassVar[FunctionOrMethod]
 
     # Wrapped app in jsonized form.
     app: JSON
