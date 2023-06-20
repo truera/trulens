@@ -12,24 +12,27 @@ cat intro.md break.md all_tools.md > README.md
 
 # Create non-jupyter scripts
 jupyter nbconvert --to script quickstart.ipynb
+jupyter nbconvert --to script llama_quickstart.ipynb
 jupyter nbconvert --to script all_tools.ipynb
 
 # gnu sed/gsed needed on mac:
 SED=`which -a gsed sed | head -n1`
 
+SCRIPTS_TO_PROCESS=quickstart.py llama_quickstart.py all_tools.py
+
 # Fix nbmerge ids field invalid for ipynb
 $SED -i "/id\"\:/d" all_tools.ipynb
 
 ## Remove ipynb JSON calls
-$SED -i "/JSON/d" quickstart.py all_tools.py
+$SED -i "/JSON/d" $SCRIPTS_TO_PROCESS
 ## Replace jupyter display with python print
-$SED -i "s/display/print/g" quickstart.py all_tools.py
+$SED -i "s/display/print/g" $SCRIPTS_TO_PROCESS
 ## Remove cell metadata
-$SED -i "/\# In\[/d" quickstart.py all_tools.py
+$SED -i "/\# In\[/d" $SCRIPTS_TO_PROCESS
 ## Remove single # lines
-$SED -i "/\#$/d" quickstart.py all_tools.py
+$SED -i "/\#$/d" $SCRIPTS_TO_PROCESS
 ## Collapse multiple empty line from sed replacements with a single line
-$SED -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" quickstart.py all_tools.py
+$SED -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" $SCRIPTS_TO_PROCESS
 
 # Move all generated files to the generated_files folder
 mv README.md ../../trulens_eval/README.md
