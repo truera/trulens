@@ -20,6 +20,7 @@ about the encoded object types in the dictionary under the util.py:CLASS_INFO ke
 
 """
 
+from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 
@@ -27,6 +28,7 @@ from typing import (Any, Dict, Optional, Sequence, TypeVar, Union)
 import logging
 from munch import Munch as Bunch
 import pydantic
+from trulens_eval.util import FunctionOrMethod
 
 from trulens_eval.util import Class
 from trulens_eval.util import Function
@@ -170,7 +172,7 @@ class Record(SerialModel):
 # Feedback related:
 
 
-class Query:
+class Select:
 
     # Typing for type hints.
     Query = JSONPath
@@ -188,6 +190,8 @@ class Query:
 
     RecordCalls = Record.app
 
+# To deprecate in 1.0.0:
+Query = Select
 
 class FeedbackResultStatus(Enum):
     NONE = "none"
@@ -315,7 +319,7 @@ class FeedbackMode(str, Enum):
     DEFERRED = "deferred"
 
 
-class AppDefinition(SerialModel, WithClassInfo):
+class AppDefinition(SerialModel, WithClassInfo, ABC):
     # Serialized fields here whereas app.py:App contains
     # non-serialized fields.
 
@@ -334,6 +338,13 @@ class AppDefinition(SerialModel, WithClassInfo):
 
     # Class of the main instrumented object.
     root_class: Class
+
+    # App's main method. To be filled in by subclass.
+    @property
+    @abstractmethod
+    def root_callable(self) -> FunctionOrMethod:
+        return None
+        # root_method: Method
 
     # Wrapped app in jsonized form.
     app: JSON
@@ -358,6 +369,22 @@ class AppDefinition(SerialModel, WithClassInfo):
             app_id = obj_id_of_obj(obj=self.dict(), prefix="app")
 
         self.app_id = app_id
+
+    @classmethod
+    def select_inputs(cls) -> JSONPath:
+        """
+        Get the path to the main app's call inputs.
+        """
+
+        return getattr(Select.RecordCalls, cls.root_callable.default_factory().name).args
+        
+    @classmethod
+    def select_outputs(cls) -> JSONPath:
+        """
+        Get the path to the main app's call outputs.
+        """
+
+        return getattr(Select.RecordCalls, cls.root_callable.default_factory().name).rets
 
 
 class App(AppDefinition):
