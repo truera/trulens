@@ -61,7 +61,25 @@ class RecordAppCallMethod(SerialModel):
 
 
 class Cost(SerialModel):
+    # Number of requests.
+    n_requests: Optional[int] = None
+
+    # Number of successful ones.
+    n_succesful_requests: Optional[int] = None
+
+    # Number of class scores retrieved.
+    n_classes: Optional[int] = None
+
+    # Total tokens processed.
     n_tokens: Optional[int] = None
+
+    # Number of prompt tokens supplied.
+    n_prompt_tokens: Optional[int] = None
+
+    # Number of completion tokens generated.
+    n_completion_tokens: Optional[int] = None
+
+    # Cost in USD.
     cost: Optional[float] = None
 
 
