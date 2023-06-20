@@ -17,19 +17,20 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
 
 
 class Prompt(app.Prompt, app.LangChainComponent):
+
     @property
     def template(self) -> str:
         return self.json['template']
-    
+
     def unsorted_parameters(self):
         return super().unsorted_parameters(skip=set(['template']))
-    
+
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name="llama_index.prompts.base",
-            class_name="Prompt"
+            module_name="llama_index.prompts.base", class_name="Prompt"
         )
+
 
 class Other(app.Other, app.LlamaIndexComponent):
     pass
@@ -38,18 +39,20 @@ class Other(app.Other, app.LlamaIndexComponent):
 # All component types, keep Other as the last one since it always matches.
 COMPONENT_VIEWS = [Prompt, Other]
 
+
 def constructor_of_class(cls: Class) -> Type[app.LlamaIndexComponent]:
     for view in COMPONENT_VIEWS:
         if view.class_is(cls):
             return view
-        
+
     raise TypeError(f"Unknown llama_index component type with class {cls}")
+
 
 def component_of_json(json: JSON) -> app.LlamaIndexComponent:
     cls = Class.of_json(json)
 
     view = constructor_of_class(cls)
-    
+
     return view(json)
 
 
@@ -71,10 +74,8 @@ class Is:
     @staticmethod
     def prompt(cls: Class):
         return cls.noserio_issubclass(
-            module_name="llama_index.prompts.base",
-            class_name="Prompt"
+            module_name="llama_index.prompts.base", class_name="Prompt"
         )
-
 
     @staticmethod
     def retriever(cls: Class):
