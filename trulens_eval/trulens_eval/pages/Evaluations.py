@@ -180,7 +180,8 @@ else:
                 details
             )  # apps may not be deserializable, don't try to, keep it json.
 
-            classes: Iterable[Tuple[JSONPath, List[ComponentView]]] = instrumented_component_views(app_json)
+            classes: Iterable[Tuple[JSONPath, List[ComponentView]]
+                             ] = instrumented_component_views(app_json)
 
             st.header("Components")
 
@@ -206,14 +207,12 @@ else:
                     draw_llm_info(component=component, query=query)
 
                 elif isinstance(component, Prompt):
-                    draw_prompt_info(
-                        component=component, query=query
-                    )
+                    draw_prompt_info(component=component, query=query)
 
                 elif isinstance(component, Other):
                     with st.expander("Uncategorized Component Details:"):
                         st.json(jsonify(component.json, skip_specials=True))
-                    
+
                 else:
                     with st.expander("Unhandled Component Details:"):
                         st.json(jsonify(component.json, skip_specials=True))
