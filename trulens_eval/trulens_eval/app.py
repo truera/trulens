@@ -16,7 +16,7 @@ from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Perf
-from trulens_eval.schema import Query
+from trulens_eval.schema import Select
 from trulens_eval.schema import Record
 from trulens_eval.tru import Tru
 from trulens_eval.db import DB
@@ -160,7 +160,7 @@ class Other(ComponentView):
 def instrumented_component_views(obj: object) -> Iterable[Tuple[JSONPath, ComponentView]]:
     """
     Iterate over contents of `obj` that are annotated with the CLASS_INFO
-    attribute/key. Returns triples with the accessor/query, the Class object
+    attribute/key. Returns triples with the accessor/selector, the Class object
     instantiated from CLASS_INFO, and the annotated object itself.
     """
 
@@ -242,7 +242,7 @@ class App(AppDefinition, SerialModel):
                 )
 
         self.instrument.instrument_object(
-            obj=self.app, query=Query.Query().app
+            obj=self.app, query=Select.Query().app
         )
 
     def json(self, *args, **kwargs):
