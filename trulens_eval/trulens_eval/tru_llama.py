@@ -5,18 +5,21 @@
 from datetime import datetime
 import logging
 from pprint import PrettyPrinter
-from typing import Sequence, Tuple
+from typing import ClassVar, Sequence, Tuple
+
+from pydantic import Field
 
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.app import App
+from trulens_eval.util import FunctionOrMethod
+from trulens_eval.util import JSONPath
+from trulens_eval.util import Method
 from trulens_eval.util import dict_set_with
-from trulens_eval.utils.llama import constructor_of_class
 from trulens_eval.util import Class
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LLAMA
-from trulens_eval.utils.llama import Is
 
 logger = logging.getLogger(__name__)
 
@@ -103,22 +106,33 @@ class TruLlama(App):
 
     app: BaseQueryEngine
 
+    root_callable: ClassVar[FunctionOrMethod] = Field(
+        default_factory = lambda: FunctionOrMethod.of_callable(TruLlama.query),
+        const=True
+    )
+
     def __init__(self, app: BaseQueryEngine, **kwargs):
 
         super().update_forward_refs()
 
         # TruLlama specific:
         kwargs['app'] = app
-        kwargs['root_class'] = Class.of_object(app)
+        kwargs['root_class'] = Class.of_object(app) # TODO: make class property
         kwargs['instrument'] = LlamaInstrument()
 
         super().__init__(**kwargs)
 
     def query(self, *args, **kwargs) -> Response:
         res, _ = self.query_with_record(*args, **kwargs)
-
         return res
 
+    @classmethod
+    def select_source_nodes(cls) -> JSONPath:
+        """
+        Get the path to the source nodes in the query output.
+        """
+        return cls.select_outputs().source_nodes[:]
+    
     def query_with_record(self, str_or_query_bundle) -> Tuple[Response, Record]:
         # Wrapped calls will look this up by traversing the call stack. This
         # should work with threads.

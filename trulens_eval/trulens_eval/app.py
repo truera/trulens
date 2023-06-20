@@ -21,6 +21,7 @@ from trulens_eval.schema import Record
 from trulens_eval.tru import Tru
 from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
+from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import all_objects
 from trulens_eval.util import JSON_BASES_T
 from trulens_eval.util import CLASS_INFO
@@ -336,8 +337,18 @@ class App(AppDefinition, SerialModel):
         Enumerate instrumented components and their categories.
         """
 
-        return instrumented_component_views(self.dict())
+        for q, c in instrumented_component_views(self.dict()):
+            # Add the chain indicator so the resulting paths can be specified for feedback selectors.
+            q = JSONPath(path = (GetItemOrAttribute(item_or_attribute="__app__"),) + q.path)
+            yield q, c
         
+    def print_instrumented(self) -> None:
+        """
+        Print instrumented components and their categories.
+        """
+
+        print("\n".join(f"{t[1].__class__.__name__} component: {str(t[0])}" for t in self.instrumented()))
+
 
 class TruApp(App):
 
