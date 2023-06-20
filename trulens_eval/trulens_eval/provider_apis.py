@@ -79,16 +79,20 @@ class Endpoint(SerialModel, SingletonPerName):
     # Requests per minute.
     rpm: float = 60
 
-    # Retries (if performing requests using this class).
+    # Retries (if performing requests using this class). TODO: wire this up to
+    # the various endpoint systems' retries specification.
     retries: int = 3
 
     # Optional post headers for post requests if done by this class.
     post_headers: Optional[Any] = None
 
-    # Queue that will  get filled at rate rpm.
+    # Queue that gets filled at rate rpm.
     _pace: Queue = pydantic.Field(default_factory=lambda: Queue(maxsize=10))
 
-    # Track costs not run inside "track_cost" here.
+    # Track costs not run inside "track_cost" here. Also note that Endpoints are
+    # singletons (one for each unique name argument) hence this global callback
+    # will track all requests for the named api even if you try to create
+    # multiple endpoints (with the same name).
     _global_callback: EndpointCallback # of type _callback_class
 
     # Callback class to use for usage tracking
@@ -275,7 +279,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
 class OpenAIEndpoint(Endpoint):
     """
-    OpenAI endpoint. Instruments "create" methodsin openai.* classes.
+    OpenAI endpoint. Instruments "create" methods in openai.* classes.
     """
 
     def __init__(self, *args, **kwargs):
