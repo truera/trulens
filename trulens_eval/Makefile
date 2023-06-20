@@ -2,10 +2,8 @@ SHELL := /bin/bash
 CONDA_ENV := py38_trulens
 CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate $(CONDA_ENV)
 
-slackbot:
-	$(CONDA); (PYTHONPATH=. python -u trulens_eval/slackbot.py)
-
-# 1>&2 > slackbot.log)
+trubot:
+	$(CONDA); (PYTHONPATH=. python -u trulens_eval/examples/trubot.py)
 
 test:
 	$(CONDA); python -m pytest -s test_tru_chain.py

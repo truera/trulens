@@ -9,24 +9,26 @@ Many of the classes defined here extending SerialModel are meant to be
 serialized into json. Most are extended with non-serialized fields in other files.
 
 Serializable       | Non-serializable
--------------------+---------------------------
-AppDefinition               | TruApp, TruChain, TruLlama
+-------------------+------------------------
+AppDefinition      | App, TruChain, TruLlama
 FeedbackDefinition | Feedback
 
-App.app is the JSONized version of a wrapped app while TruApp.app is the actual
-wrapped app. We can thus inspect the contents of a wrapped app without having to
-construct it. Additionally, JSONized objects like App.app feature information
-about the encoded object types in the dictionary under the util.py:CLASS_INFO key.
-
+AppDefinition.app is the JSONized version of a wrapped app while App.app is the
+actual wrapped app. We can thus inspect the contents of a wrapped app without
+having to construct it. Additionally, JSONized objects like AppDefinition.app
+feature information about the encoded object types in the dictionary under the
+util.py:CLASS_INFO key.
 """
 
+from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 
-from typing import (Any, Dict, Optional, Sequence, TypeVar, Union)
+from typing import (Any, ClassVar, Dict, Optional, Sequence, TypeVar, Union)
 import logging
 from munch import Munch as Bunch
 import pydantic
+from trulens_eval.util import FunctionOrMethod
 
 from trulens_eval.util import Class
 from trulens_eval.util import Function
@@ -170,22 +172,26 @@ class Record(SerialModel):
 # Feedback related:
 
 
-class Query:
+class Select:
 
     # Typing for type hints.
-    Query = JSONPath
+    Query: type = JSONPath
 
     # Instance for constructing queries for record json like `Record.app.llm`.
-    Record = Query().__record__
+    Record: Query = Query().__record__
 
     # Instance for constructing queries for app json.
-    App = Query().__app__
+    App: Query = Query().__app__
 
     # A App's main input and main output.
     # TODO: App input/output generalization.
-    RecordInput = Record.main_input
-    RecordOutput = Record.main_output
+    RecordInput: Query = Record.main_input
+    RecordOutput: Query = Record.main_output
 
+    RecordCalls: Query = Record.app
+
+# To deprecate in 1.0.0:
+Query = Select
 
 class FeedbackResultStatus(Enum):
     NONE = "none"
@@ -251,7 +257,7 @@ class FeedbackDefinition(SerialModel):
 
     # Selectors, pointers into Records of where to get
     # arguments for `imp`.
-    selectors: Optional[Dict[str, JSONPath]] = None
+    selectors: Dict[str, JSONPath]
 
     def __init__(
         self,
@@ -272,6 +278,8 @@ class FeedbackDefinition(SerialModel):
         - aggregator: Optional[Union[Function, Method]] -- serialized
           aggregation function.
         """
+
+        selectors = selectors or dict()
 
         super().__init__(
             feedback_definition_id="temporary",
@@ -311,7 +319,7 @@ class FeedbackMode(str, Enum):
     DEFERRED = "deferred"
 
 
-class AppDefinition(SerialModel, WithClassInfo):
+class AppDefinition(SerialModel, WithClassInfo, ABC):
     # Serialized fields here whereas app.py:App contains
     # non-serialized fields.
 
@@ -329,7 +337,11 @@ class AppDefinition(SerialModel, WithClassInfo):
     feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD
 
     # Class of the main instrumented object.
-    root_class: Class
+    root_class: Class # TODO: make classvar
+
+    # App's main method. To be filled in by subclass. Want to make this abstract
+    # but this causes problems when trying to load an AppDefinition from json.
+    root_callable: ClassVar[FunctionOrMethod]
 
     # Wrapped app in jsonized form.
     app: JSON
@@ -354,6 +366,22 @@ class AppDefinition(SerialModel, WithClassInfo):
             app_id = obj_id_of_obj(obj=self.dict(), prefix="app")
 
         self.app_id = app_id
+
+    @classmethod
+    def select_inputs(cls) -> JSONPath:
+        """
+        Get the path to the main app's call inputs.
+        """
+
+        return getattr(Select.RecordCalls, cls.root_callable.default_factory().name).args
+        
+    @classmethod
+    def select_outputs(cls) -> JSONPath:
+        """
+        Get the path to the main app's call outputs.
+        """
+
+        return getattr(Select.RecordCalls, cls.root_callable.default_factory().name).rets
 
 
 class App(AppDefinition):

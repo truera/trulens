@@ -12,7 +12,7 @@ import numpy as np
 import pinecone
 import streamlit as st
 
-from trulens_eval import Query
+from trulens_eval import Select
 from trulens_eval import tru
 from trulens_eval import tru_chain
 from trulens_eval import feedback
@@ -41,16 +41,16 @@ hugs = feedback.Huggingface()
 openai = feedback.OpenAI()
 
 f_lang_match = Feedback(hugs.language_match).on(
-    text1=Query.RecordInput, text2=Query.RecordOutput
+    text1=Select.RecordInput, text2=Select.RecordOutput
 )
 
 f_qa_relevance = Feedback(openai.relevance).on(
-    prompt=Query.RecordInput, response=Query.RecordOutput
+    prompt=Select.RecordInput, response=Select.RecordOutput
 )
 
 f_qs_relevance = Feedback(openai.qs_relevance).on(
-    question=Query.RecordInput,
-    statement=Query.Record.chain.combine_docs_chain._call.args.inputs.
+    question=Select.RecordInput,
+    statement=Select.Record.chain.combine_docs_chain._call.args.inputs.
     input_documents[:].page_content
 ).aggregate(np.min)
 
