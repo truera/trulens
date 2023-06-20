@@ -160,6 +160,7 @@ class Feedback(FeedbackDefinition):
                 Query.RecordOutput
             }
             self._print_guessed_selector(par_names[0], Query.RecordOutput)
+            
         elif len(par_names) == 2:
             # Two arguments remaining. Assume they are record input and output
             # respectively.
@@ -170,6 +171,8 @@ class Feedback(FeedbackDefinition):
             self._print_guessed_selector(par_names[0], Query.RecordInput)
             self._print_guessed_selector(par_names[1], Query.RecordOutput)
         else:
+            # Otherwise give up.
+
             raise RuntimeError(
                 f"Cannot determine default paths for feedback function arguments. "
                 f"The feedback function has signature {sig}."
