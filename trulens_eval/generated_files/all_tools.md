@@ -76,7 +76,7 @@ hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
 f_lang_match = Feedback(hugs.language_match).on(
-    text1=Query.RecordInput, text2=Query.RecordOutput
+    text1=Select.RecordInput, text2=Select.RecordOutput
 )
 ```
 
@@ -330,13 +330,13 @@ class StandAlone(Provider):
 
 ```
 
-2. Instantiate your provider and feedback functions. The feedback function is wrapped by the trulens-eval Feedback class which helps specify what will get sent to your function parameters (For example: Query.RecordInput or Query.RecordOutput)
+2. Instantiate your provider and feedback functions. The feedback function is wrapped by the trulens-eval Feedback class which helps specify what will get sent to your function parameters (For example: Select.RecordInput or Select.RecordOutput)
 
 
 ```python
 my_standalone = StandAlone()
 my_feedback_function_standalone = Feedback(my_standalone.my_custom_feedback).on(
-    my_text_field=Query.RecordOutput
+    my_text_field=Select.RecordOutput
 )
 ```
 

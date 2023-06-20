@@ -175,20 +175,20 @@ class Record(SerialModel):
 class Select:
 
     # Typing for type hints.
-    Query = JSONPath
+    Query: type = JSONPath
 
     # Instance for constructing queries for record json like `Record.app.llm`.
-    Record = Query().__record__
+    Record: Query = Query().__record__
 
     # Instance for constructing queries for app json.
-    App = Query().__app__
+    App: Query = Query().__app__
 
     # A App's main input and main output.
     # TODO: App input/output generalization.
-    RecordInput = Record.main_input
-    RecordOutput = Record.main_output
+    RecordInput: Query = Record.main_input
+    RecordOutput: Query = Record.main_output
 
-    RecordCalls = Record.app
+    RecordCalls: Query = Record.app
 
 # To deprecate in 1.0.0:
 Query = Select

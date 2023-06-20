@@ -26,7 +26,7 @@ from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import AppDefinition
-from trulens_eval.schema import Query
+from trulens_eval.schema import Select
 from trulens_eval.db import JSON
 from trulens_eval.db import Record
 from trulens_eval.util import FunctionOrMethod
@@ -132,12 +132,12 @@ class Feedback(FeedbackDefinition):
         return ret
 
     def _print_guessed_selector(self, par_name, par_path):
-        if par_path == Query.RecordCalls:
-            alias_info = f" or `Query.RecordCalls`"
-        elif par_path == Query.RecordInput:
-            alias_info = f" or `Query.RecordInput`"
-        elif par_path == Query.RecordOutput:
-            alias_info = f" or `Query.RecordOutput`"
+        if par_path == Select.RecordCalls:
+            alias_info = f" or `Select.RecordCalls`"
+        elif par_path == Select.RecordInput:
+            alias_info = f" or `Select.RecordInput`"
+        elif par_path == Select.RecordOutput:
+            alias_info = f" or `Select.RecordOutput`"
         else:
             alias_info = ""
 
@@ -157,19 +157,19 @@ class Feedback(FeedbackDefinition):
             # A single argument remaining. Assume it is record output.
             selectors = {
                 par_names[0]:
-                Query.RecordOutput
+                Select.RecordOutput
             }
-            self._print_guessed_selector(par_names[0], Query.RecordOutput)
+            self._print_guessed_selector(par_names[0], Select.RecordOutput)
 
         elif len(par_names) == 2:
             # Two arguments remaining. Assume they are record input and output
             # respectively.
             selectors = {
-                par_names[0]: Query.RecordInput,
-                par_names[1]: Query.RecordOutput
+                par_names[0]: Select.RecordInput,
+                par_names[1]: Select.RecordOutput
             }
-            self._print_guessed_selector(par_names[0], Query.RecordInput)
-            self._print_guessed_selector(par_names[1], Query.RecordOutput)
+            self._print_guessed_selector(par_names[0], Select.RecordInput)
+            self._print_guessed_selector(par_names[1], Select.RecordOutput)
         else:
             # Otherwise give up.
 
@@ -272,9 +272,9 @@ class Feedback(FeedbackDefinition):
 
         if arg is None:
             arg = self._next_unselected_arg_name()
-            self._print_guessed_selector(arg, Query.RecordInput)
+            self._print_guessed_selector(arg, Select.RecordInput)
 
-        new_selectors[arg] = Query.RecordInput
+        new_selectors[arg] = Select.RecordInput
 
         return Feedback(
             imp=self.imp, selectors=new_selectors, agg=self.agg
@@ -292,9 +292,9 @@ class Feedback(FeedbackDefinition):
 
         if arg is None:
             arg = self._next_unselected_arg_name()
-            self._print_guessed_selector(arg, Query.RecordOutput)
+            self._print_guessed_selector(arg, Select.RecordOutput)
 
-        new_selectors[arg] = Query.RecordOutput
+        new_selectors[arg] = Select.RecordOutput
 
         return Feedback(
             imp=self.imp, selectors=new_selectors, agg=self.agg
@@ -447,22 +447,22 @@ class Feedback(FeedbackDefinition):
         arg_vals = {}
 
         for k, v in self.selectors.items():
-            if isinstance(v, Query.Query):
+            if isinstance(v, Select.Query):
                 q = v
 
             else:
                 raise RuntimeError(f"Unhandled selection type {type(v)}.")
 
-            if q.path[0] == Query.Record.path[0]:
+            if q.path[0] == Select.Record.path[0]:
                 o = record.layout_calls_as_app()
-            elif q.path[0] == Query.App.path[0]:
+            elif q.path[0] == Select.App.path[0]:
                 o = app
             else:
                 raise ValueError(
                     f"Query {q} does not indicate whether it is about a record or about a app."
                 )
 
-            q_within_o = Query.Query(path=q.path[1:])
+            q_within_o = Select.Query(path=q.path[1:])
             arg_vals[k] = list(q_within_o(o))
 
         keys = arg_vals.keys()

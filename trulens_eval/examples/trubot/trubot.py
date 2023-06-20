@@ -22,7 +22,7 @@ from pydantic import Field
 from slack_bolt import App
 from slack_sdk import WebClient
 
-from trulens_eval import Query
+from trulens_eval import Select
 from trulens_eval import Tru
 from trulens_eval import feedback
 from trulens_eval.schema import FeedbackMode
@@ -83,7 +83,7 @@ f_qa_relevance = Feedback(openai.relevance).on_input_output()
 
 # Question/statement relevance between question and each context chunk.
 f_qs_relevance = Feedback(openai.qs_relevance).on_input().on(
-    Query.Record.model.combine_docs_chain._call.args.inputs.input_documents[:].page_content
+    Select.Record.model.combine_docs_chain._call.args.inputs.input_documents[:].page_content
 ).aggregate(np.min)
 # First feedback argument is set to main app input, and the second is taken from
 # the context sources as passed to an internal `combine_docs_chain._call`.

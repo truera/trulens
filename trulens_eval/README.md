@@ -67,7 +67,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
+from trulens_eval import TruChain, Feedback, Huggingface, Tru, Select
 tru = Tru()
 
 # Imports from langchain to build app. You may need to install langchain first
@@ -377,13 +377,13 @@ class StandAlone(Provider):
 
 ```
 
-2. Instantiate your provider and feedback functions. The feedback function is wrapped by the trulens-eval Feedback class which helps specify what will get sent to your function parameters (For example: Query.RecordInput or Query.RecordOutput)
+2. Instantiate your provider and feedback functions. The feedback function is wrapped by the trulens-eval Feedback class which helps specify what will get sent to your function parameters (For example: Select.RecordInput or Select.RecordOutput)
 
 
 ```python
 my_standalone = StandAlone()
 my_feedback_function_standalone = Feedback(my_standalone.my_custom_feedback).on(
-    my_text_field=Query.RecordOutput
+    my_text_field=Select.RecordOutput
 )
 ```
 
