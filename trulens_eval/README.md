@@ -70,7 +70,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru, Select
+from trulens_eval import TruChain, Feedback, Huggingface, Tru
 tru = Tru()
 
 # Imports from langchain to build app. You may need to install langchain first
@@ -363,7 +363,7 @@ The process for adding new feedback functions is:
 
 
 ```python
-from trulens_eval import Provider
+from trulens_eval import Provider, Feedback, Select, Tru
 
 class StandAlone(Provider):
     def my_custom_feedback(self, my_text_field: str) -> float:
@@ -394,6 +394,7 @@ my_feedback_function_standalone = Feedback(my_standalone.my_custom_feedback).on(
 
 
 ```python
+tru = Tru()
 feedback_results = tru.run_feedback_functions(
     record=record,
     feedback_functions=[my_feedback_function_standalone]

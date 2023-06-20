@@ -17,7 +17,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 # ### Import from LangChain and TruLens
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru, Select
+from trulens_eval import TruChain, Feedback, Huggingface, Tru
 
 tru = Tru()
 
@@ -61,9 +61,9 @@ print(llm_response)
 hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
-f_lang_match = Feedback(hugs.language_match).on(
-    text1=Select.RecordInput, text2=Select.RecordOutput
-)
+f_lang_match = Feedback(hugs.language_match).on_input_output()
+# By default this will check language match on the main app input and main app
+# output.
 
 # ## Instrument chain for logging with TruLens
 
@@ -250,7 +250,7 @@ tru.stop_evaluator()
 # The process for adding new feedback functions is:
 # 1. Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class. Add the new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).
 
-from trulens_eval import Provider
+from trulens_eval import Provider, Feedback, Select, Tru
 
 
 class StandAlone(Provider):
@@ -277,6 +277,7 @@ my_feedback_function_standalone = Feedback(
 
 # 3. Your feedback function is now ready to use just like the out of the box feedback functions. Below is an example of it being used.
 
+tru = Tru()
 feedback_results = tru.run_feedback_functions(
     record=record, feedback_functions=[my_feedback_function_standalone]
 )
