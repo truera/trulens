@@ -34,7 +34,7 @@ from trulens_eval.util import jsonify
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LANGCHAIN
 from trulens_eval.util import SerialModel
-from trulens_eval.util import TP
+from trulens_eval.util import TP, UNICODE_CHECK
 
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     from langchain.callbacks import get_openai_callback
@@ -115,13 +115,67 @@ class Feedback(FeedbackDefinition):
         self.agg = agg
 
         # Verify that `imp` expects the arguments specified in `selectors`:
-        if self.imp is not None and self.selectors is not None:
-            sig: Signature = signature(self.imp)
-            for argname in self.selectors.keys():
-                assert argname in sig.parameters, (
-                    f"{argname} is not an argument to {self.imp.__name__}. "
-                    f"Its arguments are {list(sig.parameters.keys())}."
-                )
+        if self.imp is not None:
+            if self.selectors is not None:
+                sig: Signature = signature(self.imp)
+                for argname in self.selectors.keys():
+                    assert argname in sig.parameters, (
+                        f"{argname} is not an argument to {self.imp.__name__}. "
+                        f"Its arguments are {list(sig.parameters.keys())}."
+                    )
+            else:
+                self._default_selectors()
+
+    def on_input_output(self):
+        return self.on_input().on_output()
+
+    def on_default(self):
+        ret = Feedback().parse_obj(self)
+        ret._default_selectors()
+        return ret
+
+    def _print_guessed_selector(self, par_name, par_path):
+        if par_path == Query.RecordCalls:
+            alias_info = f" or `Query.RecordCalls`"
+        elif par_path == Query.RecordInput:
+            alias_info = f" or `Query.RecordInput`"
+        elif par_path == Query.RecordOutput:
+            alias_info = f" or `Query.RecordOutput`"
+        else:
+            alias_info = ""
+
+        print(f"{UNICODE_CHECK} In {self.name}, input {par_name} will be set to {par_path}{alias_info} .")
+
+    def _default_selectors(self):
+        """
+        Fill in default selectors for any remaining feedback function arguments.
+        """
+
+        assert self.imp is not None, "Feedback function implementation is required to determine default argument names."
+
+        sig: Signature = signature(self.imp)
+        par_names = list(k for k in sig.parameters.keys() if k not in self.selectors)
+
+        if len(par_names) == 1:
+            # A single argument remaining. Assume it is record output.
+            selectors = {
+                par_names[0]:
+                Query.RecordOutput
+            }
+            self._print_guessed_selector(par_names[0], Query.RecordOutput)
+        elif len(par_names) == 2:
+            # Two arguments remaining. Assume they are record input and output
+            # respectively.
+            selectors = {
+                par_names[0]: Query.RecordInput,
+                par_names[1]: Query.RecordOutput
+            }
+            self._print_guessed_selector(par_names[0], Query.RecordInput)
+            self._print_guessed_selector(par_names[1], Query.RecordOutput)
+        else:
+            selectors = None
+
+        self.selectors = selectors
 
     @staticmethod
     def evaluate_deferred(tru: 'Tru'):
@@ -195,11 +249,27 @@ class Feedback(FeedbackDefinition):
 
         return Feedback(imp=imp_func, agg=agg_func, **f.dict())
 
-    def on_prompt(self, arg: str = "text"):
+    def _next_unselected_arg_name(self):
+        if self.imp is not None:
+            sig = signature(self.imp)
+            # Assume prompt is to be the next not yet specified argument (in
+            # self.selectors) to self.imp.
+            par_names = list(k for k in sig.parameters.keys() if ((k not in self.selectors) if self.selectors is not None else True))
+            return par_names[0]
+        else:
+            raise RuntimeError(
+                "Cannot determine name of feedback function parameter without its definition."
+            )
+
+    def on_prompt(self, arg: Optional[str] = None):
         """
         Create a variant of `self` that will take in the main app input or
         "prompt" as input, sending it as an argument `arg` to implementation.
         """
+
+        if arg is None:
+            arg = self._next_unselected_arg_name()
+            self._print_guessed_selector(arg, Query.RecordInput)
 
         return Feedback(
             imp=self.imp, selectors={arg: Query.RecordInput}, agg=self.agg
@@ -207,11 +277,15 @@ class Feedback(FeedbackDefinition):
 
     on_input = on_prompt
 
-    def on_response(self, arg: str = "text"):
+    def on_response(self, arg: Optional[str] = None):
         """
         Create a variant of `self` that will take in the main app output or
         "response" as input, sending it as an argument `arg` to implementation.
         """
+
+        if arg is None:
+            arg = self._next_unselected_arg_name()
+            self._print_guessed_selector(arg, Query.RecordOutput)
 
         return Feedback(
             imp=self.imp, selectors={arg: Query.RecordOutput}, agg=self.agg
@@ -219,12 +293,23 @@ class Feedback(FeedbackDefinition):
 
     on_output = on_response
 
-    def on(self, **selectors):
+    def on(self, *args, **kwargs):
         """
-        Create a variant of `self` with the same implementation but the given `selectors`.
+        Create a variant of `self` with the same implementation but the given
+        selectors. Those provided positionally get their implementation argument
+        name guessed and those provided as kwargs get their name from the kwargs
+        key.
         """
 
-        return Feedback(imp=self.imp, selectors=selectors, agg=self.agg)
+        new_selectors = self.selectors.copy()
+        new_selectors.update(kwargs)
+
+        for path in args:
+            argname = self._next_unselected_arg_name()
+            new_selectors[argname] = path
+            self._print_guessed_selector(argname, path)
+        
+        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg)
 
     def run(
         self, app: Union[AppDefinition, JSON], record: Record

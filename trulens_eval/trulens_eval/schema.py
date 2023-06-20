@@ -186,6 +186,8 @@ class Query:
     RecordInput = Record.main_input
     RecordOutput = Record.main_output
 
+    RecordCalls = Record.app
+
 
 class FeedbackResultStatus(Enum):
     NONE = "none"
@@ -251,7 +253,7 @@ class FeedbackDefinition(SerialModel):
 
     # Selectors, pointers into Records of where to get
     # arguments for `imp`.
-    selectors: Optional[Dict[str, JSONPath]] = None
+    selectors: Dict[str, JSONPath]
 
     def __init__(
         self,
@@ -272,6 +274,8 @@ class FeedbackDefinition(SerialModel):
         - aggregator: Optional[Union[Function, Method]] -- serialized
           aggregation function.
         """
+
+        selectors = selectors or dict()
 
         super().__init__(
             feedback_definition_id="temporary",
