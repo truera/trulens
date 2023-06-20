@@ -159,6 +159,10 @@ def third(seq: Sequence[T]) -> T:
     return seq[2]
 
 
+def dict_set_with(dict1: Dict, dict2: Dict):
+    dict1.update(dict2)
+    return dict1
+
 # Generator utils
 
 
@@ -205,12 +209,7 @@ def noserio(obj, **extra: Dict) -> dict:
     additional keyword arguments are included.
     """
 
-    inner = {
-        "id": id(obj),
-        "class": obj.__class__.__name__,
-        "module": obj.__class__.__module__,
-        "bases": list(map(lambda b: b.__name__, obj.__class__.__bases__))
-    }
+    inner = Obj.of_object(obj).dict()
     inner.update(extra)
 
     return {NOSERIO: inner}
@@ -254,18 +253,77 @@ def json_default(obj: Any) -> str:
 # Field/key name used to indicate a circular reference in jsonified objects.
 CIRCLE = "__tru_circular_reference"
 
+# Field/key name used to indicate an exception in property retrieval (properties
+# execute code in property.fget).
+ERROR = "__tru_property_error"
+
+# Key of structure where class information is stored. See WithClassInfo mixin.
+CLASS_INFO = "__tru_class_info"
+
+ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
 
 def _safe_getattr(obj, k):
-    try:
-        return getattr(obj, k)
-    except Exception as e:
-        return dict(error=str(e))
+    v = inspect.getattr_static(obj, k)
+
+    if isinstance(v, property):
+        try:
+            v = v.fget(obj)
+            return v
+        except Exception as e:
+            return {ERROR: ObjSerial.of_object(e)}
+    else:
+        return v
+
+def _clean_attributes(obj):
+    keys = dir(obj)
+
+    ret = {}
+
+    for k in keys:
+        if k.startswith("__"):
+            # These are typically very internal components not meant to be
+            # exposed beyond immediate definitions. Ignoring these.
+            continue
+
+        if k.startswith("_") and k[1:] in keys:
+            # Objects often have properties named `name` with their values
+            # coming from `_name`. Lets avoid including both the property and
+            # the value.
+            continue
+
+        v = _safe_getattr(obj, k)
+        ret[k] = v
+            
+    return ret
 
 
 # TODO: refactor to somewhere else or change instrument to a generic filter
-def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
+def jsonify(
+        obj: Any,
+        dicted: Optional[Dict[int, JSON]]=None,
+        instrument: Optional['Instrument'] = None,
+        skip_specials: bool = False
+    ) -> JSON:
     """
     Convert the given object into types that can be serialized in json.
+
+    Args:
+
+        - obj: Any -- the object to jsonify.
+
+        - dicted: Optional[Dict[int, JSON]] -- the mapping from addresses of
+          already jsonifed objects (via id) to their json.
+
+        - instrument: Optional[Instrument] -- instrumentation functions for
+          checking whether to recur into components of `obj`.
+
+        - skip_specials: bool (default is False) -- if set, will remove
+          specially keyed structures from the json. These have keys that start
+          with "__tru_".
+
+    Returns:
+
+        JSON | Sequence[JSON]
     """
 
     from trulens_eval.instruments import Instrument
@@ -273,8 +331,17 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
     instrument = instrument or Instrument()
     dicted = dicted or dict()
 
+    if skip_specials:
+        recur_key = lambda k: k not in ALL_SPECIAL_KEYS
+    else:
+        recur_key = lambda k: True
+
     if id(obj) in dicted:
-        return {CIRCLE: id(obj)}
+        if skip_specials:
+            return None
+        else:
+            return {CIRCLE: id(obj)}
+        
 
     if isinstance(obj, JSON_BASES):
         return obj
@@ -288,7 +355,7 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
     # TODO: should we include duplicates? If so, dicted needs to be adjusted.
     new_dicted = {k: v for k, v in dicted.items()}
 
-    recur = lambda o: jsonify(obj=o, dicted=new_dicted, instrument=instrument)
+    recur = lambda o: jsonify(obj=o, dicted=new_dicted, instrument=instrument, skip_specials=skip_specials)
 
     if isinstance(obj, Enum):
         return obj.name
@@ -296,7 +363,7 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
     if isinstance(obj, Dict):
         temp = {}
         new_dicted[id(obj)] = temp
-        temp.update({k: recur(v) for k, v in obj.items()})
+        temp.update({k: recur(v) for k, v in obj.items() if recur_key(k)})
         return temp
 
     elif isinstance(obj, Sequence):
@@ -321,11 +388,11 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
             {
                 k: recur(_safe_getattr(obj, k))
                 for k, v in obj.__fields__.items()
-                if not v.field_info.exclude
+                if not v.field_info.exclude and recur_key(k)
             }
         )
         if instrument.to_instrument_object(obj):
-            temp['class_info'] = Class.of_class(
+            temp[CLASS_INFO] = Class.of_class(
                 cls=obj.__class__, with_bases=True
             ).dict()
 
@@ -335,13 +402,13 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
         temp = {}
         new_dicted[id(obj)] = temp
 
-        kvs = {k: _safe_getattr(obj, k) for k in dir(obj)}
+        kvs = _clean_attributes(obj)
 
         temp.update(
             {
-                k: recur(v)  # TODO: static
+                k: recur(v)
                 for k, v in kvs.items()
-                if not k.startswith("__") and (
+                if recur_key(k) and (
                     isinstance(v, JSON_BASES) or isinstance(v, Dict) or
                     isinstance(v, Sequence) or
                     instrument.to_instrument_object(v)
@@ -350,7 +417,7 @@ def jsonify(obj: Any, dicted=None, instrument: 'Instrument' = None) -> JSON:
         )
 
         if instrument.to_instrument_object(obj):
-            temp['class_info'] = Class.of_class(
+            temp[CLASS_INFO] = Class.of_class(
                 cls=obj.__class__, with_bases=True
             ).dict()
 
@@ -499,10 +566,10 @@ class SerialModel(pydantic.BaseModel):
     def model_validate(cls, obj: Any, **kwargs):
         print("serial_model.model_validate")
         if isinstance(obj, dict):
-            if "class_info" in obj:
+            if CLASS_INFO in obj:
                 print(f"Creating model with class info from {obj}.")
-                cls = Class(**obj['class_info'])
-                del obj['class_info']
+                cls = Class(**obj[CLASS_INFO])
+                del obj[CLASS_INFO]
                 model = cls.model_validate(obj, **kwargs)
 
                 return WithClassInfo.of_model(model=model, cls=cls)
@@ -828,6 +895,9 @@ class JSONPath(SerialModel):
     def __len__(self):
         return len(self.path)
 
+    def is_immediate_prefix_of(self, other: JSONPath):
+        return self.is_prefix_of(other) and len(self.path) + 1 == len(other.path)
+
     def is_prefix_of(self, other: JSONPath):
         p = self.path
         pother = other.path
@@ -1128,6 +1198,17 @@ class Class(SerialModel):
     def __str__(self):
         return f"{self.name}({self.module.module_name})"
 
+    def base_class(self) -> 'Class':
+        """
+        Get the deepest base class in the same module as this class.
+        """
+        module_name = self.module.module_name
+        for base in self.bases[::-1]:
+            if base.module.module_name == module_name:
+                return base
+            
+        return self
+
     @staticmethod
     def of_class(
         cls: type, with_bases: bool = False, loadable: bool = False
@@ -1146,6 +1227,12 @@ class Class(SerialModel):
         return Class.of_class(
             cls=obj.__class__, with_bases=with_bases, loadable=loadable
         )
+
+    @staticmethod
+    def of_json(json: JSON):
+        assert CLASS_INFO in json, "Class info not in json."
+
+        return Class(**json[CLASS_INFO])
 
     def load(self) -> type:  # class
         try:
@@ -1166,8 +1253,19 @@ class Class(SerialModel):
 
         return False
 
+# inspect.signature does not work on builtin type constructors but they are used
+# like this method. Use it to create a signature of a builtin constructor.
+def builtin_init_dummy(self, /, *args, **kwargs):
+    pass
+
+builtin_init_sig = inspect.signature(builtin_init_dummy)
 
 class Obj(SerialModel):
+    # TODO: refactor this into something like WithClassInfo, perhaps
+    # WithObjectInfo, and store required constructor inputs as attributes with
+    # potentially a placeholder for additional arguments that are not
+    # attributes, under a special key like "__tru_object_info".
+
     """
     An object that may or may not be serializable. Do not use for base types
     that don't have a class.
@@ -1175,7 +1273,7 @@ class Obj(SerialModel):
 
     cls: Class
 
-    # From id(obj), identifiers memory location of a python object. Use this for
+    # From id(obj), identifies memory location of a python object. Use this for
     # handling loops in JSON objects.
     id: int
 
@@ -1212,44 +1310,76 @@ class Obj(SerialModel):
         return Obj(cls=Class.of_class(cls), id=id(obj))
 
     def load(self) -> object:
-        pp.pprint("Trying to load an object not intended to be loaded.")
-        pp.pprint(self.dict())
         raise RuntimeError(
-            "Trying to load an object not intended to be loaded."
+            f"Trying to load an object without constructor arguments: {pp.pformat(self.dict())}."
         )
 
+
+class Bindings(SerialModel):
+    args: Tuple
+    kwargs: Dict[str, Any]
+
+    @staticmethod
+    def of_bound_arguments(b: inspect.BoundArguments) -> Bindings:
+        return Bindings(args=b.args, kwargs=b.kwargs)
+    
+    def load(self, sig: inspect.Signature):
+        return sig.bind(*self.args, **self.kwargs)
+
+def _safe_init_sig(cls):
+    """
+    Get the signature of the constructor method of the given class `cls`. If it is
+    a builtin class, this typically raises an exeception in which case we return
+    a generic signature that seems typical of builtin constructors.
+    """
+
+    try:
+        return inspect.signature(cls)
+    except Exception as e:
+        return builtin_init_sig
 
 class ObjSerial(Obj):
     """
     Object that can be deserialized, or at least intended to be deserialized.
     Stores additional information beyond the class that can be used to
-    deserialize it.
+    deserialize it, the constructor bindings.
     """
 
-    # For objects that can be easily reconstructed, provide their kwargs here.
-    init_kwargs: Optional[Dict] = None
+    init_bindings: Bindings
 
     @staticmethod
     def of_object(obj: object, cls: Optional[type] = None) -> 'Obj':
         if cls is None:
             cls = obj.__class__
 
+        # Constructor arguments for some common types.
         if isinstance(obj, pydantic.BaseModel):
+            init_args = ()
             init_kwargs = obj.dict()
+        elif isinstance(obj, Exception):
+            init_args = obj.args
+            init_kwargs = {}
         else:
-            init_kwargs = None
+            init_args = ()
+            init_kwargs = {}
+        # TODO: dataclasses
+        # TODO: dataclasses_json
+
+        sig = _safe_init_sig(cls)
+        b = sig.bind(*init_args, **init_kwargs)
+        bindings = Bindings.of_bound_arguments(b)
 
         return ObjSerial(
-            cls=Class.of_class(cls), id=id(obj), init_kwargs=init_kwargs
+            cls=Class.of_class(cls), id=id(obj), init_bindings=bindings
         )
 
     def load(self) -> object:
         cls = self.cls.load()
 
-        if issubclass(cls, pydantic.BaseModel) and self.init_kwargs is not None:
-            return cls(**self.init_kwargs)
-        else:
-            raise RuntimeError(f"Do not know how to load object {self}.")
+        sig = _safe_init_sig(cls)
+        bindings = self.init_bindings.load(sig)
+
+        return cls(*bindings.args, **bindings.kwargs)
 
 
 class FunctionOrMethod(SerialModel):
@@ -1357,13 +1487,17 @@ class Function(FunctionOrMethod):
             return getattr(mod, self.name)
 
 
+
+
 class WithClassInfo(pydantic.BaseModel):
     """
     Mixin to track class information to aid in querying serialized components
     without having to load them.
     """
 
-    class_info: Class
+    # Using this odd key to not pollute attribute names in whatever class we mix
+    # this into. Should be the same as CLASS_INFO.
+    __tru_class_info: Class
 
     def __init__(
         self,
@@ -1379,7 +1513,7 @@ class WithClassInfo(pydantic.BaseModel):
             assert cls is not None, "Either `class_info`, `obj` or `cls` need to be specified."
             class_info = Class.of_class(cls, with_bases=True)
 
-        super().__init__(class_info=class_info, **kwargs)
+        super().__init__(__tru_class_info=class_info, **kwargs)
 
     @staticmethod
     def of_object(obj: object):
@@ -1403,23 +1537,3 @@ def get_owner_of_method(cls, method_name) -> type:
     # TODO
 
     return cls
-
-
-# key/attribute indicating instrumented class information.
-CLASS_INFO = "class_info"
-
-
-def instrumented_classes(obj: object) -> Iterable[Tuple[JSONPath, Class, Any]]:
-    """
-    Iterate over contents of `obj` that are annotated with the `class_info`
-    attribute/key. Returns triples with the accessor/query, the Class object
-    instantiated from class_info, and the annotated object itself.
-    """
-
-    for q, o in all_objects(obj):
-        if isinstance(o, pydantic.BaseModel) and CLASS_INFO in o.__fields__:
-            yield q, getattr(o, CLASS_INFO), o
-
-        if isinstance(o, Dict) and CLASS_INFO in o:
-            ci = Class(**o[CLASS_INFO])
-            yield q, ci, o

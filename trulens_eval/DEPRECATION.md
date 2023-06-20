@@ -1,6 +1,21 @@
 # Deprecation Notes
 
-## Changes in 0.2.0; to be deprecated at 1.0.0
+## Changes in 0.2.2
+
+### Breaking changes to databases
+
+- json serialization of WithClassInfo mixin
+    - key "class_info" renamed to "__tru_class_info"
+
+- json serialization of ObjSerial class
+    - init_kwargs expanded into init_bindings, serialized by a new class
+      Bindings, containing both args and kwargs
+
+## Changes in 0.2.0
+
+### Backwards compatible changes
+
+Backwards compatibility will be removed in 0.3.0 at earliest.
 
 - file tru_feedback.py renamed to feedback.py
 
@@ -13,4 +28,8 @@
 - in file schema.py
     - class App renamed to AppDefinition
 
-Old files and classes should function with a warning until 1.0.0 .
+### Breaking changes to databases
+
+- db schema changes
+
+    - chain_id renamed to app_id

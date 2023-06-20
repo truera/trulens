@@ -16,7 +16,7 @@ FeedbackDefinition | Feedback
 App.app is the JSONized version of a wrapped app while TruApp.app is the actual
 wrapped app. We can thus inspect the contents of a wrapped app without having to
 construct it. Additionally, JSONized objects like App.app feature information
-about the encoded object types in the dictionary under the `class_info` key.
+about the encoded object types in the dictionary under the util.py:CLASS_INFO key.
 
 """
 
