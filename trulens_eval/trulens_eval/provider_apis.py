@@ -5,12 +5,13 @@ from multiprocessing import Queue
 from threading import Thread
 from time import sleep
 from types import ModuleType
-from typing import Any, Callable, Optional, Sequence, Tuple, TypeVar
+from typing import Any, Callable, Optional, Sequence, Tuple, Type, TypeVar
 import pydantic
 
 import requests
 
 from trulens_eval.db import JSON
+from trulens_eval.trulens_eval.schema import Cost
 from trulens_eval.util import SerialModel, get_local_in_call_stack
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import TP
@@ -23,6 +24,50 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 INSTRUMENT = "__tru_instrument"
+
+class EndpointCallback(SerialModel):
+    """
+    Callbacks to be invoked after various API requests and track various metrics
+    like token usage.
+    """
+
+    cost: Cost
+
+    def handle(self, response: Any) -> None:
+        self.cost.n_requests += 1
+
+    def handle_generation(self, response: Any) -> None:
+        self.handle(response)
+
+    def handle_classification(self, response: Any) -> None:
+        self.handle(response)
+
+class HuggingfaceCallback(EndpointCallback):
+    def handle_classification(self, response: Any) -> None:
+        super().handle_classification(response)
+    
+        # TODO: check for success and increment appropriate cost field
+        # TODO: get number of class scores and increment appropriate cost field
+
+
+class OpenAICallback(EndpointCallback):
+    langchain_handler: OpenAICallbackHandler
+
+    def handle_generation(self, response: Any) -> None:
+        super().handle_generation(response)
+
+        self.langchain_handler.on_llm_end(response)
+
+        # Copy over the langchain handler fields we also have.
+        for cost_field, langchain_field in [
+            ("cost", "total_cost"),
+            ("n_tokens", "total_tokens"),
+            ("n_successful_requests", "successful_requests"),
+            ("n_prompt_tokens", "prompt_tokens"),
+            ("n_completion_tokens", "completion_tokens")
+        ]:
+            setattr(self.cost, cost_field, getattr(self.langchain_handler, langchain_field))
+        
 
 class Endpoint(SerialModel, SingletonPerName):
     class Config:
@@ -44,10 +89,10 @@ class Endpoint(SerialModel, SingletonPerName):
     _pace: Queue = pydantic.Field(default_factory=lambda: Queue(maxsize=10))
 
     # Track costs not run inside "track_cost" here.
-    _global_callback: Any # of type _callback_class
+    _global_callback: EndpointCallback # of type _callback_class
 
     # Callback class to use for usage tracking
-    _callback_class: type
+    _callback_class: Type[EndpointCallback]
 
     # Name of variable that stores the callback noted above.
     _callback_name: str
@@ -212,7 +257,7 @@ class Endpoint(SerialModel, SingletonPerName):
                 offset=0
             )
 
-            self.global_callback.on_llm_end(response=llm_res)
+            self.global_callback.handle_generation(response=llm_res)
             
             if cb is not None:
                 cb.on_llm_end(response=llm_res)
@@ -230,16 +275,31 @@ class Endpoint(SerialModel, SingletonPerName):
 
 class OpenAIEndpoint(Endpoint):
     """
-    Track openai uses. This makes use of langchain OpenAICallbackHandler for
-    extracting and tallying various openai API response content.
+    OpenAI endpoint. Instruments "create" methodsin openai.* classes.
     """
 
     def __init__(self, *args, **kwargs):
         kwargs['name'] = "openai"
-        kwargs['_callback_class'] = OpenAICallbackHandler
+        kwargs['_callback_class'] = OpenAICallback
 
         super().__init__(*args, **kwargs)
 
         import openai
 
         self._instrument_module(openai, "create")
+
+
+class HuggingfaceEndpoint(Endpoint):
+    """
+    OpenAI endpoint. Instruments "create" methodsin openai.* classes.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs['name'] = "huggingface"
+        kwargs['_callback_class'] = HuggingfaceCallback
+
+        super().__init__(*args, **kwargs)
+
+        # TODO: what to instrument here?
+        # import openai
+        # self._instrument_module(openai, "create")
