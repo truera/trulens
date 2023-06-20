@@ -10,7 +10,7 @@ serialized into json. Most are extended with non-serialized fields in other file
 
 Serializable       | Non-serializable
 -------------------+---------------------------
-AppDefinition               | TruApp, TruChain, TruLlama
+AppDefinition      | TruApp, TruChain, TruLlama
 FeedbackDefinition | Feedback
 
 App.app is the JSONized version of a wrapped app while TruApp.app is the actual
