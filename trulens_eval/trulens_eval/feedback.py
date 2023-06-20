@@ -116,16 +116,13 @@ class Feedback(FeedbackDefinition):
 
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:
-            if self.selectors is not None:
-                sig: Signature = signature(self.imp)
-                for argname in self.selectors.keys():
-                    assert argname in sig.parameters, (
-                        f"{argname} is not an argument to {self.imp.__name__}. "
-                        f"Its arguments are {list(sig.parameters.keys())}."
-                    )
-            else:
-                self._default_selectors()
-
+            sig: Signature = signature(self.imp)
+            for argname in self.selectors.keys():
+                assert argname in sig.parameters, (
+                    f"{argname} is not an argument to {self.imp.__name__}. "
+                    f"Its arguments are {list(sig.parameters.keys())}."
+                )
+        
     def on_input_output(self):
         return self.on_input().on_output()
 
