@@ -170,7 +170,10 @@ class Feedback(FeedbackDefinition):
             self._print_guessed_selector(par_names[0], Query.RecordInput)
             self._print_guessed_selector(par_names[1], Query.RecordOutput)
         else:
-            selectors = None
+            raise RuntimeError(
+                f"Cannot determine default paths for feedback function arguments. "
+                f"The feedback function has signature {sig}."
+            )
 
         self.selectors = selectors
 
