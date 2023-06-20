@@ -122,7 +122,7 @@ class Feedback(FeedbackDefinition):
                     f"{argname} is not an argument to {self.imp.__name__}. "
                     f"Its arguments are {list(sig.parameters.keys())}."
                 )
-        
+
     def on_input_output(self):
         return self.on_input().on_output()
 
@@ -141,7 +141,9 @@ class Feedback(FeedbackDefinition):
         else:
             alias_info = ""
 
-        print(f"{UNICODE_CHECK} In {self.name}, input {par_name} will be set to {par_path}{alias_info} .")
+        print(
+            f"{UNICODE_CHECK} In {self.name}, input {par_name} will be set to {par_path}{alias_info} ."
+        )
 
     def _default_selectors(self):
         """
@@ -151,14 +153,13 @@ class Feedback(FeedbackDefinition):
         assert self.imp is not None, "Feedback function implementation is required to determine default argument names."
 
         sig: Signature = signature(self.imp)
-        par_names = list(k for k in sig.parameters.keys() if k not in self.selectors)
+        par_names = list(
+            k for k in sig.parameters.keys() if k not in self.selectors
+        )
 
         if len(par_names) == 1:
             # A single argument remaining. Assume it is record output.
-            selectors = {
-                par_names[0]:
-                Select.RecordOutput
-            }
+            selectors = {par_names[0]: Select.RecordOutput}
             self._print_guessed_selector(par_names[0], Select.RecordOutput)
 
         elif len(par_names) == 2:
@@ -255,7 +256,9 @@ class Feedback(FeedbackDefinition):
     def _next_unselected_arg_name(self):
         if self.imp is not None:
             sig = signature(self.imp)
-            par_names = list(k for k in sig.parameters.keys() if k not in self.selectors)
+            par_names = list(
+                k for k in sig.parameters.keys() if k not in self.selectors
+            )
             return par_names[0]
         else:
             raise RuntimeError(
@@ -276,9 +279,7 @@ class Feedback(FeedbackDefinition):
 
         new_selectors[arg] = Select.RecordInput
 
-        return Feedback(
-            imp=self.imp, selectors=new_selectors, agg=self.agg
-        )
+        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg)
 
     on_input = on_prompt
 
@@ -296,9 +297,7 @@ class Feedback(FeedbackDefinition):
 
         new_selectors[arg] = Select.RecordOutput
 
-        return Feedback(
-            imp=self.imp, selectors=new_selectors, agg=self.agg
-        )
+        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg)
 
     on_output = on_response
 
@@ -317,7 +316,7 @@ class Feedback(FeedbackDefinition):
             argname = self._next_unselected_arg_name()
             new_selectors[argname] = path
             self._print_guessed_selector(argname, path)
-        
+
         return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg)
 
     def run(

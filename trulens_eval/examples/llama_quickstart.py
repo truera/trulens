@@ -19,7 +19,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 # ### Import from LlamaIndex and TruLens
 
 # Imports main tools:
-from trulens_eval import TruLlama, Feedback, Huggingface, Tru, Query
+from trulens_eval import TruLlama, Feedback, Huggingface, Tru
 
 tru = Tru()
 
@@ -30,10 +30,10 @@ tru = Tru()
 # LLama Index starter example from: https://gpt-index.readthedocs.io/en/latest/getting_started/starter_example.html
 # In order to run this, download into data/ Paul Graham's Essay 'What I Worked On' from https://github.com/jerryjliu/llama_index/blob/main/examples/paul_graham_essay/data/paul_graham_essay.txt
 
-from llama_index import GPTVectorStoreIndex, SimpleDirectoryReader
+from llama_index import VectorStoreIndex, SimpleDirectoryReader
 
 documents = SimpleDirectoryReader('data').load_data()
-index = GPTVectorStoreIndex.from_documents(documents)
+index = VectorStoreIndex.from_documents(documents)
 
 query_engine = index.as_query_engine()
 
@@ -48,9 +48,9 @@ print(response)
 hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
-f_lang_match = Feedback(hugs.language_match).on(
-    text1=Query.RecordInput, text2=Query.RecordOutput
-)
+f_lang_match = Feedback(hugs.language_match).on_input_output()
+# By default this will check language match on the main app input and main app
+# output.
 
 # ## Instrument chain for logging with TruLens
 
