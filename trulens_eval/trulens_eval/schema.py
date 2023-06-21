@@ -190,8 +190,10 @@ class Select:
 
     RecordCalls: Query = Record.app
 
+
 # To deprecate in 1.0.0:
 Query = Select
+
 
 class FeedbackResultStatus(Enum):
     NONE = "none"
@@ -337,7 +339,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
     feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD
 
     # Class of the main instrumented object.
-    root_class: Class # TODO: make classvar
+    root_class: Class  # TODO: make classvar
 
     # App's main method. To be filled in by subclass. Want to make this abstract
     # but this causes problems when trying to load an AppDefinition from json.
@@ -373,15 +375,21 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         Get the path to the main app's call inputs.
         """
 
-        return getattr(Select.RecordCalls, cls.root_callable.default_factory().name).args
-        
+        return getattr(
+            Select.RecordCalls,
+            cls.root_callable.default_factory().name
+        ).args
+
     @classmethod
     def select_outputs(cls) -> JSONPath:
         """
         Get the path to the main app's call outputs.
         """
 
-        return getattr(Select.RecordCalls, cls.root_callable.default_factory().name).rets
+        return getattr(
+            Select.RecordCalls,
+            cls.root_callable.default_factory().name
+        ).rets
 
 
 class App(AppDefinition):
