@@ -29,6 +29,7 @@ from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Select
 from trulens_eval.db import JSON
 from trulens_eval.db import Record
+from trulens_eval.util import UNICODE_YIELD, UNICODE_CHECK, UNICODE_STOP
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
 from trulens_eval.util import OptionalImports
@@ -202,8 +203,13 @@ class Feedback(FeedbackDefinition):
         feedbacks = db.get_feedback()
 
         for i, row in feedbacks.iterrows():
+            feedback_ident = f"{row.fname} for app {row.app_json['app_id']}, record {row.record_id}"
+
             if row.status == FeedbackResultStatus.NONE:
-                tqdm.write(f"Starting run for row {i}.")
+
+                tqdm.write(
+                    f"{UNICODE_YIELD} Feedback task starting: {feedback_ident}"
+                )
 
                 TP().runlater(prepare_feedback, row)
 
@@ -211,26 +217,26 @@ class Feedback(FeedbackDefinition):
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 30:
                     tqdm.write(
-                        f"Incomplete row {i} last made progress over 30 seconds ago. Retrying."
+                        f"{UNICODE_YIELD} Feedback task last made progress over 30 seconds ago. Retrying: {feedback_ident}"
                     )
                     TP().runlater(prepare_feedback, row)
 
                 else:
                     tqdm.write(
-                        f"Incomplete row {i} last made progress less than 30 seconds ago. Giving it more time."
+                        f"{UNICODE_STOP} Feedback task last made progress less than 30 seconds ago. Giving it more time: {feedback_ident}"
                     )
 
             elif row.status in [FeedbackResultStatus.FAILED]:
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 60 * 5:
                     tqdm.write(
-                        f"Failed row {i} last made progress over 5 minutes ago. Retrying."
+                        f"{UNICODE_YIELD} Feedback task last made progress over 5 minutes ago. Retrying: {feedback_ident}"
                     )
                     TP().runlater(prepare_feedback, row)
 
                 else:
                     tqdm.write(
-                        f"Failed row {i} last made progress less than 5 minutes ago. Not touching it for now."
+                        f"{UNICODE_STOP} Feedback task last made progress less than 5 minutes ago. Not touching it for now: {feedback_ident}"
                     )
 
             elif row.status == FeedbackResultStatus.DONE:
@@ -364,7 +370,11 @@ class Feedback(FeedbackDefinition):
                     total_cost += cb.total_cost
 
             result_vals = np.array(result_vals)
-            result = self.agg(result_vals)
+            if len(result_vals) == 0:
+                logger.warning(f"Feedback function {self.name} with aggregation {self.agg} had no inputs.")
+                result = np.nan
+            else:
+                result = self.agg(result_vals)
 
             feedback_result.update(
                 result=result,
