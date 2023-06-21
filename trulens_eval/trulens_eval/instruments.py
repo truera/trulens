@@ -240,9 +240,7 @@ import logging
 import os
 from pprint import PrettyPrinter
 import threading as th
-from typing import (
-    Callable, Dict, Iterable, Optional, Sequence, Set
-)
+from typing import (Callable, Dict, Iterable, Optional, Sequence, Set)
 
 from pydantic import BaseModel
 
@@ -280,10 +278,7 @@ class Instrument(object):
         # Methods to instrument. Methods matching name have to pass the filter
         # to be instrumented. TODO: redesign this to be a dict with classes
         # leading to method names instead.
-        METHODS = {
-            "__call__":
-                lambda o: isinstance(o, Feedback)
-        }
+        METHODS = {"__call__": lambda o: isinstance(o, Feedback)}
 
     def to_instrument_object(self, obj: object) -> bool:
         """
@@ -295,7 +290,7 @@ class Instrument(object):
         # avoid issublcass checks.
         return any(isinstance(obj, cls) for cls in self.classes)
 
-    def to_instrument_class(self, cls: type) -> bool: # class
+    def to_instrument_class(self, cls: type) -> bool:  # class
         """
         Determine whether the given class should be instrumented.
         """

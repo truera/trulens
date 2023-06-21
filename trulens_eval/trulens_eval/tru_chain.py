@@ -2,14 +2,16 @@
 # Langchain instrumentation and monitoring.
 """
 
+from pydantic import Field
 from datetime import datetime
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Dict, List, Sequence, Union
+from typing import Any, ClassVar, Dict, List, Sequence, Union
 
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.app import App
+from trulens_eval.util import FunctionOrMethod
 from trulens_eval.utils.langchain import constructor_of_class
 from trulens_eval.util import Class
 from trulens_eval.util import jsonify
@@ -35,13 +37,10 @@ class LangChainInstrument(Instrument):
 
         # Thunk because langchain is optional.
         CLASSES = lambda: {
-            langchain.chains.base.Chain,
-            langchain.vectorstores.base.BaseRetriever,
-            langchain.schema.BaseRetriever,
-            langchain.llms.base.BaseLLM,
-            langchain.prompts.base.BasePromptTemplate,
-            langchain.schema.BaseMemory,
-            langchain.schema.BaseChatMessageHistory
+            langchain.chains.base.Chain, langchain.vectorstores.base.
+            BaseRetriever, langchain.schema.BaseRetriever, langchain.llms.base.
+            BaseLLM, langchain.prompts.base.BasePromptTemplate, langchain.schema
+            .BaseMemory, langchain.schema.BaseChatMessageHistory
         }
 
         # Instrument only methods with these names and of these classes.
@@ -101,6 +100,11 @@ class TruChain(App):
 
     app: Chain
 
+    root_callable: ClassVar[FunctionOrMethod] = Field(
+        default_factory = lambda: FunctionOrMethod.of_callable(TruChain._call),
+        const=True
+    )
+
     # Normally pydantic does not like positional args but chain here is
     # important enough to make an exception.
     def __init__(self, app: Chain, **kwargs):
@@ -123,6 +127,7 @@ class TruChain(App):
 
         super().__init__(**kwargs)
 
+    
     # Chain requirement
     @property
     def _chain_type(self):

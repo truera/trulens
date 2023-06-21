@@ -33,10 +33,10 @@ otherwise you might get circular import errors.
     - `util.py` `keys.py`
 """
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 from trulens_eval.schema import FeedbackMode
-from trulens_eval.schema import Query
+from trulens_eval.schema import Query, Select
 from trulens_eval.tru import Tru
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.feedback import Feedback
@@ -54,5 +54,6 @@ __all__ = [
     'Huggingface',
     'FeedbackMode',
     'Provider',
-    'Query',
+    'Query', # to deprecate in 0.3.0
+    'Select'
 ]
