@@ -59,7 +59,7 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
 
 # Test Backwards Compat (TODO: Move this to CI/CD)
 import shutil
-shutil.copyfile("./release_dbs/0.1.2/default.sqlite", "./")
+shutil.copyfile("./release_dbs/0.1.2/default.sqlite", "./default.sqlite")
 
 if __name__ == '__main__':
     main()
