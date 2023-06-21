@@ -54,6 +54,6 @@ __all__ = [
     'Huggingface',
     'FeedbackMode',
     'Provider',
-    'Query', # to deprecate in 0.3.0
+    'Query',  # to deprecate in 0.3.0
     'Select'
 ]
