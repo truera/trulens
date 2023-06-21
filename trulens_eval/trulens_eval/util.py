@@ -569,10 +569,9 @@ class SerialModel(pydantic.BaseModel):
 
     @classmethod
     def model_validate(cls, obj: Any, **kwargs):
-        print("serial_model.model_validate")
         if isinstance(obj, dict):
             if CLASS_INFO in obj:
-                print(f"Creating model with class info from {obj}.")
+
                 cls = Class(**obj[CLASS_INFO])
                 del obj[CLASS_INFO]
                 model = cls.model_validate(obj, **kwargs)

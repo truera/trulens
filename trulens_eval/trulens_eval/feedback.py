@@ -29,7 +29,7 @@ from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Select
 from trulens_eval.db import JSON
 from trulens_eval.db import Record
-from trulens_eval.trulens_eval.provider_apis import HuggingfaceEndpoint, OpenAIEndpoint
+from trulens_eval.provider_apis import HuggingfaceEndpoint, OpenAIEndpoint
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
 from trulens_eval.util import OptionalImports
@@ -494,31 +494,7 @@ class Provider(SerialModel):
     class Config:
         arbitrary_types_allowed = True
 
-    endpoint: Optional[Endpoint] = pydantic.Field(exclude=True)
-    """
-    @staticmethod
-    def of_json(obj: Dict) -> 'Provider':
-        cls_name = obj['class_name']
-        mod_name = obj['module_name']  # ignored for now
-        check_provider(cls_name)
-
-        cls = eval(cls_name)
-        kwargs = {
-            k: v
-            for k, v in obj.items()
-            if k not in ['class_name', 'module_name']
-        }
-
-        return cls(**kwargs)
-
-    def to_json(self: 'Provider', **extras) -> Dict:
-        obj = {
-            'class_name': self.__class__.__name__,
-            'module_name': self.__class__.__module__
-        }
-        obj.update(**extras)
-        return obj
-    """
+    endpoint: Optional[Endpoint]
 
 
 class OpenAI(Provider):
