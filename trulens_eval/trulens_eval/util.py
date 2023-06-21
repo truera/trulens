@@ -53,8 +53,9 @@ pp = PrettyPrinter()
 
 T = TypeVar("T")
 
+UNICODE_STOP = "🛑"
 UNICODE_CHECK = "✅"
-UNCIODE_YIELD = "⚡"
+UNICODE_YIELD = "⚡"
 
 # Optional requirements.
 

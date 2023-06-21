@@ -33,7 +33,7 @@ from trulens_eval.util import JSON
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import JSONPath
 from trulens_eval.util import SerialModel
-from trulens_eval.util import UNCIODE_YIELD
+from trulens_eval.util import UNICODE_YIELD
 from trulens_eval.util import UNICODE_CHECK
 
 mj = MerkleJson()
@@ -393,7 +393,7 @@ class LocalSQLite(DB):
             )
         else:
             print(
-                f"{UNCIODE_YIELD} feedback {feedback_result.feedback_result_id} on {feedback_result.record_id} -> {self.filename}"
+                f"{UNICODE_YIELD} feedback {feedback_result.feedback_result_id} on {feedback_result.record_id} -> {self.filename}"
             )
 
     def get_feedback(
@@ -445,7 +445,7 @@ class LocalSQLite(DB):
                 f.last_ts,
                 f.status,
                 f.error,
-                f.name,
+                f.name as fname,
                 f.result, 
                 f.cost_json,
                 r.perf_json,

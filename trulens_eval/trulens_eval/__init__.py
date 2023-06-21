@@ -44,6 +44,7 @@ from trulens_eval.feedback import Huggingface
 from trulens_eval.feedback import OpenAI
 from trulens_eval.feedback import Provider
 from trulens_eval.tru_llama import TruLlama
+from trulens_eval.util import TP
 
 __all__ = [
     'Tru',
@@ -55,5 +56,6 @@ __all__ = [
     'FeedbackMode',
     'Provider',
     'Query',  # to deprecate in 0.3.0
-    'Select'
+    'Select',
+    'TP'
 ]

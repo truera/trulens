@@ -3,7 +3,7 @@ from multiprocessing import Queue
 # from queue import Queue
 from threading import Thread
 from time import sleep
-from typing import Any, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 import requests
 from tqdm.auto import tqdm
@@ -73,12 +73,23 @@ class Endpoint(SingletonPerName):
 
         j = ret.json()
 
-        # Huggingface public api sometimes tells us that a model is loading and how long to wait:
+        # Huggingface public api sometimes tells us that a model is loading and
+        # how long to wait:
         if "estimated_time" in j:
             wait_time = j['estimated_time']
             logger.error(f"Waiting for {j} ({wait_time}) second(s).")
             sleep(wait_time + 2)
             return self.post(url, payload)
+
+        if isinstance(j, Dict) and "error" in j:
+            error = j['error']
+            logger.error(f"API error: {j}.")
+            if error == "overloaded":
+                logger.error("Waiting for overloaded API before trying again.")
+                sleep(10.0)
+                return self.post(url, payload)
+            else:
+                raise RuntimeError(error)
 
         assert isinstance(
             j, Sequence
