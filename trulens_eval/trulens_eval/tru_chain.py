@@ -101,7 +101,7 @@ class TruChain(App):
     app: Chain
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory = lambda: FunctionOrMethod.of_callable(TruChain._call),
+        default_factory=lambda: FunctionOrMethod.of_callable(TruChain._call),
         const=True
     )
 
@@ -127,7 +127,6 @@ class TruChain(App):
 
         super().__init__(**kwargs)
 
-    
     # Chain requirement
     @property
     def _chain_type(self):

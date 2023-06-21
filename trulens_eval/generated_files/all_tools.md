@@ -20,7 +20,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
+from trulens_eval import TruChain, Feedback, Huggingface, Tru
 tru = Tru()
 
 # Imports from langchain to build app. You may need to install langchain first
@@ -75,9 +75,9 @@ display(llm_response)
 hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
-f_lang_match = Feedback(hugs.language_match).on(
-    text1=Select.RecordInput, text2=Select.RecordOutput
-)
+f_lang_match = Feedback(hugs.language_match).on_input_output()
+# By default this will check language match on the main app input and main app
+# output.
 ```
 
 ## Instrument chain for logging with TruLens
@@ -313,7 +313,7 @@ The process for adding new feedback functions is:
 
 
 ```python
-from trulens_eval import Provider
+from trulens_eval import Provider, Feedback, Select, Tru
 
 class StandAlone(Provider):
     def my_custom_feedback(self, my_text_field: str) -> float:
@@ -344,6 +344,7 @@ my_feedback_function_standalone = Feedback(my_standalone.my_custom_feedback).on(
 
 
 ```python
+tru = Tru()
 feedback_results = tru.run_feedback_functions(
     record=record,
     feedback_functions=[my_feedback_function_standalone]

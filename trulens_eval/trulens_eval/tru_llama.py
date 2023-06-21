@@ -117,7 +117,7 @@ class TruLlama(App):
     app: BaseQueryEngine
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory = lambda: FunctionOrMethod.of_callable(TruLlama.query),
+        default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query),
         const=True
     )
 
@@ -127,7 +127,7 @@ class TruLlama(App):
 
         # TruLlama specific:
         kwargs['app'] = app
-        kwargs['root_class'] = Class.of_object(app) # TODO: make class property
+        kwargs['root_class'] = Class.of_object(app)  # TODO: make class property
         kwargs['instrument'] = LlamaInstrument()
 
         super().__init__(**kwargs)
@@ -142,7 +142,7 @@ class TruLlama(App):
         Get the path to the source nodes in the query output.
         """
         return cls.select_outputs().source_nodes[:]
-    
+
     def query_with_record(self, str_or_query_bundle) -> Tuple[Response, Record]:
         # Wrapped calls will look this up by traversing the call stack. This
         # should work with threads.
