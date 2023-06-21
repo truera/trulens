@@ -11,7 +11,8 @@ import pydantic
 import requests
 
 from trulens_eval.db import JSON
-from trulens_eval.trulens_eval.schema import Cost
+from trulens_eval.schema import Cost
+from trulens_eval.trulens_eval.keys import get_huggingface_headers
 from trulens_eval.util import SerialModel, get_local_in_call_stack
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import TP
@@ -51,7 +52,10 @@ class HuggingfaceCallback(EndpointCallback):
 
 
 class OpenAICallback(EndpointCallback):
-    langchain_handler: OpenAICallbackHandler
+    class Config:
+        arbitrary_types_allowed=True
+
+    langchain_handler: OpenAICallbackHandler = pydantic.Field(default_factory=OpenAICallbackHandler)
 
     def handle_generation(self, response: Any) -> None:
         super().handle_generation(response)
@@ -71,7 +75,7 @@ class OpenAICallback(EndpointCallback):
 
 class Endpoint(SerialModel, SingletonPerName):
     class Config:
-        pass
+        arbitrary_types_allowed=True
 
     # API/endpoint name
     name: str
@@ -105,7 +109,7 @@ class Endpoint(SerialModel, SingletonPerName):
     _pace_thread: Thread = None
 
     def __init__(
-        self, *args, name: str, callback_class: type, **kwargs
+        self, *args, name: str, _callback_class: type, **kwargs
     ):
         """
         API usage, pacing, and utilities for API endpoints.
@@ -116,8 +120,8 @@ class Endpoint(SerialModel, SingletonPerName):
             return
 
         kwargs['name'] = name
-        kwargs['_callback_class'] = callback_class
-        kwargs['_global_callback'] = callback_class()
+        kwargs['_callback_class'] = _callback_class
+        kwargs['_global_callback'] = _callback_class()
         kwargs['_callback_name'] = f"callback_{name}"
 
         super().__init__(*args, **kwargs)
@@ -300,6 +304,7 @@ class HuggingfaceEndpoint(Endpoint):
 
     def __init__(self, *args, **kwargs):
         kwargs['name'] = "huggingface"
+        kwargs['post_headers'] = get_huggingface_headers()
         kwargs['_callback_class'] = HuggingfaceCallback
 
         super().__init__(*args, **kwargs)
