@@ -29,6 +29,7 @@ from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Query
 from trulens_eval.db import JSON
 from trulens_eval.db import Record
+from trulens_eval.trulens_eval.provider_apis import HuggingfaceEndpoint, OpenAIEndpoint
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
 from trulens_eval.util import OptionalImports
@@ -442,7 +443,7 @@ class OpenAI(Provider):
 
         set_openai_key()
         self.model_engine = model_engine
-        self.endpoint = Endpoint(name="openai")
+        self.endpoint = OpenAIEndpoint()
 
     """
     def to_json(self) -> Dict:
@@ -758,9 +759,7 @@ class Huggingface(Provider):
 
         super().__init__()  # need to include pydantic.BaseModel.__init__
 
-        self.endpoint = Endpoint(
-            name="huggingface", post_headers=get_huggingface_headers()
-        )
+        self.endpoint = HuggingfaceEndpoint()
 
     def language_match(self, text1: str, text2: str) -> float:
         """
