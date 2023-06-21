@@ -3,57 +3,44 @@
 
 # # Quickstart
 #
-# In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.
+# In this quickstart you will create a simple Llama Index App and learn how to log it and get feedback on an LLM response.
 
 # ## Setup
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
+
+get_ipython().system('pip install trulens')
 
 import os
 
 os.environ["OPENAI_API_KEY"] = "..."
 os.environ["HUGGINGFACE_API_KEY"] = "..."
 
-# ### Import from LangChain and TruLens
+# ### Import from LlamaIndex and TruLens
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru
+from trulens_eval import TruLlama, Feedback, Huggingface, Tru, Query
 
 tru = Tru()
 
-# Imports from langchain to build app. You may need to install langchain first
-# with the following:
-# ! pip install langchain>=0.0.170
-from langchain.chains import LLMChain
-from langchain.llms import OpenAI
-from langchain.prompts.chat import ChatPromptTemplate, PromptTemplate
-from langchain.prompts.chat import HumanMessagePromptTemplate
-
 # ### Create Simple LLM Application
 #
-# This example uses a LangChain framework and OpenAI LLM
+# This example uses LlamaIndex which internally uses an OpenAI LLM.
 
-full_prompt = HumanMessagePromptTemplate(
-    prompt=PromptTemplate(
-        template=
-        "Provide a helpful response with relevant background information for the following: {prompt}",
-        input_variables=["prompt"],
-    )
-)
+# LLama Index starter example from: https://gpt-index.readthedocs.io/en/latest/getting_started/starter_example.html
+# In order to run this, download into data/ Paul Graham's Essay 'What I Worked On' from https://github.com/jerryjliu/llama_index/blob/main/examples/paul_graham_essay/data/paul_graham_essay.txt
 
-chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
+from llama_index import GPTVectorStoreIndex, SimpleDirectoryReader
 
-llm = OpenAI(temperature=0.9, max_tokens=128)
+documents = SimpleDirectoryReader('data').load_data()
+index = GPTVectorStoreIndex.from_documents(documents)
 
-chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
+query_engine = index.as_query_engine()
 
 # ### Send your first request
 
-prompt_input = '¿que hora es?'
-
-llm_response = chain(prompt_input)
-
-print(llm_response)
+response = query_engine.query("What did the author do growing up?")
+print(response)
 
 # ## Initialize Feedback Function(s)
 
@@ -61,18 +48,18 @@ print(llm_response)
 hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
-f_lang_match = Feedback(hugs.language_match).on_input_output()
-# By default this will check language match on the main app input and main app
-# output.
+f_lang_match = Feedback(hugs.language_match).on(
+    text1=Query.RecordInput, text2=Query.RecordOutput
+)
 
 # ## Instrument chain for logging with TruLens
 
-truchain = TruChain(
-    chain, app_id='Chain3_ChatApplication', feedbacks=[f_lang_match]
+tru_query_engine = TruLlama(
+    query_engine, app_id='LlamaIndex_App1', feedbacks=[f_lang_match]
 )
 
-# Instrumented chain can operate like the original:
-llm_response = truchain(prompt_input)
+# Instrumented query engine can operate like the original:
+llm_response = tru_query_engine.query("What did the author do growing up?")
 
 print(llm_response)
 
@@ -82,7 +69,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed
 
-# ### Chain Leaderboard
+# ### Leaderboard
 #
 # Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics including cost and average feedback value across all of your LLM apps using the chain leaderboard. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up.
 #

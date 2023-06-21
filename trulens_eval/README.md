@@ -14,8 +14,11 @@ To quickly play around with the TruLens Eval library:
 
 [langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.2.2/trulens_eval/examples/quickstart.ipynb).
 
+[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.2.2/trulens_eval/examples/quickstart.py).
+
 [llamaindex_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.2.2/trulens_eval/examples/llama_index/quickstart.ipynb).
 
+[llamaindex_quickstart.py](https://github.com/truera/trulens/blob/quickstart-script-links/trulens_eval/examples/llama_quickstart.py)
 
 
 
@@ -67,7 +70,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
+from trulens_eval import TruChain, Feedback, Huggingface, Tru, Select
 tru = Tru()
 
 # Imports from langchain to build app. You may need to install langchain first
@@ -122,9 +125,9 @@ display(llm_response)
 hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
-f_lang_match = Feedback(hugs.language_match).on(
-    text1=Query.RecordInput, text2=Query.RecordOutput
-)
+f_lang_match = Feedback(hugs.language_match).on_input_output()
+# By default this will check language match on the main app input and main app
+# output.
 ```
 
 ## Instrument chain for logging with TruLens
@@ -377,13 +380,13 @@ class StandAlone(Provider):
 
 ```
 
-2. Instantiate your provider and feedback functions. The feedback function is wrapped by the trulens-eval Feedback class which helps specify what will get sent to your function parameters (For example: Query.RecordInput or Query.RecordOutput)
+2. Instantiate your provider and feedback functions. The feedback function is wrapped by the trulens-eval Feedback class which helps specify what will get sent to your function parameters (For example: Select.RecordInput or Select.RecordOutput)
 
 
 ```python
 my_standalone = StandAlone()
 my_feedback_function_standalone = Feedback(my_standalone.my_custom_feedback).on(
-    my_text_field=Query.RecordOutput
+    my_text_field=Select.RecordOutput
 )
 ```
 

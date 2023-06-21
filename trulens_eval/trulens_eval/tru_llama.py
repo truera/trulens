@@ -5,18 +5,21 @@
 from datetime import datetime
 import logging
 from pprint import PrettyPrinter
-from typing import Sequence, Tuple
+from typing import ClassVar, Sequence, Tuple
+
+from pydantic import Field
 
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.app import App
+from trulens_eval.util import FunctionOrMethod
+from trulens_eval.util import JSONPath
+from trulens_eval.util import Method
 from trulens_eval.util import dict_set_with
-from trulens_eval.utils.llama import constructor_of_class
 from trulens_eval.util import Class
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LLAMA
-from trulens_eval.utils.llama import Is
 
 logger = logging.getLogger(__name__)
 
@@ -29,12 +32,13 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
 
 from trulens_eval.tru_chain import LangChainInstrument
 
+
 class LlamaInstrument(Instrument):
 
     class Default:
-        MODULES = {
-            "llama_index."
-        }.union(LangChainInstrument.Default.MODULES) # NOTE: llama_index uses langchain internally for some things
+        MODULES = {"llama_index."}.union(
+            LangChainInstrument.Default.MODULES
+        )  # NOTE: llama_index uses langchain internally for some things
 
         # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
@@ -60,23 +64,32 @@ class LlamaInstrument(Instrument):
 
         # Instrument only methods with these names and of these classes. Ok to
         # include llama_index inside methods.
-        METHODS = dict_set_with({
-            "get_response": lambda o: isinstance(o, llama_index.indices.response.refine.Refine),
-            "predict": lambda o: isinstance(o, llama_index.llm_predictor.base.BaseLLMPredictor),
-            "query":
-                lambda o:
-                isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
-            "retrieve":
-                lambda o: isinstance(
-                    o, (
-                        llama_index.indices.query.base.BaseQueryEngine,
-                        llama_index.indices.base_retriever.BaseRetriever
-                    )
-                ),
-            "synthesize":
-                lambda o:
-                isinstance(o, llama_index.indices.query.base.BaseQueryEngine),
-        }, LangChainInstrument.Default.METHODS)
+        METHODS = dict_set_with(
+            {
+                "get_response":
+                    lambda o:
+                    isinstance(o, llama_index.indices.response.refine.Refine),
+                "predict":
+                    lambda o: isinstance(
+                        o, llama_index.llm_predictor.base.BaseLLMPredictor
+                    ),
+                "query":
+                    lambda o: isinstance(
+                        o, llama_index.indices.query.base.BaseQueryEngine
+                    ),
+                "retrieve":
+                    lambda o: isinstance(
+                        o, (
+                            llama_index.indices.query.base.BaseQueryEngine,
+                            llama_index.indices.base_retriever.BaseRetriever
+                        )
+                    ),
+                "synthesize":
+                    lambda o: isinstance(
+                        o, llama_index.indices.query.base.BaseQueryEngine
+                    ),
+            }, LangChainInstrument.Default.METHODS
+        )
 
     def __init__(self):
         super().__init__(
@@ -103,22 +116,33 @@ class TruLlama(App):
 
     app: BaseQueryEngine
 
+    root_callable: ClassVar[FunctionOrMethod] = Field(
+        default_factory = lambda: FunctionOrMethod.of_callable(TruLlama.query),
+        const=True
+    )
+
     def __init__(self, app: BaseQueryEngine, **kwargs):
 
         super().update_forward_refs()
 
         # TruLlama specific:
         kwargs['app'] = app
-        kwargs['root_class'] = Class.of_object(app)
+        kwargs['root_class'] = Class.of_object(app) # TODO: make class property
         kwargs['instrument'] = LlamaInstrument()
 
         super().__init__(**kwargs)
 
     def query(self, *args, **kwargs) -> Response:
         res, _ = self.query_with_record(*args, **kwargs)
-
         return res
 
+    @classmethod
+    def select_source_nodes(cls) -> JSONPath:
+        """
+        Get the path to the source nodes in the query output.
+        """
+        return cls.select_outputs().source_nodes[:]
+    
     def query_with_record(self, str_or_query_bundle) -> Tuple[Response, Record]:
         # Wrapped calls will look this up by traversing the call stack. This
         # should work with threads.

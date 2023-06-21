@@ -21,7 +21,6 @@ pip install trulens-eval
 ```python
 from trulens_eval import tru
 from trulens_eval import tru_chain
-from trulens_eval import Query
 
 tru = Tru()
 ```
@@ -67,9 +66,9 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
-f_lang_match = Feedback(hugs.language_match).on(
-    text1=Query.RecordInput, text2=Query.RecordOutput
-)
+f_lang_match = Feedback(hugs.language_match).on_input_output()
+# By default this will check language match on the main app input and main app
+# output.
 
 # wrap your chain with TruChain
 truchain = TruChain(
