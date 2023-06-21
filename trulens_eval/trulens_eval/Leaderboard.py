@@ -4,6 +4,7 @@ from millify import millify
 import numpy as np
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
+from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 
 st.runtime.legacy_caching.clear_cache()
 
@@ -48,7 +49,8 @@ def streamlit_app():
             5 + len(feedback_col_names)
         )
         app_df = df.loc[df.app_id == app]
-        latency_mean = app_df['latency'].apply(lambda td: td.seconds).mean()
+        latency_mean = app_df['latency'].apply(lambda td: td.seconds if td != MIGRATION_UNKNOWN_STR else None).mean()
+        
         #app_df_feedback = df.loc[df.app_id == app]
 
         col1.metric("Records", len(app_df))
