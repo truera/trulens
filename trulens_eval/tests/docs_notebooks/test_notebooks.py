@@ -56,6 +56,10 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
             DocsNotebookTests, 'test_' + filename.split('.ipynb')[0],
             get_unit_test_for_filename(filename)
         )
+c
+# Test Backwards Compat (TODO: Move this to CI/CD)
+import shutil
+shutil.copyfile("./release_dbs/0.1.2/default.sqlite", "./")
 
 if __name__ == '__main__':
     main()
