@@ -282,6 +282,21 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
         return Endpoint._track_costs(thunk, with_endpoints=endpoints)
 
     @staticmethod
+    def track_all_costs_tally(
+        thunk: Callable[[], T],
+        with_openai: bool = True,
+        with_hugs: bool = True
+    ) -> Tuple[T, Cost]:
+        """
+        Track costs of all of the apis we can currently track, over the
+        execution of thunk.
+        """
+
+        result, cbs = Endpoint.track_all_costs(thunk, with_openai=with_openai, with_hugs=with_hugs)
+        return result, sum(cb.cost for cb in cbs)
+        
+
+    @staticmethod
     def _track_costs(
         thunk: Callable[[], T],
         with_endpoints: Sequence['Endpoint'] = None,
@@ -296,7 +311,7 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
             get_local_in_call_stack(
                 key="endpoints",
                 func=Endpoint.__find_tracker,
-                offset=0
+                offset=1
             )
 
         if endpoints is None:
@@ -492,7 +507,7 @@ class OpenAIEndpoint(Endpoint):
         callback: Optional[EndpointCallback]
     ) -> None:
 
-        model_name = None
+        model_name = ""
         if 'model' in bindings.kwargs:
             model_name = bindings.kwargs['model']
 

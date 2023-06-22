@@ -265,7 +265,7 @@ class App(AppDefinition, SerialModel):
         return jsonify(self, instrument=self.instrument)
 
     def _post_record(
-        self, ret_record_args, error, total_tokens, total_cost, start_time,
+        self, ret_record_args, error, cost, start_time,
         end_time, record
     ):
         """
@@ -274,7 +274,7 @@ class App(AppDefinition, SerialModel):
 
         ret_record_args['main_error'] = str(error)
         ret_record_args['calls'] = record
-        ret_record_args['cost'] = Cost(n_tokens=total_tokens, cost=total_cost)
+        ret_record_args['cost'] = cost
         ret_record_args['perf'] = Perf(start_time=start_time, end_time=end_time)
         ret_record_args['app_id'] = self.app_id
 
