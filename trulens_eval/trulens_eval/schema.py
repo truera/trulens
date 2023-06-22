@@ -84,6 +84,20 @@ class Cost(SerialModel):
     # Cost in USD.
     cost: float = 0.0
 
+    def __add__(self, other: 'Cost') -> 'Cost':
+        kwargs = {}
+        for k in self.__fields__.keys():
+            kwargs[k] = getattr(self, k) + getattr(other, k)
+        return Cost(**kwargs)
+
+    def __radd__(self, other: 'Cost') -> 'Cost':
+        # Makes sum work on lists of Cost.
+        
+        if other == 0:
+            return self
+        
+        return self.__add__(other)
+        
 
 class Perf(SerialModel):
     start_time: datetime
