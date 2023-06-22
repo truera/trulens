@@ -14,14 +14,30 @@ import os
 import cohere
 import dotenv
 
-config = dotenv.dotenv_values(".env")
+from pathlib import Path
 
-for k, v in config.items():
-    print(f"KEY SET: {k}")
-    globals()[k] = v
+def get_config():
+    for path in Path.cwd().parents:
+        file = path / ".env" 
+        if file.exists():
+            print(f"Using {file}")
+            return file
+        
+    return None
 
-    # set them into environment as well
-    os.environ[k] = v
+config_file = get_config()
+if config_file is None:
+    print(f"WARNING: No .env found in {Path.cwd()} or its parents. You may need to specify secret keys manually.")
+
+else:
+    config = dotenv.dotenv_values(config_file)
+
+    for k, v in config.items():
+        print(f"KEY SET: {k}")
+        globals()[k] = v
+
+        # set them into environment as well
+        os.environ[k] = v
 
 
 def set_openai_key():
