@@ -17,8 +17,6 @@ import pydantic
 from tqdm.auto import tqdm
 
 from trulens_eval import feedback_prompts
-from trulens_eval.db import JSON
-from trulens_eval.db import Record
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
 from trulens_eval.provider_apis import HuggingfaceEndpoint
@@ -30,8 +28,10 @@ from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
+from trulens_eval.schema import Record
 from trulens_eval.schema import Select
 from trulens_eval.util import FunctionOrMethod
+from trulens_eval.util import JSON
 from trulens_eval.util import jsonify
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
