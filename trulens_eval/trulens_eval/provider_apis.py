@@ -15,6 +15,7 @@ import requests
 from trulens_eval.db import JSON
 from trulens_eval.schema import Cost
 from trulens_eval.keys import get_huggingface_headers
+from trulens_eval.util import WithClassInfo
 from trulens_eval.util import SerialModel, get_local_in_call_stack
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import TP
@@ -139,6 +140,21 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
     pace_thread: Thread = pydantic.Field(exclude=True)
 
     # TODO: validate to construct tracking objects when deserializing?
+
+    """
+    @classmethod
+    def model_validate(cls, obj: Any, **kwargs):
+        if isinstance(obj, dict):
+            if CLASS_INFO in obj:
+
+                cls = Class(**obj[CLASS_INFO])
+                del obj[CLASS_INFO]
+                model = cls.model_validate(obj, **kwargs)
+
+                return WithClassInfo.of_model(model=model, cls=cls)
+            else:
+                return super().model_validate(obj, **kwargs)
+    """
 
     def __new__(cls, name: str, *args, **kwargs):
         return super(SingletonPerName, cls).__new__(
@@ -494,7 +510,7 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
         return wrapper
 
 
-class OpenAIEndpoint(Endpoint):
+class OpenAIEndpoint(Endpoint, WithClassInfo):
     """
     OpenAI endpoint. Instruments "create" methods in openai.* classes.
     """
@@ -530,13 +546,16 @@ class OpenAIEndpoint(Endpoint):
         kwargs['name'] = "openai"
         kwargs['callback_class'] = OpenAICallback
 
+        # for WithClassInfo:
+        kwargs['obj'] = self
+
         super().__init__(*args, **kwargs)
 
         import openai
         self._instrument_module_members(openai, "create")
 
 
-class HuggingfaceEndpoint(Endpoint):
+class HuggingfaceEndpoint(Endpoint, WithClassInfo):
     """
     OpenAI endpoint. Instruments "create" methodsin openai.* classes.
     """
@@ -558,6 +577,9 @@ class HuggingfaceEndpoint(Endpoint):
         kwargs['name'] = "huggingface"
         kwargs['post_headers'] = get_huggingface_headers()
         kwargs['callback_class'] = HuggingfaceCallback
+
+        # for WithClassInfo:
+        kwargs['obj'] = self
 
         super().__init__(*args, **kwargs)
 

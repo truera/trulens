@@ -82,19 +82,20 @@ class Feedback(FeedbackDefinition):
         agg = agg or np.mean
 
         if imp is not None:
-            try:
+            if hasattr(imp, "__module__"):
+            
                 # These are for serialization to/from json and for db storage.
                 kwargs['implementation'] = FunctionOrMethod.of_callable(
                     imp, loadable=True
                 )
-            except:
+            else:
                 # User defined functions in script do not have a module so cannot be serialized
                 pass
         else:
             if "implementation" in kwargs:
                 imp: Callable = FunctionOrMethod.pick(
                     **(kwargs['implementation'])
-                ).load()
+                ).load() if kwargs['implementation'] is not None else None
 
         if agg is not None:
             try:
@@ -433,6 +434,9 @@ class Feedback(FeedbackDefinition):
         function implementing it.
         """
 
+        if self.imp is None:
+            raise RuntimeError("This feedback function has no implementation.")
+
         return self.imp.__name__
 
     def extract_selection(
@@ -499,7 +503,11 @@ class Provider(SerialModel):
 class OpenAI(Provider):
     model_engine: str = "gpt-3.5-turbo"
 
-    def __init__(self, model_engine: str = "gpt-3.5-turbo"):
+    # Exclude is important here so that pydantic doesn't try to
+    # serialize/deserialize the constant fixed endpoint we need.
+    endpoint: Endpoint = pydantic.Field(default_factory=OpenAIEndpoint, exclude=True)
+
+    def __init__(self, **kwargs):
         """
         A set of OpenAI Feedback Functions.
 
@@ -508,12 +516,11 @@ class OpenAI(Provider):
         - model_engine (str, optional): The specific model version. Defaults to
           "gpt-3.5-turbo".
         """
-        super().__init__()  # need to include pydantic.BaseModel.__init__
+
+        super().__init__(**kwargs)  # need to include pydantic.BaseModel.__init__
 
         set_openai_key()
-        self.model_engine = model_engine
-        self.endpoint = OpenAIEndpoint()
-
+        
     """
     def to_json(self) -> Dict:
         return Provider.to_json(self, model_engine=self.model_engine)
@@ -820,15 +827,17 @@ HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm
 
 class Huggingface(Provider):
 
-    def __init__(self):
+    # Exclude is important here so that pydantic doesn't try to
+    # serialize/deserialize the constant fixed endpoint we need.
+    endpoint: Endpoint = pydantic.Field(default_factory=HuggingfaceEndpoint, exclude=True)
+
+    def __init__(self, **kwargs):
         """
         A set of Huggingface Feedback Functions. Utilizes huggingface
         api-inference.
         """
 
-        super().__init__()  # need to include pydantic.BaseModel.__init__
-
-        self.endpoint = HuggingfaceEndpoint()
+        super().__init__(**kwargs)  # need to include pydantic.BaseModel.__init__
 
     def language_match(self, text1: str, text2: str) -> float:
         """
@@ -934,11 +943,6 @@ class Cohere(Provider):
 
         Cohere().endpoint = Endpoint(name="cohere")
         self.model_engine = model_engine
-
-    """
-    def to_json(self) -> Dict:
-        return Provider.to_json(self, model_engine=self.model_engine)
-    """
 
     def sentiment(
         self,
