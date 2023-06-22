@@ -1299,7 +1299,7 @@ class Obj(SerialModel):
 
     @staticmethod
     def pick(**d):
-        if 'init_kwargs' in d:
+        if 'init_bindings' in d:
             return ObjSerial(**d)
         else:
             return Obj(**d)
