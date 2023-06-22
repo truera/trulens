@@ -63,9 +63,41 @@ class RecordAppCallMethod(SerialModel):
 
 
 class Cost(SerialModel):
-    n_tokens: Optional[int] = None
-    cost: Optional[float] = None
+    # Number of requests.
+    n_requests: int = 0
 
+    # Number of successful ones.
+    n_successful_requests: int = 0
+
+    # Number of class scores retrieved.
+    n_classes: int = 0
+
+    # Total tokens processed.
+    n_tokens: int = 0
+
+    # Number of prompt tokens supplied.
+    n_prompt_tokens: int = 0
+
+    # Number of completion tokens generated.
+    n_completion_tokens: int = 0
+
+    # Cost in USD.
+    cost: float = 0.0
+
+    def __add__(self, other: 'Cost') -> 'Cost':
+        kwargs = {}
+        for k in self.__fields__.keys():
+            kwargs[k] = getattr(self, k) + getattr(other, k)
+        return Cost(**kwargs)
+
+    def __radd__(self, other: 'Cost') -> 'Cost':
+        # Makes sum work on lists of Cost.
+        
+        if other == 0:
+            return self
+        
+        return self.__add__(other)
+        
 
 class Perf(SerialModel):
     start_time: datetime
