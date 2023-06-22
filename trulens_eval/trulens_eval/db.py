@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 import sqlite3
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import pydantic
 from frozendict import frozendict
@@ -27,6 +27,7 @@ from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordID
+from trulens_eval.feedback import Feedback
 from trulens_eval.util import all_queries
 from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
@@ -310,7 +311,7 @@ class LocalSQLite(DB):
         return app_id
 
     def insert_feedback_definition(
-        self, feedback: FeedbackDefinition
+        self, feedback: Union[Feedback, FeedbackDefinition]
     ) -> FeedbackDefinitionID:
         """
         Insert a feedback definition into the database.

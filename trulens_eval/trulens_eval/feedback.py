@@ -27,8 +27,8 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Select
-from trulens_eval.db import JSON
-from trulens_eval.db import Record
+from trulens_eval.util import JSON
+from trulens_eval.schema import Record
 from trulens_eval.util import UNICODE_YIELD, UNICODE_CHECK, UNICODE_STOP
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
