@@ -2,6 +2,8 @@
 from tqdm import tqdm
 import json
 
+from trulens_eval.schema import Record, Cost, Perf, RecordAppCall, FeedbackDefinition, AppDefinition
+
 class VersionException(Exception):
     pass
 
@@ -30,11 +32,30 @@ def migrate_0_1_2(db):
     rows = c.fetchall()
     print(f"FEEDBACKDEFS {rows}")
 
+    
+    c.execute(f"""SELECT * FROM records""")
+    rows = c.fetchall()
+    for old_record in tqdm(rows,desc="Migrating Records DB"):
 
+        record_json_db_idx = 4
+        record_json = json.loads(old_record[record_json_db_idx])
+        record_json['app_id'] = record_json['chain_id']
+        del record_json['chain_id']
+        for calls_json in record_json['calls']:
+            calls_json['stack']=calls_json['chain_stack']
+            del calls_json['chain_stack']
+        
+        migrate_record = list(old_record)
+        migrate_record[record_json_db_idx] = json.dumps(record_json) 
+        migrate_record = tuple(migrate_record)
+        
+        db._insert_or_replace_vals(table=db.TABLE_RECORDS, vals=migrate_record)
+        
     c.execute(f"""SELECT * FROM chains""")
     rows = c.fetchall()
     for old_chain in tqdm(rows,desc="Migrating Apps DB"):
-        app_json = json.loads(old_chain[1])
+        app_json_db_idx = 1
+        app_json = json.loads(old_chain[app_json_db_idx])
         app_json['app_id'] = app_json['chain_id']
         del app_json['chain_id']
         app_json['root_class'] = {'name': 'Unknown_class', 'module': {'package_name': MIGRATION_UNKNOWN_STR, 'module_name': MIGRATION_UNKNOWN_STR}, 'bases': None}
@@ -100,7 +121,48 @@ def check_needs_migration(version, warn=False):
             raise VersionException(msg)
 
 
+def _serialization_asserts(db):
+    conn, c = db._connect()
+    for table in db.TABLES:
+        c.execute(f"""PRAGMA table_info({table});
+                """)
+        columns = c.fetchall()
+        for col_idx, col in tqdm(enumerate(columns), desc=f"Validating clean migration of table {table}"):
+            col_name_idx = 1
+            col_name=col[col_name_idx]
+            # This is naive for now...
+            if "json" in col_name:
+                c.execute(f"""SELECT * FROM {table}""")
+                rows = c.fetchall()
+                for row in rows:
+                    if row[col_idx] == MIGRATION_UNKNOWN_STR:
+                        continue
+                    
+                    test_json = json.loads(row[col_idx])
+                    
+                    if col_name == "record_json":
+                        Record(**test_json)
+                    elif col_name == "cost_json":
+                        Cost(**test_json)
+                    elif col_name == "perf_json":
+                        Perf(**test_json)
+                    elif col_name == "calls_json":
+                        for record_app_call_json in test_json['calls']:
+                            print(record_app_call_json)
+                            RecordAppCall(**record_app_call_json)
+                    elif col_name == "feedback_json":
+                        FeedbackDefinition(**test_json)
+                    elif col_name == "app_json":
+                        AppDefinition(**test_json)
+                    else:
+                        # If this happens, trulens needs to add a migration
+                        TODO_FILE_LOC = "TODO_FILE_LOC"
+                        raise VersionException(f"Migration failed on {table} {col_name} {row[col_idx]}. Please open a ticket on trulens github page including details on the old and new trulens versions. Your original DB file is saved here: {TODO_FILE_LOC}")
+    
+        
+
 def migrate(db):
+    # TODO: Save original DB
     version = db.get_meta().trulens_version
     from_compat_version = _get_compatibility_version(version)
     while from_compat_version in upgrade_paths:
@@ -108,5 +170,7 @@ def migrate(db):
         migrate_fn(db=db)
         commit_migrated_version(db=db, version=to_compat_version)
         from_compat_version=to_compat_version
+    
+    _serialization_asserts(db)
     print("DB Migration complete!")
 

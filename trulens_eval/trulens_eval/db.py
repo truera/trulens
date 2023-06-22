@@ -530,7 +530,7 @@ class LocalSQLite(DB):
             return row
 
         df = df.apply(map_row, axis=1)
-
+        print(df['record_json'].iloc[0])
         return pd.DataFrame(df)
 
     def get_app(self, app_id: str) -> JSON:

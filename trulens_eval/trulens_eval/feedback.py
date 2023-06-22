@@ -105,7 +105,7 @@ class Feedback(FeedbackDefinition):
                 # User defined functions in script do not have a module so cannot be serialized
                 pass
         else:
-            if 'arrgregator' in kwargs:
+            if 'aggregator' in kwargs:
                 agg: Callable = FunctionOrMethod.pick(**(kwargs['aggregator'])
                                                      ).load()
 
