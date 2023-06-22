@@ -139,23 +139,6 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
     # Thread that fills the queue at the appropriate rate.
     pace_thread: Thread = pydantic.Field(exclude=True)
 
-    # TODO: validate to construct tracking objects when deserializing?
-
-    """
-    @classmethod
-    def model_validate(cls, obj: Any, **kwargs):
-        if isinstance(obj, dict):
-            if CLASS_INFO in obj:
-
-                cls = Class(**obj[CLASS_INFO])
-                del obj[CLASS_INFO]
-                model = cls.model_validate(obj, **kwargs)
-
-                return WithClassInfo.of_model(model=model, cls=cls)
-            else:
-                return super().model_validate(obj, **kwargs)
-    """
-
     def __new__(cls, name: str, *args, **kwargs):
         return super(SingletonPerName, cls).__new__(
             SerialModel, name=name, *args, **kwargs
@@ -485,19 +468,6 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
                         response=response,
                         callback=callback
                     )
-
-            #cb = get_local_in_call_stack(
-            #    key=self.callback_name,
-            #    func=self.__find_tracker,
-            #    offset=0
-            #)
-
-            #self.handle_wrapped_call(
-            #    func=func,
-            #    bindings=bindings,
-            #    response=res,
-            #    callback=cb
-            #)
 
             return response
 
