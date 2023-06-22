@@ -8,6 +8,7 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
+from trulens_eval.provider_apis import HuggingfaceEndpoint, OpenAIEndpoint
 from ux.add_logo import add_logo
 
 from trulens_eval import Tru
@@ -32,11 +33,10 @@ add_logo()
 tru = Tru()
 lms = tru.db
 
-e_openai = Endpoint("openai")
-e_hugs = Endpoint("huggingface")
-e_cohere = Endpoint("cohere")
+e_openai = OpenAIEndpoint()
+e_hugs = HuggingfaceEndpoint()
 
-endpoints = [e_openai, e_hugs, e_cohere]
+endpoints = [e_openai, e_hugs]
 
 tab1, tab2, tab3 = st.tabs(["Progress", "Endpoints", "Feedback Functions"])
 
@@ -53,7 +53,6 @@ with tab2:
     for e in endpoints:
         st.header(e.name.upper())
         st.metric("RPM", e.rpm)
-        st.write(e.tqdm)
 
 with tab3:
     feedbacks = lms.get_feedback_defs()
