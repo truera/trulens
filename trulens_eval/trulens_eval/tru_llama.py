@@ -160,8 +160,6 @@ class TruLlama(App):
         cost = Cost()
 
         try:
-            # TODO: do this only if there is an openai model inside the app:
-            
             start_time = datetime.now()
             ret, cost = Endpoint.track_all_costs_tally(lambda: self.app.query(str_or_query_bundle))
 
