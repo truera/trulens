@@ -578,6 +578,8 @@ class SerialModel(pydantic.BaseModel):
 
                 return WithClassInfo.of_model(model=model, cls=cls)
             else:
+                print(f"Warning: May not be able to properly reconstruct object {obj}.")
+
                 return super().model_validate(obj, **kwargs)
 
     def update(self, **d):
