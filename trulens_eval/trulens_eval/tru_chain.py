@@ -2,23 +2,24 @@
 # Langchain instrumentation and monitoring.
 """
 
-from pydantic import Field
 from datetime import datetime
 import logging
 from pprint import PrettyPrinter
 from typing import Any, ClassVar, Dict, List, Sequence, Union
 
-from trulens_eval.instruments import Instrument
-from trulens_eval.schema import RecordAppCall
+from pydantic import Field
+
 from trulens_eval.app import App
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.utils.langchain import constructor_of_class
+from trulens_eval.instruments import Instrument
+from trulens_eval.provider_apis import Endpoint
+from trulens_eval.schema import Cost
+from trulens_eval.schema import RecordAppCall
 from trulens_eval.util import Class
+from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
 from trulens_eval.util import noserio
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LANGCHAIN
-from trulens_eval.utils.langchain import Is
 
 logger = logging.getLogger(__name__)
 
@@ -158,8 +159,7 @@ class TruChain(App):
         ret = None
         error = None
 
-        total_tokens = None
-        total_cost = None
+        cost: Cost = Cost()
 
         start_time = None
         end_time = None
@@ -168,11 +168,10 @@ class TruChain(App):
             # TODO: do this only if there is an openai model inside the chain:
             with get_openai_callback() as cb:
                 start_time = datetime.now()
-                ret = self.app.__call__(inputs=inputs, **kwargs)
+                ret, cost = Endpoint.track_all_costs_tally(
+                    lambda: self.app.__call__(inputs=inputs, **kwargs)
+                )
                 end_time = datetime.now()
-
-            total_tokens = cb.total_tokens
-            total_cost = cb.total_cost
 
         except BaseException as e:
             end_time = datetime.now()
@@ -195,8 +194,7 @@ class TruChain(App):
             ret_record_args['main_output'] = ret[output_key]
 
         ret_record = self._post_record(
-            ret_record_args, error, total_tokens, total_cost, start_time,
-            end_time, record
+            ret_record_args, error, cost, start_time, end_time, record
         )
 
         return ret, ret_record
