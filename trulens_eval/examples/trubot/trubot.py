@@ -302,14 +302,14 @@ def answer_message(client, body: dict, logger):
 
     logger.info(body)
 
-if __name__ == "__main__":
-    # WebClient instantiates a client that can call API methods When using Bolt, you
-    # can use either `app.client` or the `client` passed to listeners.
-    client = WebClient(token=SLACK_TOKEN)
-    logger = logging.getLogger(__name__)
 
-    # Initializes your app with your bot token and signing secret
-    app = App(token=SLACK_TOKEN, signing_secret=SLACK_SIGNING_SECRET)
+# WebClient instantiates a client that can call API methods When using Bolt, you
+# can use either `app.client` or the `client` passed to listeners.
+client = WebClient(token=SLACK_TOKEN)
+logger = logging.getLogger(__name__)
+
+# Initializes your app with your bot token and signing secret
+app = App(token=SLACK_TOKEN, signing_secret=SLACK_SIGNING_SECRET)
 
 
 @app.event("app_home_opened")
