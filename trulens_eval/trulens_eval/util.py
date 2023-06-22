@@ -1172,7 +1172,7 @@ def get_local_in_call_stack(
 
 
 class Module(SerialModel):
-    package_name: str
+    package_name: Optional[str] # some modules are not in a package
     module_name: str
 
     def of_module(mod: ModuleType, loadable: bool = False) -> 'Module':

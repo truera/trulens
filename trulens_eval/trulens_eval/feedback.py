@@ -82,15 +82,11 @@ class Feedback(FeedbackDefinition):
         agg = agg or np.mean
 
         if imp is not None:
-            if hasattr(imp, "__module__"):
+            # These are for serialization to/from json and for db storage.
+            kwargs['implementation'] = FunctionOrMethod.of_callable(
+                imp, loadable=True
+            )
             
-                # These are for serialization to/from json and for db storage.
-                kwargs['implementation'] = FunctionOrMethod.of_callable(
-                    imp, loadable=True
-                )
-            else:
-                # User defined functions in script do not have a module so cannot be serialized
-                pass
         else:
             if "implementation" in kwargs:
                 imp: Callable = FunctionOrMethod.pick(
