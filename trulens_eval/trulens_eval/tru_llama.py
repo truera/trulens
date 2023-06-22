@@ -15,6 +15,7 @@ from trulens_eval.schema import RecordAppCall
 from trulens_eval.app import App
 from trulens_eval.provider_apis import OpenAIEndpoint
 from trulens_eval.schema import Cost
+from trulens_eval.provider_apis import Endpoint
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import JSONPath
 from trulens_eval.util import Method
@@ -162,11 +163,9 @@ class TruLlama(App):
             # TODO: do this only if there is an openai model inside the app:
             
             start_time = datetime.now()
-            ret, cb = OpenAIEndpoint().track_cost(lambda: self.app.query(str_or_query_bundle))
-            cost = cb.cost
+            ret, cost = Endpoint.track_all_costs_tally(lambda: self.app.query(str_or_query_bundle))
 
             end_time = datetime.now()
-
 
         except BaseException as e:
             end_time = datetime.now()
@@ -184,7 +183,7 @@ class TruLlama(App):
             ret_record_args['main_output'] = ret.response
 
         ret_record = self._post_record(
-            ret_record_args, error, cost.n_tokens, cost.cost, start_time,
+            ret_record_args, error, cost, start_time,
             end_time, record
         )
 
