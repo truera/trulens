@@ -70,13 +70,14 @@ class OpenAICallback(EndpointCallback):
     class Config:
         arbitrary_types_allowed = True
 
+    # For openai cost tracking, we use the logic from langchain mostly
+    # implemented in the OpenAICallbackHandler class:
     langchain_handler: OpenAICallbackHandler = pydantic.Field(
         default_factory=OpenAICallbackHandler, exclude=True
     )
 
     def handle_generation(self, response: LLMResult) -> None:
-        # For openai we use the mechanisms from langchain.
-
+        
         super().handle_generation(response)
 
         self.langchain_handler.on_llm_end(response)
