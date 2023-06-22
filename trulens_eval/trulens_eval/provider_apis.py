@@ -7,7 +7,7 @@ from queue import Queue
 from threading import Thread
 from time import sleep
 from types import ModuleType
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
+from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Type, TypeVar
 import pydantic
 
 import requests
@@ -28,6 +28,7 @@ T = TypeVar("T")
 
 INSTRUMENT = "__tru_instrument"
 
+
 class EndpointCallback(SerialModel):
     """
     Callbacks to be invoked after various API requests and track various metrics
@@ -45,14 +46,16 @@ class EndpointCallback(SerialModel):
     def handle_classification(self, response: Any) -> None:
         self.handle(response)
 
+
 class HuggingfaceCallback(EndpointCallback):
+
     def handle_classification(self, response: requests.Response) -> None:
         # Huggingface free inference api doesn't seem to have its own library
         # and the docs say to use `requests`` so that is what we instrument and
         # process to track api calls.
 
         super().handle_classification(response)
-    
+
         if response.ok:
             self.cost.n_successful_requests += 1
             content = json.loads(response.text)
@@ -63,16 +66,16 @@ class HuggingfaceCallback(EndpointCallback):
 
 
 class OpenAICallback(EndpointCallback):
+
     class Config:
-        arbitrary_types_allowed=True
+        arbitrary_types_allowed = True
 
     langchain_handler: OpenAICallbackHandler = pydantic.Field(
-        default_factory=OpenAICallbackHandler,
-        exclude=True
+        default_factory=OpenAICallbackHandler, exclude=True
     )
 
     def handle_generation(self, response: LLMResult) -> None:
-        # For openai we use the mechanisms from langchain. 
+        # For openai we use the mechanisms from langchain.
 
         super().handle_generation(response)
 
@@ -80,16 +83,19 @@ class OpenAICallback(EndpointCallback):
 
         # Copy over the langchain handler fields we also have.
         for cost_field, langchain_field in [
-            ("cost", "total_cost"),
-            ("n_tokens", "total_tokens"),
+            ("cost", "total_cost"), ("n_tokens", "total_tokens"),
             ("n_successful_requests", "successful_requests"),
             ("n_prompt_tokens", "prompt_tokens"),
             ("n_completion_tokens", "completion_tokens")
         ]:
-            setattr(self.cost, cost_field, getattr(self.langchain_handler, langchain_field))
-        
+            setattr(
+                self.cost, cost_field,
+                getattr(self.langchain_handler, langchain_field)
+            )
 
-class Endpoint(SerialModel, SingletonPerName):#, ABC):
+
+class Endpoint(SerialModel, SingletonPerName):  #, ABC):
+
     class Config:
         arbitrary_types_allowed = True
         # underscore_attrs_are_private = False
@@ -105,16 +111,22 @@ class Endpoint(SerialModel, SingletonPerName):#, ABC):
     retries: int = 3
 
     # Optional post headers for post requests if done by this class.
-    post_headers: Dict[str, str] = pydantic.Field(default_factory=dict, exclude=True)
+    post_headers: Dict[str, str] = pydantic.Field(
+        default_factory=dict, exclude=True
+    )
 
     # Queue that gets filled at rate rpm.
-    pace: Queue = pydantic.Field(default_factory=lambda: Queue(maxsize=10), exclude=True)
+    pace: Queue = pydantic.Field(
+        default_factory=lambda: Queue(maxsize=10), exclude=True
+    )
 
     # Track costs not run inside "track_cost" here. Also note that Endpoints are
     # singletons (one for each unique name argument) hence this global callback
     # will track all requests for the named api even if you try to create
     # multiple endpoints (with the same name).
-    global_callback: EndpointCallback = pydantic.Field(exclude=True) # of type _callback_class
+    global_callback: EndpointCallback = pydantic.Field(
+        exclude=True
+    )  # of type _callback_class
 
     # Callback class to use for usage tracking
     callback_class: Type[EndpointCallback] = pydantic.Field(exclude=True)
@@ -122,17 +134,17 @@ class Endpoint(SerialModel, SingletonPerName):#, ABC):
     # Name of variable that stores the callback noted above.
     callback_name: str = pydantic.Field(exclude=True)
 
-    # Thread that fills the queue at the appropriate rate.    
+    # Thread that fills the queue at the appropriate rate.
     pace_thread: Thread = pydantic.Field(exclude=True)
 
     # TODO: validate to construct tracking objects when deserializing?
 
     def __new__(cls, name: str, *args, **kwargs):
-        return super(SingletonPerName, cls).__new__(SerialModel, name=name, *args, **kwargs)
+        return super(SingletonPerName, cls).__new__(
+            SerialModel, name=name, *args, **kwargs
+        )
 
-    def __init__(
-        self, *args, name: str, callback_class: Any, **kwargs
-    ):
+    def __init__(self, *args, name: str, callback_class: Any, **kwargs):
         """
         API usage, pacing, and utilities for API endpoints.
         """
@@ -145,7 +157,7 @@ class Endpoint(SerialModel, SingletonPerName):#, ABC):
         kwargs['callback_class'] = callback_class
         kwargs['global_callback'] = callback_class()
         kwargs['callback_name'] = f"callback_{name}"
-        kwargs['pace_thread'] = Thread() # temporary
+        kwargs['pace_thread'] = Thread()  # temporary
 
         super(SerialModel, self).__init__(*args, **kwargs)
 
@@ -153,11 +165,12 @@ class Endpoint(SerialModel, SingletonPerName):#, ABC):
             while True:
                 sleep(60.0 / self.rpm)
                 self.pace.put(True)
+
         self.pace_thread = Thread(target=keep_pace)
         self.pace_thread.start()
 
         logger.debug(f"*** Creating {self.name} endpoint ***")
-        
+
         # Extending class should call _instrument_module on the appropriate
         # modules and methods names.
 
@@ -174,7 +187,9 @@ class Endpoint(SerialModel, SingletonPerName):#, ABC):
         self, url: str, payload: JSON, timeout: Optional[int] = None
     ) -> Any:
         self.pace_me()
-        ret = requests.post(url, json=payload, timeout=timeout, headers=self.post_headers)
+        ret = requests.post(
+            url, json=payload, timeout=timeout, headers=self.post_headers
+        )
 
         j = ret.json()
 
@@ -221,26 +236,113 @@ class Endpoint(SerialModel, SingletonPerName):#, ABC):
 
     def _instrument_module(self, mod: ModuleType, method_name: str) -> None:
         if hasattr(mod, method_name):
-            logger.debug(f"Instrumenting {mod.__name__}.{method_name} for {self.name}")
-            func = getattr(mod, method_name)  
+            logger.debug(
+                f"Instrumenting {mod.__name__}.{method_name} for {self.name}"
+            )
+            func = getattr(mod, method_name)
             w = self.wrap_function(func)
             setattr(mod, method_name, w)
 
     def _instrument_class(self, cls, method_name: str) -> None:
         if hasattr(cls, method_name):
-            logger.debug(f"Instrumenting {cls.__name__}.{method_name} for {self.name}")
-            func = getattr(cls, method_name)  
+            logger.debug(
+                f"Instrumenting {cls.__name__}.{method_name} for {self.name}"
+            )
+            func = getattr(cls, method_name)
             w = self.wrap_function(func)
             setattr(cls, method_name, w)
 
-
     def _instrument_module_members(self, mod: ModuleType, method_name: str):
-        logger.debug(f"Instrumenting {mod.__package__}.*.{method_name} for {self.name}")
+        logger.debug(
+            f"Instrumenting {mod.__package__}.*.{method_name} for {self.name}"
+        )
 
         for m in dir(mod):
             obj = getattr(mod, m)
             self._instrument_class(obj, method_name=method_name)
 
+    @staticmethod
+    def track_all_costs(
+        thunk: Callable[[], T],
+        with_openai: bool = True,
+        with_hugs: bool = True
+    ) -> Tuple[T, Sequence[EndpointCallback]]:
+        """
+        Track costs of all of the apis we can currently track, over the
+        execution of thunk.
+        """
+
+        endpoints = []
+        if with_openai:
+            endpoints.append(OpenAIEndpoint())
+        if with_hugs:
+            endpoints.append(HuggingfaceEndpoint())
+
+        return Endpoint._track_costs(thunk, with_endpoints=endpoints)
+
+    @staticmethod
+    def _track_costs(
+        thunk: Callable[[], T],
+        with_endpoints: Sequence['Endpoint'] = None,
+    ) -> Tuple[T, Sequence[EndpointCallback]]:
+        """
+        Root of all cost tracking methods. Runs the given `thunk`, tracking
+        costs using each of the provided endpoints' callbacks.
+        """
+
+        # Check to see if this call is within another _track_costs call:
+        endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
+            get_local_in_call_stack(
+                key="endpoints",
+                func=Endpoint.__find_tracker,
+                offset=0
+            )
+
+        if endpoints is None:
+            # If not, lets start a new collection of endpoints here along with
+            # the callbacks for each. See type above.
+
+            endpoints = dict()
+
+        else:
+            # We copy the dict here so that the outer call to _track_costs will
+            # have their own version unaffacted by our additions below. Once
+            # this frame returns, the outer frame will have its own endpoints
+            # again and any wrapped method will get that smaller set of
+            # endpoints.
+
+            # TODO: check if deep copy is needed given we are storing lists in
+            # the values and don't want to affect the existing ones here.
+            endpoints = endpoints.copy()
+
+        # Collect any new endpoints requested of us.
+        with_endpoints = with_endpoints or []
+
+        # Keep track of the new callback objects we create here for returning
+        # later.
+        callbacks = []
+
+        # Create the callbacks for the new requested endpoints only. Existing
+        # endpoints from other frames will keep their callbacks.
+        for endpoint in with_endpoints:
+            callback_class = endpoint.callback_class
+            callback = callback_class()
+
+            if callback_class not in endpoints:
+                endpoints[callback_class] = []
+
+            # And add them to the endpoints dict. This will be retrieved from
+            # locals of this frame later in the wrapped methods.
+            endpoints[callback_class].append((endpoint, callback))
+
+            callbacks.append(callback)
+
+        # Call the thunk.
+        result: T = thunk()
+
+        # Return result and only the callbacks created here. Outer thunks might
+        # return others.
+        return result, callbacks
 
     def track_cost(self, thunk: Callable[[], T]) -> Tuple[T, EndpointCallback]:
         """
@@ -249,21 +351,17 @@ class Endpoint(SerialModel, SingletonPerName):#, ABC):
         includes the usage information.
         """
 
-        # Keep this here for access by wrappers higher in call stack.
-        cb = self.callback_class()
-        locals()[self.callback_name] = cb
+        result, callbacks = Endpoint._track_costs(thunk, with_endpoints=[self])
 
-        return thunk(), cb
+        return result, callbacks[0]
 
     @staticmethod
     def __find_tracker(f):
-        return id(f) == id(Endpoint.track_cost.__code__)
+        return id(f) == id(Endpoint._track_costs.__code__)
 
     # @abstractmethod
     def handle_wrapped_call(
-        self,
-        bindings: inspect.BoundArguments,
-        response: Any,
+        self, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
     ) -> None:
         """
@@ -286,29 +384,92 @@ class Endpoint(SerialModel, SingletonPerName):#, ABC):
 
     def wrap_function(self, func):
         if hasattr(func, INSTRUMENT):
-            # TODO: What if we want to instrument the same method for multiple
-            # endpoints?
-            logger.debug(f"{func.__name__} already instrumented")
-            return func
+            # Store the types of callback classes that will handle calls to the
+            # wrapped function in the INSTRUMENT attribute. This will be used to
+            # invoke appropriate callbacks when the wrapped function gets
+            # called.
+
+            # If INSTRUMENT is set, we don't need to instrument the method again
+            # but we may need to add the additional callback class to expected
+            # handlers stored at the attribute.
+
+            registered_callback_classes = getattr(func, INSTRUMENT)
+
+            if self.callback_class in registered_callback_classes:
+                # If our callback class is already in the list, dont bother
+                # adding it again.
+
+                logger.debug(
+                    f"{func.__name__} already instrumented for callbacks of type {self.callback_class.__name__}"
+                )
+
+                return func
+
+            else:
+                # Otherwise add our callback class but don't instrument again.
+
+                registered_callback_classes += [self.callback_class]
+                setattr(func, INSTRUMENT, registered_callback_classes)
+
+                return func
+
+        # If INSTRUMENT is not set, create a wrapper method and return it.
 
         def wrapper(*args, **kwargs):
             logger.debug(f"Calling wrapped {func.__name__} for {self.name}.")
-            
-            res = func(*args, **kwargs)
 
-            cb = get_local_in_call_stack(
-                key=self.callback_name,
-                func=self.__find_tracker,
-                offset=0
-            )
+            # Get the result of the wrapped function:
+            response: Any = func(*args, **kwargs)
 
             bindings = inspect.signature(func).bind(*args, **kwargs)
 
-            self.handle_wrapped_call(func=func, bindings=bindings, response=res, callback=cb)
-            
-            return res
-        
-        setattr(wrapper, INSTRUMENT, func)
+            # Get all of the callback classes suitable for handling this call.
+            # Note that we stored this in the INSTRUMENT attribute of the
+            # wrapper method.
+            registered_callback_classes = getattr(wrapper, INSTRUMENT)
+
+            # Look up the endpoints that are expecting to be notified and the
+            # callback tracking the tally. See Endpoint._track_costs for
+            # definition.
+            endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
+                get_local_in_call_stack(
+                    key="endpoints",
+                    func=self.__find_tracker,
+                    offset=0
+                )
+
+            # If wrapped method was not called from within _track_costs, we will
+            # get None here and do nothing but return wrapped function's
+            # response.
+            if endpoints is None:
+                return response
+
+            for callback_class in registered_callback_classes:
+                for endpoint, callback in endpoints[callback_class]:
+
+                    endpoint.handle_wrapped_call(
+                        func=func,
+                        bindings=bindings,
+                        response=response,
+                        callback=callback
+                    )
+
+            #cb = get_local_in_call_stack(
+            #    key=self.callback_name,
+            #    func=self.__find_tracker,
+            #    offset=0
+            #)
+
+            #self.handle_wrapped_call(
+            #    func=func,
+            #    bindings=bindings,
+            #    response=res,
+            #    callback=cb
+            #)
+
+            return response
+
+        setattr(wrapper, INSTRUMENT, [self.callback_class])
         wrapper.__name__ = func.__name__
         wrapper.__signature__ = inspect.signature(func)
 
@@ -326,10 +487,7 @@ class OpenAIEndpoint(Endpoint):
         return super(Endpoint, cls).__new__(cls, name="openai")
 
     def handle_wrapped_call(
-        self,
-        func: Callable, 
-        bindings: inspect.BoundArguments,
-        response: Any,
+        self, func: Callable, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
     ) -> None:
 
@@ -348,6 +506,7 @@ class OpenAIEndpoint(Endpoint):
         )
 
         self.global_callback.handle_generation(response=llm_res)
+
         if callback is not None:
             callback.handle_generation(response=llm_res)
 
@@ -370,13 +529,10 @@ class HuggingfaceEndpoint(Endpoint):
         return super(Endpoint, cls).__new__(cls, name="huggingface")
 
     def handle_wrapped_call(
-        self,
-        func: Callable, 
-        bindings: inspect.BoundArguments,
-        response: requests.Response,
-        callback: Optional[EndpointCallback]
+        self, func: Callable, bindings: inspect.BoundArguments,
+        response: requests.Response, callback: Optional[EndpointCallback]
     ) -> None:
-    
+
         self.global_callback.handle_classification(response=response)
 
         if callback is not None:
