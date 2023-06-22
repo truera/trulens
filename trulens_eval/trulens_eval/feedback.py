@@ -348,22 +348,16 @@ class Feedback(FeedbackDefinition):
         )
 
         try:
-            total_tokens = 0
-            total_cost = 0.0
+            cost = Cost()
 
             for ins in self.extract_selection(app=app_json, record=record):
+                
+                result_val, part_cost = Endpoint.track_all_costs_tally(lambda: self.imp(**ins))
+                cost += part_cost
+                result_vals.append(result_val)
 
-                # TODO: Do this only if there is an openai model inside the app:
-                # NODE: This only works for langchain uses of openai.
-                with get_openai_callback() as cb:
-                    result_val = self.imp(**ins)
-                    result_vals.append(result_val)
-
-                    feedback_call = FeedbackCall(args=ins, ret=result_val)
-                    feedback_calls.append(feedback_call)
-
-                    total_tokens += cb.total_tokens
-                    total_cost += cb.total_cost
+                feedback_call = FeedbackCall(args=ins, ret=result_val)
+                feedback_calls.append(feedback_call)
 
             result_vals = np.array(result_vals)
             result = self.agg(result_vals)
@@ -371,7 +365,7 @@ class Feedback(FeedbackDefinition):
             feedback_result.update(
                 result=result,
                 status=FeedbackResultStatus.DONE,
-                cost=Cost(n_tokens=total_tokens, cost=total_cost),
+                cost=cost,
                 calls=feedback_calls
             )
 
