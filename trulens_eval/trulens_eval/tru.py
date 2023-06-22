@@ -3,6 +3,7 @@ from multiprocessing import Process
 import os
 from pathlib import Path
 import subprocess
+import sys
 import threading
 from threading import Thread
 from time import sleep
@@ -10,17 +11,22 @@ from typing import Iterable, List, Optional, Sequence, Union
 
 import pkg_resources
 
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import AppDefinition
-from trulens_eval.schema import Record
 from trulens_eval.db import JSON
 from trulens_eval.db import LocalSQLite
 from trulens_eval.feedback import Feedback
-from trulens_eval.utils.notebook_utils import is_notebook, setup_widget_stdout_stderr
+from trulens_eval.schema import AppDefinition
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import Record
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import TP
+from trulens_eval.utils.notebook_utils import is_notebook
+from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
 
 logger = logging.getLogger(__name__)
+
+# How long to wait (seconds) for streamlit to print out url when starting the
+# dashboard.
+DASHBOARD_START_TIMEOUT = 30
 
 
 class Tru(SingletonPerName):
@@ -288,9 +294,14 @@ class Tru(SingletonPerName):
                 )
 
             else:
+                if sys.platform.startswith("win"):
+                    raise RuntimeError(
+                        "Force stop option is not supported on windows."
+                    )
+
                 print("Force stopping dashboard ...")
                 import os
-                import pwd # PROBLEM: does not exist on windows
+                import pwd  # PROBLEM: does not exist on windows
 
                 import psutil
                 username = pwd.getpwuid(os.getuid())[0]
@@ -416,7 +427,8 @@ class Tru(SingletonPerName):
 
         Tru.dashboard_proc = proc
 
-        if not started.wait(timeout=30): # This might not work on windows.
+        if not started.wait(timeout=DASHBOARD_START_TIMEOUT
+                           ):  # This might not work on windows.
             raise RuntimeError(
                 "Dashboard failed to start in time. "
                 "Please inspect dashboard logs for additional information."

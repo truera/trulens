@@ -5,20 +5,21 @@ from queue import Queue
 from threading import Thread
 from time import sleep
 from types import ModuleType
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
-import pydantic
+from typing import (Any, Callable, Dict, Optional, Sequence, Tuple, Type,
+                    TypeVar)
 
+from langchain.callbacks.openai_info import OpenAICallbackHandler
+from langchain.schema import LLMResult
+import pydantic
 import requests
 
-from trulens_eval.db import JSON
-from trulens_eval.schema import Cost
 from trulens_eval.keys import get_huggingface_headers
-from trulens_eval.util import WithClassInfo
-from trulens_eval.util import SerialModel, get_local_in_call_stack
+from trulens_eval.schema import Cost
+from trulens_eval.util import get_local_in_call_stack
+from trulens_eval.util import JSON
+from trulens_eval.util import SerialModel
 from trulens_eval.util import SingletonPerName
-
-from langchain.schema import LLMResult
-from langchain.callbacks.openai_info import OpenAICallbackHandler
+from trulens_eval.util import WithClassInfo
 
 logger = logging.getLogger(__name__)
 
