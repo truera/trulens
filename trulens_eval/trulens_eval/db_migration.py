@@ -22,6 +22,15 @@ def migrate_0_1_2(db):
     c.execute(f"""ALTER TABLE feedbacks
         DROP COLUMN chain_id;""")
     
+    #TODO: REMOVE THESE DEBUGS
+    c.execute(f"""SELECT * FROM feedbacks""")
+    rows = c.fetchall()
+    print(f"FEEDBACK {rows}")
+    c.execute(f"""SELECT * FROM feedback_defs""")
+    rows = c.fetchall()
+    print(f"FEEDBACKDEFS {rows}")
+
+
     c.execute(f"""SELECT * FROM chains""")
     rows = c.fetchall()
     for old_chain in tqdm(rows,desc="Migrating Apps DB"):

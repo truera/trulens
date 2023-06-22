@@ -187,11 +187,11 @@ class Feedback(FeedbackDefinition):
 
         def prepare_feedback(row):
             record_json = row.record_json
-            raise Exception(record_json)
             record = Record(**record_json)
 
             app_json = row.app_json
-
+            
+            print(row.feedback_json)
             feedback = Feedback(**row.feedback_json)
             feedback.run_and_log(
                 record=record,
