@@ -347,18 +347,22 @@ class App(AppDefinition, SerialModel):
         for q, c in instrumented_component_views(self.dict()):
             # Add the chain indicator so the resulting paths can be specified
             # for feedback selectors.
-            q = JSONPath(path = (GetItemOrAttribute(item_or_attribute="__app__"),) + q.path)
+            q = JSONPath(
+                path=(GetItemOrAttribute(item_or_attribute="__app__"),) + q.path
+            )
             yield q, c
-        
+
     def print_instrumented(self) -> None:
         """
         Print instrumented components and their categories.
         """
 
-        print("\n".join(
-            f"{t[1].__class__.__name__} component: "
-            f"{str(t[0])}" for t in self.instrumented()
-        ))
+        print(
+            "\n".join(
+                f"{t[1].__class__.__name__} component: "
+                f"{str(t[0])}" for t in self.instrumented()
+            )
+        )
 
 
 class TruApp(App):
