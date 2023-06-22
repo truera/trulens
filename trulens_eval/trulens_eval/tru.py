@@ -416,7 +416,7 @@ class Tru(SingletonPerName):
 
         Tru.dashboard_proc = proc
 
-        if not started.wait(timeout=60): # This might not work on windows.
+        if not started.wait(timeout=30): # This might not work on windows.
             raise RuntimeError(
                 "Dashboard failed to start in time. "
                 "Please inspect dashboard logs for additional information."
