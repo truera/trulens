@@ -123,6 +123,8 @@ class DB(SerialModel, abc.ABC):
 
 
 def versioning_decorator(func):
+    """A function decorator that checks if a DB can be used before using it.
+    """
     def wrapper(self, *args, **kwargs):
         db_migration._migration_checker(db=self)
         returned_value = func(self, *args, **kwargs)
@@ -131,6 +133,8 @@ def versioning_decorator(func):
     return wrapper
 
 def for_all_methods(decorator):
+    """A Class decorator that will decorate all DB Access methods except for instantiations, db resets, or version checking.
+    """
     def decorate(cls):
         for attr in cls.__dict__: 
             if not str(attr).startswith("_") and str(attr) not in  ["get_meta","reset_database","migrate_database"] and callable(getattr(cls, attr)):
@@ -202,7 +206,6 @@ class LocalSQLite(DB):
         try:
             c.execute(f'''SELECT key, value from {self.TABLE_META}''')
             rows = c.fetchall()
-            print(f"DB CONTENTS: {rows}" )
             ret = {}
 
             for row in rows:
@@ -235,12 +238,12 @@ class LocalSQLite(DB):
             c.execute(f"""SELECT name FROM sqlite_master  
                 WHERE type='table';""")
             rows = c.fetchall()
-            # This is called before any DB manipulations, 
-            # so if existing tables are there and its an empty metatable, it is trulens-eval first release.
+            
             if len(rows) > 1:
+                # _create_db_meta_table is called before any DB manipulations, 
+                # so if existing tables are present but it's an empty metatable, it means this is trulens-eval first release.
                 db_version = "0.1.2"
-            # migrate from pre-version-tracked database
-            # print(f"Migrating DB {self.filename} from trulens_version {meta.trulens_version} to {__version__}.")
+            # Otherwise, set the version
             c.execute(
                 f'''INSERT INTO {self.TABLE_META} VALUES (?, ?)''',
                 ('trulens_version', db_version)
@@ -506,10 +509,14 @@ class LocalSQLite(DB):
             )['calls']  # calls_json (sequence of FeedbackCall)
             row.cost_json = json.loads(row.cost_json)  # cost_json (Cost)
             try:
+                # Add a try-catch here as latency is a DB breaking change, but not a functionality breaking change.
+                # If it fails, we can still continue.
                 row.perf_json = json.loads(row.perf_json)  # perf_json (Perf)
                 row['latency'] = Perf(**row.perf_json).latency
             except:
-                # migration string will not load
+                # If it comes here, it is because we have filled the DB with a migration tag that cannot be loaded into perf_json
+                # This is not migrateable because start/end times were not logged and latency is required, but adding a real latency 
+                # would create incorrect summations
                 pass
             row.feedback_json = json.loads(
                 row.feedback_json
@@ -530,7 +537,6 @@ class LocalSQLite(DB):
             return row
 
         df = df.apply(map_row, axis=1)
-        print(df['record_json'].iloc[0])
         return pd.DataFrame(df)
 
     def get_app(self, app_id: str) -> JSON:

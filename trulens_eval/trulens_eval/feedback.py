@@ -191,7 +191,6 @@ class Feedback(FeedbackDefinition):
 
             app_json = row.app_json
             
-            print(row.feedback_json)
             feedback = Feedback(**row.feedback_json)
             feedback.run_and_log(
                 record=record,

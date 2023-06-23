@@ -247,6 +247,7 @@ def migrate(db)->None:
     Args:
         db (DB): the db object
     """
+    raise Exception("do this")
     # TODO: Save original DB
     version = db.get_meta().trulens_version
     from_compat_version = _get_compatibility_version(version)
