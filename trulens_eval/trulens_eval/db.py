@@ -5,15 +5,16 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 import sqlite3
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
-import pydantic
-from frozendict import frozendict
 from merkle_json import MerkleJson
 import numpy as np
 import pandas as pd
+import pydantic
 
 from trulens_eval import __version__
+from trulens_eval.feedback import Feedback
+from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import AppID
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackDefinition
@@ -21,21 +22,14 @@ from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.schema import JSONPath
-from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
-from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordID
-from trulens_eval.feedback import Feedback
-from trulens_eval.util import all_queries
-from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
 from trulens_eval.util import json_str_of_obj
-from trulens_eval.util import JSONPath
 from trulens_eval.util import SerialModel
-from trulens_eval.util import UNICODE_YIELD
 from trulens_eval.util import UNICODE_CHECK
+from trulens_eval.util import UNICODE_CLOCK
 
 mj = MerkleJson()
 NoneType = type(None)
@@ -394,7 +388,7 @@ class LocalSQLite(DB):
             )
         else:
             print(
-                f"{UNICODE_YIELD} feedback {feedback_result.feedback_result_id} on {feedback_result.record_id} -> {self.filename}"
+                f"{UNICODE_CLOCK} feedback {feedback_result.feedback_result_id} on {feedback_result.record_id} -> {self.filename}"
             )
 
     def get_feedback(

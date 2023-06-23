@@ -56,6 +56,8 @@ T = TypeVar("T")
 UNICODE_STOP = "🛑"
 UNICODE_CHECK = "✅"
 UNICODE_YIELD = "⚡"
+UNICODE_HOURGLASS = "⏳"
+UNICODE_CLOCK = "⏰"
 
 # Optional requirements.
 
@@ -1119,6 +1121,10 @@ class TP(SingletonPerName):  # "thread processing"
 
 
 # python instrumentation utilities
+
+
+def caller_frame(offset=0):
+    return stack()[offset+1].frame
 
 
 def get_local_in_call_stack(

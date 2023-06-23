@@ -17,6 +17,7 @@ from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import Record
+from trulens_eval.util import UNICODE_CHECK, UNICODE_YIELD
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import TP
 from trulens_eval.utils.notebook_utils import is_notebook
@@ -234,8 +235,13 @@ class Tru(SingletonPerName):
                 #    "Looking for things to do. Stop me with `tru.stop_evaluator()`.",
                 #    end=''
                 #)
-                Feedback.evaluate_deferred(tru=self)
-                TP().finish(timeout=10)
+                started_count = Feedback.evaluate_deferred(tru=self)
+
+                if started_count > 0:
+                    print(f"{UNICODE_YIELD}{UNICODE_YIELD}{UNICODE_YIELD} Started {started_count} deferred feedback functions.")
+                    TP().finish()
+                    print(f"{UNICODE_CHECK}{UNICODE_CHECK}{UNICODE_CHECK} Finished evaluating deferred feedback functions.")
+
                 if fork:
                     sleep(10)
                 else:

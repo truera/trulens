@@ -14,7 +14,7 @@ from typing import Any, Callable, Dict, Iterable, Optional, Type, Union
 import numpy as np
 import openai
 import pydantic
-from tqdm.auto import tqdm
+
 
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
@@ -36,6 +36,8 @@ from trulens_eval.util import jsonify
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
 from trulens_eval.util import UNICODE_CHECK
+from trulens_eval.util import UNICODE_YIELD
+from trulens_eval.util import UNICODE_CLOCK
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
@@ -177,7 +179,7 @@ class Feedback(FeedbackDefinition):
         self.selectors = selectors
 
     @staticmethod
-    def evaluate_deferred(tru: 'Tru'):
+    def evaluate_deferred(tru: 'Tru') -> int:
         db = tru.db
 
         def prepare_feedback(row):
@@ -196,45 +198,52 @@ class Feedback(FeedbackDefinition):
 
         feedbacks = db.get_feedback()
 
+        started_count = 0
+
         for i, row in feedbacks.iterrows():
             feedback_ident = f"{row.fname} for app {row.app_json['app_id']}, record {row.record_id}"
 
             if row.status == FeedbackResultStatus.NONE:
 
-                tqdm.write(
+                print(
                     f"{UNICODE_YIELD} Feedback task starting: {feedback_ident}"
                 )
 
                 TP().runlater(prepare_feedback, row)
+                started_count += 1
 
             elif row.status in [FeedbackResultStatus.RUNNING]:
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 30:
-                    tqdm.write(
+                    print(
                         f"{UNICODE_YIELD} Feedback task last made progress over 30 seconds ago. Retrying: {feedback_ident}"
                     )
                     TP().runlater(prepare_feedback, row)
+                    started_count += 1
 
                 else:
-                    tqdm.write(
-                        f"{UNICODE_STOP} Feedback task last made progress less than 30 seconds ago. Giving it more time: {feedback_ident}"
+                    print(
+                        f"{UNICODE_CLOCK} Feedback task last made progress less than 30 seconds ago. Giving it more time: {feedback_ident}"
                     )
 
             elif row.status in [FeedbackResultStatus.FAILED]:
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 60 * 5:
-                    tqdm.write(
+                    print(
                         f"{UNICODE_YIELD} Feedback task last made progress over 5 minutes ago. Retrying: {feedback_ident}"
                     )
                     TP().runlater(prepare_feedback, row)
+                    started_count += 1
 
                 else:
-                    tqdm.write(
-                        f"{UNICODE_STOP} Feedback task last made progress less than 5 minutes ago. Not touching it for now: {feedback_ident}"
+                    print(
+                        f"{UNICODE_CLOCK} Feedback task last made progress less than 5 minutes ago. Not touching it for now: {feedback_ident}"
                     )
 
             elif row.status == FeedbackResultStatus.DONE:
                 pass
+
+        return started_count
 
     def __call__(self, *args, **kwargs) -> Any:
         assert self.imp is not None, "Feedback definition needs an implementation to call."
