@@ -15,7 +15,7 @@
         <link rel="next" href="../truchain/">
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
     
     
       
@@ -514,7 +514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tru_feedback/" class="md-nav__link">
+      <a href="../feedback/" class="md-nav__link">
         Feedback Functions
       </a>
     </li>
@@ -909,7 +909,9 @@
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 28</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 26</span>
+<span class="normal"> 27</span>
+<span class="normal"> 28</span>
 <span class="normal"> 29</span>
 <span class="normal"> 30</span>
 <span class="normal"> 31</span>
@@ -1308,9 +1310,7 @@
 <span class="normal">424</span>
 <span class="normal">425</span>
 <span class="normal">426</span>
-<span class="normal">427</span>
-<span class="normal">428</span>
-<span class="normal">429</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Tru</span><span class="p">(</span><span class="n">SingletonPerName</span><span class="p">):</span>
+<span class="normal">427</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Tru</span><span class="p">(</span><span class="n">SingletonPerName</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Tru is the main class that provides an entry points to trulens-eval. Tru lets you:</span>
 
@@ -1392,7 +1392,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">record</span><span class="p">:</span> <span class="n">Record</span><span class="p">,</span>
         <span class="n">feedback_functions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Feedback</span><span class="p">],</span>
-        <span class="n">app</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">App</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">app</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AppDefinition</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">JSON</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Run a collection of feedback functions and report their result.</span>
@@ -1441,7 +1441,7 @@
 
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">evals</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">add_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">App</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">add_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">AppDefinition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a app to the database.        </span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1504,17 +1504,17 @@
                     <span class="s2">&quot;Evaluator is already running in this process.&quot;</span>
                 <span class="p">)</span>
 
-        <span class="kn">from</span> <span class="nn">trulens_eval.tru_feedback</span> <span class="kn">import</span> <span class="n">Feedback</span>
+        <span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">Feedback</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">fork</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">evaluator_stop</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
 
         <span class="k">def</span> <span class="nf">runloop</span><span class="p">():</span>
             <span class="k">while</span> <span class="n">fork</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluator_stop</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
-                <span class="nb">print</span><span class="p">(</span>
-                    <span class="s2">&quot;Looking for things to do. Stop me with `tru.stop_evaluator()`.&quot;</span><span class="p">,</span>
-                    <span class="n">end</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
-                <span class="p">)</span>
+                <span class="c1">#print(</span>
+                <span class="c1">#    &quot;Looking for things to do. Stop me with `tru.stop_evaluator()`.&quot;,</span>
+                <span class="c1">#    end=&#39;&#39;</span>
+                <span class="c1">#)</span>
                 <span class="n">Feedback</span><span class="o">.</span><span class="n">evaluate_deferred</span><span class="p">(</span><span class="n">tru</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
                 <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">finish</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">fork</span><span class="p">:</span>
@@ -1577,7 +1577,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Force stopping dashboard ...&quot;</span><span class="p">)</span>
                 <span class="kn">import</span> <span class="nn">os</span>
-                <span class="kn">import</span> <span class="nn">pwd</span>
+                <span class="kn">import</span> <span class="nn">pwd</span> <span class="c1"># PROBLEM: does not exist on windows</span>
 
                 <span class="kn">import</span> <span class="nn">psutil</span>
                 <span class="n">username</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwuid</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
@@ -1703,7 +1703,7 @@
 
         <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_proc</span> <span class="o">=</span> <span class="n">proc</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">started</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">started</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span> <span class="c1"># This might not work on windows.</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="s2">&quot;Dashboard failed to start in time. &quot;</span>
                 <span class="s2">&quot;Please inspect dashboard logs for additional information.&quot;</span>
@@ -1743,14 +1743,14 @@
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">47</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
 <span class="normal">48</span>
 <span class="normal">49</span>
 <span class="normal">50</span>
 <span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">Chain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">52</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">Chain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create a TruChain with database managed by self.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1780,14 +1780,14 @@
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">56</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
 <span class="normal">57</span>
 <span class="normal">58</span>
 <span class="normal">59</span>
 <span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">Llama</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">61</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">Llama</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create a llama_index engine with database managed by self.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1818,7 +1818,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">65</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
 <span class="normal">66</span>
 <span class="normal">67</span>
 <span class="normal">68</span>
@@ -1826,9 +1828,7 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 <span class="normal">70</span>
 <span class="normal">71</span>
 <span class="normal">72</span>
-<span class="normal">73</span>
-<span class="normal">74</span>
-<span class="normal">75</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">73</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    TruLens instrumentation, logging, and feedback functions for apps.</span>
 <span class="sd">    Creates a local database &#39;default.sqlite&#39; in current working directory.</span>
@@ -1861,12 +1861,12 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">159</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
 <span class="normal">160</span>
 <span class="normal">161</span>
-<span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">App</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">AppDefinition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Add a app to the database.        </span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1894,7 +1894,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">166</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
 <span class="normal">167</span>
 <span class="normal">168</span>
 <span class="normal">169</span>
@@ -1904,9 +1906,7 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 <span class="normal">173</span>
 <span class="normal">174</span>
 <span class="normal">175</span>
-<span class="normal">176</span>
-<span class="normal">177</span>
-<span class="normal">178</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_feedback</span><span class="p">(</span>
+<span class="normal">176</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_feedback</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">feedback_result</span><span class="p">:</span> <span class="n">FeedbackResult</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1941,13 +1941,13 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">180</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
 <span class="normal">181</span>
 <span class="normal">182</span>
 <span class="normal">183</span>
-<span class="normal">184</span>
-<span class="normal">185</span>
-<span class="normal">186</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_feedbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feedback_results</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">FeedbackResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">184</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_feedbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feedback_results</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">FeedbackResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Add multiple feedback results to the database.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -2005,7 +2005,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 84</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
 <span class="normal"> 85</span>
 <span class="normal"> 86</span>
 <span class="normal"> 87</span>
@@ -2023,9 +2025,7 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 <span class="normal"> 99</span>
 <span class="normal">100</span>
 <span class="normal">101</span>
-<span class="normal">102</span>
-<span class="normal">103</span>
-<span class="normal">104</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Record</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">102</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">add_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Record</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Add a record to the database.</span>
 
@@ -2068,13 +2068,13 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">188</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
 <span class="normal">189</span>
 <span class="normal">190</span>
 <span class="normal">191</span>
-<span class="normal">192</span>
-<span class="normal">193</span>
-<span class="normal">194</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSON</span><span class="p">:</span>
+<span class="normal">192</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSON</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Look up a app from the database.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -2103,14 +2103,14 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">196</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
 <span class="normal">197</span>
 <span class="normal">198</span>
 <span class="normal">199</span>
 <span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_records_and_feedback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+<span class="normal">201</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_records_and_feedback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get records, their feeback results, and feedback names from the database.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -2140,12 +2140,12 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">77</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
 <span class="normal">78</span>
 <span class="normal">79</span>
-<span class="normal">80</span>
-<span class="normal">81</span>
-<span class="normal">82</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">reset_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">80</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">reset_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reset the database. Clears all tables.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -2263,7 +2263,9 @@ its pip package installation folder.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">313</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
 <span class="normal">314</span>
 <span class="normal">315</span>
 <span class="normal">316</span>
@@ -2375,9 +2377,7 @@ its pip package installation folder.</p>
 <span class="normal">422</span>
 <span class="normal">423</span>
 <span class="normal">424</span>
-<span class="normal">425</span>
-<span class="normal">426</span>
-<span class="normal">427</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_dashboard</span><span class="p">(</span>
+<span class="normal">425</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_dashboard</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">_dev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Process</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -2485,7 +2485,7 @@ its pip package installation folder.</p>
 
     <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_proc</span> <span class="o">=</span> <span class="n">proc</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">started</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">started</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span> <span class="c1"># This might not work on windows.</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
             <span class="s2">&quot;Dashboard failed to start in time. &quot;</span>
             <span class="s2">&quot;Please inspect dashboard logs for additional information.&quot;</span>
@@ -2540,7 +2540,7 @@ its pip package installation folder.</p>
         <tr>
           <td><code>app</code></td>
           <td>
-                <code><span title="trulens_eval.schema.App">App</span></code>
+                <code>App</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2554,7 +2554,7 @@ its pip package installation folder.</p>
         <tr>
           <td><code>feedback_functions</code></td>
           <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="trulens_eval.tru_feedback.Feedback">Feedback</span>]</code>
+                <code><span title="typing.Sequence">Sequence</span>[<span title="trulens_eval.feedback.Feedback">Feedback</span>]</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -2571,7 +2571,9 @@ its pip package installation folder.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">106</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
 <span class="normal">107</span>
 <span class="normal">108</span>
 <span class="normal">109</span>
@@ -2620,13 +2622,11 @@ its pip package installation folder.</p>
 <span class="normal">152</span>
 <span class="normal">153</span>
 <span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span>
-<span class="normal">157</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_feedback_functions</span><span class="p">(</span>
+<span class="normal">155</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_feedback_functions</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">record</span><span class="p">:</span> <span class="n">Record</span><span class="p">,</span>
     <span class="n">feedback_functions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Feedback</span><span class="p">],</span>
-    <span class="n">app</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">App</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AppDefinition</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">JSON</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run a collection of feedback functions and report their result.</span>
@@ -2696,7 +2696,9 @@ its pip package installation folder.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">205</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
 <span class="normal">206</span>
 <span class="normal">207</span>
 <span class="normal">208</span>
@@ -2741,9 +2743,7 @@ its pip package installation folder.</p>
 <span class="normal">247</span>
 <span class="normal">248</span>
 <span class="normal">249</span>
-<span class="normal">250</span>
-<span class="normal">251</span>
-<span class="normal">252</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">start_evaluator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+<span class="normal">250</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">start_evaluator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                     <span class="n">restart</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                     <span class="n">fork</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Process</span><span class="p">,</span> <span class="n">Thread</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -2760,17 +2760,17 @@ its pip package installation folder.</p>
                 <span class="s2">&quot;Evaluator is already running in this process.&quot;</span>
             <span class="p">)</span>
 
-    <span class="kn">from</span> <span class="nn">trulens_eval.tru_feedback</span> <span class="kn">import</span> <span class="n">Feedback</span>
+    <span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">Feedback</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">fork</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">evaluator_stop</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">runloop</span><span class="p">():</span>
         <span class="k">while</span> <span class="n">fork</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluator_stop</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;Looking for things to do. Stop me with `tru.stop_evaluator()`.&quot;</span><span class="p">,</span>
-                <span class="n">end</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
-            <span class="p">)</span>
+            <span class="c1">#print(</span>
+            <span class="c1">#    &quot;Looking for things to do. Stop me with `tru.stop_evaluator()`.&quot;,</span>
+            <span class="c1">#    end=&#39;&#39;</span>
+            <span class="c1">#)</span>
             <span class="n">Feedback</span><span class="o">.</span><span class="n">evaluate_deferred</span><span class="p">(</span><span class="n">tru</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
             <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">finish</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">fork</span><span class="p">:</span>
@@ -2864,7 +2864,9 @@ started in this notebook and shut them down too.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">272</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
 <span class="normal">273</span>
 <span class="normal">274</span>
 <span class="normal">275</span>
@@ -2901,9 +2903,7 @@ started in this notebook and shut them down too.</p>
 <span class="normal">306</span>
 <span class="normal">307</span>
 <span class="normal">308</span>
-<span class="normal">309</span>
-<span class="normal">310</span>
-<span class="normal">311</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">stop_dashboard</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">309</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">stop_dashboard</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Stop existing dashboard(s) if running.</span>
 
@@ -2926,7 +2926,7 @@ started in this notebook and shut them down too.</p>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Force stopping dashboard ...&quot;</span><span class="p">)</span>
             <span class="kn">import</span> <span class="nn">os</span>
-            <span class="kn">import</span> <span class="nn">pwd</span>
+            <span class="kn">import</span> <span class="nn">pwd</span> <span class="c1"># PROBLEM: does not exist on windows</span>
 
             <span class="kn">import</span> <span class="nn">psutil</span>
             <span class="n">username</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwuid</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
@@ -2965,7 +2965,9 @@ started in this notebook and shut them down too.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">254</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
 <span class="normal">255</span>
 <span class="normal">256</span>
 <span class="normal">257</span>
@@ -2979,9 +2981,7 @@ started in this notebook and shut them down too.</p>
 <span class="normal">265</span>
 <span class="normal">266</span>
 <span class="normal">267</span>
-<span class="normal">268</span>
-<span class="normal">269</span>
-<span class="normal">270</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">stop_evaluator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">268</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">stop_evaluator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Stop the deferred feedback evaluation thread.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -3051,17 +3051,27 @@ started in this notebook and shut them down too.</p>
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.sections"], "search": "../../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.a51614de.min.js"></script>
       
-        <script src="../../../javascript/config.js"></script>
+        
+          <script src="../../../javascript/config.js"></script>
+        
       
-        <script src="../../../javascript/app.js"></script>
+        
+          <script src="../../../javascript/app.js"></script>
+        
       
-        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
+          <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
       
-        <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
+          <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
       
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
+          <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
       
     
   </body>

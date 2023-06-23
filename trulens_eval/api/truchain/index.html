@@ -12,10 +12,10 @@
         <link rel="prev" href="../tru/">
       
       
-        <link rel="next" href="../tru_feedback/">
+        <link rel="next" href="../feedback/">
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
     
     
       
@@ -457,7 +457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tru_feedback/" class="md-nav__link">
+      <a href="../feedback/" class="md-nav__link">
         Feedback Functions
       </a>
     </li>
@@ -812,10 +812,7 @@
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">31</span>
-<span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
 <span class="normal">35</span>
 <span class="normal">36</span>
 <span class="normal">37</span>
@@ -872,7 +869,10 @@
 <span class="normal">88</span>
 <span class="normal">89</span>
 <span class="normal">90</span>
-<span class="normal">91</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">LangChainInstrument</span><span class="p">(</span><span class="n">Instrument</span><span class="p">):</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span>
+<span class="normal">94</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">LangChainInstrument</span><span class="p">(</span><span class="n">Instrument</span><span class="p">):</span>
 
     <span class="k">class</span> <span class="nc">Default</span><span class="p">:</span>
         <span class="n">MODULES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;langchain.&quot;</span><span class="p">}</span>
@@ -969,7 +969,7 @@
 
   <div class="doc doc-contents ">
       <p class="doc doc-class-bases">
-        Bases: <code><span title="trulens_eval.tru_app.TruApp">TruApp</span></code></p>
+        Bases: <code><span title="trulens_eval.app.App">App</span></code></p>
 
   
       <p>Wrap a langchain Chain to capture its configuration and evaluation steps.</p>
@@ -977,10 +977,7 @@
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 94</span>
-<span class="normal"> 95</span>
-<span class="normal"> 96</span>
-<span class="normal"> 97</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 97</span>
 <span class="normal"> 98</span>
 <span class="normal"> 99</span>
 <span class="normal">100</span>
@@ -1096,12 +1093,20 @@
 <span class="normal">210</span>
 <span class="normal">211</span>
 <span class="normal">212</span>
-<span class="normal">213</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruChain</span><span class="p">(</span><span class="n">TruApp</span><span class="p">):</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruChain</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrap a langchain Chain to capture its configuration and evaluation steps. </span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">app</span><span class="p">:</span> <span class="n">Chain</span>
+
+    <span class="n">root_callable</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">FunctionOrMethod</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span><span class="n">TruChain</span><span class="o">.</span><span class="n">_call</span><span class="p">),</span>
+        <span class="n">const</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
 
     <span class="c1"># Normally pydantic does not like positional args but chain here is</span>
     <span class="c1"># important enough to make an exception.</span>
@@ -1111,7 +1116,8 @@
 
 <span class="sd">        Arguments:</span>
 <span class="sd">        - app: Chain -- the chain to wrap.</span>
-<span class="sd">        - More args in TruApp</span>
+<span class="sd">        - More args in App</span>
+<span class="sd">        - More args in AppDefinition</span>
 <span class="sd">        - More args in WithClassInfo</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
@@ -1155,8 +1161,7 @@
         <span class="n">ret</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">error</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="n">total_tokens</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">total_cost</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">cost</span><span class="p">:</span> <span class="n">Cost</span> <span class="o">=</span> <span class="n">Cost</span><span class="p">()</span>
 
         <span class="n">start_time</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">end_time</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1165,11 +1170,10 @@
             <span class="c1"># TODO: do this only if there is an openai model inside the chain:</span>
             <span class="k">with</span> <span class="n">get_openai_callback</span><span class="p">()</span> <span class="k">as</span> <span class="n">cb</span><span class="p">:</span>
                 <span class="n">start_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-                <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="n">ret</span><span class="p">,</span> <span class="n">cost</span> <span class="o">=</span> <span class="n">Endpoint</span><span class="o">.</span><span class="n">track_all_costs_tally</span><span class="p">(</span>
+                    <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="p">)</span>
                 <span class="n">end_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-
-            <span class="n">total_tokens</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">total_tokens</span>
-            <span class="n">total_cost</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">total_cost</span>
 
         <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">end_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
@@ -1192,8 +1196,7 @@
             <span class="n">ret_record_args</span><span class="p">[</span><span class="s1">&#39;main_output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ret</span><span class="p">[</span><span class="n">output_key</span><span class="p">]</span>
 
         <span class="n">ret_record</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_record</span><span class="p">(</span>
-            <span class="n">ret_record_args</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">total_tokens</span><span class="p">,</span> <span class="n">total_cost</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span>
-            <span class="n">end_time</span><span class="p">,</span> <span class="n">record</span>
+            <span class="n">ret_record_args</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">record</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">ret</span><span class="p">,</span> <span class="n">ret_record</span>
@@ -1213,9 +1216,6 @@
     <span class="c1"># TODO(piotrm): figure out whether the combination of _call and __call__ is working right.</span>
     <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">instrumented</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">instrumented</span><span class="p">(</span><span class="n">categorizer</span><span class="o">=</span><span class="n">Is</span><span class="o">.</span><span class="n">what</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
         </details>
 
@@ -1248,15 +1248,15 @@ get the record, use <code>call_with_record</code> instead.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">197</span>
-<span class="normal">198</span>
-<span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">203</span>
 <span class="normal">204</span>
-<span class="normal">205</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrapped call to self.app.__call__ with instrumentation. If you need to</span>
 <span class="sd">    get the record, use `call_with_record` instead. </span>
@@ -1286,21 +1286,14 @@ get the record, use <code>call_with_record</code> instead.</p>
       <p>Wrap a langchain chain for monitoring.</p>
       <ul>
 <li>app: Chain -- the chain to wrap.</li>
-<li>More args in TruApp</li>
+<li>More args in App</li>
+<li>More args in AppDefinition</li>
 <li>More args in WithClassInfo</li>
 </ul>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">103</span>
-<span class="normal">104</span>
-<span class="normal">105</span>
-<span class="normal">106</span>
-<span class="normal">107</span>
-<span class="normal">108</span>
-<span class="normal">109</span>
-<span class="normal">110</span>
-<span class="normal">111</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">111</span>
 <span class="normal">112</span>
 <span class="normal">113</span>
 <span class="normal">114</span>
@@ -1309,13 +1302,23 @@ get the record, use <code>call_with_record</code> instead.</p>
 <span class="normal">117</span>
 <span class="normal">118</span>
 <span class="normal">119</span>
-<span class="normal">120</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Chain</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Chain</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrap a langchain chain for monitoring.</span>
 
 <span class="sd">    Arguments:</span>
 <span class="sd">    - app: Chain -- the chain to wrap.</span>
-<span class="sd">    - More args in TruApp</span>
+<span class="sd">    - More args in App</span>
+<span class="sd">    - More args in AppDefinition</span>
 <span class="sd">    - More args in WithClassInfo</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -1379,16 +1382,7 @@ get the record, use <code>call_with_record</code> instead.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span>
-<span class="normal">141</span>
-<span class="normal">142</span>
-<span class="normal">143</span>
-<span class="normal">144</span>
-<span class="normal">145</span>
-<span class="normal">146</span>
-<span class="normal">147</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">147</span>
 <span class="normal">148</span>
 <span class="normal">149</span>
 <span class="normal">150</span>
@@ -1435,7 +1429,13 @@ get the record, use <code>call_with_record</code> instead.</p>
 <span class="normal">191</span>
 <span class="normal">192</span>
 <span class="normal">193</span>
-<span class="normal">194</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Run the chain and also return a record metadata object.</span>
 
 <span class="sd">    Returns:</span>
@@ -1450,8 +1450,7 @@ get the record, use <code>call_with_record</code> instead.</p>
     <span class="n">ret</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">error</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="n">total_tokens</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">total_cost</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cost</span><span class="p">:</span> <span class="n">Cost</span> <span class="o">=</span> <span class="n">Cost</span><span class="p">()</span>
 
     <span class="n">start_time</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">end_time</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1460,11 +1459,10 @@ get the record, use <code>call_with_record</code> instead.</p>
         <span class="c1"># TODO: do this only if there is an openai model inside the chain:</span>
         <span class="k">with</span> <span class="n">get_openai_callback</span><span class="p">()</span> <span class="k">as</span> <span class="n">cb</span><span class="p">:</span>
             <span class="n">start_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-            <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">ret</span><span class="p">,</span> <span class="n">cost</span> <span class="o">=</span> <span class="n">Endpoint</span><span class="o">.</span><span class="n">track_all_costs_tally</span><span class="p">(</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="p">)</span>
             <span class="n">end_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-
-        <span class="n">total_tokens</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">total_tokens</span>
-        <span class="n">total_cost</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">total_cost</span>
 
     <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">end_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
@@ -1487,8 +1485,7 @@ get the record, use <code>call_with_record</code> instead.</p>
         <span class="n">ret_record_args</span><span class="p">[</span><span class="s1">&#39;main_output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ret</span><span class="p">[</span><span class="n">output_key</span><span class="p">]</span>
 
     <span class="n">ret_record</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_record</span><span class="p">(</span>
-        <span class="n">ret_record_args</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">total_tokens</span><span class="p">,</span> <span class="n">total_cost</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span>
-        <span class="n">end_time</span><span class="p">,</span> <span class="n">record</span>
+        <span class="n">ret_record_args</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">record</span>
     <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">ret</span><span class="p">,</span> <span class="n">ret_record</span>
@@ -1554,17 +1551,27 @@ get the record, use <code>call_with_record</code> instead.</p>
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.sections"], "search": "../../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.a51614de.min.js"></script>
       
-        <script src="../../../javascript/config.js"></script>
+        
+          <script src="../../../javascript/config.js"></script>
+        
       
-        <script src="../../../javascript/app.js"></script>
+        
+          <script src="../../../javascript/app.js"></script>
+        
       
-        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
+          <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
       
-        <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
+          <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
       
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
+          <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
       
     
   </body>

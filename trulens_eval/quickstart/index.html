@@ -15,7 +15,7 @@
         <link rel="next" href="../logging/">
       
       <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
     
     
       
@@ -496,7 +496,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api/tru_feedback/" class="md-nav__link">
+      <a href="../api/feedback/" class="md-nav__link">
         Feedback Functions
       </a>
     </li>
@@ -1976,7 +1976,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">JSON</span>
 
 <span class="c1"># Imports main tools:</span>
-<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruChain</span><span class="p">,</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Huggingface</span><span class="p">,</span> <span class="n">Tru</span><span class="p">,</span> <span class="n">Query</span>
+<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruChain</span><span class="p">,</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Huggingface</span><span class="p">,</span> <span class="n">Tru</span>
 <span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
 
 <span class="c1"># Imports from langchain to build app. You may need to install langchain first</span>
@@ -1990,7 +1990,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
 <div id="cell-2" class="clipboard-copy-txt">from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru, Query
+from trulens_eval import TruChain, Feedback, Huggingface, Tru
 tru = Tru()
 
 # Imports from langchain to build app. You may need to install langchain first
@@ -2191,17 +2191,17 @@ display(llm_response)</div>
 <span class="n">hugs</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
 
 <span class="c1"># Define a language match feedback function using HuggingFace.</span>
-<span class="n">f_lang_match</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">hugs</span><span class="o">.</span><span class="n">language_match</span><span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
-    <span class="n">text1</span><span class="o">=</span><span class="n">Query</span><span class="o">.</span><span class="n">RecordInput</span><span class="p">,</span> <span class="n">text2</span><span class="o">=</span><span class="n">Query</span><span class="o">.</span><span class="n">RecordOutput</span>
-<span class="p">)</span>
+<span class="n">f_lang_match</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">hugs</span><span class="o">.</span><span class="n">language_match</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+<span class="c1"># By default this will check language match on the main app input and main app</span>
+<span class="c1"># output.</span>
 </pre></div>
 <div id="cell-6" class="clipboard-copy-txt"># Initialize Huggingface-based feedback function collection class:
 hugs = Huggingface()
 
 # Define a language match feedback function using HuggingFace.
-f_lang_match = Feedback(hugs.language_match).on(
-    text1=Query.RecordInput, text2=Query.RecordOutput
-)</div>
+f_lang_match = Feedback(hugs.language_match).on_input_output()
+# By default this will check language match on the main app input and main app
+# output.</div>
         
         </div>
     </div>
@@ -2462,17 +2462,27 @@ display(llm_response)</div>
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a51614de.min.js"></script>
       
-        <script src="../../javascript/config.js"></script>
+        
+          <script src="../../javascript/config.js"></script>
+        
       
-        <script src="../../javascript/app.js"></script>
+        
+          <script src="../../javascript/app.js"></script>
+        
       
-        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
+          <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
       
-        <script src="../../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
+          <script src="../../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
       
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
+          <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
       
     
   </body>

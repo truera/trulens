@@ -15,7 +15,7 @@
         <link rel="next" href="../trulens_eval/install/">
       
       <link rel="icon" href="../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
     
     
       
@@ -438,7 +438,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../trulens_eval/api/tru_feedback/" class="md-nav__link">
+      <a href="../trulens_eval/api/feedback/" class="md-nav__link">
         Feedback Functions
       </a>
     </li>
@@ -749,7 +749,6 @@
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">tru</span>
 <span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">tru_chain</span>
-<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Query</span>
 
 <span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
 </code></pre></div>
@@ -781,7 +780,7 @@
 <p>Now that we created an LLM chain, we can set up our first feedback function. Here, we'll create a feedback function for language matching. After we've created the feedback function, we can include it in the TruChain wrapper. Now, whenever our wrapped chain is used we'll log both the metadata and feedback.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># create a feedback function</span>
 
-<span class="kn">from</span> <span class="nn">trulens_eval.tru_feedback</span> <span class="kn">import</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Huggingface</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Huggingface</span>
 
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HUGGINGFACE_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
 
@@ -789,9 +788,9 @@
 <span class="n">hugs</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
 
 <span class="c1"># Define a language match feedback function using HuggingFace.</span>
-<span class="n">f_lang_match</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">hugs</span><span class="o">.</span><span class="n">language_match</span><span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
-    <span class="n">text1</span><span class="o">=</span><span class="n">Query</span><span class="o">.</span><span class="n">RecordInput</span><span class="p">,</span> <span class="n">text2</span><span class="o">=</span><span class="n">Query</span><span class="o">.</span><span class="n">RecordOutput</span>
-<span class="p">)</span>
+<span class="n">f_lang_match</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">hugs</span><span class="o">.</span><span class="n">language_match</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+<span class="c1"># By default this will check language match on the main app input and main app</span>
+<span class="c1"># output.</span>
 
 <span class="c1"># wrap your chain with TruChain</span>
 <span class="n">truchain</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span>
@@ -880,17 +879,27 @@ To quickly play around with the TruLens library, check out the following Colab n
     <script id="__config" type="application/json">{"base": "..", "features": ["navigation.sections"], "search": "../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.b4d07000.min.js"></script>
+      <script src="../assets/javascripts/bundle.a51614de.min.js"></script>
       
-        <script src="../javascript/config.js"></script>
+        
+          <script src="../javascript/config.js"></script>
+        
       
-        <script src="../javascript/app.js"></script>
+        
+          <script src="../javascript/app.js"></script>
+        
       
-        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
+          <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
       
-        <script src="../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
+          <script src="../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
       
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
+          <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
       
     
   </body>
