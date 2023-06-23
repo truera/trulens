@@ -161,7 +161,9 @@ class TruLlama(App):
 
         try:
             start_time = datetime.now()
-            ret, cost = Endpoint.track_all_costs_tally(lambda: self.app.query(str_or_query_bundle))
+            ret, cost = Endpoint.track_all_costs_tally(
+                lambda: self.app.query(str_or_query_bundle)
+            )
 
             end_time = datetime.now()
 
@@ -181,8 +183,7 @@ class TruLlama(App):
             ret_record_args['main_output'] = ret.response
 
         ret_record = self._post_record(
-            ret_record_args, error, cost, start_time,
-            end_time, record
+            ret_record_args, error, cost, start_time, end_time, record
         )
 
         return ret, ret_record
