@@ -16,18 +16,22 @@ import dotenv
 
 from pathlib import Path
 
+
 def get_config():
     for path in Path.cwd().parents:
-        file = path / ".env" 
+        file = path / ".env"
         if file.exists():
             print(f"Using {file}")
             return file
-        
+
     return None
+
 
 config_file = get_config()
 if config_file is None:
-    print(f"WARNING: No .env found in {Path.cwd()} or its parents. You may need to specify secret keys manually.")
+    print(
+        f"WARNING: No .env found in {Path.cwd()} or its parents. You may need to specify secret keys manually."
+    )
 
 else:
     config = dotenv.dotenv_values(config_file)
