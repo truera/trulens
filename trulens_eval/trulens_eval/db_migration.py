@@ -1,16 +1,33 @@
 #TODO: if backwards compat fails -> tell them to modify this file
 from tqdm import tqdm
 import json
+import traceback
 
-from trulens_eval.schema import Record, Cost, Perf, RecordAppCall, FeedbackDefinition, AppDefinition
+from trulens_eval.schema import Record, Cost, Perf, FeedbackDefinition, AppDefinition, FeedbackCall
+from trulens_eval.util import FunctionOrMethod
 
 class VersionException(Exception):
     pass
 
 MIGRATION_UNKNOWN_STR="unknown[db_migration]"
 migration_versions: list = ["0.3.0", "0.2.0", "0.1.2"]
+def _update_db_json_col(db, table, old_entry, json_db_col_idx, new_json):
+    migrate_record = list(old_entry)
+    migrate_record[json_db_col_idx] = json.dumps(new_json) 
+    migrate_record = tuple(migrate_record)      
+    db._insert_or_replace_vals(table=table, vals=migrate_record)  
+
 def migrate_0_2_0(db):
-    pass
+    conn, c = db._connect()
+    c.execute(f"""SELECT * FROM feedback_defs""")
+    rows = c.fetchall()
+    json_db_col_idx = 1
+    for old_entry in tqdm(rows,desc="Migrating FeedbackDefs DB"):
+        new_json = json.loads(old_entry[json_db_col_idx])
+        if 'implementation' in new_json:
+            new_json['implementation']['obj']['cls']['module']['module_name'] = new_json['implementation']['obj']['cls']['module']['module_name'].replace("tru_feedback", "feedback")
+        _update_db_json_col(db=db, table=db.TABLE_FEEDBACK_DEFS, old_entry=old_entry, json_db_col_idx=json_db_col_idx, new_json=new_json)
+    conn.commit()
 def migrate_0_1_2(db):
     conn, c = db._connect()
 
@@ -23,45 +40,33 @@ def migrate_0_1_2(db):
     
     c.execute(f"""ALTER TABLE feedbacks
         DROP COLUMN chain_id;""")
-    
-    #TODO: REMOVE THESE DEBUGS
-    c.execute(f"""SELECT * FROM feedbacks""")
-    rows = c.fetchall()
-    print(f"FEEDBACK {rows}")
-    c.execute(f"""SELECT * FROM feedback_defs""")
-    rows = c.fetchall()
-    print(f"FEEDBACKDEFS {rows}")
 
-    
     c.execute(f"""SELECT * FROM records""")
     rows = c.fetchall()
-    for old_record in tqdm(rows,desc="Migrating Records DB"):
-
-        record_json_db_idx = 4
-        record_json = json.loads(old_record[record_json_db_idx])
-        record_json['app_id'] = record_json['chain_id']
-        del record_json['chain_id']
-        for calls_json in record_json['calls']:
+    json_db_col_idx = 4
+    for old_entry in tqdm(rows,desc="Migrating Records DB"):
+        new_json = json.loads(old_entry[json_db_col_idx])
+        new_json['app_id'] = new_json['chain_id']
+        del new_json['chain_id']
+        for calls_json in new_json['calls']:
             calls_json['stack']=calls_json['chain_stack']
             del calls_json['chain_stack']
         
-        migrate_record = list(old_record)
-        migrate_record[record_json_db_idx] = json.dumps(record_json) 
-        migrate_record = tuple(migrate_record)
+        _update_db_json_col(db=db, table=db.TABLE_RECORDS, old_entry=old_entry, json_db_col_idx=json_db_col_idx, new_json=new_json)
         
-        db._insert_or_replace_vals(table=db.TABLE_RECORDS, vals=migrate_record)
         
     c.execute(f"""SELECT * FROM chains""")
     rows = c.fetchall()
-    for old_chain in tqdm(rows,desc="Migrating Apps DB"):
-        app_json_db_idx = 1
-        app_json = json.loads(old_chain[app_json_db_idx])
-        app_json['app_id'] = app_json['chain_id']
-        del app_json['chain_id']
-        app_json['root_class'] = {'name': 'Unknown_class', 'module': {'package_name': MIGRATION_UNKNOWN_STR, 'module_name': MIGRATION_UNKNOWN_STR}, 'bases': None}
-        
-        vals = (old_chain[0], json.dumps(app_json))
-        db._insert_or_replace_vals(table=db.TABLE_APPS, vals=vals)
+    json_db_col_idx = 1
+    for old_entry in tqdm(rows,desc="Migrating Apps DB"):
+        new_json = json.loads(old_entry[json_db_col_idx])
+        new_json['app_id'] = new_json['chain_id']
+        del new_json['chain_id']
+        new_json['root_class'] = {'name': 'Unknown_class', 'module': {'package_name': MIGRATION_UNKNOWN_STR, 'module_name': MIGRATION_UNKNOWN_STR}, 'bases': None}
+        new_json['feedback_mode'] = new_json['feedback_mode'].replace('chain', 'app')
+        del new_json['db']
+        _update_db_json_col(db=db, table=db.TABLE_APPS, old_entry=old_entry, json_db_col_idx=json_db_col_idx, new_json=new_json)    
+
     conn.commit()
     
 upgrade_paths = {
@@ -135,30 +140,38 @@ def _serialization_asserts(db):
                 c.execute(f"""SELECT * FROM {table}""")
                 rows = c.fetchall()
                 for row in rows:
-                    if row[col_idx] == MIGRATION_UNKNOWN_STR:
-                        continue
-                    
-                    test_json = json.loads(row[col_idx])
-                    
-                    if col_name == "record_json":
-                        Record(**test_json)
-                    elif col_name == "cost_json":
-                        Cost(**test_json)
-                    elif col_name == "perf_json":
-                        Perf(**test_json)
-                    elif col_name == "calls_json":
-                        for record_app_call_json in test_json['calls']:
-                            print(record_app_call_json)
-                            RecordAppCall(**record_app_call_json)
-                    elif col_name == "feedback_json":
-                        FeedbackDefinition(**test_json)
-                    elif col_name == "app_json":
-                        AppDefinition(**test_json)
-                    else:
-                        # If this happens, trulens needs to add a migration
-                        TODO_FILE_LOC = "TODO_FILE_LOC"
-                        raise VersionException(f"Migration failed on {table} {col_name} {row[col_idx]}. Please open a ticket on trulens github page including details on the old and new trulens versions. Your original DB file is saved here: {TODO_FILE_LOC}")
-    
+                    try:
+                        if row[col_idx] == MIGRATION_UNKNOWN_STR:
+                            continue
+                        
+                        test_json = json.loads(row[col_idx])
+                        # special implementation checks for serialized classes
+                        if 'implementation' in test_json:
+                            FunctionOrMethod.pick(
+                                **(test_json['implementation'])
+                            ).load()
+
+                        if col_name == "record_json":
+                            Record(**test_json)
+                        elif col_name == "cost_json":
+                            Cost(**test_json)
+                        elif col_name == "perf_json":
+                            Perf(**test_json)
+                        elif col_name == "calls_json":
+                            for record_app_call_json in test_json['calls']:
+                                FeedbackCall(**record_app_call_json)
+                        elif col_name == "feedback_json":
+                            FeedbackDefinition(**test_json)
+                        elif col_name == "app_json":
+                            AppDefinition(**test_json)
+                        else:
+                            # If this happens, trulens needs to add a migration
+                            TODO_FILE_LOC = "TODO_FILE_LOC"
+                            raise VersionException(f"serialized column migration not implemented. Please open a ticket on trulens github page including details on the old and new trulens versions. Your original DB file is saved here: {TODO_FILE_LOC}")
+                    except Exception as e:
+                        tb = traceback.format_exc()
+                        raise VersionException(f"Migration failed on {table} {col_name} {row[col_idx]}.\n\n{tb}")
+
         
 
 def migrate(db):
