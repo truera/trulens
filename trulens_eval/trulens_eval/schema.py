@@ -92,12 +92,12 @@ class Cost(SerialModel):
 
     def __radd__(self, other: 'Cost') -> 'Cost':
         # Makes sum work on lists of Cost.
-        
+
         if other == 0:
             return self
-        
+
         return self.__add__(other)
-        
+
 
 class Perf(SerialModel):
     start_time: datetime
