@@ -11,13 +11,28 @@ class VersionException(Exception):
 
 MIGRATION_UNKNOWN_STR="unknown[db_migration]"
 migration_versions: list = ["0.3.0", "0.2.0", "0.1.2"]
-def _update_db_json_col(db, table, old_entry, json_db_col_idx, new_json):
+def _update_db_json_col(db, table:str, old_entry:tuple, json_db_col_idx:int, new_json:dict):
+    """Replaces an old json serialized db column with a migrated/new one
+
+    Args:
+        db (DB): the db object
+        table (str): the table to update (from the current DB)
+        old_entry (tuple): the db tuple to update
+        json_db_col_idx (int): the tuple idx to update
+        new_json (dict): the new json object to be put in the DB
+    """
     migrate_record = list(old_entry)
     migrate_record[json_db_col_idx] = json.dumps(new_json) 
     migrate_record = tuple(migrate_record)      
     db._insert_or_replace_vals(table=table, vals=migrate_record)  
 
 def migrate_0_2_0(db):
+    """
+    Migrates from 0.2.0 to 0.3.0
+    Args:
+        db (DB): the db object
+    """
+    
     conn, c = db._connect()
     c.execute(f"""SELECT * FROM feedback_defs""")
     rows = c.fetchall()
@@ -29,6 +44,11 @@ def migrate_0_2_0(db):
         _update_db_json_col(db=db, table=db.TABLE_FEEDBACK_DEFS, old_entry=old_entry, json_db_col_idx=json_db_col_idx, new_json=new_json)
     conn.commit()
 def migrate_0_1_2(db):
+    """
+    Migrates from 0.1.2 to 0.2.0
+    Args:
+        db (DB): the db object
+    """
     conn, c = db._connect()
 
     c.execute(f"""ALTER TABLE records
@@ -75,10 +95,26 @@ upgrade_paths = {
         }
     
 
-def _parse_version(version_str):
+def _parse_version(version_str:str) -> list:
+    """takes a version string and returns a list of major, minor, patch
+
+    Args:
+        version_str (str): a version string
+
+    Returns:
+        list: [major, minor, patch]
+    """
     return version_str.split(".")
 
-def _get_compatibility_version(version):
+def _get_compatibility_version(version:str)->str:
+    """Gets the db version that the pypi version is compatible with
+
+    Args:
+        version (str): a pypi version
+
+    Returns:
+        str: a backwards compat db version
+    """
     version_split = _parse_version(version)
     for m_version_str in migration_versions:
         for i, m_version_split in enumerate(_parse_version(m_version_str)):
@@ -93,11 +129,23 @@ def _get_compatibility_version(version):
                 # the m_version from m_version_str is larger than this version. check the next m_version
                 break
 
-def _migration_checker(db, warn=False):
+def _migration_checker(db, warn=False)->None:
+    """Checks whether this db, if pre-populated, is comptible with this pypi version
+
+    Args:
+        db (DB): the db object to check
+        warn (bool, optional): if warn is False, then a migration issue will raise an exception, otherwise allow passing but only warn. Defaults to False.
+    """
     meta = db.get_meta()
     check_needs_migration(meta.trulens_version, warn=warn)
 
-def commit_migrated_version(db, version) -> None:
+def commit_migrated_version(db, version:str) -> None:
+    """After a successful migration, update the DB meta version
+
+    Args:
+        db (DB): the db object
+        version (str): The version string to set this DB to
+    """
     conn, c = db._connect()
     
     c.execute(
@@ -108,12 +156,26 @@ def commit_migrated_version(db, version) -> None:
         )
     conn.commit()
 
-def _upgrade_possible(compat_version):
+def _upgrade_possible(compat_version: str)->bool:
+    """Checks the upgrade paths to see if there is a valid migration from the DB to the current pypi version
+
+    Args:
+        compat_version (str): the current db version
+
+    Returns:
+        bool: True if there is an upgrade path. False if not.
+    """
     while compat_version in upgrade_paths:
         compat_version = upgrade_paths[compat_version][0]
     return compat_version == migration_versions[0]
 
-def check_needs_migration(version, warn=False):
+def check_needs_migration(version:str, warn=False)->None:
+    """Checks whether the from DB version can be updated to the current DB version.
+
+    Args:
+        version (str): the pypi version
+        warn (bool, optional): if warn is False, then a migration issue will raise an exception, otherwise allow passing but only warn. Defaults to False.
+    """
     compat_version = _get_compatibility_version(version)
     if migration_versions.index(compat_version) > 0:
         if _upgrade_possible(compat_version):
@@ -126,7 +188,12 @@ def check_needs_migration(version, warn=False):
             raise VersionException(msg)
 
 
-def _serialization_asserts(db):
+def _serialization_asserts(db)->None:
+    """After a successful migration, Do some checks if serialized jsons are loading properly
+
+    Args:
+        db (DB): the db object
+    """
     conn, c = db._connect()
     for table in db.TABLES:
         c.execute(f"""PRAGMA table_info({table});
@@ -174,7 +241,12 @@ def _serialization_asserts(db):
 
         
 
-def migrate(db):
+def migrate(db)->None:
+    """Migrate a db to the compatible version of this pypi version
+
+    Args:
+        db (DB): the db object
+    """
     # TODO: Save original DB
     version = db.get_meta().trulens_version
     from_compat_version = _get_compatibility_version(version)
