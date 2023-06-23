@@ -33,7 +33,7 @@ otherwise you might get circular import errors.
     - `util.py` `keys.py`
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.0b"
 
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Query, Select
