@@ -52,6 +52,10 @@
 
             Question-answering with langchain
 
+        - `langchain_flan_size_comparison.ipynb`
+
+            Compare different flan model sizes in a langchain framework.
+
 - `vector-dbs/`
 
     Collection of examples that makes use of vector databases for context
