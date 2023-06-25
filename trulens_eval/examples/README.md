@@ -4,7 +4,11 @@
 
 - `models`
 
+    Examples using a variety of large language models from different sources.
+
     - `alpaca7b_local_llm.ipynb`
+
+       Personal assistant with Alpaca7B running locally using HuggingFacePipeline's from_model_id.
 
 - `trubot/`
 
