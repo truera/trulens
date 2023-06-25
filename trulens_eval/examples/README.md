@@ -37,17 +37,20 @@
 
     - `llama_index/`
 
-        Examples using llama index as a framework.
+        Examples using llama-index as a framework.
 
-        - `llama_example.ipynb`
-
-            Question-answering with a vector store of contexts loaded from a local
-            set of files (`data` folder)
-
-        - `llama_quickstart.py`
+        - `llama_index_example.ipynb`
 
             Question-answering with a vector store of contexts loaded from a local
             set of files (`data` folder)
+
+    - `langchain/`
+
+        Examples using langchain as a framework.
+
+        - `langchain_quickstart.ipynb`
+
+            Question-answering with langchain
 
 - `vector-dbs/`
 
@@ -61,7 +64,7 @@
 
         - `llama_index_pinecone_comparecontrast.ipynb`
 
-            Using llama-index to compare and contrast cities using their wikipedia articles.
+            Using llama-index and pinecone to compare and contrast cities using their wikipedia articles.
 
 
 - `app_with_human_feedback.py`
