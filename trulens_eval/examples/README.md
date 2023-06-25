@@ -70,7 +70,11 @@
 
 - `feedback_functions.ipynb`
 
+    A list of out of the box feedback functions, and how to contribute new ones.
+
 - `logging.ipynb`
+
+    Different ways to log your app with TruLens
 
 - `quickstart.ipynb`
 
