@@ -32,10 +32,8 @@
     - `webindex.ipynb` -- tools for indexing a website to produce a vector db
       for context.
 
-- `vector-dbs/`
-
-    Collection of examples that makes use of vector databases for context
-    retrieval in question answering.
+- `frameworks/`
+    Collection of examples using different frameworks for constructing an LLM app.
 
     - `llama_index/`
 
@@ -43,22 +41,25 @@
 
         - `llama_example.ipynb`
 
+            Question-answering with a vector store of contexts loaded from a local
+            set of files (`data` folder)
+
         - `llama_quickstart.py`
 
             Question-answering with a vector store of contexts loaded from a local
             set of files (`data` folder)
 
-        - `essay.py`
+- `vector-dbs/`
 
-            Llama_index starter example from
-            https://gpt-index.readthedocs.io/en/latest/getting_started/starter_example.html
-            .    
+    Collection of examples that makes use of vector databases for context
+    retrieval in question answering.
 
-    - `llama_pinecone/`
+
+    - `pinecone/`
 
       Examples that use llama-index as a framework and pinecone as the vector db.
 
-        - `llama_pinecone_example.ipynb`
+        - `llama_index_pinecone_comparecontrast.ipynb`
 
             Using llama-index to compare and contrast cities using their wikipedia articles.
 
