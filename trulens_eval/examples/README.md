@@ -39,6 +39,8 @@
 
     - `llama_index/`
 
+        Examples using llama index as a framework.
+
         - `llama_example.ipynb`
 
         - `llama_quickstart.py`
@@ -54,7 +56,12 @@
 
     - `llama_pinecone/`
 
-        - `llama_pinecone.ipynb`
+      Examples that use llama-index as a framework and pinecone as the vector db.
+
+        - `llama_pinecone_example.ipynb`
+
+            Using llama-index to compare and contrast cities using their wikipedia articles.
+
 
 - `app_with_human_feedback.py`
 
