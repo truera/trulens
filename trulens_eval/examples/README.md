@@ -52,9 +52,9 @@
 
             Question-answering with langchain
 
-        - `langchain_flan_size_comparison.ipynb`
+        - `langchain_model_comparison.ipynb`
 
-            Compare different flan model sizes in a langchain framework.
+            Compare different models with TruLens in a langchain framework.
 
 - `vector-dbs/`
 
