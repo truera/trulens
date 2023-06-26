@@ -22,6 +22,7 @@ from trulens_eval.util import caller_frame
 logger = logging.getLogger(__name__)
 
 
+
 def get_config():
     for path in [Path().cwd(), *Path.cwd().parents]:
         file = path / ".env"

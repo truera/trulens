@@ -581,7 +581,9 @@ class SerialModel(pydantic.BaseModel):
 
                 return WithClassInfo.of_model(model=model, cls=cls)
             else:
-                print(f"Warning: May not be able to properly reconstruct object {obj}.")
+                print(
+                    f"Warning: May not be able to properly reconstruct object {obj}."
+                )
 
                 return super().model_validate(obj, **kwargs)
 
@@ -1179,7 +1181,7 @@ def get_local_in_call_stack(
 
 
 class Module(SerialModel):
-    package_name: Optional[str] # some modules are not in a package
+    package_name: Optional[str]  # some modules are not in a package
     module_name: str
 
     def of_module(mod: ModuleType, loadable: bool = False) -> 'Module':

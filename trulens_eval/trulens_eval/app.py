@@ -265,8 +265,7 @@ class App(AppDefinition, SerialModel):
         return jsonify(self, instrument=self.instrument)
 
     def _post_record(
-        self, ret_record_args, error, cost, start_time,
-        end_time, record
+        self, ret_record_args, error, cost, start_time, end_time, record
     ):
         """
         Final steps of record construction common among model types.
