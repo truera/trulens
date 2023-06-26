@@ -253,8 +253,6 @@ def migrate(db)->None:
     # - Update the __init__ version to the next one (if not already)
     # - In this file: add that version to `migration_versions` variable`
     # - Add the migration step in `upgrade_paths` of the form `from_version`:(`to_version_you_just_created`, `migration_function`)
-    
-    db.filename
 
     original_db_file = db.filename
     saved_db_file = original_db_file.parent / f"{original_db_file.name}_saved_{uuid.uuid1()}"

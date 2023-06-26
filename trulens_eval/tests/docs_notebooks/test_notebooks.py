@@ -47,23 +47,25 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
 def get_unit_test_for_filename(filename, db_compat_version=None):
 
     def test(self):
+
         notebook_preprocessor = VariableSettingPreprocessor
+        notebook_preprocessor_kwargs = {
+            'timeout':600,
+            'kernel_name':'trulens-llm',
+            'code_to_run_before_each_cell':[
+                f"import os",
+                f"os.environ['OPENAI_API_KEY']='{OPENAI_API_KEY}'",
+                f"os.environ['HUGGINGFACE_API_KEY']='{HUGGINGFACE_API_KEY}'",
+            ]
+        }
         if db_compat_version is not None:
             notebook_preprocessor = DBMigrationPreprocessor
+            notebook_preprocessor_kwargs['db_compat_version']=db_compat_version
         with open(f'./tests/docs_notebooks/notebooks_to_test/{filename}') as f:
             OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
             HUGGINGFACE_API_KEY = os.environ['HUGGINGFACE_API_KEY']
             nb = read(f, as_version=4)
-            notebook_preprocessor(
-                timeout=600,
-                kernel_name='trulens-llm',
-                code_to_run_before_each_cell=[
-                    f"import os",
-                    f"os.environ['OPENAI_API_KEY']='{OPENAI_API_KEY}'",
-                    f"os.environ['HUGGINGFACE_API_KEY']='{HUGGINGFACE_API_KEY}'",
-                ],
-                db_compat_version=db_compat_version
-            ).preprocess(nb, {})
+            notebook_preprocessor(**notebook_preprocessor_kwargs).preprocess(nb, {})
 
     return test
 
