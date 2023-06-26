@@ -188,7 +188,7 @@ class Feedback(FeedbackDefinition):
             record = Record(**record_json)
 
             app_json = row.app_json
-            
+
             feedback = Feedback(**row.feedback_json)
             feedback.run_and_log(
                 record=record,

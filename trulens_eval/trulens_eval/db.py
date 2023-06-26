@@ -127,23 +127,30 @@ class DB(SerialModel, abc.ABC):
 def versioning_decorator(func):
     """A function decorator that checks if a DB can be used before using it.
     """
+
     def wrapper(self, *args, **kwargs):
         db_migration._migration_checker(db=self)
         returned_value = func(self, *args, **kwargs)
         return returned_value
-         
+
     return wrapper
+
 
 def for_all_methods(decorator):
     """A Class decorator that will decorate all DB Access methods except for instantiations, db resets, or version checking.
     """
+
     def decorate(cls):
-        for attr in cls.__dict__: 
-            if not str(attr).startswith("_") and str(attr) not in  ["get_meta","reset_database","migrate_database"] and callable(getattr(cls, attr)):
+        for attr in cls.__dict__:
+            if not str(attr).startswith("_") and str(attr) not in [
+                    "get_meta", "reset_database", "migrate_database"
+            ] and callable(getattr(cls, attr)):
                 print(attr)
                 setattr(cls, attr, decorator(getattr(cls, attr)))
         return cls
+
     return decorate
+
 
 @for_all_methods(versioning_decorator)
 class LocalSQLite(DB):
@@ -173,12 +180,10 @@ class LocalSQLite(DB):
 
         self._build_tables()
         db_migration._migration_checker(db=self, warn=True)
-        
 
     def __str__(self) -> str:
         return f"SQLite({self.filename})"
 
-    
     # DB requirement
     def reset_database(self) -> None:
         self._drop_tables()
@@ -186,6 +191,7 @@ class LocalSQLite(DB):
 
     def migrate_database(self):
         db_migration.migrate(db=self)
+
     def _clear_tables(self) -> None:
         conn, c = self._connect()
 
@@ -237,12 +243,14 @@ class LocalSQLite(DB):
 
         if meta.trulens_version is None:
             db_version = __version__
-            c.execute(f"""SELECT name FROM sqlite_master  
-                WHERE type='table';""")
+            c.execute(
+                f"""SELECT name FROM sqlite_master  
+                WHERE type='table';"""
+            )
             rows = c.fetchall()
-            
+
             if len(rows) > 1:
-                # _create_db_meta_table is called before any DB manipulations, 
+                # _create_db_meta_table is called before any DB manipulations,
                 # so if existing tables are present but it's an empty metatable, it means this is trulens-eval first release.
                 db_version = "0.1.2"
             # Otherwise, set the version
@@ -250,6 +258,7 @@ class LocalSQLite(DB):
                 f'''INSERT INTO {self.TABLE_META} VALUES (?, ?)''',
                 ('trulens_version', db_version)
             )
+
     def _build_tables(self):
         conn, c = self._connect()
         self._create_db_meta_table(c)
@@ -517,7 +526,7 @@ class LocalSQLite(DB):
                 row['latency'] = Perf(**row.perf_json).latency
             except:
                 # If it comes here, it is because we have filled the DB with a migration tag that cannot be loaded into perf_json
-                # This is not migrateable because start/end times were not logged and latency is required, but adding a real latency 
+                # This is not migrateable because start/end times were not logged and latency is required, but adding a real latency
                 # would create incorrect summations
                 pass
             row.feedback_json = json.loads(
@@ -530,7 +539,7 @@ class LocalSQLite(DB):
             app = AppDefinition(**row.app_json)
 
             row.status = FeedbackResultStatus(row.status)
-            
+
             row['total_tokens'] = row.cost_json['n_tokens']
             row['total_cost'] = row.cost_json['cost']
 
@@ -598,7 +607,7 @@ class LocalSQLite(DB):
         df_records = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
-        
+
         apps = df_records['app_json'].apply(AppDefinition.parse_raw)
         df_records['type'] = apps.apply(lambda row: str(row.root_class))
 
@@ -606,8 +615,14 @@ class LocalSQLite(DB):
         df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
         df_records['total_cost'] = cost.map(lambda v: v.cost)
 
-        perf = df_records['perf_json'].apply(lambda perf_json: Perf.parse_raw(perf_json) if perf_json != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR)
-        df_records['latency'] = perf.apply(lambda p: p.latency if p != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR).dt.seconds.astype(int)
+        perf = df_records['perf_json'].apply(
+            lambda perf_json: Perf.parse_raw(perf_json)
+            if perf_json != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
+        )
+        df_records['latency'] = perf.apply(
+            lambda p: p.latency
+            if p != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
+        ).dt.seconds.astype(int)
 
         if len(df_records) == 0:
             return df_records, []

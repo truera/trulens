@@ -49,8 +49,10 @@ def streamlit_app():
             5 + len(feedback_col_names)
         )
         app_df = df.loc[df.app_id == app]
-        latency_mean = app_df['latency'].apply(lambda td: td if td != MIGRATION_UNKNOWN_STR else None).mean()
-        
+        latency_mean = app_df['latency'].apply(
+            lambda td: td if td != MIGRATION_UNKNOWN_STR else None
+        ).mean()
+
         #app_df_feedback = df.loc[df.app_id == app]
 
         col1.metric("Records", len(app_df))
