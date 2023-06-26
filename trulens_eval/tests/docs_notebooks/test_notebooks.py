@@ -45,12 +45,15 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
             code_to_run_before_each_cell=code_to_run_before_each_cell
         )
         shutil.copyfile(
-            f"./release_dbs/db_compat_version/default.sqlite",
+            f"./release_dbs/{db_compat_version}/default.sqlite",
             "./default.sqlite"
         )
 
     def preprocess_cell(self, cell, resources, index, **kwargs):
         ret = super().preprocess_cell(cell, resources, index, **kwargs)
+        if 'Tru()' in cell["source"]:
+            cell["source"] = cell["source"] = [f"tru.migrate_database()"]
+
         return ret
 
 
