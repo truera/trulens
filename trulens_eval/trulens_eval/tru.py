@@ -297,7 +297,7 @@ class Tru(SingletonPerName):
             else:
                 print("Force stopping dashboard ...")
                 import os
-                import pwd
+                import pwd  # PROBLEM: does not exist on windows
 
                 import psutil
                 username = pwd.getpwuid(os.getuid())[0]
@@ -423,7 +423,7 @@ class Tru(SingletonPerName):
 
         Tru.dashboard_proc = proc
 
-        if not started.wait(timeout=5):
+        if not started.wait(timeout=30):  # This might not work on windows.
             raise RuntimeError(
                 "Dashboard failed to start in time. "
                 "Please inspect dashboard logs for additional information."

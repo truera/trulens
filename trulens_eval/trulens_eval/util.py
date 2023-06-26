@@ -569,16 +569,19 @@ class SerialModel(pydantic.BaseModel):
 
     @classmethod
     def model_validate(cls, obj: Any, **kwargs):
-        print("serial_model.model_validate")
         if isinstance(obj, dict):
             if CLASS_INFO in obj:
-                print(f"Creating model with class info from {obj}.")
+
                 cls = Class(**obj[CLASS_INFO])
                 del obj[CLASS_INFO]
                 model = cls.model_validate(obj, **kwargs)
 
                 return WithClassInfo.of_model(model=model, cls=cls)
             else:
+                print(
+                    f"Warning: May not be able to properly reconstruct object {obj}."
+                )
+
                 return super().model_validate(obj, **kwargs)
 
     def update(self, **d):
@@ -1146,6 +1149,8 @@ def get_local_in_call_stack(
     while not q.empty():
         fi = q.get()
 
+        logger.debug(f"{fi.frame.f_code}")
+
         if id(fi.frame.f_code) == id(TP()._thread_target_wrapper.__code__):
             logger.debug(
                 "Found thread starter frame. "
@@ -1169,7 +1174,7 @@ def get_local_in_call_stack(
 
 
 class Module(SerialModel):
-    package_name: str
+    package_name: Optional[str]  # some modules are not in a package
     module_name: str
 
     def of_module(mod: ModuleType, loadable: bool = False) -> 'Module':

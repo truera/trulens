@@ -29,6 +29,7 @@ from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Select
 from trulens_eval.db import JSON
 from trulens_eval.db import Record
+from trulens_eval.provider_apis import HuggingfaceEndpoint, OpenAIEndpoint
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
 from trulens_eval.util import OptionalImports
@@ -81,19 +82,16 @@ class Feedback(FeedbackDefinition):
         agg = agg or np.mean
 
         if imp is not None:
-            try:
-                # These are for serialization to/from json and for db storage.
-                kwargs['implementation'] = FunctionOrMethod.of_callable(
-                    imp, loadable=True
-                )
-            except:
-                # User defined functions in script do not have a module so cannot be serialized
-                pass
+            # These are for serialization to/from json and for db storage.
+            kwargs['implementation'] = FunctionOrMethod.of_callable(
+                imp, loadable=True
+            )
+
         else:
             if "implementation" in kwargs:
                 imp: Callable = FunctionOrMethod.pick(
                     **(kwargs['implementation'])
-                ).load()
+                ).load() if kwargs['implementation'] is not None else None
 
         if agg is not None:
             try:
@@ -346,22 +344,18 @@ class Feedback(FeedbackDefinition):
         )
 
         try:
-            total_tokens = 0
-            total_cost = 0.0
+            cost = Cost()
 
             for ins in self.extract_selection(app=app_json, record=record):
 
-                # TODO: Do this only if there is an openai model inside the app:
-                # NODE: This only works for langchain uses of openai.
-                with get_openai_callback() as cb:
-                    result_val = self.imp(**ins)
-                    result_vals.append(result_val)
+                result_val, part_cost = Endpoint.track_all_costs_tally(
+                    lambda: self.imp(**ins)
+                )
+                cost += part_cost
+                result_vals.append(result_val)
 
-                    feedback_call = FeedbackCall(args=ins, ret=result_val)
-                    feedback_calls.append(feedback_call)
-
-                    total_tokens += cb.total_tokens
-                    total_cost += cb.total_cost
+                feedback_call = FeedbackCall(args=ins, ret=result_val)
+                feedback_calls.append(feedback_call)
 
             result_vals = np.array(result_vals)
             result = self.agg(result_vals)
@@ -369,7 +363,7 @@ class Feedback(FeedbackDefinition):
             feedback_result.update(
                 result=result,
                 status=FeedbackResultStatus.DONE,
-                cost=Cost(n_tokens=total_tokens, cost=total_cost),
+                cost=cost,
                 calls=feedback_calls
             )
 
@@ -432,6 +426,9 @@ class Feedback(FeedbackDefinition):
         function implementing it.
         """
 
+        if self.imp is None:
+            raise RuntimeError("This feedback function has no implementation.")
+
         return self.imp.__name__
 
     def extract_selection(
@@ -489,37 +486,23 @@ def _re_1_10_rating(str_val):
 
 
 class Provider(SerialModel):
-    endpoint: Any = pydantic.Field(exclude=True)
-    """
-    @staticmethod
-    def of_json(obj: Dict) -> 'Provider':
-        cls_name = obj['class_name']
-        mod_name = obj['module_name']  # ignored for now
-        check_provider(cls_name)
 
-        cls = eval(cls_name)
-        kwargs = {
-            k: v
-            for k, v in obj.items()
-            if k not in ['class_name', 'module_name']
-        }
+    class Config:
+        arbitrary_types_allowed = True
 
-        return cls(**kwargs)
-
-    def to_json(self: 'Provider', **extras) -> Dict:
-        obj = {
-            'class_name': self.__class__.__name__,
-            'module_name': self.__class__.__module__
-        }
-        obj.update(**extras)
-        return obj
-    """
+    endpoint: Optional[Endpoint]
 
 
 class OpenAI(Provider):
     model_engine: str = "gpt-3.5-turbo"
 
-    def __init__(self, model_engine: str = "gpt-3.5-turbo"):
+    # Exclude is important here so that pydantic doesn't try to
+    # serialize/deserialize the constant fixed endpoint we need.
+    endpoint: Endpoint = pydantic.Field(
+        default_factory=OpenAIEndpoint, exclude=True
+    )
+
+    def __init__(self, **kwargs):
         """
         A set of OpenAI Feedback Functions.
 
@@ -528,11 +511,12 @@ class OpenAI(Provider):
         - model_engine (str, optional): The specific model version. Defaults to
           "gpt-3.5-turbo".
         """
-        super().__init__()  # need to include pydantic.BaseModel.__init__
+
+        super().__init__(
+            **kwargs
+        )  # need to include pydantic.BaseModel.__init__
 
         set_openai_key()
-        self.model_engine = model_engine
-        self.endpoint = Endpoint(name="openai")
 
     """
     def to_json(self) -> Dict:
@@ -840,17 +824,21 @@ HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm
 
 class Huggingface(Provider):
 
-    def __init__(self):
+    # Exclude is important here so that pydantic doesn't try to
+    # serialize/deserialize the constant fixed endpoint we need.
+    endpoint: Endpoint = pydantic.Field(
+        default_factory=HuggingfaceEndpoint, exclude=True
+    )
+
+    def __init__(self, **kwargs):
         """
         A set of Huggingface Feedback Functions. Utilizes huggingface
         api-inference.
         """
 
-        super().__init__()  # need to include pydantic.BaseModel.__init__
-
-        self.endpoint = Endpoint(
-            name="huggingface", post_headers=get_huggingface_headers()
-        )
+        super().__init__(
+            **kwargs
+        )  # need to include pydantic.BaseModel.__init__
 
     def language_match(self, text1: str, text2: str) -> float:
         """
@@ -956,11 +944,6 @@ class Cohere(Provider):
 
         Cohere().endpoint = Endpoint(name="cohere")
         self.model_engine = model_engine
-
-    """
-    def to_json(self) -> Dict:
-        return Provider.to_json(self, model_engine=self.model_engine)
-    """
 
     def sentiment(
         self,
