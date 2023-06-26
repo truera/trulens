@@ -57,7 +57,8 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
 def get_unit_test_for_filename(filename, db_compat_version=None):
 
     def test(self):
-
+        OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
+        HUGGINGFACE_API_KEY = os.environ['HUGGINGFACE_API_KEY']
         notebook_preprocessor = VariableSettingPreprocessor
         notebook_preprocessor_kwargs = {
             'timeout':
@@ -76,8 +77,6 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
             notebook_preprocessor_kwargs['db_compat_version'
                                         ] = db_compat_version
         with open(f'./tests/docs_notebooks/notebooks_to_test/{filename}') as f:
-            OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
-            HUGGINGFACE_API_KEY = os.environ['HUGGINGFACE_API_KEY']
             nb = read(f, as_version=4)
             notebook_preprocessor(**notebook_preprocessor_kwargs
                                  ).preprocess(nb, {})
