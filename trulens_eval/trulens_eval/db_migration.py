@@ -137,7 +137,7 @@ def _migration_checker(db, warn=False)->None:
         warn (bool, optional): if warn is False, then a migration issue will raise an exception, otherwise allow passing but only warn. Defaults to False.
     """
     meta = db.get_meta()
-    check_needs_migration(meta.trulens_version, warn=warn)
+    _check_needs_migration(meta.trulens_version, warn=warn)
 
 def commit_migrated_version(db, version:str) -> None:
     """After a successful migration, update the DB meta version
@@ -169,7 +169,7 @@ def _upgrade_possible(compat_version: str)->bool:
         compat_version = upgrade_paths[compat_version][0]
     return compat_version == migration_versions[0]
 
-def check_needs_migration(version:str, warn=False)->None:
+def _check_needs_migration(version:str, warn=False)->None:
     """Checks whether the from DB version can be updated to the current DB version.
 
     Args:
@@ -247,8 +247,10 @@ def migrate(db)->None:
     Args:
         db (DB): the db object
     """
+    # NOTE TO DEVELOPER: If this method fails: It's likely you made a db breaking change.
+    # TODO: Give fix instructions.
     raise Exception("do this")
-    # TODO: Save original DB
+    # TODO: Save original DB and log the location
     version = db.get_meta().trulens_version
     from_compat_version = _get_compatibility_version(version)
     while from_compat_version in upgrade_paths:
