@@ -562,9 +562,8 @@ class LocalSQLite(DB):
         cost = df_records['cost_json'].map(Cost.parse_raw)
         df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
         df_records['total_cost'] = cost.map(lambda v: v.cost)
-
         perf = df_records['perf_json'].apply(Perf.parse_raw)
-        df_records['latency'] = perf.apply(lambda p: p.latency)
+        df_records['latency'] = perf.apply(lambda p: p.latency).dt.seconds.astype(int)
 
         if len(df_records) == 0:
             return df_records, []

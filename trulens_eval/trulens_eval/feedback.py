@@ -85,7 +85,7 @@ class Feedback(FeedbackDefinition):
             kwargs['implementation'] = FunctionOrMethod.of_callable(
                 imp, loadable=True
             )
-            
+
         else:
             if "implementation" in kwargs:
                 imp: Callable = FunctionOrMethod.pick(
@@ -358,8 +358,10 @@ class Feedback(FeedbackDefinition):
             cost = Cost()
 
             for ins in self.extract_selection(app=app_json, record=record):
-                
-                result_val, part_cost = Endpoint.track_all_costs_tally(lambda: self.imp(**ins))
+
+                result_val, part_cost = Endpoint.track_all_costs_tally(
+                    lambda: self.imp(**ins)
+                )
                 cost += part_cost
                 result_vals.append(result_val)
 
@@ -499,6 +501,7 @@ def _re_1_10_rating(str_val):
 
 
 class Provider(SerialModel):
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -510,7 +513,9 @@ class OpenAI(Provider):
 
     # Exclude is important here so that pydantic doesn't try to
     # serialize/deserialize the constant fixed endpoint we need.
-    endpoint: Endpoint = pydantic.Field(default_factory=OpenAIEndpoint, exclude=True)
+    endpoint: Endpoint = pydantic.Field(
+        default_factory=OpenAIEndpoint, exclude=True
+    )
 
     def __init__(self, **kwargs):
         """
@@ -522,10 +527,12 @@ class OpenAI(Provider):
           "gpt-3.5-turbo".
         """
 
-        super().__init__(**kwargs)  # need to include pydantic.BaseModel.__init__
+        super().__init__(
+            **kwargs
+        )  # need to include pydantic.BaseModel.__init__
 
         set_openai_key()
-        
+
     """
     def to_json(self) -> Dict:
         return Provider.to_json(self, model_engine=self.model_engine)
@@ -834,7 +841,9 @@ class Huggingface(Provider):
 
     # Exclude is important here so that pydantic doesn't try to
     # serialize/deserialize the constant fixed endpoint we need.
-    endpoint: Endpoint = pydantic.Field(default_factory=HuggingfaceEndpoint, exclude=True)
+    endpoint: Endpoint = pydantic.Field(
+        default_factory=HuggingfaceEndpoint, exclude=True
+    )
 
     def __init__(self, **kwargs):
         """
@@ -842,7 +851,9 @@ class Huggingface(Provider):
         api-inference.
         """
 
-        super().__init__(**kwargs)  # need to include pydantic.BaseModel.__init__
+        super().__init__(
+            **kwargs
+        )  # need to include pydantic.BaseModel.__init__
 
     def language_match(self, text1: str, text2: str) -> float:
         """
