@@ -308,7 +308,7 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
     def track_all_costs_tally(
         thunk: Callable[[], T],
         with_openai: bool = True,
-        with_hugs: bool = True
+        with_hugs: bool = False
     ) -> Tuple[T, Cost]:
         """
         Track costs of all of the apis we can currently track, over the
