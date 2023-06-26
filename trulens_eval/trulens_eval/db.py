@@ -7,13 +7,14 @@ from pprint import PrettyPrinter
 import sqlite3
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
-import pydantic
 from frozendict import frozendict
 from merkle_json import MerkleJson
 import numpy as np
 import pandas as pd
+import pydantic
 
 from trulens_eval import __version__
+from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import AppID
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackDefinition
@@ -22,7 +23,6 @@ from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import JSONPath
-from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
@@ -567,9 +567,8 @@ class LocalSQLite(DB):
         cost = df_records['cost_json'].map(Cost.parse_raw)
         df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
         df_records['total_cost'] = cost.map(lambda v: v.cost)
-
         perf = df_records['perf_json'].apply(Perf.parse_raw)
-        df_records['latency'] = perf.apply(lambda p: p.latency)
+        df_records['latency'] = perf.apply(lambda p: p.latency).dt.seconds.astype(int)
 
         if len(df_records) == 0:
             return df_records, []
