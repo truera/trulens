@@ -1,4 +1,5 @@
-#TODO: if backwards compat fails -> tell them to modify this file
+import shutil
+import uuid
 from tqdm import tqdm
 import json
 import traceback
@@ -248,9 +249,19 @@ def migrate(db)->None:
         db (DB): the db object
     """
     # NOTE TO DEVELOPER: If this method fails: It's likely you made a db breaking change.
-    # TODO: Give fix instructions.
-    raise Exception("do this")
-    # TODO: Save original DB and log the location
+    # Follow these steps to add a compatibility change
+    # - Update the __init__ version to the next one (if not already)
+    # - In this file: add that version to `migration_versions` variable`
+    # - Add the migration step in `upgrade_paths` of the form `from_version`:(`to_version_you_just_created`, `migration_function`)
+    
+    db.filename
+
+    original_db_file = db.filename
+    saved_db_file = original_db_file.parent / f"{original_db_file.name}_saved_{uuid.uuid1()}"
+
+    shutil.copy(original_db_file, saved_db_file)
+    print("Saved original db file: `{original_db_file}` to new file: `{saved_db_file}`") 
+
     version = db.get_meta().trulens_version
     from_compat_version = _get_compatibility_version(version)
     while from_compat_version in upgrade_paths:
