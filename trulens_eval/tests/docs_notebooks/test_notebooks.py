@@ -51,7 +51,7 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
 
     def preprocess_cell(self, cell, resources, index, **kwargs):
         if 'Tru()' in cell["source"]:
-            cell["source"] = cell["source"] + f"\ntru.migrate_database()\n"
+            cell["source"] = cell["source"] + f"\nfrom trulens_eval import Tru\ntru().migrate_database()\n"
         ret = super().preprocess_cell(cell, resources, index, **kwargs)
 
         return ret
