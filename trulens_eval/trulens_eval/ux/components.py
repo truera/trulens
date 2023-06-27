@@ -1,3 +1,4 @@
+import json
 from typing import Dict, List
 
 import pandas as pd
@@ -5,13 +6,31 @@ import streamlit as st
 
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
-from trulens_eval.db import JSON
 from trulens_eval.app import ComponentView
 from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.util import CLASS_INFO
 from trulens_eval.util import is_empty
 from trulens_eval.util import is_noserio
+
+
+def write_or_json(st, obj):
+    """
+    Dispatch either st.json or st.write depending on content of `obj`. If it is
+    a string that can parses into strictly json (dict), use st.json, otherwise
+    use st.write.
+    """
+
+    if isinstance(obj, str):
+        try:
+            content = json.loads(obj)
+            if not isinstance(content, str):
+                st.json(content)
+            else:
+                st.write(content)
+
+        except BaseException:
+            st.write(obj)
 
 
 def render_call_frame(frame: RecordAppCall) -> str:  # markdown

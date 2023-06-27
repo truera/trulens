@@ -78,7 +78,8 @@ jobs:
         displayName: Run combine docs for testing
       - bash: |
           source activate $(condaEnvFileSuffix)
-          pip install pytest==7.0.1 pytest-azurepipelines langchain>=0.0.170 llama_index>=0.6.24
+          pip install pytest==7.0.1 pytest-azurepipelines langchain>=0.0.170 llama_index>=0.6.24 
+          pip install docarray hnswlib
           echo '::group::piplist'
           echo "$(pip list)"
           echo '::endgroup::'
@@ -88,3 +89,6 @@ jobs:
         env:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
           HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
+          PINECONE_API_KEY: $(PINECONE_API_KEY)
+          PINECONE_ENV: $(PINECONE_ENV)
+          HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)

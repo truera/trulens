@@ -1,29 +1,30 @@
-from abc import ABC, abstractmethod
 import inspect
 import json
 import logging
-# from multiprocessing import Queue
 from queue import Queue
 from threading import Thread
 from time import sleep
 from types import ModuleType
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Type, TypeVar
-import pydantic
+from typing import (Any, Callable, Dict, Optional, Sequence, Tuple, Type,
+                    TypeVar)
+from pprint import PrettyPrinter
 
+
+from langchain.callbacks.openai_info import OpenAICallbackHandler
+from langchain.schema import LLMResult
+import pydantic
 import requests
 
-from trulens_eval.db import JSON
-from trulens_eval.schema import Cost
 from trulens_eval.keys import get_huggingface_headers
-from trulens_eval.util import WithClassInfo
-from trulens_eval.util import SerialModel, get_local_in_call_stack
+from trulens_eval.schema import Cost
+from trulens_eval.util import get_local_in_call_stack
+from trulens_eval.util import JSON
+from trulens_eval.util import SerialModel
 from trulens_eval.util import SingletonPerName
-from trulens_eval.util import TP
-
-from langchain.schema import LLMResult
-from langchain.callbacks.openai_info import OpenAICallbackHandler
+from trulens_eval.util import WithClassInfo
 
 logger = logging.getLogger(__name__)
+pp = PrettyPrinter()
 
 T = TypeVar("T")
 
@@ -77,6 +78,17 @@ class OpenAICallback(EndpointCallback):
         default_factory=OpenAICallbackHandler, exclude=True
     )
 
+    def handle_classification(self, response: Dict) -> None:
+        # OpenAI's moderation API is not text generation and does not return
+        # usage information. Will count those as a classification.
+
+        super().handle_classification(response)
+
+        if "categories" in response:
+            self.cost.n_successful_requests += 1
+            self.cost.n_classes += len(response['categories'])
+
+
     def handle_generation(self, response: LLMResult) -> None:
 
         super().handle_generation(response)
@@ -96,11 +108,10 @@ class OpenAICallback(EndpointCallback):
             )
 
 
-class Endpoint(SerialModel, SingletonPerName):  #, ABC):
+class Endpoint(SerialModel, SingletonPerName):
 
     class Config:
         arbitrary_types_allowed = True
-        # underscore_attrs_are_private = False
 
     # API/endpoint name
     name: str
@@ -201,6 +212,16 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
             sleep(wait_time + 2)
             return self.post(url, payload)
 
+        if isinstance(j, Dict) and "error" in j:
+            error = j['error']
+            logger.error(f"API error: {j}.")
+            if error == "overloaded":
+                logger.error("Waiting for overloaded API before trying again.")
+                sleep(10.0)
+                return self.post(url, payload)
+            else:
+                raise RuntimeError(error)
+
         assert isinstance(
             j, Sequence
         ) and len(j) > 0, f"Post did not return a sequence: {j}"
@@ -273,10 +294,26 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
         """
 
         endpoints = []
+
         if with_openai:
-            endpoints.append(OpenAIEndpoint())
+            try:
+                e = OpenAIEndpoint()
+                endpoints.append(e)
+            except:
+                logger.warning(
+                    "OpenAI API keys are not set. "
+                    "Will not track usage."
+                )
+
         if with_hugs:
-            endpoints.append(HuggingfaceEndpoint())
+            try:
+                e = HuggingfaceEndpoint()
+                endpoints.append(e)
+            except:
+                logger.warning(
+                    "Huggingface API keys are not set. "
+                    "Will not track usage."
+                )
 
         return Endpoint._track_costs(thunk, with_endpoints=endpoints)
 
@@ -375,7 +412,6 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
     def __find_tracker(f):
         return id(f) == id(Endpoint._track_costs.__code__)
 
-    # @abstractmethod
     def handle_wrapped_call(
         self, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
@@ -461,6 +497,12 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
                 return response
 
             for callback_class in registered_callback_classes:
+                if callback_class not in endpoints:
+                    logger.warning(
+                        f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
+                        " but there are no endpoints waiting to receive the result.")
+                    continue
+
                 for endpoint, callback in endpoints[callback_class]:
 
                     endpoint.handle_wrapped_call(
@@ -498,22 +540,48 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         if 'model' in bindings.kwargs:
             model_name = bindings.kwargs['model']
 
-        usage = None
+        results = None
+        if "results" in response:
+            results = response['results']
+            
+        counted_something = False
+
         if 'usage' in response:
+            counted_something = True
             usage = response['usage']
 
-        llm_res = LLMResult(
-            generations=[[]],
-            llm_output=dict(token_usage=usage, model_name=model_name),
-            run=None
-        )
+            llm_res = LLMResult(
+                generations=[[]],
+                llm_output=dict(token_usage=usage, model_name=model_name),
+                run=None
+            )
 
-        self.global_callback.handle_generation(response=llm_res)
+            self.global_callback.handle_generation(response=llm_res)
 
-        if callback is not None:
-            callback.handle_generation(response=llm_res)
+            if callback is not None:
+                callback.handle_generation(response=llm_res)
+
+        if results is not None:
+            for res in results:
+                if "categories" in res:
+                    counted_something = True
+                    self.global_callback.handle_classification(response=res)
+
+                    if callback is not None:
+                        callback.handle_classification(response=res)
+
+        if not counted_something:
+            logger.warning(
+                f"Unregonized openai response format. It did not have usage information nor categories:\n" +
+                pp.pformat(response)
+            )
+
 
     def __init__(self, *args, **kwargs):
+        if hasattr(self, "name"):
+            # Already created with SingletonPerName mechanism
+            return
+
         kwargs['name'] = "openai"
         kwargs['callback_class'] = OpenAICallback
 
@@ -557,6 +625,10 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
             callback.handle_classification(response=response)
 
     def __init__(self, *args, **kwargs):
+        if hasattr(self, "name"):
+            # Already created with SingletonPerName mechanism
+            return
+
         kwargs['name'] = "huggingface"
         kwargs['post_headers'] = get_huggingface_headers()
         kwargs['callback_class'] = HuggingfaceCallback

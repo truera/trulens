@@ -3,6 +3,7 @@ from multiprocessing import Process
 import os
 from pathlib import Path
 import subprocess
+import sys
 import threading
 from threading import Thread
 from time import sleep
@@ -10,17 +11,23 @@ from typing import Iterable, List, Optional, Sequence, Union
 
 import pkg_resources
 
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import AppDefinition
-from trulens_eval.schema import Record
 from trulens_eval.db import JSON
 from trulens_eval.db import LocalSQLite
 from trulens_eval.feedback import Feedback
-from trulens_eval.utils.notebook_utils import is_notebook, setup_widget_stdout_stderr
+from trulens_eval.schema import AppDefinition
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import Record
+from trulens_eval.util import UNICODE_CHECK, UNICODE_YIELD
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import TP
+from trulens_eval.utils.notebook_utils import is_notebook
+from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
 
 logger = logging.getLogger(__name__)
+
+# How long to wait (seconds) for streamlit to print out url when starting the
+# dashboard.
+DASHBOARD_START_TIMEOUT = 30
 
 
 class Tru(SingletonPerName):
@@ -235,8 +242,13 @@ class Tru(SingletonPerName):
                 #    "Looking for things to do. Stop me with `tru.stop_evaluator()`.",
                 #    end=''
                 #)
-                Feedback.evaluate_deferred(tru=self)
-                TP().finish(timeout=10)
+                started_count = Feedback.evaluate_deferred(tru=self)
+
+                if started_count > 0:
+                    print(f"{UNICODE_YIELD}{UNICODE_YIELD}{UNICODE_YIELD} Started {started_count} deferred feedback functions.")
+                    TP().finish()
+                    print(f"{UNICODE_CHECK}{UNICODE_CHECK}{UNICODE_CHECK} Finished evaluating deferred feedback functions.")
+
                 if fork:
                     sleep(10)
                 else:
@@ -279,7 +291,7 @@ class Tru(SingletonPerName):
         Stop existing dashboard(s) if running.
 
         Args:
-            
+
             - force: bool: Also try to find any other dashboard processes not
               started in this notebook and shut them down too.
 
@@ -295,6 +307,11 @@ class Tru(SingletonPerName):
                 )
 
             else:
+                if sys.platform.startswith("win"):
+                    raise RuntimeError(
+                        "Force stop option is not supported on windows."
+                    )
+
                 print("Force stopping dashboard ...")
                 import os
                 import pwd  # PROBLEM: does not exist on windows
@@ -423,7 +440,8 @@ class Tru(SingletonPerName):
 
         Tru.dashboard_proc = proc
 
-        if not started.wait(timeout=30):  # This might not work on windows.
+        if not started.wait(timeout=DASHBOARD_START_TIMEOUT
+                           ):  # This might not work on windows.
             raise RuntimeError(
                 "Dashboard failed to start in time. "
                 "Please inspect dashboard logs for additional information."
