@@ -89,3 +89,5 @@ jobs:
         env:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
           HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
+          PINECONE_API_KEY: $(PINECONE_API_KEY)
+          PINECONE_ENV: $(PINECONE_ENV)
