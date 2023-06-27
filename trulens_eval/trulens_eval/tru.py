@@ -284,7 +284,7 @@ class Tru(SingletonPerName):
         Stop existing dashboard(s) if running.
 
         Args:
-            
+
             - force: bool: Also try to find any other dashboard processes not
               started in this notebook and shut them down too.
 

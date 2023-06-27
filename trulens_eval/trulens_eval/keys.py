@@ -42,10 +42,8 @@ if config_file is None:
     )
 
 else:
-    
     config = dotenv.dotenv_values(config_file)
 
-    
     for k, v in config.items():
         # print(f"{config_file}: {k}")
         globals()[k] = v
@@ -80,6 +78,16 @@ def get_huggingface_headers():
 
 
 def setup_keys(**kwargs):
+    global config_file
+
+    config_file = get_config()
+    if config_file is None:
+        logger.warning(
+            f"No .env found in {Path.cwd()} or its parents. "
+            "You may need to specify secret keys in another manner."
+        )
+
+
     to_global = dict()
 
     globs = caller_frame(offset=1).f_globals
