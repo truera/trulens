@@ -94,8 +94,12 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
             get_unit_test_for_filename(filename)
         )
         if 'trulens_eval_gh_top_readme' not in filename:
-            # TODO: Remove this to only test most recent
-            for version in db_migration.migration_versions:
+            # If you want to test all versions uncomment and replace the below for loop
+            ### for version in db_migration.migration_versions:
+
+            # Run the oldest and latest migrations to keep testing more manageable
+            for version in [db_migration.migration_versions[0],
+                            db_migration.migration_versions[-1]]:
                 test_version_str = version.replace('.', '_')
                 setattr(
                     DocsNotebookTests,
