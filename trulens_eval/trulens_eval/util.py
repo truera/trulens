@@ -180,10 +180,15 @@ def iterable_peek(it: Iterable[T]) -> Tuple[T, Iterable[T]]:
 
 JSON_BASES = (str, int, float, type(None))
 JSON_BASES_T = Union[str, int, float, type(None)]
+
 # JSON = (List, Dict) + JSON_BASES
 # JSON_T = Union[JSON_BASES_T, List, Dict]
-JSON = Union[JSON_BASES_T, Dict[str, Any]]
-# want: Union[JSON_BASES_T, Dict[str, JSON]] but this will result in loop at some point
+
+# TODO: rename to "JSON_LIKE" as it is not stringly json.
+JSON = Union[JSON_BASES_T, Sequence['JSON'], Dict[str, 'JSON']]
+
+# TODO: rename to "JSON".
+JSON_STRICT = Dict[str, JSON]
 
 mj = MerkleJson()
 
