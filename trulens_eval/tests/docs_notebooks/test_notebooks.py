@@ -93,14 +93,15 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
             DocsNotebookTests, 'test_' + filename.split('.ipynb')[0],
             get_unit_test_for_filename(filename)
         )
-        # TODO: Remove this to only test most recent
-        for version in db_migration.migration_versions:
-            test_version_str = version.replace('.', '_')
-            setattr(
-                DocsNotebookTests,
-                f"test_db_backwards_compat_{test_version_str}_{filename.split('.ipynb')[0]}",
-                get_unit_test_for_filename(filename, db_compat_version=version)
-            )
+        if 'trulens_eval_gh_top_readme' not in filename:
+            # TODO: Remove this to only test most recent
+            for version in db_migration.migration_versions:
+                test_version_str = version.replace('.', '_')
+                setattr(
+                    DocsNotebookTests,
+                    f"test_db_backwards_compat_{test_version_str}_{filename.split('.ipynb')[0]}",
+                    get_unit_test_for_filename(filename, db_compat_version=version)
+                )
 
 if __name__ == '__main__':
     main()
