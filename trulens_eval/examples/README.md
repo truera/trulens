@@ -56,6 +56,11 @@
 
             Compare different models with TruLens in a langchain framework.
 
+        - `langchain_summarize.ipynb`
+
+            A summarization model using langchain. This type of model does not
+            take as input a piece of text but rather a set of documents.
+
 - `vector-dbs/`
 
     Collection of examples that makes use of vector databases for context
@@ -69,6 +74,8 @@
         - `llama_index_pinecone_comparecontrast.ipynb`
 
             Using llama-index and pinecone to compare and contrast cities using their wikipedia articles.
+
+        - `langchain-retrieval-augmentation-with-trulens.ipynb`
 
 
 - `app_with_human_feedback.py`
