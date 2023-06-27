@@ -20,7 +20,7 @@ pip install trulens-eval
 
 ```python
 from trulens_eval import Tru
-from trulens_eval import tru_chain
+from trulens_eval import TruChain
 
 tru = Tru()
 ```
