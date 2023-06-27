@@ -5,6 +5,9 @@ on:
     branches:
       - main
     paths:
+      - 'docs/trulens_eval/gh_top_intro.md'
+      - 'docs/trulens_eval/trulens_eval_gh_top_readme.ipynb'
+      - 'trulens_eval/examples/examples/vector-dbs/llama_index/llama_example.ipynb'
       - 'trulens_eval/examples/quickstart.ipynb'
       - 'trulens_eval/examples/logging.ipynb'
       - 'trulens_eval/examples/feedback_functions.ipynb'
