@@ -9,6 +9,9 @@ jupyter nbconvert --to markdown all_tools.ipynb
 printf  "\n\n" >> break.md
 cat intro.md break.md all_tools.md > README.md
 
+# Create top level readme from testable code trulens_eval_gh_top_readme.ipynb
+jupyter nbconvert --to markdown trulens_eval_gh_top_readme.ipynb
+cat gh_top_intro.md break.md trulens_eval_gh_top_readme.md break.md ../trulens_explain/gh_top_intro.md > TOP_README.md
 
 # Create non-jupyter scripts
 jupyter nbconvert --to script quickstart.ipynb
@@ -34,7 +37,8 @@ $SED -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" quickstart.py llama_quickstart.py a
 
 # Move all generated files to the generated_files folder
 mv README.md ../../trulens_eval/README.md
- 
+mv TOP_README.md ../../README.md
+
 mv llama_quickstart.py ../../trulens_eval/examples/vector-dbs/llama_index/llamaindex_quickstart.py
 mv *.py ../../trulens_eval/examples/
 mv all_tools* ../../trulens_eval/generated_files/
