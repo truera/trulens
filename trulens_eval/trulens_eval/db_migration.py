@@ -96,6 +96,12 @@ def migrate_0_2_0(db):
                     'module']['module_name'].replace(
                         "tru_feedback", "feedback"
                     )
+            if 'init_kwargs' in new_json['implementation']['obj']:
+                new_json['implementation']['obj']['init_bindings'] = {
+                    'args': (),
+                    'kwargs': new_json['implementation']['obj']['init_kwargs']
+                }
+                del new_json['implementation']['obj']['init_kwargs']
         _update_db_json_col(
             db=db,
             table="feedback_defs",
