@@ -620,10 +620,11 @@ class LocalSQLite(DB):
             lambda perf_json: Perf.parse_raw(perf_json)
             if perf_json != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
         )
+
         df_records['latency'] = perf.apply(
-            lambda p: p.latency
+            lambda p: p.latency.seconds
             if p != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
-        ).dt.seconds.astype(int)
+        )
 
         if len(df_records) == 0:
             return df_records, []
