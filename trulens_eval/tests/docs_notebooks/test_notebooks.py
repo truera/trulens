@@ -100,7 +100,9 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
                 setattr(
                     DocsNotebookTests,
                     f"test_db_backwards_compat_{test_version_str}_{filename.split('.ipynb')[0]}",
-                    get_unit_test_for_filename(filename, db_compat_version=version)
+                    get_unit_test_for_filename(
+                        filename, db_compat_version=version
+                    )
                 )
 
 if __name__ == '__main__':
