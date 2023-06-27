@@ -336,7 +336,7 @@ def _serialization_asserts(db) -> None:
                             AppDefinition(**test_json)
                         else:
                             # If this happens, trulens needs to add a migration
-                            SAVED_DB_FILE_LOC = saved_db_locations[db]
+                            SAVED_DB_FILE_LOC = saved_db_locations[db.filename]
                             raise VersionException(
                                 f"serialized column migration not implemented. Please open a ticket on trulens github page including details on the old and new trulens versions. Your original DB file is saved here: {SAVED_DB_FILE_LOC}"
                             )
@@ -365,7 +365,7 @@ def migrate(db) -> None:
     global saved_db_locations
 
     saved_db_file = original_db_file.parent / f"{original_db_file.name}_saved_{uuid.uuid1()}"
-    saved_db_locations[db] = saved_db_file
+    saved_db_locations[original_db_file] = saved_db_file
     shutil.copy(original_db_file, saved_db_file)
     print(
         "Saved original db file: `{original_db_file}` to new file: `{saved_db_file}`"
