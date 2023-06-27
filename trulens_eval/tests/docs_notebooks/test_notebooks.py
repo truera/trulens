@@ -64,6 +64,7 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
         HUGGINGFACE_API_KEY = os.environ['HUGGINGFACE_API_KEY']
         PINECONE_API_KEY = os.environ['PINECONE_API_KEY']
         PINECONE_ENV = os.environ['PINECONE_ENV']
+        HUGGINGFACEHUB_API_TOKEN = os.environ['HUGGINGFACEHUB_API_TOKEN']
 
         notebook_preprocessor = VariableSettingPreprocessor
         notebook_preprocessor_kwargs = {
@@ -78,6 +79,7 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
                     f"os.environ['HUGGINGFACE_API_KEY']='{HUGGINGFACE_API_KEY}'",
                     f"os.environ['PINECONE_API_KEY']='{PINECONE_API_KEY}'",
                     f"os.environ['PINECONE_ENV']='{PINECONE_ENV}'",
+                    f"os.environ['HUGGINGFACEHUB_API_TOKEN']='{HUGGINGFACEHUB_API_TOKEN}'",
                 ]
         }
         if db_compat_version is not None:
