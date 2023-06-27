@@ -62,6 +62,9 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
     def test(self):
         OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
         HUGGINGFACE_API_KEY = os.environ['HUGGINGFACE_API_KEY']
+        PINECONE_API_KEY = os.environ['PINECONE_API_KEY']
+        PINECONE_ENV = os.environ['PINECONE_ENV']
+
         notebook_preprocessor = VariableSettingPreprocessor
         notebook_preprocessor_kwargs = {
             'timeout':
@@ -73,6 +76,8 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
                     f"import os",
                     f"os.environ['OPENAI_API_KEY']='{OPENAI_API_KEY}'",
                     f"os.environ['HUGGINGFACE_API_KEY']='{HUGGINGFACE_API_KEY}'",
+                    f"os.environ['PINECONE_API_KEY']='{PINECONE_API_KEY}'",
+                    f"os.environ['PINECONE_ENV']='{PINECONE_ENV}'",
                 ]
         }
         if db_compat_version is not None:
