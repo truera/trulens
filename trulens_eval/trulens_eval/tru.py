@@ -79,6 +79,13 @@ class Tru(SingletonPerName):
 
         self.db.reset_database()
 
+    def migrate_database(self):
+        """
+        Migrates the database. 
+        """
+
+        self.db.migrate_database()
+
     def add_record(self, record: Optional[Record] = None, **kwargs):
         """
         Add a record to the database.
@@ -290,7 +297,7 @@ class Tru(SingletonPerName):
             else:
                 print("Force stopping dashboard ...")
                 import os
-                import pwd # PROBLEM: does not exist on windows
+                import pwd  # PROBLEM: does not exist on windows
 
                 import psutil
                 username = pwd.getpwuid(os.getuid())[0]
@@ -416,7 +423,7 @@ class Tru(SingletonPerName):
 
         Tru.dashboard_proc = proc
 
-        if not started.wait(timeout=30): # This might not work on windows.
+        if not started.wait(timeout=30):  # This might not work on windows.
             raise RuntimeError(
                 "Dashboard failed to start in time. "
                 "Please inspect dashboard logs for additional information."

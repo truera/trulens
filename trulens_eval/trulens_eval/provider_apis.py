@@ -78,7 +78,7 @@ class OpenAICallback(EndpointCallback):
     )
 
     def handle_generation(self, response: LLMResult) -> None:
-        
+
         super().handle_generation(response)
 
         self.langchain_handler.on_llm_end(response)
@@ -291,9 +291,10 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
         execution of thunk.
         """
 
-        result, cbs = Endpoint.track_all_costs(thunk, with_openai=with_openai, with_hugs=with_hugs)
+        result, cbs = Endpoint.track_all_costs(
+            thunk, with_openai=with_openai, with_hugs=with_hugs
+        )
         return result, sum(cb.cost for cb in cbs)
-        
 
     @staticmethod
     def _track_costs(

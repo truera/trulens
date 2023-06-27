@@ -92,12 +92,12 @@ class Cost(SerialModel):
 
     def __radd__(self, other: 'Cost') -> 'Cost':
         # Makes sum work on lists of Cost.
-        
+
         if other == 0:
             return self
-        
+
         return self.__add__(other)
-        
+
 
 class Perf(SerialModel):
     start_time: datetime
@@ -127,7 +127,7 @@ class RecordAppCall(SerialModel):
     error: Optional[str] = None
 
     # Timestamps tracking entrance and exit of the instrumented method.
-    perf: Perf = pydantic.Field(default_factory=Perf)
+    perf: Optional[Perf] = None
 
     # Process id.
     pid: int
