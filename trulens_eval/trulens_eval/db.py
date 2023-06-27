@@ -78,10 +78,10 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def insert_app(self, app: AppDefinition) -> AppID:
         """
-        Insert a new `app` into db under the given `app_id`. 
+        Insert a new `app` into db under the given `app_id`.
 
         Args:
-        - app: AppDefinition -- App definition. 
+        - app: AppDefinition -- App definition.
         """
 
         raise NotImplementedError()
@@ -136,7 +136,9 @@ def versioning_decorator(func):
 
 
 def for_all_methods(decorator):
-    """A Class decorator that will decorate all DB Access methods except for instantiations, db resets, or version checking.
+    """
+    A Class decorator that will decorate all DB Access methods except for
+    instantiations, db resets, or version checking.
     """
 
     def decorate(cls):
@@ -144,7 +146,7 @@ def for_all_methods(decorator):
             if not str(attr).startswith("_") and str(attr) not in [
                     "get_meta", "reset_database", "migrate_database"
             ] and callable(getattr(cls, attr)):
-                print(attr)
+                logger.debug(f"{attr}")
                 setattr(cls, attr, decorator(getattr(cls, attr)))
         return cls
 
@@ -170,7 +172,7 @@ class LocalSQLite(DB):
         Database locally hosted using SQLite.
 
         Args
-        
+
         - filename: Optional[Path] -- location of sqlite database dump
           file. It will be created if it does not exist.
 

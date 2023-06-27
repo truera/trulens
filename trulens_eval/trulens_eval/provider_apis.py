@@ -94,11 +94,10 @@ class OpenAICallback(EndpointCallback):
             )
 
 
-class Endpoint(SerialModel, SingletonPerName):  #, ABC):
+class Endpoint(SerialModel, SingletonPerName):
 
     class Config:
         arbitrary_types_allowed = True
-        # underscore_attrs_are_private = False
 
     # API/endpoint name
     name: str
@@ -136,22 +135,6 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
 
     # Thread that fills the queue at the appropriate rate.
     pace_thread: Thread = pydantic.Field(exclude=True)
-
-    # TODO: validate to construct tracking objects when deserializing?
-    """
-    @classmethod
-    def model_validate(cls, obj: Any, **kwargs):
-        if isinstance(obj, dict):
-            if CLASS_INFO in obj:
-
-                cls = Class(**obj[CLASS_INFO])
-                del obj[CLASS_INFO]
-                model = cls.model_validate(obj, **kwargs)
-
-                return WithClassInfo.of_model(model=model, cls=cls)
-            else:
-                return super().model_validate(obj, **kwargs)
-    """
 
     def __new__(cls, name: str, *args, **kwargs):
         return super(SingletonPerName, cls).__new__(
@@ -297,10 +280,26 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
         """
 
         endpoints = []
+
         if with_openai:
-            endpoints.append(OpenAIEndpoint())
+            try:
+                e = OpenAIEndpoint()
+                endpoints.append(e)
+            except:
+                logger.warning(
+                    "OpenAI API keys are not set. "
+                    "Will not track usage."
+                )
+
         if with_hugs:
-            endpoints.append(HuggingfaceEndpoint())
+            try:
+                e = HuggingfaceEndpoint()
+                endpoints.append(e)
+            except:
+                logger.warning(
+                    "Huggingface API keys are not set. "
+                    "Will not track usage."
+                )
 
         return Endpoint._track_costs(thunk, with_endpoints=endpoints)
 
@@ -308,7 +307,7 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
     def track_all_costs_tally(
         thunk: Callable[[], T],
         with_openai: bool = True,
-        with_hugs: bool = False
+        with_hugs: bool = True
     ) -> Tuple[T, Cost]:
         """
         Track costs of all of the apis we can currently track, over the
@@ -399,7 +398,6 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
     def __find_tracker(f):
         return id(f) == id(Endpoint._track_costs.__code__)
 
-    # @abstractmethod
     def handle_wrapped_call(
         self, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
@@ -485,6 +483,12 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
                 return response
 
             for callback_class in registered_callback_classes:
+                if callback_class not in endpoints:
+                    logger.warning(
+                        f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
+                        " but there are no endpoints waiting to receive the result.")
+                    continue
+
                 for endpoint, callback in endpoints[callback_class]:
 
                     endpoint.handle_wrapped_call(
@@ -493,19 +497,6 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
                         response=response,
                         callback=callback
                     )
-
-            #cb = get_local_in_call_stack(
-            #    key=self.callback_name,
-            #    func=self.__find_tracker,
-            #    offset=0
-            #)
-
-            #self.handle_wrapped_call(
-            #    func=func,
-            #    bindings=bindings,
-            #    response=res,
-            #    callback=cb
-            #)
 
             return response
 
@@ -551,6 +542,10 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             callback.handle_generation(response=llm_res)
 
     def __init__(self, *args, **kwargs):
+        if hasattr(self, "name"):
+            # Already created with SingletonPerName mechanism
+            return
+
         kwargs['name'] = "openai"
         kwargs['callback_class'] = OpenAICallback
 
@@ -582,6 +577,10 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
             callback.handle_classification(response=response)
 
     def __init__(self, *args, **kwargs):
+        if hasattr(self, "name"):
+            # Already created with SingletonPerName mechanism
+            return
+
         kwargs['name'] = "huggingface"
         kwargs['post_headers'] = get_huggingface_headers()
         kwargs['callback_class'] = HuggingfaceCallback
