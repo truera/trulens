@@ -53,8 +53,11 @@ pp = PrettyPrinter()
 
 T = TypeVar("T")
 
+UNICODE_STOP = "🛑"
 UNICODE_CHECK = "✅"
-UNCIODE_YIELD = "⚡"
+UNICODE_YIELD = "⚡"
+UNICODE_HOURGLASS = "⏳"
+UNICODE_CLOCK = "⏰"
 
 # Optional requirements.
 
@@ -177,10 +180,16 @@ def iterable_peek(it: Iterable[T]) -> Tuple[T, Iterable[T]]:
 
 JSON_BASES = (str, int, float, type(None))
 JSON_BASES_T = Union[str, int, float, type(None)]
+
 # JSON = (List, Dict) + JSON_BASES
 # JSON_T = Union[JSON_BASES_T, List, Dict]
-JSON = Union[JSON_BASES_T, Dict[str, Any]]
-# want: Union[JSON_BASES_T, Dict[str, JSON]] but this will result in loop at some point
+
+# TODO: rename to "JSON_LIKE" as it is not stringly json.
+# JSON = Union[JSON_BASES_T, Sequence['JSON'], Dict[str, 'JSON']]
+JSON = Union[JSON_BASES_T, Sequence[Any], Dict[str, Any]] # Any = JSON
+
+# TODO: rename to "JSON".
+JSON_STRICT = Dict[str, JSON]
 
 mj = MerkleJson()
 
@@ -1120,6 +1129,10 @@ class TP(SingletonPerName):  # "thread processing"
 
 
 # python instrumentation utilities
+
+
+def caller_frame(offset=0):
+    return stack()[offset+1].frame
 
 
 def get_local_in_call_stack(
