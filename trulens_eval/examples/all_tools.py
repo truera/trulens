@@ -9,12 +9,10 @@
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
 
-from trulens_eval.keys import setup_keys
+import os
 
-setup_keys(
-    OPENAI_API_KEY="to fill in",
-    HUGGINGFACE_API_KEY="to fill in"
-)
+os.environ["OPENAI_API_KEY"] = "..."
+os.environ["HUGGINGFACE_API_KEY"] = "..."
 
 # ### Import from LangChain and TruLens
 

@@ -37,8 +37,12 @@ from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
 
 # Set your API key as an environmental variable
-import os
-os.environ["OPENAI_API_KEY"] = "..."
+from trulens_eval.keys import setup_keys
+
+setup_keys(
+    OPENAI_API_KEY="to fill in",
+    HUGGINGFACE_API_KEY="to fill in"
+)
 ```
 
 
@@ -64,8 +68,6 @@ Now that we created an LLM chain, we can set up our first feedback function. Her
 # create a feedback function
 
 from trulens_eval.feedback import Feedback, Huggingface
-
-os.environ["HUGGINGFACE_API_KEY"] = "..."
 ```
 
 

@@ -5,10 +5,10 @@ from queue import Queue
 from threading import Thread
 from time import sleep
 from types import ModuleType
-from typing import (Any, Callable, Dict, Optional, Sequence, Tuple, Type,
-                    TypeVar)
+from typing import (
+    Any, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
+)
 from pprint import PrettyPrinter
-
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import LLMResult
@@ -87,7 +87,6 @@ class OpenAICallback(EndpointCallback):
         if "categories" in response:
             self.cost.n_successful_requests += 1
             self.cost.n_classes += len(response['categories'])
-
 
     def handle_generation(self, response: LLMResult) -> None:
 
@@ -500,7 +499,8 @@ class Endpoint(SerialModel, SingletonPerName):
                 if callback_class not in endpoints:
                     logger.warning(
                         f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
-                        " but there are no endpoints waiting to receive the result.")
+                        " but there are no endpoints waiting to receive the result."
+                    )
                     continue
 
                 for endpoint, callback in endpoints[callback_class]:
@@ -543,7 +543,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         results = None
         if "results" in response:
             results = response['results']
-            
+
         counted_something = False
 
         if 'usage' in response:
@@ -572,10 +572,9 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         if not counted_something:
             logger.warning(
-                f"Unregonized openai response format. It did not have usage information nor categories:\n" +
-                pp.pformat(response)
+                f"Unregonized openai response format. It did not have usage information nor categories:\n"
+                + pp.pformat(response)
             )
-
 
     def __init__(self, *args, **kwargs):
         if hasattr(self, "name"):

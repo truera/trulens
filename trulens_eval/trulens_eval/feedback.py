@@ -15,7 +15,6 @@ import numpy as np
 import openai
 import pydantic
 
-
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
@@ -370,7 +369,9 @@ class Feedback(FeedbackDefinition):
 
             result_vals = np.array(result_vals)
             if len(result_vals) == 0:
-                logger.warning(f"Feedback function {self.name} with aggregation {self.agg} had no inputs.")
+                logger.warning(
+                    f"Feedback function {self.name} with aggregation {self.agg} had no inputs."
+                )
                 result = np.nan
             else:
                 result = self.agg(result_vals)
