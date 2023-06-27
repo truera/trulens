@@ -1,6 +1,20 @@
-# Run with command: streamlit run Example_Thumbs_Application.py
-import langchain
-from langchain.callbacks import get_openai_callback
+"""
+Streamlit app with a langchain-based chat and the use of feedback functions
+based on user input.
+
+# Running:
+
+Start with streamlit on the command line: 
+
+```bash
+streamlit run Example_Thumbs_Application.py
+```
+"""
+
+import os
+from pathlib import Path
+import sys
+
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
@@ -8,15 +22,13 @@ from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
 import streamlit as st
 
-import sys
-import os
-from pathlib import Path
-
 dev_path = str(Path(__file__).resolve().parent.parent)
 sys.path.insert(0, dev_path)
 os.environ["OPENAI_API_KEY"] = "..."
 
-from trulens_eval import TruChain, Tru
+from trulens_eval import Tru
+from trulens_eval import TruChain
+
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
 tru = Tru()

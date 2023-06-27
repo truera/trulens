@@ -5,15 +5,15 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 import sqlite3
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple, Union
 
-from frozendict import frozendict
 from merkle_json import MerkleJson
 import numpy as np
 import pandas as pd
 import pydantic
 
 from trulens_eval import __version__
+from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import AppID
 from trulens_eval.schema import Cost
@@ -22,7 +22,6 @@ from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.schema import JSONPath
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordID
@@ -31,8 +30,8 @@ from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.util import JSON
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import SerialModel
-from trulens_eval.util import UNCIODE_YIELD
 from trulens_eval.util import UNICODE_CHECK
+from trulens_eval.util import UNICODE_CLOCK
 
 mj = MerkleJson()
 NoneType = type(None)
@@ -79,10 +78,10 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def insert_app(self, app: AppDefinition) -> AppID:
         """
-        Insert a new `app` into db under the given `app_id`. 
+        Insert a new `app` into db under the given `app_id`.
 
         Args:
-        - app: AppDefinition -- App definition. 
+        - app: AppDefinition -- App definition.
         """
 
         raise NotImplementedError()
@@ -137,7 +136,9 @@ def versioning_decorator(func):
 
 
 def for_all_methods(decorator):
-    """A Class decorator that will decorate all DB Access methods except for instantiations, db resets, or version checking.
+    """
+    A Class decorator that will decorate all DB Access methods except for
+    instantiations, db resets, or version checking.
     """
 
     def decorate(cls):
@@ -145,7 +146,7 @@ def for_all_methods(decorator):
             if not str(attr).startswith("_") and str(attr) not in [
                     "get_meta", "reset_database", "migrate_database"
             ] and callable(getattr(cls, attr)):
-                print(attr)
+                logger.debug(f"{attr}")
                 setattr(cls, attr, decorator(getattr(cls, attr)))
         return cls
 
@@ -171,7 +172,7 @@ class LocalSQLite(DB):
         Database locally hosted using SQLite.
 
         Args
-        
+
         - filename: Optional[Path] -- location of sqlite database dump
           file. It will be created if it does not exist.
 
@@ -312,7 +313,7 @@ class LocalSQLite(DB):
         conn.commit()
         conn.close()
 
-    # DB requirement-
+    # DB requirement
     def insert_record(
         self,
         record: Record,
@@ -323,8 +324,8 @@ class LocalSQLite(DB):
         # within sqlite.
 
         vals = (
-            record.record_id, record.app_id, record.main_input,
-            record.main_output, json_str_of_obj(record), record.tags, record.ts,
+            record.record_id, record.app_id, json_str_of_obj(record.main_input),
+            json_str_of_obj(record.main_output), json_str_of_obj(record), record.tags, record.ts,
             json_str_of_obj(record.cost), json_str_of_obj(record.perf)
         )
 
@@ -349,7 +350,7 @@ class LocalSQLite(DB):
         return app_id
 
     def insert_feedback_definition(
-        self, feedback: FeedbackDefinition
+        self, feedback: Union[Feedback, FeedbackDefinition]
     ) -> FeedbackDefinitionID:
         """
         Insert a feedback definition into the database.
@@ -432,7 +433,7 @@ class LocalSQLite(DB):
             )
         else:
             print(
-                f"{UNCIODE_YIELD} feedback {feedback_result.feedback_result_id} on {feedback_result.record_id} -> {self.filename}"
+                f"{UNICODE_CLOCK} feedback {feedback_result.feedback_result_id} on {feedback_result.record_id} -> {self.filename}"
             )
 
     def get_feedback(
@@ -484,7 +485,7 @@ class LocalSQLite(DB):
                 f.last_ts,
                 f.status,
                 f.error,
-                f.name,
+                f.name as fname,
                 f.result, 
                 f.cost_json,
                 r.perf_json,

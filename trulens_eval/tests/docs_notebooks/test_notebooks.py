@@ -51,7 +51,7 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
 
     def preprocess_cell(self, cell, resources, index, **kwargs):
         if 'Tru()' in cell["source"]:
-            cell["source"] = cell["source"] + f"\ntru.migrate_database()\n"
+            cell["source"] = cell["source"] + f"\nfrom trulens_eval import Tru\nTru().migrate_database()\n"
         ret = super().preprocess_cell(cell, resources, index, **kwargs)
 
         return ret
@@ -62,6 +62,10 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
     def test(self):
         OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
         HUGGINGFACE_API_KEY = os.environ['HUGGINGFACE_API_KEY']
+        PINECONE_API_KEY = os.environ['PINECONE_API_KEY']
+        PINECONE_ENV = os.environ['PINECONE_ENV']
+        HUGGINGFACEHUB_API_TOKEN = os.environ['HUGGINGFACEHUB_API_TOKEN']
+
         notebook_preprocessor = VariableSettingPreprocessor
         notebook_preprocessor_kwargs = {
             'timeout':
@@ -73,6 +77,9 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
                     f"import os",
                     f"os.environ['OPENAI_API_KEY']='{OPENAI_API_KEY}'",
                     f"os.environ['HUGGINGFACE_API_KEY']='{HUGGINGFACE_API_KEY}'",
+                    f"os.environ['PINECONE_API_KEY']='{PINECONE_API_KEY}'",
+                    f"os.environ['PINECONE_ENV']='{PINECONE_ENV}'",
+                    f"os.environ['HUGGINGFACEHUB_API_TOKEN']='{HUGGINGFACEHUB_API_TOKEN}'",
                 ]
         }
         if db_compat_version is not None:
