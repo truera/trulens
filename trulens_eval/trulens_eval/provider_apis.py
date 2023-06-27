@@ -7,6 +7,8 @@ from time import sleep
 from types import ModuleType
 from typing import (Any, Callable, Dict, Optional, Sequence, Tuple, Type,
                     TypeVar)
+from pprint import PrettyPrinter
+
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import LLMResult
@@ -22,6 +24,7 @@ from trulens_eval.util import SingletonPerName
 from trulens_eval.util import WithClassInfo
 
 logger = logging.getLogger(__name__)
+pp = PrettyPrinter()
 
 T = TypeVar("T")
 
@@ -74,6 +77,17 @@ class OpenAICallback(EndpointCallback):
     langchain_handler: OpenAICallbackHandler = pydantic.Field(
         default_factory=OpenAICallbackHandler, exclude=True
     )
+
+    def handle_classification(self, response: Dict) -> None:
+        # OpenAI's moderation API is not text generation and does not return
+        # usage information. Will count those as a classification.
+
+        super().handle_classification(response)
+
+        if "categories" in response:
+            self.cost.n_successful_requests += 1
+            self.cost.n_classes += len(response['categories'])
+
 
     def handle_generation(self, response: LLMResult) -> None:
 
@@ -526,20 +540,42 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         if 'model' in bindings.kwargs:
             model_name = bindings.kwargs['model']
 
-        usage = None
+        results = None
+        if "results" in response:
+            results = response['results']
+            
+        counted_something = False
+
         if 'usage' in response:
+            counted_something = True
             usage = response['usage']
 
-        llm_res = LLMResult(
-            generations=[[]],
-            llm_output=dict(token_usage=usage, model_name=model_name),
-            run=None
-        )
+            llm_res = LLMResult(
+                generations=[[]],
+                llm_output=dict(token_usage=usage, model_name=model_name),
+                run=None
+            )
 
-        self.global_callback.handle_generation(response=llm_res)
+            self.global_callback.handle_generation(response=llm_res)
 
-        if callback is not None:
-            callback.handle_generation(response=llm_res)
+            if callback is not None:
+                callback.handle_generation(response=llm_res)
+
+        if results is not None:
+            for res in results:
+                if "categories" in res:
+                    counted_something = True
+                    self.global_callback.handle_classification(response=res)
+
+                    if callback is not None:
+                        callback.handle_classification(response=res)
+
+        if not counted_something:
+            logger.warning(
+                f"Unregonized openai response format. It did not have usage information nor categories:\n" +
+                pp.pformat(response)
+            )
+
 
     def __init__(self, *args, **kwargs):
         if hasattr(self, "name"):
