@@ -100,7 +100,7 @@ These installation instructions assume that you have conda installed and added t
 
 0. Create a virtual environment (or modify an existing one).
 ```bash
-conda create -n "<my_name>" python=3.7  # Skip if using existing environment.
+conda create -n "<my_name>" python=3  # Skip if using existing environment.
 conda activate <my_name>
 ```
  
