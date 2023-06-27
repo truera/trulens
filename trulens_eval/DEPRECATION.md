@@ -1,5 +1,13 @@
 # Deprecation Notes
 
+## Changes in 0.4.0
+
+### Backwards compatible changes
+
+- class `Record` of schema.py
+
+    - attributes `main_input` and `main_output` generalized to `JSON` (not strict json) allowing the field to contain strings like before the change but also sequences and dictionaries (with string keys) of json.
+
 ## Changes in 0.2.3
 
 ### Backwards compatible changes
