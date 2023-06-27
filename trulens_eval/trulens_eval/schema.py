@@ -153,9 +153,9 @@ class Record(SerialModel):
 
     tags: str = ""
 
-    main_input: Optional[str] = None
-    main_output: Optional[str] = None  # if no error
-    main_error: Optional[str] = None  # if error
+    main_input: Optional[JSON] = None
+    main_output: Optional[JSON] = None  # if no error
+    main_error: Optional[JSON] = None  # if error
 
     # The collection of calls recorded. Note that these can be converted into a
     # json structure with the same paths as the app that generated this record

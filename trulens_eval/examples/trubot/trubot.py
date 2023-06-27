@@ -302,74 +302,72 @@ def answer_message(client, body: dict, logger):
 
     logger.info(body)
 
-
-# WebClient instantiates a client that can call API methods When using Bolt, you
-# can use either `app.client` or the `client` passed to listeners.
-client = WebClient(token=SLACK_TOKEN)
-logger = logging.getLogger(__name__)
-
-# Initializes your app with your bot token and signing secret
-app = App(token=SLACK_TOKEN, signing_secret=SLACK_SIGNING_SECRET)
-
-
-@app.event("app_home_opened")
-def update_home_tab(client, event, logger):
-    try:
-        # views.publish is the method that your app uses to push a view to the Home tab
-        client.views_publish(
-            # the user that opened your app's app home
-            user_id=event["user"],
-            # the view object that appears in the app home
-            view={
-                "type":
-                    "home",
-                "callback_id":
-                    "home_view",
-
-                # body of the view
-                "blocks":
-                    [
-                        {
-                            "type": "section",
-                            "text":
-                                {
-                                    "type":
-                                        "mrkdwn",
-                                    "text":
-                                        "*I'm here to answer questions and test feedback functions.* :tada: Note that all of my conversations and thinking are recorded."
-                                }
-                        }
-                    ]
-            }
-        )
-
-    except Exception as e:
-        logger.error(f"Error publishing home tab: {e}")
-
-
-@app.event("message")
-def handle_message_events(body, logger):
-    """
-    Handle direct messages to the bot.
-    """
-
-    answer_message(client, body, logger)
-
-
-@app.event("app_mention")
-def handle_app_mention_events(body, logger):
-    """
-    Handle messages that mention the bot.
-    """
-
-    answer_message(client, body, logger)
-
-
-def start_bot():
-    tru.start_evaluator()
-    app.start(port=int(PORT))
-
-
-# Start your app
 if __name__ == "__main__":
+    # WebClient instantiates a client that can call API methods When using Bolt, you
+    # can use either `app.client` or the `client` passed to listeners.
+    client = WebClient(token=SLACK_TOKEN)
+    logger = logging.getLogger(__name__)
+
+    # Initializes your app with your bot token and signing secret
+    app = App(token=SLACK_TOKEN, signing_secret=SLACK_SIGNING_SECRET)
+
+
+    @app.event("app_home_opened")
+    def update_home_tab(client, event, logger):
+        try:
+            # views.publish is the method that your app uses to push a view to the Home tab
+            client.views_publish(
+                # the user that opened your app's app home
+                user_id=event["user"],
+                # the view object that appears in the app home
+                view={
+                    "type":
+                        "home",
+                    "callback_id":
+                        "home_view",
+
+                    # body of the view
+                    "blocks":
+                        [
+                            {
+                                "type": "section",
+                                "text":
+                                    {
+                                        "type":
+                                            "mrkdwn",
+                                        "text":
+                                            "*I'm here to answer questions and test feedback functions.* :tada: Note that all of my conversations and thinking are recorded."
+                                    }
+                            }
+                        ]
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"Error publishing home tab: {e}")
+
+
+    @app.event("message")
+    def handle_message_events(body, logger):
+        """
+        Handle direct messages to the bot.
+        """
+
+        answer_message(client, body, logger)
+
+
+    @app.event("app_mention")
+    def handle_app_mention_events(body, logger):
+        """
+        Handle messages that mention the bot.
+        """
+
+        answer_message(client, body, logger)
+
+
+    def start_bot():
+        tru.start_evaluator()
+        app.start(port=int(PORT))
+
+    # Start your app
     start_bot()
