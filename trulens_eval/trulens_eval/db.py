@@ -313,7 +313,7 @@ class LocalSQLite(DB):
         conn.commit()
         conn.close()
 
-    # DB requirement-
+    # DB requirement
     def insert_record(
         self,
         record: Record,
@@ -324,8 +324,8 @@ class LocalSQLite(DB):
         # within sqlite.
 
         vals = (
-            record.record_id, record.app_id, record.main_input,
-            record.main_output, json_str_of_obj(record), record.tags, record.ts,
+            record.record_id, record.app_id, json_str_of_obj(record.main_input),
+            json_str_of_obj(record.main_output), json_str_of_obj(record), record.tags, record.ts,
             json_str_of_obj(record.cost), json_str_of_obj(record.perf)
         )
 

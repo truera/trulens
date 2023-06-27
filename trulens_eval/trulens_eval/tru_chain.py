@@ -143,6 +143,20 @@ class TruChain(App):
     def output_keys(self) -> List[str]:
         return self.app.output_keys
 
+    def __getattr__(self, __name: str) -> Any:
+        # A message for cases where a user calls something that the wrapped
+        # chain has but we do not wrap yet.
+
+        if hasattr(self.app, __name):
+            return RuntimeError(
+                f"TruChain has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
+                f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruChain`. "
+                f"TruChain only wraps the the Chain.__call__ and Chain._call methods presently."
+            )
+        else:
+            raise RuntimeError(f"TruChain has no attribute named {__name}.")
+
+
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
     def call_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs):
         """ Run the chain and also return a record metadata object.
@@ -189,9 +203,13 @@ class TruChain(App):
         input_key = self.input_keys[0]
         output_key = self.output_keys[0]
 
-        ret_record_args['main_input'] = inputs[input_key]
+        ret_record_args['main_input'] = jsonify(inputs[input_key])
+
         if ret is not None:
-            ret_record_args['main_output'] = ret[output_key]
+            ret_record_args['main_output'] = jsonify(ret[output_key])
+
+        if error is not None:
+            ret_record_args['main_error'] = jsonify(error)
 
         ret_record = self._post_record(
             ret_record_args, error, cost, start_time, end_time, record
@@ -199,7 +217,7 @@ class TruChain(App):
 
         return ret, ret_record
 
-    # langchain.chains.base.py:Chain
+    # langchain.chains.base.py:Chain requirement:
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         """
         Wrapped call to self.app.__call__ with instrumentation. If you need to
@@ -210,7 +228,13 @@ class TruChain(App):
 
         return ret
 
-    # Chain requirement
-    # TODO(piotrm): figure out whether the combination of _call and __call__ is working right.
+    # langchain.chains.base.py:Chain requirement:
     def _call(self, *args, **kwargs) -> Any:
+        # TODO(piotrm): figure out whether the combination of _call and __call__ is
+        # working right.
+
+        # TODO(piotrm): potentially remove this. We don't want to be
+        # wrapping/passing through all of the methods that a langchain Chain
+        # supports.
+
         return self.app._call(*args, **kwargs)

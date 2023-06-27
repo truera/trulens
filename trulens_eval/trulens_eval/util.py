@@ -185,7 +185,8 @@ JSON_BASES_T = Union[str, int, float, type(None)]
 # JSON_T = Union[JSON_BASES_T, List, Dict]
 
 # TODO: rename to "JSON_LIKE" as it is not stringly json.
-JSON = Union[JSON_BASES_T, Sequence['JSON'], Dict[str, 'JSON']]
+# JSON = Union[JSON_BASES_T, Sequence['JSON'], Dict[str, 'JSON']]
+JSON = Union[JSON_BASES_T, Sequence[Any], Dict[str, Any]] # Any = JSON
 
 # TODO: rename to "JSON".
 JSON_STRICT = Dict[str, JSON]

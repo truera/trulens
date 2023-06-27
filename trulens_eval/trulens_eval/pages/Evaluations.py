@@ -1,27 +1,29 @@
 import json
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Iterable, List, Tuple
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
-from trulens_eval.app import ComponentView
-from trulens_eval.app import LLM, Memory, Other, Prompt
-from trulens_eval.app import instrumented_component_views
-from trulens_eval.util import jsonify
 from ux.add_logo import add_logo
 from ux.styles import default_pass_fail_color_threshold
 
 from trulens_eval import Tru
+from trulens_eval.app import ComponentView
+from trulens_eval.app import instrumented_component_views
+from trulens_eval.app import LLM
+from trulens_eval.app import Other
+from trulens_eval.app import Prompt
 from trulens_eval.schema import Record
+from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
 from trulens_eval.ux.components import draw_prompt_info
+from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
 
 st.set_page_config(page_title="Evaluations", layout="wide")
@@ -130,11 +132,11 @@ else:
             prompt = selected_rows['input'][0]
             response = selected_rows['output'][0]
 
-            with st.expander("Input Prompt", expanded=True):
-                st.write(prompt)
+            with st.expander("Input", expanded=True):
+                write_or_json(st, obj=prompt)
 
             with st.expander("Response", expanded=True):
-                st.write(response)
+                write_or_json(st, obj=response)
 
             row = selected_rows.head().iloc[0]
 
