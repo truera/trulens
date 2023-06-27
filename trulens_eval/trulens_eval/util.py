@@ -1416,6 +1416,7 @@ class FunctionOrMethod(SerialModel):
 
     @classmethod
     def validate(cls, d) -> 'FunctionOrMethod':
+
         if isinstance(d, Dict):
             return FunctionOrMethod.pick(**d)
         else:
