@@ -8,7 +8,7 @@ TruLens provides a set of tools for developing and monitoring neural nets, inclu
 
 **TruLens-Eval** contains instrumentation and evaluation tools for large language model (LLM) based applications. It supports the iterative development and monitoring of a wide range of LLM applications by wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine. Importantly, it also gives you the tools you need to evaluate the quality of your LLM-based applications.
 
-![Architecture Diagram](docs/Assets/image/TruLens_Architecture.png)
+![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
 
 ### Get going with TruLens-Eval
 
@@ -27,6 +27,7 @@ tru = Tru()
 
 This example uses LangChain and OpenAI, but the same process can be followed with any framework and model provider.
 
+
 ```python
 # imports from LangChain to build app
 from langchain import PromptTemplate
@@ -38,7 +39,10 @@ from langchain.prompts.chat import HumanMessagePromptTemplate
 # Set your API key as an environmental variable
 import os
 os.environ["OPENAI_API_KEY"] = "..."
+```
 
+
+```python
 # create LLM chain
 full_prompt = HumanMessagePromptTemplate(
     prompt=PromptTemplate(
@@ -55,13 +59,17 @@ chain = LLMChain(llm=chat, prompt=chat_prompt_template)
 
 Now that we created an LLM chain, we can set up our first feedback function. Here, we'll create a feedback function for language matching. After we've created the feedback function, we can include it in the TruChain wrapper. Now, whenever our wrapped chain is used we'll log both the metadata and feedback.
 
+
 ```python
 # create a feedback function
 
 from trulens_eval.feedback import Feedback, Huggingface
 
 os.environ["HUGGINGFACE_API_KEY"] = "..."
+```
 
+
+```python
 # Initialize HuggingFace-based feedback function collection class:
 hugs = Huggingface()
 
@@ -84,11 +92,13 @@ Now you can explore your LLM-based application!
 
 Doing so will help you understand how your LLM application is performing at a glance. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up. You'll also be able to view evaluations at a record level, and explore the chain metadata for each record.
 
+
 ```python
 tru.run_dashboard() # open a Streamlit app to explore
 ```
 
 For more information, see [TruLens-Eval Documentation](https://www.trulens.org/trulens_eval/quickstart/).
+
 
 ## TruLens-Explain
 
