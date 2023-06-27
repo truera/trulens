@@ -606,6 +606,18 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
         self, func: Callable, bindings: inspect.BoundArguments,
         response: requests.Response, callback: Optional[EndpointCallback]
     ) -> None:
+        # Call here can only be requests.post .
+
+        if "url" not in bindings.arguments:
+            return
+        
+        url = bindings.arguments['url']
+        if not url.startswith("https://api-inference.huggingface.co"):
+            return
+        
+        # TODO: Determine whether the request was a classification or some other
+        # type of request. Currently we use huggingface only for classification
+        # in feedback but this can change.
 
         self.global_callback.handle_classification(response=response)
 
