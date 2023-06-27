@@ -127,7 +127,7 @@ class RecordAppCall(SerialModel):
     error: Optional[str] = None
 
     # Timestamps tracking entrance and exit of the instrumented method.
-    perf: Perf = pydantic.Field(default_factory=Perf)
+    perf: Optional[Perf] = None
 
     # Process id.
     pid: int
