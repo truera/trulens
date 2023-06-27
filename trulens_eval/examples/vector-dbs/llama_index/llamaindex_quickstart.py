@@ -6,10 +6,15 @@
 # In this quickstart you will create a simple Llama Index App and learn how to log it and get feedback on an LLM response.
 
 # ## Setup
-# ### Add API keys
-# For this quickstart you will need Open AI and Huggingface keys
+#
+# ### Install dependencies
+# Let's install some of the dependencies for this notebook if we don't have them already
 
-get_ipython().system('pip install trulens')
+get_ipython().system('pip install trulens-eval')
+get_ipython().system('pip install llama_index==0.6.31')
+
+# ### Add API keys
+# For this quickstart, you will need Open AI and Huggingface keys
 
 import os
 
@@ -19,7 +24,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 # ### Import from LlamaIndex and TruLens
 
 # Imports main tools:
-from trulens_eval import TruLlama, Feedback, Huggingface, Tru
+from trulens_eval import TruLlama, Feedback, Tru, feedback
 
 tru = Tru()
 
@@ -44,18 +49,31 @@ print(response)
 
 # ## Initialize Feedback Function(s)
 
+import numpy as np
+
 # Initialize Huggingface-based feedback function collection class:
-hugs = Huggingface()
+hugs = feedback.Huggingface()
+openai = feedback.OpenAI()
 
 # Define a language match feedback function using HuggingFace.
 f_lang_match = Feedback(hugs.language_match).on_input_output()
 # By default this will check language match on the main app input and main app
 # output.
 
+# Question/answer relevance between overall question and answer.
+f_qa_relevance = Feedback(openai.relevance).on_input_output()
+
+# Question/statement relevance between question and each context chunk.
+f_qs_relevance = Feedback(openai.qs_relevance).on_input().on(
+    TruLlama.select_source_nodes().node.text
+).aggregate(np.min)
+
 # ## Instrument chain for logging with TruLens
 
 tru_query_engine = TruLlama(
-    query_engine, app_id='LlamaIndex_App1', feedbacks=[f_lang_match]
+    query_engine,
+    app_id='LlamaIndex_App1',
+    feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance]
 )
 
 # Instrumented query engine can operate like the original:
