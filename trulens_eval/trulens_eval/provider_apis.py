@@ -139,22 +139,6 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
     # Thread that fills the queue at the appropriate rate.
     pace_thread: Thread = pydantic.Field(exclude=True)
 
-    # TODO: validate to construct tracking objects when deserializing?
-    """
-    @classmethod
-    def model_validate(cls, obj: Any, **kwargs):
-        if isinstance(obj, dict):
-            if CLASS_INFO in obj:
-
-                cls = Class(**obj[CLASS_INFO])
-                del obj[CLASS_INFO]
-                model = cls.model_validate(obj, **kwargs)
-
-                return WithClassInfo.of_model(model=model, cls=cls)
-            else:
-                return super().model_validate(obj, **kwargs)
-    """
-
     def __new__(cls, name: str, *args, **kwargs):
         return super(SingletonPerName, cls).__new__(
             SerialModel, name=name, *args, **kwargs
@@ -486,19 +470,6 @@ class Endpoint(SerialModel, SingletonPerName):  #, ABC):
                         callback=callback
                     )
 
-            #cb = get_local_in_call_stack(
-            #    key=self.callback_name,
-            #    func=self.__find_tracker,
-            #    offset=0
-            #)
-
-            #self.handle_wrapped_call(
-            #    func=func,
-            #    bindings=bindings,
-            #    response=res,
-            #    callback=cb
-            #)
-
             return response
 
         setattr(wrapper, INSTRUMENT, [self.callback_class])
@@ -567,6 +538,18 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
         self, func: Callable, bindings: inspect.BoundArguments,
         response: requests.Response, callback: Optional[EndpointCallback]
     ) -> None:
+        # Call here can only be requests.post .
+
+        if "url" not in bindings.arguments:
+            return
+        
+        url = bindings.arguments['url']
+        if not url.startswith("https://api-inference.huggingface.co"):
+            return
+        
+        # TODO: Determine whether the request was a classification or some other
+        # type of request. Currently we use huggingface only for classification
+        # in feedback but this can change.
 
         self.global_callback.handle_classification(response=response)
 
