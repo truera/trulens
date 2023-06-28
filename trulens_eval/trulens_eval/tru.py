@@ -245,9 +245,13 @@ class Tru(SingletonPerName):
                 started_count = Feedback.evaluate_deferred(tru=self)
 
                 if started_count > 0:
-                    print(f"{UNICODE_YIELD}{UNICODE_YIELD}{UNICODE_YIELD} Started {started_count} deferred feedback functions.")
+                    print(
+                        f"{UNICODE_YIELD}{UNICODE_YIELD}{UNICODE_YIELD} Started {started_count} deferred feedback functions."
+                    )
                     TP().finish()
-                    print(f"{UNICODE_CHECK}{UNICODE_CHECK}{UNICODE_CHECK} Finished evaluating deferred feedback functions.")
+                    print(
+                        f"{UNICODE_CHECK}{UNICODE_CHECK}{UNICODE_CHECK} Finished evaluating deferred feedback functions."
+                    )
 
                 if fork:
                     sleep(10)

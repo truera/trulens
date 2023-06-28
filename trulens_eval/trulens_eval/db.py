@@ -325,8 +325,9 @@ class LocalSQLite(DB):
 
         vals = (
             record.record_id, record.app_id, json_str_of_obj(record.main_input),
-            json_str_of_obj(record.main_output), json_str_of_obj(record), record.tags, record.ts,
-            json_str_of_obj(record.cost), json_str_of_obj(record.perf)
+            json_str_of_obj(record.main_output), json_str_of_obj(record),
+            record.tags, record.ts, json_str_of_obj(record.cost),
+            json_str_of_obj(record.perf)
         )
 
         self._insert_or_replace_vals(table=self.TABLE_RECORDS, vals=vals)
