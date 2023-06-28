@@ -539,6 +539,9 @@ class OpenAI(Provider):
         return Provider.to_json(self, model_engine=self.model_engine)
     """
 
+    def _create_chat_completition(self, *args, **kwargs):
+        return openai.ChatCompletion.create(*args, **kwargs)
+
     def _moderation(self, text: str):
         return self.endpoint.run_me(
             lambda: openai.Moderation.create(input=text)
@@ -684,7 +687,7 @@ class OpenAI(Provider):
         """
         return _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: openai.ChatCompletion.create(
+                lambda: self._create_chat_completition(
                     model=self.model_engine,
                     temperature=0.0,
                     messages=[
@@ -718,7 +721,7 @@ class OpenAI(Provider):
         """
         return _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: openai.ChatCompletion.create(
+                lambda: self._create_chat_completition(
                     model=self.model_engine,
                     temperature=0.0,
                     messages=[
@@ -753,7 +756,7 @@ class OpenAI(Provider):
             being "in agreement".
         """
         oai_chat_response = OpenAI().endpoint_openai.run_me(
-            lambda: openai.ChatCompletion.create(
+            lambda: self._create_chat_completition(
                 model=self.model_engine,
                 temperature=0.0,
                 messages=[
@@ -788,7 +791,7 @@ class OpenAI(Provider):
 
         return _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: openai.ChatCompletion.create(
+                lambda: self._create_chat_completition(
                     model=self.model_engine,
                     temperature=0.5,
                     messages=[
@@ -802,6 +805,42 @@ class OpenAI(Provider):
                     ]
                 )["choices"][0]["message"]["content"]
             )
+        )
+
+
+class AzureOpenAI(OpenAI):
+    deployment_id: str
+
+    def __init__(self, **kwargs):
+        """
+        Wrapper to use Azure OpenAI. Please export the following env variables
+
+        - OPENAI_API_BASE
+        - OPENAI_API_VERSION
+        - OPENAI_API_KEY
+
+        Parameters:
+
+        - model_engine (str, optional): The specific model version. Defaults to
+          "gpt-35-turbo".
+        - deployment_id (str): The specified deployment id
+        """
+
+        super().__init__(
+            **kwargs
+        )  # need to include pydantic.BaseModel.__init__
+
+        set_openai_key()
+        openai.api_type = "azure"
+        openai.api_base = os.getenv("OPENAI_API_BASE")
+        openai.api_version = os.getenv("OPENAI_API_VERSION")
+
+    def _create_chat_completition(self, *args, **kwargs):
+        """
+        We need to pass `engine`
+        """
+        return super()._create_chat_completition(
+            *args, deployment_id=self.deployment_id, **kwargs
         )
 
 
