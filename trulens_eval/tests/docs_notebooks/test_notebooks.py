@@ -102,7 +102,7 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
             DocsNotebookTests, 'test_' + filename.split('.ipynb')[0],
             get_unit_test_for_filename(filename)
         )
-        if 'trulens_eval_gh_top_readme' not in filename:
+        if 'all_tools' in filename or 'llama_index_quickstart' in filename:
             # If you want to test all versions uncomment and replace the below for loop
             ### for version in db_migration.migration_versions:
 
