@@ -611,7 +611,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
                     attr_val = getattr(openai, k)
                     if attr_val is not None:
-                        print(f"{UNICODE_CHECK} Env. var. {v} set from openai.{k}={attr_val} .")
+                        print(f"{UNICODE_CHECK} Env. var. {v} set from openai.{k} .")
                         os.environ[v] = attr_val
 
         if hasattr(self, "name"):
