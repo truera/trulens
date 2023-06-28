@@ -33,6 +33,6 @@ setup(
         'frozendict>=2.3.8',
         'munch>=3.0.0',
         'ipywidgets>=8.0.6',
-        'numpy>=1.23.5', 
+        'numpy>=1.23.5',
     ],
 )

@@ -59,6 +59,7 @@ def streamlit_app():
         col2.metric(
             "Average Latency (Seconds)",
             f"{millify(round(latency_mean, 5), precision=2)}"
+            if not math.isnan(latency_mean) else "nan"
         )
         col3.metric(
             "Total Cost (USD)",
