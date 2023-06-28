@@ -22,7 +22,6 @@ from trulens_eval.util import caller_frame
 logger = logging.getLogger(__name__)
 
 
-
 def get_config():
     for path in [Path().cwd(), *Path.cwd().parents]:
         file = path / ".env"
@@ -86,7 +85,6 @@ def setup_keys(**kwargs):
             f"No .env found in {Path.cwd()} or its parents. "
             "You may need to specify secret keys in another manner."
         )
-
 
     to_global = dict()
 
