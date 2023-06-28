@@ -755,7 +755,7 @@ class OpenAI(Provider):
             float: A value between 0 and 1. 0 being "not in agreement" and 1
             being "in agreement".
         """
-        oai_chat_response = OpenAI().endpoint_openai.run_me(
+        oai_chat_response = OpenAI().endpoint.run_me(
             lambda: self._create_chat_completition(
                 model=self.model_engine,
                 temperature=0.0,
