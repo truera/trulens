@@ -509,15 +509,13 @@ class Provider(SerialModel):
 
 
 class OpenAI(Provider):
-    model_engine: str = "gpt-3.5-turbo"
+    model_engine: str
 
     # Exclude is important here so that pydantic doesn't try to
     # serialize/deserialize the constant fixed endpoint we need.
-    endpoint: Endpoint = pydantic.Field(
-        default_factory=OpenAIEndpoint, exclude=True
-    )
+    endpoint: Endpoint = pydantic.Field(exclude=True)
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, model_engine = "gpt-3.5-turbo", **kwargs):
         """
         A set of OpenAI Feedback Functions.
 
@@ -525,10 +523,16 @@ class OpenAI(Provider):
 
         - model_engine (str, optional): The specific model version. Defaults to
           "gpt-3.5-turbo".
+
+        - All other args/kwargs passed to OpenAIEndpoint constructor.
         """
 
+        self_kwargs = dict()
+        self_kwargs['model_engine'] = model_engine
+        self_kwargs['endpoint'] = OpenAIEndpoint(*args, **kwargs)
+
         super().__init__(
-            **kwargs
+            **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
         set_openai_key()
@@ -805,10 +809,8 @@ class OpenAI(Provider):
 
 
 def _get_answer_agreement(prompt, response, check_response, model_engine):
-    print("DEBUG")
-    print(feedback_prompts.AGREEMENT_SYSTEM_PROMPT % (prompt, response))
-    print("MODEL ANSWER")
-    print(check_response)
+    # TODO: documentation
+    
     oai_chat_response = OpenAI().endpoint.run_me(
         lambda: openai.ChatCompletion.create(
             model=model_engine,
@@ -841,18 +843,20 @@ class Huggingface(Provider):
 
     # Exclude is important here so that pydantic doesn't try to
     # serialize/deserialize the constant fixed endpoint we need.
-    endpoint: Endpoint = pydantic.Field(
-        default_factory=HuggingfaceEndpoint, exclude=True
-    )
+    endpoint: Endpoint = pydantic.Field(exclude=True)
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
-        A set of Huggingface Feedback Functions. Utilizes huggingface
-        api-inference.
+        A set of Huggingface Feedback Functions.
+
+        All args/kwargs passed to HuggingfaceEndpoint constructor.
         """
+
+        self_kwargs = dict()
+        self_kwargs['endpoint'] = HuggingfaceEndpoint(*args, **kwargs)
 
         super().__init__(
-            **kwargs
+            **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
     def language_match(self, text1: str, text2: str) -> float:

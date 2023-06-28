@@ -5,10 +5,10 @@ from queue import Queue
 from threading import Thread
 from time import sleep
 from types import ModuleType
-from typing import (Any, Callable, Dict, Optional, Sequence, Tuple, Type,
-                    TypeVar)
+from typing import (
+    Any, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
+)
 from pprint import PrettyPrinter
-
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import LLMResult
@@ -17,6 +17,7 @@ import requests
 
 from trulens_eval.keys import get_huggingface_headers
 from trulens_eval.schema import Cost
+from trulens_eval.util import UNICODE_CHECK
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import JSON
 from trulens_eval.util import SerialModel
@@ -87,7 +88,6 @@ class OpenAICallback(EndpointCallback):
         if "categories" in response:
             self.cost.n_successful_requests += 1
             self.cost.n_classes += len(response['categories'])
-
 
     def handle_generation(self, response: LLMResult) -> None:
 
@@ -500,7 +500,8 @@ class Endpoint(SerialModel, SingletonPerName):
                 if callback_class not in endpoints:
                     logger.warning(
                         f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
-                        " but there are no endpoints waiting to receive the result.")
+                        " but there are no endpoints waiting to receive the result."
+                    )
                     continue
 
                 for endpoint, callback in endpoints[callback_class]:
@@ -528,7 +529,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
     OpenAI endpoint. Instruments "create" methods in openai.* classes.
     """
 
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="openai")
 
     def handle_wrapped_call(
@@ -543,7 +544,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         results = None
         if "results" in response:
             results = response['results']
-            
+
         counted_something = False
 
         if 'usage' in response:
@@ -572,12 +573,47 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         if not counted_something:
             logger.warning(
-                f"Unregonized openai response format. It did not have usage information nor categories:\n" +
-                pp.pformat(response)
+                f"Unregonized openai response format. It did not have usage information nor categories:\n"
+                + pp.pformat(response)
             )
 
-
     def __init__(self, *args, **kwargs):
+        # If any of these keys are in kwargs, copy over its value to the env
+        # variable named as the respective value in this dict. If value is None,
+        # don't copy to env. Regardless of env, set all of these as attributes
+        # to openai.
+
+        # https://learn.microsoft.com/en-us/azure/cognitive-services/openai/how-to/switching-endpoints
+        CONF_CLONE = dict(
+            api_key="OPENAI_API_KEY",
+            organization=None,
+            api_type=None,
+            api_base=None,
+            api_version=None
+        )
+
+        import openai
+        import os
+
+        for k, v in CONF_CLONE.items():
+            if k in kwargs:
+                print(f"{UNICODE_CHECK} Setting openai.{k} explicitly.")
+                setattr(openai, k, kwargs[k])
+
+                if v is not None:
+                    print(f"{UNICODE_CHECK} Env. var. {v} set explicitly.")
+                    os.environ[v] = kwargs[k]
+            else:
+                if v is not None:
+                    # If no value were explicitly set, check if the user set up openai
+                    # attributes themselves and if so, copy over the ones we use via
+                    # environment vars, to this env vars.
+
+                    attr_val = getattr(openai, k)
+                    if attr_val is not None:
+                        print(f"{UNICODE_CHECK} Env. var. {v} set from openai.{k}={attr_val} .")
+                        os.environ[v] = attr_val
+
         if hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
             return
@@ -590,7 +626,6 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         super().__init__(*args, **kwargs)
 
-        import openai
         self._instrument_module_members(openai, "create")
 
 
@@ -599,7 +634,7 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
     OpenAI endpoint. Instruments "create" methodsin openai.* classes.
     """
 
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="huggingface")
 
     def handle_wrapped_call(
@@ -625,6 +660,9 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
             callback.handle_classification(response=response)
 
     def __init__(self, *args, **kwargs):
+        # If kwargs contains any openai constructor params, set them and copy
+        # over any relevant keys from them to env.
+
         if hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
             return
