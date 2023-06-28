@@ -47,7 +47,10 @@ with tab1:
             FeedbackResultStatus.FAILED
         ]
     )
-    data = AgGrid(feedbacks, allow_unsafe_jscode=True)
+    feedbacks = feedbacks.astype(str)
+    data = AgGrid(
+        feedbacks, allow_unsafe_jscode=True, fit_columns_on_grid_load=True
+    )
 
 with tab2:
     for e in endpoints:
@@ -56,4 +59,7 @@ with tab2:
 
 with tab3:
     feedbacks = lms.get_feedback_defs()
-    data = AgGrid(feedbacks, allow_unsafe_jscode=True)
+    feedbacks = feedbacks.astype(str)
+    data = AgGrid(
+        feedbacks, allow_unsafe_jscode=True, fit_columns_on_grid_load=True
+    )
