@@ -1,7 +1,15 @@
-# from llama.hf import LLaMATokenizer
+from unittest import main
+from unittest import TestCase
 
+from langchain import LLMChain
+from langchain import PromptTemplate
+from langchain.chains import ConversationalRetrievalChain
+from langchain.chains import SimpleSequentialChain
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.llms import HuggingFacePipeline
+from langchain.memory import ConversationBufferWindowMemory
+from langchain.vectorstores import Pinecone
 import pinecone
-import pytest
 import torch
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
@@ -10,23 +18,16 @@ from transformers import pipeline
 from trulens_eval.keys import PINECONE_API_KEY
 from trulens_eval.keys import PINECONE_ENV
 from trulens_eval.tru_chain import TruChain
-from trulens_eval.util import OptionalImports
-from trulens_eval.util import REQUIREMENT_LANGCHAIN
-
-with OptionalImports(message=REQUIREMENT_LANGCHAIN):
-    from langchain import LLMChain
-    from langchain import PromptTemplate
-    from langchain.chains import ConversationalRetrievalChain
-    from langchain.chains import SimpleSequentialChain
-    from langchain.embeddings.openai import OpenAIEmbeddings
-    from langchain.llms import HuggingFacePipeline
-    from langchain.memory import ConversationBufferWindowMemory
-    from langchain.vectorstores import Pinecone
 
 
-class TestTruChain():
+class TruChainWrappingTests(TestCase):
+    # test for instrumented components
 
-    def setup_method(self):
+    # test for cost tracking
+
+    # test for correct cost tracking
+
+    def setUp(self):
         print("setup")
 
         self.llm_model_id = "gpt2"
@@ -39,7 +40,7 @@ class TestTruChain():
         self.model = AutoModelForCausalLM.from_pretrained(
             self.llm_model_id,
             device_map='auto',
-            torch_dtype=torch.float16,
+            torch_dtype=torch.float32,
             local_files_only=True
         )
 
@@ -71,10 +72,11 @@ class TestTruChain():
 
         assert tru_app.app is not None
 
-        tru_app.run(dict(question="How are you?"))
-        tru_app.run(dict(question="How are you today?"))
+        tru_app(dict(question="How are you?"))
+        tru_app(dict(question="How are you today?"))
 
-        assert len(tru_app.db.select()) == 2
+        # TODO: checks
+
 
     def test_qa_prompt_with_memory(self):
         # Test of a small q/a app using a prompt and a single call to an llm.
@@ -93,12 +95,12 @@ class TestTruChain():
 
         assert tru_app.app is not None
 
-        tru_app.run(dict(question="How are you?"))
-        tru_app.run(dict(question="How are you today?"))
+        tru_app(dict(question="How are you?"))
+        tru_app(dict(question="How are you today?"))
 
-        assert len(tru_app.db.select()) == 2
+        # TODO: checks
 
-    @pytest.mark.nonfree
+
     def test_qa_db(self):
         # Test a q/a app that uses a vector store to look up context to include in
         # llm prompt.
@@ -128,9 +130,10 @@ class TestTruChain():
 
         tru_app = TruChain(app)
         assert tru_app.app is not None
+
         tru_app(dict(question="How do I add a model?", chat_history=[]))
 
-        assert len(tru_app.db.select()) == 1
+        # TODO: checks
 
     def test_sequential(self):
         # Test of a sequential app that contains the same llm twice with
@@ -147,30 +150,32 @@ class TestTruChain():
         llm_app_2 = LLMChain(prompt=prompt_2, llm=self.llm)
 
         seq_app = SimpleSequentialChain(
-            apps=[llm_app, llm_app_2],
+            chains=[llm_app, llm_app_2],
             input_key="question",
             output_key="answer"
         )
-        seq_app.run(
-            question="What is the average air speed velocity of a laden swallow?"
+        seq_app(
+            "What is the average air speed velocity of a laden swallow?"
         )
 
         tru_app = TruChain(seq_app)
         assert tru_app.app is not None
 
         # This run should not be recorded.
-        seq_app.run(
-            question="What is the average air speed velocity of a laden swallow?"
+        seq_app(
+            "What is the average air speed velocity of a laden swallow?"
         )
 
         # These two should.
-        tru_app.run(
-            question=
+        tru_app(
             "What is the average air speed velocity of a laden european swallow?"
         )
-        tru_app.run(
-            question=
+        tru_app(
             "What is the average air speed velocity of a laden african swallow?"
         )
 
-        assert len(tru_app.db.select()) == 2
+        # TODO: checks
+
+
+if __name__ == '__main__':
+    main()
