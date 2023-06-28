@@ -3,12 +3,12 @@
 
 ## Setting keys
 
-Most example notebooks come with a key setup line like this:
+Most example notebooks come with a key check line like this:
 
 ```python 
-from trulens_eval.keys import setup_keys
+from trulens_eval.keys import check_keys
 
-setup_keys(
+check_keys(
     OPENAI_API_KEY="to fill in", 
     HUGGINGFACE_API_KEY="to fill in"
 )
@@ -18,7 +18,7 @@ This line checks that you have the requisite api keys set before continuing the
 notebook. They do not need to be provided, however, right on this line. There
 are several ways to make sure this check passes:
 
-- *Explicit* -- Explicitly provide key values to `setup_keys`.
+- *Explicit* -- Explicitly provide key values to `check_keys`.
 
 - *Python* -- Define variables before this check like this:
 
@@ -38,7 +38,7 @@ print(os.environ)
   `trulens_eval/trulens_eval/env.example` .
 
 - *3rd party* -- For some keys, set them as arguments to the 3rd-party endpoint class. For
-  example, with `openai`, do this ahead of the `setup_keys` check:
+  example, with `openai`, do this ahead of the `check_keys` check:
 
 ```python
 import openai
@@ -47,7 +47,7 @@ openai.api_key = "something"
 
 - *Endpoint class* For some keys, set them as arguments to trulens_eval endpoint class that
   manages the endpoint. For example, with `openai`, do this ahead of the
-  `setup_keys` check:
+  `check_keys` check:
 
 ```python
 from trulens_eval.provider_apis import OpenAIEndpoint
@@ -56,7 +56,7 @@ openai_endpoint = OpenAIEndpoint(api_key="something")
 
 - *Provider class* For some keys, set them as arguments to trulens_eval feedback
   collection ("provider") class that makes use of the relevant endpoint. For
-  example, with `openai`, do this ahead of the `setup_keys` check:
+  example, with `openai`, do this ahead of the `check_keys` check:
 
 ```python
 from trulens_eval.feedback import OpenAI
@@ -156,7 +156,7 @@ def get_huggingface_headers():
     return HUGGINGFACE_HEADERS
 
 
-def setup_keys(**kwargs):
+def check_keys(**kwargs):
     """
     Check various sources of api configuration values like secret keys and set
     env variables for each of them. We use env variables as the canonical
@@ -210,7 +210,7 @@ f"""{UNICODE_STOP} Variable {k} needs to be set; please provide it in one of the
   - in a variable {k} prior to this check, 
   - in your variable environment, 
   - in a .env file in {Path.cwd()} or its parents,
-  - explicitly passed to `setup_keys`,
+  - explicitly passed to `check_keys`,
   - passed to the endpoint or feedback collection constructor that needs it (`trulens_eval.provider_apis.OpenAIEndpoint`, etc.), or
   - set in api utility class that expects it (i.e. `openai`, etc.).
 

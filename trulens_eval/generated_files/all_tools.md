@@ -8,9 +8,9 @@ For this quickstart you will need Open AI and Huggingface keys
 
 
 ```python
-from trulens_eval.keys import setup_keys
+from trulens_eval.keys import check_keys
 
-setup_keys(
+check_keys(
     OPENAI_API_KEY="to fill in",
     HUGGINGFACE_API_KEY="to fill in"
 )
