@@ -374,7 +374,7 @@ def migrate(db) -> None:
     saved_db_locations[original_db_file] = saved_db_file
     shutil.copy(original_db_file, saved_db_file)
     print(
-        "Saved original db file: `{original_db_file}` to new file: `{saved_db_file}`"
+        f"Saved original db file: `{original_db_file}` to new file: `{saved_db_file}`"
     )
 
     version = db.get_meta().trulens_version
