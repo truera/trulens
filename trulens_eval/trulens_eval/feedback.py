@@ -15,7 +15,6 @@ import numpy as np
 import openai
 import pydantic
 
-
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
@@ -36,8 +35,8 @@ from trulens_eval.util import jsonify
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
 from trulens_eval.util import UNICODE_CHECK
-from trulens_eval.util import UNICODE_YIELD
 from trulens_eval.util import UNICODE_CLOCK
+from trulens_eval.util import UNICODE_YIELD
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
@@ -751,7 +750,7 @@ class OpenAI(Provider):
             float: A value between 0 and 1. 0 being "not in agreement" and 1
             being "in agreement".
         """
-        oai_chat_response = OpenAI().endpoint_openai.run_me(
+        oai_chat_response = OpenAI().endpoint.run_me(
             lambda: openai.ChatCompletion.create(
                 model=self.model_engine,
                 temperature=0.0,
