@@ -80,7 +80,7 @@ import openai
 openai.api_type = "azure"
 openai.api_key = "..."
 openai.api_base = "https://example-endpoint.openai.azure.com"
-openai.api_version = "2023-05-15"  # subject to chang
+openai.api_version = "2023-05-15"  # subject to change
 # See https://learn.microsoft.com/en-us/azure/cognitive-services/openai/how-to/switching-endpoints .
 ```
 
