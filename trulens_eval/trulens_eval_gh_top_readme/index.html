@@ -9,17 +9,13 @@
       
       
       
-        <link rel="prev" href="../../welcome/">
-      
-      
-        <link rel="next" href="../quickstart/">
       
       <link rel="icon" href="../../img/favicon.ico">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
     
     
       
-        <title>Installation - TruLens</title>
+        <title>Trulens eval gh top readme - TruLens</title>
       
     
     
@@ -72,11 +68,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#getting-access-to-trulens" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -107,7 +98,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Installation
+              Trulens eval gh top readme
             
           </span>
         </div>
@@ -222,18 +213,16 @@
 
   
   
-    
-  
   
     
       
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
       
       
       
@@ -242,7 +231,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
         <label class="md-nav__title" for="__nav_3">
           <span class="md-nav__icon md-icon"></span>
           Eval
@@ -253,48 +242,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Installation
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
         Installation
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#getting-access-to-trulens" class="md-nav__link">
-    Getting access to TruLens
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -653,21 +605,6 @@
   
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#getting-access-to-trulens" class="md-nav__link">
-    Getting access to TruLens
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -681,34 +618,65 @@
                   
 
 
-  <h1>Installation</h1>
+  <h1>Trulens eval gh top readme</h1>
 
-<h2 id="getting-access-to-trulens">Getting access to TruLens<a class="headerlink" href="#getting-access-to-trulens" title="Permanent link">&para;</a></h2>
-<p>These installation instructions assume that you have conda installed and added to your path.</p>
-<ol>
-<li>
-<p>Create a virtual environment (or modify an existing one).
-<div class="highlight"><pre><span></span><code>conda create -n &quot;&lt;my_name&gt;&quot; python=3  # Skip if using existing environment.
-conda activate &lt;my_name&gt;
-</code></pre></div></p>
-</li>
-<li>
-<p>[Pip installation] Install the trulens-eval pip package from PyPI.
-<div class="highlight"><pre><span></span><code>pip install trulens-eval
-</code></pre></div></p>
-</li>
-<li>
-<p>[Local installation] If you would like to develop or modify TruLens, you can download the source code by cloning the TruLens repo.
-<div class="highlight"><pre><span></span><code>git clone https://github.com/truera/trulens.git
-</code></pre></div></p>
-</li>
-<li>
-<p>[Local installation] Install the TruLens repo.
-<div class="highlight"><pre><span></span><code>cd trulens/trulens_eval
-pip install -e .
-</code></pre></div></p>
-</li>
-</ol>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Tru</span>
+<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruChain</span>
+
+<span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
+</code></pre></div>
+<p>This example uses LangChain and OpenAI, but the same process can be followed with any framework and model provider.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># imports from LangChain to build app</span>
+<span class="kn">from</span> <span class="nn">langchain</span> <span class="kn">import</span> <span class="n">PromptTemplate</span>
+<span class="kn">from</span> <span class="nn">langchain.chains</span> <span class="kn">import</span> <span class="n">LLMChain</span>
+<span class="kn">from</span> <span class="nn">langchain.chat_models</span> <span class="kn">import</span> <span class="n">ChatOpenAI</span>
+<span class="kn">from</span> <span class="nn">langchain.prompts.chat</span> <span class="kn">import</span> <span class="n">ChatPromptTemplate</span>
+<span class="kn">from</span> <span class="nn">langchain.prompts.chat</span> <span class="kn">import</span> <span class="n">HumanMessagePromptTemplate</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HUGGINGFACE_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># create LLM chain</span>
+<span class="n">full_prompt</span> <span class="o">=</span> <span class="n">HumanMessagePromptTemplate</span><span class="p">(</span>
+    <span class="n">prompt</span><span class="o">=</span><span class="n">PromptTemplate</span><span class="p">(</span>
+        <span class="n">template</span><span class="o">=</span><span class="s2">&quot;Provide a helpful response with relevant background information for the following: </span><span class="si">{prompt}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">input_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;prompt&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+<span class="n">chat_prompt_template</span> <span class="o">=</span> <span class="n">ChatPromptTemplate</span><span class="o">.</span><span class="n">from_messages</span><span class="p">([</span><span class="n">full_prompt</span><span class="p">])</span>
+
+<span class="n">chat</span> <span class="o">=</span> <span class="n">ChatOpenAI</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="s1">&#39;gpt-3.5-turbo&#39;</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+
+<span class="n">chain</span> <span class="o">=</span> <span class="n">LLMChain</span><span class="p">(</span><span class="n">llm</span><span class="o">=</span><span class="n">chat</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="n">chat_prompt_template</span><span class="p">)</span>
+</code></pre></div>
+<p>Now that we created an LLM chain, we can set up our first feedback function. Here, we'll create a feedback function for language matching. After we've created the feedback function, we can include it in the TruChain wrapper. Now, whenever our wrapped chain is used we'll log both the metadata and feedback.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># create a feedback function</span>
+
+<span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Huggingface</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># Initialize HuggingFace-based feedback function collection class:</span>
+<span class="n">hugs</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
+
+<span class="c1"># Define a language match feedback function using HuggingFace.</span>
+<span class="n">f_lang_match</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">hugs</span><span class="o">.</span><span class="n">language_match</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+<span class="c1"># By default this will check language match on the main app input and main app</span>
+<span class="c1"># output.</span>
+
+<span class="c1"># wrap your chain with TruChain</span>
+<span class="n">truchain</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span>
+    <span class="n">chain</span><span class="p">,</span>
+    <span class="n">app_id</span><span class="o">=</span><span class="s1">&#39;Chain1_ChatApplication&#39;</span><span class="p">,</span>
+    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_lang_match</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="c1"># Note: any `feedbacks` specified here will be evaluated and logged whenever the chain is used.</span>
+<span class="n">truchain</span><span class="p">(</span><span class="s2">&quot;que hora es?&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Now you can explore your LLM-based application!</p>
+<p>Doing so will help you understand how your LLM application is performing at a glance. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up. You'll also be able to view evaluations at a record level, and explore the chain metadata for each record.</p>
+<div class="highlight"><pre><span></span><code><span class="n">tru</span><span class="o">.</span><span class="n">run_dashboard</span><span class="p">()</span> <span class="c1"># open a Streamlit app to explore</span>
+</code></pre></div>
+<p>For more information, see <a href="https://www.trulens.org/trulens_eval/quickstart/">TruLens-Eval Documentation</a>.</p>
 
 
 

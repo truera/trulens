@@ -438,6 +438,20 @@
   
   
     <li class="md-nav__item">
+      <a href="../trulens_eval/api/trullama/" class="md-nav__link">
+        TruLlama
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../trulens_eval/api/feedback/" class="md-nav__link">
         Feedback Functions
       </a>
@@ -742,13 +756,13 @@
 <p>TruLens provides a set of tools for developing and monitoring neural nets, including large language models. This includes both tools for evaluation of LLMs and LLM-based applications with TruLens-Eval and deep learning explainability with TruLens-Explain. TruLens-Eval and TruLens-Explain are housed in separate packages and can be used independently.</p>
 <h2 id="trulens-eval">TruLens-Eval<a class="headerlink" href="#trulens-eval" title="Permanent link">&para;</a></h2>
 <p><strong>TruLens-Eval</strong> contains instrumentation and evaluation tools for large language model (LLM) based applications. It supports the iterative development and monitoring of a wide range of LLM applications by wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine. Importantly, it also gives you the tools you need to evaluate the quality of your LLM-based applications.</p>
-<p><img alt="Architecture Diagram" src="docs/Assets/image/TruLens_Architecture.png" /></p>
+<p><img alt="Architecture Diagram" src="https://www.trulens.org/Assets/image/TruLens_Architecture.png" /></p>
 <h3 id="get-going-with-trulens-eval">Get going with TruLens-Eval<a class="headerlink" href="#get-going-with-trulens-eval" title="Permanent link">&para;</a></h3>
 <p>Install trulens-eval from PyPI.</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>trulens-eval
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">tru</span>
-<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">tru_chain</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Tru</span>
+<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruChain</span>
 
 <span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
 </code></pre></div>
@@ -760,11 +774,11 @@
 <span class="kn">from</span> <span class="nn">langchain.prompts.chat</span> <span class="kn">import</span> <span class="n">ChatPromptTemplate</span>
 <span class="kn">from</span> <span class="nn">langchain.prompts.chat</span> <span class="kn">import</span> <span class="n">HumanMessagePromptTemplate</span>
 
-<span class="c1"># Set your API key as an environmental variable</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
-
-<span class="c1"># create LLM chain</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HUGGINGFACE_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># create LLM chain</span>
 <span class="n">full_prompt</span> <span class="o">=</span> <span class="n">HumanMessagePromptTemplate</span><span class="p">(</span>
     <span class="n">prompt</span><span class="o">=</span><span class="n">PromptTemplate</span><span class="p">(</span>
         <span class="n">template</span><span class="o">=</span><span class="s2">&quot;Provide a helpful response with relevant background information for the following: </span><span class="si">{prompt}</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -781,10 +795,8 @@
 <div class="highlight"><pre><span></span><code><span class="c1"># create a feedback function</span>
 
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Huggingface</span>
-
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HUGGINGFACE_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
-
-<span class="c1"># Initialize HuggingFace-based feedback function collection class:</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># Initialize HuggingFace-based feedback function collection class:</span>
 <span class="n">hugs</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
 
 <span class="c1"># Define a language match feedback function using HuggingFace.</span>
@@ -813,7 +825,7 @@
 <ol>
 <li>
 <p>Create a virtual environment (or modify an existing one).
-<div class="highlight"><pre><span></span><code>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;&lt;my_name&gt;&quot;</span><span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.7<span class="w">  </span><span class="c1"># Skip if using existing environment.</span>
+<div class="highlight"><pre><span></span><code>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;&lt;my_name&gt;&quot;</span><span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span><span class="w">  </span><span class="c1"># Skip if using existing environment.</span>
 conda<span class="w"> </span>activate<span class="w"> </span>&lt;my_name&gt;
 </code></pre></div></p>
 </li>

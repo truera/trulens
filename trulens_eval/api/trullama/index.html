@@ -9,13 +9,17 @@
       
       
       
+        <link rel="prev" href="../truchain/">
+      
+      
+        <link rel="next" href="../feedback/">
       
       <link rel="icon" href="../../../img/favicon.ico">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
     
     
       
-        <title>Tru Llama - TruLens</title>
+        <title>TruLlama - TruLens</title>
       
     
     
@@ -103,7 +107,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Tru Llama
+              TruLlama
             
           </span>
         </div>
@@ -218,16 +222,18 @@
 
   
   
+    
+  
   
     
       
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
       
       
       
@@ -236,7 +242,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_3">
           <span class="md-nav__icon md-icon"></span>
           Eval
@@ -303,14 +309,16 @@
               
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" checked>
       
       
       
@@ -319,7 +327,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_3_5">
           <span class="md-nav__icon md-icon"></span>
           API Reference
@@ -349,6 +357,88 @@
       <a href="../truchain/" class="md-nav__link">
         TruChain
       </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          TruLlama
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        TruLlama
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.tru_llama" class="md-nav__link">
+    trulens_eval.trulens_eval.tru_llama
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.tru_llama--llama_index-instrumentation-and-monitoring" class="md-nav__link">
+    Llama_index instrumentation and monitoring.
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.tru_llama.TruLlama" class="md-nav__link">
+    TruLlama
+  </a>
+  
+    <nav class="md-nav" aria-label="TruLlama">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.tru_llama.TruLlama.select_source_nodes" class="md-nav__link">
+    select_source_nodes()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -784,7 +874,8 @@
 <span class="normal">185</span>
 <span class="normal">186</span>
 <span class="normal">187</span>
-<span class="normal">188</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruLlama</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
+<span class="normal">188</span>
+<span class="normal">189</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruLlama</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrap a llama index engine for monitoring.</span>
 
@@ -842,7 +933,9 @@
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">start_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-            <span class="n">ret</span><span class="p">,</span> <span class="n">cost</span> <span class="o">=</span> <span class="n">Endpoint</span><span class="o">.</span><span class="n">track_all_costs_tally</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">str_or_query_bundle</span><span class="p">))</span>
+            <span class="n">ret</span><span class="p">,</span> <span class="n">cost</span> <span class="o">=</span> <span class="n">Endpoint</span><span class="o">.</span><span class="n">track_all_costs_tally</span><span class="p">(</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">str_or_query_bundle</span><span class="p">)</span>
+            <span class="p">)</span>
 
             <span class="n">end_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
 
@@ -862,8 +955,7 @@
             <span class="n">ret_record_args</span><span class="p">[</span><span class="s1">&#39;main_output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ret</span><span class="o">.</span><span class="n">response</span>
 
         <span class="n">ret_record</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_record</span><span class="p">(</span>
-            <span class="n">ret_record_args</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span>
-            <span class="n">end_time</span><span class="p">,</span> <span class="n">record</span>
+            <span class="n">ret_record_args</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">record</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">ret</span><span class="p">,</span> <span class="n">ret_record</span>

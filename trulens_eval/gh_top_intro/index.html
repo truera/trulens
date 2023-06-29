@@ -9,17 +9,13 @@
       
       
       
-        <link rel="prev" href="../../welcome/">
-      
-      
-        <link rel="next" href="../quickstart/">
       
       <link rel="icon" href="../../img/favicon.ico">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
     
     
       
-        <title>Installation - TruLens</title>
+        <title>Welcome to TruLens! - TruLens</title>
       
     
     
@@ -73,7 +69,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#getting-access-to-trulens" class="md-skip">
+        <a href="#welcome-to-trulens" class="md-skip">
           Skip to content
         </a>
       
@@ -107,7 +103,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Installation
+              Welcome to TruLens!
             
           </span>
         </div>
@@ -222,18 +218,16 @@
 
   
   
-    
-  
   
     
       
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
       
       
       
@@ -242,7 +236,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
         <label class="md-nav__title" for="__nav_3">
           <span class="md-nav__icon md-icon"></span>
           Eval
@@ -253,48 +247,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Installation
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
         Installation
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#getting-access-to-trulens" class="md-nav__link">
-    Getting access to TruLens
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -652,6 +609,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -660,9 +619,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#getting-access-to-trulens" class="md-nav__link">
-    Getting access to TruLens
+  <a href="#trulens-eval" class="md-nav__link">
+    TruLens-Eval
   </a>
+  
+    <nav class="md-nav" aria-label="TruLens-Eval">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-going-with-trulens-eval" class="md-nav__link">
+    Get going with TruLens-Eval
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -681,34 +653,16 @@
                   
 
 
-  <h1>Installation</h1>
-
-<h2 id="getting-access-to-trulens">Getting access to TruLens<a class="headerlink" href="#getting-access-to-trulens" title="Permanent link">&para;</a></h2>
-<p>These installation instructions assume that you have conda installed and added to your path.</p>
-<ol>
-<li>
-<p>Create a virtual environment (or modify an existing one).
-<div class="highlight"><pre><span></span><code>conda create -n &quot;&lt;my_name&gt;&quot; python=3  # Skip if using existing environment.
-conda activate &lt;my_name&gt;
-</code></pre></div></p>
-</li>
-<li>
-<p>[Pip installation] Install the trulens-eval pip package from PyPI.
-<div class="highlight"><pre><span></span><code>pip install trulens-eval
-</code></pre></div></p>
-</li>
-<li>
-<p>[Local installation] If you would like to develop or modify TruLens, you can download the source code by cloning the TruLens repo.
-<div class="highlight"><pre><span></span><code>git clone https://github.com/truera/trulens.git
-</code></pre></div></p>
-</li>
-<li>
-<p>[Local installation] Install the TruLens repo.
-<div class="highlight"><pre><span></span><code>cd trulens/trulens_eval
-pip install -e .
-</code></pre></div></p>
-</li>
-</ol>
+<h1 id="welcome-to-trulens">Welcome to TruLens!<a class="headerlink" href="#welcome-to-trulens" title="Permanent link">&para;</a></h1>
+<p><img alt="TruLens" src="https://www.trulens.org/Assets/image/Neural_Network_Explainability.png" /></p>
+<p>TruLens provides a set of tools for developing and monitoring neural nets, including large language models. This includes both tools for evaluation of LLMs and LLM-based applications with TruLens-Eval and deep learning explainability with TruLens-Explain. TruLens-Eval and TruLens-Explain are housed in separate packages and can be used independently.</p>
+<h2 id="trulens-eval">TruLens-Eval<a class="headerlink" href="#trulens-eval" title="Permanent link">&para;</a></h2>
+<p><strong>TruLens-Eval</strong> contains instrumentation and evaluation tools for large language model (LLM) based applications. It supports the iterative development and monitoring of a wide range of LLM applications by wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine. Importantly, it also gives you the tools you need to evaluate the quality of your LLM-based applications.</p>
+<p><img alt="Architecture Diagram" src="https://www.trulens.org/Assets/image/TruLens_Architecture.png" /></p>
+<h3 id="get-going-with-trulens-eval">Get going with TruLens-Eval<a class="headerlink" href="#get-going-with-trulens-eval" title="Permanent link">&para;</a></h3>
+<p>Install trulens-eval from PyPI.</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>trulens-eval
+</code></pre></div>
 
 
 
