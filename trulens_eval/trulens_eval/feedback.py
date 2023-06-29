@@ -845,7 +845,8 @@ class Huggingface(Provider):
     # serialize/deserialize the constant fixed endpoint we need.
     endpoint: Endpoint = pydantic.Field(exclude=True)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
+        # endpoint: Optional[Endpoint]=None, 
         """
         A set of Huggingface Feedback Functions.
 
@@ -853,7 +854,7 @@ class Huggingface(Provider):
         """
 
         self_kwargs = dict()
-        self_kwargs['endpoint'] = HuggingfaceEndpoint(*args, **kwargs)
+        self_kwargs['endpoint'] = HuggingfaceEndpoint(**kwargs)
 
         super().__init__(
             **self_kwargs
@@ -954,7 +955,6 @@ class Huggingface(Provider):
                 return label['score']
 
 
-# cohere
 class Cohere(Provider):
     model_engine: str = "large"
 

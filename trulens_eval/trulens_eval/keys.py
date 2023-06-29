@@ -112,7 +112,7 @@ def get_config():
 
     return None
 
-
+"""
 config_file = get_config()
 if config_file is None:
     logger.warning(
@@ -129,7 +129,7 @@ else:
 
         # set them into environment as well
         os.environ[k] = v
-
+"""
 
 def set_openai_key():
     if 'OPENAI_API_KEY' in os.environ:
@@ -155,6 +155,23 @@ def get_huggingface_headers():
     }
     return HUGGINGFACE_HEADERS
 
+def _check_key(k, v = None):
+    v = v or os.environ.get(k)
+
+    if v is None or "fill" in v:
+        raise RuntimeError(\
+f"""{UNICODE_STOP} Variable {k} needs to be set; please provide it in one of these ways:
+
+  - in a variable {k} prior to this check, 
+  - in your variable environment, 
+  - in a .env file in {Path.cwd()} or its parents,
+  - explicitly passed to function `check_keys` of `trulens_eval.keys`,
+  - passed to the endpoint or feedback collection constructor that needs it (`trulens_eval.provider_apis.OpenAIEndpoint`, etc.), or
+  - set in api utility class that expects it (i.e. `openai`, etc.).
+
+For the last two options, the name of the argument may differ from {k} (i.e. `openai.api_key` for `OPENAI_API_KEY`).
+""")
+
 
 def check_keys(**kwargs):
     """
@@ -163,15 +180,14 @@ def check_keys(**kwargs):
     storage of these keys, regardless of how they were specified.
     """
 
-    global config_file
-
     config_file = get_config()
     if config_file is None:
         logger.warning(
             f"No .env found in {Path.cwd()} or its parents. "
             "You may need to specify secret keys in another manner."
         )
-
+    else:
+        config = dotenv.dotenv_values(config_file)
 
     to_global = dict()
 
@@ -203,19 +219,7 @@ def check_keys(**kwargs):
                 to_global[k] = v
                 continue
 
-        if "fill" in v:
-            raise RuntimeError(\
-f"""{UNICODE_STOP} Variable {k} needs to be set; please provide it in one of these ways:
-
-  - in a variable {k} prior to this check, 
-  - in your variable environment, 
-  - in a .env file in {Path.cwd()} or its parents,
-  - explicitly passed to `check_keys`,
-  - passed to the endpoint or feedback collection constructor that needs it (`trulens_eval.provider_apis.OpenAIEndpoint`, etc.), or
-  - set in api utility class that expects it (i.e. `openai`, etc.).
-
-For the last two options, the name of the argument may differ from {k} (i.e. `openai.api_key` for `OPENAI_API_KEY`).
-""")
+        _check_key(k, v)
 
     for k, v in to_global.items():
         globs[k] = v

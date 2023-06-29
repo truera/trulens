@@ -17,6 +17,7 @@ import requests
 
 from trulens_eval.keys import get_huggingface_headers
 from trulens_eval.schema import Cost
+from trulens_eval.keys import _check_key
 from trulens_eval.util import UNICODE_CHECK
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import JSON
@@ -610,9 +611,12 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
                     # environment vars, to this env vars.
 
                     attr_val = getattr(openai, k)
-                    if attr_val is not None:
+                    if attr_val is not None and attr_val != os.environ.get(v):
                         print(f"{UNICODE_CHECK} Env. var. {v} set from openai.{k} .")
                         os.environ[v] = attr_val
+
+        # Will fail if key not set:
+        _check_key("OPENAI_API_KEY")
 
         if hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
@@ -662,6 +666,9 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
     def __init__(self, *args, **kwargs):
         # If kwargs contains any openai constructor params, set them and copy
         # over any relevant keys from them to env.
+
+        # Will fail if key not set:
+        _check_key("HUGGINGFACE_API_KEY")
 
         if hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
