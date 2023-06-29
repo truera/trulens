@@ -34,7 +34,6 @@ def add_logo():
                 margin-left: 20px;
                 color: #aaaaaa;
                 content: "{__package__} {__version__}";
-                text-align: center;
                 font-size: 10pt;
             }}
         </style>
