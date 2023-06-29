@@ -12,13 +12,13 @@ Using feedback functions, you can objectively evaluate the quality of the respon
 
 To quickly play around with the TruLens Eval library:
 
-[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.3.0/trulens_eval/examples/quickstart.ipynb).
+[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.4.0/trulens_eval/examples/quickstart.ipynb).
 
-[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.3.0/trulens_eval/examples/quickstart.py).
+[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.4.0/trulens_eval/examples/quickstart.py).
 
-[llamaindex_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.3.0/trulens_eval/examples/vector-dbs/llama_index/quickstart.ipynb).
+[llamaindex_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.4.0/trulens_eval/examples/frameworks/llama_index/llama_index_quickstart.ipynb).
 
-[llamaindex_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.3.0/trulens_eval/examples/vector-dbs/llama_index/llamaindex_quickstart.py)
+[llamaindex_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.4.0/trulens_eval/examples/llama_index_quickstart.py)
 
 
 
