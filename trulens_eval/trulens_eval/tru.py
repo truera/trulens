@@ -495,7 +495,11 @@ class Tru(SingletonPerName):
 
         Tru.dashboard_proc = proc
 
-        if not started.wait(timeout=DASHBOARD_START_TIMEOUT
+        wait_period = DASHBOARD_START_TIMEOUT
+        if IN_COLAB:
+            # Need more time to setup 2 processes tunnel and dashboard
+            wait_period=wait_period*3
+        if not started.wait(timeout=wait_period
                            ):  # This might not work on windows.
             raise RuntimeError(
                 "Dashboard failed to start in time. "
