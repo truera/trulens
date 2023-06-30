@@ -430,15 +430,17 @@ class Tru(SingletonPerName):
                 while proc.poll() is None:
                     
                     line = pipe.readline()
+                    if "url" in line:
+                        line = "Go to this url and submit the ip given here. " + line
                     if out is not None:
                         out.append_stdout(line)
                         count+=1
-                        if count >=0:
+                        if count >=2:
                             started.set()
                     else:
                         print(line)
                         count+=1
-                        if count >=0:
+                        if count >=2:
                             started.set()
             Tru.tunnel_listener_stdout = Thread(
                 target=listen_to_tunnel,
@@ -465,8 +467,8 @@ class Tru(SingletonPerName):
                         line=line.replace("8501","")
                         if out is not None:
                             out.append_stdout(line)
-                    else:
-                        print(line)
+                        else:
+                            print(line)
                 else:
                     if "Network URL: " in line:
                         url = line.split(": ")[1]
