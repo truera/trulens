@@ -23,7 +23,7 @@ setup(
         'requests>=2.30.0',
         'slack-bolt>=1.18.0',
         'slack-sdk>=3.21.3',
-        'streamlit>=1.22.0',
+        'streamlit>=1.13.0',
         'streamlit-aggrid>=0.3.4.post3',
         'streamlit-extras>=0.2.7',
         # 'tinydb>=4.7.1',
