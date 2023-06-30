@@ -424,24 +424,20 @@ class Tru(SingletonPerName):
                 text=True,
                 **env_opts
             )
-            print("Go to the below url and enter the ip given here.")
             def listen_to_tunnel(proc: subprocess.Popen, pipe, out, started):
-                count=0
                 while proc.poll() is None:
                     
                     line = pipe.readline()
                     if "url" in line:
+                        started.set()
                         line = "Go to this url and submit the ip given here. " + line
+
                     if out is not None:
                         out.append_stdout(line)
-                        count+=1
-                        if count >=2:
-                            started.set()
+                        
                     else:
                         print(line)
-                        count+=1
-                        if count >=2:
-                            started.set()
+                        
             Tru.tunnel_listener_stdout = Thread(
                 target=listen_to_tunnel,
                 args=(tunnel_proc, tunnel_proc.stdout, out_stdout, tunnel_started)
@@ -463,8 +459,9 @@ class Tru(SingletonPerName):
                 line = pipe.readline()
                 if IN_COLAB:
                     if "External URL: " in line:
-                        line=line.replace("External URL: http://","")
-                        line=line.replace("8501","")
+                        started.set()
+                        line=line.replace("External URL: http://","Submit this IP Address: ")
+                        line=line.replace(":8501","")
                         if out is not None:
                             out.append_stdout(line)
                         else:
