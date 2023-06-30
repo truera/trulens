@@ -463,6 +463,7 @@ class Tru(SingletonPerName):
                 line = pipe.readline()
                 if IN_COLAB:
                     if "External URL: " in line:
+                        started.set()
                         line=line.replace("External URL: http://","")
                         line=line.replace("8501","")
                         if out is not None:
