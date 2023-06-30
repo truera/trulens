@@ -25,7 +25,7 @@ The components of this specifications are:
   implementation. Here it is a method with the following signature:
 
     ```python
-        def qs_relevance(self, question: str, statement: str) -> float:
+    def qs_relevance(self, question: str, statement: str) -> float:
     ```
 
     That is, `qs_relevance` is a plain python method that accepts a `question`
@@ -138,26 +138,26 @@ are equivalent assuming the feedback implementation has two arguments,
 
 Several utility methods starting with `.on` provide shorthands:
 
-    - `on_input(arg) == on_prompt(arg: Optional[str])` -- both specify that the next
-      unspecified argument or `arg` should be the main app input.
+- `on_input(arg) == on_prompt(arg: Optional[str])` -- both specify that the next
+    unspecified argument or `arg` should be the main app input.
 
-    - `on_output(arg) == on_response(arg: Optional[str])` -- specify that the next
-      argument or `arg` should be the main app output.
+- `on_output(arg) == on_response(arg: Optional[str])` -- specify that the next
+    argument or `arg` should be the main app output.
 
-    - `on_input_output() == on_input().on_output()` -- specifies that the first
-      two arguments of implementation should be the main app input and main app
-      output, respectively.
+- `on_input_output() == on_input().on_output()` -- specifies that the first
+    two arguments of implementation should be the main app input and main app
+    output, respectively.
 
-    - `on_default()` -- depending on signature of implementation uses either
-      `on_output()` if it has a single argument, or `on_input_output` if it has
-      two arguments.
+- `on_default()` -- depending on signature of implementation uses either
+    `on_output()` if it has a single argument, or `on_input_output` if it has
+    two arguments.
 
 Some wrappers include additional shorthands:
 
-**llama_index**
+### llama_index-specific selectors
 
-    - `TruLlama.select_source_nodes()` -- outputs the selector of the source
-      documents part of the engine output.
+- `TruLlama.select_source_nodes()` -- outputs the selector of the source
+    documents part of the engine output.
 
 ### Running Feedback
 
@@ -167,10 +167,10 @@ to be run on outputs of app evaluation (the "Records"). Specifically,
 `Feedback.run` has this definition:
 
 ```python
-    def run(self, 
-        app: Union[AppDefinition, JSON], 
-        record: Record
-    ) -> FeedbackResult:
+def run(self, 
+    app: Union[AppDefinition, JSON], 
+    record: Record
+) -> FeedbackResult:
 ```
 
 That is, the context of a Feedback evaluation is an app (either as
@@ -281,11 +281,11 @@ structures (enumerating `Record` or `App` contents).
 By JSON-like structures we mean python objects that can be converted into JSON
 or are base types. This includes:
 
-    - base types: strings, integers, dates, etc.
+- base types: strings, integers, dates, etc.
 
-    - sequences
+- sequences
 
-    - dictionaries with string keys
+- dictionaries with string keys
 
 Additionally, JSONPath also index into general python objects like
 `AppDefinition` or `Record` though each of these can be converted to JSON-like.
@@ -293,25 +293,25 @@ Additionally, JSONPath also index into general python objects like
 The syntax of this specification mirrors the syntax one would use with
 instantiations of JSON-like objects. If `query: JSONPath` points to an `obj`, then:
 
-    - `query[somekey]` points to the `somekey` element of `obj` assuming it is a
-      dictionary with key `somekey`.
+- `query[somekey]` points to the `somekey` element of `obj` assuming it is a
+    dictionary with key `somekey`.
 
-    - `query[someindex]` points to the index `someindex` of `obj` assuming it is
-      a sequence.
+- `query[someindex]` points to the index `someindex` of `obj` assuming it is
+    a sequence.
 
-    - `query[slice]` points to __multiple__ elements of `obj` assuming it is a
-      sequence. Slices include `:` or in general `startindex:endindex:step`.
+- `query[slice]` points to __multiple__ elements of `obj` assuming it is a
+    sequence. Slices include `:` or in general `startindex:endindex:step`.
 
-    - `query[somekey1, somekey2, ...]` points to __multiple__ elements of `obj`
-      assuming `obj` is a dictionary and `somekey1`... are its keys.
+- `query[somekey1, somekey2, ...]` points to __multiple__ elements of `obj`
+    assuming `obj` is a dictionary and `somekey1`... are its keys.
 
-    - `query[someindex1, someindex2, ...]` points to __multiple__ elements
-      indexed by `someindex1`... from a sequence `obj`.
+- `query[someindex1, someindex2, ...]` points to __multiple__ elements
+    indexed by `someindex1`... from a sequence `obj`.
 
-    - `query.someattr` depends on type of `obj`. If `obj` is a dictionary, then
-      `query.someattr` is an alias for `query[someattr]`. Otherwise if
-      `someattr` is an attribute of a python object `obj`, then `query.someattr`
-      points to the named attribute.
+- `query.someattr` depends on type of `obj`. If `obj` is a dictionary, then
+    `query.someattr` is an alias for `query[someattr]`. Otherwise if
+    `someattr` is an attribute of a python object `obj`, then `query.someattr`
+    points to the named attribute.
 
 For feedback argument specification, the selectors should start with either
 `__record__` or `__app__` indicating which of the two JSON-like structures to
@@ -320,20 +320,20 @@ select from (Records or Apps). `Select.Record` and `Select.App` are defined as
 selector specification that wishes to select from a Record or App, respectively.
 The full set of Query aliases are as follows:
 
-    - `Record = Query().__record__` -- points to the Record.
+- `Record = Query().__record__` -- points to the Record.
 
-    - App = Query().__app__ -- points to the App.
+- App = Query().__app__ -- points to the App.
 
-    - `RecordInput = Record.main_input` -- points to the main input part of a
-      Record. This is the first argument to the root method of an app (for
-      langchain Chains this is the `__call__` method).
+- `RecordInput = Record.main_input` -- points to the main input part of a
+    Record. This is the first argument to the root method of an app (for
+    langchain Chains this is the `__call__` method).
 
-    - `RecordOutput = Record.main_output` -- points to the main output part of a
-      Record. This is the output of the root method of an app (i.e. `__call__`
-      for langchain Chains).
+- `RecordOutput = Record.main_output` -- points to the main output part of a
+    Record. This is the output of the root method of an app (i.e. `__call__`
+    for langchain Chains).
 
-    - `RecordCalls = Record.app` -- points to the root of the app-structured
-      mirror of calls in a record. See **App-organized Calls** Section above.
+- `RecordCalls = Record.app` -- points to the root of the app-structured
+    mirror of calls in a record. See **App-organized Calls** Section above.
 
 ## Multiple Inputs Per Argument
 
