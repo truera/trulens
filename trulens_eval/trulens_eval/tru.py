@@ -408,24 +408,75 @@ class Tru(SingletonPerName):
         )
 
         started = threading.Event()
+        tunnel_started = threading.Event()
         if is_notebook():
             out_stdout, out_stderr = setup_widget_stdout_stderr()
         else:
             out_stdout = None
             out_stderr = None
+        
+        IN_COLAB = 'google.colab' in sys.modules
+        if IN_COLAB:
+            tunnel_proc = subprocess.Popen(
+                ["npx", "localtunnel", "--port", "8501"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                **env_opts
+            )
+            print("Go to the below url and enter the ip given here.")
+            def listen_to_tunnel(proc: subprocess.Popen, pipe, out, started):
+                count=0
+                while proc.poll() is None:
+                    
+                    line = pipe.readline()
+                    if out is not None:
+                        out.append_stdout(line)
+                        count+=1
+                        if count >=0:
+                            started.set()
+                    else:
+                        print(line)
+                        count+=1
+                        if count >=0:
+                            started.set()
+            Tru.tunnel_listener_stdout = Thread(
+                target=listen_to_tunnel,
+                args=(tunnel_proc, tunnel_proc.stdout, out_stdout, tunnel_started)
+            )
+            Tru.tunnel_listener_stderr = Thread(
+                target=listen_to_tunnel,
+                args=(tunnel_proc, tunnel_proc.stderr, out_stderr, tunnel_started)
+            )
+            Tru.tunnel_listener_stdout.start()
+            Tru.tunnel_listener_stderr.start()
+            if not tunnel_started.wait(timeout=DASHBOARD_START_TIMEOUT
+                            ):  # This might not work on windows.
+                raise RuntimeError(
+                    "Tunnel failed to start in time. "
+                )
 
         def listen_to_dashboard(proc: subprocess.Popen, pipe, out, started):
             while proc.poll() is None:
                 line = pipe.readline()
-                if "Network URL: " in line:
-                    url = line.split(": ")[1]
-                    url = url.rstrip()
-                    print(f"Dashboard started at {url} .")
-                    started.set()
-                if out is not None:
-                    out.append_stdout(line)
+                if IN_COLAB:
+                    if "External URL: " in line:
+                        line=line.replace("External URL: http://","")
+                        line=line.replace("8501","")
+                        if out is not None:
+                            out.append_stdout(line)
+                    else:
+                        print(line)
                 else:
-                    print(line)
+                    if "Network URL: " in line:
+                        url = line.split(": ")[1]
+                        url = url.rstrip()
+                        print(f"Dashboard started at {url} .")
+                        started.set()
+                    if out is not None:
+                        out.append_stdout(line)
+                    else:
+                        print(line)
             if out is not None:
                 out.append_stdout("Dashboard closed.")
             else:
@@ -450,6 +501,7 @@ class Tru(SingletonPerName):
                 "Dashboard failed to start in time. "
                 "Please inspect dashboard logs for additional information."
             )
+        
 
         return proc
 
