@@ -12,7 +12,7 @@ openai = feedback.OpenAI()
 f_qs_relevance = Feedback(openai.qs_relevance)
     .on_input()
     .on(Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[:].page_content)
-    .aggregate(np.min)
+    .aggregate(numpy.min)
 ```
 
 The components of this specifications are:
@@ -44,7 +44,7 @@ The components of this specifications are:
   implementation comes from. The form of the specification will be discussed in
   further details in the **Specifying Arguments** section.
 
-- **Aggregation specification** -- The last line `aggregate(np.min)` specifies
+- **Aggregation specification** -- The last line `aggregate(numpy.min)` specifies
   how feedback outputs are to be aggregated. This only applies to cases where
   the argument specification names more than one value for an input. The second
   specification, for `statement` was of this type. The input to `aggregate` must
@@ -154,7 +154,7 @@ Several utility methods starting with `.on` provide shorthands:
 
 Some wrappers include additional shorthands:
 
-** llama_index **
+**llama_index**
 
     - `TruLlama.select_source_nodes()` -- outputs the selector of the source
       documents part of the engine output.
@@ -198,7 +198,7 @@ class App(AppDefinition, SerialModel):
     ...
 ```
 
-The other non-exlcuded fields accessible outside of the wrapped app are listed
+The other non-excluded fields accessible outside of the wrapped app are listed
 in the `AppDefinition` class in `schema.py`:
 
 ```python
@@ -219,10 +219,10 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
 ```
 
 Note that `app` is in both classes. This distinction between `App` and
-`AppDefinition` here is that one corresponds to non-serializable python objects
-(`App`) and their serialized versions (`AppDefinition`). Feedbacks should expect
-to be run with `AppDefinition`, fields of `App` that are not part of
-`AppDefinition` may not be available.
+`AppDefinition` here is that one corresponds to potentially non-serializable
+python objects (`App`) and their serializable versions (`AppDefinition`).
+Feedbacks should expect to be run with `AppDefinition`, fields of `App` that are
+not part of `AppDefinition` may not be available.
 
 Note that you can inspect the data available for feedback definitions in the
 dashboard by clicking on the "See full app json" button on the bottom of the
