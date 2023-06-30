@@ -120,6 +120,45 @@ argument mappings, the source of `argname1` is `selector1` and so on for further
 argument names. The types of `selector1` is `JSONPath` which we elaborate on in
 the further sections.
 
+If argument names are ommitted, they are taken from the feedback function
+implementation signature in order. That is, 
+
+```python
+...on(argname1=selector1, argname2=selector2)
+```
+
+and
+
+```python
+...on(selector1, selector2)
+```
+
+are equivalent assuming the feedback implementation has two arguments,
+`argname1` and `argname2`, in that order.
+
+Several utility methods starting with `.on` provide shorthands:
+
+    - `on_input(arg) == on_prompt(arg: Optional[str])` -- both specify that the next
+      unspecified argument or `arg` should be the main app input.
+
+    - `on_output(arg) == on_response(arg: Optional[str])` -- specify that the next
+      argument or `arg` should be the main app output.
+
+    - `on_input_output() == on_input().on_output()` -- specifies that the first
+      two arguments of implementation should be the main app input and main app
+      output, respectively.
+
+    - `on_default()` -- depending on signature of implementation uses either
+      `on_output()` if it has a single argument, or `on_input_output` if it has
+      two arguments.
+
+Some wrappers include additional shorthands:
+
+** llama_index **
+
+    - `TruLlama.select_source_nodes()` -- outputs the selector of the source
+      documents part of the engine output.
+
 ### Running Feedback
 
 Feedback implementations are simple callables that can be run on any arguments
@@ -467,6 +506,8 @@ class Feedback(FeedbackDefinition):
             selectors = {par_names[0]: Select.RecordOutput}
             self._print_guessed_selector(par_names[0], Select.RecordOutput)
 
+            # TODO: replace with on_output ?
+
         elif len(par_names) == 2:
             # Two arguments remaining. Assume they are record input and output
             # respectively.
@@ -476,6 +517,8 @@ class Feedback(FeedbackDefinition):
             }
             self._print_guessed_selector(par_names[0], Select.RecordInput)
             self._print_guessed_selector(par_names[1], Select.RecordOutput)
+
+            # TODO: replace on_input_output ?
         else:
             # Otherwise give up.
 
