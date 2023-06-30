@@ -152,7 +152,7 @@ class Record(SerialModel):
 
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
-    tags: tags
+    tags: str = ""
 
     main_input: Optional[JSON] = None
     main_output: Optional[JSON] = None  # if no error
