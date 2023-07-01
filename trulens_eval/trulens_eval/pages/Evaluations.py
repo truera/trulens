@@ -8,6 +8,7 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
+from streamlit_javascript import st_javascript
 from ux.add_logo import add_logo
 from ux.styles import default_pass_fail_color_threshold
 
@@ -18,11 +19,14 @@ from trulens_eval.app import LLM
 from trulens_eval.app import Other
 from trulens_eval.app import Prompt
 from trulens_eval.schema import Record
+from trulens_eval.schema import Select
 from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
 from trulens_eval.ux.components import draw_prompt_info
+from trulens_eval.ux.components import draw_selector_button
+from trulens_eval.ux.components import render_selector_markdown
 from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
 
@@ -38,6 +42,26 @@ tru = Tru()
 lms = tru.db
 
 df_results, feedback_cols = lms.get_records_and_feedback([])
+
+state = st.session_state
+
+if "clipboard" not in state:
+    state.clipboard = "nothing"
+
+if state.clipboard: 
+    ret = st_javascript(
+f"""navigator.clipboard.writeText("{state.clipboard}")
+    .then(
+        function() {{
+            console.log('success?')
+        }},
+        function(err) {{
+            console.error("Async: Could not copy text: ", err)
+        }}
+    )
+""")
+    # st.write(f"ret={ret}")         
+    # st.write(f"clipped? {state.clipboard}")
 
 if df_results.empty:
     st.write("No records yet...")
@@ -132,10 +156,10 @@ else:
             prompt = selected_rows['input'][0]
             response = selected_rows['output'][0]
 
-            with st.expander("Input", expanded=True):
+            with st.expander(f"Input {render_selector_markdown(Select.RecordInput)}", expanded=True):
                 write_or_json(st, obj=prompt)
 
-            with st.expander("Response", expanded=True):
+            with st.expander(f"Response {render_selector_markdown(Select.RecordOutput)}", expanded=True):
                 write_or_json(st, obj=response)
 
             row = selected_rows.head().iloc[0]
@@ -194,15 +218,15 @@ else:
                     continue
 
                 # Draw the accessor/path within the wrapped app of the component.
-                st.subheader(f"{query}")
+                st.subheader(f"Component {render_selector_markdown(Select.for_app(query))}")
 
                 # Draw the python class information of this component.
                 cls = component.cls
                 base_cls = cls.base_class()
-                label = f"`{repr(cls)}`"
+                label = f"__{repr(cls)}__"
                 if str(base_cls) != str(cls):
-                    label += f" < `{repr(base_cls)}`"
-                st.write(label)
+                    label += f" < __{repr(base_cls)}__"
+                st.write("Python class: " + label)
 
                 # Per-component-type drawing routines.
                 if isinstance(component, LLM):
@@ -225,7 +249,7 @@ else:
                     if query == call.stack[-1].path
                 ]
                 if len(calls) > 0:
-                    st.subheader("Calls to component:")
+                    # st.subheader("Calls to component:")
                     for call in calls:
                         draw_call(call)
 
