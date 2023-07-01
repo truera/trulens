@@ -26,6 +26,7 @@ setup(
         'streamlit>=1.22.0',
         'streamlit-aggrid>=0.3.4.post3',
         'streamlit-extras>=0.2.7',
+        'streamlit-javascript>=0.1.5',
         # 'tinydb>=4.7.1',
         'transformers>=4.10.0',
         'typing-inspect==0.8.0',  # langchain with python < 3.9 fix
