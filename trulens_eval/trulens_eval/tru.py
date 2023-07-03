@@ -414,7 +414,7 @@ class Tru(SingletonPerName):
         else:
             out_stdout = None
             out_stderr = None
-        
+
         IN_COLAB = 'google.colab' in sys.modules
         if IN_COLAB:
             tunnel_proc = subprocess.Popen(
@@ -424,9 +424,10 @@ class Tru(SingletonPerName):
                 text=True,
                 **env_opts
             )
+
             def listen_to_tunnel(proc: subprocess.Popen, pipe, out, started):
                 while proc.poll() is None:
-                    
+
                     line = pipe.readline()
                     if "url" in line:
                         started.set()
@@ -434,25 +435,27 @@ class Tru(SingletonPerName):
 
                     if out is not None:
                         out.append_stdout(line)
-                        
+
                     else:
                         print(line)
-                        
+
             Tru.tunnel_listener_stdout = Thread(
                 target=listen_to_tunnel,
-                args=(tunnel_proc, tunnel_proc.stdout, out_stdout, tunnel_started)
+                args=(
+                    tunnel_proc, tunnel_proc.stdout, out_stdout, tunnel_started
+                )
             )
             Tru.tunnel_listener_stderr = Thread(
                 target=listen_to_tunnel,
-                args=(tunnel_proc, tunnel_proc.stderr, out_stderr, tunnel_started)
+                args=(
+                    tunnel_proc, tunnel_proc.stderr, out_stderr, tunnel_started
+                )
             )
             Tru.tunnel_listener_stdout.start()
             Tru.tunnel_listener_stderr.start()
             if not tunnel_started.wait(timeout=DASHBOARD_START_TIMEOUT
-                            ):  # This might not work on windows.
-                raise RuntimeError(
-                    "Tunnel failed to start in time. "
-                )
+                                      ):  # This might not work on windows.
+                raise RuntimeError("Tunnel failed to start in time. ")
 
         def listen_to_dashboard(proc: subprocess.Popen, pipe, out, started):
             while proc.poll() is None:
@@ -460,8 +463,10 @@ class Tru(SingletonPerName):
                 if IN_COLAB:
                     if "External URL: " in line:
                         started.set()
-                        line=line.replace("External URL: http://","Submit this IP Address: ")
-                        line=line.replace(":8501","")
+                        line = line.replace(
+                            "External URL: http://", "Submit this IP Address: "
+                        )
+                        line = line.replace(":8501", "")
                         if out is not None:
                             out.append_stdout(line)
                         else:
@@ -497,14 +502,13 @@ class Tru(SingletonPerName):
         wait_period = DASHBOARD_START_TIMEOUT
         if IN_COLAB:
             # Need more time to setup 2 processes tunnel and dashboard
-            wait_period=wait_period*3
+            wait_period = wait_period * 3
         if not started.wait(timeout=wait_period
                            ):  # This might not work on windows.
             raise RuntimeError(
                 "Dashboard failed to start in time. "
                 "Please inspect dashboard logs for additional information."
             )
-        
 
         return proc
 
