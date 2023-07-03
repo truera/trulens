@@ -164,7 +164,7 @@ class Record(SerialModel):
     calls: Sequence[RecordAppCall] = []
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
-        super().__init__(record_id="temporay", **kwargs)
+        super().__init__(record_id="temporary", **kwargs)
 
         if record_id is None:
             record_id = obj_id_of_obj(self.dict(), prefix="record")
