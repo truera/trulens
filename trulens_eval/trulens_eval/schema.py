@@ -153,7 +153,7 @@ class Record(SerialModel):
 
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
-    tags: Tags = ""
+    tags: Optional[str] = ""
 
     main_input: Optional[JSON] = None
     main_output: Optional[JSON] = None  # if no error
@@ -254,8 +254,6 @@ class FeedbackResult(SerialModel):
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
 
     cost: Cost = pydantic.Field(default_factory=Cost)
-
-    tags: Tags
 
     name: str
 
@@ -405,6 +403,9 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
             app_id = obj_id_of_obj(obj=self.dict(), prefix="app")
 
         self.app_id = app_id
+
+        if tags is None:
+            tags = "-"  # Set tags to a "-" if None is provided
         self.tags = tags
 
     @classmethod
