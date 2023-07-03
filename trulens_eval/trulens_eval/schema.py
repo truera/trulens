@@ -20,18 +20,19 @@ feature information about the encoded object types in the dictionary under the
 util.py:CLASS_INFO key.
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 from datetime import datetime
 from enum import Enum
-
-from typing import (Any, ClassVar, Dict, Optional, Sequence, TypeVar, Union)
 import logging
+from typing import Any, ClassVar, Dict, Optional, Sequence, TypeVar, Union
+
 from munch import Munch as Bunch
 import pydantic
-from trulens_eval.util import FunctionOrMethod
 
 from trulens_eval.util import Class
 from trulens_eval.util import Function
+from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
 from trulens_eval.util import JSONPath
@@ -254,7 +255,7 @@ class FeedbackResult(SerialModel):
 
     cost: Cost = pydantic.Field(default_factory=Cost)
 
-    tags: tags
+    tags: Tags
 
     name: str
 
