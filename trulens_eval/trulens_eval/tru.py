@@ -408,24 +408,74 @@ class Tru(SingletonPerName):
         )
 
         started = threading.Event()
+        tunnel_started = threading.Event()
         if is_notebook():
             out_stdout, out_stderr = setup_widget_stdout_stderr()
         else:
             out_stdout = None
             out_stderr = None
+        
+        IN_COLAB = 'google.colab' in sys.modules
+        if IN_COLAB:
+            tunnel_proc = subprocess.Popen(
+                ["npx", "localtunnel", "--port", "8501"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                **env_opts
+            )
+            def listen_to_tunnel(proc: subprocess.Popen, pipe, out, started):
+                while proc.poll() is None:
+                    
+                    line = pipe.readline()
+                    if "url" in line:
+                        started.set()
+                        line = "Go to this url and submit the ip given here. " + line
+
+                    if out is not None:
+                        out.append_stdout(line)
+                        
+                    else:
+                        print(line)
+                        
+            Tru.tunnel_listener_stdout = Thread(
+                target=listen_to_tunnel,
+                args=(tunnel_proc, tunnel_proc.stdout, out_stdout, tunnel_started)
+            )
+            Tru.tunnel_listener_stderr = Thread(
+                target=listen_to_tunnel,
+                args=(tunnel_proc, tunnel_proc.stderr, out_stderr, tunnel_started)
+            )
+            Tru.tunnel_listener_stdout.start()
+            Tru.tunnel_listener_stderr.start()
+            if not tunnel_started.wait(timeout=DASHBOARD_START_TIMEOUT
+                            ):  # This might not work on windows.
+                raise RuntimeError(
+                    "Tunnel failed to start in time. "
+                )
 
         def listen_to_dashboard(proc: subprocess.Popen, pipe, out, started):
             while proc.poll() is None:
                 line = pipe.readline()
-                if "Network URL: " in line:
-                    url = line.split(": ")[1]
-                    url = url.rstrip()
-                    print(f"Dashboard started at {url} .")
-                    started.set()
-                if out is not None:
-                    out.append_stdout(line)
+                if IN_COLAB:
+                    if "External URL: " in line:
+                        started.set()
+                        line=line.replace("External URL: http://","Submit this IP Address: ")
+                        line=line.replace(":8501","")
+                        if out is not None:
+                            out.append_stdout(line)
+                        else:
+                            print(line)
                 else:
-                    print(line)
+                    if "Network URL: " in line:
+                        url = line.split(": ")[1]
+                        url = url.rstrip()
+                        print(f"Dashboard started at {url} .")
+                        started.set()
+                    if out is not None:
+                        out.append_stdout(line)
+                    else:
+                        print(line)
             if out is not None:
                 out.append_stdout("Dashboard closed.")
             else:
@@ -444,12 +494,17 @@ class Tru(SingletonPerName):
 
         Tru.dashboard_proc = proc
 
-        if not started.wait(timeout=DASHBOARD_START_TIMEOUT
+        wait_period = DASHBOARD_START_TIMEOUT
+        if IN_COLAB:
+            # Need more time to setup 2 processes tunnel and dashboard
+            wait_period=wait_period*3
+        if not started.wait(timeout=wait_period
                            ):  # This might not work on windows.
             raise RuntimeError(
                 "Dashboard failed to start in time. "
                 "Please inspect dashboard logs for additional information."
             )
+        
 
         return proc
 
