@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 RecordID = str
 AppID = str
-tags = str
+Tags = str
 FeedbackDefinitionID = str
 FeedbackResultID = str
 
@@ -152,7 +152,7 @@ class Record(SerialModel):
 
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
-    tags: str = ""
+    tags: Tags = ""
 
     main_input: Optional[JSON] = None
     main_output: Optional[JSON] = None  # if no error
@@ -362,7 +362,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         arbitrary_types_allowed = True
 
     app_id: AppID
-    tags: tags
+    tags: Tags
 
     # Feedback functions to evaluate on each record. Unlike the above, these are
     # meant to be serialized.
@@ -385,7 +385,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
     def __init__(
         self,
         app_id: Optional[AppID] = None,
-        tags: Optional[tags] = None,
+        tags: Optional[Tags] = None,
         feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
         **kwargs
     ):
