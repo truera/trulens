@@ -14,6 +14,7 @@ from trulens_eval.provider_apis import Endpoint
 from trulens_eval.schema import Cost
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.instruments import Instrument
+from trulens_eval.util import Class
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
 
@@ -21,10 +22,13 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-class NoInstrument(Instrument):
-    pass
 class NoRootClass:
     pass
+
+class TruWrapperApp:
+    __call__: Callable = None
+    def __init__(self, call_fn:Callable):
+        self.__call__ = call_fn
 
 class TruBasicApp(App):
     """
@@ -52,9 +56,9 @@ class TruBasicApp(App):
         """
 
         super().update_forward_refs()
-        kwargs['app'] = text_to_text
-        kwargs['root_class'] = NoRootClass
-        kwargs['instrument'] = NoInstrument
+        kwargs['app'] = TruWrapperApp(text_to_text)
+        kwargs['root_class'] = Class.of_class(NoRootClass)
+        kwargs['instrument'] = Instrument()
         super().__init__(**kwargs)
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
