@@ -10,11 +10,7 @@ TruLens provides a set of tools for developing and monitoring neural nets, inclu
 
 ![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
 
-### 💡 Contributing
-
-Interested in contributing? See our [contribution guide](trulens_eval/CONTRIBUTING.md) for more details.
-
-### Example Usage
+### Get going with TruLens-Eval
 
 Install trulens-eval from PyPI.
 
@@ -102,13 +98,11 @@ tru.run_dashboard() # open a Streamlit app to explore
 For more information, see [TruLens-Eval Documentation](https://www.trulens.org/trulens_eval/quickstart/).
 
 
-
-
 ## TruLens-Explain
 
 **TruLens-Explain** is a cross-framework library for deep learning explainability. It provides a uniform abstraction over a number of different frameworks. It provides a uniform abstraction layer over TensorFlow, Pytorch, and Keras and allows input and internal explanations.
 
-### Example Usage
+### Get going with TruLens-Explain
 
 These installation instructions assume that you have conda installed and added to your path.
 
