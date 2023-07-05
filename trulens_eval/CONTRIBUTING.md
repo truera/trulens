@@ -7,10 +7,11 @@ Interested in contributing to TruLens? Here's how to get started!
 What should I work on?
 
 1. 🆕 Add new [feedback functions](https://www.trulens.org/trulens_eval/feedback_functions/)
-2. 🐛 Fix bugs
-3. 🎉 Add usage examples
-4. 🧪 Add experimental features
-5. 📄 Improve code quality & documentation
+2. 🤝 Add new feedback function providers.
+3. 🐛 Fix bugs
+4. 🎉 Add usage examples
+5. 🧪 Add experimental features
+6. 📄 Improve code quality & documentation
 
 Also, join the AI Quality Slack community for ideas and discussions:
 
