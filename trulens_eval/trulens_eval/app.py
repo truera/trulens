@@ -276,6 +276,7 @@ class App(AppDefinition, SerialModel):
         ret_record_args['cost'] = cost
         ret_record_args['perf'] = Perf(start_time=start_time, end_time=end_time)
         ret_record_args['app_id'] = self.app_id
+        ret_record_args['tags'] = self.tags
 
         ret_record = Record(**ret_record_args)
 
