@@ -20,7 +20,9 @@ To quickly play around with the TruLens Eval library:
 
 [llamaindex_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.4.0/trulens_eval/examples/llama_index_quickstart.py)
 
+### 💡 Contributing
 
+Interested in contributing? See our [contribution guide](https://github.com/truera/trulens/tree/main/trulens_eval/CONTRIBUTING.md) for more details.
 
 ## Installation and Setup
 
