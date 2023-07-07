@@ -35,7 +35,7 @@ class TruBasicApp(App):
     A Basic app that makes little assumptions. Assumes input text and output text 
     """
 
-    app: Callable
+    app: TruWrapperApp
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
         default_factory=lambda: FunctionOrMethod.of_callable(TruBasicApp._call),
@@ -84,7 +84,7 @@ class TruBasicApp(App):
         try:
             start_time = datetime.now()
             ret, cost = Endpoint.track_all_costs_tally(
-                lambda: self.app(input, **kwargs)
+                lambda: self.app.__call__(input, **kwargs)
             )
             end_time = datetime.now()
 
