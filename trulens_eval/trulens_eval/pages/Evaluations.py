@@ -25,6 +25,7 @@ from trulens_eval.ux.components import draw_llm_info
 from trulens_eval.ux.components import draw_prompt_info
 from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
+from trulens_eval.react_components.record_viewer import record_viewer
 
 st.set_page_config(page_title="Evaluations", layout="wide")
 
@@ -185,60 +186,41 @@ else:
             classes: Iterable[Tuple[JSONPath, List[ComponentView]]
                              ] = instrumented_component_views(app_json)
 
-            st.header("Components")
 
-            for query, component in classes:
+            val = record_viewer(record_json, app_json)
 
-                if len(query.path) == 0:
-                    # Skip App, will still list A.app under "app" below.
-                    continue
+            if val != None:
+                match = None
+                for call in record.calls: 
+                    if call.perf.start_time.isoformat() == val:
+                        match = call
+                        break
 
-                # Draw the accessor/path within the wrapped app of the component.
-                st.subheader(f"{query}")
+                if match:
+                    length = len(match.stack)
+                    app_call = match.stack[length - 1]
+                    st.header(app_call.method.obj.cls.name)
 
-                # Draw the python class information of this component.
-                cls = component.cls
-                base_cls = cls.base_class()
-                label = f"`{repr(cls)}`"
-                if str(base_cls) != str(cls):
-                    label += f" < `{repr(base_cls)}`"
-                st.write(label)
+                    with st.expander("Call Details:"):
+                        st.json(jsonify(match.json, skip_specials=True))
+                    
+                    with st.expander("Argument Details:"):
+                        st.json(jsonify(match.args, skip_specials=True))
+                    
+                    with st.expander("Return Details:"):
+                        if isinstance(match.rets, str):
+                            st.text(match.rets)
+                        else:
+                            st.json(jsonify(match.rets, skip_specials=True))
+                elif val == 0:
+                    st.header('App')
+                    with st.expander("App Details:"):
+                        st.json(jsonify(app_json, skip_specials=True))
+                else: 
+                    st.text('No match found')
 
-                # Per-component-type drawing routines.
-                if isinstance(component, LLM):
-                    draw_llm_info(component=component, query=query)
 
-                elif isinstance(component, Prompt):
-                    draw_prompt_info(component=component, query=query)
-
-                elif isinstance(component, Other):
-                    with st.expander("Uncategorized Component Details:"):
-                        st.json(jsonify(component.json, skip_specials=True))
-
-                else:
-                    with st.expander("Unhandled Component Details:"):
-                        st.json(jsonify(component.json, skip_specials=True))
-
-                # Draw the calls issued to component.
-                calls = [
-                    call for call in record.calls
-                    if query == call.stack[-1].path
-                ]
-                if len(calls) > 0:
-                    st.subheader("Calls to component:")
-                    for call in calls:
-                        draw_call(call)
-
-            st.header("More options:")
-
-            if st.button("Display full app json"):
-
-                st.write(jsonify(app_json, skip_specials=True))
-
-            if st.button("Display full record json"):
-
-                st.write(jsonify(record_json, skip_specials=True))
-
+         
     with tab2:
         feedback = feedback_cols
         cols = 4

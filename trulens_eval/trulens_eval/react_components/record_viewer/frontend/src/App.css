@@ -1,0 +1,15 @@
+
+.timeline {
+  position: absolute;
+  overflow: hidden;
+  height: 30px;
+  font-weight: 600;
+  border-radius: 4px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  cursor: pointer;
+}
+
+.timeline:hover {
+  filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.04)) drop-shadow(0 4px 3px rgb(0 0 0 / 0.1));
+  top: 1,
+}
