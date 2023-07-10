@@ -59,7 +59,7 @@ def record_viewer(record_json, app_json, key=None):
 
     Returns
     -------
-    string or 0 or None.
+    string or None.
         Start time of the selected component in the application. If the whole app is selected,
         this returns a JavaScript null, which is interpreted in python as a 0.
 
@@ -70,10 +70,8 @@ def record_viewer(record_json, app_json, key=None):
     #
     # "default" is a special argument that specifies the initial return
     # value of the component before the user has interacted with it.
-    component_value = _record_viewer(record_json=record_json, app_json=app_json, key=key, default=0)
+    component_value = _record_viewer(record_json=record_json, app_json=app_json, key=key, default="")
 
-    # We could modify the value returned from the component if we wanted.
-    # There's no need to do this in our simple example - but it's an option.
     return component_value
 
 
