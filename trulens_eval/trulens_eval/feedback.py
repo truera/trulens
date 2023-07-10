@@ -9,6 +9,7 @@ import itertools
 import logging
 from multiprocessing.pool import AsyncResult
 import re
+import traceback
 from typing import Any, Callable, Dict, Iterable, Optional, Type, Union
 
 import numpy as np
@@ -385,8 +386,13 @@ class Feedback(FeedbackDefinition):
 
             return feedback_result
 
-        except Exception as e:
-            raise e
+        except:
+            exc_tb = traceback.format_exc()
+            logger.warning(f"Feedback Function Exception Caught: {exc_tb}")
+            feedback_result.update(
+                error=exc_tb, status=FeedbackResultStatus.FAILED
+            )
+            return feedback_result
 
     def run_and_log(
         self,
@@ -423,9 +429,10 @@ class Feedback(FeedbackDefinition):
             ).update(feedback_result_id=feedback_result_id)
 
         except Exception as e:
+            exc_tb = traceback.format_exc()
             db.insert_feedback(
                 feedback_result.update(
-                    error=str(e), status=FeedbackResultStatus.FAILED
+                    error=exc_tb, status=FeedbackResultStatus.FAILED
                 )
             )
             return
