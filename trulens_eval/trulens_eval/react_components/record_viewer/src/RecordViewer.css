@@ -3,10 +3,27 @@
   position: absolute;
   overflow: hidden;
   height: 30px;
-  font-weight: 600;
   border-radius: 4px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   cursor: pointer;
+  background-color: #F5F5F5;
+  color: #212121;
+  border: 1px solid #212121;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px
+}
+
+.timeline-component-name {
+  font-weight: 600;
+
+}
+
+.timeline-time-taken {
+  font-weight: 400;
+  font-size: 0.8em;
 }
 
 .timeline:hover {

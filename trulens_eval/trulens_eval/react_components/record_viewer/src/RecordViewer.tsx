@@ -5,10 +5,9 @@ import {
 } from "streamlit-component-lib"
 import { ReactNode } from "react"
 import "./RecordViewer.css"
-import { getStartAndEndTimesForNode } from "./treeUtils"
+import { getStartAndEndTimesForNode, getTreeDepth } from "./treeUtils"
 import { DataRaw, StackTreeNode } from "./types"
 import { createTreeFromCalls } from "./utils"
-import { COLORS, COLOR_SCHEME } from "./theme"
 
 class RecordViewer extends StreamlitComponentBase {
   public render = (): ReactNode => {
@@ -16,37 +15,34 @@ class RecordViewer extends StreamlitComponentBase {
     // StreamlitComponentBase appears happy to just give it "any".
     const { record_json } = this.props.args as DataRaw
 
+    const { font: fontFamily } = this.props.theme as { font: string }
+
     const tree = createTreeFromCalls(record_json)
+    const treeDepth = getTreeDepth(tree)
+    const { startTime: treeStart, timeTaken: totalTime } =
+      getStartAndEndTimesForNode(tree)
 
     const renderTree = () => {
-      const { startTime: treeStart, endTime: treeEnd } =
-        getStartAndEndTimesForNode(tree)
-
-      const totalTime = treeStart - treeEnd
-
       const children: ReactNode[] = []
 
       const recursiveRender = (node: StackTreeNode, depth: number) => {
-        const { startTime, endTime } = getStartAndEndTimesForNode(node)
+        const { startTime, timeTaken } = getStartAndEndTimesForNode(node)
 
         children.push(
           <div
             className="timeline"
             style={{
-              backgroundColor: COLORS[COLOR_SCHEME[depth]][300],
-              color: COLORS[COLOR_SCHEME[depth]][900],
-              border: `2px solid ${COLORS[COLOR_SCHEME[depth]][900]}`,
               left: `${((startTime - treeStart) / totalTime) * 100}%`,
-              width: `${((endTime - startTime) / totalTime) * 100}%`,
+              width: `${(timeTaken / totalTime) * 100}%`,
               top: depth * 32,
-              padding: 4,
-              boxSizing: "border-box",
+              fontFamily,
             }}
             onClick={() => {
               Streamlit.setComponentValue(node.raw?.perf.start_time ?? null)
             }}
           >
-            {node.name}
+            <span className="timeline-component-name">{node.name}</span>
+            <span className="timeline-time-taken">{timeTaken}ms</span>
           </div>
         )
 
@@ -60,7 +56,7 @@ class RecordViewer extends StreamlitComponentBase {
       return (
         <div
           style={{
-            height: 32 * children.length,
+            height: 32 * treeDepth + 8, // + 8 for padding
             position: "relative",
           }}
         >
@@ -69,7 +65,14 @@ class RecordViewer extends StreamlitComponentBase {
       )
     }
 
-    return <div>{renderTree()}</div>
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <span style={{ fontFamily }}>
+          Total time taken: {totalTime / 1000}s
+        </span>
+        {renderTree()}
+      </div>
+    )
   }
 }
 
