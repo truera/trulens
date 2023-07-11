@@ -11,11 +11,10 @@ from torch import Tensor
 from torch.nn import Linear
 from torch.nn import Module
 from torch.nn import ReLU
+from trulens.nn.backend import get_backend
 from trulens.nn.models.pytorch import PytorchModelWrapper
 from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut
-
-from trulens.nn.backend import get_backend
 
 
 class ModelWrapperTest(ModelWrapperTestBase, TestCase):

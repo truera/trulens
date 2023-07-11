@@ -1,14 +1,13 @@
 import numpy as np
 from trulens.nn.attribution import InputAttribution
 from trulens.nn.attribution import InternalInfluence
+from trulens.nn.backend import get_backend
+from trulens.nn.backend import tile
 from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.utils.typing import ModelInputs
-
-from trulens.nn.backend import get_backend
-from trulens.nn.backend import tile
 
 
 class ModelWrapperTestBase(object):
