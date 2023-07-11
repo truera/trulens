@@ -4,6 +4,8 @@ import { getStartAndEndTimesForNode } from './treeUtils';
 import { StackTreeNode } from './types';
 import { Box, Tooltip } from '@mui/material';
 
+export const BAR_HEIGHT = 32;
+
 type TreeProps = {
   root: StackTreeNode;
 };
@@ -62,7 +64,7 @@ function NodeBar({ node, depth, root }: { node: StackTreeNode; depth: number; ro
         style={{
           left: `${((startTime - treeStart) / totalTime) * 100}%`,
           width: `${(timeTaken / totalTime) * 100}%`,
-          top: depth * 32 + 16,
+          top: depth * BAR_HEIGHT + 16,
         }}
         onClick={() => {
           Streamlit.setComponentValue(node.raw?.perf.start_time ?? null);

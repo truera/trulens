@@ -5,7 +5,8 @@ import { getStartAndEndTimesForNode, getTreeDepth } from './treeUtils';
 import { DataRaw } from './types';
 import GridLines from './GridLines';
 import { createTreeFromCalls } from './utils';
-import TimelineBars from './TimelineBars';
+import { TIME_DISPLAY_HEIGHT_BUFFER } from './styling';
+import TimelineBars, { BAR_HEIGHT } from './TimelineBars';
 
 class RecordViewer extends StreamlitComponentBase {
   public render = (): ReactNode => {
@@ -27,7 +28,7 @@ class RecordViewer extends StreamlitComponentBase {
     const treeDepth = getTreeDepth(root);
     const { timeTaken: totalTime } = getStartAndEndTimesForNode(root);
 
-    const modifiedWidth = width - 16;
+    const modifiedWidth = width - 12;
 
     return (
       <div style={{ fontFamily }}>
@@ -36,9 +37,9 @@ class RecordViewer extends StreamlitComponentBase {
           className="timeline-container"
           style={{
             width: modifiedWidth,
-            gridTemplateRows: 32 * treeDepth + 16,
             gridTemplateColumns: modifiedWidth,
-            height: 32 * treeDepth + 16,
+            height: BAR_HEIGHT * treeDepth + TIME_DISPLAY_HEIGHT_BUFFER,
+            gridTemplateRows: BAR_HEIGHT * treeDepth + TIME_DISPLAY_HEIGHT_BUFFER + 8,
           }}
         >
           <GridLines totalWidth={modifiedWidth} totalTime={totalTime} />

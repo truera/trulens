@@ -1,0 +1,1 @@
+export const TIME_DISPLAY_HEIGHT_BUFFER = 16;
