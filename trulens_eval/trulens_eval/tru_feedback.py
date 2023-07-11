@@ -1,6 +1,6 @@
-from trulens_eval import feedback
-
 import logging
+
+from trulens_eval import feedback
 
 logger = logging.getLogger(__name__)
 

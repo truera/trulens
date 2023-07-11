@@ -3,14 +3,13 @@ from unittest import TestCase
 
 import numpy as np
 from trulens.nn.attribution import InternalInfluence
+from trulens.nn.backend import get_backend
 from trulens.nn.distributions import DoI
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
 from trulens.utils.typing import OM
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import Tensor
-
-from trulens.nn.backend import get_backend
 
 
 class PerTimestepQoI(QoI):

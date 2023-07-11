@@ -1281,7 +1281,7 @@ class Class(SerialModel):
 
 # inspect.signature does not work on builtin type constructors but they are used
 # like this method. Use it to create a signature of a builtin constructor.
-def builtin_init_dummy(self, /, *args, **kwargs):
+def builtin_init_dummy(self, *args, **kwargs):
     pass
 
 
