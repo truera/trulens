@@ -7,17 +7,39 @@ import {
 } from "./types"
 
 /**
- * Gets the name of the calling function in the stack cell.
+ * Gets the name of the calling class in the stack cell.
  *
  * TODO: Is this the best name to use for the component/stack?
  *
- * See README.md for an overview of the terminology.
+ * @param stackCell - StackJSONRaw Cell in the stack of a call.
+ * @returns name of the calling class in the stack cell.
+ */
+export const getClassNameFromCell = (stackCell: StackJSONRaw) => {
+  return stackCell.method.obj.cls.name
+}
+
+/**
+ * Gets the name of the calling method in the stack cell.
  *
  * @param stackCell - StackJSONRaw Cell in the stack of a call.
- * @returns name of the calling function in the stack cell.
+ * @returns name of the calling method in the stack cell.
  */
-export const getNameFromCell = (stackCell: StackJSONRaw) => {
-  return stackCell.method.obj.cls.name
+export const getMethodNameFromCell = (stackCell: StackJSONRaw) => {
+  return stackCell.method.name
+}
+
+/**
+ * Gets the path of the calling method in the stack cell.
+ *
+ * @param stackCell - StackJSONRaw Cell in the stack of a call.
+ * @returns name of the calling method in the stack cell.
+ */
+export const getPathName = (stackCell: StackJSONRaw) => {
+  console.log(stackCell.path)
+  return stackCell.path.path
+    .map((p) => p?.item_or_attribute)
+    .filter(Boolean)
+    .join(".")
 }
 
 /**
@@ -51,7 +73,7 @@ const addCallToTree = (
   // otherwise, we are deciding which node to go in
   let matchingNode = tree.children.find(
     (node) =>
-      node.name === getNameFromCell(stackCell) &&
+      node.name === getClassNameFromCell(stackCell) &&
       (node.startTime ?? 0) <= new Date(call.perf.start_time) &&
       (node.endTime ?? Infinity) >= new Date(call.perf.end_time)
   )
@@ -70,7 +92,9 @@ const addCallToTree = (
 
     tree.children.push({
       children: undefined,
-      name: getNameFromCell(stackCell),
+      name: getClassNameFromCell(stackCell),
+      path: getPathName(stackCell),
+      methodName: getMethodNameFromCell(stackCell),
       startTime,
       endTime,
       raw: call,
@@ -82,7 +106,9 @@ const addCallToTree = (
   if (!matchingNode) {
     const newNode = {
       children: [],
-      name: getNameFromCell(stackCell),
+      name: getClassNameFromCell(stackCell),
+      methodName: getMethodNameFromCell(stackCell),
+      path: getPathName(stackCell),
     }
 
     // otherwise create a new node

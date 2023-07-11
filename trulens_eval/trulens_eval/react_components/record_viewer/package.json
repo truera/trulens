@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.13.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "streamlit-component-lib": "^1.3.0"

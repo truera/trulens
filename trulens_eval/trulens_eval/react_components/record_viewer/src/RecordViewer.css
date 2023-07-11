@@ -6,9 +6,8 @@
   border-radius: 4px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   cursor: pointer;
-  background-color: #F5F5F5;
+  background-color: #E0E0E0;
   color: #212121;
-  border: 1px solid #212121;
   box-sizing: border-box;
   display: flex;
   justify-content: space-between;
@@ -27,6 +26,6 @@
 }
 
 .timeline:hover {
-  filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.04)) drop-shadow(0 4px 3px rgb(0 0 0 / 0.1));
+  border: 1px solid #212121;
   top: 1,
 }
