@@ -187,9 +187,10 @@ else:
                              ] = instrumented_component_views(app_json)
 
 
+            st.header('Timeline')
             val = record_viewer(record_json, app_json)
 
-            if val != None:
+            if val != "":
                 match = None
                 for call in record.calls: 
                     if call.perf.start_time.isoformat() == val:
@@ -199,7 +200,7 @@ else:
                 if match:
                     length = len(match.stack)
                     app_call = match.stack[length - 1]
-                    st.header(app_call.method.obj.cls.name)
+                    st.subheader(app_call.method.obj.cls.name)
 
                     with st.expander("Call Details:"):
                         st.json(jsonify(match.json, skip_specials=True))
@@ -212,12 +213,68 @@ else:
                             st.text(match.rets)
                         else:
                             st.json(jsonify(match.rets, skip_specials=True))
-                elif val == 0:
-                    st.header('App')
-                    with st.expander("App Details:"):
-                        st.json(jsonify(app_json, skip_specials=True))
+      
                 else: 
                     st.text('No match found')
+            else:
+                st.subheader('App')
+                with st.expander("App Details:"):
+                    st.json(jsonify(app_json, skip_specials=True))
+
+
+            st.header("Components")
+
+            for query, component in classes:
+
+                if len(query.path) == 0:
+                    # Skip App, will still list A.app under "app" below.
+                    continue
+
+                # Draw the accessor/path within the wrapped app of the component.
+                st.subheader(f"{query}")
+
+                # Draw the python class information of this component.
+                cls = component.cls
+                base_cls = cls.base_class()
+                label = f"`{repr(cls)}`"
+                if str(base_cls) != str(cls):
+                    label += f" < `{repr(base_cls)}`"
+                st.write(label)
+
+                # Per-component-type drawing routines.
+                if isinstance(component, LLM):
+                    draw_llm_info(component=component, query=query)
+
+                elif isinstance(component, Prompt):
+                    draw_prompt_info(component=component, query=query)
+
+                elif isinstance(component, Other):
+                    with st.expander("Uncategorized Component Details:"):
+                        st.json(jsonify(component.json, skip_specials=True))
+
+                else:
+                    with st.expander("Unhandled Component Details:"):
+                        st.json(jsonify(component.json, skip_specials=True))
+
+                # Draw the calls issued to component.
+                calls = [
+                    call for call in record.calls
+                    if query == call.stack[-1].path
+                ]
+                if len(calls) > 0:
+                    st.subheader("Calls to component:")
+                    for call in calls:
+                        draw_call(call)
+
+            st.header("More options:")
+
+            if st.button("Display full app json"):
+
+                st.write(jsonify(app_json, skip_specials=True))
+
+            if st.button("Display full record json"):
+
+                st.write(jsonify(record_json, skip_specials=True))
 
 
          
