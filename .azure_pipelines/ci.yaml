@@ -92,6 +92,7 @@ jobs:
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
+          echo yapf --version
           ./format.sh
         displayName: Format Code
       - bash: |
