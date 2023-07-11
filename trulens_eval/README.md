@@ -161,7 +161,7 @@ tru.run_dashboard() # open a local streamlit app to explore
 # tru.stop_dashboard() # stop if needed
 ```
 
-Alternatively, you can also run `trulens-eval` from the command line to start the dashboard.
+Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
 ### Chain Leaderboard
 
