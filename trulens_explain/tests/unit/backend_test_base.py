@@ -1,7 +1,6 @@
 from unittest import TestCase
 
 import numpy as np
-
 from trulens.nn.backend import get_backend
 
 

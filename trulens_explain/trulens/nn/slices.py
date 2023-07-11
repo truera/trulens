@@ -14,10 +14,9 @@ thought of as a sub-model that uses the features computed by $h$.
 
 from typing import Callable, List, Optional, Union
 
+from trulens.nn.backend import get_backend
 from trulens.utils.typing import render_object
 from trulens.utils.typing import TensorLike
-
-from trulens.nn.backend import get_backend
 
 # Define some type aliases.
 LayerIdentifier = Union[int, str, List[Union[int, str]]]
