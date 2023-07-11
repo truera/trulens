@@ -39,6 +39,7 @@ jobs:
           set -e
           source activate $(condaEnvFileSuffix)
           pip install yapf==0.32.0
+          pip install isort==5.10.1
           ./format.sh
         displayName: Format Code
       - bash: |
