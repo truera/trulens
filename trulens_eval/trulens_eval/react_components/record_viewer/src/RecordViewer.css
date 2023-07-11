@@ -29,3 +29,12 @@
   border: 1px solid #212121;
   top: 1,
 }
+
+.timeline-container {
+  border: 1px solid #E0E0E0;
+  border-left: 2px solid #2D736D;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  box-sizing: content-box;
+  display: grid;
+}

@@ -35,7 +35,6 @@ export const getMethodNameFromCell = (stackCell: StackJSONRaw) => {
  * @returns name of the calling method in the stack cell.
  */
 export const getPathName = (stackCell: StackJSONRaw) => {
-  console.log(stackCell.path)
   return stackCell.path.path
     .map((p) => p?.item_or_attribute)
     .filter(Boolean)

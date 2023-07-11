@@ -9,6 +9,7 @@ import { getStartAndEndTimesForNode, getTreeDepth } from "./treeUtils"
 import { DataRaw, StackTreeNode } from "./types"
 import { createTreeFromCalls } from "./utils"
 import { Box, Tooltip } from "@mui/material"
+import { GridLines } from "./TimelineBars"
 
 class RecordViewer extends StreamlitComponentBase {
   public render = (): ReactNode => {
@@ -17,6 +18,7 @@ class RecordViewer extends StreamlitComponentBase {
     const { record_json } = this.props.args as DataRaw
 
     const { font: fontFamily } = this.props.theme as { font: string }
+    const { width } = this.props as { width: number }
 
     const tree = createTreeFromCalls(record_json)
     const treeDepth = getTreeDepth(tree)
@@ -43,7 +45,7 @@ class RecordViewer extends StreamlitComponentBase {
             )}
             {path && (
               <span>
-                <b>path:</b> {path}
+                <b>Path:</b> {path}
               </span>
             )}
           </Box>
@@ -56,7 +58,7 @@ class RecordViewer extends StreamlitComponentBase {
               style={{
                 left: `${((startTime - treeStart) / totalTime) * 100}%`,
                 width: `${(timeTaken / totalTime) * 100}%`,
-                top: depth * 32,
+                top: depth * 32 + 16,
                 fontFamily,
               }}
               onClick={() => {
@@ -79,9 +81,9 @@ class RecordViewer extends StreamlitComponentBase {
       return (
         <div
           style={{
-            height: 32 * treeDepth + 8, // + 8 for padding
             position: "relative",
-            margin: 16,
+            gridColumnStart: 1,
+            gridRowStart: 1,
           }}
         >
           {children}
@@ -89,19 +91,23 @@ class RecordViewer extends StreamlitComponentBase {
       )
     }
 
+    const modifiedWidth = width - 16
+
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <span style={{ fontFamily }}>
           Total time taken: {totalTime / 1000}s
         </span>
         <div
+          className="timeline-container"
           style={{
-            border: `1px solid #E0E0E0`,
-            borderRadius: 4,
-            marginBottom: 8,
-            boxSizing: "content-box",
+            width,
+            gridTemplateRows: 32 * treeDepth + 16,
+            gridTemplateColumns: modifiedWidth,
+            height: 32 * treeDepth + 16,
           }}
         >
+          <GridLines totalWidth={modifiedWidth} totalTime={totalTime} />
           {renderTree()}
         </div>
       </div>
