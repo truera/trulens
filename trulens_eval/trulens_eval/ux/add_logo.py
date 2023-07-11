@@ -3,7 +3,8 @@ import base64
 import pkg_resources
 import streamlit as st
 
-from trulens_eval import __version__, __package__
+from trulens_eval import __package__
+from trulens_eval import __version__
 
 
 def add_logo():

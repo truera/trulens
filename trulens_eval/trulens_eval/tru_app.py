@@ -1,6 +1,6 @@
-from trulens_eval import app
-
 import logging
+
+from trulens_eval import app
 
 logger = logging.getLogger(__name__)
 
