@@ -38,10 +38,8 @@ from pprint import PrettyPrinter
 from queue import Queue
 from time import sleep
 from types import ModuleType
-from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
-    Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
+                    Sequence, Set, Tuple, TypeVar, Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -61,13 +59,15 @@ UNICODE_CLOCK = "⏰"
 
 # Optional requirements.
 
+langchain_version = "0.0.230"
+
 REQUIREMENT_LLAMA = (
     "llama_index 0.6.24 or above is required for instrumenting llama_index apps. "
     "Please install it before use: `pip install llama_index>=0.6.24`."
 )
 REQUIREMENT_LANGCHAIN = (
-    "langchain 0.0.170 or above is required for instrumenting langchain apps. "
-    "Please install it before use: `pip install langchain>=0.0.170`."
+    f"langchain {langchain_version} or above is required for instrumenting langchain apps. "
+    f"Please install it before use: `pip install langchain>={langchain_version}`."
 )
 
 
