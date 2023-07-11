@@ -1,19 +1,22 @@
 from typing import Iterable, List, Type
 
-from trulens_eval import Feedback
-from trulens_eval.feedback import Feedback
-from trulens_eval.app import COMPONENT_CATEGORY
 from trulens_eval import app
+from trulens_eval import Feedback
+from trulens_eval.app import COMPONENT_CATEGORY
+from trulens_eval.feedback import Feedback
+from trulens_eval.util import Class
+from trulens_eval.util import first
 from trulens_eval.util import JSON
-from trulens_eval.util import Class, first, second
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LLAMA
+from trulens_eval.util import second
 from trulens_eval.util import TP
 
 with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.data_structs.node import NodeWithScore
     from llama_index.indices.query.schema import QueryBundle
-    from llama_index.indices.vector_store.retrievers import VectorIndexRetriever
+    from llama_index.indices.vector_store.retrievers import \
+        VectorIndexRetriever
 
 
 class Prompt(app.Prompt, app.LangChainComponent):

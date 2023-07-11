@@ -9,18 +9,18 @@ from typing import ClassVar, Sequence, Tuple
 
 from pydantic import Field
 
-from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Record
-from trulens_eval.schema import RecordAppCall
 from trulens_eval.app import App
+from trulens_eval.instruments import Instrument
+from trulens_eval.provider_apis import Endpoint
 from trulens_eval.provider_apis import OpenAIEndpoint
 from trulens_eval.schema import Cost
-from trulens_eval.provider_apis import Endpoint
+from trulens_eval.schema import Record
+from trulens_eval.schema import RecordAppCall
+from trulens_eval.util import Class
+from trulens_eval.util import dict_set_with
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import JSONPath
 from trulens_eval.util import Method
-from trulens_eval.util import dict_set_with
-from trulens_eval.util import Class
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LLAMA
 
