@@ -3,6 +3,7 @@ import './RecordViewer.css';
 import { getStartAndEndTimesForNode } from './treeUtils';
 import { StackTreeNode } from './types';
 import { Box, Tooltip } from '@mui/material';
+import { TIME_DISPLAY_HEIGHT_BUFFER } from './styling';
 
 export const BAR_HEIGHT = 32;
 
@@ -64,7 +65,7 @@ function NodeBar({ node, depth, root }: { node: StackTreeNode; depth: number; ro
         style={{
           left: `${((startTime - treeStart) / totalTime) * 100}%`,
           width: `${(timeTaken / totalTime) * 100}%`,
-          top: depth * BAR_HEIGHT + 16,
+          top: depth * BAR_HEIGHT + TIME_DISPLAY_HEIGHT_BUFFER,
         }}
         onClick={() => {
           Streamlit.setComponentValue(node.raw?.perf.start_time ?? null);
@@ -82,9 +83,11 @@ export default function TimelineBars({ root: tree }: TreeProps) {
 
   return (
     <div className="timeline-bar-container">
-      {nodesToRender.map(({ node, depth }) => (
-        <NodeBar node={node} depth={depth} root={tree} />
-      ))}
+      <div style={{ position: 'relative' }}>
+        {nodesToRender.map(({ node, depth }) => (
+          <NodeBar node={node} depth={depth} root={tree} />
+        ))}
+      </div>
     </div>
   );
 }

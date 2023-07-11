@@ -28,21 +28,17 @@ class RecordViewer extends StreamlitComponentBase {
     const treeDepth = getTreeDepth(root);
     const { timeTaken: totalTime } = getStartAndEndTimesForNode(root);
 
-    const modifiedWidth = width - 12;
-
     return (
       <div style={{ fontFamily }}>
         <span className="detail">Total time taken: {totalTime / 1000}s</span>
         <div
           className="timeline-container"
           style={{
-            width: modifiedWidth,
-            gridTemplateColumns: modifiedWidth,
-            height: BAR_HEIGHT * treeDepth + TIME_DISPLAY_HEIGHT_BUFFER,
-            gridTemplateRows: BAR_HEIGHT * treeDepth + TIME_DISPLAY_HEIGHT_BUFFER + 8,
+            gridTemplateColumns: width,
+            gridTemplateRows: BAR_HEIGHT * treeDepth + TIME_DISPLAY_HEIGHT_BUFFER,
           }}
         >
-          <GridLines totalWidth={modifiedWidth} totalTime={totalTime} />
+          <GridLines totalWidth={width} totalTime={totalTime} />
           <TimelineBars root={root} />
         </div>
       </div>
