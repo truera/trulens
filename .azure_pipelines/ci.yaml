@@ -22,33 +22,33 @@ jobs:
 
     strategy:
       matrix:
-        py37_tf1_keras:
-          condaEnvFileSuffix: "python37"
+        py38_tf1_keras:
+          condaEnvFileSuffix: "python38"
           requirementsFile: "tests/keras/requirements_tfv1.txt"
           testSubdirectory: "tests/keras"
 
-        py37_tf1_tf_keras:
-          condaEnvFileSuffix: "python37"
+        py38_tf1_tf_keras:
+          condaEnvFileSuffix: "python38"
           requirementsFile: "tests/tf_keras/requirements_tfv1.txt"
           testSubdirectory: "tests/tf_keras"
 
-        py37_pytorch:
-          condaEnvFileSuffix: "python37"
+        py38_pytorch:
+          condaEnvFileSuffix: "python38"
           requirementsFile: "tests/pytorch/requirements.txt"
           testSubdirectory: "tests/pytorch"
 
-        py37_tf1:
-          condaEnvFileSuffix: "python37"
+        py38_tf1:
+          condaEnvFileSuffix: "python38"
           requirementsFile: "tests/tf/requirements.txt"
           testSubdirectory: "tests/tf"
 
-        py37_tf2:
-          condaEnvFileSuffix: "python37"
+        py38_tf2:
+          condaEnvFileSuffix: "python38"
           requirementsFile: "tests/tf2/requirements.txt"
           testSubdirectory: "tests/tf2"
 
-        py37_tf2_non_eager:
-          condaEnvFileSuffix: "python37"
+        py38_tf2_non_eager:
+          condaEnvFileSuffix: "python38"
           requirementsFile: "tests/tf2/requirements.txt"
           testSubdirectory: "tests/tf2_non_eager"
 
@@ -92,14 +92,14 @@ jobs:
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
-          echo Using yapf $(yapf --version)
-          ./format.sh
+          echo Using $(yapf --version) isort $(isort --vn)
+          ./format.sh --explain
         displayName: Format Code
       - bash: |
-          num_changed_files=`git ls-files --others -m --exclude-standard | wc -l`
+          num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_explain | wc -l`
           if [ $num_changed_files -ne 0 ]; then
             echo "The following files have changed after running format.sh. Please format your code and update the PR."
-            git ls-files --others -m --exclude-standard
+            git ls-files --others -m --exclude-standard ./trulens_explain
             echo "\n\nOutputting git diff for checked in files.\n"
             git diff
           fi
