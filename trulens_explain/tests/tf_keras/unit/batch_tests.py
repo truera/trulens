@@ -10,7 +10,6 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
 from tests.unit.batch_test_base import BatchTestBase
-
 from trulens.nn.models import get_model_wrapper
 
 

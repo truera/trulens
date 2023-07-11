@@ -4,6 +4,10 @@ rm -rf break.md
 # Combined notebook flow - will be tested
 nbmerge quickstart.ipynb logging.ipynb feedback_functions.ipynb >> all_tools.ipynb
 
+# Colab quickstarts
+nbmerge colab_dependencies.ipynb quickstart.ipynb >> langchain_quickstart_colab.ipynb
+nbmerge colab_dependencies.ipynb llama_index_quickstart.ipynb >> llama_index_quickstart_colab.ipynb
+
 # Create pypi page documentation
 jupyter nbconvert --to markdown all_tools.ipynb
 printf  "\n\n" >> break.md
@@ -22,7 +26,7 @@ jupyter nbconvert --to script all_tools.ipynb
 SED=`which -a gsed sed | head -n1`
 
 # Fix nbmerge ids field invalid for ipynb
-$SED -i "/id\"\:/d" all_tools.ipynb
+$SED -i "/id\"\:/d" all_tools.ipynb langchain_quickstart_colab.ipynb llama_index_quickstart_colab.ipynb
 
 ## Remove ipynb JSON calls
 $SED -i "/JSON/d" quickstart.py llama_index_quickstart.py all_tools.py
@@ -41,4 +45,5 @@ mv TOP_README.md ../../README.md
 
 mv llama_index_quickstart.py ../../trulens_eval/examples/llama_index_quickstart.py
 mv *.py ../../trulens_eval/examples/
+mv *quickstart_colab.ipynb ../../trulens_eval/examples/colab/quickstarts/
 mv all_tools* ../../trulens_eval/generated_files/

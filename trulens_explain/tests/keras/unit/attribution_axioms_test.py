@@ -14,7 +14,6 @@ from keras.layers import Dense
 from keras.layers import Input
 from keras.models import Model
 from tests.unit.attribution_axioms_test_base import AxiomsTestBase
-
 from trulens.nn.models import get_model_wrapper
 
 
