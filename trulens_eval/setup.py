@@ -1,8 +1,24 @@
 from setuptools import find_namespace_packages
 from setuptools import setup
+from distutils import log
+from distutils.command.build import build
+#import subprocess
+import os
+
+
+class javascript_build(build):
+    def run(self):
+        log.info("running npm run build")
+        os.system("npm run --prefix trulens_eval/react_components/record_viewer/frontend build")
+        #subprocess.check_output(['npm', 'run', '--prefix', 'trulens_eval/react_components/record_viewer/frontend', 'build'], shell=True)
+        build.run(self)
+
 
 setup(
     name="trulens_eval",
+    cmdclass={
+        'build': javascript_build,
+    },
     include_package_data=True,
     packages=find_namespace_packages(
         include=["trulens_eval", "trulens_eval.*"]
