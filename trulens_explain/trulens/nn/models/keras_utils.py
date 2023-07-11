@@ -1,10 +1,9 @@
 import collections
 
-from trulens.utils.typing import many_of_om
-from trulens.utils.typing import om_of_many
-
 from trulens.nn.backend import get_backend
 from trulens.utils import tru_logger
+from trulens.utils.typing import many_of_om
+from trulens.utils.typing import om_of_many
 
 
 def hash_tensor(tensor):

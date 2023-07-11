@@ -17,7 +17,10 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 # ### Import from LangChain and TruLens
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru
+from trulens_eval import Feedback
+from trulens_eval import Huggingface
+from trulens_eval import Tru
+from trulens_eval import TruChain
 
 tru = Tru()
 
@@ -26,8 +29,9 @@ tru = Tru()
 # ! pip install langchain>=0.0.170
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
-from langchain.prompts.chat import ChatPromptTemplate, PromptTemplate
+from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
+from langchain.prompts.chat import PromptTemplate
 
 # ### Create Simple LLM Application
 #
@@ -68,7 +72,10 @@ f_lang_match = Feedback(hugs.language_match).on_input_output()
 # ## Instrument chain for logging with TruLens
 
 truchain = TruChain(
-    chain, app_id='Chain3_ChatApplication', feedbacks=[f_lang_match]
+    chain,
+    app_id='Chain1_ChatApplication',
+    feedbacks=[f_lang_match],
+    tags="prototype"
 )
 
 # Instrumented chain can operate like the original:

@@ -240,15 +240,15 @@ import logging
 import os
 from pprint import PrettyPrinter
 import threading as th
-from typing import (Callable, Dict, Iterable, Optional, Sequence, Set)
+from typing import Callable, Dict, Iterable, Optional, Sequence, Set
 
 from pydantic import BaseModel
 
+from trulens_eval.feedback import Feedback
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Query
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordAppCallMethod
-from trulens_eval.feedback import Feedback
 from trulens_eval.util import _safe_getattr
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import jsonify
