@@ -4,6 +4,7 @@ from millify import millify
 import numpy as np
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
+
 from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 
 st.runtime.legacy_caching.clear_cache()
@@ -59,6 +60,7 @@ def streamlit_app():
         col2.metric(
             "Average Latency (Seconds)",
             f"{millify(round(latency_mean, 5), precision=2)}"
+            if not math.isnan(latency_mean) else "nan"
         )
         col3.metric(
             "Total Cost (USD)",

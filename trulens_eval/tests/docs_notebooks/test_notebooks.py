@@ -1,13 +1,13 @@
 import os
 from os import listdir
 import shutil
-
 from typing import Sequence
 from unittest import main
 from unittest import TestCase
 
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat import read
+
 from trulens_eval import db_migration
 
 
@@ -51,7 +51,9 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
 
     def preprocess_cell(self, cell, resources, index, **kwargs):
         if 'Tru()' in cell["source"]:
-            cell["source"] = cell["source"] + f"\nfrom trulens_eval import Tru\nTru().migrate_database()\n"
+            cell["source"] = cell[
+                "source"
+            ] + f"\nfrom trulens_eval import Tru\nTru().migrate_database()\n"
         ret = super().preprocess_cell(cell, resources, index, **kwargs)
 
         return ret
@@ -100,7 +102,7 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
             DocsNotebookTests, 'test_' + filename.split('.ipynb')[0],
             get_unit_test_for_filename(filename)
         )
-        if 'trulens_eval_gh_top_readme' not in filename:
+        if 'all_tools' in filename or 'llama_index_quickstart' in filename:
             # If you want to test all versions uncomment and replace the below for loop
             ### for version in db_migration.migration_versions:
 

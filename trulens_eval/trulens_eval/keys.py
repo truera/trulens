@@ -94,12 +94,12 @@ from pathlib import Path
 
 import cohere
 import dotenv
-from trulens_eval.util import UNICODE_CHECK, UNICODE_STOP
 
 from trulens_eval.util import caller_frame
+from trulens_eval.util import UNICODE_CHECK
+from trulens_eval.util import UNICODE_STOP
 
 logger = logging.getLogger(__name__)
-
 
 
 def get_config():
@@ -186,8 +186,6 @@ def check_keys(**kwargs):
             f"No .env found in {Path.cwd()} or its parents. "
             "You may need to specify secret keys in another manner."
         )
-    else:
-        config = dotenv.dotenv_values(config_file)
 
     to_global = dict()
 

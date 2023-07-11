@@ -23,7 +23,7 @@ setup(
         'requests>=2.30.0',
         'slack-bolt>=1.18.0',
         'slack-sdk>=3.21.3',
-        'streamlit>=1.22.0',
+        'streamlit>=1.13.0',  # 1.13.0 needed for colab only. https://stackoverflow.com/questions/74500526/streamlit-via-google-colab-through-localtunnel-does-not-work-anymore
         'streamlit-aggrid>=0.3.4.post3',
         'streamlit-extras>=0.2.7',
         # 'tinydb>=4.7.1',
@@ -33,6 +33,6 @@ setup(
         'frozendict>=2.3.8',
         'munch>=3.0.0',
         'ipywidgets>=8.0.6',
-        'numpy>=1.23.5', 
+        'numpy>=1.23.5',
     ],
 )

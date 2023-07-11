@@ -3,6 +3,9 @@ import base64
 import pkg_resources
 import streamlit as st
 
+from trulens_eval import __package__
+from trulens_eval import __version__
+
 
 def add_logo():
     logo = open(
@@ -27,6 +30,12 @@ def add_logo():
                 font-size: 30px;
                 position: relative;
                 top: 100px;
+            }}
+            [data-testid="stSidebarNav"]::after {{
+                margin-left: 20px;
+                color: #aaaaaa;
+                content: "{__package__} {__version__}";
+                font-size: 10pt;
             }}
         </style>
         """,

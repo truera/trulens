@@ -156,7 +156,6 @@ class TruChain(App):
         else:
             raise RuntimeError(f"TruChain has no attribute named {__name}.")
 
-
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
     def call_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs):
         """ Run the chain and also return a record metadata object.

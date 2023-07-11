@@ -186,7 +186,7 @@ JSON_BASES_T = Union[str, int, float, type(None)]
 
 # TODO: rename to "JSON_LIKE" as it is not stringly json.
 # JSON = Union[JSON_BASES_T, Sequence['JSON'], Dict[str, 'JSON']]
-JSON = Union[JSON_BASES_T, Sequence[Any], Dict[str, Any]] # Any = JSON
+JSON = Union[JSON_BASES_T, Sequence[Any], Dict[str, Any]]  # Any = JSON
 
 # TODO: rename to "JSON".
 JSON_STRICT = Dict[str, JSON]
@@ -1132,7 +1132,7 @@ class TP(SingletonPerName):  # "thread processing"
 
 
 def caller_frame(offset=0):
-    return stack()[offset+1].frame
+    return stack()[offset + 1].frame
 
 
 def get_local_in_call_stack(
@@ -1281,7 +1281,7 @@ class Class(SerialModel):
 
 # inspect.signature does not work on builtin type constructors but they are used
 # like this method. Use it to create a signature of a builtin constructor.
-def builtin_init_dummy(self, /, *args, **kwargs):
+def builtin_init_dummy(self, *args, **kwargs):
     pass
 
 

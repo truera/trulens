@@ -4,6 +4,8 @@ import os
 import tempfile
 from typing import Tuple
 
+from trulens.nn.backend import Backend
+from trulens.nn.backend import get_backend
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.models.keras_utils import flatten_substitute_tfhub
 from trulens.nn.models.keras_utils import hash_tensor
@@ -14,16 +16,13 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
+from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import TensorArgs
 from trulens.utils.typing import TensorLike
-
-from trulens.nn.backend import Backend
-from trulens.nn.backend import get_backend
-from trulens.utils import tru_logger
 
 
 def import_keras_backend():

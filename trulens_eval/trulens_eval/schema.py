@@ -20,18 +20,19 @@ feature information about the encoded object types in the dictionary under the
 util.py:CLASS_INFO key.
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 from datetime import datetime
 from enum import Enum
-
-from typing import (Any, ClassVar, Dict, Optional, Sequence, TypeVar, Union)
 import logging
+from typing import Any, ClassVar, Dict, Optional, Sequence, TypeVar, Union
+
 from munch import Munch as Bunch
 import pydantic
-from trulens_eval.util import FunctionOrMethod
 
 from trulens_eval.util import Class
 from trulens_eval.util import Function
+from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
 from trulens_eval.util import JSONPath
@@ -48,6 +49,7 @@ logger = logging.getLogger(__name__)
 
 RecordID = str
 AppID = str
+Tags = str
 FeedbackDefinitionID = str
 FeedbackResultID = str
 
@@ -151,7 +153,7 @@ class Record(SerialModel):
 
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
-    tags: str = ""
+    tags: Optional[str] = ""
 
     main_input: Optional[JSON] = None
     main_output: Optional[JSON] = None  # if no error
@@ -163,7 +165,7 @@ class Record(SerialModel):
     calls: Sequence[RecordAppCall] = []
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
-        super().__init__(record_id="temporay", **kwargs)
+        super().__init__(record_id="temporary", **kwargs)
 
         if record_id is None:
             record_id = obj_id_of_obj(self.dict(), prefix="record")
@@ -252,8 +254,6 @@ class FeedbackResult(SerialModel):
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
 
     cost: Cost = pydantic.Field(default_factory=Cost)
-
-    tags: str = ""
 
     name: str
 
@@ -361,6 +361,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         arbitrary_types_allowed = True
 
     app_id: AppID
+    tags: Tags
 
     # Feedback functions to evaluate on each record. Unlike the above, these are
     # meant to be serialized.
@@ -383,6 +384,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
     def __init__(
         self,
         app_id: Optional[AppID] = None,
+        tags: Optional[Tags] = None,
         feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
         **kwargs
     ):
@@ -390,6 +392,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         # for us:
         kwargs['app_id'] = "temporary"  # will be adjusted below
         kwargs['feedback_mode'] = feedback_mode
+        kwargs['tags'] = ""
 
         # for WithClassInfo:
         kwargs['obj'] = self
@@ -400,6 +403,10 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
             app_id = obj_id_of_obj(obj=self.dict(), prefix="app")
 
         self.app_id = app_id
+
+        if tags is None:
+            tags = "-"  # Set tags to a "-" if None is provided
+        self.tags = tags
 
     @classmethod
     def select_inputs(cls) -> JSONPath:

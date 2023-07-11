@@ -22,14 +22,14 @@ from pydantic import Field
 from slack_bolt import App
 from slack_sdk import WebClient
 
+from trulens_eval import feedback
 from trulens_eval import Select
 from trulens_eval import Tru
-from trulens_eval import feedback
-from trulens_eval.schema import FeedbackMode
-from trulens_eval.tru_chain import TruChain
 from trulens_eval.db import LocalSQLite
 from trulens_eval.db import Record
 from trulens_eval.feedback import Feedback
+from trulens_eval.schema import FeedbackMode
+from trulens_eval.tru_chain import TruChain
 from trulens_eval.util import TP
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 
@@ -302,6 +302,7 @@ def answer_message(client, body: dict, logger):
 
     logger.info(body)
 
+
 if __name__ == "__main__":
     # WebClient instantiates a client that can call API methods When using Bolt, you
     # can use either `app.client` or the `client` passed to listeners.
@@ -310,7 +311,6 @@ if __name__ == "__main__":
 
     # Initializes your app with your bot token and signing secret
     app = App(token=SLACK_TOKEN, signing_secret=SLACK_SIGNING_SECRET)
-
 
     @app.event("app_home_opened")
     def update_home_tab(client, event, logger):
@@ -346,7 +346,6 @@ if __name__ == "__main__":
         except Exception as e:
             logger.error(f"Error publishing home tab: {e}")
 
-
     @app.event("message")
     def handle_message_events(body, logger):
         """
@@ -355,7 +354,6 @@ if __name__ == "__main__":
 
         answer_message(client, body, logger)
 
-
     @app.event("app_mention")
     def handle_app_mention_events(body, logger):
         """
@@ -363,7 +361,6 @@ if __name__ == "__main__":
         """
 
         answer_message(client, body, logger)
-
 
     def start_bot():
         tru.start_evaluator()

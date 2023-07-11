@@ -5,9 +5,8 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
 from tests.unit.environment_test_base import EnvironmentTestBase
-from trulens.nn.models.keras import KerasModelWrapper
-
 from trulens.nn.backend import Backend
+from trulens.nn.models.keras import KerasModelWrapper
 
 
 class EnvironmentTest(EnvironmentTestBase, TestCase):

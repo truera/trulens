@@ -15,12 +15,12 @@ import inspect
 import os
 import traceback
 
-from trulens.utils.typing import ModelLike
-
-import trulens
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
 from trulens.utils import tru_logger
+from trulens.utils.typing import ModelLike
+
+import trulens
 
 
 def discern_backend(model: ModelLike):
