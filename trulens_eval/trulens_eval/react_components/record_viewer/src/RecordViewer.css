@@ -1,4 +1,3 @@
-
 .timeline {
   position: absolute;
   overflow: hidden;
@@ -6,18 +5,17 @@
   border-radius: 4px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   cursor: pointer;
-  background-color: #E0E0E0;
+  background-color: #e0e0e0;
   color: #212121;
   box-sizing: border-box;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px
+  padding: 4px;
 }
 
 .timeline-component-name {
   font-weight: 600;
-
 }
 
 .timeline-time-taken {
@@ -27,20 +25,39 @@
 
 .timeline:hover {
   border: 1px solid #212121;
-  top: 1,
+  top: 1;
 }
 
 .timeline-container {
-  border: 1px solid #E0E0E0;
-  border-left: 2px solid #2D736D;
+  border: 1px solid #e0e0e0;
+  border-left: 2px solid #2d736d;
   border-radius: 4px;
   margin-bottom: 8px;
   box-sizing: content-box;
   display: grid;
 }
 
+.timeline-bar-container {
+  position: relative;
+  grid-column-start: 1;
+  grid-row-start: 1;
+}
+
 .detail {
   font-weight: 600;
   font-size: 0.8rem;
-  color: #757575
+  color: #757575;
+}
+
+.record-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 16;
+  box-sizing: border-box;
+}
+
+.description {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
