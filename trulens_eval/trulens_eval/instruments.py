@@ -478,7 +478,7 @@ class Instrument(object):
             logger.debug(f"\t{query}: instrumenting base {base.__name__}")
 
             for method_name in self.methods:
-                
+
                 if hasattr(base, method_name):
                     check_class = self.methods[method_name]
                     if not check_class(obj):

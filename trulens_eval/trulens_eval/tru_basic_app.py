@@ -5,14 +5,15 @@
 from datetime import datetime
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar,Sequence
+from typing import Any, Callable, ClassVar, Sequence
 
 from pydantic import Field
+
 from trulens_eval.app import App
+from trulens_eval.instruments import Instrument
 from trulens_eval.provider_apis import Endpoint
 from trulens_eval.schema import Cost
 from trulens_eval.schema import RecordAppCall
-from trulens_eval.instruments import Instrument
 from trulens_eval.util import Class
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
@@ -21,17 +22,14 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
+
 class TruBasicCallableInstrument(Instrument):
 
     class Default:
-        CLASSES = lambda: {
-            TruWrapperApp
-        }
+        CLASSES = lambda: {TruWrapperApp}
 
         # Instrument only methods with these names and of these classes.
-        METHODS = {
-            "_call": lambda o: isinstance(o, TruWrapperApp)
-        }
+        METHODS = {"_call": lambda o: isinstance(o, TruWrapperApp)}
 
     def __init__(self):
         super().__init__(
@@ -40,11 +38,16 @@ class TruBasicCallableInstrument(Instrument):
             methods=TruBasicCallableInstrument.Default.METHODS
         )
 
+
 class TruWrapperApp(object):
     # the class level call (Should be immutable from the __init__)
-    _call: Callable = lambda self, *args, **kwargs : self._call_fn(*args, **kwargs)
-    def __init__(self, call_fn:Callable):
+    _call: Callable = lambda self, *args, **kwargs: self._call_fn(
+        *args, **kwargs
+    )
+
+    def __init__(self, call_fn: Callable):
         self._call_fn = call_fn
+
 
 class TruBasicApp(App):
     """
