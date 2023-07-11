@@ -2,31 +2,35 @@
 Generalized root type for various libraries like llama_index and langchain .
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+)
 
-from pydantic import Field
 import pydantic
+from pydantic import Field
 
+from trulens_eval.db import DB
+from trulens_eval.feedback import Feedback
 from trulens_eval.instruments import Instrument
+from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Perf
-from trulens_eval.schema import Select
 from trulens_eval.schema import Record
+from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
-from trulens_eval.db import DB
-from trulens_eval.feedback import Feedback
-from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import all_objects
-from trulens_eval.util import JSON_BASES_T
-from trulens_eval.util import CLASS_INFO
-from trulens_eval.util import JSON, JSON_BASES
 from trulens_eval.util import Class
+from trulens_eval.util import CLASS_INFO
+from trulens_eval.util import GetItemOrAttribute
+from trulens_eval.util import JSON
+from trulens_eval.util import JSON_BASES
+from trulens_eval.util import JSON_BASES_T
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath

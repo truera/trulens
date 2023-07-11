@@ -35,14 +35,15 @@ otherwise you might get circular import errors.
 
 __version__ = "0.4.0"
 
-from trulens_eval.schema import FeedbackMode
-from trulens_eval.schema import Query, Select
-from trulens_eval.tru import Tru
-from trulens_eval.tru_chain import TruChain
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Huggingface
 from trulens_eval.feedback import OpenAI
 from trulens_eval.feedback import Provider
+from trulens_eval.schema import FeedbackMode
+from trulens_eval.schema import Query
+from trulens_eval.schema import Select
+from trulens_eval.tru import Tru
+from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_llama import TruLlama
 from trulens_eval.util import TP
 
