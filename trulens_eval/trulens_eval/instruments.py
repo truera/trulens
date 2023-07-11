@@ -344,7 +344,7 @@ class Instrument(object):
             # than once in the wrapped chain or are called more than once.
             # func = getattr(func, Instrument.INSTRUMENT)
 
-        logger.debug(f"\t\t\t{query}: instrumenting {method_name}={func}")
+        logger.error(f"\t\t\t{query}: instrumenting {method_name}={func}")
 
         sig = signature(func)
 
@@ -424,7 +424,6 @@ class Instrument(object):
                 rets=rets,
                 error=error_str if error is not None else None
             )
-        
             row = RecordAppCall(**row_args)
             record.append(row)
 
@@ -476,20 +475,20 @@ class Instrument(object):
             if not self.to_instrument_module(base.__module__):
                 continue
 
-            logger.debug(f"\t{query}: instrumenting base {base.__name__}")
+            logger.error(f"\t{query}: instrumenting base {base.__name__}")
 
             for method_name in self.methods:
-                print(method_name)
+                
                 if hasattr(base, method_name):
-                    print("Tracked!", method_name)
+                    print("Tracked!", " | ", cls, " | ",method_name)
                     check_class = self.methods[method_name]
                     if not check_class(obj):
                         continue
-
+                    print("NOT SKIPPED")
                     original_fun = getattr(base, method_name)
 
                     logger.debug(f"\t\t{query}: instrumenting {method_name}")
-
+                    print(original_fun)
                     setattr(
                         base, method_name,
                         self.instrument_tracked_method(

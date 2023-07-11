@@ -1,5 +1,5 @@
 """
-# Langchain instrumentation and monitoring.
+# Basic input output instrumentation and monitoring.
 """
 
 from datetime import datetime
@@ -8,7 +8,6 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar,Sequence
 
 from pydantic import Field
-
 from trulens_eval.app import App
 from trulens_eval.provider_apis import Endpoint
 from trulens_eval.schema import Cost
@@ -22,13 +21,30 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-class NoRootClass:
-    pass
+class TruBasicCallableInstrument(Instrument):
 
-class TruWrapperApp:
-    __call__: Callable = None
+    class Default:
+        CLASSES = lambda: {
+            TruWrapperApp
+        }
+
+        # Instrument only methods with these names and of these classes.
+        METHODS = {
+            "_call": lambda o: isinstance(o, TruWrapperApp)
+        }
+
+    def __init__(self):
+        super().__init__(
+            root_method=TruBasicApp.call_with_record,
+            classes=TruBasicCallableInstrument.Default.CLASSES(),
+            methods=TruBasicCallableInstrument.Default.METHODS
+        )
+
+class TruWrapperApp(object):
+    # the class level call (Should be immutable from the __init__)
+    _call: Callable = lambda self, *args, **kwargs : self._call_fn(*args, **kwargs)
     def __init__(self, call_fn:Callable):
-        self.__call__ = call_fn
+        self._call_fn = call_fn
 
 class TruBasicApp(App):
     """
@@ -42,26 +58,24 @@ class TruBasicApp(App):
         const=True
     )
 
-    # Normally pydantic does not like positional args but chain here is
-    # important enough to make an exception.
     def __init__(self, text_to_text: Callable, **kwargs):
         """
         Wrap a callable for monitoring.
 
         Arguments:
-        - app: Chain -- the chain to wrap.
+        - text_to_text: A callable string to string
         - More args in App
         - More args in AppDefinition
         - More args in WithClassInfo
         """
-
+        assert isinstance(text_to_text("This should return a string"), str)
         super().update_forward_refs()
+        app = TruWrapperApp(text_to_text)
         kwargs['app'] = TruWrapperApp(text_to_text)
-        kwargs['root_class'] = Class.of_class(NoRootClass)
-        kwargs['instrument'] = Instrument()
+        kwargs['root_class'] = Class.of_object(app)
+        kwargs['instrument'] = TruBasicCallableInstrument()
         super().__init__(**kwargs)
 
-    # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
     def call_with_record(self, input: str, **kwargs):
         """ Run the callable and pass any kwargs.
 
@@ -84,7 +98,7 @@ class TruBasicApp(App):
         try:
             start_time = datetime.now()
             ret, cost = Endpoint.track_all_costs_tally(
-                lambda: self.app.__call__(input, **kwargs)
+                lambda: self.app._call(input, **kwargs)
             )
             end_time = datetime.now()
 
@@ -97,17 +111,9 @@ class TruBasicApp(App):
 
         ret_record_args = dict()
 
-        inputs = self.app.prep_inputs(inputs)
-
-        output_key = self.output_keys[0]
-
-        ret_record_args['main_input'] = jsonify(input)
-
+        ret_record_args['main_input'] = input
         if ret is not None:
-            ret_record_args['main_output'] = jsonify(ret[output_key])
-
-        if error is not None:
-            ret_record_args['main_error'] = jsonify(error)
+            ret_record_args['main_output'] = ret
 
         ret_record = self._post_record(
             ret_record_args, error, cost, start_time, end_time, record

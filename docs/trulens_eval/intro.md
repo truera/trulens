@@ -26,6 +26,13 @@ Llama Index:
 
 [llama_index_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.4.0/trulens_eval/examples/llama_index_quickstart.py)
 
+No Framework: 
+
+[no_framework_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.5.0/trulens_eval/examples/no_framework_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/truera/trulens/blob/releases/rc-trulens-eval-0.5.0/trulens_eval/examples/no_framework_quickstart.ipynb)
+
+[llama_index_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.5.0/trulens_eval/examples/no_framework_quickstart.py)
+
 ## Installation and Setup
 
 Install the trulens-eval pip package from PyPI.
