@@ -13,6 +13,8 @@ import pandas as pd
 import pydantic
 
 from trulens_eval import __version__
+from trulens_eval import db_migration
+from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import AppID
@@ -25,8 +27,6 @@ from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordID
-from trulens_eval import db_migration
-from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.util import JSON
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import SerialModel

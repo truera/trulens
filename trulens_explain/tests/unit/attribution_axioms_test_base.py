@@ -15,6 +15,7 @@ from functools import partial
 
 import numpy as np
 from trulens.nn.attribution import InternalInfluence
+from trulens.nn.backend import get_backend
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
@@ -24,8 +25,6 @@ from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.utils.test import tolerance
-
-from trulens.nn.backend import get_backend
 
 
 class AxiomsTestBase(object):

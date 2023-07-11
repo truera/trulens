@@ -1,21 +1,21 @@
 import json
 import random
 from typing import Dict, List
-from streamlit_javascript import st_javascript
 
 import pandas as pd
 import streamlit as st
+from streamlit_javascript import st_javascript
 
+from trulens_eval.app import ComponentView
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
-from trulens_eval.app import ComponentView
 from trulens_eval.schema import Select
-from trulens_eval.util import GetItemOrAttribute
-from trulens_eval.util import jsonify
-from trulens_eval.util import JSONPath
 from trulens_eval.util import CLASS_INFO
+from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import is_empty
 from trulens_eval.util import is_noserio
+from trulens_eval.util import jsonify
+from trulens_eval.util import JSONPath
 
 
 def write_or_json(st, obj):
