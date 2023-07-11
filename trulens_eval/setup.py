@@ -1,7 +1,7 @@
 from setuptools import find_namespace_packages
 from setuptools import setup
 
-from trulens_eval.util import langchain_version
+langchain_version = "0.0.230" # duplicated in trulens_eval.util, don't know how to dedup
 
 setup(
     name="trulens_eval",
