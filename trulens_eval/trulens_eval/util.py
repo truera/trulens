@@ -745,7 +745,7 @@ class GetItemOrAttribute(Step):
     item_or_attribute: str  # distinct from "item" for deserialization
 
     def __hash__(self):
-        return hash(self.item)
+        return hash(self.item_or_attribute)
 
     def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
         if isinstance(obj, Dict):

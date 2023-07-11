@@ -41,7 +41,7 @@ def render_call_frame(frame: RecordAppCall) -> str:  # markdown
     )
 
 
-def draw_call(call) -> None:
+def draw_call(call: RecordAppCall) -> None:
     top = call.stack[-1]
 
     with st.expander(label=render_call_frame(top)):
