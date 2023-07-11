@@ -186,6 +186,8 @@ def check_keys(**kwargs):
             f"No .env found in {Path.cwd()} or its parents. "
             "You may need to specify secret keys in another manner."
         )
+    else:
+        config = dotenv.dotenv_values(config_file)
 
     to_global = dict()
 
