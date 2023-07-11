@@ -1,11 +1,11 @@
 from typing import Iterable, List, Type
 
-from trulens_eval.feedback import Feedback
-from trulens_eval.app import COMPONENT_CATEGORY
 from trulens_eval import app
-from trulens_eval.util import JSON
+from trulens_eval.app import COMPONENT_CATEGORY
+from trulens_eval.feedback import Feedback
 from trulens_eval.util import Class
 from trulens_eval.util import first
+from trulens_eval.util import JSON
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LANGCHAIN
 from trulens_eval.util import second
