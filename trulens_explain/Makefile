@@ -3,7 +3,7 @@
 
 SHELL:=bash
 ACTIVATE:=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
-CONDA_ENV:=python37
+CONDA_ENV:=python38
 TEST_ENV:=PYTHONPATH=. CUDA_VISIBLE_DEVICES=
 
 format:
