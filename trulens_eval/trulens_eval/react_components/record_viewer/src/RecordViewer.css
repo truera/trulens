@@ -38,3 +38,9 @@
   box-sizing: content-box;
   display: grid;
 }
+
+.detail {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: #757575
+}
