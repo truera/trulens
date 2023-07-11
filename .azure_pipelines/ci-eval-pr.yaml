@@ -40,13 +40,14 @@ jobs:
           source activate $(condaEnvFileSuffix)
           pip install yapf==0.32.0
           pip install isort==5.10.1
-          ./format.sh
+          echo Using $(yapf --version) isort $(isort --vn)
+          ./format.sh --eval
         displayName: Format Code
       - bash: |
-          num_changed_files=`git ls-files --others -m --exclude-standard | wc -l`
+          num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
           if [ $num_changed_files -ne 0 ]; then
             echo "The following files have changed after running format.sh. Please format your code and update the PR."
-            git ls-files --others -m --exclude-standard
+            git ls-files --others -m --exclude-standard ./trulens_eval
             echo "\n\nOutputting git diff for checked in files.\n"
             git diff
           fi
