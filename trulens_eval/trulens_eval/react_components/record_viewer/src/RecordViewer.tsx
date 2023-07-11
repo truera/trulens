@@ -3,12 +3,16 @@ import { ReactNode } from 'react';
 import './RecordViewer.css';
 import { getStartAndEndTimesForNode, getTreeDepth } from './treeUtils';
 import { DataRaw } from './types';
-import { GridLines } from './TimelineBars';
+import GridLines from './GridLines';
 import { createTreeFromCalls } from './utils';
-import Tree from './Tree';
+import TimelineBars from './TimelineBars';
 
 class RecordViewer extends StreamlitComponentBase {
   public render = (): ReactNode => {
+    /**
+     * Extracting args and theme from streamlit args
+     */
+
     // This seems to currently be the best way to type args, since
     // StreamlitComponentBase appears happy to just give it "any".
     const { record_json } = this.props.args as DataRaw;
@@ -16,9 +20,12 @@ class RecordViewer extends StreamlitComponentBase {
     const { font: fontFamily } = this.props.theme as { font: string };
     const { width } = this.props as { width: number };
 
-    const tree = createTreeFromCalls(record_json);
-    const treeDepth = getTreeDepth(tree);
-    const { timeTaken: totalTime } = getStartAndEndTimesForNode(tree);
+    /**
+     * Actual code begins
+     */
+    const root = createTreeFromCalls(record_json);
+    const treeDepth = getTreeDepth(root);
+    const { timeTaken: totalTime } = getStartAndEndTimesForNode(root);
 
     const modifiedWidth = width - 16;
 
@@ -35,7 +42,7 @@ class RecordViewer extends StreamlitComponentBase {
           }}
         >
           <GridLines totalWidth={modifiedWidth} totalTime={totalTime} />
-          <Tree tree={tree} />
+          <TimelineBars root={root} />
         </div>
       </div>
     );

@@ -1,63 +1,88 @@
-type GridLinesProps = {
-  totalWidth: number;
-  totalTime: number;
+import { Streamlit } from 'streamlit-component-lib';
+import './RecordViewer.css';
+import { getStartAndEndTimesForNode } from './treeUtils';
+import { StackTreeNode } from './types';
+import { Box, Tooltip } from '@mui/material';
+
+type TreeProps = {
+  root: StackTreeNode;
 };
 
-const MIN_WIDTH = 100;
+const getNodesToRender = (root: StackTreeNode) => {
+  const children: { node: StackTreeNode; depth: number }[] = [];
+  const { endTime: treeEnd } = getStartAndEndTimesForNode(root);
 
-const SECOND = 1000;
-const MINUTE = 60 * SECOND;
+  const recursiveGetChildrenToRender = (node: StackTreeNode, depth: number) => {
+    const { startTime } = getStartAndEndTimesForNode(node);
 
-const TIME_OPTIONS = [100, 500, 1 * SECOND, 5 * SECOND, 10 * SECOND, 30 * SECOND, MINUTE];
+    // Ignore calls that happen after the app time. This is indicative of errors.
+    if (startTime >= treeEnd) return;
 
-export const GridLines = ({ totalWidth, totalTime }: GridLinesProps) => {
-  const maxCols = Math.floor(totalWidth / MIN_WIDTH);
+    children.push({ node, depth });
 
-  const timeOptionCols = TIME_OPTIONS.map((timeOption) => Math.floor(totalTime / timeOption));
+    for (const child of node.children ?? []) {
+      recursiveGetChildrenToRender(child, depth + 1);
+    }
+  };
 
-  const timeOptionIndex = timeOptionCols.findIndex((c) => c < maxCols);
-  const timeOption = timeOptionIndex !== -1 ? TIME_OPTIONS[timeOptionIndex] : 1;
-  const numCols = Math.floor(totalTime / timeOption);
-  const widthPerCol = (timeOption / totalTime) * totalWidth;
+  recursiveGetChildrenToRender(root, 0);
+
+  return children;
+};
+
+function NodeBar({ node, depth, root }: { node: StackTreeNode; depth: number; root: StackTreeNode }) {
+  const { startTime, timeTaken } = getStartAndEndTimesForNode(node);
+  const { timeTaken: totalTime, startTime: treeStart } = getStartAndEndTimesForNode(root);
+
+  const { name, methodName, path } = node;
+
+  const description = (
+    <Box className="description">
+      <b>{name}</b>
+      <span>
+        <b>Time taken:</b> {timeTaken}ms
+      </span>
+      {methodName && (
+        <span>
+          <b>Method name:</b> {methodName}
+        </span>
+      )}
+      {path && (
+        <span>
+          <b>Path:</b> {path}
+        </span>
+      )}
+    </Box>
+  );
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-        position: 'relative',
-        gridColumnStart: 1,
-        gridRowStart: 1,
-        overflow: 'hidden',
-      }}
-    >
-      {Array(numCols)
-        .fill(undefined)
-        .map((_c, i) => (
-          <>
-            <div
-              key={i}
-              style={{
-                height: '100%',
-                minHeight: 20,
-                width: '1px',
-                backgroundColor: '#E0E0E0',
-                position: 'absolute',
-                left: (i + 1) * widthPerCol,
-              }}
-            />
-            <span
-              className="detail"
-              style={{
-                position: 'absolute',
-                fontSize: '0.8rem',
-                left: (i + 1) * widthPerCol + 4,
-              }}
-            >
-              {(i + 1) * timeOption}ms
-            </span>
-          </>
-        ))}
+    <Tooltip title={description} arrow>
+      <div
+        className="timeline"
+        style={{
+          left: `${((startTime - treeStart) / totalTime) * 100}%`,
+          width: `${(timeTaken / totalTime) * 100}%`,
+          top: depth * 32 + 16,
+        }}
+        onClick={() => {
+          Streamlit.setComponentValue(node.raw?.perf.start_time ?? null);
+        }}
+      >
+        <span className="timeline-component-name">{node.name}</span>
+        <span className="timeline-time-taken">{timeTaken}ms</span>
+      </div>
+    </Tooltip>
+  );
+}
+
+export default function TimelineBars({ root: tree }: TreeProps) {
+  const nodesToRender = getNodesToRender(tree);
+
+  return (
+    <div className="timeline-bar-container">
+      {nodesToRender.map(({ node, depth }) => (
+        <NodeBar node={node} depth={depth} root={tree} />
+      ))}
     </div>
   );
-};
+}
