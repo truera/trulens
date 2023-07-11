@@ -35,7 +35,7 @@ The components of this specifications are:
 - **Feedback constructor** -- The line `Feedback(openai.language_match)`
   constructs a Feedback object with a feedback implementation. 
 
-- **Argument specification** -- The next line, `on_input_output', specifies how
+- **Argument specification** -- The next line, `on_input_output`, specifies how
   the `language_match` arguments are to be determined from an app record or app
   definition. The general form of this specification is done using `on` but
   several shorthands are provided. `on_input_output` states that the first two
