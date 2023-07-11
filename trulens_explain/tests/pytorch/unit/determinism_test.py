@@ -1,7 +1,6 @@
 import os
 
 from tests.unit.determinism_test_base import DeterminismTestBase
-
 from trulens.nn.models import get_model_wrapper
 
 os.environ['TRULENS_BACKEND'] = 'pytorch'

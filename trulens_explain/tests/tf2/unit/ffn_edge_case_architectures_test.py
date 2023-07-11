@@ -12,16 +12,15 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
 from trulens.nn.attribution import InternalInfluence
+from trulens.nn.backend import get_backend
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import GaussianDoi
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
+from trulens.nn.models import get_model_wrapper
 from trulens.nn.quantities import ClassQoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
-
-from trulens.nn.backend import get_backend
-from trulens.nn.models import get_model_wrapper
 
 
 class FfnEdgeCaseArchitecturesTest(TestCase):

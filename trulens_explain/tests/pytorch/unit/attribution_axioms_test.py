@@ -10,7 +10,6 @@ from torch import Tensor
 from torch.nn import Linear
 from torch.nn import Module
 from torch.nn import ReLU
-
 from trulens.nn.backend import get_backend
 from trulens.nn.models import get_model_wrapper
 
