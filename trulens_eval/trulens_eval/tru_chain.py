@@ -187,7 +187,6 @@ class TruChain(App):
                 end_time = datetime.now()
 
         except BaseException as e:
-            raise e
             end_time = datetime.now()
             error = e
             logger.error(f"App raised an exception: {e}")
