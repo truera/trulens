@@ -224,7 +224,11 @@ else:
                         match = call
                         break
 
-                if match:
+                if match:                    
+                    length = len(match.stack)
+                    app_call = match.stack[length - 1]
+                    st.subheader(app_call.method.obj.cls.name)
+
                     draw_call(match)
                     with st.expander("Call Details:"):
                         st.json(jsonify(match, skip_specials=True))
@@ -246,7 +250,7 @@ else:
                 with st.expander("App Details:"):
                     st.json(jsonify(app_json, skip_specials=True))
 
-            st.header("Components")
+            st.header("All components")
 
             for query, component in classes:
 
