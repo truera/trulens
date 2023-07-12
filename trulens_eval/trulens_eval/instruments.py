@@ -424,7 +424,6 @@ class Instrument(object):
                 rets=rets,
                 error=error_str if error is not None else None
             )
-
             row = RecordAppCall(**row_args)
             record.append(row)
 
@@ -479,15 +478,14 @@ class Instrument(object):
             logger.debug(f"\t{query}: instrumenting base {base.__name__}")
 
             for method_name in self.methods:
+
                 if hasattr(base, method_name):
                     check_class = self.methods[method_name]
                     if not check_class(obj):
                         continue
-
                     original_fun = getattr(base, method_name)
 
                     logger.debug(f"\t\t{query}: instrumenting {method_name}")
-
                     setattr(
                         base, method_name,
                         self.instrument_tracked_method(
