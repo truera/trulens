@@ -42,14 +42,19 @@ def copy_to_clipboard(path, *args, **kwargs):
 
 
 def draw_selector_button(path) -> None:
-    st.button(key=str(random.random()), label=f"{Select.render_for_dashboard(path)}", on_click=copy_to_clipboard, args=(path, ))
+    st.button(
+        key=str(random.random()),
+        label=f"{Select.render_for_dashboard(path)}",
+        on_click=copy_to_clipboard,
+        args=(path,)
+    )
 
 
 def render_selector_markdown(path) -> str:
     return f"[`{Select.render_for_dashboard(path)}`]"
 
 
-def render_call_frame(frame: RecordAppCall, path = None) -> str:  # markdown
+def render_call_frame(frame: RecordAppCall, path=None) -> str:  # markdown
     path = path or frame.path
 
     return (
@@ -61,10 +66,13 @@ def draw_call(call: RecordAppCall) -> None:
     top = call.stack[-1]
 
     path = Select.for_record(
-        top.path._append(step = GetItemOrAttribute(item_or_attribute=top.method.name))
+        top.path._append(
+            step=GetItemOrAttribute(item_or_attribute=top.method.name)
+        )
     )
 
-    with st.expander(label=f"Call " + render_call_frame(top, path=path) + " " + render_selector_markdown(path)):
+    with st.expander(label=f"Call " + render_call_frame(top, path=path) + " " +
+                     render_selector_markdown(path)):
 
         args = call.args
         rets = call.rets
@@ -116,7 +124,9 @@ def draw_prompt_info(query: JSONPath, component: ComponentView) -> None:
     }
 
     for key, value in prompt_types.items():
-        with st.expander(key.capitalize() + " " + render_selector_markdown(getattr(path, key)), expanded=True):
+        with st.expander(key.capitalize() + " " +
+                         render_selector_markdown(getattr(path, key)),
+                         expanded=True):
 
             if isinstance(value, (Dict, List)):
                 st.write(value)
@@ -157,7 +167,10 @@ def draw_llm_info(query: JSONPath, component: ComponentView) -> None:
             new_columns = df[column].apply(
                 lambda x: pd.Series(x) if isinstance(x, dict) else pd.Series()
             )
-            new_columns.columns = [f"{key} {render_selector_markdown(path)}" for key in new_columns.columns]
+            new_columns.columns = [
+                f"{key} {render_selector_markdown(path)}"
+                for key in new_columns.columns
+            ]
 
             # Remove extra zeros after the decimal point
             new_columns = new_columns.applymap(
@@ -171,7 +184,6 @@ def draw_llm_info(query: JSONPath, component: ComponentView) -> None:
             # TODO: add selectors to the output here
 
             pass
-
 
     # Inject CSS with Markdown
 

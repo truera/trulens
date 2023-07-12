@@ -153,7 +153,7 @@ class TrulensComponent(ComponentView):
         return False
 
     @staticmethod
-    def of_json(json: JSON) -> 'TrulensComponent':        
+    def of_json(json: JSON) -> 'TrulensComponent':
         from trulens_eval.utils.trulens import component_of_json
         return component_of_json(json)
 
@@ -188,9 +188,6 @@ class Other(ComponentView):
     # Any component that does not fit into the other named categories.
 
     pass
-
-
-
 
 
 def instrumented_component_views(
