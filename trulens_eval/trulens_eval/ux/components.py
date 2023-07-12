@@ -41,14 +41,14 @@ def render_call_frame(frame: RecordAppCall) -> str:  # markdown
     )
 
 
-def draw_call(call) -> None:
+def draw_call(call: RecordAppCall) -> None:
     top = call.stack[-1]
 
     with st.expander(label=render_call_frame(top)):
         args = call.args
         rets = call.rets
 
-        for frame in call.stack[0:-2]:
+        for frame in call.stack[::-1][1:]:
             st.write("Via " + render_call_frame(frame))
 
         st.subheader(f"Inputs:")
