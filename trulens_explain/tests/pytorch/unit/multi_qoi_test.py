@@ -12,7 +12,6 @@ from torch import cat
 from torch.nn import GRU
 from torch.nn import Linear
 from torch.nn import Module
-
 from trulens.nn.backend import get_backend
 from trulens.nn.models import get_model_wrapper
 

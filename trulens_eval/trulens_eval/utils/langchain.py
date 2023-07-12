@@ -1,11 +1,11 @@
 from typing import Iterable, List, Type
 
-from trulens_eval.feedback import Feedback
-from trulens_eval.app import COMPONENT_CATEGORY
 from trulens_eval import app
-from trulens_eval.util import JSON
+from trulens_eval.app import COMPONENT_CATEGORY
+from trulens_eval.feedback import Feedback
 from trulens_eval.util import Class
 from trulens_eval.util import first
+from trulens_eval.util import JSON
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LANGCHAIN
 from trulens_eval.util import second
@@ -158,9 +158,13 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
             feedback=feedback, threshold=threshold, *args, **kwargs
         )
 
-    def get_relevant_documents(self, query: str) -> List[Document]:
+    # Signature must match
+    # langchain.schema.retriever.BaseRetriever._get_relevant_documents .
+    def _get_relevant_documents(
+        self, query: str, *, run_manager
+    ) -> List[Document]:
         # Get relevant docs using super class:
-        docs = super().get_relevant_documents(query)
+        docs = super()._get_relevant_documents(query, run_manager=run_manager)
 
         # Evaluate the filter on each, in parallel.
         promises = (

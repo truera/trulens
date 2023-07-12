@@ -16,6 +16,10 @@ from dataclasses import dataclass
 from typing import Callable, get_type_hints, List, Tuple, Union
 
 import numpy as np
+from trulens.nn.backend import get_backend
+from trulens.nn.backend import memory_suggestions
+from trulens.nn.backend import rebatch
+from trulens.nn.backend import tile
 from trulens.nn.distributions import DoI
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
@@ -29,6 +33,7 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
+from trulens.utils import tru_logger
 from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
@@ -46,12 +51,6 @@ from trulens.utils.typing import Outputs
 from trulens.utils.typing import TensorArgs
 from trulens.utils.typing import TensorLike
 from trulens.utils.typing import Uniform
-
-from trulens.nn.backend import get_backend
-from trulens.nn.backend import memory_suggestions
-from trulens.nn.backend import rebatch
-from trulens.nn.backend import tile
-from trulens.utils import tru_logger
 
 # Attribution-related type aliases.
 # TODO: Verify these and move to typing utils?

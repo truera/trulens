@@ -1,6 +1,7 @@
 import inspect
 import json
 import logging
+from pprint import PrettyPrinter
 from queue import Queue
 from threading import Thread
 from time import sleep
@@ -8,7 +9,6 @@ from types import ModuleType
 from typing import (
     Any, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
 )
-from pprint import PrettyPrinter
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import LLMResult
@@ -244,7 +244,7 @@ class Endpoint(SerialModel, SingletonPerName):
             except Exception as e:
                 retries -= 1
                 logger.error(
-                    f"{self.name} request failed {type(e)}={e}. Retries={retries}."
+                    f"{self.name} request failed {type(e)}={e}. Retries remaining={retries}."
                 )
                 if retries > 0:
                     sleep(retry_delay)

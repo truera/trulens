@@ -22,14 +22,14 @@ from pydantic import Field
 from slack_bolt import App
 from slack_sdk import WebClient
 
+from trulens_eval import feedback
 from trulens_eval import Select
 from trulens_eval import Tru
-from trulens_eval import feedback
-from trulens_eval.schema import FeedbackMode
-from trulens_eval.tru_chain import TruChain
 from trulens_eval.db import LocalSQLite
 from trulens_eval.db import Record
 from trulens_eval.feedback import Feedback
+from trulens_eval.schema import FeedbackMode
+from trulens_eval.tru_chain import TruChain
 from trulens_eval.util import TP
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 
