@@ -740,6 +740,48 @@ class OpenAI(Provider):
             )
         ) / 10
 
+    class GroundTruthAgreement(SerialModel):
+        ground_truth: list
+        def __init__(self, ground_truth: list):
+            super().__init__(ground_truth=ground_truth)
+
+        def _find_response(self, prompt: str) -> Optional[str]:
+            responses = [qr["response"] for qr in self.ground_truth if qr["query"] == prompt]
+            if responses:
+                return responses[0]
+            else:
+                return None
+
+
+        def measure(self, prompt: str, response: str) -> float:
+            """
+            Uses OpenAI's Chat GPT Model. A function that that measures similarity to ground truth. A second template
+            is given to Chat GPT with a prompt that the original response is
+            correct, and measures whether previous Chat GPT's response is similar.
+
+            Parameters:
+                prompt (str): A text prompt to an agent. response (str): The agent's
+                response to the prompt.
+
+            Returns:
+                float: A value between 0 and 1. 0 being "not in agreement" and 1
+                being "in agreement".
+            """
+            ground_truth_response = self._find_response(prompt)
+            print(prompt)
+            print(ground_truth_response)
+            if (ground_truth_response):
+                print(ground_truth_response)            
+                agreement_txt = _get_answer_agreement(
+                    prompt, response, ground_truth_response
+                )
+                print(agreement_txt)
+                ret = _re_1_10_rating(agreement_txt) / 10
+                print(ret)
+            else:
+                ret = np.nan
+            return ret
+
     def model_agreement(self, prompt: str, response: str) -> float:
         """
         Uses OpenAI's Chat GPT Model. A function that gives Chat GPT the same
@@ -844,11 +886,7 @@ class AzureOpenAI(OpenAI):
         )
 
 
-def _get_answer_agreement(prompt, response, check_response, model_engine):
-    print("DEBUG")
-    print(feedback_prompts.AGREEMENT_SYSTEM_PROMPT % (prompt, response))
-    print("MODEL ANSWER")
-    print(check_response)
+def _get_answer_agreement(prompt, response, check_response, model_engine="gpt-3.5-turbo"):
     oai_chat_response = OpenAI().endpoint.run_me(
         lambda: openai.ChatCompletion.create(
             model=model_engine,
