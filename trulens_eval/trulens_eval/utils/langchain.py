@@ -170,7 +170,7 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         docs = super()._get_relevant_documents(query, run_manager=run_manager)
 
         # Evaluate the filter on each, in parallel.
-        ex = ThreadPoolExecutor(max_workers=len(docs))
+        ex = ThreadPoolExecutor(max_workers=max(1, len(docs)))
 
         futures = list(
             (
