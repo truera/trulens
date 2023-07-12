@@ -226,7 +226,7 @@ class Select:
 
     def for_record(query: Query) -> Query:
         return Select.Query(path=Select.Record.path + query.path)
-    
+
     def for_app(query: Query) -> Query:
         return Select.Query(path=Select.App.path + query.path)
 
@@ -245,7 +245,7 @@ class Select:
         if query.path[0:2] == Select.RecordInput.path:
             ret = "Select.RecordInput"
             rest = query.path[2:]
-        elif query.path[0:2] == Select.RecordOutput.path: 
+        elif query.path[0:2] == Select.RecordOutput.path:
             ret = "Select.RecordOutput"
             rest = query.path[2:]
         elif query.path[0:2] == Select.RecordCalls.path:
@@ -264,6 +264,7 @@ class Select:
             ret += repr(step)
 
         return f"{ret}"
+
 
 # To deprecate in 1.0.0:
 Query = Select

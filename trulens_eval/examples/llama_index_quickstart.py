@@ -24,10 +24,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 # ### Import from LlamaIndex and TruLens
 
 # Imports main tools:
-from trulens_eval import Feedback
-from trulens_eval import feedback
-from trulens_eval import Tru
-from trulens_eval import TruLlama
+from trulens_eval import TruLlama, Feedback, Tru, feedback
 
 tru = Tru()
 
@@ -38,8 +35,7 @@ tru = Tru()
 # LLama Index starter example from: https://gpt-index.readthedocs.io/en/latest/getting_started/starter_example.html
 # In order to run this, download into data/ Paul Graham's Essay 'What I Worked On' from https://github.com/jerryjliu/llama_index/blob/main/examples/paul_graham_essay/data/paul_graham_essay.txt
 
-from llama_index import SimpleDirectoryReader
-from llama_index import VectorStoreIndex
+from llama_index import VectorStoreIndex, SimpleDirectoryReader
 
 documents = SimpleDirectoryReader('data').load_data()
 index = VectorStoreIndex.from_documents(documents)

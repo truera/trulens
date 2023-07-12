@@ -26,6 +26,17 @@ Llama Index:
 
 [llama_index_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.4.0/trulens_eval/examples/llama_index_quickstart.py)
 
+No Framework: 
+
+[no_framework_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.5.0/trulens_eval/examples/no_framework_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/truera/trulens/blob/releases/rc-trulens-eval-0.5.0/trulens_eval/examples/no_framework_quickstart.ipynb)
+
+[no_framework_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.5.0/trulens_eval/examples/no_framework_quickstart.py)
+
+### 💡 Contributing
+
+Interested in contributing? See our [contribution guide](https://github.com/truera/trulens/tree/main/trulens_eval/CONTRIBUTING.md) for more details.
+
 ## Installation and Setup
 
 Install the trulens-eval pip package from PyPI.
@@ -160,8 +171,6 @@ tru.run_dashboard() # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed
 ```
-
-Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
 ### Chain Leaderboard
 

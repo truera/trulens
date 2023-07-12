@@ -17,10 +17,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 # ### Import from LangChain and TruLens
 
 # Imports main tools:
-from trulens_eval import Feedback
-from trulens_eval import Huggingface
-from trulens_eval import Tru
-from trulens_eval import TruChain
+from trulens_eval import TruChain, Feedback, Huggingface, Tru
 
 tru = Tru()
 
@@ -29,9 +26,8 @@ tru = Tru()
 # ! pip install langchain>=0.0.170
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
-from langchain.prompts.chat import ChatPromptTemplate
+from langchain.prompts.chat import ChatPromptTemplate, PromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
-from langchain.prompts.chat import PromptTemplate
 
 # ### Create Simple LLM Application
 #
