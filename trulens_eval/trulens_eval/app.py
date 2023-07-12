@@ -72,6 +72,8 @@ class ComponentView(ABC):
             return LangChainComponent.of_json(json)
         elif LlamaIndexComponent.class_is(cls):
             return LlamaIndexComponent.of_json(json)
+        elif TrulensComponent.class_is(cls):
+            return TrulensComponent.of_json(json)
         else:
             raise TypeError(f"Unhandled component type with class {cls}")
 
@@ -105,9 +107,9 @@ class LangChainComponent(ComponentView):
         if cls.module.module_name.startswith("langchain."):
             return True
 
-        if any(base.module.module_name.startswith("langchain.")
-               for base in cls.bases):
-            return True
+        #if any(base.module.module_name.startswith("langchain.")
+        #       for base in cls.bases):
+        #    return True
 
         return False
 
@@ -124,15 +126,35 @@ class LlamaIndexComponent(ComponentView):
         if cls.module.module_name.startswith("llama_index."):
             return True
 
-        if any(base.module.module_name.startswith("llama_index.")
-               for base in cls.bases):
-            return True
+        #if any(base.module.module_name.startswith("llama_index.")
+        #       for base in cls.bases):
+        #    return True
 
         return False
 
     @staticmethod
     def of_json(json: JSON) -> 'LlamaIndexComponent':
         from trulens_eval.utils.llama import component_of_json
+        return component_of_json(json)
+
+
+class TrulensComponent(ComponentView):
+    """
+    Components provided in trulens.
+    """
+
+    def class_is(cls: Class) -> bool:
+        if cls.module.module_name.startswith("trulens_eval."):
+            return True
+
+        #if any(base.module.module_name.startswith("trulens.") for base in cls.bases):
+        #    return True
+
+        return False
+
+    @staticmethod
+    def of_json(json: JSON) -> 'TrulensComponent':        
+        from trulens_eval.utils.trulens import component_of_json
         return component_of_json(json)
 
 
@@ -166,6 +188,9 @@ class Other(ComponentView):
     # Any component that does not fit into the other named categories.
 
     pass
+
+
+
 
 
 def instrumented_component_views(
@@ -363,7 +388,7 @@ class App(AppDefinition, SerialModel):
 
         print(
             "\n".join(
-                f"{t[1].__class__.__name__} component: "
+                f"{t[1].__class__.__name__} of {t[1].__class__.__module__} component: "
                 f"{str(t[0])}" for t in self.instrumented()
             )
         )

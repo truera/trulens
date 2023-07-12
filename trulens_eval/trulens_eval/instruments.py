@@ -388,7 +388,7 @@ class Instrument(object):
                 key="stack", func=find_instrumented, offset=1
             ) or ()
             frame_ident = RecordAppCallMethod(
-                path=query, method=Method.of_method(func, obj=obj)
+                path=query, method=Method.of_method(func, obj=obj, cls=cls)
             )
             stack = stack + (frame_ident,)
 
