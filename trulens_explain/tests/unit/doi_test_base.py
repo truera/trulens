@@ -1,5 +1,6 @@
 import numpy as np
 from trulens.nn.attribution import InternalInfluence
+from trulens.nn.backend import get_backend
 from trulens.nn.distributions import GaussianDoi
 from trulens.nn.distributions import LinearDoi
 from trulens.nn.distributions import PointDoi
@@ -8,8 +9,6 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.utils.typing import ModelInputs
-
-from trulens.nn.backend import get_backend
 
 
 class DoiTestBase(object):

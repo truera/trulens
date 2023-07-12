@@ -15,9 +15,10 @@ from pathlib import Path
 
 import cohere
 import dotenv
-from trulens_eval.util import UNICODE_CHECK, UNICODE_STOP
 
 from trulens_eval.util import caller_frame
+from trulens_eval.util import UNICODE_CHECK
+from trulens_eval.util import UNICODE_STOP
 
 logger = logging.getLogger(__name__)
 
