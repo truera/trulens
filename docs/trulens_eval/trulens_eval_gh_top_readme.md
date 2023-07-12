@@ -75,4 +75,8 @@ Doing so will help you understand how your LLM application is performing at a gl
 tru.run_dashboard() # open a Streamlit app to explore
 ```
 
+Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
+
 For more information, see [TruLens-Eval Documentation](https://www.trulens.org/trulens_eval/quickstart/).
+
+
