@@ -9,6 +9,7 @@ from trulens_eval.util import JSON
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LANGCHAIN
 from trulens_eval.util import second
+from trulens_eval.util import ThreadPoolExecutor
 from trulens_eval.util import TP
 
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
@@ -31,7 +32,10 @@ class Prompt(app.Prompt, app.LangChainComponent):
         return cls.noserio_issubclass(
             module_name="langchain.prompts.base",
             class_name="BasePromptTemplate"
-        )
+        ) or cls.noserio_issubclass(
+            module_name="langchain.schema.prompt_template",
+            class_name="BasePromptTemplate"
+        )  # langchain >= 0.230
 
 
 class LLM(app.LLM, app.LangChainComponent):
@@ -160,24 +164,29 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
 
     # Signature must match
     # langchain.schema.retriever.BaseRetriever._get_relevant_documents .
-    def _get_relevant_documents(
-        self, query: str, *, run_manager
-    ) -> List[Document]:
+    def _get_relevant_documents(self, query: str, *,
+                                run_manager) -> List[Document]:
         # Get relevant docs using super class:
         docs = super()._get_relevant_documents(query, run_manager=run_manager)
 
         # Evaluate the filter on each, in parallel.
-        promises = (
+        ex = ThreadPoolExecutor(max_workers=len(docs))
+
+        futures = list(
             (
-                doc, TP().promise(
-                    lambda doc, query: self.feedback(query, doc.page_content) >
-                    self.threshold,
+                doc,
+                ex.submit(
+                    (
+                        lambda doc, query: self.
+                        feedback(query, doc.page_content) > self.threshold
+                    ),
                     query=query,
                     doc=doc
                 )
             ) for doc in docs
         )
-        results = ((doc, promise.get()) for (doc, promise) in promises)
+
+        results = list((doc, promise.result()) for (doc, promise) in futures)
         filtered = map(first, filter(second, results))
 
         # Return only the filtered ones.
