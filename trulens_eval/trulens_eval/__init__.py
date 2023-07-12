@@ -43,12 +43,14 @@ from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Query
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
+from trulens_eval.tru_basic_app import TruBasicApp
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_llama import TruLlama
 from trulens_eval.util import TP
 
 __all__ = [
     'Tru',
+    'TruBasicApp',
     'TruChain',
     'TruLlama',
     'Feedback',
