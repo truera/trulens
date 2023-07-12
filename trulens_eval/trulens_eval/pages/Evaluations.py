@@ -240,10 +240,12 @@ else:
                     if view is not None:
                         render_component(query=query, component=view)
                     else:
-                        st.write(f"Call by {query} was not associated with any instrumented component but might be an uninstrumented.")
+                        st.write(f"Call by {query} was not associated with any instrumented component.")
                         # Look up whether there was any data at that path even if not an instrumented component:
                         app_component_json = list(query(app_json))[0]
-                        st.json(app_component_json)
+                        if app_component_json is not None:
+                            with st.expander("Uninstrumented app component details."):
+                                st.json(app_component_json)
 
                 else: 
                     st.text('No match found')
