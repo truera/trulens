@@ -27,6 +27,7 @@ jobs:
           pip install jupyter
           pip install nbmerge
           pip install yapf==0.32.0
+          pip install isort==5.10.1
           ../../.github/workflows/combine_nb_to_docs_testing.sh
           rm -rf break.md
           cd ${{ github.workspace }}
