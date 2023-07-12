@@ -224,6 +224,46 @@ class Select:
 
     RecordCalls: Query = Record.app
 
+    def for_record(query: Query) -> Query:
+        return Select.Query(path=Select.Record.path + query.path)
+    
+    def for_app(query: Query) -> Query:
+        return Select.Query(path=Select.App.path + query.path)
+
+    def render_for_dashboard(query: Query) -> str:
+        """
+        Render the given query for use in dashboard to help user specify
+        feedback functions.
+        """
+
+        if len(query) == 0:
+            return "Select.Query()"
+
+        ret = ""
+        rest = None
+
+        if query.path[0:2] == Select.RecordInput.path:
+            ret = "Select.RecordInput"
+            rest = query.path[2:]
+        elif query.path[0:2] == Select.RecordOutput.path: 
+            ret = "Select.RecordOutput"
+            rest = query.path[2:]
+        elif query.path[0:2] == Select.RecordCalls.path:
+            ret = "Select.RecordCalls"
+            rest = query.path[2:]
+        elif query.path[0] == Select.Record.path[0]:
+            ret = "Select.Record"
+            rest = query.path[1:]
+        elif query.path[0] == Select.App.path[0]:
+            ret = "Select.App"
+            rest = query.path[1:]
+        else:
+            rest = query.path
+
+        for step in rest:
+            ret += repr(step)
+
+        return f"{ret}"
 
 # To deprecate in 1.0.0:
 Query = Select
