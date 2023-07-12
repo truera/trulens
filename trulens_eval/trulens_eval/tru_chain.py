@@ -47,7 +47,8 @@ class LangChainInstrument(Instrument):
         # Instrument only methods with these names and of these classes.
         METHODS = {
             "_call": lambda o: isinstance(o, langchain.chains.base.Chain),
-            "get_relevant_documents": lambda o: True,  # VectorStoreRetriever
+            # "get_relevant_documents": lambda o: True,  # VectorStoreRetriever
+            "_get_relevant_documents": lambda o: True,  # VectorStoreRetriever, langchain >= 0.230
         }
 
     def __init__(self):

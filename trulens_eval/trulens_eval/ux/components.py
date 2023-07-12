@@ -56,7 +56,8 @@ def render_call_frame(frame: RecordAppCall, path = None) -> str:  # markdown
         f"__{frame.method.name}__ (__{frame.method.obj.cls.module.module_name}.{frame.method.obj.cls.name}__)"
     )
 
-def draw_call(call) -> None:
+
+def draw_call(call: RecordAppCall) -> None:
     top = call.stack[-1]
 
     path = Select.for_record(
@@ -68,7 +69,7 @@ def draw_call(call) -> None:
         args = call.args
         rets = call.rets
 
-        for frame in call.stack[0:-2]:
+        for frame in call.stack[::-1][1:]:
             st.write("Via " + render_call_frame(frame, path=path))
 
         st.subheader(f"Inputs {render_selector_markdown(path.args)}")

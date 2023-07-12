@@ -18,6 +18,7 @@ from trulens_eval.app import instrumented_component_views
 from trulens_eval.app import LLM
 from trulens_eval.app import Other
 from trulens_eval.app import Prompt
+from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
 from trulens_eval.util import jsonify
@@ -60,8 +61,33 @@ f"""navigator.clipboard.writeText("{state.clipboard}")
         }}
     )
 """)
-    # st.write(f"ret={ret}")         
-    # st.write(f"clipped? {state.clipboard}")
+
+def render_component(query, component):
+    # Draw the accessor/path within the wrapped app of the component.
+    st.subheader(f"Component {render_selector_markdown(Select.for_app(query))}")
+
+    # Draw the python class information of this component.
+    cls = component.cls
+    base_cls = cls.base_class()
+    label = f"__{repr(cls)}__"
+    if str(base_cls) != str(cls):
+        label += f" < __{repr(base_cls)}__"
+    st.write("Python class: " + label)
+
+    # Per-component-type drawing routines.
+    if isinstance(component, LLM):
+        draw_llm_info(component=component, query=query)
+
+    elif isinstance(component, Prompt):
+        draw_prompt_info(component=component, query=query)
+
+    elif isinstance(component, Other):
+        with st.expander("Uncategorized Component Details:"):
+            st.json(jsonify(component.json, skip_specials=True))
+
+    else:
+        with st.expander("Unhandled Component Details:"):
+            st.json(jsonify(component.json, skip_specials=True))
 
 if df_results.empty:
     st.write("No records yet...")
@@ -206,52 +232,61 @@ else:
                 details
             )  # apps may not be deserializable, don't try to, keep it json.
 
-            classes: Iterable[Tuple[JSONPath, List[ComponentView]]
-                             ] = instrumented_component_views(app_json)
+            classes: Iterable[Tuple[JSONPath, ComponentView]] = list(instrumented_component_views(app_json))
+            classes_map = {path: view for path, view in classes}
 
-            st.header("Components")
+            st.header('Timeline')
+            val = record_viewer(record_json, app_json)
 
-            for query, component in classes:
+            match_query = None
+            if val != "":
+                match = None
+                for call in record.calls: 
+                    if call.perf.start_time.isoformat() == val:
+                        match = call
+                        break
 
-                if len(query.path) == 0:
-                    # Skip App, will still list A.app under "app" below.
-                    continue
+                if match:                    
+                    length = len(match.stack)
+                    app_call = match.stack[length - 1]
+                    st.subheader(app_call.method.obj.cls.name)
 
-                # Draw the accessor/path within the wrapped app of the component.
-                st.subheader(f"Component {render_selector_markdown(Select.for_app(query))}")
+                    draw_call(match)
+                    # with st.expander("Call Details:"):
+                    #     st.json(jsonify(match, skip_specials=True))
+                    
+                    query = match.top().path
+                    match_query = query
+                    view = classes_map.get(query)
+                    if view is not None:
+                        render_component(query=query, component=view)
+                    else:
+                        st.write(f"Call by {query} was not associated with any instrumented component.")
+                        # Look up whether there was any data at that path even if not an instrumented component:
+                        app_component_json = list(query(app_json))[0]
+                        if app_component_json is not None:
+                            with st.expander("Uninstrumented app component details."):
+                                st.json(app_component_json)
 
-                # Draw the python class information of this component.
-                cls = component.cls
-                base_cls = cls.base_class()
-                label = f"__{repr(cls)}__"
-                if str(base_cls) != str(cls):
-                    label += f" < __{repr(base_cls)}__"
-                st.write("Python class: " + label)
+                else: 
+                    st.text('No match found')
+            else:
+                st.subheader('App')
+                with st.expander("App Details:"):
+                    st.json(jsonify(app_json, skip_specials=True))
 
-                # Per-component-type drawing routines.
-                if isinstance(component, LLM):
-                    draw_llm_info(component=component, query=query)
+            if match_query is not None:
+                st.header("Subcomponents")
 
-                elif isinstance(component, Prompt):
-                    draw_prompt_info(component=component, query=query)
+                for query, component in classes:
+                    if not match_query.is_immediate_prefix_of(query):
+                        continue
 
-                elif isinstance(component, Other):
-                    with st.expander("Uncategorized Component Details:"):
-                        st.json(jsonify(component.json, skip_specials=True))
+                    if len(query.path) == 0:
+                        # Skip App, will still list App.app under "app".
+                        continue
 
-                else:
-                    with st.expander("Unhandled Component Details:"):
-                        st.json(jsonify(component.json, skip_specials=True))
-
-                # Draw the calls issued to component.
-                calls = [
-                    call for call in record.calls
-                    if query == call.stack[-1].path
-                ]
-                if len(calls) > 0:
-                    # st.subheader("Calls to component:")
-                    for call in calls:
-                        draw_call(call)
+                    render_component(query, component)
 
             st.header("More options:")
 
@@ -263,6 +298,8 @@ else:
 
                 st.write(jsonify(record_json, skip_specials=True))
 
+
+         
     with tab2:
         feedback = feedback_cols
         cols = 4
