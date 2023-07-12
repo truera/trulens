@@ -49,9 +49,9 @@ state = st.session_state
 if "clipboard" not in state:
     state.clipboard = "nothing"
 
-if state.clipboard: 
+if state.clipboard:
     ret = st_javascript(
-f"""navigator.clipboard.writeText("{state.clipboard}")
+        f"""navigator.clipboard.writeText("{state.clipboard}")
     .then(
         function() {{
             console.log('success?')
@@ -60,12 +60,16 @@ f"""navigator.clipboard.writeText("{state.clipboard}")
             console.error("Async: Could not copy text: ", err)
         }}
     )
-""")
+"""
+    )
+
 
 def render_component(query, component, header=True):
     # Draw the accessor/path within the wrapped app of the component.
     if header:
-        st.subheader(f"Component {render_selector_markdown(Select.for_app(query))}")
+        st.subheader(
+            f"Component {render_selector_markdown(Select.for_app(query))}"
+        )
 
     # Draw the python class information of this component.
     cls = component.cls
@@ -89,6 +93,7 @@ def render_component(query, component, header=True):
     else:
         with st.expander("Unhandled Component Details:"):
             st.json(jsonify(component.json, skip_specials=True))
+
 
 if df_results.empty:
     st.write("No records yet...")
@@ -183,10 +188,14 @@ else:
             prompt = selected_rows['input'][0]
             response = selected_rows['output'][0]
 
-            with st.expander(f"Input {render_selector_markdown(Select.RecordInput)}", expanded=True):
+            with st.expander(
+                    f"Input {render_selector_markdown(Select.RecordInput)}",
+                    expanded=True):
                 write_or_json(st, obj=prompt)
 
-            with st.expander(f"Response {render_selector_markdown(Select.RecordOutput)}", expanded=True):
+            with st.expander(
+                    f"Response {render_selector_markdown(Select.RecordOutput)}",
+                    expanded=True):
                 write_or_json(st, obj=response)
 
             row = selected_rows.head().iloc[0]
@@ -233,7 +242,8 @@ else:
                 details
             )  # apps may not be deserializable, don't try to, keep it json.
 
-            classes: Iterable[Tuple[JSONPath, ComponentView]] = list(instrumented_component_views(app_json))
+            classes: Iterable[Tuple[JSONPath, ComponentView]
+                             ] = list(instrumented_component_views(app_json))
             classes_map = {path: view for path, view in classes}
 
             st.header('Timeline')
@@ -242,36 +252,42 @@ else:
             match_query = None
             if val != "":
                 match = None
-                for call in record.calls: 
+                for call in record.calls:
                     if call.perf.start_time.isoformat() == val:
                         match = call
                         break
 
-                if match:                    
+                if match:
                     length = len(match.stack)
                     app_call = match.stack[length - 1]
 
                     match_query = match.top().path
 
-                    st.subheader(f"{app_call.method.obj.cls.name} {render_selector_markdown(Select.for_app(match_query))}")
+                    st.subheader(
+                        f"{app_call.method.obj.cls.name} {render_selector_markdown(Select.for_app(match_query))}"
+                    )
 
                     draw_call(match)
                     # with st.expander("Call Details:"):
                     #     st.json(jsonify(match, skip_specials=True))
-                    
-                    
+
                     view = classes_map.get(match_query)
                     if view is not None:
-                        render_component(query=match_query, component=view, header=False)
+                        render_component(
+                            query=match_query, component=view, header=False
+                        )
                     else:
-                        st.write(f"Call by {match_query} was not associated with any instrumented component.")
+                        st.write(
+                            f"Call by {match_query} was not associated with any instrumented component."
+                        )
                         # Look up whether there was any data at that path even if not an instrumented component:
                         app_component_json = list(match_query(app_json))[0]
                         if app_component_json is not None:
-                            with st.expander("Uninstrumented app component details."):
+                            with st.expander(
+                                    "Uninstrumented app component details."):
                                 st.json(app_component_json)
 
-                else: 
+                else:
                     st.text('No match found')
             else:
                 st.subheader(f"App {render_selector_markdown(Select.App)}")
@@ -301,8 +317,6 @@ else:
 
                 st.write(jsonify(record_json, skip_specials=True))
 
-
-         
     with tab2:
         feedback = feedback_cols
         cols = 4
