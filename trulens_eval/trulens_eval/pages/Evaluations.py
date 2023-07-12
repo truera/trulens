@@ -62,9 +62,10 @@ f"""navigator.clipboard.writeText("{state.clipboard}")
     )
 """)
 
-def render_component(query, component):
+def render_component(query, component, header=True):
     # Draw the accessor/path within the wrapped app of the component.
-    st.subheader(f"Component {render_selector_markdown(Select.for_app(query))}")
+    if header:
+        st.subheader(f"Component {render_selector_markdown(Select.for_app(query))}")
 
     # Draw the python class information of this component.
     cls = component.cls
@@ -249,21 +250,23 @@ else:
                 if match:                    
                     length = len(match.stack)
                     app_call = match.stack[length - 1]
-                    st.subheader(app_call.method.obj.cls.name)
+
+                    match_query = match.top().path
+
+                    st.subheader(f"{app_call.method.obj.cls.name} {render_selector_markdown(Select.for_app(match_query))}")
 
                     draw_call(match)
                     # with st.expander("Call Details:"):
                     #     st.json(jsonify(match, skip_specials=True))
                     
-                    query = match.top().path
-                    match_query = query
-                    view = classes_map.get(query)
+                    
+                    view = classes_map.get(match_query)
                     if view is not None:
-                        render_component(query=query, component=view)
+                        render_component(query=match_query, component=view, header=False)
                     else:
-                        st.write(f"Call by {query} was not associated with any instrumented component.")
+                        st.write(f"Call by {match_query} was not associated with any instrumented component.")
                         # Look up whether there was any data at that path even if not an instrumented component:
-                        app_component_json = list(query(app_json))[0]
+                        app_component_json = list(match_query(app_json))[0]
                         if app_component_json is not None:
                             with st.expander("Uninstrumented app component details."):
                                 st.json(app_component_json)
@@ -271,12 +274,12 @@ else:
                 else: 
                     st.text('No match found')
             else:
-                st.subheader('App')
+                st.subheader(f"App {render_selector_markdown(Select.App)}")
                 with st.expander("App Details:"):
                     st.json(jsonify(app_json, skip_specials=True))
 
             if match_query is not None:
-                st.header("Subcomponents")
+                st.header("Subcomponents:")
 
                 for query, component in classes:
                     if not match_query.is_immediate_prefix_of(query):
