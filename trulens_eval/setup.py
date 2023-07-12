@@ -8,8 +8,10 @@ import os
 
 class javascript_build(build):
     def run(self):
+        log.info("running npm i")
+        os.system("npm i --prefix trulens_eval/react_components/record_viewer")
         log.info("running npm run build")
-        os.system("npm run --prefix trulens_eval/react_components/record_viewer/frontend build")
+        os.system("npm run --prefix trulens_eval/react_components/record_viewer build")
         #subprocess.check_output(['npm', 'run', '--prefix', 'trulens_eval/react_components/record_viewer/frontend', 'build'], shell=True)
         build.run(self)
 
