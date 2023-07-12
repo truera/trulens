@@ -31,7 +31,10 @@ class Prompt(app.Prompt, app.LangChainComponent):
         return cls.noserio_issubclass(
             module_name="langchain.prompts.base",
             class_name="BasePromptTemplate"
-        )
+        ) or cls.noserio_issubclass(
+            module_name="langchain.schema.prompt_template",
+            class_name="BasePromptTemplate"
+        ) # langchain >= 0.230
 
 
 class LLM(app.LLM, app.LangChainComponent):

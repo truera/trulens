@@ -217,6 +217,7 @@ else:
             st.header('Timeline')
             val = record_viewer(record_json, app_json)
 
+            match_query = None
             if val != "":
                 match = None
                 for call in record.calls: 
@@ -226,10 +227,11 @@ else:
 
                 if match:
                     draw_call(match)
-                    with st.expander("Call Details:"):
-                        st.json(jsonify(match, skip_specials=True))
+                    # with st.expander("Call Details:"):
+                    #     st.json(jsonify(match, skip_specials=True))
                     
                     query = match.top().path
+                    match_query = query
                     view = classes_map.get(query)
                     if view is not None:
                         render_component(query=query, component=view)
@@ -238,7 +240,7 @@ else:
                         # Look up whether there was any data at that path even if not an instrumented component:
                         app_component_json = list(query(app_json))[0]
                         st.json(app_component_json)
-                          
+
                 else: 
                     st.text('No match found')
             else:
@@ -246,25 +248,28 @@ else:
                 with st.expander("App Details:"):
                     st.json(jsonify(app_json, skip_specials=True))
 
-            st.header("Components")
+            if match_query is not None:
+                st.header("Subcomponents")
 
-            for query, component in classes:
+                for query, component in classes:
+                    if not match_query.is_immediate_prefix_of(query):
+                        continue
 
-                if len(query.path) == 0:
-                    # Skip App, will still list App.app under "app".
-                    continue
+                    if len(query.path) == 0:
+                        # Skip App, will still list App.app under "app".
+                        continue
 
-                render_component(query, component)
+                    render_component(query, component)
 
-                # Draw the calls issued to component.
-                calls = [
-                    call for call in record.calls
-                    if query == call.stack[-1].path
-                ]
-                if len(calls) > 0:
-                    st.subheader("Calls to component:")
-                    for call in calls:
-                        draw_call(call)
+                    # Draw the calls issued to component.
+                    #calls = [
+                    #    call for call in record.calls
+                    #    if query == call.stack[-1].path
+                    #]
+                    #if len(calls) > 0:
+                    #    st.subheader("Calls to component:")
+                    #    for call in calls:
+                    #        draw_call(call)
 
             st.header("More options:")
 
