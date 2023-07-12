@@ -48,7 +48,8 @@ class LangChainInstrument(Instrument):
         METHODS = {
             "_call": lambda o: isinstance(o, langchain.chains.base.Chain),
             # "get_relevant_documents": lambda o: True,  # VectorStoreRetriever
-            "_get_relevant_documents": lambda o: True,  # VectorStoreRetriever, langchain >= 0.230
+            "_get_relevant_documents":
+                lambda o: True,  # VectorStoreRetriever, langchain >= 0.230
         }
 
     def __init__(self):

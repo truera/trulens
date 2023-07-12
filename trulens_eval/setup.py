@@ -1,8 +1,9 @@
-from setuptools import find_namespace_packages
-from setuptools import setup
 from distutils import log
 from distutils.command.build import build
 import os
+
+from setuptools import find_namespace_packages
+from setuptools import setup
 
 
 class javascript_build(build):

@@ -39,8 +39,10 @@ from pprint import PrettyPrinter
 from queue import Queue
 from time import sleep
 from types import ModuleType
-from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
-                    Sequence, Set, Tuple, TypeVar, Union)
+from typing import (
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
+    Tuple, TypeVar, Union
+)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -1037,6 +1039,7 @@ class SingletonPerName():
 
 # Threading utilities
 
+
 def _future_target_wrapper(stack, func, *args, **kwargs):
     """
     Wrapper for a function that is started by threads. This is needed to
@@ -1050,10 +1053,15 @@ def _future_target_wrapper(stack, func, *args, **kwargs):
 
     return func(*args, **kwargs)
 
+
 class ThreadPoolExecutor(fThreadPoolExecutor):
+
     def submit(self, fn, /, *args, **kwargs):
         present_stack = stack()
-        return super().submit(_future_target_wrapper, present_stack, fn, *args, **kwargs)
+        return super().submit(
+            _future_target_wrapper, present_stack, fn, *args, **kwargs
+        )
+
 
 class TP(SingletonPerName):  # "thread processing"
 
@@ -1080,7 +1088,6 @@ class TP(SingletonPerName):  # "thread processing"
                 sleep(60 / rpm)
 
         self.runlater(runner)
-
 
     def _thread_starter(self, func, args, kwargs):
         present_stack = stack()
