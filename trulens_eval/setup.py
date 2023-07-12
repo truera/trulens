@@ -1,6 +1,8 @@
 from setuptools import find_namespace_packages
 from setuptools import setup
 
+langchain_version = "0.0.230" # duplicated in trulens_eval.util, don't know how to dedup
+
 setup(
     name="trulens_eval",
     include_package_data=True,
@@ -13,7 +15,7 @@ setup(
         'datasets>=2.12.0',
         'python-dotenv>=1.0.0',
         'kaggle>=1.5.13',
-        'langchain>=0.0.170',  # required for cost tracking even outside of langchain
+        f'langchain>={langchain_version}',  # required for cost tracking even outside of langchain
         'llama_index>=0.6.24',
         'merkle-json>=1.0.0',
         'millify>=0.1.1',
