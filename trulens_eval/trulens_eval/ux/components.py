@@ -1,13 +1,17 @@
 import json
+import random
 from typing import Dict, List
 
 import pandas as pd
 import streamlit as st
+from streamlit_javascript import st_javascript
 
 from trulens_eval.app import ComponentView
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
+from trulens_eval.schema import Select
 from trulens_eval.util import CLASS_INFO
+from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import is_empty
 from trulens_eval.util import is_noserio
 from trulens_eval.util import jsonify
@@ -33,31 +37,48 @@ def write_or_json(st, obj):
             st.write(obj)
 
 
-def render_call_frame(frame: RecordAppCall) -> str:  # markdown
+def copy_to_clipboard(path, *args, **kwargs):
+    st.session_state.clipboard = str(path)
+
+
+def draw_selector_button(path) -> None:
+    st.button(key=str(random.random()), label=f"{Select.render_for_dashboard(path)}", on_click=copy_to_clipboard, args=(path, ))
+
+
+def render_selector_markdown(path) -> str:
+    return f"[`{Select.render_for_dashboard(path)}`]"
+
+
+def render_call_frame(frame: RecordAppCall, path = None) -> str:  # markdown
+    path = path or frame.path
 
     return (
-        f"{frame.path}.___{frame.method.name}___\n"
-        f"(`{frame.method.obj.cls.module.module_name}.{frame.method.obj.cls.name}`)"
+        f"__{frame.method.name}__ (__{frame.method.obj.cls.module.module_name}.{frame.method.obj.cls.name}__)"
     )
 
 
 def draw_call(call: RecordAppCall) -> None:
     top = call.stack[-1]
 
-    with st.expander(label=render_call_frame(top)):
+    path = Select.for_record(
+        top.path._append(step = GetItemOrAttribute(item_or_attribute=top.method.name))
+    )
+
+    with st.expander(label=f"Call " + render_call_frame(top, path=path) + " " + render_selector_markdown(path)):
+
         args = call.args
         rets = call.rets
 
         for frame in call.stack[::-1][1:]:
-            st.write("Via " + render_call_frame(frame))
+            st.write("Via " + render_call_frame(frame, path=path))
 
-        st.subheader(f"Inputs:")
+        st.subheader(f"Inputs {render_selector_markdown(path.args)}")
         if isinstance(args, Dict):
             st.json(args)
         else:
             st.write(args)
 
-        st.subheader(f"Outputs:")
+        st.subheader(f"Outputs {render_selector_markdown(path.rets)}")
         if isinstance(rets, Dict):
             st.json(rets)
         else:
@@ -85,8 +106,9 @@ def draw_calls(record: Record, index: int) -> None:
 def draw_prompt_info(query: JSONPath, component: ComponentView) -> None:
     prompt_details_json = jsonify(component.json, skip_specials=True)
 
-    path_str = str(query)
     st.subheader(f"*Prompt Details*")
+
+    path = Select.for_app(query)
 
     prompt_types = {
         k: v for k, v in prompt_details_json.items() if (v is not None) and
@@ -94,7 +116,8 @@ def draw_prompt_info(query: JSONPath, component: ComponentView) -> None:
     }
 
     for key, value in prompt_types.items():
-        with st.expander(key.capitalize(), expanded=True):
+        with st.expander(key.capitalize() + " " + render_selector_markdown(getattr(path, key)), expanded=True):
+
             if isinstance(value, (Dict, List)):
                 st.write(value)
             else:
@@ -126,13 +149,15 @@ def draw_llm_info(query: JSONPath, component: ComponentView) -> None:
 
     # Iterate over each column of the DataFrame
     for column in df.columns:
+        path = getattr(Select.for_app(query), str(column))
         # Check if any cell in the column is a dictionary
+
         if any(isinstance(cell, dict) for cell in df[column]):
             # Create new columns for each key in the dictionary
             new_columns = df[column].apply(
                 lambda x: pd.Series(x) if isinstance(x, dict) else pd.Series()
             )
-            new_columns.columns = [f"{key}" for key in new_columns.columns]
+            new_columns.columns = [f"{key} {render_selector_markdown(path)}" for key in new_columns.columns]
 
             # Remove extra zeros after the decimal point
             new_columns = new_columns.applymap(
@@ -141,6 +166,14 @@ def draw_llm_info(query: JSONPath, component: ComponentView) -> None:
 
             # Add the new columns to the original DataFrame
             df = pd.concat([df.drop(column, axis=1), new_columns], axis=1)
+
+        else:
+            # TODO: add selectors to the output here
+
+            pass
+
+
     # Inject CSS with Markdown
+
     st.markdown(hide_table_row_index, unsafe_allow_html=True)
     st.table(df)
