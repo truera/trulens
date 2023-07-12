@@ -10,6 +10,9 @@ setup(
         include=["trulens_eval", "trulens_eval.*"]
     ),
     python_requires='>=3.8',
+    entry_points = {
+        'console_scripts': ['trulens-eval=trulens_eval.utils.command_line:main'],
+    },
     install_requires=[
         'cohere>=4.4.1',
         'datasets>=2.12.0',
