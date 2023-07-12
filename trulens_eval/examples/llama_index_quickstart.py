@@ -91,6 +91,8 @@ tru.run_dashboard()  # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed
 
+# Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
+
 # ### Leaderboard
 #
 # Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics including cost and average feedback value across all of your LLM apps using the chain leaderboard. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up.
