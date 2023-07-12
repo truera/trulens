@@ -7,7 +7,7 @@ nbmerge quickstart.ipynb logging.ipynb feedback_functions.ipynb >> all_tools.ipy
 # Colab quickstarts
 nbmerge colab_dependencies.ipynb quickstart.ipynb >> langchain_quickstart_colab.ipynb
 nbmerge colab_dependencies.ipynb llama_index_quickstart.ipynb >> llama_index_quickstart_colab.ipynb
-nbmerge colab_dependencies.ipynb no_framework_quickstart.ipynb >> no_framework_quickstart.ipynb
+nbmerge colab_dependencies.ipynb no_framework_quickstart.ipynb >> no_framework_quickstart_colab.ipynb
 
 # Create pypi page documentation
 jupyter nbconvert --to markdown all_tools.ipynb
@@ -28,7 +28,7 @@ jupyter nbconvert --to script all_tools.ipynb
 SED=`which -a gsed sed | head -n1`
 
 # Fix nbmerge ids field invalid for ipynb
-$SED -i "/id\"\:/d" all_tools.ipynb langchain_quickstart_colab.ipynb llama_index_quickstart_colab.ipynb no_framework_quickstart.ipynb
+$SED -i "/id\"\:/d" all_tools.ipynb langchain_quickstart_colab.ipynb llama_index_quickstart_colab.ipynb no_framework_quickstart_colab.ipynb
 
 ## Remove ipynb JSON calls
 $SED -i "/JSON/d" quickstart.py llama_index_quickstart.py no_framework_quickstart.py all_tools.py 
