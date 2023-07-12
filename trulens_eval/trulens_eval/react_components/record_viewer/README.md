@@ -1,15 +1,12 @@
-WORK IN PROGRESS
-
-
 ## Pre-requisites
 
 1. `npm` should be installed. To verify, run the following command in your terminal:
+
 ```
 $ npm -v
 ```
 
 If `npm` is absent, follow the instructions [here](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) to install Node.js and npm.
-
 
 ## Quickstart for developing
 
@@ -32,12 +29,14 @@ $ npm run dev
 ```
 
 4. Set `_RELEASE` in `__init__.py` to be `False`
+
 ```
 $ cd <your-trulens-directory>/trulens/trulens_eval/trulens_eval/react_components/record_viewer
 $ <vi/nano/your text editor> __init__.py
 ```
 
 5. Start your jupyter notebook
+
 ```
 $ PYTHONPATH="<path to trulens-eval>:$PYTHONPATH" jupyter lab
 ```
@@ -62,14 +61,15 @@ $ npm i
 $ npm run build
 ```
 
-
 4. Set `_RELEASE` in `__init__.py` to be `True`
+
 ```
 $ cd <your-trulens-directory>/trulens/trulens_eval/trulens_eval/react_components/record_viewer
 $ <vi/nano/your text editor> __init__.py
 ```
 
 5. Start your jupyter notebook
+
 ```
 $ PYTHONPATH="<path to trulens-eval>:$PYTHONPATH" jupyter lab
 ```

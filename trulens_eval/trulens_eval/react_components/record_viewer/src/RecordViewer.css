@@ -3,7 +3,6 @@
   overflow: hidden;
   height: 30px;
   border-radius: 4px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   cursor: pointer;
   background-color: #e0e0e0;
   color: #212121;
@@ -32,8 +31,7 @@
   border: 1px solid #e0e0e0;
   border-left: 2px solid #2d736d;
   border-radius: 4px;
-  margin-bottom: 8px;
-  box-sizing: content-box;
+  box-sizing: border-box;
   display: grid;
 }
 
@@ -41,6 +39,7 @@
   position: relative;
   grid-column-start: 1;
   grid-row-start: 1;
+  padding-right: 4px;
 }
 
 .detail {

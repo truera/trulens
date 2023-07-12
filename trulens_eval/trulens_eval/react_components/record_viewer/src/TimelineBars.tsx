@@ -1,8 +1,14 @@
+import { Box, Tooltip } from '@mui/material';
 import { Streamlit } from 'streamlit-component-lib';
 import './RecordViewer.css';
 import { getStartAndEndTimesForNode } from './treeUtils';
 import { StackTreeNode } from './types';
-import { Box, Tooltip } from '@mui/material';
+import { TIME_DISPLAY_HEIGHT_BUFFER } from './styling';
+
+// TODO: fix in later release
+/* eslint-disable jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */
+
+export const BAR_HEIGHT = 32;
 
 type TreeProps = {
   root: StackTreeNode;
@@ -20,9 +26,11 @@ const getNodesToRender = (root: StackTreeNode) => {
 
     children.push({ node, depth });
 
-    for (const child of node.children ?? []) {
+    if (!node.children) return;
+
+    node.children.forEach((child) => {
       recursiveGetChildrenToRender(child, depth + 1);
-    }
+    });
   };
 
   recursiveGetChildrenToRender(root, 0);
@@ -62,7 +70,7 @@ function NodeBar({ node, depth, root }: { node: StackTreeNode; depth: number; ro
         style={{
           left: `${((startTime - treeStart) / totalTime) * 100}%`,
           width: `${(timeTaken / totalTime) * 100}%`,
-          top: depth * 32 + 16,
+          top: depth * BAR_HEIGHT + TIME_DISPLAY_HEIGHT_BUFFER,
         }}
         onClick={() => {
           Streamlit.setComponentValue(node.raw?.perf.start_time ?? null);
@@ -80,9 +88,11 @@ export default function TimelineBars({ root: tree }: TreeProps) {
 
   return (
     <div className="timeline-bar-container">
-      {nodesToRender.map(({ node, depth }) => (
-        <NodeBar node={node} depth={depth} root={tree} />
-      ))}
+      <div style={{ position: 'relative' }}>
+        {nodesToRender.map(({ node, depth }) => (
+          <NodeBar node={node} depth={depth} root={tree} />
+        ))}
+      </div>
     </div>
   );
 }

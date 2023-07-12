@@ -225,7 +225,11 @@ else:
                         match = call
                         break
 
-                if match:
+                if match:                    
+                    length = len(match.stack)
+                    app_call = match.stack[length - 1]
+                    st.subheader(app_call.method.obj.cls.name)
+
                     draw_call(match)
                     # with st.expander("Call Details:"):
                     #     st.json(jsonify(match, skip_specials=True))

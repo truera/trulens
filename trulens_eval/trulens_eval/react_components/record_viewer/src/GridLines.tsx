@@ -1,3 +1,6 @@
+import { Box, SxProps } from '@mui/material';
+import { Fragment } from 'react';
+
 type GridLinesProps = {
   totalWidth: number;
   totalTime: number;
@@ -21,43 +24,43 @@ export default function GridLines({ totalWidth, totalTime }: GridLinesProps) {
   const widthPerCol = (timeOption / totalTime) * totalWidth;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-        position: 'relative',
-        gridColumnStart: 1,
-        gridRowStart: 1,
-        overflow: 'hidden',
-      }}
-    >
+    <Box sx={containerSx}>
       {Array(numCols)
         .fill(undefined)
         .map((_c, i) => (
-          <>
-            <div
-              key={i}
-              style={{
-                height: '100%',
-                minHeight: 20,
-                width: '1px',
-                backgroundColor: '#E0E0E0',
-                position: 'absolute',
-                left: (i + 1) * widthPerCol,
-              }}
-            />
+          <Fragment
+            // eslint-disable-next-line react/no-array-index-key
+            key={i}
+          >
+            <Box sx={{ ...lineSx, left: (i + 1) * widthPerCol }} />
             <span
               className="detail"
               style={{
                 position: 'absolute',
-                fontSize: '0.8rem',
                 left: (i + 1) * widthPerCol + 4,
               }}
             >
               {(i + 1) * timeOption}ms
             </span>
-          </>
+          </Fragment>
         ))}
-    </div>
+    </Box>
   );
 }
+
+const containerSx: SxProps = {
+  display: 'flex',
+  flexDirection: 'row',
+  position: 'relative',
+  gridColumnStart: 1,
+  gridRowStart: 1,
+  overflow: 'hidden',
+};
+
+const lineSx: SxProps = {
+  height: '100%',
+  minHeight: 20,
+  width: '1px',
+  backgroundColor: '#E0E0E0',
+  position: 'absolute',
+};

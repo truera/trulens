@@ -5,7 +5,8 @@ import { getStartAndEndTimesForNode, getTreeDepth } from './treeUtils';
 import { DataRaw } from './types';
 import GridLines from './GridLines';
 import { createTreeFromCalls } from './utils';
-import TimelineBars from './TimelineBars';
+import { TIME_DISPLAY_HEIGHT_BUFFER } from './styling';
+import TimelineBars, { BAR_HEIGHT } from './TimelineBars';
 
 class RecordViewer extends StreamlitComponentBase {
   public render = (): ReactNode => {
@@ -15,7 +16,7 @@ class RecordViewer extends StreamlitComponentBase {
 
     // This seems to currently be the best way to type args, since
     // StreamlitComponentBase appears happy to just give it "any".
-    const { record_json } = this.props.args as DataRaw;
+    const { record_json: recordJSON } = this.props.args as DataRaw;
 
     const { font: fontFamily } = this.props.theme as { font: string };
     const { width } = this.props as { width: number };
@@ -23,11 +24,9 @@ class RecordViewer extends StreamlitComponentBase {
     /**
      * Actual code begins
      */
-    const root = createTreeFromCalls(record_json);
+    const root = createTreeFromCalls(recordJSON);
     const treeDepth = getTreeDepth(root);
     const { timeTaken: totalTime } = getStartAndEndTimesForNode(root);
-
-    const modifiedWidth = width - 16;
 
     return (
       <div style={{ fontFamily }}>
@@ -35,13 +34,11 @@ class RecordViewer extends StreamlitComponentBase {
         <div
           className="timeline-container"
           style={{
-            width: modifiedWidth,
-            gridTemplateRows: 32 * treeDepth + 16,
-            gridTemplateColumns: modifiedWidth,
-            height: 32 * treeDepth + 16,
+            gridTemplateColumns: width,
+            gridTemplateRows: BAR_HEIGHT * treeDepth + TIME_DISPLAY_HEIGHT_BUFFER,
           }}
         >
-          <GridLines totalWidth={modifiedWidth} totalTime={totalTime} />
+          <GridLines totalWidth={width} totalTime={totalTime} />
           <TimelineBars root={root} />
         </div>
       </div>
