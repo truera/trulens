@@ -50,3 +50,6 @@ mv no_framework_quickstart.py ../../trulens_eval/examples/no_framework_quickstar
 mv *.py ../../trulens_eval/examples/
 mv *quickstart_colab.ipynb ../../trulens_eval/examples/colab/quickstarts/
 mv all_tools* ../../trulens_eval/generated_files/
+
+# token:framework in the ipynb name hits a nbformat reader special string. Changing to texttotext just so notebook test can load.
+cp ../../trulens_eval/examples/no_framework_quickstart.ipynb ../../trulens_eval/tests/docs_notebooks/notebooks_to_test/texttotext_quickstart.ipynb
