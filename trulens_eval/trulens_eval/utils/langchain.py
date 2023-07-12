@@ -158,9 +158,13 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
             feedback=feedback, threshold=threshold, *args, **kwargs
         )
 
-    def get_relevant_documents(self, query: str) -> List[Document]:
+    # Signature must match
+    # langchain.schema.retriever.BaseRetriever._get_relevant_documents .
+    def _get_relevant_documents(
+        self, query: str, *, run_manager
+    ) -> List[Document]:
         # Get relevant docs using super class:
-        docs = super().get_relevant_documents(query)
+        docs = super()._get_relevant_documents(query, run_manager=run_manager)
 
         # Evaluate the filter on each, in parallel.
         promises = (
