@@ -23,6 +23,7 @@ Method                      | (python method)
 from __future__ import annotations
 
 import builtins
+from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from enum import Enum
 import importlib
 import inspect
@@ -745,7 +746,7 @@ class GetItemOrAttribute(Step):
     item_or_attribute: str  # distinct from "item" for deserialization
 
     def __hash__(self):
-        return hash(self.item)
+        return hash(self.item_or_attribute)
 
     def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
         if isinstance(obj, Dict):
@@ -1036,6 +1037,23 @@ class SingletonPerName():
 
 # Threading utilities
 
+def _future_target_wrapper(stack, func, *args, **kwargs):
+    """
+    Wrapper for a function that is started by threads. This is needed to
+    record the call stack prior to thread creation as in python threads do
+    not inherit the stack. Our instrumentation, however, relies on walking
+    the stack and need to do this to the frames prior to thread starts.
+    """
+
+    # Keep this for looking up via get_local_in_call_stack .
+    pre_start_stack = stack
+
+    return func(*args, **kwargs)
+
+class ThreadPoolExecutor(fThreadPoolExecutor):
+    def submit(self, fn, /, *args, **kwargs):
+        present_stack = stack()
+        return super().submit(_future_target_wrapper, present_stack, fn, *args, **kwargs)
 
 class TP(SingletonPerName):  # "thread processing"
 
@@ -1063,25 +1081,12 @@ class TP(SingletonPerName):  # "thread processing"
 
         self.runlater(runner)
 
-    @staticmethod
-    def _thread_target_wrapper(stack, func, *args, **kwargs):
-        """
-        Wrapper for a function that is started by threads. This is needed to
-        record the call stack prior to thread creation as in python threads do
-        not inherit the stack. Our instrumentation, however, relies on walking
-        the stack and need to do this to the frames prior to thread starts.
-        """
-
-        # Keep this for looking up via get_local_in_call_stack .
-        pre_start_stack = stack
-
-        return func(*args, **kwargs)
 
     def _thread_starter(self, func, args, kwargs):
         present_stack = stack()
 
         prom = self.thread_pool.apply_async(
-            self._thread_target_wrapper,
+            _future_target_wrapper,
             args=(present_stack, func) + args,
             kwds=kwargs
         )
@@ -1164,7 +1169,7 @@ def get_local_in_call_stack(
 
         logger.debug(f"{fi.frame.f_code}")
 
-        if id(fi.frame.f_code) == id(TP()._thread_target_wrapper.__code__):
+        if id(fi.frame.f_code) == id(_future_target_wrapper.__code__):
             logger.debug(
                 "Found thread starter frame. "
                 "Will walk over frames prior to thread start."
