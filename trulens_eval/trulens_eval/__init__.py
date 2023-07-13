@@ -30,7 +30,9 @@ otherwise you might get circular import errors.
 
     - `schema.py`
 
-    - `util.py` `keys.py`
+    - `util.py` 
+    
+    - `keys.py`
 
     - `utils/python.py` `utils/text.py`
 """
