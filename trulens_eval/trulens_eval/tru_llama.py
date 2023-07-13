@@ -52,8 +52,8 @@ class LlamaInstrument(Instrument):
             llama_index.prompts.base.Prompt,
             # llama_index.prompts.prompt_type.PromptType, # enum
             llama_index.question_gen.types.BaseQuestionGenerator,
-            llama_index.indices.query.response_synthesis.ResponseSynthesizer,
-            llama_index.indices.response.refine.Refine,
+            llama_index.response_synthesizers.base.BaseSynthesizer,
+            llama_index.response_synthesizers.refine.Refine,
             llama_index.llm_predictor.LLMPredictor,
             llama_index.llm_predictor.base.LLMMetadata,
             llama_index.llm_predictor.base.BaseLLMPredictor,
@@ -71,7 +71,7 @@ class LlamaInstrument(Instrument):
             {
                 "get_response":
                     lambda o:
-                    isinstance(o, llama_index.indices.response.refine.Refine),
+                    isinstance(o, llama_index.response_synthesizers.refine.Refine),
                 "predict":
                     lambda o: isinstance(
                         o, llama_index.llm_predictor.base.BaseLLMPredictor
