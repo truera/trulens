@@ -33,7 +33,7 @@ otherwise you might get circular import errors.
     - `util.py` `keys.py`
 """
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Huggingface
