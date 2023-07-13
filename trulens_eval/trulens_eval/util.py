@@ -66,7 +66,7 @@ langchain_version = "0.0.230"
 
 REQUIREMENT_LLAMA = (
     "llama_index 0.6.24 or above is required for instrumenting llama_index apps. "
-    "Please install it before use: `pip install llama_index>=0.6.24`."
+    "Please install it before use: `pip install llama_index>=0.7.0`."
 )
 REQUIREMENT_LANGCHAIN = (
     f"langchain {langchain_version} or above is required for instrumenting langchain apps. "
