@@ -12,15 +12,58 @@ import statement.
 import logging
 import os
 from pathlib import Path
+import re
+from typing import Any, Optional, Set, Union
 
 import cohere
 import dotenv
 
-from trulens_eval.util import caller_frame
-from trulens_eval.util import UNICODE_CHECK
-from trulens_eval.util import UNICODE_STOP
+from trulens_eval.utils.python import caller_frame
+from trulens_eval.utils.text import UNICODE_CHECK
+from trulens_eval.utils.text import UNICODE_STOP
 
 logger = logging.getLogger(__name__)
+
+# Keep track of values that should not be shown in UI (or added to DB). This set
+# is only used for cases where the name/key for a field is not useful to
+# determine whether it should be redacted.
+values_to_redact = set()
+
+# Regex of keys (into dict/json) that should be redacted.
+RE_KEY_TO_REDACT = re.compile('|'.join([
+    r'.*api_key', # covers OpenAI class key 'api_key' and env vars ending in 'API_KEY'
+    r'KAGGLE_KEY',
+    r'SLACK_(TOKEN|SIGNING_SECRET)', # covers slack-related keys
+    ]), re.IGNORECASE
+)
+# Env vars not covered as they are assumed non-sensitive:
+# - PINECONE_ENV, e.g. "us-west1-gcp-free"
+# - KAGGLE_USER
+
+# TODO: Some method for letting users add more things to redact.
+
+# The replacement value for redacted values.
+REDACTED_VALUE = "__tru_redacted"
+
+def should_redact_key(k: Optional[str]) -> bool:
+    return isinstance(k, str) and RE_KEY_TO_REDACT.fullmatch(k)
+
+def should_redact_value(v: Union[Any, str]) -> bool:
+    return isinstance(v, str) and v in values_to_redact
+
+def redact_value(v: Union[str, Any], k: Optional[str] = None) -> Union[str, Any]:
+    """
+    Determine whether the given value `v` should be redact it and redact it if
+    so. If its key `k` (in a dict/json-like) is given, uses the key name to
+    determine whether redaction is appropriate. If key `k` is not given, only
+    redacts if `v` is a string and identical to one of the keys ingested using
+    `setup_keys`.
+    """
+
+    if should_redact_key(k) or should_redact_value(v):
+        return REDACTED_VALUE
+    else:
+        return v
 
 
 def get_config():
@@ -45,11 +88,13 @@ else:
     config = dotenv.dotenv_values(config_file)
 
     for k, v in config.items():
-        # print(f"{config_file}: {k}")
         globals()[k] = v
 
-        # set them into environment as well
+        # Set them into environment as well
         os.environ[k] = v
+
+        # Put value in redaction list.
+        values_to_redact.add(v)
 
 
 def set_openai_key():
@@ -127,5 +172,7 @@ def setup_keys(**kwargs):
     for k, v in to_global.items():
         globs[k] = v
         os.environ[k] = v
+
+        values_to_redact.add(v)
 
     set_openai_key()

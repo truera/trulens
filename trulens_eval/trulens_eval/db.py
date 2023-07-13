@@ -30,8 +30,8 @@ from trulens_eval.schema import RecordID
 from trulens_eval.util import JSON
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import SerialModel
-from trulens_eval.util import UNICODE_CHECK
-from trulens_eval.util import UNICODE_CLOCK
+from trulens_eval.utils.text import UNICODE_CHECK
+from trulens_eval.utils.text import UNICODE_CLOCK
 
 mj = MerkleJson()
 NoneType = type(None)
