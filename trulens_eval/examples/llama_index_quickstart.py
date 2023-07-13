@@ -11,7 +11,7 @@
 # Let's install some of the dependencies for this notebook if we don't have them already
 
 get_ipython().system('pip install trulens-eval')
-get_ipython().system('pip install llama_index==0.6.31')
+get_ipython().system('pip install llama_index==0.7.0')
 
 # ### Add API keys
 # For this quickstart, you will need Open AI and Huggingface keys
