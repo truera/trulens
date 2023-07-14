@@ -53,7 +53,7 @@ def should_redact_value(v: Union[Any, str]) -> bool:
 
 def redact_value(v: Union[str, Any], k: Optional[str] = None) -> Union[str, Any]:
     """
-    Determine whether the given value `v` should be redact it and redact it if
+    Determine whether the given value `v` should be redacted and redact it if
     so. If its key `k` (in a dict/json-like) is given, uses the key name to
     determine whether redaction is appropriate. If key `k` is not given, only
     redacts if `v` is a string and identical to one of the keys ingested using
