@@ -31,14 +31,33 @@ values_to_redact = set()
 
 # Regex of keys (into dict/json) that should be redacted.
 RE_KEY_TO_REDACT = re.compile('|'.join([
-    r'.*api_key', # covers OpenAI class key 'api_key' and env vars ending in 'API_KEY'
+    r'api_key',
+    # Covers OpenAI, Cohere, Anthropic class key 'api_key'
+
+    r'.+_api_key',
+    # Covers langchain llm attributes for keys such as 'openai_api_key'.
+
+    # r'token',
+    # Would cover bard unofficial api field "token" but this is a
+    # bit too general of a key; TODO: need another solution to redact.
+
+    r'.+_API_KEY',
+    # Covers env vars ending in "_API_KEY", including openai, cohere, anthropic,
+    # bard
+
     r'KAGGLE_KEY',
-    r'SLACK_(TOKEN|SIGNING_SECRET)', # covers slack-related keys
-    ]), re.IGNORECASE
-)
+
+    r'SLACK_(TOKEN|SIGNING_SECRET)',
+    # Covers slack-related keys.
+]))
+
 # Env vars not covered as they are assumed non-sensitive:
 # - PINECONE_ENV, e.g. "us-west1-gcp-free"
 # - KAGGLE_USER
+
+# Keys not covered that might be sensitive:
+# - "token" - i.e. bard-api Bard.token, slack api's -- name collision with
+#   "token" as in the basic building block of text.
 
 # TODO: Some method for letting users add more things to redact.
 
@@ -110,7 +129,7 @@ cohere_agent = None
 def get_cohere_agent():
     global cohere_agent
     if cohere_agent is None:
-        cohere.api_key = os.environ['COHERE_API_KEY']
+        cohere.api_key = os.environ['CO_API_KEY']
         cohere_agent = cohere.Client(cohere.api_key)
     return cohere_agent
 
