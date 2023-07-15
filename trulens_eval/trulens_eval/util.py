@@ -1449,6 +1449,11 @@ class FunctionOrMethod(SerialModel):
 
     @staticmethod
     def of_callable(c: Callable, loadable: bool = False) -> 'FunctionOrMethod':
+        """
+        Serialize the given callable. If `loadable` is set, tries to add enough
+        info for the callable to be deserialized.
+        """
+
         if hasattr(c, "__self__"):
             return Method.of_method(
                 c, obj=getattr(c, "__self__"), loadable=loadable
@@ -1497,11 +1502,12 @@ class Method(FunctionOrMethod):
 
 class Function(FunctionOrMethod):
     """
-    A python function.
+    A python function. Could be a static method inside a class (not instance of
+    the class).
     """
 
     module: Module
-    cls: Optional[Class]
+    cls: Optional[Class] # for static methods in a class which we view as functions
     name: str
 
     @staticmethod
@@ -1522,11 +1528,11 @@ class Function(FunctionOrMethod):
 
     def load(self) -> Callable:
         if self.cls is not None:
-            cls = self.cls.load()
-            return getattr(cls, self.name)
+            cls = self.cls.load() # does not create class instance
+            return getattr(cls, self.name) # lookup static method
         else:
             mod = self.module.load()
-            return getattr(mod, self.name)
+            return getattr(mod, self.name) # function not inside a class
 
 
 class WithClassInfo(pydantic.BaseModel):

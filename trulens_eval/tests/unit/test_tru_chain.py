@@ -1,4 +1,6 @@
-# from llama.hf import LLaMATokenizer
+"""
+Tests for TruChain. This is outdated.
+"""
 
 import pinecone
 import pytest
