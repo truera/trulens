@@ -4,7 +4,7 @@
 
 TruLens provides a set of tools for developing and monitoring neural nets, including large language models. This includes both tools for evaluation of LLMs and LLM-based applications with TruLens-Eval and deep learning explainability with TruLens-Explain. TruLens-Eval and TruLens-Explain are housed in separate packages and can be used independently.
 
-The best way to support TruLens is to give us a star. You can also join our [slack community](https://communityinviter.com/apps/aiqualityforum/josh)!
+The best way to support TruLens is to give us a ⭐ and join our [slack community](https://communityinviter.com/apps/aiqualityforum/josh)!
 
 ## TruLens-Eval
 
@@ -19,6 +19,7 @@ Install trulens-eval from PyPI.
 ```bash
 pip install trulens-eval
 ```
+
 
 ```python
 from trulens_eval import Tru
