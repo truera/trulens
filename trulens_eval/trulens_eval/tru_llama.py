@@ -70,8 +70,9 @@ class LlamaInstrument(Instrument):
         METHODS = dict_set_with(
             {
                 "get_response":
-                    lambda o:
-                    isinstance(o, llama_index.response_synthesizers.refine.Refine),
+                    lambda o: isinstance(
+                        o, llama_index.response_synthesizers.refine.Refine
+                    ),
                 "predict":
                     lambda o: isinstance(
                         o, llama_index.llm_predictor.base.BaseLLMPredictor
