@@ -67,6 +67,10 @@ def make_nonglobal_feedbacks():
     # Creates the same stuff as above except in the local scope of this
     # function, making the results not globally importable.
 
+    # TODO: bug here that if the methods below are named the same as the
+    # globally importable ones above, they will get imported as them
+    # incorrectly.
+
     class NG: # "non-global"
         def NGcustom_feedback_function(t1: str) -> float:
             return 0.1
