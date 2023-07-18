@@ -1486,9 +1486,10 @@ class FunctionOrMethod(SerialModel):
 
         if inspect.ismethod(c):
             self = c.__self__
-
             return Method.of_method(c, obj=self, loadable=loadable)
+        
         else:
+            
             return Function.of_function(c, loadable=loadable)
 
     def load(self) -> Callable:
@@ -1543,7 +1544,7 @@ class Function(FunctionOrMethod):
 
     module: Module
     cls: Optional[Class
-                 ]  # for static methods in a class which we view as functions
+                 ]  # for static methods in a class which we view as functions, not yet supported
     name: str
 
     @staticmethod
@@ -1564,8 +1565,11 @@ class Function(FunctionOrMethod):
 
     def load(self) -> Callable:
         if self.cls is not None:
-            cls = self.cls.load()  # does not create class instance
-            return getattr(cls, self.name)  # lookup static method
+            # TODO: static/class methods work in progress
+
+            cls = self.cls.load()  # does not create object instance
+            return getattr(cls, self.name)  # lookup static/class method
+        
         else:
             mod = self.module.load()
             try:

@@ -29,15 +29,15 @@ class TestFeedbackConstructors(TestCase):
 
         for imp, target in [
             (custom_feedback_function, 0.1),
-                # (CustomProvider.static_method, 0.2),
-                # (CustomProvider.class_method, 0.3),
+            # (CustomProvider.static_method, 0.2),
+            # (CustomProvider.class_method, 0.3),
             (CustomProvider(attr=0.37).method, 0.4 + 0.37),
-                # (CustomClassNoArgs.static_method, 0.5),
-                # (CustomClassNoArgs.class_method, 0.6),
+            # (CustomClassNoArgs.static_method, 0.5),
+            # (CustomClassNoArgs.class_method, 0.6),
             (CustomClassNoArgs().method, 0.7),
-                # (CustomClassWithArgs.static_method, 0.8),
-                # (CustomClassWithArgs.class_method, 0.9),
-                # (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
+            # (CustomClassWithArgs.static_method, 0.8),
+            # (CustomClassWithArgs.class_method, 0.9),
+            # (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
         ]:
 
             with self.subTest(imp=imp, taget=target):
@@ -57,6 +57,26 @@ class TestFeedbackConstructors(TestCase):
 
                 self.assertEqual(res.result, target)
 
+    def test_global_unsupported(self):
+        # Each of these should fail when trying to create a Feedback object.
+
+        for imp, target in [
+            # (custom_feedback_function, 0.1),
+            # (CustomProvider.static_method, 0.2), # TODO
+            (CustomProvider.class_method, 0.3),
+            # (CustomProvider(attr=0.37).method, 0.4 + 0.37),
+            # (CustomClassNoArgs.static_method, 0.5), # TODO
+            (CustomClassNoArgs.class_method, 0.6),
+            # (CustomClassNoArgs().method, 0.7),
+            # (CustomClassWithArgs.static_method, 0.8), # TODO
+            (CustomClassWithArgs.class_method, 0.9),
+            (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
+        ]:
+
+            with self.subTest(imp=imp, taget=target):
+                with self.assertRaises(RuntimeError):
+                    f = Feedback(imp).on_default()
+
     def test_nonglobal_feedback_functions(self):
         # Set up the same feedback functions as in feedback.py but locally here.
         # This makes them non-globally-importable.
@@ -65,15 +85,15 @@ class TestFeedbackConstructors(TestCase):
 
         for imp, target in [
             (NG.NGcustom_feedback_function, 0.1),
-                # (NG.CustomProvider.static_method, 0.2),
-                # (NG.CustomProvider.class_method, 0.3),
+            # (NG.CustomProvider.static_method, 0.2),
+            # (NG.CustomProvider.class_method, 0.3),
             (NG.NGCustomProvider(attr=0.37).method, 0.4 + 0.37),
-                # (NG.CustomClassNoArgs.static_method, 0.5),
-                # (NG.CustomClassNoArgs.class_method, 0.6),
+            # (NG.CustomClassNoArgs.static_method, 0.5),
+            # (NG.CustomClassNoArgs.class_method, 0.6),
             (NG.NGCustomClassNoArgs().method, 0.7),
-                # (NG.CustomClassWithArgs.static_method, 0.8),
-                # (NG.CustomClassWithArgs.class_method, 0.9),
-                # (NG.CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
+            # (NG.CustomClassWithArgs.static_method, 0.8),
+            # (NG.CustomClassWithArgs.class_method, 0.9),
+            # (NG.CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
         ]:
 
             with self.subTest(imp=imp, taget=target):
@@ -90,10 +110,6 @@ class TestFeedbackConstructors(TestCase):
                 # This should fail:
                 with self.assertRaises(ImportError):
                     fds = Feedback(**fs)
-
-                    res = fds.run(record=self.record, app=self.app)
-
-                    self.assertEqual(res.result, target)
 
                 # OK to use with App as long as not deferred mode:
                 TruBasicApp(
@@ -117,7 +133,6 @@ class TestFeedbackConstructors(TestCase):
                         feedbacks=[f],
                         feedback_mode=FeedbackMode.DEFERRED
                     )
-
 
 
 if __name__ == '__main__':
