@@ -3,12 +3,23 @@
 
 ## Setting keys
 
-Most example notebooks come with a key check line like this:
+To check whether appropriate api keys have been set:
 
 ```python 
 from trulens_eval.keys import check_keys
 
 check_keys(
+    "OPENAI_API_KEY",
+    "HUGGINGFACE_API_KEY"
+)
+```
+
+Alternatively you can set using `check_or_set_keys`:
+
+```python 
+from trulens_eval.keys import check_or_set_keys
+
+check_or_set_keys(
     OPENAI_API_KEY="to fill in", 
     HUGGINGFACE_API_KEY="to fill in"
 )
@@ -88,9 +99,11 @@ Our example notebooks will only check that the api_key is set but will make use
 of the configured openai object as needed to compute feedback.
 """
 
+from collections import defaultdict
 import logging
 import os
-from pathlib import Path
+from pathlib import Path, PurePath
+from typing import Tuple
 
 import cohere
 import dotenv
@@ -102,36 +115,35 @@ from trulens_eval.util import UNICODE_STOP
 logger = logging.getLogger(__name__)
 
 
-def get_config():
+def get_config_file() -> Path:
+    """
+    Looks for a .env file in current folder or its parents. Returns Path of
+    found .env or None if not found.
+    """
     for path in [Path().cwd(), *Path.cwd().parents]:
         file = path / ".env"
         if file.exists():
-            # print(f"Using {file}")
-
             return file
 
     return None
 
-"""
-config_file = get_config()
-if config_file is None:
-    logger.warning(
-        f"No .env found in {Path.cwd()} or its parents. "
-        "You may need to specify secret keys in another manner."
-    )
+def get_config() -> Tuple[Path, dict]:
+    config_file = get_config_file()
+    if config_file is None:
+        logger.warning(
+            f"No .env found in {Path.cwd()} or its parents. "
+            "You may need to specify secret keys in another manner."
+        )
+        return None, None
+    else:
+        return config_file, dotenv.dotenv_values(config_file)
 
-else:
-    config = dotenv.dotenv_values(config_file)
+def set_openai_key() -> None:
+    """
+    Sets the openai class attribute `api_key` to its value from the
+    OPENAI_API_KEY env var.
+    """
 
-    for k, v in config.items():
-        # print(f"{config_file}: {k}")
-        globals()[k] = v
-
-        # set them into environment as well
-        os.environ[k] = v
-"""
-
-def set_openai_key():
     if 'OPENAI_API_KEY' in os.environ:
         import openai
         openai.api_key = os.environ["OPENAI_API_KEY"]
@@ -141,7 +153,11 @@ global cohere_agent
 cohere_agent = None
 
 
-def get_cohere_agent():
+def get_cohere_agent() -> cohere.Client:
+    """
+    Gete a singleton cohere agent. Sets its api key from env var COHERE_API_KEY.
+    """
+
     global cohere_agent
     if cohere_agent is None:
         cohere.api_key = os.environ['COHERE_API_KEY']
@@ -155,17 +171,35 @@ def get_huggingface_headers():
     }
     return HUGGINGFACE_HEADERS
 
-def _check_key(k, v = None):
+
+def _value_is_set(v: str) -> bool:
+    return not(v is None or "fill" in v or v == "")
+
+
+class KeyError(RuntimeError):
+    def __init__(self, key: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.key = key
+
+
+def _check_key(k: str, v: str = None) -> None:
+    """
+    Check that the given `k` is an env var with a value that indicates a valid
+    api key or secret.  If `v` is provided, checks that instead. If value
+    indicates the key is not set, raises an informative error telling the user
+    options on how to set that key.
+    """
+
     v = v or os.environ.get(k)
 
-    if v is None or "fill" in v:
-        raise RuntimeError(\
-f"""{UNICODE_STOP} Variable {k} needs to be set; please provide it in one of these ways:
+    if not _value_is_set(v):
+        raise KeyError(key=k, msg=\
+f"""{UNICODE_STOP} Key {k} needs to be set; please provide it in one of these ways:
 
   - in a variable {k} prior to this check, 
   - in your variable environment, 
   - in a .env file in {Path.cwd()} or its parents,
-  - explicitly passed to function `check_keys` of `trulens_eval.keys`,
+  - explicitly passed to function `check_or_set_keys` of `trulens_eval.keys`,
   - passed to the endpoint or feedback collection constructor that needs it (`trulens_eval.provider_apis.OpenAIEndpoint`, etc.), or
   - set in api utility class that expects it (i.e. `openai`, etc.).
 
@@ -173,56 +207,145 @@ For the last two options, the name of the argument may differ from {k} (i.e. `op
 """)
 
 
-def check_keys(**kwargs):
+def _relative_path(path: Path, relative_to: Path) -> str:
+    """
+    Get the path `path` relative to path `relative_to` even if `relative_to` is
+    not a prefix of `path`. Iteratively takes the parent of `relative_to` in
+    that case until it becomes a prefix. Each parent is indicated by '..'.
+    """
+
+    parents = 0
+
+    while True:
+        try:
+            return "".join(["../"] * parents) + str(path.relative_to(relative_to))
+        except Exception:
+            parents += 1
+            relative_to = relative_to.parent
+    
+
+def _collect_keys(*args, **kwargs) -> dict:
+    """
+    Collect values for keys from all of the currently supported sources. This includes:
+
+    - Using env variables.
+
+    - Using python variables.
+
+    - Explicitly passed to `check_or_set_keys`.
+
+    - Using vars defined in a .env file in current folder or one of its parents.
+
+    - Using 3rd party class attributes (i.e. OpenAI.api_key). This one requires the
+      user to initialize our Endpoint class for that 3rd party api.
+
+    - With initialization of trulens_eval Endpoint class that handles a 3rd party api.
+    """
+
+    ret = dict()
+
+    config_file, config = get_config()
+    
+    globs = caller_frame(offset=2).f_globals
+
+    for k in list(args) + list(kwargs.keys()):
+        valid_values = set()
+        valid_sources = defaultdict(list)
+
+        # Env vars. NOTE: Endpoint classes copy over relevant keys from 3rd party
+        # classes (or provided explicitly to them) to var env.
+        temp_v = os.environ.get(k)
+        if _value_is_set(temp_v):
+            valid_sources[temp_v].append("environment")
+            valid_values.add(temp_v)
+
+        # Explicit.
+        temp_v = kwargs.get(k)
+        if _value_is_set(temp_v):
+            valid_sources[temp_v].append(f"explicit value to `check_or_set_keys`")
+            valid_values.add(temp_v)
+
+        
+        # .env vars.
+        if config is not None:
+            temp_v = config.get(k)
+            if _value_is_set(temp_v):
+                valid_sources[temp_v].append(f".env file at {config_file}")
+                valid_values.add(temp_v)
+
+        # Globals of caller.
+        temp_v = globs.get(k)
+        if _value_is_set(temp_v):
+            valid_sources[temp_v].append(f"python variable")
+            valid_values.add(temp_v)
+
+        if len(valid_values) == 0:
+            ret[k] = None
+
+        elif len(valid_values) > 1:
+            warning = f"More than one different value for key {k} has been found:\n\t"
+            warning += "\n\t".join(f"""value ending in {v[-1]} in {' and '.join(valid_sources[v])}""" for v in valid_values)
+            warning += f"\nUsing one arbitrarily."
+            logger.warning(warning)
+
+            ret[k] = list(valid_values)[0]
+        else:
+            v = list(valid_values)[0]
+            print(
+                f"{UNICODE_CHECK} Key {k} set from {valid_sources[v][0]}"
+                + (' (same value found in ' + (' and '.join(valid_sources[v][1:])) + ')' if len(valid_sources[v]) > 1 else '')
+                + "."
+            )
+
+            ret[k] = v
+        
+    return ret
+
+
+def check_keys(*keys):
+    """
+    Check that all keys named in `*args` are set as env vars. Will fail with a
+    message on how to set missing key if one is missing. If all are provided
+    somewhere, they will be set in the env var as the canonical location where
+    we should expect them subsequently. Example:
+
+    ```python 
+    from trulens_eval.keys import check_keys
+
+    check_keys(
+        "OPENAI_API_KEY",
+        "HUGGINGFACE_API_KEY"
+    )
+    ```
+    """
+
+    kvals = _collect_keys(*keys)
+    for k in keys:
+        v = kvals.get(k)
+        _check_key(k, v=v)
+        os.environ[k] = v
+
+
+def check_or_set_keys(*args, **kwargs):
     """
     Check various sources of api configuration values like secret keys and set
     env variables for each of them. We use env variables as the canonical
-    storage of these keys, regardless of how they were specified.
+    storage of these keys, regardless of how they were specified. Values can
+    also be specified explicitly to this method. Example:
+
+    ```python 
+    from trulens_eval.keys import check_or_set_keys
+
+    check_or_set_keys(
+        OPENAI_API_KEY="to fill in", 
+        HUGGINGFACE_API_KEY="to fill in"
+    )
+    ```
     """
 
-    config_file = get_config()
-    if config_file is None:
-        logger.warning(
-            f"No .env found in {Path.cwd()} or its parents. "
-            "You may need to specify secret keys in another manner."
-        )
-    else:
-        config = dotenv.dotenv_values(config_file)
-
-    to_global = dict()
-
-    globs = caller_frame(offset=1).f_globals
-
-    for k, v in kwargs.items():
-        if v is not None and "fill" not in v.lower():
-            to_global[k] = v
-            print(f"{UNICODE_CHECK} Variable {k} set explicitly.")
-            continue
-
-        if k in globs:
-            print(f"{UNICODE_CHECK} Variable {k} was already set.")
-            continue
-
-        if k in os.environ:
-            # Note this option also applies to cases where we copy the key from
-            # a specific class like openai as that process sets the relevant env
-            # variable as well so we can access it here.
-            v = os.environ[k]
-            to_global[k] = v
-            print(f"{UNICODE_CHECK} Variable {k} set from environment.")
-            continue
-
-        if config_file is not None:
-            if k in config:
-                v = config[k]
-                print(f"{UNICODE_CHECK} Variable {k} set from {config_file} .")
-                to_global[k] = v
-                continue
-
-        _check_key(k, v)
-
-    for k, v in to_global.items():
-        globs[k] = v
+    kvals = _collect_keys(*args, **kwargs)
+    for k in list(args) + list(kwargs.keys()):
+        v = kvals.get(k)
+        _check_key(k, v=v)
         os.environ[k] = v
 
-    set_openai_key()

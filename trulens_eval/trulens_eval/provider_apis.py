@@ -609,7 +609,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
                 if v is not None:
                     # If no value were explicitly set, check if the user set up openai
                     # attributes themselves and if so, copy over the ones we use via
-                    # environment vars, to this env vars.
+                    # environment vars, to its respective env var.
 
                     attr_val = getattr(openai, k)
                     if attr_val is not None and attr_val != os.environ.get(v):
