@@ -176,10 +176,11 @@ def _value_is_set(v: str) -> bool:
     return not(v is None or "fill" in v or v == "")
 
 
-class KeyError(RuntimeError):
-    def __init__(self, key: str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class ApiKeyError(RuntimeError):
+    def __init__(self, *args, key: str, msg: str = ""):
+        super().__init__(msg, *args)
         self.key = key
+        self.msg = msg
 
 
 def _check_key(k: str, v: str = None) -> None:
@@ -193,8 +194,7 @@ def _check_key(k: str, v: str = None) -> None:
     v = v or os.environ.get(k)
 
     if not _value_is_set(v):
-        raise KeyError(key=k, msg=\
-f"""{UNICODE_STOP} Key {k} needs to be set; please provide it in one of these ways:
+        msg = f"""Key {k} needs to be set; please provide it in one of these ways:
 
   - in a variable {k} prior to this check, 
   - in your variable environment, 
@@ -204,7 +204,9 @@ f"""{UNICODE_STOP} Key {k} needs to be set; please provide it in one of these wa
   - set in api utility class that expects it (i.e. `openai`, etc.).
 
 For the last two options, the name of the argument may differ from {k} (i.e. `openai.api_key` for `OPENAI_API_KEY`).
-""")
+"""
+        print(f"{UNICODE_STOP} {msg}")
+        raise ApiKeyError(key=k, msg=msg)
 
 
 def _relative_path(path: Path, relative_to: Path) -> str:
