@@ -118,33 +118,37 @@ The function or method provided to the `Feedback` constructor is the
 implementation of the feedback function which does the actual work of producing
 a float indicating some quantity of interest. 
 
-**Note regarding FeedbackMode.DEFERRED** -- Any callable can be provided here
-but there are additional requirements if your app uses the "deferred" feedback
-evaluation mode (when `feedback_mode=FeedbackMode.DEFERRED` are specified to app
-constructor). In those cases the callables must be methods that are globally
-importable (see the next section for details). The function/method performing
-the aggregation has the same requirements.
+**Note regarding FeedbackMode.DEFERRED** -- Any function or method (not static
+or class methods presently supported) can be provided here but there are
+additional requirements if your app uses the "deferred" feedback evaluation mode
+(when `feedback_mode=FeedbackMode.DEFERRED` are specified to app constructor).
+In those cases the callables must be functions or methods that are importable
+(see the next section for details). The function/method performing the
+aggregation has the same requirements.
 
-### Global import requirement (DEFERRED feedback mode only)
+### Import requirement (DEFERRED feedback mode only)
 
 If using deferred evaluation, the feedback function implementations and
-aggregation implementations must be methods from a class that is globally
-importable. That is, the callables must be accessible were you to evaluate this
-code:
+aggregation implementations must be functions or methods from a Provider
+subclass that is importable. That is, the callables must be accessible were you
+to evaluate this code:
 
 ```python
-import somepackage.[...].someclass 
+from somepackage.[...] import someproviderclass
+from somepackage.[...] import somefunction
+
 # [...] means optionally further package specifications
 
-provider = someclass(...) # constructor arguments can be included
-feedback_implementation = provider.somemethod
+provider = someproviderclass(...) # constructor arguments can be included
+feedback_implementation1 = provider.somemethod
+feedback_implementation2 = somefunction
 ```
 
 For provided feedback functions, `somepackage` is `trulens_eval.feedback` and
-`someclass` is `OpenAI` or one of the other `Provider` subclasses. Custom
-feedback functions likewise need to belong to a package that can be imported.
-Critically, classes defined locally in a notebook will not be importable this
-way.
+`someproviderclass` is `OpenAI` or one of the other `Provider` subclasses.
+Custom feedback functions likewise need to be importable functions or methods of
+a provider subclass that can be imported. Critically, functions or classes
+defined locally in a notebook will not be importable this way.
 
 ## Specifying Arguments
 
