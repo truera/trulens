@@ -6,12 +6,12 @@ import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 
 from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
+from trulens_eval.ux.styles import CATEGORY
 
 st.runtime.legacy_caching.clear_cache()
 
 from trulens_eval import db
 from trulens_eval import Tru
-from trulens_eval.feedback import default_pass_fail_color_threshold
 from trulens_eval.ux import styles
 
 st.set_page_config(page_title="Leaderboard", layout="wide")
@@ -88,19 +88,13 @@ def streamlit_app():
                 pass
 
             else:
-                if mean >= default_pass_fail_color_threshold:
-                    feedback_cols[i].metric(
-                        label=col_name,
-                        value=f'{round(mean, 2)}',
-                        delta='✅ High'
-                    )
-                else:
-                    feedback_cols[i].metric(
-                        label=col_name,
-                        value=f'{round(mean, 2)}',
-                        delta='⚠️ Low ',
-                        delta_color="inverse"
-                    )
+                cat = CATEGORY.of_score(mean)
+                feedback_cols[i].metric(
+                    label=col_name,
+                    value=f'{round(mean, 2)}',
+                    delta=f'{cat.icon} {cat.adjective}',
+                    delta_color="normal" if mean >= CATEGORY.PASS.threshold else "inverse"
+                )
 
         with col99:
             if st.button('Select App', key=f"app-selector-{app}"):
