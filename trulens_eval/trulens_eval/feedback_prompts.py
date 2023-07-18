@@ -34,6 +34,8 @@ Respond only as a number from 1 to 10 where 1 is the least relevant and 10 is th
 
 A few additional scoring guidelines:
 
+- Long RESPONSES should score equally well as short RESPONSES.
+
 - Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the most RELEVANT.
 
 - RESPONSE must be relevant to the entire PROMPT to get a score of 10.
@@ -42,11 +44,13 @@ A few additional scoring guidelines:
 
 - RESPONSE that is RELEVANT to none of the PROMPT should get a score of 1.
 
-- RESPONSE that is RELEVANT to some of the PROMPT should get as score between a 2 and 4.
+- RESPONSE that is RELEVANT to some of the PROMPT should get as score of 2, 3, or 4. Higher score indicates more RELEVANCE.
 
-- RESPONSE that is RELEVANT to most of the PROMPT should get a score between a 5 and 9.
+- RESPONSE that is RELEVANT to most of the PROMPT should get a score between a 5, 6, 7 or 8. Higher score indicates more RELEVANCE.
 
-- RESPONSE that is RELEVANT to the entire PROMPT should get a score of 10.
+- RESPONSE that is RELEVANT to the entire PROMPT should get a score of 9 or 10.
+
+- RESPONSE that is RELEVANT and answers the entire PROMPT completely should get a score of 10.
 
 - RESPONSE that confidently FALSE should get a score of 1.
 
