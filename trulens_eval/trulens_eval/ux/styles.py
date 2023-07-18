@@ -37,9 +37,11 @@ class CATEGORY:
         icon="?"
     )
 
+    ALL = [PASS, WARNING, FAIL] # not including UNKNOWN intentionally
+
     @staticmethod
     def of_score(score: float) -> Category:
-        for cat in [CATEGORY.PASS, CATEGORY.WARNING, CATEGORY.FAIL]:
+        for cat in CATEGORY.ALL:
             if score >= cat.threshold:
                 return cat
 
@@ -51,6 +53,7 @@ class CATEGORY:
 root_js = f"""
     var default_pass_threshold = {CATEGORY.PASS.threshold};
     var default_warning_threshold = {CATEGORY.WARNING.threshold};
+    var default_fail_threshold = {CATEGORY.FAIL.threshold};
 """
 
 # Not presently used. Need to figure out how to include this in streamlit pages.
@@ -67,29 +70,21 @@ stmetricdelta_hidearrow = """
 cellstyle_jscode = f"""
     function(params) {{
         let v = parseFloat(params.value);
-        if (v >= {CATEGORY.PASS.threshold}) {{
+        """ + \
+    "\n".join(f"""
+        if (v >= {cat.threshold}) {{
             return {{
                 'color': 'black',
-                'backgroundColor': '{CATEGORY.PASS.color}'
-                
-            }};
-        }} else if (v >= {CATEGORY.WARNING.threshold}) {{
-            return {{
-                'color': 'black',
-                'backgroundColor': '{CATEGORY.WARNING.color}'
-            }};
-        }} else if (v >= {CATEGORY.FAIL.threshold}) {{
-            return {{
-                'color': 'black',
-                'backgroundColor': '{CATEGORY.FAIL.color}'
-            }};
-        }} else {{ // i.e. not a number
-            return {{
-                'color': 'black',
-                'backgroundColor': '{CATEGORY.UNKNOWN.color}'
+                'backgroundColor': '{cat.color}'
             }};
         }}
-    }};
+    """ for cat in CATEGORY.ALL) + f"""
+        // i.e. not a number
+        return {{
+            'color': 'black',
+            'backgroundColor': '{CATEGORY.UNKNOWN.color}'
+        }};
+    }}
     """
 
 hide_table_row_index = """
