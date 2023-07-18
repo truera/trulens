@@ -92,7 +92,7 @@ def make_nonglobal_feedbacks():
 
         class NGCustomClassNoArgs():
             # This one is ok as it has no init arguments so we can deserialize it just
-            # from its moudle and name.
+            # from its module and name.
 
             @staticmethod
             def static_method(t1: str) -> float:
