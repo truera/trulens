@@ -1,5 +1,5 @@
 #TODO: This is incomplete and does not include all the dependencies required for development.
-name: python37
+name: python38
 channels:
   - defaults
 dependencies:
@@ -30,4 +30,4 @@ dependencies:
       - python-markdown-math==0.7
       - yapf==0.32.0
       - isort==5.10.1
-prefix: /home/truera/miniconda3/envs/python37
+prefix: /home/truera/miniconda3/envs/python38

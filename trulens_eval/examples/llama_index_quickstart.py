@@ -11,7 +11,7 @@
 # Let's install some of the dependencies for this notebook if we don't have them already
 
 get_ipython().system('pip install trulens-eval')
-get_ipython().system('pip install llama_index==0.6.31')
+get_ipython().system('pip install llama_index==0.7.0')
 
 # ### Add API keys
 # For this quickstart, you will need Open AI and Huggingface keys
@@ -90,6 +90,8 @@ print(llm_response)
 tru.run_dashboard()  # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed
+
+# Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
 # ### Leaderboard
 #

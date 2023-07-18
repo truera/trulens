@@ -247,7 +247,7 @@ class Endpoint(SerialModel, SingletonPerName):
             except Exception as e:
                 retries -= 1
                 logger.error(
-                    f"{self.name} request failed {type(e)}={e}. Retries={retries}."
+                    f"{self.name} request failed {type(e)}={e}. Retries remaining={retries}."
                 )
                 if retries > 0:
                     sleep(retry_delay)
