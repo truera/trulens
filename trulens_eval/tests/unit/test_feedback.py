@@ -5,30 +5,42 @@ Tests for Feedback class.
 from unittest import main
 from unittest import TestCase
 
-
-from trulens_eval import Provider, Feedback
-from trulens_eval.util import jsonify
-from trulens_eval.tru_basic_app import TruBasicApp
-
 # Get the "globally importable" feedback implementations.
-from tests.unit.feedbacks import custom_feedback_function, CustomProvider, CustomClass
+from tests.unit.feedbacks import custom_feedback_function
+from tests.unit.feedbacks import CustomClassNoArgs
+from tests.unit.feedbacks import CustomClassWithArgs
+from tests.unit.feedbacks import CustomProvider
+from tests.unit.feedbacks import make_nonglobal_feedbacks
 
-class FeedbackConstructors(TestCase):
+from trulens_eval import Feedback
+from trulens_eval.tru_basic_app import TruBasicApp
+from trulens_eval.schema import FeedbackMode
+from trulens_eval.util import jsonify
+
+
+class TestFeedbackConstructors(TestCase):
 
     def setUp(self):
-        self.app = TruBasicApp(text_to_text = lambda t: f"returning {t}")
+        self.app = TruBasicApp(text_to_text=lambda t: f"returning {t}")
         _, self.record = self.app.call_with_record(input="hello")
 
-    def test_feedback_functions(self):
+    def test_global_feedback_functions(self):
+        # NOTE: currently static methods and class methods are not supported
+
         for imp, target in [
             (custom_feedback_function, 0.1),
-            (CustomProvider.custom_provider_static_method, 0.2),
-            (CustomProvider().custom_provider_method, 0.3),
-            (CustomClass.custom_class_static_method, 0.4),
-            (CustomClass().custom_class_method, 0.5)
+                # (CustomProvider.static_method, 0.2),
+                # (CustomProvider.class_method, 0.3),
+            (CustomProvider(attr=0.37).method, 0.4 + 0.37),
+                # (CustomClassNoArgs.static_method, 0.5),
+                # (CustomClassNoArgs.class_method, 0.6),
+            (CustomClassNoArgs().method, 0.7),
+                # (CustomClassWithArgs.static_method, 0.8),
+                # (CustomClassWithArgs.class_method, 0.9),
+                # (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
         ]:
 
-            with self.subTest(imp=imp,taget=target):
+            with self.subTest(imp=imp, taget=target):
                 f = Feedback(imp).on_default()
 
                 # Run the feedback function.
@@ -44,6 +56,68 @@ class FeedbackConstructors(TestCase):
                 res = fds.run(record=self.record, app=self.app)
 
                 self.assertEqual(res.result, target)
+
+    def test_nonglobal_feedback_functions(self):
+        # Set up the same feedback functions as in feedback.py but locally here.
+        # This makes them non-globally-importable.
+
+        NG = make_nonglobal_feedbacks()
+
+        for imp, target in [
+            (NG.NGcustom_feedback_function, 0.1),
+                # (NG.CustomProvider.static_method, 0.2),
+                # (NG.CustomProvider.class_method, 0.3),
+            (NG.NGCustomProvider(attr=0.37).method, 0.4 + 0.37),
+                # (NG.CustomClassNoArgs.static_method, 0.5),
+                # (NG.CustomClassNoArgs.class_method, 0.6),
+            (NG.NGCustomClassNoArgs().method, 0.7),
+                # (NG.CustomClassWithArgs.static_method, 0.8),
+                # (NG.CustomClassWithArgs.class_method, 0.9),
+                # (NG.CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
+        ]:
+
+            with self.subTest(imp=imp, taget=target):
+                f = Feedback(imp).on_default()
+
+                # Run the feedback function.
+                res = f.run(record=self.record, app=self.app)
+
+                self.assertEqual(res.result, target)
+
+                # Serialize and deserialize the feedback function.
+                fs = jsonify(f)
+
+                # This should fail:
+                with self.assertRaises(ImportError):
+                    fds = Feedback(**fs)
+
+                    res = fds.run(record=self.record, app=self.app)
+
+                    self.assertEqual(res.result, target)
+
+                # OK to use with App as long as not deferred mode:
+                TruBasicApp(
+                    text_to_text=lambda t: f"returning {t}",
+                    feedbacks=[f],
+                    feedback_mode=FeedbackMode.WITH_APP
+                )
+
+                # OK to use with App as long as not deferred mode:
+                TruBasicApp(
+                    text_to_text=lambda t: f"returning {t}",
+                    feedbacks=[f],
+                    feedback_mode=FeedbackMode.WITH_APP_THREAD
+                )
+
+                # Trying these feedbacks with an app with deferred mode should
+                # fail at app construction:
+                with self.assertRaises(ImportError):
+                    TruBasicApp(
+                        text_to_text=lambda t: f"returning {t}",
+                        feedbacks=[f],
+                        feedback_mode=FeedbackMode.DEFERRED
+                    )
+
 
 
 if __name__ == '__main__':

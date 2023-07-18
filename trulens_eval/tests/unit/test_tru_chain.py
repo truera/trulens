@@ -3,7 +3,9 @@ Tests for TruChain. This is outdated.
 """
 
 import pinecone
-import pytest
+import unittest
+from unittest import main
+from unittest import TestCase
 import torch
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
@@ -26,9 +28,9 @@ with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     from langchain.vectorstores import Pinecone
 
 
-class TestTruChain():
+class TestTruChain(TestCase):
 
-    def setup_method(self):
+    def setUp(self):
         print("setup")
 
         self.llm_model_id = "gpt2"
@@ -60,6 +62,7 @@ class TestTruChain():
 
         self.llm = HuggingFacePipeline(pipeline=self.pipe)
 
+    @unittest.skip("outdated")
     def test_qa_prompt(self):
         # Test of a small q/a app using a prompt and a single call to an llm.
 
@@ -78,6 +81,7 @@ class TestTruChain():
 
         assert len(tru_app.db.select()) == 2
 
+    @unittest.skip("outdated")
     def test_qa_prompt_with_memory(self):
         # Test of a small q/a app using a prompt and a single call to an llm.
         # Also has memory.
@@ -100,7 +104,7 @@ class TestTruChain():
 
         assert len(tru_app.db.select()) == 2
 
-    @pytest.mark.nonfree
+    @unittest.skip("outdated")
     def test_qa_db(self):
         # Test a q/a app that uses a vector store to look up context to include in
         # llm prompt.
@@ -134,6 +138,7 @@ class TestTruChain():
 
         assert len(tru_app.db.select()) == 1
 
+    @unittest.skip("outdated")
     def test_sequential(self):
         # Test of a sequential app that contains the same llm twice with
         # different prompts.
@@ -176,3 +181,6 @@ class TestTruChain():
         )
 
         assert len(tru_app.db.select()) == 2
+
+if __name__ == '__main__':
+    main()

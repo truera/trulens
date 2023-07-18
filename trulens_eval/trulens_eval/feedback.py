@@ -419,6 +419,7 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
+from trulens_eval.util import WithClassInfo
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import JSON
 from trulens_eval.util import jsonify
@@ -479,9 +480,20 @@ class Feedback(FeedbackDefinition):
 
         if imp is not None:
             # These are for serialization to/from json and for db storage.
-            kwargs['implementation'] = FunctionOrMethod.of_callable(
-                imp, loadable=True
-            )
+            if 'implementation' not in kwargs:
+                try:
+                    kwargs['implementation'] = FunctionOrMethod.of_callable(
+                        imp, loadable=True
+                    )
+                except ImportError as e:
+                    logger.warning(
+                        f"Feedback implementation {imp} cannot be serialized: {e}. "
+                        f"This may be ok unless you are using the deferred feedback mode."
+                    )
+
+                    kwargs['implementation'] = FunctionOrMethod.of_callable(
+                        imp, loadable=False
+                    )
 
         else:
             if "implementation" in kwargs:
@@ -491,14 +503,15 @@ class Feedback(FeedbackDefinition):
 
         # Similarly with agg and aggregator.
         if agg is not None:
-            try:
-                # These are for serialization to/from json and for db storage.
-                kwargs['aggregator'] = FunctionOrMethod.of_callable(
-                    agg, loadable=True
-                )
-            except:
-                # User defined functions in script do not have a module so cannot be serialized
-                pass
+            if 'aggregator' not in kwargs:
+                try:
+                    # These are for serialization to/from json and for db storage.            
+                    kwargs['aggregator'] = FunctionOrMethod.of_callable(
+                        agg, loadable=True
+                    )
+                except:
+                    # User defined functions in script do not have a module so cannot be serialized
+                    pass
         else:
             if 'aggregator' in kwargs:
                 agg: Callable = FunctionOrMethod.pick(**(kwargs['aggregator'])
@@ -946,12 +959,18 @@ def _re_1_10_rating(str_val):
     return int(matches.group())
 
 
-class Provider(SerialModel):
+class Provider(SerialModel, WithClassInfo):
 
     class Config:
         arbitrary_types_allowed = True
 
     endpoint: Optional[Endpoint]
+
+    def __init__(self, *args, **kwargs):
+        # for WithClassInfo:
+        kwargs['obj'] = self
+
+        super().__init__(*args, **kwargs)
 
 
 class OpenAI(Provider):
