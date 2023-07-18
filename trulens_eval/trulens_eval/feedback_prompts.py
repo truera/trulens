@@ -7,23 +7,21 @@ A few additional scoring guidelines:
 
 - Answers that intentionally do not answer the question, such as 'I don't know', should also be counted as the most relevant.
 
-- STATEMENT must be relevant to the entire QUESTION to get the highest score.
+- STATEMENT must be relevant to the entire QUESTION to get a score of 10.
 
 - RELEVANCE score should increase as the STATEMENT provides more RELEVANT context to the QUESTION.
 
 - RELEVANCE score should increase as the STATEMENT provides RELEVANT context to more parts of the QUESTION.
 
-- STATEMENT that is relevant to none of the question should get a score of 1.
+- STATEMENT that is RELEVANT to none of the QUESTION should get a score of 1.
 
-- STATEMENT that is relevant to some of the question should get as score between a 2 and 4.
+- STATEMENT that is RELEVANT to some of the QUESTION should get as score between a 2 and 4.
 
-- STATEMENT that is relevant to most of the question should get a score between a 5 and 9.
+- STATEMENT that is RELEVANT to most of the QUESTION should get a score between a 5 and 9.
 
-- STATEMENT that is relevant to the entire question should get a score of 10.
+- STATEMENT that is RELEVANT to the entire QUESTION should get a score of 10.
 
-- STATEMENT that confidently false should get a score of 1.
-
-- STATEMENT that is only seemingly relevant should get a score of 1.
+- STATEMENT that is only seemingly RELEVANT should get a score of 1.
 
 - Never elaborate.
 
@@ -33,16 +31,36 @@ STATEMENT: {statement}
 
 RELEVANCE: """
 
-PR_RELEVANCE = """
-You are a relevance classifier, providing the relevance of a given response to the given prompt.
-Respond only as a number from 1 to 10 where 1 is the least relevant and 10 is the most relevant.
-Never elaborate.
+PR_RELEVANCE = """You are a RELEVANCE grader; providing the relevance of the given RESPONSE to the given PROMPT.
+Respond only as a number from 1 to 10 where 1 is the least relevant and 10 is the most relevant. 
 
-Prompt: {prompt}
+A few additional scoring guidelines:
 
-Response: {response}
+- Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the most RELEVANT.
 
-Relevance: """
+- RESPONSE must be relevant to the entire PROMPT to get a score of 10.
+
+- RELEVANCE score should increase as the RESPONSE provides RELEVANT context to more parts of the PROMPT.
+
+- RESPONSE that is RELEVANT to none of the PROMPT should get a score of 1.
+
+- RESPONSE that is RELEVANT to some of the PROMPT should get as score between a 2 and 4.
+
+- RESPONSE that is RELEVANT to most of the PROMPT should get a score between a 5 and 9.
+
+- RESPONSE that is RELEVANT to the entire PROMPT should get a score of 10.
+
+- RESPONSE that confidently FALSE should get a score of 1.
+
+- RESPONSE that is only seemingly RELEVANT should get a score of 1.
+
+- Never elaborate.
+
+PROMPT: {prompt}
+
+RESPONSE: {response}
+
+RELEVANCE: """
 
 SENTIMENT_SYSTEM_PROMPT = f"Please classify the sentiment of the following text as 1 if positive or 0 if not positive. Respond with only a '1' or '0', nothing more."
 RELEVANCE_SYSTEM_PROMPT = f"You are a relevance classifier, providing the relevance of a given response to a particular prompt. \n"
