@@ -102,7 +102,7 @@ of the configured openai object as needed to compute feedback.
 from collections import defaultdict
 import logging
 import os
-from pathlib import Path, PurePath
+from pathlib import Path
 from typing import Tuple
 
 import cohere
@@ -113,6 +113,10 @@ from trulens_eval.util import UNICODE_CHECK
 from trulens_eval.util import UNICODE_STOP
 
 logger = logging.getLogger(__name__)
+
+# Treat these value as not valid keys. Use any as a templates to suggest a user
+# fills in the key.
+TEMPLATE_VALUES = set(["to fill in"])
 
 
 def get_config_file() -> Path:
@@ -127,6 +131,7 @@ def get_config_file() -> Path:
 
     return None
 
+
 def get_config() -> Tuple[Path, dict]:
     config_file = get_config_file()
     if config_file is None:
@@ -137,6 +142,7 @@ def get_config() -> Tuple[Path, dict]:
         return None, None
     else:
         return config_file, dotenv.dotenv_values(config_file)
+
 
 def set_openai_key() -> None:
     """
@@ -173,10 +179,11 @@ def get_huggingface_headers():
 
 
 def _value_is_set(v: str) -> bool:
-    return not(v is None or "fill" in v or v == "")
+    return not (v is None or v in TEMPLATE_VALUES or v == "")
 
 
 class ApiKeyError(RuntimeError):
+
     def __init__(self, *args, key: str, msg: str = ""):
         super().__init__(msg, *args)
         self.key = key
@@ -220,11 +227,12 @@ def _relative_path(path: Path, relative_to: Path) -> str:
 
     while True:
         try:
-            return "".join(["../"] * parents) + str(path.relative_to(relative_to))
+            return "".join(["../"] * parents
+                          ) + str(path.relative_to(relative_to))
         except Exception:
             parents += 1
             relative_to = relative_to.parent
-    
+
 
 def _collect_keys(*args, **kwargs) -> dict:
     """
@@ -247,7 +255,7 @@ def _collect_keys(*args, **kwargs) -> dict:
     ret = dict()
 
     config_file, config = get_config()
-    
+
     globs = caller_frame(offset=2).f_globals
 
     for k in list(args) + list(kwargs.keys()):
@@ -264,10 +272,11 @@ def _collect_keys(*args, **kwargs) -> dict:
         # Explicit.
         temp_v = kwargs.get(k)
         if _value_is_set(temp_v):
-            valid_sources[temp_v].append(f"explicit value to `check_or_set_keys`")
+            valid_sources[temp_v].append(
+                f"explicit value to `check_or_set_keys`"
+            )
             valid_values.add(temp_v)
 
-        
         # .env vars.
         if config is not None:
             temp_v = config.get(k)
@@ -286,7 +295,10 @@ def _collect_keys(*args, **kwargs) -> dict:
 
         elif len(valid_values) > 1:
             warning = f"More than one different value for key {k} has been found:\n\t"
-            warning += "\n\t".join(f"""value ending in {v[-1]} in {' and '.join(valid_sources[v])}""" for v in valid_values)
+            warning += "\n\t".join(
+                f"""value ending in {v[-1]} in {' and '.join(valid_sources[v])}"""
+                for v in valid_values
+            )
             warning += f"\nUsing one arbitrarily."
             logger.warning(warning)
 
@@ -294,13 +306,15 @@ def _collect_keys(*args, **kwargs) -> dict:
         else:
             v = list(valid_values)[0]
             print(
-                f"{UNICODE_CHECK} Key {k} set from {valid_sources[v][0]}"
-                + (' (same value found in ' + (' and '.join(valid_sources[v][1:])) + ')' if len(valid_sources[v]) > 1 else '')
-                + "."
+                f"{UNICODE_CHECK} Key {k} set from {valid_sources[v][0]}" + (
+                    ' (same value found in ' +
+                    (' and '.join(valid_sources[v][1:])) +
+                    ')' if len(valid_sources[v]) > 1 else ''
+                ) + "."
             )
 
             ret[k] = v
-        
+
     return ret
 
 
@@ -350,4 +364,3 @@ def check_or_set_keys(*args, **kwargs):
         v = kvals.get(k)
         _check_key(k, v=v)
         os.environ[k] = v
-
