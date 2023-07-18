@@ -1,5 +1,3 @@
-from enum import Enum
-
 import numpy as np
 
 from trulens_eval.util import SerialModel
