@@ -5,23 +5,21 @@ Respond only as a number from 1 to 10 where 1 is the least relevant and 10 is th
 
 A few additional scoring guidelines:
 
-- Answers that intentionally do not answer the question, such as 'I don't know', should also be counted as the most relevant.
-
-- STATEMENT must be relevant to the entire QUESTION to get a score of 10.
+- Long STATEMENTS should score equally well as short STATEMENTS.
 
 - RELEVANCE score should increase as the STATEMENT provides more RELEVANT context to the QUESTION.
 
 - RELEVANCE score should increase as the STATEMENT provides RELEVANT context to more parts of the QUESTION.
 
-- STATEMENT that is RELEVANT to none of the QUESTION should get a score of 1.
+- STATEMENT that is RELEVANT to some of the QUESTION should score of 2, 3 or 4. Higher score indicates more RELEVANCE.
 
-- STATEMENT that is RELEVANT to some of the QUESTION should get as score between a 2 and 4.
+- STATEMENT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.
 
-- STATEMENT that is RELEVANT to most of the QUESTION should get a score between a 5 and 9.
+- STATEMENT that is RELEVANT to the entire QUESTION should get a score of 9 or 10. Higher score indicates more RELEVANCE.
 
-- STATEMENT that is RELEVANT to the entire QUESTION should get a score of 10.
+- STATEMENT must be relevant and helpful for answering the entire QUESTION to get a score of 10.
 
-- STATEMENT that is only seemingly RELEVANT should get a score of 1.
+- Answers that intentionally do not answer the question, such as 'I don't know', should also be counted as the most relevant.
 
 - Never elaborate.
 
