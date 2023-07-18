@@ -1,8 +1,31 @@
 from cohere.responses.classify import Example
 
-QS_RELEVANCE = """You are a RELEVANCE classifier; providing the relevance of the given STATEMENT to the given QUESTION.
-Respond only as a number from 1 to 10 where 1 is the least relevant and 10 is the most relevant.
-Never elaborate.
+QS_RELEVANCE = """You are a RELEVANCE grader; providing the relevance of the given STATEMENT to the given QUESTION.
+Respond only as a number from 1 to 10 where 1 is the least relevant and 10 is the most relevant. 
+
+A few additional scoring guidelines:
+
+- Answers that intentionally do not answer the question, such as 'I don't know', should also be counted as the most relevant.
+
+- STATEMENT must be relevant to the entire QUESTION to get the highest score.
+
+- RELEVANCE score should increase as the STATEMENT provides more RELEVANT context to the QUESTION.
+
+- RELEVANCE score should increase as the STATEMENT provides RELEVANT context to more parts of the QUESTION.
+
+- STATEMENT that is relevant to none of the question should get a score of 1.
+
+- STATEMENT that is relevant to some of the question should get as score between a 2 and 4.
+
+- STATEMENT that is relevant to most of the question should get a score between a 5 and 9.
+
+- STATEMENT that is relevant to the entire question should get a score of 10.
+
+- STATEMENT that confidently false should get a score of 1.
+
+- STATEMENT that is only seemingly relevant should get a score of 1.
+
+- Never elaborate.
 
 QUESTION: {question}
 
