@@ -636,7 +636,8 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
 class HuggingfaceEndpoint(Endpoint, WithClassInfo):
     """
-    OpenAI endpoint. Instruments "create" methodsin openai.* classes.
+    Huggingface. Instruments the requests.post method for requests to
+    "https://api-inference.huggingface.co".
     """
 
     def __new__(cls, *args, **kwargs):
@@ -665,9 +666,6 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
             callback.handle_classification(response=response)
 
     def __init__(self, *args, **kwargs):
-        # If kwargs contains any openai constructor params, set them and copy
-        # over any relevant keys from them to env.
-
         # Will fail if key not set:
         _check_key("HUGGINGFACE_API_KEY")
 
