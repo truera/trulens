@@ -753,7 +753,7 @@ class OpenAI(Provider):
                 return None
 
 
-        def measure(self, prompt: str, response: str) -> float:
+        def agreement_measure(self, prompt: str, response: str) -> float:
             """
             Uses OpenAI's Chat GPT Model. A function that that measures similarity to ground truth. A second template
             is given to Chat GPT with a prompt that the original response is
@@ -768,16 +768,11 @@ class OpenAI(Provider):
                 being "in agreement".
             """
             ground_truth_response = self._find_response(prompt)
-            print(prompt)
-            print(ground_truth_response)
             if (ground_truth_response):
-                print(ground_truth_response)            
                 agreement_txt = _get_answer_agreement(
                     prompt, response, ground_truth_response
                 )
-                print(agreement_txt)
                 ret = _re_1_10_rating(agreement_txt) / 10
-                print(ret)
             else:
                 ret = np.nan
             return ret
