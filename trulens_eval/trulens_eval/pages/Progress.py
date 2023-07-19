@@ -14,7 +14,6 @@ from trulens_eval import db
 from trulens_eval import Tru
 from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
-from trulens_eval.keys import *
 from trulens_eval.provider_apis import Endpoint
 from trulens_eval.provider_apis import HuggingfaceEndpoint
 from trulens_eval.provider_apis import OpenAIEndpoint
@@ -22,6 +21,13 @@ from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.util import is_empty
 from trulens_eval.util import is_noserio
 from trulens_eval.util import TP
+
+from trulens_eval.keys import check_keys
+
+check_keys(
+    "OPENAI_API_KEY",
+    "HUGGINGFACE_API_KEY"
+)
 
 st.set_page_config(page_title="Feedback Progress", layout="wide")
 
