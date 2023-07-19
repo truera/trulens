@@ -18,9 +18,9 @@ from trulens_eval import tru
 from trulens_eval import tru_chain
 from trulens_eval.db import Record
 from trulens_eval.feedback import Feedback
-from trulens_eval.keys import *
-from trulens_eval.keys import PINECONE_API_KEY
-from trulens_eval.keys import PINECONE_ENV
+from trulens_eval.keys import check_keys
+
+check_keys("PINECONE_API_KEY", "PINECONE_ENV", "OPENAI_API_KEY")
 
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
@@ -31,8 +31,8 @@ app_id = "TruBot"
 
 # Pinecone configuration.
 pinecone.init(
-    api_key=PINECONE_API_KEY,  # find at app.pinecone.io
-    environment=PINECONE_ENV  # next to api key in console
+    api_key=os.environ.get("PINECONE_API_KEY"),  # find at app.pinecone.io
+    environment=os.environ.get("PINECONE_ENV")  # next to api key in console
 )
 
 identity = lambda h: h

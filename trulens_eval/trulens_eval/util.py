@@ -1435,7 +1435,10 @@ class ObjSerial(Obj):
         # TODO: dataclasses
         # TODO: dataclasses_json
 
-        sig = _safe_init_sig(cls)
+        sig = _safe_init_sig(cls.__call__)
+        # NOTE: Something related to pydantic models incorrectly sets signature
+        # of cls so we need to check cls.__call__ instead.
+        
         b = sig.bind(*init_args, **init_kwargs)
         bindings = Bindings.of_bound_arguments(b)
 
