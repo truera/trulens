@@ -435,8 +435,6 @@ from trulens_eval.util import UNICODE_YIELD
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
-default_pass_fail_color_threshold = 0.5
-
 logger = logging.getLogger(__name__)
 
 
