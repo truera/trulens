@@ -6,7 +6,7 @@ trubot:
 	$(CONDA); (PYTHONPATH=. python -u trulens_eval/examples/trubot.py)
 
 test:
-	$(CONDA); python -m pytest -s test_tru_chain.py
+	$(CONDA); python -m unittest discover tests.unit
 
 format:
 	$(CONDA); bash format.sh
