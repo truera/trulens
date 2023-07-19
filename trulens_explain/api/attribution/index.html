@@ -15,7 +15,7 @@
         <link rel="next" href="../model_wrappers/">
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
     
     
       
@@ -23,10 +23,10 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.26e3688c.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.240905d7.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ecc896b0.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.a0c5b2b5.min.css">
       
       
 
@@ -63,7 +63,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="" data-md-color-accent="">
   
     
     
@@ -113,8 +113,6 @@
         </div>
       </div>
     </div>
-    
-      
     
     
     
@@ -924,15 +922,15 @@ package.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.attribution.AttributionMethod" class="doc doc-heading">
-        <code>AttributionMethod</code>
+          <code>AttributionMethod</code>
 
 
 <a href="#trulens_explain.trulens.nn.attribution.AttributionMethod" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="abc.ABC">AbstractBaseClass</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="abc.ABC">AbstractBaseClass</span></code></p>
 
   
       <p>Interface used by all attribution methods.</p>
@@ -940,10 +938,9 @@ package.</p>
 to assign values to the variables of the network that specify the importance
 of each variable towards particular predictions.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 82</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 82</span>
 <span class="normal"> 83</span>
 <span class="normal"> 84</span>
 <span class="normal"> 85</span>
@@ -1209,7 +1206,7 @@ of each variable towards particular predictions.</p>
 
         <span class="k">return</span> <span class="n">attributions</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
@@ -1244,6 +1241,7 @@ of each variable towards particular predictions.</p>
 
 
 
+
 <div class="doc doc-object doc-function">
 
 
@@ -1261,6 +1259,8 @@ of each variable towards particular predictions.</p>
   <div class="doc doc-contents ">
   
       <p>Abstract constructor.</p>
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1311,9 +1311,9 @@ doi_size into rebatch_size chunks to send to model.</p>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 91</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 91</span>
 <span class="normal"> 92</span>
 <span class="normal"> 93</span>
 <span class="normal"> 94</span>
@@ -1357,10 +1357,11 @@ doi_size into rebatch_size chunks to send to model.</p>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">rebatch_size</span> <span class="o">=</span> <span class="n">rebatch_size</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -1386,6 +1387,8 @@ ensures the sum of all attributions of a record equals the output
 determined by the Quantity of Interest on the same record. </p>
 <p>The Point Distribution of Interest will be determined by the gradient at
 a single point, thus being a good measure of model sensitivity. </p>
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1439,9 +1442,9 @@ If the quantity of interest features multiple outputs, a list for
 each will be returned.
 </code></pre></div>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">130</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">130</span>
 <span class="normal">131</span>
 <span class="normal">132</span>
 <span class="normal">133</span>
@@ -1611,7 +1614,7 @@ each will be returned.
 
     <span class="k">return</span> <span class="n">attributions</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -1629,7 +1632,7 @@ each will be returned.
 
 
 <h2 id="trulens_explain.trulens.nn.attribution.AttributionResult" class="doc doc-heading">
-        <code>AttributionResult</code>
+          <code>AttributionResult</code>
 
   
   <span class="doc doc-labels">
@@ -1644,10 +1647,9 @@ each will be returned.
   
       <p>_attribution method output container.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">63</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">63</span>
 <span class="normal">64</span>
 <span class="normal">65</span>
 <span class="normal">66</span>
@@ -1665,7 +1667,7 @@ each will be returned.
     <span class="n">gradients</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">[</span><span class="n">Inputs</span><span class="p">[</span><span class="n">Uniform</span><span class="p">[</span><span class="n">TensorLike</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">interventions</span><span class="p">:</span> <span class="n">Inputs</span><span class="p">[</span><span class="n">Uniform</span><span class="p">[</span><span class="n">TensorLike</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
@@ -1692,15 +1694,15 @@ each will be returned.
 
 
 <h2 id="trulens_explain.trulens.nn.attribution.InputAttribution" class="doc doc-heading">
-        <code>InputAttribution</code>
+          <code>InputAttribution</code>
 
 
 <a href="#trulens_explain.trulens.nn.attribution.InputAttribution" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.attribution.InternalInfluence" href="#trulens_explain.trulens.nn.attribution.InternalInfluence">InternalInfluence</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.attribution.InternalInfluence" href="#trulens_explain.trulens.nn.attribution.InternalInfluence">InternalInfluence</a></code></p>
 
   
       <p>Attributions of input features on either internal or output quantities. This
@@ -1713,10 +1715,9 @@ is essentially an alias for</p>
     <span class="n">multiply_activation</span><span class="p">)</span>
 </code></pre></div>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">672</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">672</span>
 <span class="normal">673</span>
 <span class="normal">674</span>
 <span class="normal">675</span>
@@ -1936,11 +1937,12 @@ is essentially an alias for</p>
             <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -1962,6 +1964,8 @@ is essentially an alias for</p>
 
   <div class="doc doc-contents ">
   
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2096,9 +2100,9 @@ activation, thus converting from "<em>influence space</em>" to
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">687</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">687</span>
 <span class="normal">688</span>
 <span class="normal">689</span>
 <span class="normal">690</span>
@@ -2288,7 +2292,7 @@ activation, thus converting from "<em>influence space</em>" to
         <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -2306,15 +2310,15 @@ activation, thus converting from "<em>influence space</em>" to
 
 
 <h2 id="trulens_explain.trulens.nn.attribution.IntegratedGradients" class="doc doc-heading">
-        <code>IntegratedGradients</code>
+          <code>IntegratedGradients</code>
 
 
 <a href="#trulens_explain.trulens.nn.attribution.IntegratedGradients" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.attribution.InputAttribution" href="#trulens_explain.trulens.nn.attribution.InputAttribution">InputAttribution</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.attribution.InputAttribution" href="#trulens_explain.trulens.nn.attribution.InputAttribution">InputAttribution</a></code></p>
 
   
       <p>Implementation for the Integrated Gradients method from the following paper:</p>
@@ -2337,10 +2341,9 @@ activation, thus converting from "<em>influence space</em>" to
     <span class="n">multiply_activation</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">784</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">784</span>
 <span class="normal">785</span>
 <span class="normal">786</span>
 <span class="normal">787</span>
@@ -2490,11 +2493,12 @@ activation, thus converting from "<em>influence space</em>" to
             <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -2516,6 +2520,8 @@ activation, thus converting from "<em>influence space</em>" to
 
   <div class="doc doc-contents ">
   
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2577,9 +2583,9 @@ method represents.</p>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">815</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">815</span>
 <span class="normal">816</span>
 <span class="normal">817</span>
 <span class="normal">818</span>
@@ -2667,7 +2673,7 @@ method represents.</p>
         <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -2685,15 +2691,15 @@ method represents.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.attribution.InternalInfluence" class="doc doc-heading">
-        <code>InternalInfluence</code>
+          <code>InternalInfluence</code>
 
 
 <a href="#trulens_explain.trulens.nn.attribution.InternalInfluence" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.attribution.AttributionMethod" href="#trulens_explain.trulens.nn.attribution.AttributionMethod">AttributionMethod</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.attribution.AttributionMethod" href="#trulens_explain.trulens.nn.attribution.AttributionMethod">AttributionMethod</a></code></p>
 
   
       <p>Internal attributions parameterized by a slice, quantity of interest, and
@@ -2724,10 +2730,9 @@ specifies the records over which the attributions are aggregated.</p>
 <span class="p">}</span>
 </code></pre></div>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">217</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">217</span>
 <span class="normal">218</span>
 <span class="normal">219</span>
 <span class="normal">220</span>
@@ -3633,11 +3638,12 @@ specifies the records over which the attributions are aggregated.</p>
         <span class="n">ret</span> <span class="o">=</span> <span class="n">nested_map</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">,</span> <span class="n">nest</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ret</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -3659,6 +3665,8 @@ specifies the records over which the attributions are aggregated.</p>
 
   <div class="doc doc-contents ">
   
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -3795,9 +3803,9 @@ activation, thus converting from "<em>influence space</em>" to
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">254</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">254</span>
 <span class="normal">255</span>
 <span class="normal">256</span>
 <span class="normal">257</span>
@@ -4001,7 +4009,7 @@ activation, thus converting from "<em>influence space</em>" to
     <span class="bp">self</span><span class="o">.</span><span class="n">_return_grads</span> <span class="o">=</span> <span class="n">return_grads</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_return_doi</span> <span class="o">=</span> <span class="n">return_doi</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -4062,27 +4070,17 @@ activation, thus converting from "<em>influence space</em>" to
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.sections"], "search": "../../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.a51614de.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.19047be9.min.js"></script>
       
-        
-          <script src="../../../javascript/config.js"></script>
-        
+        <script src="../../../javascript/config.js"></script>
       
-        
-          <script src="../../../javascript/app.js"></script>
-        
+        <script src="../../../javascript/app.js"></script>
       
-        
-          <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-        
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
-        
-          <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
-        
+        <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
       
-        
-          <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
-        
+        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
       
     
   </body>

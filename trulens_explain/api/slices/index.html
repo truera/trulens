@@ -15,7 +15,7 @@
         <link rel="next" href="../quantities/">
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
     
     
       
@@ -23,10 +23,10 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.26e3688c.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.240905d7.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ecc896b0.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.a0c5b2b5.min.css">
       
       
 
@@ -63,7 +63,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="" data-md-color-accent="">
   
     
     
@@ -113,8 +113,6 @@
         </div>
       </div>
     </div>
-    
-      
     
     
     
@@ -1006,24 +1004,23 @@ thought of as a sub-model that uses the features computed by <span class="arithm
 
 
 <h2 id="trulens_explain.trulens.nn.slices.Cut" class="doc doc-heading">
-        <code>Cut</code>
+          <code>Cut</code>
 
 
 <a href="#trulens_explain.trulens.nn.slices.Cut" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code>object</code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code>object</code></p>
 
   
       <p>A cut is the primary building block for a slice. It determines an internal
 component of a network to expose. A slice if formed by two cuts.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 25</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 25</span>
 <span class="normal"> 26</span>
 <span class="normal"> 27</span>
 <span class="normal"> 28</span>
@@ -1201,11 +1198,12 @@ component of a network to expose. A slice if formed by two cuts.</p>
             <span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">accessor</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -1227,6 +1225,8 @@ component of a network to expose. A slice if formed by two cuts.</p>
 
   <div class="doc doc-contents ">
   
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1293,9 +1293,9 @@ following accessor function will be used:
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">31</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">31</span>
 <span class="normal">32</span>
 <span class="normal">33</span>
 <span class="normal">34</span>
@@ -1405,10 +1405,11 @@ following accessor function will be used:
     <span class="bp">self</span><span class="o">.</span><span class="n">accessor</span> <span class="o">=</span> <span class="n">accessor</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">anchor</span> <span class="o">=</span> <span class="n">anchor</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -1424,6 +1425,8 @@ following accessor function will be used:
   
       <p>Applies <code>self.accessor</code> to the result of collecting the relevant 
 tensor(s) associated with a layer's output.</p>
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1454,6 +1457,8 @@ the layer(s) specified by this cut.</p>
     </tbody>
   </table>
 
+
+
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -1476,9 +1481,9 @@ the layer(s) specified by this cut.</p>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 91</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 91</span>
 <span class="normal"> 92</span>
 <span class="normal"> 93</span>
 <span class="normal"> 94</span>
@@ -1524,7 +1529,7 @@ the layer(s) specified by this cut.</p>
         <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">accessor</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -1542,23 +1547,22 @@ the layer(s) specified by this cut.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.slices.InputCut" class="doc doc-heading">
-        <code>InputCut</code>
+          <code>InputCut</code>
 
 
 <a href="#trulens_explain.trulens.nn.slices.InputCut" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.slices.Cut" href="#trulens_explain.trulens.nn.slices.Cut">Cut</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.slices.Cut" href="#trulens_explain.trulens.nn.slices.Cut">Cut</a></code></p>
 
   
       <p>Special cut that selects the input(s) of a model.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">116</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">116</span>
 <span class="normal">117</span>
 <span class="normal">118</span>
 <span class="normal">119</span>
@@ -1606,11 +1610,12 @@ the layer(s) specified by this cut.</p>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">accessor</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -1632,6 +1637,8 @@ the layer(s) specified by this cut.</p>
 
   <div class="doc doc-contents ">
   
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1683,9 +1690,9 @@ following accessor function will be used:
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">121</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">121</span>
 <span class="normal">122</span>
 <span class="normal">123</span>
 <span class="normal">124</span>
@@ -1723,7 +1730,7 @@ following accessor function will be used:
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">accessor</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -1741,24 +1748,23 @@ following accessor function will be used:
 
 
 <h2 id="trulens_explain.trulens.nn.slices.LogitCut" class="doc doc-heading">
-        <code>LogitCut</code>
+          <code>LogitCut</code>
 
 
 <a href="#trulens_explain.trulens.nn.slices.LogitCut" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.slices.Cut" href="#trulens_explain.trulens.nn.slices.Cut">Cut</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.slices.Cut" href="#trulens_explain.trulens.nn.slices.Cut">Cut</a></code></p>
 
   
       <p>Special cut that selects the logit layer of a model. The logit layer must be
 named <code>'logits'</code> or otherwise specified by the user to the model wrapper.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">170</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">170</span>
 <span class="normal">171</span>
 <span class="normal">172</span>
 <span class="normal">173</span>
@@ -1812,11 +1818,12 @@ named <code>'logits'</code> or otherwise specified by the user to the model wrap
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">LogitCut</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">accessor</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -1838,6 +1845,8 @@ named <code>'logits'</code> or otherwise specified by the user to the model wrap
 
   <div class="doc doc-contents ">
   
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1889,9 +1898,9 @@ following accessor function will be used:
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
 <span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
@@ -1933,7 +1942,7 @@ following accessor function will be used:
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">(</span><span class="n">LogitCut</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">accessor</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -1951,23 +1960,22 @@ following accessor function will be used:
 
 
 <h2 id="trulens_explain.trulens.nn.slices.OutputCut" class="doc doc-heading">
-        <code>OutputCut</code>
+          <code>OutputCut</code>
 
 
 <a href="#trulens_explain.trulens.nn.slices.OutputCut" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.slices.Cut" href="#trulens_explain.trulens.nn.slices.Cut">Cut</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.slices.Cut" href="#trulens_explain.trulens.nn.slices.Cut">Cut</a></code></p>
 
   
       <p>Special cut that selects the output(s) of a model.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">142</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">142</span>
 <span class="normal">143</span>
 <span class="normal">144</span>
 <span class="normal">145</span>
@@ -2019,11 +2027,12 @@ following accessor function will be used:
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">OutputCut</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">accessor</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -2045,6 +2054,8 @@ following accessor function will be used:
 
   <div class="doc doc-contents ">
   
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2096,9 +2107,9 @@ following accessor function will be used:
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">147</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">147</span>
 <span class="normal">148</span>
 <span class="normal">149</span>
 <span class="normal">150</span>
@@ -2140,7 +2151,7 @@ following accessor function will be used:
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">(</span><span class="n">OutputCut</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">accessor</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -2158,15 +2169,15 @@ following accessor function will be used:
 
 
 <h2 id="trulens_explain.trulens.nn.slices.Slice" class="doc doc-heading">
-        <code>Slice</code>
+          <code>Slice</code>
 
 
 <a href="#trulens_explain.trulens.nn.slices.Slice" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code>object</code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code>object</code></p>
 
   
       <p>Class representing a slice of a network. A network, <span class="arithmatex">\(f\)</span>, can be broken
@@ -2177,10 +2188,9 @@ sub-model that uses the features computed by <span class="arithmatex">\(h\)</spa
 which are the layers corresponding to the output of <span class="arithmatex">\(h\)</span> and <span class="arithmatex">\(g\)</span>, 
 respectively.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">199</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">199</span>
 <span class="normal">200</span>
 <span class="normal">201</span>
 <span class="normal">202</span>
@@ -2284,7 +2294,7 @@ respectively.</p>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Slice</span><span class="p">(</span><span class="n">InputCut</span><span class="p">(),</span> <span class="n">OutputCut</span><span class="p">())</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
@@ -2342,6 +2352,7 @@ slice, <span class="arithmatex">\(f = g \circ h\)</span>.</p>
 
 
 
+
 <div class="doc doc-object doc-function">
 
 
@@ -2354,6 +2365,8 @@ slice, <span class="arithmatex">\(f = g \circ h\)</span>.</p>
 
   <div class="doc doc-contents ">
   
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2399,9 +2412,9 @@ in slice, <span class="arithmatex">\(f = g \circ h\)</span>.</p>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">211</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">211</span>
 <span class="normal">212</span>
 <span class="normal">213</span>
 <span class="normal">214</span>
@@ -2427,10 +2440,11 @@ in slice, <span class="arithmatex">\(f = g \circ h\)</span>.</p>
     <span class="bp">self</span><span class="o">.</span><span class="n">_from_cut</span> <span class="o">=</span> <span class="n">from_cut</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_to_cut</span> <span class="o">=</span> <span class="n">to_cut</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2453,9 +2467,9 @@ in slice, <span class="arithmatex">\(f = g \circ h\)</span>.</p>
     A slice representing the entire model, i.e., :math:<code>f = g \circ h</code>,
     where :math:<code>h</code> is the identity function and :math:<code>g = f</code>.</p>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/slices.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
 <span class="normal">242</span>
 <span class="normal">243</span>
 <span class="normal">244</span>
@@ -2475,7 +2489,7 @@ in slice, <span class="arithmatex">\(f = g \circ h\)</span>.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">Slice</span><span class="p">(</span><span class="n">InputCut</span><span class="p">(),</span> <span class="n">OutputCut</span><span class="p">())</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -2536,27 +2550,17 @@ in slice, <span class="arithmatex">\(f = g \circ h\)</span>.</p>
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.sections"], "search": "../../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.a51614de.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.19047be9.min.js"></script>
       
-        
-          <script src="../../../javascript/config.js"></script>
-        
+        <script src="../../../javascript/config.js"></script>
       
-        
-          <script src="../../../javascript/app.js"></script>
-        
+        <script src="../../../javascript/app.js"></script>
       
-        
-          <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-        
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
-        
-          <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
-        
+        <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
       
-        
-          <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
-        
+        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
       
     
   </body>

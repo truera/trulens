@@ -15,7 +15,7 @@
         <link rel="next" href="../trullama/">
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
     
     
       
@@ -23,10 +23,10 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.26e3688c.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.240905d7.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ecc896b0.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.a0c5b2b5.min.css">
       
       
 
@@ -63,7 +63,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="" data-md-color-accent="">
   
     
     
@@ -113,8 +113,6 @@
         </div>
       </div>
     </div>
-    
-      
     
     
     
@@ -812,21 +810,20 @@
 
 
 <h2 id="trulens_eval.trulens_eval.tru_chain.LangChainInstrument" class="doc doc-heading">
-        <code>LangChainInstrument</code>
+          <code>LangChainInstrument</code>
 
 
 <a href="#trulens_eval.trulens_eval.tru_chain.LangChainInstrument" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="trulens_eval.instruments.Instrument">Instrument</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="trulens_eval.instruments.Instrument">Instrument</span></code></p>
 
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
 <span class="normal">35</span>
 <span class="normal">36</span>
 <span class="normal">37</span>
@@ -952,7 +949,7 @@
 
         <span class="k">return</span> <span class="n">new_prop</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
@@ -979,23 +976,22 @@
 
 
 <h2 id="trulens_eval.trulens_eval.tru_chain.TruChain" class="doc doc-heading">
-        <code>TruChain</code>
+          <code>TruChain</code>
 
 
 <a href="#trulens_eval.trulens_eval.tru_chain.TruChain" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="trulens_eval.app.App">App</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="trulens_eval.app.App">App</span></code></p>
 
   
       <p>Wrap a langchain Chain to capture its configuration and evaluation steps.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 99</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 99</span>
 <span class="normal">100</span>
 <span class="normal">101</span>
 <span class="normal">102</span>
@@ -1281,11 +1277,12 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -1310,9 +1307,9 @@
       <p>Wrapped call to self.app.<strong>call</strong> with instrumentation. If you need to
 get the record, use <code>call_with_record</code> instead.</p>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">222</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">222</span>
 <span class="normal">223</span>
 <span class="normal">224</span>
 <span class="normal">225</span>
@@ -1330,10 +1327,11 @@ get the record, use <code>call_with_record</code> instead.</p>
 
     <span class="k">return</span> <span class="n">ret</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -1355,9 +1353,9 @@ get the record, use <code>call_with_record</code> instead.</p>
 <li>More args in WithClassInfo</li>
 </ul>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">113</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">113</span>
 <span class="normal">114</span>
 <span class="normal">115</span>
 <span class="normal">116</span>
@@ -1395,10 +1393,11 @@ get the record, use <code>call_with_record</code> instead.</p>
 
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -1413,6 +1412,8 @@ get the record, use <code>call_with_record</code> instead.</p>
   <div class="doc doc-contents ">
   
       <p>Run the chain and also return a record metadata object.</p>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1444,9 +1445,9 @@ get the record, use <code>call_with_record</code> instead.</p>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">162</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">162</span>
 <span class="normal">163</span>
 <span class="normal">164</span>
 <span class="normal">165</span>
@@ -1562,7 +1563,7 @@ get the record, use <code>call_with_record</code> instead.</p>
 
     <span class="k">return</span> <span class="n">ret</span><span class="p">,</span> <span class="n">ret_record</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -1623,27 +1624,17 @@ get the record, use <code>call_with_record</code> instead.</p>
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.sections"], "search": "../../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.a51614de.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.19047be9.min.js"></script>
       
-        
-          <script src="../../../javascript/config.js"></script>
-        
+        <script src="../../../javascript/config.js"></script>
       
-        
-          <script src="../../../javascript/app.js"></script>
-        
+        <script src="../../../javascript/app.js"></script>
       
-        
-          <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-        
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
-        
-          <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
-        
+        <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
       
-        
-          <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
-        
+        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
       
     
   </body>
