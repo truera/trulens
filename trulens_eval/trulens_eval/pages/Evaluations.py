@@ -10,7 +10,7 @@ from st_aggrid.shared import JsCode
 import streamlit as st
 from streamlit_javascript import st_javascript
 from ux.add_logo import add_logo
-from ux.styles import default_pass_fail_color_threshold
+from ux.styles import CATEGORY
 
 from trulens_eval import Tru
 from trulens_eval.app import ComponentView
@@ -212,12 +212,9 @@ else:
                 def display_feedback_call(call):
 
                     def highlight(s):
-                        return ['background-color: #4CAF50'] * len(
-                            s
-                        ) if s.result >= default_pass_fail_color_threshold else [
-                            'background-color: #FCE6E6'
-                        ] * len(s)
-
+                        cat = CATEGORY.of_score(s.result)
+                        return [f'background-color: {cat.color}'] * len(s)
+                        
                     if call is not None and len(call) > 0:
                         df = pd.DataFrame.from_records(
                             [call[i]["args"] for i in range(len(call))]
