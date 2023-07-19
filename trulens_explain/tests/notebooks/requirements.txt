@@ -2,6 +2,7 @@ jinja2==3.0.3
 nbformat==5.0.8
 nbconvert==6.0.7
 pandas==1.3.5
+pyyaml==5.3.1 # 5.4.1 fails during build due to Cython regression (https://github.com/yaml/pyyaml/issues/724)
 matplotlib
 scipy
 tensorflow-hub
