@@ -276,6 +276,13 @@ class App(AppDefinition, SerialModel):
                     "Feedback logging requires `tru` to be specified."
                 )
 
+        if self.feedback_mode == FeedbackMode.DEFERRED:
+            for f in feedbacks:
+                # Try to load each of the feedback implementations. Deferred
+                # mode will do this but we want to fail earlier at app
+                # constructor here.
+                f.implementation.load()
+
         self.instrument.instrument_object(
             obj=self.app, query=Select.Query().app
         )

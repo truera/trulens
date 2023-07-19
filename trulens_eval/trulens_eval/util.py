@@ -1246,16 +1246,30 @@ class Class(SerialModel):
 
         return self
 
+    def _check_importable(self):
+        try:
+            cls = self.load()
+        except Exception as e:
+            raise ImportError(
+                f"Class {self} is not importable. "
+                "If you are defining custom feedback function implementations, make sure they can be imported by python scripts. "
+                "If you defined a function in a notebook, it will not be importable."
+            )
+
     @staticmethod
     def of_class(
         cls: type, with_bases: bool = False, loadable: bool = False
     ) -> 'Class':
-        return Class(
+        ret = Class(
             name=cls.__name__,
             module=Module.of_module_name(cls.__module__),
             bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__))
             if with_bases else None
         )
+        if loadable:
+            ret._check_importable()
+
+        return ret
 
     @staticmethod
     def of_object(
@@ -1339,16 +1353,19 @@ class Obj(SerialModel):
         obj: object,
         cls: Optional[type] = None,
         loadable: bool = False
-    ) -> Union['Obj', 'ObjSerial']:
+    ) -> Union['Obj', 'ObjSerial']:        
         if loadable:
             return ObjSerial.of_object(obj=obj, cls=cls, loadable=loadable)
-
+        
         if cls is None:
             cls = obj.__class__
-
+        
         return Obj(cls=Class.of_class(cls), id=id(obj))
 
     def load(self) -> object:
+        # Check that the object's class is importable before the other error is thrown.
+        self.cls._check_importable()
+
         raise RuntimeError(
             f"Trying to load an object without constructor arguments: {pp.pformat(self.dict())}."
         )
@@ -1401,8 +1418,20 @@ class ObjSerial(Obj):
             init_args = obj.args
             init_kwargs = {}
         else:
+            # For unknown types, check if the constructor for cls expect
+            # arguments and fail if so as we don't know where to get them. If
+            # there are none, create empty init bindings.
+
+            sig = _safe_init_sig(cls)
+            if len(sig.parameters) > 0:
+                raise RuntimeError(
+                    f"Do not know how to get constructor arguments for object of type {cls.__name__}. "
+                    f"If you are defining a custom feedback function, define its implementation as a function or a method of a Provider subclass."
+                )
+
             init_args = ()
             init_kwargs = {}
+
         # TODO: dataclasses
         # TODO: dataclasses_json
 
@@ -1410,9 +1439,10 @@ class ObjSerial(Obj):
         b = sig.bind(*init_args, **init_kwargs)
         bindings = Bindings.of_bound_arguments(b)
 
-        return ObjSerial(
-            cls=Class.of_class(cls), id=id(obj), init_bindings=bindings
-        )
+        cls_serial = Class.of_class(cls)
+        cls_serial._check_importable()
+
+        return ObjSerial(cls=cls_serial, id=id(obj), init_bindings=bindings)
 
     def load(self) -> object:
         cls = self.cls.load()
@@ -1449,11 +1479,17 @@ class FunctionOrMethod(SerialModel):
 
     @staticmethod
     def of_callable(c: Callable, loadable: bool = False) -> 'FunctionOrMethod':
-        if hasattr(c, "__self__"):
-            return Method.of_method(
-                c, obj=getattr(c, "__self__"), loadable=loadable
-            )
+        """
+        Serialize the given callable. If `loadable` is set, tries to add enough
+        info for the callable to be deserialized.
+        """
+
+        if inspect.ismethod(c):
+            self = c.__self__
+            return Method.of_method(c, obj=self, loadable=loadable)
+        
         else:
+            
             return Function.of_function(c, loadable=loadable)
 
     def load(self) -> Callable:
@@ -1478,13 +1514,18 @@ class Method(FunctionOrMethod):
         loadable: bool = False
     ) -> 'Method':
         if obj is None:
-            assert hasattr(
-                meth, "__self__"
+            assert inspect.ismethod(
+                meth
             ), f"Expected a method (maybe it is a function?): {meth}"
             obj = meth.__self__
 
         if cls is None:
-            cls = obj.__class__
+            if isinstance(cls, type):
+                # classmethod, self is a type
+                cls = obj
+            else:
+                # normal method, self is instance of cls
+                cls = obj.__class__
 
         obj_json = (ObjSerial if loadable else Obj).of_object(obj, cls=cls)
 
@@ -1497,11 +1538,13 @@ class Method(FunctionOrMethod):
 
 class Function(FunctionOrMethod):
     """
-    A python function.
+    A python function. Could be a static method inside a class (not instance of
+    the class).
     """
 
     module: Module
-    cls: Optional[Class]
+    cls: Optional[Class
+                 ]  # for static methods in a class which we view as functions, not yet supported
     name: str
 
     @staticmethod
@@ -1522,11 +1565,21 @@ class Function(FunctionOrMethod):
 
     def load(self) -> Callable:
         if self.cls is not None:
-            cls = self.cls.load()
-            return getattr(cls, self.name)
+            # TODO: static/class methods work in progress
+
+            cls = self.cls.load()  # does not create object instance
+            return getattr(cls, self.name)  # lookup static/class method
+        
         else:
             mod = self.module.load()
-            return getattr(mod, self.name)
+            try:
+                return getattr(mod, self.name)  # function not inside a class
+            except Exception:
+                raise ImportError(
+                   f"Function {self} is not importable. "
+                    "If you are defining custom feedback function implementations, make sure they can be imported by python scripts. "
+                    "If you defined a function in a notebook, it will not be importable."
+                )
 
 
 class WithClassInfo(pydantic.BaseModel):
