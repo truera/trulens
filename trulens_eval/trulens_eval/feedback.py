@@ -118,33 +118,37 @@ The function or method provided to the `Feedback` constructor is the
 implementation of the feedback function which does the actual work of producing
 a float indicating some quantity of interest. 
 
-**Note regarding FeedbackMode.DEFERRED** -- Any callable can be provided here
-but there are additional requirements if your app uses the "deferred" feedback
-evaluation mode (when `feedback_mode=FeedbackMode.DEFERRED` are specified to app
-constructor). In those cases the callables must be methods that are globally
-importable (see the next section for details). The function/method performing
-the aggregation has the same requirements.
+**Note regarding FeedbackMode.DEFERRED** -- Any function or method (not static
+or class methods presently supported) can be provided here but there are
+additional requirements if your app uses the "deferred" feedback evaluation mode
+(when `feedback_mode=FeedbackMode.DEFERRED` are specified to app constructor).
+In those cases the callables must be functions or methods that are importable
+(see the next section for details). The function/method performing the
+aggregation has the same requirements.
 
-### Global import requirement (DEFERRED feedback mode only)
+### Import requirement (DEFERRED feedback mode only)
 
 If using deferred evaluation, the feedback function implementations and
-aggregation implementations must be methods from a class that is globally
-importable. That is, the callables must be accessible were you to evaluate this
-code:
+aggregation implementations must be functions or methods from a Provider
+subclass that is importable. That is, the callables must be accessible were you
+to evaluate this code:
 
 ```python
-import somepackage.[...].someclass 
+from somepackage.[...] import someproviderclass
+from somepackage.[...] import somefunction
+
 # [...] means optionally further package specifications
 
-provider = someclass(...) # constructor arguments can be included
-feedback_implementation = provider.somemethod
+provider = someproviderclass(...) # constructor arguments can be included
+feedback_implementation1 = provider.somemethod
+feedback_implementation2 = somefunction
 ```
 
 For provided feedback functions, `somepackage` is `trulens_eval.feedback` and
-`someclass` is `OpenAI` or one of the other `Provider` subclasses. Custom
-feedback functions likewise need to belong to a package that can be imported.
-Critically, classes defined locally in a notebook will not be importable this
-way.
+`someproviderclass` is `OpenAI` or one of the other `Provider` subclasses.
+Custom feedback functions likewise need to be importable functions or methods of
+a provider subclass that can be imported. Critically, functions or classes
+defined locally in a notebook will not be importable this way.
 
 ## Specifying Arguments
 
@@ -164,13 +168,13 @@ If argument names are ommitted, they are taken from the feedback function
 implementation signature in order. That is, 
 
 ```python
-...on(argname1=selector1, argname2=selector2)
+Feedback(...).on(argname1=selector1, argname2=selector2)
 ```
 
 and
 
 ```python
-...on(selector1, selector2)
+Feedback(...).on(selector1, selector2)
 ```
 
 are equivalent assuming the feedback implementation has two arguments,
@@ -419,6 +423,7 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
+from trulens_eval.util import WithClassInfo
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import JSON
 from trulens_eval.util import jsonify
@@ -450,7 +455,8 @@ class Feedback(FeedbackDefinition):
     imp: Optional[Callable] = pydantic.Field(exclude=True)
 
     # Aggregator method for feedback functions that produce more than one
-    # result.
+    # result. FeedbackDefinition contains aggregator which is the serialized
+    # version of agg.
     agg: Optional[Callable] = pydantic.Field(exclude=True)
 
     def __init__(
@@ -465,15 +471,33 @@ class Feedback(FeedbackDefinition):
         Parameters:
         
         - imp: Optional[Callable] -- implementation of the feedback function.
+
+        - agg: Optional[Callable] -- aggregation function for producing a single
+          float for feedback implementations that are run more than once.
         """
 
         agg = agg or np.mean
 
+        # imp is the python function/method while implementation is a serialized
+        # json structure. Create the one that is missing based on the one that
+        # is provided:
+
         if imp is not None:
             # These are for serialization to/from json and for db storage.
-            kwargs['implementation'] = FunctionOrMethod.of_callable(
-                imp, loadable=True
-            )
+            if 'implementation' not in kwargs:
+                try:
+                    kwargs['implementation'] = FunctionOrMethod.of_callable(
+                        imp, loadable=True
+                    )
+                except ImportError as e:
+                    logger.warning(
+                        f"Feedback implementation {imp} cannot be serialized: {e}. "
+                        f"This may be ok unless you are using the deferred feedback mode."
+                    )
+
+                    kwargs['implementation'] = FunctionOrMethod.of_callable(
+                        imp, loadable=False
+                    )
 
         else:
             if "implementation" in kwargs:
@@ -481,15 +505,17 @@ class Feedback(FeedbackDefinition):
                     **(kwargs['implementation'])
                 ).load() if kwargs['implementation'] is not None else None
 
+        # Similarly with agg and aggregator.
         if agg is not None:
-            try:
-                # These are for serialization to/from json and for db storage.
-                kwargs['aggregator'] = FunctionOrMethod.of_callable(
-                    agg, loadable=True
-                )
-            except:
-                # User defined functions in script do not have a module so cannot be serialized
-                pass
+            if 'aggregator' not in kwargs:
+                try:
+                    # These are for serialization to/from json and for db storage.            
+                    kwargs['aggregator'] = FunctionOrMethod.of_callable(
+                        agg, loadable=True
+                    )
+                except:
+                    # User defined functions in script do not have a module so cannot be serialized
+                    pass
         else:
             if 'aggregator' in kwargs:
                 agg: Callable = FunctionOrMethod.pick(**(kwargs['aggregator'])
@@ -510,9 +536,23 @@ class Feedback(FeedbackDefinition):
                 )
 
     def on_input_output(self):
+        """
+        Specifies that the feedback implementation arguments are to be the main
+        app input and output in that order.
+
+        Returns a new Feedback object with the specification.
+        """
         return self.on_input().on_output()
 
     def on_default(self):
+        """
+        Specifies that one argument feedbacks should be evaluated on the main
+        app output and two argument feedbacks should be evaluates on main input
+        and main output in that order.
+
+        Returns a new Feedback object with this specification.
+        """
+
         ret = Feedback().parse_obj(self)
         ret._default_selectors()
         return ret
@@ -528,7 +568,8 @@ class Feedback(FeedbackDefinition):
             alias_info = ""
 
         print(
-            f"{UNICODE_CHECK} In {self.name}, input {par_name} will be set to {par_path}{alias_info} ."
+            f"{UNICODE_CHECK} In {self.name}, "
+            f"input {par_name} will be set to {par_path}{alias_info} ."
         )
 
     def _default_selectors(self):
@@ -573,6 +614,11 @@ class Feedback(FeedbackDefinition):
 
     @staticmethod
     def evaluate_deferred(tru: 'Tru') -> int:
+        """
+        Evaluates feedback functions that were specified to be deferred. Returns
+        an integer indicating how many evaluates were run.
+        """
+
         db = tru.db
 
         def prepare_feedback(row):
@@ -609,28 +655,32 @@ class Feedback(FeedbackDefinition):
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 30:
                     print(
-                        f"{UNICODE_YIELD} Feedback task last made progress over 30 seconds ago. Retrying: {feedback_ident}"
+                        f"{UNICODE_YIELD} Feedback task last made progress over 30 seconds ago. "
+                        f"Retrying: {feedback_ident}"
                     )
                     TP().runlater(prepare_feedback, row)
                     started_count += 1
 
                 else:
                     print(
-                        f"{UNICODE_CLOCK} Feedback task last made progress less than 30 seconds ago. Giving it more time: {feedback_ident}"
+                        f"{UNICODE_CLOCK} Feedback task last made progress less than 30 seconds ago. "
+                        f"Giving it more time: {feedback_ident}"
                     )
 
             elif row.status in [FeedbackResultStatus.FAILED]:
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 60 * 5:
                     print(
-                        f"{UNICODE_YIELD} Feedback task last made progress over 5 minutes ago. Retrying: {feedback_ident}"
+                        f"{UNICODE_YIELD} Feedback task last made progress over 5 minutes ago. "
+                        f"Retrying: {feedback_ident}"
                     )
                     TP().runlater(prepare_feedback, row)
                     started_count += 1
 
                 else:
                     print(
-                        f"{UNICODE_CLOCK} Feedback task last made progress less than 5 minutes ago. Not touching it for now: {feedback_ident}"
+                        f"{UNICODE_CLOCK} Feedback task last made progress less than 5 minutes ago. "
+                        f"Not touching it for now: {feedback_ident}"
                     )
 
             elif row.status == FeedbackResultStatus.DONE:
@@ -643,6 +693,13 @@ class Feedback(FeedbackDefinition):
         return self.imp(*args, **kwargs)
 
     def aggregate(self, func: Callable) -> 'Feedback':
+        """
+        Specify the aggregation function in case the selectors for this feedback
+        generate more than one value for implementation argument(s).
+
+        Returns a new Feedback object with the given aggregation function.
+        """
+
         return Feedback(imp=self.imp, selectors=self.selectors, agg=func)
 
     @staticmethod
@@ -906,12 +963,18 @@ def _re_1_10_rating(str_val):
     return int(matches.group())
 
 
-class Provider(SerialModel):
+class Provider(SerialModel, WithClassInfo):
 
     class Config:
         arbitrary_types_allowed = True
 
     endpoint: Optional[Endpoint]
+
+    def __init__(self, *args, **kwargs):
+        # for WithClassInfo:
+        kwargs['obj'] = self
+
+        super().__init__(*args, **kwargs)
 
 
 class OpenAI(Provider):
