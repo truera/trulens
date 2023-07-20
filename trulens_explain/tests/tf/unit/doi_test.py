@@ -19,7 +19,6 @@ else:
     )
 
 from tests.unit.doi_test_base import DoiTestBase
-
 from trulens.nn.models import get_model_wrapper
 
 

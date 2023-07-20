@@ -2,31 +2,35 @@
 Generalized root type for various libraries like llama_index and langchain .
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+)
 
-from pydantic import Field
 import pydantic
+from pydantic import Field
 
+from trulens_eval.db import DB
+from trulens_eval.feedback import Feedback
 from trulens_eval.instruments import Instrument
+from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Perf
-from trulens_eval.schema import Select
 from trulens_eval.schema import Record
+from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
-from trulens_eval.db import DB
-from trulens_eval.feedback import Feedback
-from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import all_objects
-from trulens_eval.util import JSON_BASES_T
-from trulens_eval.util import CLASS_INFO
-from trulens_eval.util import JSON, JSON_BASES
 from trulens_eval.util import Class
+from trulens_eval.util import CLASS_INFO
+from trulens_eval.util import GetItemOrAttribute
+from trulens_eval.util import JSON
+from trulens_eval.util import JSON_BASES
+from trulens_eval.util import JSON_BASES_T
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
@@ -68,6 +72,8 @@ class ComponentView(ABC):
             return LangChainComponent.of_json(json)
         elif LlamaIndexComponent.class_is(cls):
             return LlamaIndexComponent.of_json(json)
+        elif TrulensComponent.class_is(cls):
+            return TrulensComponent.of_json(json)
         else:
             raise TypeError(f"Unhandled component type with class {cls}")
 
@@ -101,9 +107,9 @@ class LangChainComponent(ComponentView):
         if cls.module.module_name.startswith("langchain."):
             return True
 
-        if any(base.module.module_name.startswith("langchain.")
-               for base in cls.bases):
-            return True
+        #if any(base.module.module_name.startswith("langchain.")
+        #       for base in cls.bases):
+        #    return True
 
         return False
 
@@ -120,15 +126,35 @@ class LlamaIndexComponent(ComponentView):
         if cls.module.module_name.startswith("llama_index."):
             return True
 
-        if any(base.module.module_name.startswith("llama_index.")
-               for base in cls.bases):
-            return True
+        #if any(base.module.module_name.startswith("llama_index.")
+        #       for base in cls.bases):
+        #    return True
 
         return False
 
     @staticmethod
     def of_json(json: JSON) -> 'LlamaIndexComponent':
         from trulens_eval.utils.llama import component_of_json
+        return component_of_json(json)
+
+
+class TrulensComponent(ComponentView):
+    """
+    Components provided in trulens.
+    """
+
+    def class_is(cls: Class) -> bool:
+        if cls.module.module_name.startswith("trulens_eval."):
+            return True
+
+        #if any(base.module.module_name.startswith("trulens.") for base in cls.bases):
+        #    return True
+
+        return False
+
+    @staticmethod
+    def of_json(json: JSON) -> 'TrulensComponent':
+        from trulens_eval.utils.trulens import component_of_json
         return component_of_json(json)
 
 
@@ -250,6 +276,13 @@ class App(AppDefinition, SerialModel):
                     "Feedback logging requires `tru` to be specified."
                 )
 
+        if self.feedback_mode == FeedbackMode.DEFERRED:
+            for f in feedbacks:
+                # Try to load each of the feedback implementations. Deferred
+                # mode will do this but we want to fail earlier at app
+                # constructor here.
+                f.implementation.load()
+
         self.instrument.instrument_object(
             obj=self.app, query=Select.Query().app
         )
@@ -359,7 +392,7 @@ class App(AppDefinition, SerialModel):
 
         print(
             "\n".join(
-                f"{t[1].__class__.__name__} component: "
+                f"{t[1].__class__.__name__} of {t[1].__class__.__module__} component: "
                 f"{str(t[0])}" for t in self.instrumented()
             )
         )

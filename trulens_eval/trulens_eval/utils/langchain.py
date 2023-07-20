@@ -1,14 +1,15 @@
 from typing import Iterable, List, Type
 
-from trulens_eval.feedback import Feedback
-from trulens_eval.app import COMPONENT_CATEGORY
 from trulens_eval import app
-from trulens_eval.util import JSON
+from trulens_eval.app import COMPONENT_CATEGORY
+from trulens_eval.feedback import Feedback
 from trulens_eval.util import Class
 from trulens_eval.util import first
+from trulens_eval.util import JSON
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LANGCHAIN
 from trulens_eval.util import second
+from trulens_eval.util import ThreadPoolExecutor
 from trulens_eval.util import TP
 
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
@@ -31,7 +32,10 @@ class Prompt(app.Prompt, app.LangChainComponent):
         return cls.noserio_issubclass(
             module_name="langchain.prompts.base",
             class_name="BasePromptTemplate"
-        )
+        ) or cls.noserio_issubclass(
+            module_name="langchain.schema.prompt_template",
+            class_name="BasePromptTemplate"
+        )  # langchain >= 0.230
 
 
 class LLM(app.LLM, app.LangChainComponent):
@@ -158,22 +162,31 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
             feedback=feedback, threshold=threshold, *args, **kwargs
         )
 
-    def get_relevant_documents(self, query: str) -> List[Document]:
+    # Signature must match
+    # langchain.schema.retriever.BaseRetriever._get_relevant_documents .
+    def _get_relevant_documents(self, query: str, *,
+                                run_manager) -> List[Document]:
         # Get relevant docs using super class:
-        docs = super().get_relevant_documents(query)
+        docs = super()._get_relevant_documents(query, run_manager=run_manager)
 
         # Evaluate the filter on each, in parallel.
-        promises = (
+        ex = ThreadPoolExecutor(max_workers=max(1, len(docs)))
+
+        futures = list(
             (
-                doc, TP().promise(
-                    lambda doc, query: self.feedback(query, doc.page_content) >
-                    self.threshold,
+                doc,
+                ex.submit(
+                    (
+                        lambda doc, query: self.
+                        feedback(query, doc.page_content) > self.threshold
+                    ),
                     query=query,
                     doc=doc
                 )
             ) for doc in docs
         )
-        results = ((doc, promise.get()) for (doc, promise) in promises)
+
+        results = list((doc, promise.result()) for (doc, promise) in futures)
         filtered = map(first, filter(second, results))
 
         # Return only the filtered ones.

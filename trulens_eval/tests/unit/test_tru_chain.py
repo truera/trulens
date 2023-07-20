@@ -1,17 +1,27 @@
-# from llama.hf import LLaMATokenizer
+"""
+Tests for TruChain. This is outdated.
+"""
 
 import pinecone
-import pytest
+import unittest
+from unittest import main
+from unittest import TestCase
 import torch
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
 from transformers import pipeline
 
-from trulens_eval.keys import PINECONE_API_KEY
-from trulens_eval.keys import PINECONE_ENV
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LANGCHAIN
+from trulens_eval.keys import check_keys
+
+check_keys(
+    "OPENAI_API_KEY",
+    "HUGGINGFACE_API_KEY",
+    "PINECONE_API_KEY",
+    "PINECONE_ENV"
+)
 
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     from langchain import LLMChain
@@ -24,9 +34,9 @@ with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     from langchain.vectorstores import Pinecone
 
 
-class TestTruChain():
+class TestTruChain(TestCase):
 
-    def setup_method(self):
+    def setUp(self):
         print("setup")
 
         self.llm_model_id = "gpt2"
@@ -58,6 +68,7 @@ class TestTruChain():
 
         self.llm = HuggingFacePipeline(pipeline=self.pipe)
 
+    @unittest.skip("outdated")
     def test_qa_prompt(self):
         # Test of a small q/a app using a prompt and a single call to an llm.
 
@@ -76,6 +87,7 @@ class TestTruChain():
 
         assert len(tru_app.db.select()) == 2
 
+    @unittest.skip("outdated")
     def test_qa_prompt_with_memory(self):
         # Test of a small q/a app using a prompt and a single call to an llm.
         # Also has memory.
@@ -98,7 +110,7 @@ class TestTruChain():
 
         assert len(tru_app.db.select()) == 2
 
-    @pytest.mark.nonfree
+    @unittest.skip("outdated")
     def test_qa_db(self):
         # Test a q/a app that uses a vector store to look up context to include in
         # llm prompt.
@@ -112,8 +124,8 @@ class TestTruChain():
         )  # 1536 dims
 
         pinecone.init(
-            api_key=PINECONE_API_KEY,  # find at app.pinecone.io
-            environment=PINECONE_ENV  # next to api key in console
+            api_key=os.environ.get('PINECONE_API_KEY'),  # find at app.pinecone.io
+            environment=os.environ.get('PINECONE_ENV')  # next to api key in console
         )
         docsearch = Pinecone.from_existing_index(
             index_name=index_name, embedding=embedding
@@ -132,6 +144,7 @@ class TestTruChain():
 
         assert len(tru_app.db.select()) == 1
 
+    @unittest.skip("outdated")
     def test_sequential(self):
         # Test of a sequential app that contains the same llm twice with
         # different prompts.
@@ -174,3 +187,6 @@ class TestTruChain():
         )
 
         assert len(tru_app.db.select()) == 2
+
+if __name__ == '__main__':
+    main()

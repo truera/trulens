@@ -23,6 +23,7 @@ Method                      | (python method)
 from __future__ import annotations
 
 import builtins
+from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from enum import Enum
 import importlib
 import inspect
@@ -61,13 +62,15 @@ UNICODE_CLOCK = "⏰"
 
 # Optional requirements.
 
+langchain_version = "0.0.230"
+
 REQUIREMENT_LLAMA = (
     "llama_index 0.6.24 or above is required for instrumenting llama_index apps. "
-    "Please install it before use: `pip install llama_index>=0.6.24`."
+    "Please install it before use: `pip install llama_index>=0.7.0`."
 )
 REQUIREMENT_LANGCHAIN = (
-    "langchain 0.0.170 or above is required for instrumenting langchain apps. "
-    "Please install it before use: `pip install langchain>=0.0.170`."
+    f"langchain {langchain_version} or above is required for instrumenting langchain apps. "
+    f"Please install it before use: `pip install langchain>={langchain_version}`."
 )
 
 
@@ -745,7 +748,7 @@ class GetItemOrAttribute(Step):
     item_or_attribute: str  # distinct from "item" for deserialization
 
     def __hash__(self):
-        return hash(self.item)
+        return hash(self.item_or_attribute)
 
     def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
         if isinstance(obj, Dict):
@@ -1037,6 +1040,29 @@ class SingletonPerName():
 # Threading utilities
 
 
+def _future_target_wrapper(stack, func, *args, **kwargs):
+    """
+    Wrapper for a function that is started by threads. This is needed to
+    record the call stack prior to thread creation as in python threads do
+    not inherit the stack. Our instrumentation, however, relies on walking
+    the stack and need to do this to the frames prior to thread starts.
+    """
+
+    # Keep this for looking up via get_local_in_call_stack .
+    pre_start_stack = stack
+
+    return func(*args, **kwargs)
+
+
+class ThreadPoolExecutor(fThreadPoolExecutor):
+
+    def submit(self, fn, /, *args, **kwargs):
+        present_stack = stack()
+        return super().submit(
+            _future_target_wrapper, present_stack, fn, *args, **kwargs
+        )
+
+
 class TP(SingletonPerName):  # "thread processing"
 
     # Store here stacks of calls to various thread starting methods so that we can retrieve
@@ -1063,25 +1089,11 @@ class TP(SingletonPerName):  # "thread processing"
 
         self.runlater(runner)
 
-    @staticmethod
-    def _thread_target_wrapper(stack, func, *args, **kwargs):
-        """
-        Wrapper for a function that is started by threads. This is needed to
-        record the call stack prior to thread creation as in python threads do
-        not inherit the stack. Our instrumentation, however, relies on walking
-        the stack and need to do this to the frames prior to thread starts.
-        """
-
-        # Keep this for looking up via get_local_in_call_stack .
-        pre_start_stack = stack
-
-        return func(*args, **kwargs)
-
     def _thread_starter(self, func, args, kwargs):
         present_stack = stack()
 
         prom = self.thread_pool.apply_async(
-            self._thread_target_wrapper,
+            _future_target_wrapper,
             args=(present_stack, func) + args,
             kwds=kwargs
         )
@@ -1164,7 +1176,7 @@ def get_local_in_call_stack(
 
         logger.debug(f"{fi.frame.f_code}")
 
-        if id(fi.frame.f_code) == id(TP()._thread_target_wrapper.__code__):
+        if id(fi.frame.f_code) == id(_future_target_wrapper.__code__):
             logger.debug(
                 "Found thread starter frame. "
                 "Will walk over frames prior to thread start."
@@ -1234,16 +1246,30 @@ class Class(SerialModel):
 
         return self
 
+    def _check_importable(self):
+        try:
+            cls = self.load()
+        except Exception as e:
+            raise ImportError(
+                f"Class {self} is not importable. "
+                "If you are defining custom feedback function implementations, make sure they can be imported by python scripts. "
+                "If you defined a function in a notebook, it will not be importable."
+            )
+
     @staticmethod
     def of_class(
         cls: type, with_bases: bool = False, loadable: bool = False
     ) -> 'Class':
-        return Class(
+        ret = Class(
             name=cls.__name__,
             module=Module.of_module_name(cls.__module__),
             bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__))
             if with_bases else None
         )
+        if loadable:
+            ret._check_importable()
+
+        return ret
 
     @staticmethod
     def of_object(
@@ -1281,7 +1307,7 @@ class Class(SerialModel):
 
 # inspect.signature does not work on builtin type constructors but they are used
 # like this method. Use it to create a signature of a builtin constructor.
-def builtin_init_dummy(self, /, *args, **kwargs):
+def builtin_init_dummy(self, *args, **kwargs):
     pass
 
 
@@ -1327,16 +1353,19 @@ class Obj(SerialModel):
         obj: object,
         cls: Optional[type] = None,
         loadable: bool = False
-    ) -> Union['Obj', 'ObjSerial']:
+    ) -> Union['Obj', 'ObjSerial']:        
         if loadable:
             return ObjSerial.of_object(obj=obj, cls=cls, loadable=loadable)
-
+        
         if cls is None:
             cls = obj.__class__
-
+        
         return Obj(cls=Class.of_class(cls), id=id(obj))
 
     def load(self) -> object:
+        # Check that the object's class is importable before the other error is thrown.
+        self.cls._check_importable()
+
         raise RuntimeError(
             f"Trying to load an object without constructor arguments: {pp.pformat(self.dict())}."
         )
@@ -1389,18 +1418,34 @@ class ObjSerial(Obj):
             init_args = obj.args
             init_kwargs = {}
         else:
+            # For unknown types, check if the constructor for cls expect
+            # arguments and fail if so as we don't know where to get them. If
+            # there are none, create empty init bindings.
+
+            sig = _safe_init_sig(cls)
+            if len(sig.parameters) > 0:
+                raise RuntimeError(
+                    f"Do not know how to get constructor arguments for object of type {cls.__name__}. "
+                    f"If you are defining a custom feedback function, define its implementation as a function or a method of a Provider subclass."
+                )
+
             init_args = ()
             init_kwargs = {}
+
         # TODO: dataclasses
         # TODO: dataclasses_json
 
-        sig = _safe_init_sig(cls)
+        sig = _safe_init_sig(cls.__call__)
+        # NOTE: Something related to pydantic models incorrectly sets signature
+        # of cls so we need to check cls.__call__ instead.
+        
         b = sig.bind(*init_args, **init_kwargs)
         bindings = Bindings.of_bound_arguments(b)
 
-        return ObjSerial(
-            cls=Class.of_class(cls), id=id(obj), init_bindings=bindings
-        )
+        cls_serial = Class.of_class(cls)
+        cls_serial._check_importable()
+
+        return ObjSerial(cls=cls_serial, id=id(obj), init_bindings=bindings)
 
     def load(self) -> object:
         cls = self.cls.load()
@@ -1437,11 +1482,17 @@ class FunctionOrMethod(SerialModel):
 
     @staticmethod
     def of_callable(c: Callable, loadable: bool = False) -> 'FunctionOrMethod':
-        if hasattr(c, "__self__"):
-            return Method.of_method(
-                c, obj=getattr(c, "__self__"), loadable=loadable
-            )
+        """
+        Serialize the given callable. If `loadable` is set, tries to add enough
+        info for the callable to be deserialized.
+        """
+
+        if inspect.ismethod(c):
+            self = c.__self__
+            return Method.of_method(c, obj=self, loadable=loadable)
+        
         else:
+            
             return Function.of_function(c, loadable=loadable)
 
     def load(self) -> Callable:
@@ -1466,13 +1517,18 @@ class Method(FunctionOrMethod):
         loadable: bool = False
     ) -> 'Method':
         if obj is None:
-            assert hasattr(
-                meth, "__self__"
+            assert inspect.ismethod(
+                meth
             ), f"Expected a method (maybe it is a function?): {meth}"
             obj = meth.__self__
 
         if cls is None:
-            cls = obj.__class__
+            if isinstance(cls, type):
+                # classmethod, self is a type
+                cls = obj
+            else:
+                # normal method, self is instance of cls
+                cls = obj.__class__
 
         obj_json = (ObjSerial if loadable else Obj).of_object(obj, cls=cls)
 
@@ -1485,11 +1541,13 @@ class Method(FunctionOrMethod):
 
 class Function(FunctionOrMethod):
     """
-    A python function.
+    A python function. Could be a static method inside a class (not instance of
+    the class).
     """
 
     module: Module
-    cls: Optional[Class]
+    cls: Optional[Class
+                 ]  # for static methods in a class which we view as functions, not yet supported
     name: str
 
     @staticmethod
@@ -1510,11 +1568,21 @@ class Function(FunctionOrMethod):
 
     def load(self) -> Callable:
         if self.cls is not None:
-            cls = self.cls.load()
-            return getattr(cls, self.name)
+            # TODO: static/class methods work in progress
+
+            cls = self.cls.load()  # does not create object instance
+            return getattr(cls, self.name)  # lookup static/class method
+        
         else:
             mod = self.module.load()
-            return getattr(mod, self.name)
+            try:
+                return getattr(mod, self.name)  # function not inside a class
+            except Exception:
+                raise ImportError(
+                   f"Function {self} is not importable. "
+                    "If you are defining custom feedback function implementations, make sure they can be imported by python scripts. "
+                    "If you defined a function in a notebook, it will not be importable."
+                )
 
 
 class WithClassInfo(pydantic.BaseModel):

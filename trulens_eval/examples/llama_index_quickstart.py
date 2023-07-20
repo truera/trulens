@@ -11,7 +11,7 @@
 # Let's install some of the dependencies for this notebook if we don't have them already
 
 get_ipython().system('pip install trulens-eval')
-get_ipython().system('pip install llama_index==0.6.31')
+get_ipython().system('pip install llama_index==0.7.0')
 
 # ### Add API keys
 # For this quickstart, you will need Open AI and Huggingface keys
@@ -24,7 +24,10 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 # ### Import from LlamaIndex and TruLens
 
 # Imports main tools:
-from trulens_eval import TruLlama, Feedback, Tru, feedback
+from trulens_eval import Feedback
+from trulens_eval import feedback
+from trulens_eval import Tru
+from trulens_eval import TruLlama
 
 tru = Tru()
 
@@ -35,7 +38,8 @@ tru = Tru()
 # LLama Index starter example from: https://gpt-index.readthedocs.io/en/latest/getting_started/starter_example.html
 # In order to run this, download into data/ Paul Graham's Essay 'What I Worked On' from https://github.com/jerryjliu/llama_index/blob/main/examples/paul_graham_essay/data/paul_graham_essay.txt
 
-from llama_index import VectorStoreIndex, SimpleDirectoryReader
+from llama_index import SimpleDirectoryReader
+from llama_index import VectorStoreIndex
 
 documents = SimpleDirectoryReader('data').load_data()
 index = VectorStoreIndex.from_documents(documents)
@@ -86,6 +90,8 @@ print(llm_response)
 tru.run_dashboard()  # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed
+
+# Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
 # ### Leaderboard
 #

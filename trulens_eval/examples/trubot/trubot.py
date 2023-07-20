@@ -5,11 +5,6 @@ from typing import Callable, Dict, List, Set, Tuple
 
 import numpy as np
 
-# This needs to be before some others to make sure api keys are ready before
-# relevant classes are loaded.
-from trulens_eval.keys import *
-"This is here so that import organizer does not move the keys import below this line."
-
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
@@ -22,16 +17,25 @@ from pydantic import Field
 from slack_bolt import App
 from slack_sdk import WebClient
 
+from trulens_eval import feedback
 from trulens_eval import Select
 from trulens_eval import Tru
-from trulens_eval import feedback
-from trulens_eval.schema import FeedbackMode
-from trulens_eval.tru_chain import TruChain
 from trulens_eval.db import LocalSQLite
 from trulens_eval.db import Record
 from trulens_eval.feedback import Feedback
+from trulens_eval.schema import FeedbackMode
+from trulens_eval.tru_chain import TruChain
 from trulens_eval.util import TP
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
+
+from trulens_eval.keys import check_keys
+
+check_keys(
+    "OPENAI_API_KEY",
+    "HUGGINGFACE_API_KEY",
+    "PINECONE_API_KEY",
+    "PINECONE_ENV"
+)
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
@@ -44,8 +48,8 @@ verb = False
 
 # Pinecone configuration.
 pinecone.init(
-    api_key=PINECONE_API_KEY,  # find at app.pinecone.io
-    environment=PINECONE_ENV  # next to api key in console
+    api_key=os.environ.get("PINECONE_API_KEY"),  # find at app.pinecone.io
+    environment=os.environ.get("PINECONE_ENV")  # next to api key in console
 )
 
 # Cache of conversations. Keys are SlackAPI conversation ids (channel ids or

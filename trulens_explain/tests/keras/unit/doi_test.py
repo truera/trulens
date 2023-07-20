@@ -12,7 +12,6 @@ from keras.layers import Input
 from keras.layers import Lambda
 from keras.models import Model
 from tests.unit.doi_test_base import DoiTestBase
-
 from trulens.nn.models import get_model_wrapper
 
 
