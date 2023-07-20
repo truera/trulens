@@ -402,9 +402,8 @@ import itertools
 import logging
 from multiprocessing.pool import AsyncResult
 import re
-from typing import Any, Callable, Dict, Iterable, Optional, Type, Union, Tuple
 import traceback
-from typing import Any, Callable, Dict, Iterable, Optional, Type, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Type, Union
 
 import numpy as np
 import openai
@@ -424,7 +423,6 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
-from trulens_eval.util import WithClassInfo
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import JSON
 from trulens_eval.util import jsonify
@@ -433,6 +431,7 @@ from trulens_eval.util import TP
 from trulens_eval.util import UNICODE_CHECK
 from trulens_eval.util import UNICODE_CLOCK
 from trulens_eval.util import UNICODE_YIELD
+from trulens_eval.util import WithClassInfo
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
@@ -832,10 +831,10 @@ class Feedback(FeedbackDefinition):
                     assert isinstance(meta, dict), f"Feedback metadata output must be a dictionary but was {type(call_meta)}."
                 else:
                     # Otherwise it is just the float. We create empty metadata dict.
-                    result_val = result_vals
+                    result_val = result_and_meta
                     meta = dict()
 
-                assert isinstance(result_val, float), f"Feedback function output must be a float but was {type(feedback_val)}."
+                assert isinstance(result_val, float), f"Feedback function output must be a float but was {type(result_val)}."
                     
                 result_vals.append(result_val)
 
@@ -1242,26 +1241,28 @@ class OpenAI(Provider):
                 return None
 
 
-        def agreement_measure(self, prompt: str, response: str) -> float:
+        def agreement_measure(self, prompt: str, response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
             """
-            Uses OpenAI's Chat GPT Model. A function that that measures similarity to ground truth. A second template
-            is given to Chat GPT with a prompt that the original response is
-            correct, and measures whether previous Chat GPT's response is similar.
+            Uses OpenAI's Chat GPT Model. A function that that measures
+            similarity to ground truth. A second template is given to Chat GPT
+            with a prompt that the original response is correct, and measures
+            whether previous Chat GPT's response is similar.
 
             Parameters:
-                prompt (str): A text prompt to an agent. response (str): The agent's
-                response to the prompt.
+                prompt (str): A text prompt to an agent. response (str): The
+                agent's response to the prompt.
 
             Returns:
-                float: A value between 0 and 1. 0 being "not in agreement" and 1
-                being "in agreement".
+                - float: A value between 0 and 1. 0 being "not in agreement" and 1
+                  being "in agreement".
+                - dict: with key 'ground_truth_response'
             """
             ground_truth_response = self._find_response(prompt)
-            if (ground_truth_response):
+            if ground_truth_response:
                 agreement_txt = _get_answer_agreement(
                     prompt, response, ground_truth_response
                 )
-                ret = _re_1_10_rating(agreement_txt) / 10
+                ret = _re_1_10_rating(agreement_txt) / 10, dict(ground_truth_response=ground_truth_response)
             else:
                 ret = np.nan
             return ret
