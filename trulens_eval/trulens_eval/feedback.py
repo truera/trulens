@@ -1228,80 +1228,6 @@ class OpenAI(Provider):
             )
         ) / 10
 
-    class GroundTruthAgreement(SerialModel):
-        ground_truth: list
-        def __init__(self, ground_truth: list):
-            super().__init__(ground_truth=ground_truth)
-
-        def _find_response(self, prompt: str) -> Optional[str]:
-            responses = [qr["response"] for qr in self.ground_truth if qr["query"] == prompt]
-            if responses:
-                return responses[0]
-            else:
-                return None
-
-
-        def agreement_measure(self, prompt: str, response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
-            """
-            Uses OpenAI's Chat GPT Model. A function that that measures
-            similarity to ground truth. A second template is given to Chat GPT
-            with a prompt that the original response is correct, and measures
-            whether previous Chat GPT's response is similar.
-
-            Parameters:
-                prompt (str): A text prompt to an agent. response (str): The
-                agent's response to the prompt.
-
-            Returns:
-                - float: A value between 0 and 1. 0 being "not in agreement" and 1
-                  being "in agreement".
-                - dict: with key 'ground_truth_response'
-            """
-            ground_truth_response = self._find_response(prompt)
-            if ground_truth_response:
-                agreement_txt = _get_answer_agreement(
-                    prompt, response, ground_truth_response
-                )
-                ret = _re_1_10_rating(agreement_txt) / 10, dict(ground_truth_response=ground_truth_response)
-            else:
-                ret = np.nan
-            return ret
-
-    def model_agreement(self, prompt: str, response: str) -> float:
-        """
-        Uses OpenAI's Chat GPT Model. A function that gives Chat GPT the same
-        prompt and gets a response, encouraging truthfulness. A second template
-        is given to Chat GPT with a prompt that the original response is
-        correct, and measures whether previous Chat GPT's response is similar.
-
-        Parameters:
-            prompt (str): A text prompt to an agent. response (str): The agent's
-            response to the prompt.
-
-        Returns:
-            float: A value between 0 and 1. 0 being "not in agreement" and 1
-            being "in agreement".
-        """
-        oai_chat_response = OpenAI().endpoint.run_me(
-            lambda: self._create_chat_completition(
-                model=self.model_engine,
-                temperature=0.0,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": feedback_prompts.CORRECT_SYSTEM_PROMPT
-                    }, {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
-            )["choices"][0]["message"]["content"]
-        )
-        agreement_txt = _get_answer_agreement(
-            prompt, response, oai_chat_response, self.model_engine
-        )
-        return _re_1_10_rating(agreement_txt) / 10
-
     def sentiment(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -1333,6 +1259,81 @@ class OpenAI(Provider):
                 )["choices"][0]["message"]["content"]
             )
         )
+
+
+class GroundTruthAgreement(SerialModel):
+    ground_truth: list
+
+    def __init__(self, ground_truth: list):
+        super().__init__(ground_truth=ground_truth)
+
+    def _find_response(self, prompt: str) -> Optional[str]:
+        responses = [qr["response"] for qr in self.ground_truth if qr["query"] == prompt]
+        if responses:
+            return responses[0]
+        else:
+            return None
+
+    def agreement_measure(self, prompt: str, response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
+        """
+        Uses OpenAI's Chat GPT Model. A function that that measures
+        similarity to ground truth. A second template is given to Chat GPT
+        with a prompt that the original response is correct, and measures
+        whether previous Chat GPT's response is similar.
+
+        Parameters:
+            prompt (str): A text prompt to an agent. response (str): The
+            agent's response to the prompt.
+
+        Returns:
+            - float: A value between 0 and 1. 0 being "not in agreement" and 1
+                being "in agreement".
+            - dict: with key 'ground_truth_response'
+        """
+        ground_truth_response = self._find_response(prompt)
+        if ground_truth_response:
+            agreement_txt = _get_answer_agreement(
+                prompt, response, ground_truth_response
+            )
+            ret = _re_1_10_rating(agreement_txt) / 10, dict(ground_truth_response=ground_truth_response)
+        else:
+            ret = np.nan
+        return ret
+
+def model_agreement(self, prompt: str, response: str) -> float:
+    """
+    Uses OpenAI's Chat GPT Model. A function that gives Chat GPT the same
+    prompt and gets a response, encouraging truthfulness. A second template
+    is given to Chat GPT with a prompt that the original response is
+    correct, and measures whether previous Chat GPT's response is similar.
+
+    Parameters:
+        prompt (str): A text prompt to an agent. response (str): The agent's
+        response to the prompt.
+
+    Returns:
+        float: A value between 0 and 1. 0 being "not in agreement" and 1
+        being "in agreement".
+    """
+    oai_chat_response = OpenAI().endpoint.run_me(
+        lambda: self._create_chat_completition(
+            model=self.model_engine,
+            temperature=0.0,
+            messages=[
+                {
+                    "role": "system",
+                    "content": feedback_prompts.CORRECT_SYSTEM_PROMPT
+                }, {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )["choices"][0]["message"]["content"]
+    )
+    agreement_txt = _get_answer_agreement(
+        prompt, response, oai_chat_response, self.model_engine
+    )
+    return _re_1_10_rating(agreement_txt) / 10
 
 
 class AzureOpenAI(OpenAI):
