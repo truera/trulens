@@ -103,20 +103,88 @@ from collections import defaultdict
 import logging
 import os
 from pathlib import Path
-from typing import Tuple
+import re
+from typing import Any, Optional, Set, Tuple, Union, Dict
 
 import cohere
 import dotenv
 
-from trulens_eval.util import caller_frame
-from trulens_eval.util import UNICODE_CHECK
-from trulens_eval.util import UNICODE_STOP
+from trulens_eval.utils.python import caller_frame
+from trulens_eval.utils.text import UNICODE_CHECK
+from trulens_eval.utils.text import UNICODE_STOP
 
 logger = logging.getLogger(__name__)
+
+# Keep track of values that should not be shown in UI (or added to DB). This set
+# is only used for cases where the name/key for a field is not useful to
+# determine whether it should be redacted.
+values_to_redact: Set[str] = set()
+
+# Regex of keys (into dict/json) that should be redacted.
+RE_KEY_TO_REDACT: re.Pattern = re.compile(
+    '|'.join(
+        [
+            r'api_key',
+            # Covers OpenAI, Cohere, Anthropic class key 'api_key'
+            r'.+_api_key',
+            # Covers langchain llm attributes for keys such as 'openai_api_key'.
+
+            # r'token',
+            # Would cover bard unofficial api field "token" but this is a
+            # bit too general of a key; TODO: need another solution to redact.
+            r'.+_API_KEY',
+            # Covers env vars ending in "_API_KEY", including openai, cohere, anthropic,
+            # bard
+            r'KAGGLE_KEY',
+            r'SLACK_(TOKEN|SIGNING_SECRET)',
+            # Covers slack-related keys.
+        ]
+    )
+)
+
+# Env vars not covered as they are assumed non-sensitive:
+# - PINECONE_ENV, e.g. "us-west1-gcp-free"
+# - KAGGLE_USER
+
+# Keys not covered that might be sensitive:
+# - "token" - i.e. bard-api Bard.token, slack api's -- name collision with
+#   "token" as in the basic building block of text.
+
+# TODO: Some method for letting users add more things to redact.
+
+# The replacement value for redacted values.
+REDACTED_VALUE = "__tru_redacted"
 
 # Treat these value as not valid keys. Use any as a templates to suggest a user
 # fills in the key.
 TEMPLATE_VALUES = set(["to fill in"])
+
+global cohere_agent
+cohere_agent = None
+
+
+def should_redact_key(k: Optional[str]) -> bool:
+    return isinstance(k, str) and RE_KEY_TO_REDACT.fullmatch(k)
+
+
+def should_redact_value(v: Union[Any, str]) -> bool:
+    return isinstance(v, str) and v in values_to_redact
+
+
+def redact_value(v: Union[str, Any],
+                 k: Optional[str] = None) -> Union[str, Any]:
+    """
+    Determine whether the given value `v` should be redacted and redact it if
+    so. If its key `k` (in a dict/json-like) is given, uses the key name to
+    determine whether redaction is appropriate. If key `k` is not given, only
+    redacts if `v` is a string and identical to one of the keys ingested using
+    `setup_keys`.
+    """
+
+    if should_redact_key(k) or should_redact_value(v):
+        return REDACTED_VALUE
+    else:
+        return v
 
 
 def get_config_file() -> Path:
@@ -143,6 +211,9 @@ def get_config() -> Tuple[Path, dict]:
     else:
         return config_file, dotenv.dotenv_values(config_file)
 
+        # Put value in redaction list.
+        values_to_redact.add(v)
+
 
 def set_openai_key() -> None:
     """
@@ -155,10 +226,6 @@ def set_openai_key() -> None:
         openai.api_key = os.environ["OPENAI_API_KEY"]
 
 
-global cohere_agent
-cohere_agent = None
-
-
 def get_cohere_agent() -> cohere.Client:
     """
     Gete a singleton cohere agent. Sets its api key from env var COHERE_API_KEY.
@@ -166,12 +233,12 @@ def get_cohere_agent() -> cohere.Client:
 
     global cohere_agent
     if cohere_agent is None:
-        cohere.api_key = os.environ['COHERE_API_KEY']
+        cohere.api_key = os.environ['CO_API_KEY']
         cohere_agent = cohere.Client(cohere.api_key)
     return cohere_agent
 
 
-def get_huggingface_headers():
+def get_huggingface_headers() -> Dict[str, str]:
     HUGGINGFACE_HEADERS = {
         "Authorization": f"Bearer {os.environ['HUGGINGFACE_API_KEY']}"
     }
@@ -234,7 +301,7 @@ def _relative_path(path: Path, relative_to: Path) -> str:
             relative_to = relative_to.parent
 
 
-def _collect_keys(*args, **kwargs) -> dict:
+def _collect_keys(*args: Tuple[str], **kwargs: Dict[str, str]) -> Dict[str, str]:
     """
     Collect values for keys from all of the currently supported sources. This includes:
 
@@ -318,7 +385,7 @@ def _collect_keys(*args, **kwargs) -> dict:
     return ret
 
 
-def check_keys(*keys):
+def check_keys(*keys: Tuple[str]) -> None:
     """
     Check that all keys named in `*args` are set as env vars. Will fail with a
     message on how to set missing key if one is missing. If all are provided
@@ -339,10 +406,13 @@ def check_keys(*keys):
     for k in keys:
         v = kvals.get(k)
         _check_key(k, v=v)
+        values_to_redact.add(v)
         os.environ[k] = v
 
+    set_openai_key()
 
-def check_or_set_keys(*args, **kwargs):
+
+def check_or_set_keys(*args: Tuple[str], **kwargs: Dict[str, str]) -> None:
     """
     Check various sources of api configuration values like secret keys and set
     env variables for each of them. We use env variables as the canonical
@@ -363,4 +433,5 @@ def check_or_set_keys(*args, **kwargs):
     for k in list(args) + list(kwargs.keys()):
         v = kvals.get(k)
         _check_key(k, v=v)
+        values_to_redact.add(v)
         os.environ[k] = v
