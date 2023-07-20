@@ -403,7 +403,7 @@ import logging
 from multiprocessing.pool import AsyncResult
 import re
 import traceback
-from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Type, Union, List
 
 import numpy as np
 import openai
@@ -1261,13 +1261,36 @@ class OpenAI(Provider):
         )
 
 
-class GroundTruthAgreement(SerialModel):
-    ground_truth: list
+class GroundTruthAgreement(SerialModel, WithClassInfo):
+    ground_truth: Union[List[str], FunctionOrMethod]
 
-    def __init__(self, ground_truth: list):
-        super().__init__(ground_truth=ground_truth)
+    ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
+
+    def __init__(self, ground_truth: Union[List[str], Callable, FunctionOrMethod]):
+        if isinstance(ground_truth, List):
+            ground_truth_imp = None
+        elif isinstance(ground_truth, FunctionOrMethod):
+            ground_truth_imp = ground_truth.load()
+        elif isinstance(ground_truth, Callable):
+            ground_truth_imp = ground_truth
+            ground_truth = FunctionOrMethod.of_callable(ground_truth)
+        elif isinstance(ground_truth, Dict):
+            # Serialized FunctionOrMethod?
+            ground_truth = FunctionOrMethod.pick(**ground_truth)
+            ground_truth_imp = ground_truth.load()
+        else:
+            raise RuntimeError(f"Unhandled ground_truth type: {type(ground_truth)}.")
+
+        super().__init__(
+            ground_truth=ground_truth,
+            ground_truth_imp=ground_truth_imp,
+            obj=self # for WithClassInfo
+        )
 
     def _find_response(self, prompt: str) -> Optional[str]:
+        if self.ground_truth_imp is not None:
+            return self.ground_truth_imp(prompt)
+
         responses = [qr["response"] for qr in self.ground_truth if qr["query"] == prompt]
         if responses:
             return responses[0]
