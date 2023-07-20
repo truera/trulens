@@ -429,9 +429,9 @@ from trulens_eval.util import JSON
 from trulens_eval.util import jsonify
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
-from trulens_eval.util import UNICODE_CHECK
-from trulens_eval.util import UNICODE_CLOCK
-from trulens_eval.util import UNICODE_YIELD
+from trulens_eval.utils.text import UNICODE_CHECK
+from trulens_eval.utils.text import UNICODE_CLOCK
+from trulens_eval.utils.text import UNICODE_YIELD
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
@@ -978,11 +978,13 @@ class Provider(SerialModel, WithClassInfo):
 class OpenAI(Provider):
     model_engine: str
 
-    # Exclude is important here so that pydantic doesn't try to
-    # serialize/deserialize the constant fixed endpoint we need.
-    endpoint: Endpoint = pydantic.Field(exclude=True)
+    endpoint: Endpoint
 
-    def __init__(self, *args, model_engine = "gpt-3.5-turbo", **kwargs):
+    def __init__(self, *args, endpoint = None, model_engine = "gpt-3.5-turbo", **kwargs):
+        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
+
         """
         A set of OpenAI Feedback Functions.
 
@@ -994,6 +996,7 @@ class OpenAI(Provider):
         - All other args/kwargs passed to OpenAIEndpoint constructor.
         """
 
+        # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
         self_kwargs['model_engine'] = model_engine
         self_kwargs['endpoint'] = OpenAIEndpoint(*args, **kwargs)
@@ -1281,7 +1284,11 @@ class OpenAI(Provider):
 class AzureOpenAI(OpenAI):
     deployment_id: str
 
-    def __init__(self, **kwargs):
+    def __init__(self, endpoint=None, **kwargs):
+        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
+
         """
         Wrapper to use Azure OpenAI. Please export the following env variables
 
@@ -1347,12 +1354,13 @@ HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm
 
 class Huggingface(Provider):
 
-    # Exclude is important here so that pydantic doesn't try to
-    # serialize/deserialize the constant fixed endpoint we need.
-    endpoint: Endpoint = pydantic.Field(exclude=True)
+    endpoint: Endpoint
 
-    def __init__(self, **kwargs):
-        # endpoint: Optional[Endpoint]=None, 
+    def __init__(self, endpoint=None, **kwargs):
+        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
+
         """
         A set of Huggingface Feedback Functions.
 
@@ -1464,12 +1472,16 @@ class Huggingface(Provider):
 class Cohere(Provider):
     model_engine: str = "large"
 
-    def __init__(self, model_engine='large'):
-        super().__init__()  # need to include pydantic.BaseModel.__init__
+    def __init__(self, model_engine='large', endpoint=None, **kwargs):
+        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
 
-        Cohere().endpoint = Endpoint(name="cohere")
-        self.model_engine = model_engine
+        kwargs['endpoint'] = Endpoint(name="cohere")
+        kwargs['model_engine'] = model_engine
 
+        super().__init__(**kwargs)  # need to include pydantic.BaseModel.__init__
+        
     def sentiment(
         self,
         text,

@@ -1,5 +1,13 @@
 # Deprecation Notes
 
+## Changes in 0.5.0
+
+### Backwards compatible
+
+- Class `Provider` contains the attribute `endpoint` which was previously
+  excluded from serialization but is now included.
+
+
 ## Changes in 0.4.0
 
 ### Backwards compatible
