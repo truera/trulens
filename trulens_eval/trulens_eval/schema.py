@@ -281,7 +281,7 @@ class FeedbackCall(SerialModel):
     args: Dict[str, str]
     ret: float
 
-    # New in 0.4.0: Any additional data a feedback function returns to display
+    # New in 0.6.0: Any additional data a feedback function returns to display
     # alongside its float result.
     meta: Dict[str, Any] = pydantic.Field(default_factory=dict)
 
