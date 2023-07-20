@@ -63,6 +63,10 @@ if state.clipboard:
     )
 
 
+def jsonify_for_ui(*args, **kwargs):
+    return jsonify(*args, **kwargs, redact_keys=True, skip_specials=True)
+
+
 def render_component(query, component, header=True):
     # Draw the accessor/path within the wrapped app of the component.
     if header:
@@ -87,11 +91,11 @@ def render_component(query, component, header=True):
 
     elif isinstance(component, Other):
         with st.expander("Uncategorized Component Details:"):
-            st.json(jsonify(component.json, skip_specials=True))
+            st.json(jsonify_for_ui(component.json))
 
     else:
         with st.expander("Unhandled Component Details:"):
-            st.json(jsonify(component.json, skip_specials=True))
+            st.json(jsonify_for_ui(component.json))
 
 
 if df_results.empty:
@@ -265,7 +269,7 @@ else:
 
                     draw_call(match)
                     # with st.expander("Call Details:"):
-                    #     st.json(jsonify(match, skip_specials=True))
+                    #     st.json(jsonify_for_ui(match)
 
                     view = classes_map.get(match_query)
                     if view is not None:
@@ -288,7 +292,7 @@ else:
             else:
                 st.subheader(f"App {render_selector_markdown(Select.App)}")
                 with st.expander("App Details:"):
-                    st.json(jsonify(app_json, skip_specials=True))
+                    st.json(jsonify_for_ui(app_json))
 
             if match_query is not None:
                 st.header("Subcomponents:")
@@ -307,11 +311,11 @@ else:
 
             if st.button("Display full app json"):
 
-                st.write(jsonify(app_json, skip_specials=True))
+                st.write(jsonify_for_ui(app_json))
 
             if st.button("Display full record json"):
 
-                st.write(jsonify(record_json, skip_specials=True))
+                st.write(jsonify_for_ui(record_json))
 
     with tab2:
         feedback = feedback_cols

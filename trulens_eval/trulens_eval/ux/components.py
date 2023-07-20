@@ -10,6 +10,7 @@ from trulens_eval.app import ComponentView
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
+from trulens_eval.keys import REDACTED_VALUE, should_redact_key
 from trulens_eval.util import CLASS_INFO
 from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import is_empty
@@ -156,6 +157,14 @@ def draw_llm_info(query: JSONPath, component: ComponentView) -> None:
                 </style>
                 """
     df = pd.DataFrame.from_dict(llm_kv, orient='index').transpose()
+
+    # Redact any column whose name indicates it might be a secret.
+    for col in df.columns:
+        if should_redact_key(col):
+            df[col] = REDACTED_VALUE
+
+    # TODO: What about columns not indicating a secret but some values do
+    # indicate it as per `should_redact_value` ?
 
     # Iterate over each column of the DataFrame
     for column in df.columns:
