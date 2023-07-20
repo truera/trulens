@@ -9,7 +9,7 @@ import itertools
 import logging
 from multiprocessing.pool import AsyncResult
 import re
-from typing import Any, Callable, Dict, Iterable, Optional, Type, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Type, Union, Tuple
 
 import numpy as np
 import openai
@@ -53,15 +53,21 @@ def check_provider(cls_or_name: Union[Type, str]) -> None:
 
     assert cls_name in PROVIDER_CLASS_NAMES, f"Unsupported provider class {cls_name}"
 
+# Signature of feedback implementations. Take in any number of arguments
+# and return either a single float or a float and a dictionary (of metadata).
+ImpCallable = Callable[..., Union[float, Tuple[float, Dict[str, Any]]]]
+
+# Signature of aggregation functions.
+AggCallable = Callable[[Iterable[float]], float]
 
 class Feedback(FeedbackDefinition):
     # Implementation, not serializable, note that FeedbackDefinition contains
     # `implementation` meant to serialize the below.
-    imp: Optional[Callable] = pydantic.Field(exclude=True)
+    imp: Optional[ImpCallable] = pydantic.Field(exclude=True)
 
     # Aggregator method for feedback functions that produce more than one
     # result.
-    agg: Optional[Callable] = pydantic.Field(exclude=True)
+    agg: Optional[AggCallable] = pydantic.Field(exclude=True)
 
     def __init__(
         self,
@@ -87,7 +93,7 @@ class Feedback(FeedbackDefinition):
 
         else:
             if "implementation" in kwargs:
-                imp: Callable = FunctionOrMethod.pick(
+                imp: ImpCallable = FunctionOrMethod.pick(
                     **(kwargs['implementation'])
                 ).load() if kwargs['implementation'] is not None else None
 
@@ -102,7 +108,7 @@ class Feedback(FeedbackDefinition):
                 pass
         else:
             if 'aggregator' in kwargs:
-                agg: Callable = FunctionOrMethod.pick(**(kwargs['aggregator'])
+                agg: AggCallable = FunctionOrMethod.pick(**(kwargs['aggregator'])
                                                      ).load()
 
         super().__init__(**kwargs)
@@ -354,17 +360,32 @@ class Feedback(FeedbackDefinition):
         )
 
         try:
+            # Total cost, will accumulate.
             cost = Cost()
-
+            
             for ins in self.extract_selection(app=app_json, record=record):
 
-                result_val, part_cost = Endpoint.track_all_costs_tally(
+                result_and_meta, part_cost = Endpoint.track_all_costs_tally(
                     lambda: self.imp(**ins)
                 )
                 cost += part_cost
+
+                if isinstance(result_and_meta, Tuple):
+                    # If output is a tuple of two, we assume it is the float and the metadata.
+                    assert len(result_and_meta) == 2, "Feedback functions must return either a single float or a float and a dictionary."
+                    result_val, meta = result_and_meta
+
+                    assert isinstance(meta, dict), f"Feedback metadata output must be a dictionary but was {type(call_meta)}."
+                else:
+                    # Otherwise it is just the float. We create empty metadata dict.
+                    result_val = result_vals
+                    meta = dict()
+
+                assert isinstance(result_val, float), f"Feedback function output must be a float but was {type(feedback_val)}."
+                    
                 result_vals.append(result_val)
 
-                feedback_call = FeedbackCall(args=ins, ret=result_val)
+                feedback_call = FeedbackCall(args=ins, ret=result_val, meta=meta)
                 feedback_calls.append(feedback_call)
 
             result_vals = np.array(result_vals)

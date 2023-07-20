@@ -240,6 +240,10 @@ class FeedbackCall(SerialModel):
     args: Dict[str, str]
     ret: float
 
+    # New in 0.4.0: Any additional data a feedback function returns to display
+    # alongside its float result.
+    meta: Dict[str, Any] = pydantic.Field(default_factory=dict)
+
 
 class FeedbackResult(SerialModel):
     feedback_result_id: FeedbackResultID
@@ -260,6 +264,7 @@ class FeedbackResult(SerialModel):
     calls: Sequence[FeedbackCall] = []
     result: Optional[
         float] = None  # final result, potentially aggregating multiple calls
+
     error: Optional[str] = None  # if there was an error
 
     def __init__(

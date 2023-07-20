@@ -164,6 +164,7 @@ class LocalSQLite(DB):
 
     TYPE_TIMESTAMP = "FLOAT"
     TYPE_ENUM = "TEXT"
+    TYPE_JSON = "TEXT"
 
     TABLES = [TABLE_RECORDS, TABLE_FEEDBACKS, TABLE_FEEDBACK_DEFS, TABLE_APPS]
 
@@ -213,7 +214,7 @@ class LocalSQLite(DB):
         conn, c = self._connect()
 
         try:
-            c.execute(f'''SELECT key, value from {self.TABLE_META}''')
+            c.execute(f'''SELECT key, value FROM {self.TABLE_META}''')
             rows = c.fetchall()
             ret = {}
 
@@ -245,8 +246,10 @@ class LocalSQLite(DB):
         if meta.trulens_version is None:
             db_version = __version__
             c.execute(
-                f"""SELECT name FROM sqlite_master  
-                WHERE type='table';"""
+                f"""
+                SELECT name FROM sqlite_master  
+                WHERE type='table';
+                """
             )
             rows = c.fetchall()
 
@@ -269,11 +272,11 @@ class LocalSQLite(DB):
                 app_id TEXT NOT NULL,
                 input TEXT,
                 output TEXT,
-                record_json TEXT NOT NULL,
+                record_json {self.TYPE_JSON} NOT NULL,
                 tags TEXT NOT NULL,
                 ts {self.TYPE_TIMESTAMP} NOT NULL,
-                cost_json TEXT NOT NULL,
-                perf_json TEXT NOT NULL
+                cost_json {self.TYPE_JSON} NOT NULL,
+                perf_json {self.TYPE_JSON} NOT NULL
             )'''
         )
         c.execute(
@@ -284,22 +287,22 @@ class LocalSQLite(DB):
                 last_ts {self.TYPE_TIMESTAMP} NOT NULL,
                 status {self.TYPE_ENUM} NOT NULL,
                 error TEXT,
-                calls_json TEXT NOT NULL,
+                calls_json {self.TYPE_JSON} NOT NULL,
                 result FLOAT,
                 name TEXT NOT NULL,
-                cost_json TEXT NOT NULL
+                cost_json {self.TYPE_JSON} NOT NULL
             )'''
         )
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_FEEDBACK_DEFS} (
                 feedback_definition_id TEXT NOT NULL PRIMARY KEY,
-                feedback_json TEXT NOT NULL
+                feedback_json {self.TYPE_JSON} NOT NULL
             )'''
         )
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_APPS} (
                 app_id TEXT NOT NULL PRIMARY KEY,
-                app_json TEXT NOT NULL
+                app_json {self.TYPE_JSON} NOT NULL
             )'''
         )
         self._close(conn)
