@@ -980,7 +980,7 @@ class OpenAI(Provider):
 
     # Exclude is important here so that pydantic doesn't try to
     # serialize/deserialize the constant fixed endpoint we need.
-    endpoint: Endpoint = pydantic.Field(exclude=True)
+    endpoint: Endpoint
 
     def __init__(self, *args, model_engine = "gpt-3.5-turbo", **kwargs):
         """
@@ -1349,7 +1349,7 @@ class Huggingface(Provider):
 
     # Exclude is important here so that pydantic doesn't try to
     # serialize/deserialize the constant fixed endpoint we need.
-    endpoint: Endpoint = pydantic.Field(exclude=True)
+    endpoint: Endpoint
 
     def __init__(self, **kwargs):
         # endpoint: Optional[Endpoint]=None, 
