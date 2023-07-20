@@ -1027,7 +1027,7 @@ class OpenAI(Provider):
         return Provider.to_json(self, model_engine=self.model_engine)
     """
 
-    def _create_chat_completition(self, *args, **kwargs):
+    def _create_chat_completion(self, *args, **kwargs):
         return openai.ChatCompletion.create(*args, **kwargs)
 
     def _moderation(self, text: str):
@@ -1175,7 +1175,7 @@ class OpenAI(Provider):
         """
         return _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: self._create_chat_completition(
+                lambda: self._create_chat_completion(
                     model=self.model_engine,
                     temperature=0.0,
                     messages=[
@@ -1209,7 +1209,7 @@ class OpenAI(Provider):
         """
         return _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: self._create_chat_completition(
+                lambda: self._create_chat_completion(
                     model=self.model_engine,
                     temperature=0.0,
                     messages=[
@@ -1244,7 +1244,7 @@ class OpenAI(Provider):
 
         return _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: self._create_chat_completition(
+                lambda: self._create_chat_completion(
                     model=self.model_engine,
                     temperature=0.5,
                     messages=[
@@ -1277,7 +1277,7 @@ class OpenAI(Provider):
         """
         logger.warning("model_agreement has been deprecated. Use GroundTruthAgreement(ground_truth) instead.")
         oai_chat_response = OpenAI().endpoint.run_me(
-            lambda: self._create_chat_completition(
+            lambda: self._create_chat_completion(
                 model=self.model_engine,
                 temperature=0.0,
                 messages=[
@@ -1388,11 +1388,11 @@ class AzureOpenAI(OpenAI):
         openai.api_base = os.getenv("OPENAI_API_BASE")
         openai.api_version = os.getenv("OPENAI_API_VERSION")
 
-    def _create_chat_completition(self, *args, **kwargs):
+    def _create_chat_completion(self, *args, **kwargs):
         """
         We need to pass `engine`
         """
-        return super()._create_chat_completition(
+        return super()._create_chat_completion(
             *args, deployment_id=self.deployment_id, **kwargs
         )
 
