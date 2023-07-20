@@ -999,9 +999,7 @@ class Provider(SerialModel, WithClassInfo):
 class OpenAI(Provider):
     model_engine: str
 
-    # Exclude is important here so that pydantic doesn't try to
-    # serialize/deserialize the constant fixed endpoint we need.
-    endpoint: Endpoint = pydantic.Field(exclude=True)
+    endpoint: Endpoint
 
     def __init__(self, *args, model_engine = "gpt-3.5-turbo", **kwargs):
         """
@@ -1403,9 +1401,7 @@ HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm
 
 class Huggingface(Provider):
 
-    # Exclude is important here so that pydantic doesn't try to
-    # serialize/deserialize the constant fixed endpoint we need.
-    endpoint: Endpoint = pydantic.Field(exclude=True)
+    endpoint: Endpoint
 
     def __init__(self, **kwargs):
         # endpoint: Optional[Endpoint]=None, 

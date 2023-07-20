@@ -2,6 +2,11 @@
 
 ## Changes in 0.4.0
 
+### Breaking changes
+
+- Class `Provider` contains the attribute `endpoint` which was prefiously
+  excluded from serialization but is now required.
+
 ### Backwards compatible
 
 - Class `Record` of `schema.py`:
