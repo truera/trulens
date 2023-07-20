@@ -1,0 +1,8 @@
+mkdocs==1.4.2
+python-markdown-math==0.8
+mkdocs-material==9.1.4
+mkdocstrings-python
+mkdocstrings==0.20.0
+mkdocs-jupyter
+jupyter_contrib_nbextensions
+notebook<7

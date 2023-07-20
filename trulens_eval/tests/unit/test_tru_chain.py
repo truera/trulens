@@ -11,11 +11,17 @@ from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
 from transformers import pipeline
 
-from trulens_eval.keys import PINECONE_API_KEY
-from trulens_eval.keys import PINECONE_ENV
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LANGCHAIN
+from trulens_eval.keys import check_keys
+
+check_keys(
+    "OPENAI_API_KEY",
+    "HUGGINGFACE_API_KEY",
+    "PINECONE_API_KEY",
+    "PINECONE_ENV"
+)
 
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     from langchain import LLMChain
@@ -118,8 +124,8 @@ class TestTruChain(TestCase):
         )  # 1536 dims
 
         pinecone.init(
-            api_key=PINECONE_API_KEY,  # find at app.pinecone.io
-            environment=PINECONE_ENV  # next to api key in console
+            api_key=os.environ.get('PINECONE_API_KEY'),  # find at app.pinecone.io
+            environment=os.environ.get('PINECONE_ENV')  # next to api key in console
         )
         docsearch = Pinecone.from_existing_index(
             index_name=index_name, embedding=embedding
