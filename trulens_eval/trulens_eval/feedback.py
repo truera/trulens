@@ -1259,6 +1259,42 @@ class OpenAI(Provider):
                 )["choices"][0]["message"]["content"]
             )
         )
+    
+    def model_agreement(self, prompt: str, response: str) -> float:
+        """
+        Uses OpenAI's Chat GPT Model. A function that gives Chat GPT the same
+        prompt and gets a response, encouraging truthfulness. A second template
+        is given to Chat GPT with a prompt that the original response is
+        correct, and measures whether previous Chat GPT's response is similar.
+
+        Parameters:
+            prompt (str): A text prompt to an agent. response (str): The agent's
+            response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not in agreement" and 1
+            being "in agreement".
+        """
+        logger.warning("model_agreement has been deprecated. Use GroundTruthAgreement(ground_truth) instead.")
+        oai_chat_response = OpenAI().endpoint.run_me(
+            lambda: self._create_chat_completition(
+                model=self.model_engine,
+                temperature=0.0,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": feedback_prompts.CORRECT_SYSTEM_PROMPT
+                    }, {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+        )
+        agreement_txt = _get_answer_agreement(
+            prompt, response, oai_chat_response, self.model_engine
+        )
+        return _re_1_10_rating(agreement_txt) / 10
 
 
 class GroundTruthAgreement(SerialModel, WithClassInfo):
@@ -1323,40 +1359,6 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ret = np.nan
         return ret
 
-def model_agreement(self, prompt: str, response: str) -> float:
-    """
-    Uses OpenAI's Chat GPT Model. A function that gives Chat GPT the same
-    prompt and gets a response, encouraging truthfulness. A second template
-    is given to Chat GPT with a prompt that the original response is
-    correct, and measures whether previous Chat GPT's response is similar.
-
-    Parameters:
-        prompt (str): A text prompt to an agent. response (str): The agent's
-        response to the prompt.
-
-    Returns:
-        float: A value between 0 and 1. 0 being "not in agreement" and 1
-        being "in agreement".
-    """
-    oai_chat_response = OpenAI().endpoint.run_me(
-        lambda: self._create_chat_completition(
-            model=self.model_engine,
-            temperature=0.0,
-            messages=[
-                {
-                    "role": "system",
-                    "content": feedback_prompts.CORRECT_SYSTEM_PROMPT
-                }, {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )["choices"][0]["message"]["content"]
-    )
-    agreement_txt = _get_answer_agreement(
-        prompt, response, oai_chat_response, self.model_engine
-    )
-    return _re_1_10_rating(agreement_txt) / 10
 
 
 class AzureOpenAI(OpenAI):
