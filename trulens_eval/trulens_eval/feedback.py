@@ -403,7 +403,8 @@ import logging
 from multiprocessing.pool import AsyncResult
 import re
 import traceback
-from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Type, Union, List
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple, Type,
+                    Union)
 
 import numpy as np
 import openai
@@ -428,6 +429,7 @@ from trulens_eval.util import JSON
 from trulens_eval.util import jsonify
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
+from trulens_eval.util import WithClassInfo
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
 from trulens_eval.utils.text import UNICODE_YIELD
