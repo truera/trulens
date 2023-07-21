@@ -922,6 +922,8 @@ class OpenAI(Provider):
     endpoint: Endpoint = pydantic.Field(
         default_factory=OpenAIEndpoint, exclude=True
     )
+    model: Any=None
+    tokenizer: Any=None
 
     def __init__(self, **kwargs):
         """
@@ -938,6 +940,7 @@ class OpenAI(Provider):
         )  # need to include pydantic.BaseModel.__init__
 
         set_openai_key()
+
 
     """
     def to_json(self) -> Dict:
@@ -1077,6 +1080,106 @@ class OpenAI(Provider):
             openai_response["results"][0]["category_scores"]["violence/graphic"]
         )
 
+    def _set_if_not(self):
+        if self.tokenizer:
+            return
+        from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+        
+        premise = "Soccer is a sport where the goal is to get a ball into a net. Soccer is a game with multiple males playing, each goal scoring one point each. Typically score range from 0-4 per each team."
+        hypothesis = "The ball scores two points when it hits the back of the net"
+
+        hg_model_hub_name = "ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
+        # hg_model_hub_name = "ynie/albert-xxlarge-v2-snli_mnli_fever_anli_R1_R2_R3-nli"
+        # hg_model_hub_name = "ynie/bart-large-snli_mnli_fever_anli_R1_R2_R3-nli"
+        # hg_model_hub_name = "ynie/electra-large-discriminator-snli_mnli_fever_anli_R1_R2_R3-nli"
+        # hg_model_hub_name = "ynie/xlnet-large-cased-snli_mnli_fever_anli_R1_R2_R3-nli"
+
+        self.tokenizer = AutoTokenizer.from_pretrained(hg_model_hub_name)
+        self.model = AutoModelForSequenceClassification.from_pretrained(hg_model_hub_name)
+    def _wip_entailment(self, premise, hypothesis):
+        import torch
+        self._set_if_not()
+        tokenizer = self.tokenizer
+        model = self.model
+        max_length = 256
+
+        tokenized_input_seq_pair = tokenizer.encode_plus(premise, hypothesis,
+                                                        max_length=max_length,
+                                                        return_token_type_ids=True, truncation=True)
+
+        input_ids = torch.Tensor(tokenized_input_seq_pair['input_ids']).long().unsqueeze(0)
+        # remember bart doesn't have 'token_type_ids', remove the line below if you are using bart.
+        token_type_ids = torch.Tensor(tokenized_input_seq_pair['token_type_ids']).long().unsqueeze(0)
+        attention_mask = torch.Tensor(tokenized_input_seq_pair['attention_mask']).long().unsqueeze(0)
+
+        outputs = model(input_ids,
+                        attention_mask=attention_mask,
+                        token_type_ids=token_type_ids,
+                        labels=None)
+        # Note:
+        # "id2label": {
+        #     "0": "entailment",
+        #     "1": "neutral",
+        #     "2": "contradiction"
+        # },
+        #print(outputs)
+        predicted_probability = torch.softmax(outputs[0], dim=1)[0].tolist()  # batch_size only one
+
+        #print("Premise:", premise)
+        #print("Hypothesis:", hypothesis)
+        print("Entailment:", predicted_probability[0])
+        print("Neutral:", predicted_probability[1])
+        print("Contradiction:", predicted_probability[2])
+    def find_relevant_string(self, full_source, statement_piece):
+        return self.endpoint.run_me(
+                lambda: self._create_chat_completition(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role":
+                                "system",
+                            "content":
+                                str.format(
+                                    feedback_prompts.SYSTEM_FIND_SUPPORTING,
+                                    prompt=full_source,
+                                )
+                        },
+                        {
+                            "role":
+                                "user",
+                            "content":
+                                str.format(
+                                    feedback_prompts.USER_FIND_SUPPORTING,
+                                    response=statement_piece
+                                )
+                        }
+                    
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+    def llm_entailment(self, premise, hypothesis):
+        return self.endpoint.run_me(
+                lambda: self._create_chat_completition(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role":
+                                "system",
+                            "content":
+                                str.format(
+                                    feedback_prompts.LLM_ENTAILMENT,
+                                    premise=premise,
+                                    hypothesis=hypothesis,
+                                )
+                        }
+                    
+                    ]
+                )["choices"][0]["message"]["content"]
+            ) 
+        
     def qs_relevance(self, question: str, statement: str) -> float:
         """
         Uses OpenAI's Chat Completion App. A function that completes a
@@ -1090,7 +1193,9 @@ class OpenAI(Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
             "relevant".
         """
-        return _re_1_10_rating(
+        ans=1
+        '''
+        ans = _re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completition(
                     model=self.model_engine,
@@ -1110,6 +1215,21 @@ class OpenAI(Provider):
                 )["choices"][0]["message"]["content"]
             )
         ) / 10
+
+        print(f"\nRELEVANCE SCORE: {ans} \nQ:{question}\n")
+        '''
+        for statement_piece in statement.split("."):
+            if len(statement_piece) > 4:
+                print(f"PIECE:{statement_piece}")
+                supporting = self.find_relevant_string(question, statement_piece)
+                print(f"Summarized Supporting: {supporting}")
+                #self._wip_entailment(supporting, statement_piece)
+                print(f"LLM ENTAIL SCORE: {self.llm_entailment(premise=supporting, hypothesis=statement_piece)}")
+                print("\n")
+        
+        
+        print("\n================================\n")
+        return ans
 
     def relevance(self, prompt: str, response: str) -> float:
         """
@@ -1139,7 +1259,7 @@ class OpenAI(Provider):
                                     prompt=prompt,
                                     response=response
                                 )
-                        }
+                        }, 
                     ]
                 )["choices"][0]["message"]["content"]
             )
