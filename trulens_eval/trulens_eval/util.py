@@ -1240,9 +1240,17 @@ class Module(SerialModel):
     module_name: str
 
     def of_module(mod: ModuleType, loadable: bool = False) -> 'Module':
+        if loadable and mod.__name__ == "__main__":
+            # running in notebook
+            raise ImportError(f"Module {mod} is not importable.")
+
         return Module(package_name=mod.__package__, module_name=mod.__name__)
 
     def of_module_name(module_name: str, loadable: bool = False) -> 'Module':
+        if loadable and module_name == "__main__":
+            # running in notebook
+            raise ImportError(f"Module {module_name} is not importable.")
+
         mod = importlib.import_module(module_name)
         package_name = mod.__package__
         return Module(package_name=package_name, module_name=module_name)
@@ -1299,7 +1307,7 @@ class Class(SerialModel):
     ) -> 'Class':
         ret = Class(
             name=cls.__name__,
-            module=Module.of_module_name(cls.__module__),
+            module=Module.of_module_name(cls.__module__, loadable=loadable),
             bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__))
             if with_bases else None
         )
@@ -1583,8 +1591,11 @@ class Function(FunctionOrMethod):
     """
 
     module: Module
-    cls: Optional[Class
-                 ]  # for static methods in a class which we view as functions, not yet supported
+
+    # For static methods in a class which we view as functions, not yet
+    # supported:
+    cls: Optional[Class]
+
     name: str
 
     @staticmethod
