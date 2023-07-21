@@ -403,7 +403,8 @@ import logging
 from multiprocessing.pool import AsyncResult
 import re
 import traceback
-from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Type, Union, List
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple, Type,
+                    Union)
 
 import numpy as np
 import openai
@@ -428,10 +429,10 @@ from trulens_eval.util import JSON
 from trulens_eval.util import jsonify
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
-from trulens_eval.util import UNICODE_CHECK
-from trulens_eval.util import UNICODE_CLOCK
-from trulens_eval.util import UNICODE_YIELD
 from trulens_eval.util import WithClassInfo
+from trulens_eval.utils.text import UNICODE_CHECK
+from trulens_eval.utils.text import UNICODE_CLOCK
+from trulens_eval.utils.text import UNICODE_YIELD
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
@@ -1000,7 +1001,11 @@ class OpenAI(Provider):
 
     endpoint: Endpoint
 
-    def __init__(self, *args, model_engine = "gpt-3.5-turbo", **kwargs):
+    def __init__(self, *args, endpoint = None, model_engine = "gpt-3.5-turbo", **kwargs):
+        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
+
         """
         A set of OpenAI Feedback Functions.
 
@@ -1012,6 +1017,7 @@ class OpenAI(Provider):
         - All other args/kwargs passed to OpenAIEndpoint constructor.
         """
 
+        # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
         self_kwargs['model_engine'] = model_engine
         self_kwargs['endpoint'] = OpenAIEndpoint(*args, **kwargs)
@@ -1388,7 +1394,11 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
 class AzureOpenAI(OpenAI):
     deployment_id: str
 
-    def __init__(self, **kwargs):
+    def __init__(self, endpoint=None, **kwargs):
+        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
+
         """
         Wrapper to use Azure OpenAI. Please export the following env variables
 
@@ -1421,7 +1431,6 @@ class AzureOpenAI(OpenAI):
         )
 
 
-
 # Cannot put these inside Huggingface since it interferes with pydantic.BaseModel.
 HUGS_SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
 HUGS_TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
@@ -1433,8 +1442,11 @@ class Huggingface(Provider):
 
     endpoint: Endpoint
 
-    def __init__(self, **kwargs):
-        # endpoint: Optional[Endpoint]=None, 
+    def __init__(self, endpoint=None, **kwargs):
+        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
+
         """
         A set of Huggingface Feedback Functions.
 
@@ -1493,7 +1505,7 @@ class Huggingface(Provider):
 
         l1 = 1.0 - (np.linalg.norm(diff, ord=1)) / 2.0
 
-        return l1
+        return l1, dict(text1_scores=scores1, text2_scores=scores2)
 
     def positive_sentiment(self, text: str) -> float:
         """
@@ -1546,12 +1558,16 @@ class Huggingface(Provider):
 class Cohere(Provider):
     model_engine: str = "large"
 
-    def __init__(self, model_engine='large'):
-        super().__init__()  # need to include pydantic.BaseModel.__init__
+    def __init__(self, model_engine='large', endpoint=None, **kwargs):
+        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
 
-        Cohere().endpoint = Endpoint(name="cohere")
-        self.model_engine = model_engine
+        kwargs['endpoint'] = Endpoint(name="cohere")
+        kwargs['model_engine'] = model_engine
 
+        super().__init__(**kwargs)  # need to include pydantic.BaseModel.__init__
+        
     def sentiment(
         self,
         text,

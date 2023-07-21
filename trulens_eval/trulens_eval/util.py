@@ -1,4 +1,8 @@
 """
+TODO: This file got big. Split off pieces into the utils folder. Already split some:
+- utils/text.py -- text outputs/ui related utilities and constants
+- utils/python.py -- core python-related utilities
+
 # Utilities.
 
 ## Serialization of Python objects
@@ -39,26 +43,21 @@ from pprint import PrettyPrinter
 from queue import Queue
 from time import sleep
 from types import ModuleType
-from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
-    Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
+                    Sequence, Set, Tuple, TypeVar, Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pandas as pd
 import pydantic
 
+from trulens_eval.keys import redact_value
+
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 T = TypeVar("T")
 
-UNICODE_STOP = "🛑"
-UNICODE_CHECK = "✅"
-UNICODE_YIELD = "⚡"
-UNICODE_HOURGLASS = "⏳"
-UNICODE_CLOCK = "⏰"
 
 # Optional requirements.
 
@@ -276,7 +275,13 @@ CLASS_INFO = "__tru_class_info"
 ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
 
 
-def _safe_getattr(obj, k):
+def _safe_getattr(obj: Any, k: str) -> Any:
+    """
+    Try to get the attribute `k` of the given object. This may evaluate some
+    code if the attribute is a property and may fail. In that case, an dict
+    indicating so is returned.
+    """
+
     v = inspect.getattr_static(obj, k)
 
     if isinstance(v, property):
@@ -289,7 +294,17 @@ def _safe_getattr(obj, k):
         return v
 
 
-def _clean_attributes(obj):
+def _clean_attributes(obj) -> Dict[str, Any]:
+    """
+    Determine which attributes of the given object should be enumerated for
+    storage and/or display in UI. Returns a dict of those attributes and their
+    values.
+
+    For enumerating contents of objects that do not support utility classes like
+    pydantic, we use this method to guess what should be enumerated when
+    serializing/displaying.
+    """
+
     keys = dir(obj)
 
     ret = {}
@@ -317,7 +332,8 @@ def jsonify(
     obj: Any,
     dicted: Optional[Dict[int, JSON]] = None,
     instrument: Optional['Instrument'] = None,
-    skip_specials: bool = False
+    skip_specials: bool = False,
+    redact_keys: bool = False
 ) -> JSON:
     """
     Convert the given object into types that can be serialized in json.
@@ -335,6 +351,9 @@ def jsonify(
         - skip_specials: bool (default is False) -- if set, will remove
           specially keyed structures from the json. These have keys that start
           with "__tru_".
+
+        - redact_keys: bool (default is False) -- if set, will redact secrets
+          from the output. Secrets are detremined by `keys.py:redact_value` .
 
     Returns:
 
@@ -358,7 +377,10 @@ def jsonify(
             return {CIRCLE: id(obj)}
 
     if isinstance(obj, JSON_BASES):
-        return obj
+        if redact_keys and isinstance(obj, str):
+            return redact_value(obj)
+        else:
+            return obj
 
     if isinstance(obj, Path):
         return str(obj)
@@ -373,7 +395,8 @@ def jsonify(
         obj=o,
         dicted=new_dicted,
         instrument=instrument,
-        skip_specials=skip_specials
+        skip_specials=skip_specials,
+        redact_keys=redact_keys
     )
 
     if isinstance(obj, Enum):
@@ -383,6 +406,12 @@ def jsonify(
         temp = {}
         new_dicted[id(obj)] = temp
         temp.update({k: recur(v) for k, v in obj.items() if recur_key(k)})
+
+        # Redact possible secrets based on key name and value.
+        if redact_keys:
+            for k, v in temp.items():
+                temp[k] = redact_value(v=v, k=k)
+
         return temp
 
     elif isinstance(obj, Sequence):
@@ -401,6 +430,7 @@ def jsonify(
 
     elif isinstance(obj, pydantic.BaseModel):
         # Not even trying to use pydantic.dict here.
+
         temp = {}
         new_dicted[id(obj)] = temp
         temp.update(
@@ -410,6 +440,12 @@ def jsonify(
                 if not v.field_info.exclude and recur_key(k)
             }
         )
+
+        # Redact possible secrets based on key name and value.
+        if redact_keys:
+            for k, v in temp.items():
+                temp[k] = redact_value(v=v, k=k)
+
         if instrument.to_instrument_object(obj):
             temp[CLASS_INFO] = Class.of_class(
                 cls=obj.__class__, with_bases=True
@@ -418,6 +454,10 @@ def jsonify(
         return temp
 
     elif obj.__class__.__module__.startswith("llama_index."):
+        # Most of llama_index classes do not inherit a storage-utility class
+        # like pydantc so we have to enumerate their contents ourselves based on
+        # some heuristics.
+
         temp = {}
         new_dicted[id(obj)] = temp
 
@@ -1142,9 +1182,6 @@ class TP(SingletonPerName):  # "thread processing"
 
 # python instrumentation utilities
 
-
-def caller_frame(offset=0):
-    return stack()[offset + 1].frame
 
 
 def get_local_in_call_stack(
