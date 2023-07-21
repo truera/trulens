@@ -7,9 +7,9 @@ specification and evaluation. A typical use-case looks like this:
 ```python 
 from trulens_eval import feedback, Select, Feedback
 
-openai = feedback.OpenAI()
+hugs = feedback.Huggingface()
 
-f_lang_match = Feedback(openai.language_match)
+f_lang_match = Feedback(hugs.language_match)
     .on_input_output()
 ```
 
@@ -429,10 +429,10 @@ from trulens_eval.util import JSON
 from trulens_eval.util import jsonify
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
-from trulens_eval.util import UNICODE_CHECK
-from trulens_eval.util import UNICODE_CLOCK
-from trulens_eval.util import UNICODE_YIELD
 from trulens_eval.util import WithClassInfo
+from trulens_eval.utils.text import UNICODE_CHECK
+from trulens_eval.utils.text import UNICODE_CLOCK
+from trulens_eval.utils.text import UNICODE_YIELD
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
 
@@ -1033,7 +1033,7 @@ class OpenAI(Provider):
         return Provider.to_json(self, model_engine=self.model_engine)
     """
 
-    def _create_chat_completition(self, *args, **kwargs):
+    def _create_chat_completion(self, *args, **kwargs):
         return openai.ChatCompletion.create(*args, **kwargs)
 
     def _moderation(self, text: str):
@@ -1181,7 +1181,7 @@ class OpenAI(Provider):
         """
         return _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: self._create_chat_completition(
+                lambda: self._create_chat_completion(
                     model=self.model_engine,
                     temperature=0.0,
                     messages=[
@@ -1215,7 +1215,7 @@ class OpenAI(Provider):
         """
         return _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: self._create_chat_completition(
+                lambda: self._create_chat_completion(
                     model=self.model_engine,
                     temperature=0.0,
                     messages=[
@@ -1250,9 +1250,9 @@ class OpenAI(Provider):
 
         return _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: self._create_chat_completition(
+                lambda: self._create_chat_completion(
                     model=self.model_engine,
-                    temperature=0.5,
+                    temperature=0.0,
                     messages=[
                         {
                             "role": "system",
@@ -1282,8 +1282,8 @@ class OpenAI(Provider):
             being "in agreement".
         """
         logger.warning("model_agreement has been deprecated. Use GroundTruthAgreement(ground_truth) instead.")
-        oai_chat_response = OpenAI().endpoint.run_me(
-            lambda: self._create_chat_completition(
+        oai_chat_response = self.endpoint.run_me(
+            lambda: self._create_chat_completion(
                 model=self.model_engine,
                 temperature=0.0,
                 messages=[
@@ -1297,18 +1297,41 @@ class OpenAI(Provider):
                 ]
             )["choices"][0]["message"]["content"]
         )
-        agreement_txt = _get_answer_agreement(
+        agreement_txt = self._get_answer_agreement(
             prompt, response, oai_chat_response, self.model_engine
         )
         return _re_1_10_rating(agreement_txt) / 10
 
+    def _get_answer_agreement(self, prompt, response, check_response, model_engine="gpt-3.5-turbo"):
+        oai_chat_response = self.endpoint.run_me(
+            lambda: self._create_chat_completion(
+                model=model_engine,
+                temperature=0.0,
+                messages=[
+                    {
+                        "role":
+                            "system",
+                        "content":
+                            feedback_prompts.AGREEMENT_SYSTEM_PROMPT %
+                            (prompt, response)
+                    }, {
+                        "role": "user",
+                        "content": check_response
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+        )
+        return oai_chat_response
+
+
 
 class GroundTruthAgreement(SerialModel, WithClassInfo):
     ground_truth: Union[List[str], FunctionOrMethod]
+    provider: OpenAI
 
     ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
 
-    def __init__(self, ground_truth: Union[List[str], Callable, FunctionOrMethod]):
+    def __init__(self, ground_truth: Union[List[str], Callable, FunctionOrMethod], provider: OpenAI = OpenAI()):
         if isinstance(ground_truth, List):
             ground_truth_imp = None
         elif isinstance(ground_truth, FunctionOrMethod):
@@ -1326,6 +1349,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         super().__init__(
             ground_truth=ground_truth,
             ground_truth_imp=ground_truth_imp,
+            provider=provider,
             obj=self # for WithClassInfo
         )
 
@@ -1357,7 +1381,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         """
         ground_truth_response = self._find_response(prompt)
         if ground_truth_response:
-            agreement_txt = _get_answer_agreement(
+            agreement_txt = self.provider._get_answer_agreement(
                 prompt, response, ground_truth_response
             )
             ret = _re_1_10_rating(agreement_txt) / 10, dict(ground_truth_response=ground_truth_response)
@@ -1398,36 +1422,13 @@ class AzureOpenAI(OpenAI):
         openai.api_base = os.getenv("OPENAI_API_BASE")
         openai.api_version = os.getenv("OPENAI_API_VERSION")
 
-    def _create_chat_completition(self, *args, **kwargs):
+    def _create_chat_completion(self, *args, **kwargs):
         """
         We need to pass `engine`
         """
-        return super()._create_chat_completition(
+        return super()._create_chat_completion(
             *args, deployment_id=self.deployment_id, **kwargs
         )
-
-
-def _get_answer_agreement(prompt, response, check_response, model_engine="gpt-3.5-turbo"):
-    oai_chat_response = OpenAI().endpoint.run_me(
-        lambda: openai.ChatCompletion.create(
-            model=model_engine,
-            temperature=0.5,
-            messages=[
-                {
-                    "role":
-                        "system",
-                    "content":
-                        feedback_prompts.AGREEMENT_SYSTEM_PROMPT %
-                        (prompt, response)
-                }, {
-                    "role": "user",
-                    "content": check_response
-                }
-            ]
-        )["choices"][0]["message"]["content"]
-    )
-    return oai_chat_response
-
 
 # Cannot put these inside Huggingface since it interferes with pydantic.BaseModel.
 HUGS_SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
@@ -1503,7 +1504,7 @@ class Huggingface(Provider):
 
         l1 = 1.0 - (np.linalg.norm(diff, ord=1)) / 2.0
 
-        return l1
+        return l1, dict(text1_scores=scores1, text2_scores=scores2)
 
     def positive_sentiment(self, text: str) -> float:
         """
