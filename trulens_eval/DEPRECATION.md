@@ -10,6 +10,8 @@
 - Class `FeedbackCall` has new attribute `meta` for storing additional feedback
   results. The value will be set to an empty dict if loaded from an older database that does not have this attribute.
 
+- Class `FeedbackCall` has new attribute `meta` for storing additional feedback
+
 ## Changes in 0.4.0
 
 ### Backwards compatible

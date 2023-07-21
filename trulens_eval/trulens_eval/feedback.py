@@ -1430,7 +1430,6 @@ class AzureOpenAI(OpenAI):
             *args, deployment_id=self.deployment_id, **kwargs
         )
 
-
 # Cannot put these inside Huggingface since it interferes with pydantic.BaseModel.
 HUGS_SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
 HUGS_TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
@@ -1441,7 +1440,7 @@ HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm
 class Huggingface(Provider):
 
     endpoint: Endpoint
-
+    
     def __init__(self, endpoint=None, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
