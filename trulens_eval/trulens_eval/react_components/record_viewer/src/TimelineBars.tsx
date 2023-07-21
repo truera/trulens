@@ -1,9 +1,9 @@
 import { Box, Tooltip } from '@mui/material';
 import { Streamlit } from 'streamlit-component-lib';
 import './RecordViewer.css';
-import { getStartAndEndTimesForNode } from './treeUtils';
-import { StackTreeNode } from './types';
-import { TIME_DISPLAY_HEIGHT_BUFFER } from './styling';
+import { getNodesToRender, getStartAndEndTimesForNode } from './utils/treeUtils';
+import { StackTreeNode } from './utils/types';
+import { TIME_DISPLAY_HEIGHT_BUFFER } from './utils/styling';
 
 // TODO: fix in later release
 /* eslint-disable jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */
@@ -12,30 +12,6 @@ export const BAR_HEIGHT = 32;
 
 type TreeProps = {
   root: StackTreeNode;
-};
-
-const getNodesToRender = (root: StackTreeNode) => {
-  const children: { node: StackTreeNode; depth: number }[] = [];
-  const { endTime: treeEnd } = getStartAndEndTimesForNode(root);
-
-  const recursiveGetChildrenToRender = (node: StackTreeNode, depth: number) => {
-    const { startTime } = getStartAndEndTimesForNode(node);
-
-    // Ignore calls that happen after the app time. This is indicative of errors.
-    if (startTime >= treeEnd) return;
-
-    children.push({ node, depth });
-
-    if (!node.children) return;
-
-    node.children.forEach((child) => {
-      recursiveGetChildrenToRender(child, depth + 1);
-    });
-  };
-
-  recursiveGetChildrenToRender(root, 0);
-
-  return children;
 };
 
 function NodeBar({ node, depth, root }: { node: StackTreeNode; depth: number; root: StackTreeNode }) {

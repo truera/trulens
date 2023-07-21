@@ -1,12 +1,13 @@
 import { StreamlitComponentBase, withStreamlitConnection } from 'streamlit-component-lib';
 import { ReactNode } from 'react';
 import './RecordViewer.css';
-import { getStartAndEndTimesForNode, getTreeDepth } from './treeUtils';
-import { DataRaw } from './types';
+import { getStartAndEndTimesForNode, getTreeDepth } from './utils/treeUtils';
+import { DataRaw } from './utils/types';
 import GridLines from './GridLines';
-import { createTreeFromCalls } from './utils';
-import { TIME_DISPLAY_HEIGHT_BUFFER } from './styling';
+import { createTreeFromCalls } from './utils/utils';
+import { TIME_DISPLAY_HEIGHT_BUFFER } from './utils/styling';
 import TimelineBars, { BAR_HEIGHT } from './TimelineBars';
+import RecordTable from './RecordTable/RecordTable';
 
 class RecordViewer extends StreamlitComponentBase {
   public render = (): ReactNode => {
@@ -29,7 +30,7 @@ class RecordViewer extends StreamlitComponentBase {
     const { timeTaken: totalTime } = getStartAndEndTimesForNode(root);
 
     return (
-      <div style={{ fontFamily }}>
+      <div style={{ fontFamily, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <span className="detail">Total time taken: {totalTime / 1000}s</span>
         <div
           className="timeline-container"
@@ -41,6 +42,7 @@ class RecordViewer extends StreamlitComponentBase {
           <GridLines totalWidth={width} totalTime={totalTime} />
           <TimelineBars root={root} />
         </div>
+        <RecordTable root={root} />
       </div>
     );
   };
