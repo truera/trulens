@@ -19,7 +19,7 @@ import requests
 from trulens_eval.keys import get_huggingface_headers
 from trulens_eval.schema import Cost
 from trulens_eval.keys import _check_key
-from trulens_eval.util import UNICODE_CHECK
+from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import JSON
 from trulens_eval.util import SerialModel
