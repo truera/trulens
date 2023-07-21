@@ -7,9 +7,9 @@ specification and evaluation. A typical use-case looks like this:
 ```python 
 from trulens_eval import feedback, Select, Feedback
 
-openai = feedback.OpenAI()
+hugs = feedback.Huggingface()
 
-f_lang_match = Feedback(openai.language_match)
+f_lang_match = Feedback(hugs.language_match)
     .on_input_output()
 ```
 
