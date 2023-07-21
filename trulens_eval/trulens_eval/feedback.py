@@ -403,7 +403,8 @@ import logging
 from multiprocessing.pool import AsyncResult
 import re
 import traceback
-from typing import Any, Callable, Dict, Iterable, Optional, Type, Union
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple, Type,
+                    Union)
 
 import numpy as np
 import openai
@@ -423,12 +424,12 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
-from trulens_eval.util import WithClassInfo
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import JSON
 from trulens_eval.util import jsonify
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
+from trulens_eval.util import WithClassInfo
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
 from trulens_eval.utils.text import UNICODE_YIELD
@@ -446,16 +447,21 @@ def check_provider(cls_or_name: Union[Type, str]) -> None:
 
     assert cls_name in PROVIDER_CLASS_NAMES, f"Unsupported provider class {cls_name}"
 
+# Signature of feedback implementations. Take in any number of arguments
+# and return either a single float or a float and a dictionary (of metadata).
+ImpCallable = Callable[..., Union[float, Tuple[float, Dict[str, Any]]]]
+
+# Signature of aggregation functions.
+AggCallable = Callable[[Iterable[float]], float]
 
 class Feedback(FeedbackDefinition):
     # Implementation, not serializable, note that FeedbackDefinition contains
     # `implementation` meant to serialize the below.
-    imp: Optional[Callable] = pydantic.Field(exclude=True)
+    imp: Optional[ImpCallable] = pydantic.Field(exclude=True)
 
     # Aggregator method for feedback functions that produce more than one
-    # result. FeedbackDefinition contains aggregator which is the serialized
-    # version of agg.
-    agg: Optional[Callable] = pydantic.Field(exclude=True)
+    # result.
+    agg: Optional[AggCallable] = pydantic.Field(exclude=True)
 
     def __init__(
         self,
@@ -499,7 +505,7 @@ class Feedback(FeedbackDefinition):
 
         else:
             if "implementation" in kwargs:
-                imp: Callable = FunctionOrMethod.pick(
+                imp: ImpCallable = FunctionOrMethod.pick(
                     **(kwargs['implementation'])
                 ).load() if kwargs['implementation'] is not None else None
 
@@ -516,7 +522,7 @@ class Feedback(FeedbackDefinition):
                     pass
         else:
             if 'aggregator' in kwargs:
-                agg: Callable = FunctionOrMethod.pick(**(kwargs['aggregator'])
+                agg: AggCallable = FunctionOrMethod.pick(**(kwargs['aggregator'])
                                                      ).load()
 
         super().__init__(**kwargs)
@@ -808,17 +814,32 @@ class Feedback(FeedbackDefinition):
         )
 
         try:
+            # Total cost, will accumulate.
             cost = Cost()
-
+            
             for ins in self.extract_selection(app=app_json, record=record):
 
-                result_val, part_cost = Endpoint.track_all_costs_tally(
+                result_and_meta, part_cost = Endpoint.track_all_costs_tally(
                     lambda: self.imp(**ins)
                 )
                 cost += part_cost
+
+                if isinstance(result_and_meta, Tuple):
+                    # If output is a tuple of two, we assume it is the float and the metadata.
+                    assert len(result_and_meta) == 2, "Feedback functions must return either a single float or a float and a dictionary."
+                    result_val, meta = result_and_meta
+
+                    assert isinstance(meta, dict), f"Feedback metadata output must be a dictionary but was {type(call_meta)}."
+                else:
+                    # Otherwise it is just the float. We create empty metadata dict.
+                    result_val = result_and_meta
+                    meta = dict()
+
+                assert isinstance(result_val, float), f"Feedback function output must be a float but was {type(result_val)}."
+                    
                 result_vals.append(result_val)
 
-                feedback_call = FeedbackCall(args=ins, ret=result_val)
+                feedback_call = FeedbackCall(args=ins, ret=result_val, meta=meta)
                 feedback_calls.append(feedback_call)
 
             result_vals = np.array(result_vals)
@@ -1012,7 +1033,7 @@ class OpenAI(Provider):
         return Provider.to_json(self, model_engine=self.model_engine)
     """
 
-    def _create_chat_completition(self, *args, **kwargs):
+    def _create_chat_completion(self, *args, **kwargs):
         return openai.ChatCompletion.create(*args, **kwargs)
 
     def _moderation(self, text: str):
@@ -1160,7 +1181,7 @@ class OpenAI(Provider):
         """
         return _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: self._create_chat_completition(
+                lambda: self._create_chat_completion(
                     model=self.model_engine,
                     temperature=0.0,
                     messages=[
@@ -1194,7 +1215,7 @@ class OpenAI(Provider):
         """
         return _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: self._create_chat_completition(
+                lambda: self._create_chat_completion(
                     model=self.model_engine,
                     temperature=0.0,
                     messages=[
@@ -1213,6 +1234,38 @@ class OpenAI(Provider):
             )
         ) / 10
 
+    def sentiment(self, text: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the sentiment of some text.
+
+        Parameters:
+            text (str): A prompt to an agent. response (str): The agent's
+            response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "negative sentiment" and 1
+            being "positive sentiment".
+        """
+
+        return _re_1_10_rating(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    model=self.model_engine,
+                    temperature=0.5,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": feedback_prompts.SENTIMENT_SYSTEM_PROMPT
+                        }, {
+                            "role": "user",
+                            "content": text
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+        )
+    
     def model_agreement(self, prompt: str, response: str) -> float:
         """
         Uses OpenAI's Chat GPT Model. A function that gives Chat GPT the same
@@ -1228,8 +1281,9 @@ class OpenAI(Provider):
             float: A value between 0 and 1. 0 being "not in agreement" and 1
             being "in agreement".
         """
+        logger.warning("model_agreement has been deprecated. Use GroundTruthAgreement(ground_truth) instead.")
         oai_chat_response = OpenAI().endpoint.run_me(
-            lambda: self._create_chat_completition(
+            lambda: self._create_chat_completion(
                 model=self.model_engine,
                 temperature=0.0,
                 messages=[
@@ -1248,37 +1302,69 @@ class OpenAI(Provider):
         )
         return _re_1_10_rating(agreement_txt) / 10
 
-    def sentiment(self, text: str) -> float:
+
+class GroundTruthAgreement(SerialModel, WithClassInfo):
+    ground_truth: Union[List[str], FunctionOrMethod]
+
+    ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
+
+    def __init__(self, ground_truth: Union[List[str], Callable, FunctionOrMethod]):
+        if isinstance(ground_truth, List):
+            ground_truth_imp = None
+        elif isinstance(ground_truth, FunctionOrMethod):
+            ground_truth_imp = ground_truth.load()
+        elif isinstance(ground_truth, Callable):
+            ground_truth_imp = ground_truth
+            ground_truth = FunctionOrMethod.of_callable(ground_truth)
+        elif isinstance(ground_truth, Dict):
+            # Serialized FunctionOrMethod?
+            ground_truth = FunctionOrMethod.pick(**ground_truth)
+            ground_truth_imp = ground_truth.load()
+        else:
+            raise RuntimeError(f"Unhandled ground_truth type: {type(ground_truth)}.")
+
+        super().__init__(
+            ground_truth=ground_truth,
+            ground_truth_imp=ground_truth_imp,
+            obj=self # for WithClassInfo
+        )
+
+    def _find_response(self, prompt: str) -> Optional[str]:
+        if self.ground_truth_imp is not None:
+            return self.ground_truth_imp(prompt)
+
+        responses = [qr["response"] for qr in self.ground_truth if qr["query"] == prompt]
+        if responses:
+            return responses[0]
+        else:
+            return None
+
+    def agreement_measure(self, prompt: str, response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
-        template to check the sentiment of some text.
+        Uses OpenAI's Chat GPT Model. A function that that measures
+        similarity to ground truth. A second template is given to Chat GPT
+        with a prompt that the original response is correct, and measures
+        whether previous Chat GPT's response is similar.
 
         Parameters:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            prompt (str): A text prompt to an agent. response (str): The
+            agent's response to the prompt.
 
         Returns:
-            float: A value between 0 and 1. 0 being "negative sentiment" and 1
-            being "positive sentiment".
+            - float: A value between 0 and 1. 0 being "not in agreement" and 1
+                being "in agreement".
+            - dict: with key 'ground_truth_response'
         """
-
-        return _re_1_10_rating(
-            self.endpoint.run_me(
-                lambda: self._create_chat_completition(
-                    model=self.model_engine,
-                    temperature=0.5,
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": feedback_prompts.SENTIMENT_SYSTEM_PROMPT
-                        }, {
-                            "role": "user",
-                            "content": text
-                        }
-                    ]
-                )["choices"][0]["message"]["content"]
+        ground_truth_response = self._find_response(prompt)
+        if ground_truth_response:
+            agreement_txt = _get_answer_agreement(
+                prompt, response, ground_truth_response
             )
-        )
+            ret = _re_1_10_rating(agreement_txt) / 10, dict(ground_truth_response=ground_truth_response)
+        else:
+            ret = np.nan
+        return ret
+
 
 
 class AzureOpenAI(OpenAI):
@@ -1312,18 +1398,16 @@ class AzureOpenAI(OpenAI):
         openai.api_base = os.getenv("OPENAI_API_BASE")
         openai.api_version = os.getenv("OPENAI_API_VERSION")
 
-    def _create_chat_completition(self, *args, **kwargs):
+    def _create_chat_completion(self, *args, **kwargs):
         """
         We need to pass `engine`
         """
-        return super()._create_chat_completition(
+        return super()._create_chat_completion(
             *args, deployment_id=self.deployment_id, **kwargs
         )
 
 
-def _get_answer_agreement(prompt, response, check_response, model_engine):
-    # TODO: documentation
-    
+def _get_answer_agreement(prompt, response, check_response, model_engine="gpt-3.5-turbo"):
     oai_chat_response = OpenAI().endpoint.run_me(
         lambda: openai.ChatCompletion.create(
             model=model_engine,
@@ -1419,7 +1503,7 @@ class Huggingface(Provider):
 
         l1 = 1.0 - (np.linalg.norm(diff, ord=1)) / 2.0
 
-        return l1
+        return l1, dict(text1_scores=scores1, text2_scores=scores2)
 
     def positive_sentiment(self, text: str) -> float:
         """
