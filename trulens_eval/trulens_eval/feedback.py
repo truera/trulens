@@ -1501,7 +1501,7 @@ class Huggingface(Provider):
 
         l1 = 1.0 - (np.linalg.norm(diff, ord=1)) / 2.0
 
-        return l1
+        return l1, dict(text1_scores=scores1, text2_scores=scores2)
 
     def positive_sentiment(self, text: str) -> float:
         """
