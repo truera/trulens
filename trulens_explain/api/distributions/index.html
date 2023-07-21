@@ -15,7 +15,7 @@
         <link rel="next" href="../visualizations/">
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
     
     
       
@@ -23,10 +23,10 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.240905d7.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.26e3688c.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.a0c5b2b5.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ecc896b0.min.css">
       
       
 
@@ -63,7 +63,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="" data-md-color-accent="">
+    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="indigo" data-md-color-accent="indigo">
   
     
     
@@ -113,6 +113,8 @@
         </div>
       </div>
     </div>
+    
+      
     
     
     
@@ -947,24 +949,25 @@ interested in a more general behavior over a distribution of samples.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.distributions.DoI" class="doc doc-heading">
-          <code>DoI</code>
+        <code>DoI</code>
 
 
 <a href="#trulens_explain.trulens.nn.distributions.DoI" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="abc.ABC">AbstractBaseClass</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="abc.ABC">AbstractBaseClass</span></code></p>
 
   
       <p>Interface for distributions of interest. The <em>Distribution of Interest</em> 
 (DoI) specifies the samples over which an attribution method is 
 aggregated.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 42</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 42</span>
 <span class="normal"> 43</span>
 <span class="normal"> 44</span>
 <span class="normal"> 45</span>
@@ -1302,12 +1305,11 @@ aggregated.</p>
                 <span class="p">)</span>
             <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1340,8 +1342,6 @@ layer. </p>
 <p>Either way, we always return List[List[TensorLike]] (alias
 Inputs[Uniform[TensorLike]]) with outer list spanning layer inputs, and
 inner list spanning a distribution's instance.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1386,8 +1386,6 @@ cut.</p>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1441,9 +1439,9 @@ cut.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 91</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 91</span>
 <span class="normal"> 92</span>
 <span class="normal"> 93</span>
 <span class="normal"> 94</span>
@@ -1507,11 +1505,10 @@ cut.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -1526,8 +1523,6 @@ cut.</p>
   <div class="doc doc-contents ">
   
       <p>"Initialize DoI</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1559,9 +1554,9 @@ to the latent space defined by the cut.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">49</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">49</span>
 <span class="normal">50</span>
 <span class="normal">51</span>
 <span class="normal">52</span>
@@ -1581,11 +1576,10 @@ to the latent space defined by the cut.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_cut</span> <span class="o">=</span> <span class="n">cut</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -1599,8 +1593,6 @@ to the latent space defined by the cut.</p>
 
   <div class="doc doc-contents ">
   
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1644,9 +1636,9 @@ to the latent space defined by the cut.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">125</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">125</span>
 <span class="normal">126</span>
 <span class="normal">127</span>
 <span class="normal">128</span>
@@ -1662,11 +1654,10 @@ to the latent space defined by the cut.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cut</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -1686,8 +1677,6 @@ corresponds to the potential effect of a slight increase in each
 feature, while "attribution space" corresponds to an approximation of
 the net marginal contribution to the quantity of interest of each
 feature.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1732,8 +1721,6 @@ at cut.</p>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1787,9 +1774,9 @@ at cut.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
 <span class="normal">155</span>
 <span class="normal">156</span>
 <span class="normal">157</span>
@@ -1847,7 +1834,7 @@ at cut.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">om_of_many</span><span class="p">(</span><span class="n">activation</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -1865,23 +1852,24 @@ at cut.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.distributions.DoiCutSupportError" class="doc doc-heading">
-          <code>DoiCutSupportError</code>
+        <code>DoiCutSupportError</code>
 
 
 <a href="#trulens_explain.trulens.nn.distributions.DoiCutSupportError" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code>ValueError</code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code>ValueError</code></p>
 
   
       <p>Exception raised if the distribution of interest is called on a cut whose
 output is not supported by the distribution of interest.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
 <span class="normal">35</span>
 <span class="normal">36</span>
 <span class="normal">37</span>
@@ -1893,7 +1881,7 @@ output is not supported by the distribution of interest.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   </div>
 
@@ -1904,23 +1892,24 @@ output is not supported by the distribution of interest.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.distributions.GaussianDoi" class="doc doc-heading">
-          <code>GaussianDoi</code>
+        <code>GaussianDoi</code>
 
 
 <a href="#trulens_explain.trulens.nn.distributions.GaussianDoi" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.distributions.DoI" href="#trulens_explain.trulens.nn.distributions.DoI">DoI</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.distributions.DoI" href="#trulens_explain.trulens.nn.distributions.DoI">DoI</a></code></p>
 
   
       <p>Distribution representing a Gaussian ball around the point. Used by Smooth
 Gradients.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">420</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">420</span>
 <span class="normal">421</span>
 <span class="normal">422</span>
 <span class="normal">423</span>
@@ -2026,12 +2015,11 @@ Gradients.</p>
 
         <span class="k">return</span> <span class="n">om_of_many</span><span class="p">(</span><span class="n">nested_map</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">gauss_of_input</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -2053,8 +2041,6 @@ Gradients.</p>
 
   <div class="doc doc-contents ">
   
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2114,9 +2100,9 @@ to the latent space defined by the cut.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">426</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">426</span>
 <span class="normal">427</span>
 <span class="normal">428</span>
 <span class="normal">429</span>
@@ -2148,7 +2134,7 @@ to the latent space defined by the cut.</p>
     <span class="bp">self</span><span class="o">.</span><span class="n">_var</span> <span class="o">=</span> <span class="n">var</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_resolution</span> <span class="o">=</span> <span class="n">resolution</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -2166,23 +2152,24 @@ to the latent space defined by the cut.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.distributions.LinearDoi" class="doc doc-heading">
-          <code>LinearDoi</code>
+        <code>LinearDoi</code>
 
 
 <a href="#trulens_explain.trulens.nn.distributions.LinearDoi" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.distributions.DoI" href="#trulens_explain.trulens.nn.distributions.DoI">DoI</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.distributions.DoI" href="#trulens_explain.trulens.nn.distributions.DoI">DoI</a></code></p>
 
   
       <p>Distribution representing the linear interpolation between a baseline and 
 the given point. Used by Integrated Gradients.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
 <span class="normal">242</span>
 <span class="normal">243</span>
 <span class="normal">244</span>
@@ -2536,12 +2523,11 @@ the given point. Used by Integrated Gradients.</p>
             <span class="n">astype</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="n">tensor_wrapper</span><span class="o">.</span><span class="n">first_batchable</span><span class="p">(</span><span class="n">B</span><span class="p">))</span>
         <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -2566,8 +2552,6 @@ the given point. Used by Integrated Gradients.</p>
       <p>The DoI for point, <code>z</code>, will be a uniform distribution over the points
 on the line segment connecting <code>z</code> to <code>baseline</code>, approximated by a
 sample of <code>resolution</code> points equally spaced along this segment.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2636,9 +2620,9 @@ approximation of the DoI this object mathematically represents.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
 <span class="normal">248</span>
 <span class="normal">249</span>
 <span class="normal">250</span>
@@ -2706,11 +2690,10 @@ approximation of the DoI this object mathematically represents.</p>
     <span class="bp">self</span><span class="o">.</span><span class="n">_baseline</span> <span class="o">=</span> <span class="n">baseline</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_resolution</span> <span class="o">=</span> <span class="n">resolution</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -2730,8 +2713,6 @@ corresponds to the potential effect of a slight increase in each
 feature, while "attribution space" corresponds to an approximation of
 the net marginal contribution to the quantity of interest of each 
 feature.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2761,8 +2742,6 @@ feature.</p>
     </tbody>
   </table>
 
-
-
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -2785,9 +2764,9 @@ feature.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">333</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">333</span>
 <span class="normal">334</span>
 <span class="normal">335</span>
 <span class="normal">336</span>
@@ -2883,7 +2862,7 @@ feature.</p>
     <span class="n">ret</span> <span class="o">=</span> <span class="n">nested_map</span><span class="p">(</span><span class="n">zipped</span><span class="p">,</span> <span class="n">zipped_subtract</span><span class="p">,</span> <span class="n">check_accessor</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">ret</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -2901,22 +2880,23 @@ feature.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.distributions.PointDoi" class="doc doc-heading">
-          <code>PointDoi</code>
+        <code>PointDoi</code>
 
 
 <a href="#trulens_explain.trulens.nn.distributions.PointDoi" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.distributions.DoI" href="#trulens_explain.trulens.nn.distributions.DoI">DoI</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.distributions.DoI" href="#trulens_explain.trulens.nn.distributions.DoI">DoI</a></code></p>
 
   
       <p>Distribution that puts all probability mass on a single point.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">213</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">213</span>
 <span class="normal">214</span>
 <span class="normal">215</span>
 <span class="normal">216</span>
@@ -2968,12 +2948,11 @@ feature.</p>
 
         <span class="k">return</span> <span class="n">om_of_many</span><span class="p">(</span><span class="n">nested_map</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">[</span><span class="n">x</span><span class="p">]))</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -2996,8 +2975,6 @@ feature.</p>
   <div class="doc doc-contents ">
   
       <p>"Initialize PointDoI</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -3029,9 +3006,9 @@ to the latent space defined by the cut.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">218</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">218</span>
 <span class="normal">219</span>
 <span class="normal">220</span>
 <span class="normal">221</span>
@@ -3051,7 +3028,7 @@ to the latent space defined by the cut.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">(</span><span class="n">PointDoi</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -3112,17 +3089,27 @@ to the latent space defined by the cut.</p>
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.sections"], "search": "../../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.19047be9.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.a51614de.min.js"></script>
       
-        <script src="../../../javascript/config.js"></script>
+        
+          <script src="../../../javascript/config.js"></script>
+        
       
-        <script src="../../../javascript/app.js"></script>
+        
+          <script src="../../../javascript/app.js"></script>
+        
       
-        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
+          <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
       
-        <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
+          <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
       
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
+          <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
       
     
   </body>

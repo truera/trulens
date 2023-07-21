@@ -15,7 +15,7 @@
         <link rel="next" href="../truchain/">
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
     
     
       
@@ -23,10 +23,10 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.240905d7.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.26e3688c.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.a0c5b2b5.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ecc896b0.min.css">
       
       
 
@@ -63,7 +63,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="" data-md-color-accent="">
+    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="indigo" data-md-color-accent="indigo">
   
     
     
@@ -113,6 +113,8 @@
         </div>
       </div>
     </div>
+    
+      
     
     
     
@@ -919,8 +921,8 @@
 
 <a id="trulens_eval.trulens_eval.tru.Tru"></a>
   <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="trulens_eval.util.SingletonPerName">SingletonPerName</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="trulens_eval.util.SingletonPerName">SingletonPerName</span></code></p>
 
   
       <p>Tru is the main class that provides an entry points to trulens-eval. Tru lets you:</p>
@@ -932,9 +934,10 @@
 </ul>
 <p>All data is logged to the current working directory to default.sqlite.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 34</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 34</span>
 <span class="normal"> 35</span>
 <span class="normal"> 36</span>
 <span class="normal"> 37</span>
@@ -1900,12 +1903,11 @@
 
     <span class="n">start_dashboard</span> <span class="o">=</span> <span class="n">run_dashboard</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1929,9 +1931,9 @@
   
       <p>Create a TruChain with database managed by self.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">53</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">53</span>
 <span class="normal">54</span>
 <span class="normal">55</span>
 <span class="normal">56</span>
@@ -1947,11 +1949,10 @@
 
     <span class="k">return</span> <span class="n">TruChain</span><span class="p">(</span><span class="n">tru</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">chain</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -1967,9 +1968,9 @@
   
       <p>Create a llama_index engine with database managed by self.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">62</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">62</span>
 <span class="normal">63</span>
 <span class="normal">64</span>
 <span class="normal">65</span>
@@ -1985,11 +1986,10 @@
 
     <span class="k">return</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">tru</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -2006,9 +2006,9 @@
       <p>TruLens instrumentation, logging, and feedback functions for apps.
 Creates a local database 'default.sqlite' in current working directory.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">71</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">71</span>
 <span class="normal">72</span>
 <span class="normal">73</span>
 <span class="normal">74</span>
@@ -2030,11 +2030,10 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">db</span> <span class="o">=</span> <span class="n">LocalSQLite</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">Tru</span><span class="o">.</span><span class="n">DEFAULT_DATABASE_FILE</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -2050,9 +2049,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
   
       <p>Add a app to the database.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">172</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">172</span>
 <span class="normal">173</span>
 <span class="normal">174</span>
 <span class="normal">175</span>
@@ -2064,11 +2063,10 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">insert_app</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -2084,9 +2082,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
   
       <p>Add a single feedback result to the database.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">179</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">179</span>
 <span class="normal">180</span>
 <span class="normal">181</span>
 <span class="normal">182</span>
@@ -2112,11 +2110,10 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">insert_feedback</span><span class="p">(</span><span class="n">feedback_result</span><span class="o">=</span><span class="n">feedback_result</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -2132,9 +2129,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
   
       <p>Add multiple feedback results to the database.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">193</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">193</span>
 <span class="normal">194</span>
 <span class="normal">195</span>
 <span class="normal">196</span>
@@ -2148,11 +2145,10 @@ Creates a local database 'default.sqlite' in current working directory.</p>
     <span class="k">for</span> <span class="n">feedback_result</span> <span class="ow">in</span> <span class="n">feedback_results</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">add_feedback</span><span class="p">(</span><span class="n">feedback_result</span><span class="o">=</span><span class="n">feedback_result</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -2176,8 +2172,6 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 </li>
 </ul>
 
-
-
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -2199,9 +2193,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 97</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 97</span>
 <span class="normal"> 98</span>
 <span class="normal"> 99</span>
 <span class="normal">100</span>
@@ -2243,11 +2237,10 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">insert_record</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -2263,9 +2256,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
   
       <p>Look up a app from the database.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">201</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">201</span>
 <span class="normal">202</span>
 <span class="normal">203</span>
 <span class="normal">204</span>
@@ -2279,11 +2272,10 @@ Creates a local database 'default.sqlite' in current working directory.</p>
     <span class="c1"># TODO: unserialize</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_id</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -2299,9 +2291,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
   
       <p>Get records, their feeback results, and feedback names from the database.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">209</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">209</span>
 <span class="normal">210</span>
 <span class="normal">211</span>
 <span class="normal">212</span>
@@ -2317,11 +2309,10 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
     <span class="k">return</span> <span class="n">df</span><span class="p">,</span> <span class="n">feedback_columns</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -2337,9 +2328,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
   
       <p>Migrates the database.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">90</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">90</span>
 <span class="normal">91</span>
 <span class="normal">92</span>
 <span class="normal">93</span>
@@ -2351,11 +2342,10 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">migrate_database</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -2371,9 +2361,9 @@ Creates a local database 'default.sqlite' in current working directory.</p>
   
       <p>Reset the database. Clears all tables.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">83</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">83</span>
 <span class="normal">84</span>
 <span class="normal">85</span>
 <span class="normal">86</span>
@@ -2385,11 +2375,10 @@ Creates a local database 'default.sqlite' in current working directory.</p>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">reset_database</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -2404,8 +2393,6 @@ Creates a local database 'default.sqlite' in current working directory.</p>
   <div class="doc doc-contents ">
   
       <p>Run a streamlit dashboard to view logged results and apps.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2451,8 +2438,6 @@ its pip package installation folder.</p>
     </tbody>
   </table>
 
-
-
   <p><strong>Raises:</strong></p>
   <table>
     <thead>
@@ -2474,8 +2459,6 @@ its pip package installation folder.</p>
         </tr>
     </tbody>
   </table>
-
-
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2501,9 +2484,9 @@ its pip package installation folder.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">340</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">340</span>
 <span class="normal">341</span>
 <span class="normal">342</span>
 <span class="normal">343</span>
@@ -2853,11 +2836,10 @@ its pip package installation folder.</p>
 
     <span class="k">return</span> <span class="n">proc</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -2872,8 +2854,6 @@ its pip package installation folder.</p>
   <div class="doc doc-contents ">
   
       <p>Run a collection of feedback functions and report their result.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2932,9 +2912,9 @@ its pip package installation folder.</p>
   </table>
       <p>Returns nothing.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">119</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">119</span>
 <span class="normal">120</span>
 <span class="normal">121</span>
 <span class="normal">122</span>
@@ -3038,11 +3018,10 @@ its pip package installation folder.</p>
 
     <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">evals</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -3058,9 +3037,9 @@ its pip package installation folder.</p>
   
       <p>Start a deferred feedback function evaluation thread.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">218</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">218</span>
 <span class="normal">219</span>
 <span class="normal">220</span>
 <span class="normal">221</span>
@@ -3174,11 +3153,10 @@ its pip package installation folder.</p>
 
     <span class="k">return</span> <span class="n">proc</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -3193,8 +3171,6 @@ its pip package installation folder.</p>
   <div class="doc doc-contents ">
   
       <p>Stop existing dashboard(s) if running.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -3225,8 +3201,6 @@ started in this notebook and shut them down too.</p>
     </tbody>
   </table>
 
-
-
   <p><strong>Raises:</strong></p>
   <table>
     <thead>
@@ -3249,9 +3223,9 @@ started in this notebook and shut them down too.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">294</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">294</span>
 <span class="normal">295</span>
 <span class="normal">296</span>
 <span class="normal">297</span>
@@ -3341,11 +3315,10 @@ started in this notebook and shut them down too.</p>
         <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_proc</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
         <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_proc</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
@@ -3361,9 +3334,9 @@ started in this notebook and shut them down too.</p>
   
       <p>Stop the deferred feedback evaluation thread.</p>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">276</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">276</span>
 <span class="normal">277</span>
 <span class="normal">278</span>
 <span class="normal">279</span>
@@ -3397,7 +3370,7 @@ started in this notebook and shut them down too.</p>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">evaluator_proc</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -3449,17 +3422,27 @@ started in this notebook and shut them down too.</p>
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.sections"], "search": "../../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.19047be9.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.a51614de.min.js"></script>
       
-        <script src="../../../javascript/config.js"></script>
+        
+          <script src="../../../javascript/config.js"></script>
+        
       
-        <script src="../../../javascript/app.js"></script>
+        
+          <script src="../../../javascript/app.js"></script>
+        
       
-        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
+          <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
       
-        <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
+          <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
       
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
+          <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
       
     
   </body>

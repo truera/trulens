@@ -15,7 +15,7 @@
         <link rel="next" href="../distributions/">
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
     
     
       
@@ -23,10 +23,10 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.240905d7.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.26e3688c.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.a0c5b2b5.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ecc896b0.min.css">
       
       
 
@@ -63,7 +63,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="" data-md-color-accent="">
+    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="indigo" data-md-color-accent="indigo">
   
     
     
@@ -113,6 +113,8 @@
         </div>
       </div>
     </div>
+    
+      
     
     
     
@@ -1057,22 +1059,23 @@ roof of the car, a “car feature” not shared by convertibles.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.quantities.ClassQoI" class="doc doc-heading">
-          <code>ClassQoI</code>
+        <code>ClassQoI</code>
 
 
 <a href="#trulens_explain.trulens.nn.quantities.ClassQoI" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
 
   
       <p>Quantity of interest for attributing output towards a specified class.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">238</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">238</span>
 <span class="normal">239</span>
 <span class="normal">240</span>
 <span class="normal">241</span>
@@ -1112,12 +1115,11 @@ roof of the car, a “car feature” not shared by convertibles.</p>
 
         <span class="k">return</span> <span class="n">y</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl</span><span class="p">]</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1139,8 +1141,6 @@ roof of the car, a “car feature” not shared by convertibles.</p>
 
   <div class="doc doc-contents ">
   
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1170,9 +1170,9 @@ roof of the car, a “car feature” not shared by convertibles.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">243</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">243</span>
 <span class="normal">244</span>
 <span class="normal">245</span>
 <span class="normal">246</span>
@@ -1186,7 +1186,7 @@ roof of the car, a “car feature” not shared by convertibles.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">cl</span> <span class="o">=</span> <span class="n">cl</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -1204,23 +1204,24 @@ roof of the car, a “car feature” not shared by convertibles.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.quantities.ClassSeqQoI" class="doc doc-heading">
-          <code>ClassSeqQoI</code>
+        <code>ClassSeqQoI</code>
 
 
 <a href="#trulens_explain.trulens.nn.quantities.ClassSeqQoI" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
 
   
       <p>Quantity of interest for attributing output towards a sequence of classes 
 for each input.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">389</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">389</span>
 <span class="normal">390</span>
 <span class="normal">391</span>
 <span class="normal">392</span>
@@ -1260,12 +1261,11 @@ for each input.</p>
 
         <span class="k">return</span> <span class="n">y</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq_labels</span><span class="p">]</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1287,8 +1287,6 @@ for each input.</p>
 
   <div class="doc doc-contents ">
   
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1318,9 +1316,9 @@ for each input.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">395</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">395</span>
 <span class="normal">396</span>
 <span class="normal">397</span>
 <span class="normal">398</span>
@@ -1334,7 +1332,7 @@ for each input.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">seq_labels</span> <span class="o">=</span> <span class="n">seq_labels</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -1352,23 +1350,24 @@ for each input.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.quantities.ComparativeQoI" class="doc doc-heading">
-          <code>ComparativeQoI</code>
+        <code>ComparativeQoI</code>
 
 
 <a href="#trulens_explain.trulens.nn.quantities.ComparativeQoI" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
 
   
       <p>Quantity of interest for attributing network output towards a given class, 
 relative to another.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">260</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">260</span>
 <span class="normal">261</span>
 <span class="normal">262</span>
 <span class="normal">263</span>
@@ -1418,12 +1417,11 @@ relative to another.</p>
 
         <span class="k">return</span> <span class="n">y</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl1</span><span class="p">]</span> <span class="o">-</span> <span class="n">y</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl2</span><span class="p">]</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1445,8 +1443,6 @@ relative to another.</p>
 
   <div class="doc doc-contents ">
   
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1490,9 +1486,9 @@ relative to another.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">266</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">266</span>
 <span class="normal">267</span>
 <span class="normal">268</span>
 <span class="normal">269</span>
@@ -1512,7 +1508,7 @@ relative to another.</p>
     <span class="bp">self</span><span class="o">.</span><span class="n">cl1</span> <span class="o">=</span> <span class="n">cl1</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">cl2</span> <span class="o">=</span> <span class="n">cl2</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -1530,15 +1526,15 @@ relative to another.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.quantities.InternalChannelQoI" class="doc doc-heading">
-          <code>InternalChannelQoI</code>
+        <code>InternalChannelQoI</code>
 
 
 <a href="#trulens_explain.trulens.nn.quantities.InternalChannelQoI" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
 
   
       <p>Quantity of interest for attributing output towards the output of an 
@@ -1547,9 +1543,10 @@ operation.</p>
 <p>Also works for non-convolutional dense layers, where the given neuron's
 activation is returned.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
 <span class="normal">155</span>
 <span class="normal">156</span>
 <span class="normal">157</span>
@@ -1713,12 +1710,11 @@ activation is returned.</p>
                 <span class="p">)</span>
             <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1740,8 +1736,6 @@ activation is returned.</p>
 
   <div class="doc doc-contents ">
   
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1807,9 +1801,9 @@ used when the channels are scalars, e.g., for dense layers.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">171</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">171</span>
 <span class="normal">172</span>
 <span class="normal">173</span>
 <span class="normal">174</span>
@@ -1875,7 +1869,7 @@ used when the channels are scalars, e.g., for dense layers.</p>
     <span class="bp">self</span><span class="o">.</span><span class="n">_agg_fn</span> <span class="o">=</span> <span class="n">agg_fn</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_channels</span> <span class="o">=</span> <span class="n">channel</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">channel</span><span class="p">]</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -1893,23 +1887,24 @@ used when the channels are scalars, e.g., for dense layers.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.quantities.LambdaQoI" class="doc doc-heading">
-          <code>LambdaQoI</code>
+        <code>LambdaQoI</code>
 
 
 <a href="#trulens_explain.trulens.nn.quantities.LambdaQoI" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
 
   
       <p>Generic quantity of interest allowing the user to specify a function of the
 model's output as the QoI.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">287</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">287</span>
 <span class="normal">288</span>
 <span class="normal">289</span>
 <span class="normal">290</span>
@@ -1961,12 +1956,11 @@ model's output as the QoI.</p>
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">TensorLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TensorLike</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">function</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -1988,8 +1982,6 @@ model's output as the QoI.</p>
 
   <div class="doc doc-contents ">
   
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2021,9 +2013,9 @@ representing the QoI.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">293</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">293</span>
 <span class="normal">294</span>
 <span class="normal">295</span>
 <span class="normal">296</span>
@@ -2057,7 +2049,7 @@ representing the QoI.</p>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">function</span> <span class="o">=</span> <span class="n">function</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -2075,23 +2067,24 @@ representing the QoI.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.quantities.MaxClassQoI" class="doc doc-heading">
-          <code>MaxClassQoI</code>
+        <code>MaxClassQoI</code>
 
 
 <a href="#trulens_explain.trulens.nn.quantities.MaxClassQoI" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
 
   
       <p>Quantity of interest for attributing output towards the maximum-predicted 
 class.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">101</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">101</span>
 <span class="normal">102</span>
 <span class="normal">103</span>
 <span class="normal">104</span>
@@ -2193,12 +2186,11 @@ class.</p>
 
         <span class="k">return</span> <span class="n">get_backend</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -2220,8 +2212,6 @@ class.</p>
 
   <div class="doc doc-contents ">
   
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2275,9 +2265,9 @@ the input.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">107</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">107</span>
 <span class="normal">108</span>
 <span class="normal">109</span>
 <span class="normal">110</span>
@@ -2323,7 +2313,7 @@ the input.</p>
     <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span> <span class="o">=</span> <span class="n">axis</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">activation</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -2341,24 +2331,25 @@ the input.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.quantities.QoI" class="doc doc-heading">
-          <code>QoI</code>
+        <code>QoI</code>
 
 
 <a href="#trulens_explain.trulens.nn.quantities.QoI" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="abc.ABC">AbstractBaseClass</span></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="abc.ABC">AbstractBaseClass</span></code></p>
 
   
       <p>Interface for quantities of interest. The <em>Quantity of Interest</em> (QoI) is a
 function of the output specified by the slice that determines the network 
 output behavior that the attributions describe.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">40</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">40</span>
 <span class="normal">41</span>
 <span class="normal">42</span>
 <span class="normal">43</span>
@@ -2476,12 +2467,11 @@ output behavior that the attributions describe.</p>
                 <span class="p">)</span>
             <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -2508,8 +2498,6 @@ output behavior that the attributions describe.</p>
   <div class="doc doc-contents ">
   
       <p>Computes the distribution of interest from an initial point.</p>
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2540,8 +2528,6 @@ differentiable tensor.</p>
     </tbody>
   </table>
 
-
-
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -2564,9 +2550,9 @@ differentiable tensor.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">63</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">63</span>
 <span class="normal">64</span>
 <span class="normal">65</span>
 <span class="normal">66</span>
@@ -2594,7 +2580,7 @@ differentiable tensor.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -2612,23 +2598,24 @@ differentiable tensor.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.quantities.QoiCutSupportError" class="doc doc-heading">
-          <code>QoiCutSupportError</code>
+        <code>QoiCutSupportError</code>
 
 
 <a href="#trulens_explain.trulens.nn.quantities.QoiCutSupportError" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code>ValueError</code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code>ValueError</code></p>
 
   
       <p>Exception raised if the quantity of interest is called on a cut whose output
 is not supported by the quantity of interest.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">32</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">32</span>
 <span class="normal">33</span>
 <span class="normal">34</span>
 <span class="normal">35</span>
@@ -2640,7 +2627,7 @@ is not supported by the quantity of interest.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   </div>
 
@@ -2651,15 +2638,15 @@ is not supported by the quantity of interest.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.quantities.ThresholdQoI" class="doc doc-heading">
-          <code>ThresholdQoI</code>
+        <code>ThresholdQoI</code>
 
 
 <a href="#trulens_explain.trulens.nn.quantities.ThresholdQoI" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
+      <p class="doc doc-class-bases">
+        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.quantities.QoI" href="#trulens_explain.trulens.nn.quantities.QoI">QoI</a></code></p>
 
   
       <p>Quantity of interest for attributing network output toward the difference 
@@ -2669,9 +2656,10 @@ elements have activations above the threshold and the low elements have
 activations below the threshold.</p>
 <p>Use case: bianry segmentation.</p>
 
-            <details class="quote">
-              <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">315</span>
+
+        <details class="quote">
+          <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">315</span>
 <span class="normal">316</span>
 <span class="normal">317</span>
 <span class="normal">318</span>
@@ -2815,12 +2803,11 @@ activations below the threshold.</p>
 
         <span class="k">return</span> <span class="n">B</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mask</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">non_batch_dimensions</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-            </details>
+        </details>
 
   
 
   <div class="doc doc-children">
-
 
 
 
@@ -2842,8 +2829,6 @@ activations below the threshold.</p>
 
   <div class="doc doc-contents ">
   
-
-
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2915,9 +2900,9 @@ to the quantity.</p>
     </tbody>
   </table>
 
-          <details class="quote">
-            <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">326</span>
+      <details class="quote">
+        <summary>Source code in <code>trulens_explain/trulens/nn/quantities.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">326</span>
 <span class="normal">327</span>
 <span class="normal">328</span>
 <span class="normal">329</span>
@@ -2985,7 +2970,7 @@ to the quantity.</p>
     <span class="bp">self</span><span class="o">.</span><span class="n">low_minus_high</span> <span class="o">=</span> <span class="n">low_minus_high</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">activation</span>
 </code></pre></div></td></tr></table></div>
-          </details>
+      </details>
   </div>
 
 </div>
@@ -3046,17 +3031,27 @@ to the quantity.</p>
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.sections"], "search": "../../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.19047be9.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.a51614de.min.js"></script>
       
-        <script src="../../../javascript/config.js"></script>
+        
+          <script src="../../../javascript/config.js"></script>
+        
       
-        <script src="../../../javascript/app.js"></script>
+        
+          <script src="../../../javascript/app.js"></script>
+        
       
-        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
+          <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
       
-        <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
+          <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
+        
       
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
+          <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        
       
     
   </body>
