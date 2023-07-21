@@ -1,12 +1,14 @@
 # Deprecation Notes
 
-## Changes in 0.5.0
+## Changes in 0.6.0
 
 ### Backwards compatible
 
 - Class `Provider` contains the attribute `endpoint` which was previously
   excluded from serialization but is now included.
 
+- Class `FeedbackCall` has new attribute `meta` for storing additional feedback
+  results. The value will be set to an empty dict if loaded from an older database that does not have this attribute.
 
 ## Changes in 0.4.0
 
