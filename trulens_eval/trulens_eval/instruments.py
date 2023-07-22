@@ -236,6 +236,7 @@ stack for specific frames:
 from datetime import datetime
 from inspect import BoundArguments
 from inspect import signature
+import inspect
 import logging
 import os
 from pprint import PrettyPrinter
@@ -307,12 +308,12 @@ class Instrument(object):
 
     def __init__(
         self,
-        root_method: Optional[Callable] = None,
+        root_methods: Optional[Set[Callable]] = None,
         modules: Iterable[str] = [],
         classes: Iterable[type] = [],
         methods: Dict[str, Callable] = {},
     ):
-        self.root_method = root_method
+        self.root_methods = root_methods or set([])
 
         self.modules = Instrument.Default.MODULES.union(set(modules))
 
@@ -329,7 +330,7 @@ class Instrument(object):
         Instrument a method to capture its inputs/outputs/errors.
         """
 
-        assert self.root_method is not None, "Cannot instrument method without a `root_method`."
+        assert self.root_methods is not None, "Cannot instrument method without a `root_methods`."
 
         if hasattr(func, Instrument.INSTRUMENT):
             logger.debug(f"\t\t\t{query}: {func} is already instrumented")
@@ -348,6 +349,90 @@ class Instrument(object):
 
         sig = signature(func)
 
+        async def awrapper(*args, **kwargs):
+            # If not within TruChain._call, call the wrapped function without
+            # any recording. This check is not perfect in threaded situations so
+            # the next call stack-based lookup handles the rarer cases.
+
+            # NOTE(piotrm): Disabling this for now as it is not thread safe.
+            #if not self.recording:
+            #    return func(*args, **kwargs)
+
+            logger.debug(f"{query}: calling instrumented async method {func}")
+
+            def find_root_methods(f):
+                # TODO: generalize
+                return id(f) in set([id(rm.__code__) for rm in self.root_methods])
+
+            # Look up whether the root instrumented method was called earlier in
+            # the stack and "record" variable was defined there. Will use that
+            # for recording the wrapped call.
+            record = get_local_in_call_stack(
+                key="record", func=find_root_methods
+            )
+
+            if record is None:
+                logger.debug(f"{query}: no record found, not recording.")
+                return await func(*args, **kwargs)
+
+            # Otherwise keep track of inputs and outputs (or exception).
+
+            error = None
+            rets = None
+
+            def find_instrumented(f):
+                return id(f) == id(awrapper.__code__)
+
+            # If a wrapped method was called in this call stack, get the prior
+            # calls from this variable. Otherwise create a new chain stack.
+            stack = get_local_in_call_stack(
+                key="stack", func=find_instrumented, offset=1
+            ) or ()
+            frame_ident = RecordAppCallMethod(
+                path=query, method=Method.of_method(func, obj=obj, cls=cls)
+            )
+            stack = stack + (frame_ident,)
+
+            start_time = None
+            end_time = None
+
+            try:
+                # Using sig bind here so we can produce a list of key-value
+                # pairs even if positional arguments were provided.
+                bindings: BoundArguments = sig.bind(*args, **kwargs)
+                start_time = datetime.now()
+                rets = await func(*bindings.args, **bindings.kwargs)
+                end_time = datetime.now()
+
+            except BaseException as e:
+                end_time = datetime.now()
+                error = e
+                error_str = str(e)
+
+            # Don't include self in the recorded arguments.
+            nonself = {
+                k: jsonify(v)
+                for k, v in bindings.arguments.items()
+                if k != "self"
+            }
+
+            row_args = dict(
+                args=nonself,
+                perf=Perf(start_time=start_time, end_time=end_time),
+                pid=os.getpid(),
+                tid=th.get_native_id(),
+                stack=stack,
+                rets=rets,
+                error=error_str if error is not None else None
+            )
+            row = RecordAppCall(**row_args)
+            record.append(row)
+
+            if error is not None:
+                raise error
+
+            return rets
+
         def wrapper(*args, **kwargs):
             # If not within TruChain._call, call the wrapped function without
             # any recording. This check is not perfect in threaded situations so
@@ -359,15 +444,15 @@ class Instrument(object):
 
             logger.debug(f"{query}: calling instrumented method {func}")
 
-            def find_root_method(f):
+            def find_root_methods(f):
                 # TODO: generalize
-                return id(f) == id(self.root_method.__code__)
+                return id(f) in set([id(rm.__code__) for rm in self.root_methods])
 
             # Look up whether the root instrumented method was called earlier in
             # the stack and "record" variable was defined there. Will use that
             # for recording the wrapped call.
             record = get_local_in_call_stack(
-                key="record", func=find_root_method
+                key="record", func=find_root_methods
             )
 
             if record is None:
@@ -431,18 +516,22 @@ class Instrument(object):
                 raise error
 
             return rets
+        
+        w = wrapper
+        if inspect.iscoroutinefunction(func):
+            w = awrapper
 
         # Indicate that the wrapper is an instrumented method so that we dont
         # further instrument it in another layer accidentally.
-        setattr(wrapper, Instrument.INSTRUMENT, func)
+        setattr(w, Instrument.INSTRUMENT, func)
 
         # Put the address of the instrumented chain in the wrapper so that we
         # don't pollute its list of fields. Note that this address may be
         # deceptive if the same subchain appears multiple times in the wrapped
         # chain.
-        setattr(wrapper, Instrument.PATH, query)
+        setattr(w, Instrument.PATH, query)
 
-        return wrapper
+        return w
 
     def instrument_object(self, obj, query: Query, done: Set[int] = None):
 

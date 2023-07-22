@@ -1,3 +1,4 @@
+from asyncio import Future
 import inspect
 import json
 import logging
@@ -320,6 +321,42 @@ class Endpoint(SerialModel, SingletonPerName):
         return Endpoint._track_costs(thunk, with_endpoints=endpoints)
 
     @staticmethod
+    async def atrack_all_costs(
+        thunk: Future,
+        with_openai: bool = True,
+        with_hugs: bool = True
+    ) -> Tuple[T, Sequence[EndpointCallback]]:
+        """
+        Track costs of all of the apis we can currently track, over the
+        execution of thunk.
+        """
+
+        endpoints = []
+
+        if with_openai:
+            try:
+                e = OpenAIEndpoint()
+                endpoints.append(e)
+            except:
+                logger.warning(
+                    "OpenAI API keys are not set. "
+                    "Will not track usage."
+                )
+
+        if with_hugs:
+            try:
+                e = HuggingfaceEndpoint()
+                endpoints.append(e)
+            except:
+                logger.warning(
+                    "Huggingface API keys are not set. "
+                    "Will not track usage."
+                )
+
+        return await Endpoint._atrack_costs(thunk, with_endpoints=endpoints)
+
+
+    @staticmethod
     def track_all_costs_tally(
         thunk: Callable[[], T],
         with_openai: bool = True,
@@ -331,6 +368,22 @@ class Endpoint(SerialModel, SingletonPerName):
         """
 
         result, cbs = Endpoint.track_all_costs(
+            thunk, with_openai=with_openai, with_hugs=with_hugs
+        )
+        return result, sum(cb.cost for cb in cbs)
+
+    @staticmethod
+    async def atrack_all_costs_tally(
+        thunk: Future,
+        with_openai: bool = True,
+        with_hugs: bool = True
+    ) -> Tuple[T, Cost]:
+        """
+        Track costs of all of the apis we can currently track, over the
+        execution of thunk.
+        """
+
+        result, cbs = await Endpoint.atrack_all_costs(
             thunk, with_openai=with_openai, with_hugs=with_hugs
         )
         return result, sum(cb.cost for cb in cbs)
@@ -394,6 +447,70 @@ class Endpoint(SerialModel, SingletonPerName):
 
         # Call the thunk.
         result: T = thunk()
+
+        # Return result and only the callbacks created here. Outer thunks might
+        # return others.
+        return result, callbacks
+
+    @staticmethod
+    async def _atrack_costs(
+        thunk: Future,
+        with_endpoints: Sequence['Endpoint'] = None,
+    ) -> Tuple[T, Sequence[EndpointCallback]]:
+        """
+        Root of all cost tracking methods. Runs the given `thunk`, tracking
+        costs using each of the provided endpoints' callbacks.
+        """
+
+        # Check to see if this call is within another _track_costs call:
+        endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
+            get_local_in_call_stack(
+                key="endpoints",
+                func=Endpoint.__find_tracker,
+                offset=1
+            )
+
+        if endpoints is None:
+            # If not, lets start a new collection of endpoints here along with
+            # the callbacks for each. See type above.
+
+            endpoints = dict()
+
+        else:
+            # We copy the dict here so that the outer call to _track_costs will
+            # have their own version unaffacted by our additions below. Once
+            # this frame returns, the outer frame will have its own endpoints
+            # again and any wrapped method will get that smaller set of
+            # endpoints.
+
+            # TODO: check if deep copy is needed given we are storing lists in
+            # the values and don't want to affect the existing ones here.
+            endpoints = endpoints.copy()
+
+        # Collect any new endpoints requested of us.
+        with_endpoints = with_endpoints or []
+
+        # Keep track of the new callback objects we create here for returning
+        # later.
+        callbacks = []
+
+        # Create the callbacks for the new requested endpoints only. Existing
+        # endpoints from other frames will keep their callbacks.
+        for endpoint in with_endpoints:
+            callback_class = endpoint.callback_class
+            callback = callback_class()
+
+            if callback_class not in endpoints:
+                endpoints[callback_class] = []
+
+            # And add them to the endpoints dict. This will be retrieved from
+            # locals of this frame later in the wrapped methods.
+            endpoints[callback_class].append((endpoint, callback))
+
+            callbacks.append(callback)
+
+        # Call the thunk.
+        result: T = await thunk()
 
         # Return result and only the callbacks created here. Outer thunks might
         # return others.

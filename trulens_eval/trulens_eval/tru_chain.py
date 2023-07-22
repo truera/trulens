@@ -2,10 +2,11 @@
 # Langchain instrumentation and monitoring.
 """
 
+import asyncio
 from datetime import datetime
 import logging
 from pprint import PrettyPrinter
-from typing import Any, ClassVar, Dict, List, Sequence, Union
+from typing import Any, ClassVar, Dict, List, Sequence, Tuple, Union
 
 from pydantic import Field
 
@@ -14,6 +15,7 @@ from trulens_eval.instruments import Instrument
 from trulens_eval.provider_apis import Endpoint
 from trulens_eval.schema import Cost
 from trulens_eval.schema import RecordAppCall
+from trulens_eval.schema import Record
 from trulens_eval.util import Class
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
@@ -47,14 +49,14 @@ class LangChainInstrument(Instrument):
         # Instrument only methods with these names and of these classes.
         METHODS = {
             "_call": lambda o: isinstance(o, langchain.chains.base.Chain),
-            # "get_relevant_documents": lambda o: True,  # VectorStoreRetriever
+            "_acall": lambda o: isinstance(o, langchain.chains.base.Chain),
             "_get_relevant_documents":
                 lambda o: True,  # VectorStoreRetriever, langchain >= 0.230
         }
 
     def __init__(self):
         super().__init__(
-            root_method=TruChain.call_with_record,
+            root_methods=set([TruChain.call_with_record, TruChain.acall_with_record]),
             modules=LangChainInstrument.Default.MODULES,
             classes=LangChainInstrument.Default.CLASSES(),
             methods=LangChainInstrument.Default.METHODS
@@ -153,13 +155,22 @@ class TruChain(App):
             return RuntimeError(
                 f"TruChain has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
                 f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruChain`. "
-                f"TruChain only wraps the the Chain.__call__ and Chain._call methods presently."
+                f"TruChain presently only wraps Chain.__call__, Chain._call, and Chain._acall ."
             )
         else:
             raise RuntimeError(f"TruChain has no attribute named {__name}.")
 
-    # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
-    def call_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs):
+    def __root(self, func, *args, **kwargs) -> Any:
+        async def func_async(*args, **kwargs):
+            return func(*args, **kwargs)
+       
+        asyncio.wait(
+            [self.__async_root(func_async, *args, **kwargs)],
+            timeout=None
+        )
+
+
+    async def __async_root(self, func, *args, **kwargs) -> Any:
         """ Run the chain and also return a record metadata object.
 
         Returns:
@@ -179,14 +190,15 @@ class TruChain(App):
         start_time = None
         end_time = None
 
+        # langchain.__call__ specific:
+        inputs = self.app.prep_inputs(inputs)
+
         try:
-            # TODO: do this only if there is an openai model inside the chain:
-            with get_openai_callback() as cb:
-                start_time = datetime.now()
-                ret, cost = Endpoint.track_all_costs_tally(
-                    lambda: self.app.__call__(inputs=inputs, **kwargs)
-                )
-                end_time = datetime.now()
+            start_time = datetime.now()
+            ret, cost = await Endpoint.atrack_all_costs_tally(
+                lambda: func(inputs=inputs, **kwargs)
+            )
+            end_time = datetime.now()
 
         except BaseException as e:
             end_time = datetime.now()
@@ -197,7 +209,8 @@ class TruChain(App):
 
         ret_record_args = dict()
 
-        inputs = self.app.prep_inputs(inputs)
+        # langchain.__call__ specific:
+        # inputs = self.app.prep_inputs(inputs)
 
         # Figure out the content of the "inputs" arg that __call__ constructs
         # for _call so we can lookup main input and output.
@@ -218,17 +231,21 @@ class TruChain(App):
 
         return ret, ret_record
 
-    # langchain.chains.base.py:Chain requirement:
+    # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
+    def call_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs) -> Tuple[Any, Record]:
+        return self.__root(self.app._call, inputs, **kwargs)
+
+    async def acall_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs) -> Tuple[Any, Record]:
+        return await self.__async_root(self.app._acall, inputs, **kwargs)
+
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         """
         Wrapped call to self.app.__call__ with instrumentation. If you need to
         get the record, use `call_with_record` instead. 
         """
 
-        ret, _ = self.call_with_record(*args, **kwargs)
-
-        return ret
-
+        return self._call(*args, **kwargs)
+    
     # langchain.chains.base.py:Chain requirement:
     def _call(self, *args, **kwargs) -> Any:
         # TODO(piotrm): figure out whether the combination of _call and __call__ is
@@ -238,4 +255,13 @@ class TruChain(App):
         # wrapping/passing through all of the methods that a langchain Chain
         # supports.
 
-        return self.app._call(*args, **kwargs)
+        # TODO: Why not recording here?
+        ret, _ = self.call_with_record(*args, **kwargs)
+
+        return ret
+
+    # langchain.chains.base.py:Chain requirement:
+    async def _acall(self, *args, **kwargs) -> Any:
+        ret, _ = await self.acall_with_record(*args, **kwargs)
+
+        return ret
