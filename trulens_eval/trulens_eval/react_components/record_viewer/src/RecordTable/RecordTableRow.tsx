@@ -74,7 +74,7 @@ export default function RecordTableRow({
         </Box>
       </TableCell>
       <TableCell align="right">{timeTaken} ms</TableCell>
-      <TableCell sx={{ minWidth: 500 }}>
+      <TableCell sx={{ minWidth: 500, padding: 0 }}>
         <Tooltip title={<TooltipDescription startTime={startTime} endTime={endTime} />}>
           <Box
             sx={{

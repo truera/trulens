@@ -1,12 +1,7 @@
 import { StreamlitComponentBase, withStreamlitConnection } from 'streamlit-component-lib';
 import { ReactNode } from 'react';
-import './RecordViewer.css';
-import { getStartAndEndTimesForNode, getTreeDepth } from './utils/treeUtils';
 import { DataRaw } from './utils/types';
-import GridLines from './GridLines';
 import { createTreeFromCalls } from './utils/utils';
-import { TIME_DISPLAY_HEIGHT_BUFFER } from './utils/styling';
-import TimelineBars, { BAR_HEIGHT } from './TimelineBars';
 import RecordTable from './RecordTable/RecordTable';
 
 class RecordViewer extends StreamlitComponentBase {
@@ -20,28 +15,14 @@ class RecordViewer extends StreamlitComponentBase {
     const { record_json: recordJSON, app_json: appJSON } = this.props.args as DataRaw;
 
     const { font: fontFamily } = this.props.theme as { font: string };
-    const { width } = this.props as { width: number };
 
     /**
      * Actual code begins
      */
     const root = createTreeFromCalls(recordJSON, appJSON);
-    const treeDepth = getTreeDepth(root);
-    const { timeTaken: totalTime } = getStartAndEndTimesForNode(root);
 
     return (
       <div style={{ fontFamily, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <span className="detail">Total time taken: {totalTime / 1000}s</span>
-        <div
-          className="timeline-container"
-          style={{
-            gridTemplateColumns: width,
-            gridTemplateRows: BAR_HEIGHT * treeDepth + TIME_DISPLAY_HEIGHT_BUFFER,
-          }}
-        >
-          <GridLines totalWidth={width} totalTime={totalTime} />
-          <TimelineBars root={root} />
-        </div>
         <RecordTable root={root} />
       </div>
     );
