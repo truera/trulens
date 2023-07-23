@@ -52,12 +52,14 @@ export default function RecordTableRow({
   let selector = 'Select.App';
   if (node.path) selector += `.${node.path}`;
 
+  const isNodeSelected = selectedNode === node.raw?.perf.start_time;
+
   return (
     <TableRow
       onClick={() => setSelectedNode(node.raw?.perf.start_time ?? undefined)}
       sx={{
         ...recordRowSx,
-        background: selectedNode === node.raw?.perf.start_time ? ({ palette }) => palette.primary.lighter : undefined,
+        background: isNodeSelected ? ({ palette }) => palette.primary.lighter : undefined,
       }}
     >
       <TableCell>
@@ -80,6 +82,8 @@ export default function RecordTableRow({
             sx={{
               left: `${((startTime - treeStart) / totalTime) * 100}%`,
               width: `${(timeTaken / totalTime) * 100}%`,
+              background: ({ palette }) =>
+                selectedNode === undefined || isNodeSelected ? palette.grey[500] : palette.grey[300],
               ...recordBarSx,
             }}
           />
@@ -92,7 +96,6 @@ export default function RecordTableRow({
 const recordBarSx: SxProps<Theme> = {
   position: 'relative',
   height: 20,
-  background: ({ palette }) => palette.grey[500],
   borderRadius: 0.5,
 };
 

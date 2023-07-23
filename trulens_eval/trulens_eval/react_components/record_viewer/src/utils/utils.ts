@@ -116,6 +116,15 @@ export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appJSON: AppJSONR
     path: '',
     parentNodes: [],
     id: 0,
+    raw: {
+      stack: [],
+      args: { str_or_query_bundle: '' },
+      error: null,
+      rets: [],
+      perf: recordJSON.perf,
+      pid: -1,
+      tid: -1,
+    },
   };
 
   recordJSON.calls.forEach((call) => {
