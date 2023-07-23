@@ -1,9 +1,14 @@
 import { Box, SxProps, TableCell, TableRow, Theme, Tooltip, Typography } from '@mui/material';
-import { Streamlit } from 'streamlit-component-lib';
 import { StackTreeNode } from '../utils/types';
 import { getStartAndEndTimesForNode } from '../utils/treeUtils';
 
-type RecordTableProps = { nodeWithDepth: { node: StackTreeNode; depth: number }; totalTime: number; treeStart: number };
+type RecordTableProps = {
+  nodeWithDepth: { node: StackTreeNode; depth: number };
+  totalTime: number;
+  treeStart: number;
+  selectedNode: string | undefined;
+  setSelectedNode: (newNode: string | undefined) => void;
+};
 
 function TooltipDescription({ startTime, endTime }: { startTime: number; endTime: number }) {
   return (
@@ -21,7 +26,13 @@ function TooltipDescription({ startTime, endTime }: { startTime: number; endTime
   );
 }
 
-export default function RecordTableRow({ nodeWithDepth, totalTime, treeStart }: RecordTableProps) {
+export default function RecordTableRow({
+  nodeWithDepth,
+  totalTime,
+  treeStart,
+  selectedNode,
+  setSelectedNode,
+}: RecordTableProps) {
   const { node, depth } = nodeWithDepth;
   const { startTime, timeTaken, endTime } = getStartAndEndTimesForNode(node);
 
@@ -29,7 +40,13 @@ export default function RecordTableRow({ nodeWithDepth, totalTime, treeStart }: 
   if (node.path) selector += `.${node.path}`;
 
   return (
-    <TableRow onClick={() => Streamlit.setComponentValue(node.raw?.perf.start_time ?? null)} sx={recordRowSx}>
+    <TableRow
+      onClick={() => setSelectedNode(node.raw?.perf.start_time ?? undefined)}
+      sx={{
+        ...recordRowSx,
+        background: selectedNode === node.raw?.perf.start_time ? ({ palette }) => palette.primary.lighter : undefined,
+      }}
+    >
       <TableCell>
         <Box sx={{ ml: depth, display: 'flex', flexDirection: 'column' }}>
           <Typography>{node.name}</Typography>

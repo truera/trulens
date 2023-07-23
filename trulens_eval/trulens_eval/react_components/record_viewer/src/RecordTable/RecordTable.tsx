@@ -1,4 +1,6 @@
-import { Paper, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, SxProps, Theme } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Streamlit } from 'streamlit-component-lib';
+import { Table, TableContainer, TableHead, TableRow, TableCell, TableBody, SxProps, Theme } from '@mui/material';
 import { StackTreeNode } from '../utils/types';
 import RecordTableRow from './RecordTableRow';
 import { getNodesToRender, getStartAndEndTimesForNode } from '../utils/treeUtils';
@@ -8,11 +10,15 @@ type RecordTableProps = {
 };
 
 export default function RecordTable({ root }: RecordTableProps) {
+  const [selectedNode, setSelectedNode] = useState<number>();
+
+  useEffect(() => Streamlit.setComponentValue(selectedNode), [selectedNode]);
+
   const nodesToRender = getNodesToRender(root);
   const { timeTaken: totalTime, startTime: treeStart } = getStartAndEndTimesForNode(root);
 
   return (
-    <TableContainer component={Paper}>
+    <TableContainer>
       <Table sx={recordTableSx} aria-label="Table breakdown of the components in the current app" size="small">
         <TableHead>
           <TableRow>
@@ -23,7 +29,14 @@ export default function RecordTable({ root }: RecordTableProps) {
         </TableHead>
         <TableBody>
           {nodesToRender.map((nodeWithDepth) => (
-            <RecordTableRow nodeWithDepth={nodeWithDepth} totalTime={totalTime} treeStart={treeStart} />
+            <RecordTableRow
+              selectedNode={selectedNode}
+              setSelectedNode={setSelectedNode}
+              nodeWithDepth={nodeWithDepth}
+              totalTime={totalTime}
+              treeStart={treeStart}
+              key={`${nodeWithDepth.node.name}-${nodeWithDepth.node.id ?? ''}`}
+            />
           ))}
         </TableBody>
       </Table>
@@ -40,5 +53,13 @@ const recordTableSx: SxProps<Theme> = {
     backgroundColor: ({ palette }) => palette.grey[100],
     color: ({ palette }) => palette.grey[600],
     fontWeight: 600,
+  },
+
+  '& .MuiTableCell-root': {
+    borderRight: ({ palette }) => `1px solid ${palette.grey[300]}`,
+  },
+
+  '& .MuiTableCell-root:last-child': {
+    borderRight: 'none',
   },
 };
