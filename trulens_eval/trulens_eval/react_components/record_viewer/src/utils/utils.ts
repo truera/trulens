@@ -1,4 +1,4 @@
-import { CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw, StackTreeNode } from './types';
+import { AppJSONRaw, CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw, StackTreeNode } from './types';
 
 /**
  * Gets the name of the calling class in the stack cell.
@@ -69,6 +69,7 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
     if (matchingNode) {
       matchingNode.startTime = startTime;
       matchingNode.endTime = endTime;
+      matchingNode.id = call.stack[index].method.obj.id;
       matchingNode.raw = call;
 
       return;
@@ -79,6 +80,7 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
       name: getClassNameFromCell(stackCell),
       path: getPathName(stackCell),
       methodName: getMethodNameFromCell(stackCell),
+      id: stackCell.method.obj.id,
       startTime,
       endTime,
       raw: call,
@@ -103,12 +105,13 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
   addCallToTree(matchingNode, call, stack, index + 1);
 };
 
-export const createTreeFromCalls = (recordJSON: RecordJSONRaw) => {
+export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appJSON: AppJSONRaw) => {
   const tree: StackTreeNode = {
     children: [],
-    name: 'App',
+    name: appJSON.app_id,
     startTime: new Date(recordJSON.perf.start_time),
     endTime: new Date(recordJSON.perf.end_time),
+    path: '',
   };
 
   recordJSON.calls.forEach((call) => {

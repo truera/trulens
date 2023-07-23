@@ -134,4 +134,5 @@ export interface StackTreeNode {
   startTime?: Date;
   endTime?: Date;
   raw?: CallJSONRaw;
+  id?: number;
 }

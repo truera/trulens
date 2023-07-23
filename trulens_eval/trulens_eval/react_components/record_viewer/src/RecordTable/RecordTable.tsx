@@ -13,11 +13,11 @@ export default function RecordTable({ root }: RecordTableProps) {
 
   return (
     <TableContainer component={Paper}>
-      <Table sx={recordTableSx} aria-label="Table breakdown of the components in the current app">
+      <Table sx={recordTableSx} aria-label="Table breakdown of the components in the current app" size="small">
         <TableHead>
           <TableRow>
-            <TableCell>Method</TableCell>
-            <TableCell>Duration</TableCell>
+            <TableCell width={275}>Method</TableCell>
+            <TableCell width={75}>Duration</TableCell>
             <TableCell>Timeline</TableCell>
           </TableRow>
         </TableHead>
