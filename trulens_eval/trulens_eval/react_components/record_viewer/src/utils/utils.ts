@@ -76,7 +76,7 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
     }
 
     tree.children.push({
-      children: undefined,
+      children: [],
       name: getClassNameFromCell(stackCell),
       path: getPathName(stackCell),
       methodName: getMethodNameFromCell(stackCell),
@@ -84,6 +84,7 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
       startTime,
       endTime,
       raw: call,
+      parentNodes: [...tree.parentNodes, tree],
     });
 
     return;
@@ -95,6 +96,7 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
       name: getClassNameFromCell(stackCell),
       methodName: getMethodNameFromCell(stackCell),
       path: getPathName(stackCell),
+      parentNodes: [...tree.parentNodes, tree],
     };
 
     // otherwise create a new node
@@ -112,6 +114,8 @@ export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appJSON: AppJSONR
     startTime: new Date(recordJSON.perf.start_time),
     endTime: new Date(recordJSON.perf.end_time),
     path: '',
+    parentNodes: [],
+    id: 0,
   };
 
   recordJSON.calls.forEach((call) => {

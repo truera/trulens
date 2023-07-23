@@ -127,7 +127,7 @@ export interface DataRaw {
 }
 
 export interface StackTreeNode {
-  children: StackTreeNode[] | undefined;
+  children: StackTreeNode[];
   name: string;
   path?: string;
   methodName?: string;
@@ -135,4 +135,5 @@ export interface StackTreeNode {
   endTime?: Date;
   raw?: CallJSONRaw;
   id?: number;
+  parentNodes: StackTreeNode[];
 }

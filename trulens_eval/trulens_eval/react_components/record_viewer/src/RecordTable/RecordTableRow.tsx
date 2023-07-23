@@ -1,4 +1,7 @@
-import { Box, SxProps, TableCell, TableRow, Theme, Tooltip, Typography } from '@mui/material';
+import { useEffect } from 'react';
+import { ArrowDropDown, ArrowRight } from '@mui/icons-material';
+import { Streamlit } from 'streamlit-component-lib';
+import { Box, IconButton, SxProps, TableCell, TableRow, Theme, Tooltip, Typography } from '@mui/material';
 import { StackTreeNode } from '../utils/types';
 import { getStartAndEndTimesForNode } from '../utils/treeUtils';
 
@@ -8,11 +11,13 @@ type RecordTableProps = {
   treeStart: number;
   selectedNode: string | undefined;
   setSelectedNode: (newNode: string | undefined) => void;
+  expanded: Set<number | undefined>;
+  toggleNodeExpanding: (nodeId: number | undefined) => void;
 };
 
 function TooltipDescription({ startTime, endTime }: { startTime: number; endTime: number }) {
   return (
-    <Box sx={{ fontSize: '0.8rem', lineHeight: 1.5 }}>
+    <Box sx={{ lineHeight: 1.5 }}>
       <span>
         <b>Start: </b>
         {new Date(startTime).toISOString()}
@@ -26,7 +31,11 @@ function TooltipDescription({ startTime, endTime }: { startTime: number; endTime
   );
 }
 
+// We can't recursively create the rows because streamlit's frame height update logic
+// is still a little wonky :(
 export default function RecordTableRow({
+  expanded,
+  toggleNodeExpanding,
   nodeWithDepth,
   totalTime,
   treeStart,
@@ -34,6 +43,10 @@ export default function RecordTableRow({
   setSelectedNode,
 }: RecordTableProps) {
   const { node, depth } = nodeWithDepth;
+  useEffect(() => Streamlit.setFrameHeight());
+
+  if (node.parentNodes.some(({ id }) => !expanded.has(id))) return null;
+
   const { startTime, timeTaken, endTime } = getStartAndEndTimesForNode(node);
 
   let selector = 'Select.App';
@@ -48,9 +61,16 @@ export default function RecordTableRow({
       }}
     >
       <TableCell>
-        <Box sx={{ ml: depth, display: 'flex', flexDirection: 'column' }}>
-          <Typography>{node.name}</Typography>
-          <Typography variant="subtitle1">{selector}</Typography>
+        <Box sx={{ ml: depth, display: 'flex', flexDirection: 'row' }}>
+          {node.children.length > 0 && (
+            <IconButton onClick={() => toggleNodeExpanding(node.id)} disableRipple>
+              {expanded.has(node.id) ? <ArrowDropDown /> : <ArrowRight />}
+            </IconButton>
+          )}
+          <Box sx={{ display: 'flex', flexDirection: 'column', ml: node.children.length === 0 ? 5 : 0 }}>
+            <Typography>{node.name}</Typography>
+            <Typography variant="subtitle1">{selector}</Typography>
+          </Box>
         </Box>
       </TableCell>
       <TableCell align="right">{timeTaken} ms</TableCell>

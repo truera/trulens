@@ -10,12 +10,26 @@ type RecordTableProps = {
 };
 
 export default function RecordTable({ root }: RecordTableProps) {
-  const [selectedNode, setSelectedNode] = useState<number>();
+  const [selectedNode, setSelectedNode] = useState<string>();
+  const [expanded, setExpanded] = useState<Set<number | undefined>>(new Set([-1, 0]));
 
   useEffect(() => Streamlit.setComponentValue(selectedNode), [selectedNode]);
 
   const nodesToRender = getNodesToRender(root);
   const { timeTaken: totalTime, startTime: treeStart } = getStartAndEndTimesForNode(root);
+
+  const toggleNodeExpanding = (nodeId: number | undefined) => {
+    setExpanded((curr) => {
+      const updatedSet = new Set(curr.values());
+      if (curr.has(nodeId)) {
+        updatedSet.delete(nodeId);
+      } else {
+        updatedSet.add(nodeId);
+      }
+
+      return updatedSet;
+    });
+  };
 
   return (
     <TableContainer>
@@ -30,12 +44,16 @@ export default function RecordTable({ root }: RecordTableProps) {
         <TableBody>
           {nodesToRender.map((nodeWithDepth) => (
             <RecordTableRow
+              expanded={expanded}
+              toggleNodeExpanding={toggleNodeExpanding}
               selectedNode={selectedNode}
               setSelectedNode={setSelectedNode}
               nodeWithDepth={nodeWithDepth}
               totalTime={totalTime}
               treeStart={treeStart}
-              key={`${nodeWithDepth.node.name}-${nodeWithDepth.node.id ?? ''}`}
+              key={`${nodeWithDepth.node.name}-${nodeWithDepth.node.id ?? ''}-${
+                nodeWithDepth.node.endTime?.toISOString() ?? ''
+              }`}
             />
           ))}
         </TableBody>
@@ -61,5 +79,9 @@ const recordTableSx: SxProps<Theme> = {
 
   '& .MuiTableCell-root:last-child': {
     borderRight: 'none',
+  },
+
+  '& .MuiTableBody-root .MuiTableCell-root': {
+    mx: 1,
   },
 };
