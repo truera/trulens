@@ -164,17 +164,23 @@ class TruChain(App):
         async def func_async(inputs, **kwargs):
             return func(inputs, **kwargs)
        
-        # Required for reusing async methods inside sync methods.
+        
         try:
+            # Required for reusing async methods inside sync methods if running
+            # inside some outer async loop. Note that jupyter notebook cells are
+            # run within such a loop.
+            
             nest_asyncio.apply()
+            evl = asyncio.get_event_loop()
+            
             # Will fail if not inside an async loop, in that case, we are free
-            # to create and run one with `get_event_loop`` below.
+            # to create one below.
+
         except:
-            pass
+            evl = asyncio.new_event_loop()
 
         # requires nested asyncio
-        return asyncio.get_event_loop() \
-            .run_until_complete(self._eval_async_root_method(func_async, inputs, **kwargs))
+        return evl.run_until_complete(self._eval_async_root_method(func_async, inputs, **kwargs))
 
     async def _eval_async_root_method(self, func, inputs, **kwargs) -> Any:
         """ Run the chain and also return a record metadata object.
