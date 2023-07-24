@@ -330,7 +330,7 @@ class Instrument(object):
         Instrument a method to capture its inputs/outputs/errors.
         """
 
-        assert self.root_methods is not None, "Cannot instrument method without a `root_methods`."
+        assert self.root_methods is not None, "Cannot instrument method without `root_methods`."
 
         if hasattr(func, Instrument.INSTRUMENT):
             logger.debug(f"\t\t\t{query}: {func} is already instrumented")
@@ -350,13 +350,12 @@ class Instrument(object):
         sig = signature(func)
 
         async def awrapper(*args, **kwargs):
-            # If not within TruChain._call, call the wrapped function without
+            # TODO: figure out how to have less repetition between the async and
+            # sync versions of this method.
+
+            # If not within a root method, call the wrapped function without
             # any recording. This check is not perfect in threaded situations so
             # the next call stack-based lookup handles the rarer cases.
-
-            # NOTE(piotrm): Disabling this for now as it is not thread safe.
-            #if not self.recording:
-            #    return func(*args, **kwargs)
 
             logger.debug(f"{query}: calling instrumented async method {func}")
 
@@ -373,6 +372,7 @@ class Instrument(object):
 
             if record is None:
                 logger.debug(f"{query}: no record found, not recording.")
+
                 return await func(*args, **kwargs)
 
             # Otherwise keep track of inputs and outputs (or exception).
@@ -401,7 +401,9 @@ class Instrument(object):
                 # pairs even if positional arguments were provided.
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
                 start_time = datetime.now()
+
                 rets = await func(*bindings.args, **bindings.kwargs)
+
                 end_time = datetime.now()
 
             except BaseException as e:
@@ -434,13 +436,12 @@ class Instrument(object):
             return rets
 
         def wrapper(*args, **kwargs):
-            # If not within TruChain._call, call the wrapped function without
+            # TODO: figure out how to have less repetition between the async and
+            # sync versions of this method.
+
+            # If not within a root method, call the wrapped function without
             # any recording. This check is not perfect in threaded situations so
             # the next call stack-based lookup handles the rarer cases.
-
-            # NOTE(piotrm): Disabling this for now as it is not thread safe.
-            #if not self.recording:
-            #    return func(*args, **kwargs)
 
             logger.debug(f"{query}: calling instrumented method {func}")
 
