@@ -1,4 +1,3 @@
-from asyncio import Future
 import inspect
 import json
 import logging
@@ -8,7 +7,7 @@ from threading import Thread
 from time import sleep
 from types import ModuleType
 from typing import (
-    Any, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
+    Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
 )
 from pprint import PrettyPrinter
 
@@ -20,6 +19,7 @@ import requests
 from trulens_eval.keys import get_huggingface_headers
 from trulens_eval.schema import Cost
 from trulens_eval.keys import _check_key
+from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import JSON
@@ -231,7 +231,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
         return j[0]
 
-    def run_me(self, thunk: Callable[[], T]) -> T:
+    def run_me(self, thunk: Thunk[T]) -> T:
         """
         Run the given thunk, returning itse output, on pace with the api.
         Retries request multiple times if self.retries > 0.
@@ -287,7 +287,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
     @staticmethod
     def track_all_costs(
-        thunk: Callable[[], T],
+        thunk:Thunk[T],
         with_openai: bool = True,
         with_hugs: bool = True
     ) -> Tuple[T, Sequence[EndpointCallback]]:
@@ -322,7 +322,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
     @staticmethod
     async def atrack_all_costs(
-        thunk: Future,
+        thunk: Thunk[Awaitable],
         with_openai: bool = True,
         with_hugs: bool = True
     ) -> Tuple[T, Sequence[EndpointCallback]]:
@@ -358,7 +358,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
     @staticmethod
     def track_all_costs_tally(
-        thunk: Callable[[], T],
+        thunk: Thunk[T],
         with_openai: bool = True,
         with_hugs: bool = True
     ) -> Tuple[T, Cost]:
@@ -374,7 +374,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
     @staticmethod
     async def atrack_all_costs_tally(
-        thunk: Future,
+        thunk: Thunk[Awaitable],
         with_openai: bool = True,
         with_hugs: bool = True
     ) -> Tuple[T, Cost]:
@@ -390,7 +390,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
     @staticmethod
     def _track_costs(
-        thunk: Callable[[], T],
+        thunk: Thunk[T],
         with_endpoints: Sequence['Endpoint'] = None,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
@@ -454,7 +454,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
     @staticmethod
     async def _atrack_costs(
-        thunk: Future,
+        thunk: Thunk[Awaitable],
         with_endpoints: Sequence['Endpoint'] = None,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
@@ -516,7 +516,7 @@ class Endpoint(SerialModel, SingletonPerName):
         # return others.
         return result, callbacks
 
-    def track_cost(self, thunk: Callable[[], T]) -> Tuple[T, EndpointCallback]:
+    def track_cost(self, thunk: Thunk[T]) -> Tuple[T, EndpointCallback]:
         """
         Tally only the usage performed within the execution of the given thunk.
         Returns the thunk's result alongside the EndpointCallback object that
