@@ -68,6 +68,8 @@ class TestTruChain(TestCase):
 
     @unittest.skip("TODO")
     async def test_async(self):
+        # Test of chain acall methods as requested in https://github.com/truera/trulens/issues/309 .
+
         import asyncio
 
         from langchain import PromptTemplate
@@ -96,7 +98,6 @@ class TestTruChain(TestCase):
                 self.agent = LLMChain(llm=llm, prompt=prompt)
                 self.agent = tru.Chain(
                     self.agent,
-                    app_id='smalltalk_agent',
                     feedbacks=[f_lang_match]
                 )
 
