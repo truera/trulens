@@ -165,7 +165,12 @@ class TruChain(App):
             return func(inputs, **kwargs)
        
         # Required for reusing async methods inside sync methods.
-        nest_asyncio.apply()
+        try:
+            nest_asyncio.apply()
+            # Will fail if not inside an async loop, in that case, we are free
+            # to create and run one with `get_event_loop`` below.
+        except:
+            pass
 
         # requires nested asyncio
         return asyncio.get_event_loop() \
