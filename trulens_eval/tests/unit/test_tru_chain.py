@@ -2,25 +2,23 @@
 Tests for TruChain. This is outdated.
 """
 
-import pinecone
 import unittest
 from unittest import main
 from unittest import TestCase
+
+import pinecone
 import torch
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
 from transformers import pipeline
 
+from trulens_eval.keys import check_keys
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LANGCHAIN
-from trulens_eval.keys import check_keys
 
 check_keys(
-    "OPENAI_API_KEY",
-    "HUGGINGFACE_API_KEY",
-    "PINECONE_API_KEY",
-    "PINECONE_ENV"
+    "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
 )
 
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
@@ -67,6 +65,58 @@ class TestTruChain(TestCase):
         )
 
         self.llm = HuggingFacePipeline(pipeline=self.pipe)
+
+    @unittest.skip("TODO")
+    async def test_async(self):
+        import asyncio
+
+        from langchain import PromptTemplate
+        from langchain.callbacks import AsyncIteratorCallbackHandler
+        from langchain.chains import LLMChain
+        from langchain.chat_models.openai import ChatOpenAI
+
+        from trulens_eval import feedback
+        from trulens_eval import Feedback
+        from trulens_eval import Tru
+
+        class AsyncAgent:
+
+            def __init__(self):
+                tru = Tru()
+                hugs = feedback.Huggingface()
+                f_lang_match = Feedback(hugs.language_match).on_input_output()
+
+                self.async_callback = AsyncIteratorCallbackHandler()
+                prompt = PromptTemplate.from_template(
+                    """Honestly answer this question: {question}."""
+                )
+                llm = ChatOpenAI(
+                    streaming=True, callbacks=[self.async_callback]
+                )
+                self.agent = LLMChain(llm=llm, prompt=prompt)
+                self.agent = tru.Chain(
+                    self.agent,
+                    app_id='smalltalk_agent',
+                    feedbacks=[f_lang_match]
+                )
+
+            async def respond_each_token(self, message):
+                f_res_record = asyncio.create_task(
+                    self.agent.acall_with_record(
+                        inputs=dict(question=message),
+                    )
+                )
+
+                async for token in self.async_callback.aiter():
+                    yield token
+
+                self.res, self.record = await f_res_record
+
+        # TODO: async test cases?
+        st = AsyncAgent()
+        async for tok in st.respond_each_token(
+                "What is 1+2? Explain your answer."):
+            print(tok)
 
     @unittest.skip("outdated")
     def test_qa_prompt(self):
@@ -124,8 +174,10 @@ class TestTruChain(TestCase):
         )  # 1536 dims
 
         pinecone.init(
-            api_key=os.environ.get('PINECONE_API_KEY'),  # find at app.pinecone.io
-            environment=os.environ.get('PINECONE_ENV')  # next to api key in console
+            api_key=os.environ.get('PINECONE_API_KEY'
+                                  ),  # find at app.pinecone.io
+            environment=os.environ.get('PINECONE_ENV'
+                                      )  # next to api key in console
         )
         docsearch = Pinecone.from_existing_index(
             index_name=index_name, embedding=embedding
@@ -187,6 +239,7 @@ class TestTruChain(TestCase):
         )
 
         assert len(tru_app.db.select()) == 2
+
 
 if __name__ == '__main__':
     main()

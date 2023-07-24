@@ -8,14 +8,15 @@ import logging
 from pprint import PrettyPrinter
 from typing import Any, ClassVar, Dict, List, Sequence, Tuple, Union
 
+import nest_asyncio
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.provider_apis import Endpoint
 from trulens_eval.schema import Cost
-from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Record
+from trulens_eval.schema import RecordAppCall
 from trulens_eval.util import Class
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
@@ -29,7 +30,6 @@ pp = PrettyPrinter()
 
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     import langchain
-    from langchain.callbacks import get_openai_callback
     from langchain.chains.base import Chain
 
 
@@ -56,7 +56,7 @@ class LangChainInstrument(Instrument):
 
     def __init__(self):
         super().__init__(
-            root_methods=set([TruChain.call_with_record, TruChain.acall_with_record]),
+            root_methods=set([TruChain._eval_async_root_method]),
             modules=LangChainInstrument.Default.MODULES,
             classes=LangChainInstrument.Default.CLASSES(),
             methods=LangChainInstrument.Default.METHODS
@@ -160,17 +160,18 @@ class TruChain(App):
         else:
             raise RuntimeError(f"TruChain has no attribute named {__name}.")
 
-    def __root(self, func, *args, **kwargs) -> Any:
-        async def func_async(*args, **kwargs):
-            return func(*args, **kwargs)
+    def _eval_sync_root_method(self, func, inputs, **kwargs) -> Any:
+        async def func_async(inputs, **kwargs):
+            return func(inputs, **kwargs)
        
-        asyncio.wait(
-            [self.__async_root(func_async, *args, **kwargs)],
-            timeout=None
-        )
+        # Required for reusing async methods inside sync methods.
+        nest_asyncio.apply()
 
+        # requires nested asyncio
+        return asyncio.get_event_loop() \
+            .run_until_complete(self._eval_async_root_method(func_async, inputs, **kwargs))
 
-    async def __async_root(self, func, *args, **kwargs) -> Any:
+    async def _eval_async_root_method(self, func, inputs, **kwargs) -> Any:
         """ Run the chain and also return a record metadata object.
 
         Returns:
@@ -209,9 +210,6 @@ class TruChain(App):
 
         ret_record_args = dict()
 
-        # langchain.__call__ specific:
-        # inputs = self.app.prep_inputs(inputs)
-
         # Figure out the content of the "inputs" arg that __call__ constructs
         # for _call so we can lookup main input and output.
         input_key = self.input_keys[0]
@@ -233,10 +231,10 @@ class TruChain(App):
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
     def call_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs) -> Tuple[Any, Record]:
-        return self.__root(self.app._call, inputs, **kwargs)
+        return self._eval_sync_root_method(self.app._call, inputs, **kwargs)
 
     async def acall_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs) -> Tuple[Any, Record]:
-        return await self.__async_root(self.app._acall, inputs, **kwargs)
+        return await self._eval_async_root_method(self.app._acall, inputs, **kwargs)
 
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         """
