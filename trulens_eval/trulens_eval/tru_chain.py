@@ -8,7 +8,7 @@ import logging
 from pprint import PrettyPrinter
 from typing import Any, ClassVar, Dict, List, Sequence, Tuple, Union
 
-import nest_asyncio
+# import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
 
 from trulens_eval.app import App
@@ -56,7 +56,7 @@ class LangChainInstrument(Instrument):
 
     def __init__(self):
         super().__init__(
-            root_methods=set([TruChain._eval_async_root_method]),
+            root_methods=set([TruChain.call_with_record, TruChain.acall_with_record]),
             modules=LangChainInstrument.Default.MODULES,
             classes=LangChainInstrument.Default.CLASSES(),
             methods=LangChainInstrument.Default.METHODS
@@ -160,30 +160,36 @@ class TruChain(App):
         else:
             raise RuntimeError(f"TruChain has no attribute named {__name}.")
 
+    """
+    # NOTE: Disabling this method for now as it may have compatibility issues
+    with various packages. Need some way to reduce code duplication between the
+    async and sync versions of various methods.
+
     def _eval_sync_root_method(self, func, inputs, **kwargs) -> Any:
         async def func_async(inputs, **kwargs):
             return func(inputs, **kwargs)
        
-        
         try:
             # Required for reusing async methods inside sync methods if running
             # inside some outer async loop. Note that jupyter notebook cells are
             # run within such a loop.
             
-            nest_asyncio.apply()
-            evl = asyncio.get_event_loop()
+            nest_asyncio.apply() evl = asyncio.get_event_loop()
             
-            # Will fail if not inside an async loop, in that case, we are free
-            # to create one below.
+            # Will fail if not inside an async loop, in that case, we are free #
+            to create one below.
 
         except:
             evl = asyncio.new_event_loop()
 
         # requires nested asyncio
         return evl.run_until_complete(self._eval_async_root_method(func_async, inputs, **kwargs))
+    """
 
-    async def _eval_async_root_method(self, func, inputs, **kwargs) -> Any:
-        """ Run the chain and also return a record metadata object.
+    # NOTE: Input signature compatible with langchain.chains.base.Chain._acall
+    async def acall_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs) -> Tuple[Any, Record]:
+        """
+        Run the chain and also return a record metadata object.
 
         Returns:
             Any: chain output
@@ -208,7 +214,7 @@ class TruChain(App):
         try:
             start_time = datetime.now()
             ret, cost = await Endpoint.atrack_all_costs_tally(
-                lambda: func(inputs=inputs, **kwargs)
+                lambda: self.app._acall(inputs=inputs, **kwargs)
             )
             end_time = datetime.now()
 
@@ -240,16 +246,70 @@ class TruChain(App):
 
         return ret, ret_record
 
-    # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
+    # NOTE: Input signature compatible with langchain.chains.base.Chain._call
     def call_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs) -> Tuple[Any, Record]:
-        return self._eval_sync_root_method(self.app._call, inputs, **kwargs)
+        """
+        Run the chain and also return a record metadata object.
 
-    async def acall_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs) -> Tuple[Any, Record]:
-        return await self._eval_async_root_method(self.app._acall, inputs, **kwargs)
+        Returns:
+            Any: chain output
+            dict: record metadata
+        """
 
+        # Wrapped calls will look this up by traversing the call stack. This
+        # should work with threads.
+        record: Sequence[RecordAppCall] = []
+
+        ret = None
+        error = None
+
+        cost: Cost = Cost()
+
+        start_time = None
+        end_time = None
+
+        # langchain.__call__ specific:
+        inputs = self.app.prep_inputs(inputs)
+
+        try:
+            start_time = datetime.now()
+            ret, cost = Endpoint.track_all_costs_tally(
+                lambda: self.app._call(inputs=inputs, **kwargs)
+            )
+            end_time = datetime.now()
+
+        except BaseException as e:
+            end_time = datetime.now()
+            error = e
+            logger.error(f"App raised an exception: {e}")
+
+        assert len(record) > 0, "No information recorded in call."
+
+        ret_record_args = dict()
+
+        # Figure out the content of the "inputs" arg that __call__ constructs
+        # for _call so we can lookup main input and output.
+        input_key = self.input_keys[0]
+        output_key = self.output_keys[0]
+
+        ret_record_args['main_input'] = jsonify(inputs[input_key])
+
+        if ret is not None:
+            ret_record_args['main_output'] = jsonify(ret[output_key])
+
+        if error is not None:
+            ret_record_args['main_error'] = jsonify(error)
+
+        ret_record = self._post_record(
+            ret_record_args, error, cost, start_time, end_time, record
+        )
+
+        return ret, ret_record
+
+    
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         """
-        Wrapped call to self.app.__call__ with instrumentation. If you need to
+        Wrapped call to self.app._call with instrumentation. If you need to
         get the record, use `call_with_record` instead. 
         """
 
@@ -257,19 +317,11 @@ class TruChain(App):
     
     # langchain.chains.base.py:Chain requirement:
     def _call(self, *args, **kwargs) -> Any:
-        # TODO(piotrm): figure out whether the combination of _call and __call__ is
-        # working right.
-
-        # TODO(piotrm): potentially remove this. We don't want to be
-        # wrapping/passing through all of the methods that a langchain Chain
-        # supports.
-
-        # TODO: Why not recording here?
         ret, _ = self.call_with_record(*args, **kwargs)
 
         return ret
 
-    # langchain.chains.base.py:Chain requirement:
+    # optional langchain.chains.base.py:Chain requirement:
     async def _acall(self, *args, **kwargs) -> Any:
         ret, _ = await self.acall_with_record(*args, **kwargs)
 
