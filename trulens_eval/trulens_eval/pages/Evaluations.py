@@ -10,7 +10,7 @@ from st_aggrid.shared import JsCode
 import streamlit as st
 from streamlit_javascript import st_javascript
 from ux.add_logo import add_logo
-from ux.styles import default_pass_fail_color_threshold
+from ux.styles import CATEGORY
 
 from trulens_eval import Tru
 from trulens_eval.app import ComponentView
@@ -26,7 +26,6 @@ from trulens_eval.util import JSONPath
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
 from trulens_eval.ux.components import draw_prompt_info
-from trulens_eval.ux.components import draw_selector_button
 from trulens_eval.ux.components import render_selector_markdown
 from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
@@ -64,6 +63,10 @@ if state.clipboard:
     )
 
 
+def jsonify_for_ui(*args, **kwargs):
+    return jsonify(*args, **kwargs, redact_keys=True, skip_specials=True)
+
+
 def render_component(query, component, header=True):
     # Draw the accessor/path within the wrapped app of the component.
     if header:
@@ -88,11 +91,11 @@ def render_component(query, component, header=True):
 
     elif isinstance(component, Other):
         with st.expander("Uncategorized Component Details:"):
-            st.json(jsonify(component.json, skip_specials=True))
+            st.json(jsonify_for_ui(component.json))
 
     else:
         with st.expander("Unhandled Component Details:"):
-            st.json(jsonify(component.json, skip_specials=True))
+            st.json(jsonify_for_ui(component.json))
 
 
 if df_results.empty:
@@ -209,23 +212,27 @@ else:
                 def display_feedback_call(call):
 
                     def highlight(s):
-                        return ['background-color: #4CAF50'] * len(
-                            s
-                        ) if s.result >= default_pass_fail_color_threshold else [
-                            'background-color: #FCE6E6'
-                        ] * len(s)
-
+                        cat = CATEGORY.of_score(s.result)
+                        return [f'background-color: {cat.color}'] * len(s)
+                        
                     if call is not None and len(call) > 0:
+                        
                         df = pd.DataFrame.from_records(
                             [call[i]["args"] for i in range(len(call))]
                         )
                         df["result"] = pd.DataFrame(
                             [float(call[i]["ret"]) for i in range(len(call))]
                         )
+                        df["meta"] = pd.Series(
+                            [call[i]["meta"] for i in range(len(call))]
+                        )
+                        df = df.join(df.meta.apply(lambda m: pd.Series(m))).drop(columns="meta")
+                        
                         st.dataframe(
                             df.style.apply(highlight, axis=1
                                           ).format("{:.2}", subset=["result"])
                         )
+
                     else:
                         st.text("No feedback details.")
 
@@ -269,7 +276,7 @@ else:
 
                     draw_call(match)
                     # with st.expander("Call Details:"):
-                    #     st.json(jsonify(match, skip_specials=True))
+                    #     st.json(jsonify_for_ui(match)
 
                     view = classes_map.get(match_query)
                     if view is not None:
@@ -292,7 +299,7 @@ else:
             else:
                 st.subheader(f"App {render_selector_markdown(Select.App)}")
                 with st.expander("App Details:"):
-                    st.json(jsonify(app_json, skip_specials=True))
+                    st.json(jsonify_for_ui(app_json))
 
             if match_query is not None:
                 st.header("Subcomponents:")
@@ -311,11 +318,11 @@ else:
 
             if st.button("Display full app json"):
 
-                st.write(jsonify(app_json, skip_specials=True))
+                st.write(jsonify_for_ui(app_json))
 
             if st.button("Display full record json"):
 
-                st.write(jsonify(record_json, skip_specials=True))
+                st.write(jsonify_for_ui(record_json))
 
     with tab2:
         feedback = feedback_cols

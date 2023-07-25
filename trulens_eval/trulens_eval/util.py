@@ -1,4 +1,8 @@
 """
+TODO: This file got big. Split off pieces into the utils folder. Already split some:
+- utils/text.py -- text outputs/ui related utilities and constants
+- utils/python.py -- core python-related utilities
+
 # Utilities.
 
 ## Serialization of Python objects
@@ -39,26 +43,21 @@ from pprint import PrettyPrinter
 from queue import Queue
 from time import sleep
 from types import ModuleType
-from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
-    Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
+                    Sequence, Set, Tuple, TypeVar, Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pandas as pd
 import pydantic
 
+from trulens_eval.keys import redact_value
+
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 T = TypeVar("T")
 
-UNICODE_STOP = "🛑"
-UNICODE_CHECK = "✅"
-UNICODE_YIELD = "⚡"
-UNICODE_HOURGLASS = "⏳"
-UNICODE_CLOCK = "⏰"
 
 # Optional requirements.
 
@@ -276,7 +275,13 @@ CLASS_INFO = "__tru_class_info"
 ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
 
 
-def _safe_getattr(obj, k):
+def _safe_getattr(obj: Any, k: str) -> Any:
+    """
+    Try to get the attribute `k` of the given object. This may evaluate some
+    code if the attribute is a property and may fail. In that case, an dict
+    indicating so is returned.
+    """
+
     v = inspect.getattr_static(obj, k)
 
     if isinstance(v, property):
@@ -289,7 +294,17 @@ def _safe_getattr(obj, k):
         return v
 
 
-def _clean_attributes(obj):
+def _clean_attributes(obj) -> Dict[str, Any]:
+    """
+    Determine which attributes of the given object should be enumerated for
+    storage and/or display in UI. Returns a dict of those attributes and their
+    values.
+
+    For enumerating contents of objects that do not support utility classes like
+    pydantic, we use this method to guess what should be enumerated when
+    serializing/displaying.
+    """
+
     keys = dir(obj)
 
     ret = {}
@@ -317,7 +332,8 @@ def jsonify(
     obj: Any,
     dicted: Optional[Dict[int, JSON]] = None,
     instrument: Optional['Instrument'] = None,
-    skip_specials: bool = False
+    skip_specials: bool = False,
+    redact_keys: bool = False
 ) -> JSON:
     """
     Convert the given object into types that can be serialized in json.
@@ -335,6 +351,9 @@ def jsonify(
         - skip_specials: bool (default is False) -- if set, will remove
           specially keyed structures from the json. These have keys that start
           with "__tru_".
+
+        - redact_keys: bool (default is False) -- if set, will redact secrets
+          from the output. Secrets are detremined by `keys.py:redact_value` .
 
     Returns:
 
@@ -358,7 +377,10 @@ def jsonify(
             return {CIRCLE: id(obj)}
 
     if isinstance(obj, JSON_BASES):
-        return obj
+        if redact_keys and isinstance(obj, str):
+            return redact_value(obj)
+        else:
+            return obj
 
     if isinstance(obj, Path):
         return str(obj)
@@ -373,7 +395,8 @@ def jsonify(
         obj=o,
         dicted=new_dicted,
         instrument=instrument,
-        skip_specials=skip_specials
+        skip_specials=skip_specials,
+        redact_keys=redact_keys
     )
 
     if isinstance(obj, Enum):
@@ -383,6 +406,12 @@ def jsonify(
         temp = {}
         new_dicted[id(obj)] = temp
         temp.update({k: recur(v) for k, v in obj.items() if recur_key(k)})
+
+        # Redact possible secrets based on key name and value.
+        if redact_keys:
+            for k, v in temp.items():
+                temp[k] = redact_value(v=v, k=k)
+
         return temp
 
     elif isinstance(obj, Sequence):
@@ -401,6 +430,7 @@ def jsonify(
 
     elif isinstance(obj, pydantic.BaseModel):
         # Not even trying to use pydantic.dict here.
+
         temp = {}
         new_dicted[id(obj)] = temp
         temp.update(
@@ -410,6 +440,12 @@ def jsonify(
                 if not v.field_info.exclude and recur_key(k)
             }
         )
+
+        # Redact possible secrets based on key name and value.
+        if redact_keys:
+            for k, v in temp.items():
+                temp[k] = redact_value(v=v, k=k)
+
         if instrument.to_instrument_object(obj):
             temp[CLASS_INFO] = Class.of_class(
                 cls=obj.__class__, with_bases=True
@@ -418,6 +454,10 @@ def jsonify(
         return temp
 
     elif obj.__class__.__module__.startswith("llama_index."):
+        # Most of llama_index classes do not inherit a storage-utility class
+        # like pydantc so we have to enumerate their contents ourselves based on
+        # some heuristics.
+
         temp = {}
         new_dicted[id(obj)] = temp
 
@@ -1143,9 +1183,6 @@ class TP(SingletonPerName):  # "thread processing"
 # python instrumentation utilities
 
 
-def caller_frame(offset=0):
-    return stack()[offset + 1].frame
-
 
 def get_local_in_call_stack(
     key: str,
@@ -1203,9 +1240,17 @@ class Module(SerialModel):
     module_name: str
 
     def of_module(mod: ModuleType, loadable: bool = False) -> 'Module':
+        if loadable and mod.__name__ == "__main__":
+            # running in notebook
+            raise ImportError(f"Module {mod} is not importable.")
+
         return Module(package_name=mod.__package__, module_name=mod.__name__)
 
     def of_module_name(module_name: str, loadable: bool = False) -> 'Module':
+        if loadable and module_name == "__main__":
+            # running in notebook
+            raise ImportError(f"Module {module_name} is not importable.")
+
         mod = importlib.import_module(module_name)
         package_name = mod.__package__
         return Module(package_name=package_name, module_name=module_name)
@@ -1246,16 +1291,30 @@ class Class(SerialModel):
 
         return self
 
+    def _check_importable(self):
+        try:
+            cls = self.load()
+        except Exception as e:
+            raise ImportError(
+                f"Class {self} is not importable. "
+                "If you are defining custom feedback function implementations, make sure they can be imported by python scripts. "
+                "If you defined a function in a notebook, it will not be importable."
+            )
+
     @staticmethod
     def of_class(
         cls: type, with_bases: bool = False, loadable: bool = False
     ) -> 'Class':
-        return Class(
+        ret = Class(
             name=cls.__name__,
-            module=Module.of_module_name(cls.__module__),
+            module=Module.of_module_name(cls.__module__, loadable=loadable),
             bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__))
             if with_bases else None
         )
+        if loadable:
+            ret._check_importable()
+
+        return ret
 
     @staticmethod
     def of_object(
@@ -1339,16 +1398,19 @@ class Obj(SerialModel):
         obj: object,
         cls: Optional[type] = None,
         loadable: bool = False
-    ) -> Union['Obj', 'ObjSerial']:
+    ) -> Union['Obj', 'ObjSerial']:        
         if loadable:
             return ObjSerial.of_object(obj=obj, cls=cls, loadable=loadable)
-
+        
         if cls is None:
             cls = obj.__class__
-
+        
         return Obj(cls=Class.of_class(cls), id=id(obj))
 
     def load(self) -> object:
+        # Check that the object's class is importable before the other error is thrown.
+        self.cls._check_importable()
+
         raise RuntimeError(
             f"Trying to load an object without constructor arguments: {pp.pformat(self.dict())}."
         )
@@ -1401,18 +1463,34 @@ class ObjSerial(Obj):
             init_args = obj.args
             init_kwargs = {}
         else:
+            # For unknown types, check if the constructor for cls expect
+            # arguments and fail if so as we don't know where to get them. If
+            # there are none, create empty init bindings.
+
+            sig = _safe_init_sig(cls)
+            if len(sig.parameters) > 0:
+                raise RuntimeError(
+                    f"Do not know how to get constructor arguments for object of type {cls.__name__}. "
+                    f"If you are defining a custom feedback function, define its implementation as a function or a method of a Provider subclass."
+                )
+
             init_args = ()
             init_kwargs = {}
+
         # TODO: dataclasses
         # TODO: dataclasses_json
 
-        sig = _safe_init_sig(cls)
+        sig = _safe_init_sig(cls.__call__)
+        # NOTE: Something related to pydantic models incorrectly sets signature
+        # of cls so we need to check cls.__call__ instead.
+        
         b = sig.bind(*init_args, **init_kwargs)
         bindings = Bindings.of_bound_arguments(b)
 
-        return ObjSerial(
-            cls=Class.of_class(cls), id=id(obj), init_bindings=bindings
-        )
+        cls_serial = Class.of_class(cls)
+        cls_serial._check_importable()
+
+        return ObjSerial(cls=cls_serial, id=id(obj), init_bindings=bindings)
 
     def load(self) -> object:
         cls = self.cls.load()
@@ -1449,11 +1527,17 @@ class FunctionOrMethod(SerialModel):
 
     @staticmethod
     def of_callable(c: Callable, loadable: bool = False) -> 'FunctionOrMethod':
-        if hasattr(c, "__self__"):
-            return Method.of_method(
-                c, obj=getattr(c, "__self__"), loadable=loadable
-            )
+        """
+        Serialize the given callable. If `loadable` is set, tries to add enough
+        info for the callable to be deserialized.
+        """
+
+        if inspect.ismethod(c):
+            self = c.__self__
+            return Method.of_method(c, obj=self, loadable=loadable)
+        
         else:
+            
             return Function.of_function(c, loadable=loadable)
 
     def load(self) -> Callable:
@@ -1478,13 +1562,18 @@ class Method(FunctionOrMethod):
         loadable: bool = False
     ) -> 'Method':
         if obj is None:
-            assert hasattr(
-                meth, "__self__"
+            assert inspect.ismethod(
+                meth
             ), f"Expected a method (maybe it is a function?): {meth}"
             obj = meth.__self__
 
         if cls is None:
-            cls = obj.__class__
+            if isinstance(cls, type):
+                # classmethod, self is a type
+                cls = obj
+            else:
+                # normal method, self is instance of cls
+                cls = obj.__class__
 
         obj_json = (ObjSerial if loadable else Obj).of_object(obj, cls=cls)
 
@@ -1497,11 +1586,16 @@ class Method(FunctionOrMethod):
 
 class Function(FunctionOrMethod):
     """
-    A python function.
+    A python function. Could be a static method inside a class (not instance of
+    the class).
     """
 
     module: Module
+
+    # For static methods in a class which we view as functions, not yet
+    # supported:
     cls: Optional[Class]
+
     name: str
 
     @staticmethod
@@ -1522,11 +1616,21 @@ class Function(FunctionOrMethod):
 
     def load(self) -> Callable:
         if self.cls is not None:
-            cls = self.cls.load()
-            return getattr(cls, self.name)
+            # TODO: static/class methods work in progress
+
+            cls = self.cls.load()  # does not create object instance
+            return getattr(cls, self.name)  # lookup static/class method
+        
         else:
             mod = self.module.load()
-            return getattr(mod, self.name)
+            try:
+                return getattr(mod, self.name)  # function not inside a class
+            except Exception:
+                raise ImportError(
+                   f"Function {self} is not importable. "
+                    "If you are defining custom feedback function implementations, make sure they can be imported by python scripts. "
+                    "If you defined a function in a notebook, it will not be importable."
+                )
 
 
 class WithClassInfo(pydantic.BaseModel):

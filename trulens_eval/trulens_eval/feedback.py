@@ -7,9 +7,9 @@ specification and evaluation. A typical use-case looks like this:
 ```python 
 from trulens_eval import feedback, Select, Feedback
 
-openai = feedback.OpenAI()
+hugs = feedback.Huggingface()
 
-f_lang_match = Feedback(openai.language_match)
+f_lang_match = Feedback(hugs.language_match)
     .on_input_output()
 ```
 
@@ -118,33 +118,37 @@ The function or method provided to the `Feedback` constructor is the
 implementation of the feedback function which does the actual work of producing
 a float indicating some quantity of interest. 
 
-**Note regarding FeedbackMode.DEFERRED** -- Any callable can be provided here
-but there are additional requirements if your app uses the "deferred" feedback
-evaluation mode (when `feedback_mode=FeedbackMode.DEFERRED` are specified to app
-constructor). In those cases the callables must be methods that are globally
-importable (see the next section for details). The function/method performing
-the aggregation has the same requirements.
+**Note regarding FeedbackMode.DEFERRED** -- Any function or method (not static
+or class methods presently supported) can be provided here but there are
+additional requirements if your app uses the "deferred" feedback evaluation mode
+(when `feedback_mode=FeedbackMode.DEFERRED` are specified to app constructor).
+In those cases the callables must be functions or methods that are importable
+(see the next section for details). The function/method performing the
+aggregation has the same requirements.
 
-### Global import requirement (DEFERRED feedback mode only)
+### Import requirement (DEFERRED feedback mode only)
 
 If using deferred evaluation, the feedback function implementations and
-aggregation implementations must be methods from a class that is globally
-importable. That is, the callables must be accessible were you to evaluate this
-code:
+aggregation implementations must be functions or methods from a Provider
+subclass that is importable. That is, the callables must be accessible were you
+to evaluate this code:
 
 ```python
-import somepackage.[...].someclass 
+from somepackage.[...] import someproviderclass
+from somepackage.[...] import somefunction
+
 # [...] means optionally further package specifications
 
-provider = someclass(...) # constructor arguments can be included
-feedback_implementation = provider.somemethod
+provider = someproviderclass(...) # constructor arguments can be included
+feedback_implementation1 = provider.somemethod
+feedback_implementation2 = somefunction
 ```
 
 For provided feedback functions, `somepackage` is `trulens_eval.feedback` and
-`someclass` is `OpenAI` or one of the other `Provider` subclasses. Custom
-feedback functions likewise need to belong to a package that can be imported.
-Critically, classes defined locally in a notebook will not be importable this
-way.
+`someproviderclass` is `OpenAI` or one of the other `Provider` subclasses.
+Custom feedback functions likewise need to be importable functions or methods of
+a provider subclass that can be imported. Critically, functions or classes
+defined locally in a notebook will not be importable this way.
 
 ## Specifying Arguments
 
@@ -164,13 +168,13 @@ If argument names are ommitted, they are taken from the feedback function
 implementation signature in order. That is, 
 
 ```python
-...on(argname1=selector1, argname2=selector2)
+Feedback(...).on(argname1=selector1, argname2=selector2)
 ```
 
 and
 
 ```python
-...on(selector1, selector2)
+Feedback(...).on(selector1, selector2)
 ```
 
 are equivalent assuming the feedback implementation has two arguments,
@@ -399,7 +403,8 @@ import logging
 from multiprocessing.pool import AsyncResult
 import re
 import traceback
-from typing import Any, Callable, Dict, Iterable, Optional, Type, Union
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple, Type,
+                    Union)
 
 import numpy as np
 import openai
@@ -424,13 +429,12 @@ from trulens_eval.util import JSON
 from trulens_eval.util import jsonify
 from trulens_eval.util import SerialModel
 from trulens_eval.util import TP
-from trulens_eval.util import UNICODE_CHECK
-from trulens_eval.util import UNICODE_CLOCK
-from trulens_eval.util import UNICODE_YIELD
+from trulens_eval.util import WithClassInfo
+from trulens_eval.utils.text import UNICODE_CHECK
+from trulens_eval.utils.text import UNICODE_CLOCK
+from trulens_eval.utils.text import UNICODE_YIELD
 
 PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
-
-default_pass_fail_color_threshold = 0.5
 
 logger = logging.getLogger(__name__)
 
@@ -443,15 +447,21 @@ def check_provider(cls_or_name: Union[Type, str]) -> None:
 
     assert cls_name in PROVIDER_CLASS_NAMES, f"Unsupported provider class {cls_name}"
 
+# Signature of feedback implementations. Take in any number of arguments
+# and return either a single float or a float and a dictionary (of metadata).
+ImpCallable = Callable[..., Union[float, Tuple[float, Dict[str, Any]]]]
+
+# Signature of aggregation functions.
+AggCallable = Callable[[Iterable[float]], float]
 
 class Feedback(FeedbackDefinition):
     # Implementation, not serializable, note that FeedbackDefinition contains
     # `implementation` meant to serialize the below.
-    imp: Optional[Callable] = pydantic.Field(exclude=True)
+    imp: Optional[ImpCallable] = pydantic.Field(exclude=True)
 
     # Aggregator method for feedback functions that produce more than one
     # result.
-    agg: Optional[Callable] = pydantic.Field(exclude=True)
+    agg: Optional[AggCallable] = pydantic.Field(exclude=True)
 
     def __init__(
         self,
@@ -465,34 +475,54 @@ class Feedback(FeedbackDefinition):
         Parameters:
         
         - imp: Optional[Callable] -- implementation of the feedback function.
+
+        - agg: Optional[Callable] -- aggregation function for producing a single
+          float for feedback implementations that are run more than once.
         """
 
         agg = agg or np.mean
 
+        # imp is the python function/method while implementation is a serialized
+        # json structure. Create the one that is missing based on the one that
+        # is provided:
+
         if imp is not None:
             # These are for serialization to/from json and for db storage.
-            kwargs['implementation'] = FunctionOrMethod.of_callable(
-                imp, loadable=True
-            )
+            if 'implementation' not in kwargs:
+                try:
+                    kwargs['implementation'] = FunctionOrMethod.of_callable(
+                        imp, loadable=True
+                    )
+                except ImportError as e:
+                    logger.warning(
+                        f"Feedback implementation {imp} cannot be serialized: {e}. "
+                        f"This may be ok unless you are using the deferred feedback mode."
+                    )
+
+                    kwargs['implementation'] = FunctionOrMethod.of_callable(
+                        imp, loadable=False
+                    )
 
         else:
             if "implementation" in kwargs:
-                imp: Callable = FunctionOrMethod.pick(
+                imp: ImpCallable = FunctionOrMethod.pick(
                     **(kwargs['implementation'])
                 ).load() if kwargs['implementation'] is not None else None
 
+        # Similarly with agg and aggregator.
         if agg is not None:
-            try:
-                # These are for serialization to/from json and for db storage.
-                kwargs['aggregator'] = FunctionOrMethod.of_callable(
-                    agg, loadable=True
-                )
-            except:
-                # User defined functions in script do not have a module so cannot be serialized
-                pass
+            if 'aggregator' not in kwargs:
+                try:
+                    # These are for serialization to/from json and for db storage.            
+                    kwargs['aggregator'] = FunctionOrMethod.of_callable(
+                        agg, loadable=True
+                    )
+                except:
+                    # User defined functions in script do not have a module so cannot be serialized
+                    pass
         else:
             if 'aggregator' in kwargs:
-                agg: Callable = FunctionOrMethod.pick(**(kwargs['aggregator'])
+                agg: AggCallable = FunctionOrMethod.pick(**(kwargs['aggregator'])
                                                      ).load()
 
         super().__init__(**kwargs)
@@ -510,9 +540,23 @@ class Feedback(FeedbackDefinition):
                 )
 
     def on_input_output(self):
+        """
+        Specifies that the feedback implementation arguments are to be the main
+        app input and output in that order.
+
+        Returns a new Feedback object with the specification.
+        """
         return self.on_input().on_output()
 
     def on_default(self):
+        """
+        Specifies that one argument feedbacks should be evaluated on the main
+        app output and two argument feedbacks should be evaluates on main input
+        and main output in that order.
+
+        Returns a new Feedback object with this specification.
+        """
+
         ret = Feedback().parse_obj(self)
         ret._default_selectors()
         return ret
@@ -528,7 +572,8 @@ class Feedback(FeedbackDefinition):
             alias_info = ""
 
         print(
-            f"{UNICODE_CHECK} In {self.name}, input {par_name} will be set to {par_path}{alias_info} ."
+            f"{UNICODE_CHECK} In {self.name}, "
+            f"input {par_name} will be set to {par_path}{alias_info} ."
         )
 
     def _default_selectors(self):
@@ -573,6 +618,11 @@ class Feedback(FeedbackDefinition):
 
     @staticmethod
     def evaluate_deferred(tru: 'Tru') -> int:
+        """
+        Evaluates feedback functions that were specified to be deferred. Returns
+        an integer indicating how many evaluates were run.
+        """
+
         db = tru.db
 
         def prepare_feedback(row):
@@ -609,28 +659,32 @@ class Feedback(FeedbackDefinition):
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 30:
                     print(
-                        f"{UNICODE_YIELD} Feedback task last made progress over 30 seconds ago. Retrying: {feedback_ident}"
+                        f"{UNICODE_YIELD} Feedback task last made progress over 30 seconds ago. "
+                        f"Retrying: {feedback_ident}"
                     )
                     TP().runlater(prepare_feedback, row)
                     started_count += 1
 
                 else:
                     print(
-                        f"{UNICODE_CLOCK} Feedback task last made progress less than 30 seconds ago. Giving it more time: {feedback_ident}"
+                        f"{UNICODE_CLOCK} Feedback task last made progress less than 30 seconds ago. "
+                        f"Giving it more time: {feedback_ident}"
                     )
 
             elif row.status in [FeedbackResultStatus.FAILED]:
                 now = datetime.now().timestamp()
                 if now - row.last_ts > 60 * 5:
                     print(
-                        f"{UNICODE_YIELD} Feedback task last made progress over 5 minutes ago. Retrying: {feedback_ident}"
+                        f"{UNICODE_YIELD} Feedback task last made progress over 5 minutes ago. "
+                        f"Retrying: {feedback_ident}"
                     )
                     TP().runlater(prepare_feedback, row)
                     started_count += 1
 
                 else:
                     print(
-                        f"{UNICODE_CLOCK} Feedback task last made progress less than 5 minutes ago. Not touching it for now: {feedback_ident}"
+                        f"{UNICODE_CLOCK} Feedback task last made progress less than 5 minutes ago. "
+                        f"Not touching it for now: {feedback_ident}"
                     )
 
             elif row.status == FeedbackResultStatus.DONE:
@@ -643,6 +697,13 @@ class Feedback(FeedbackDefinition):
         return self.imp(*args, **kwargs)
 
     def aggregate(self, func: Callable) -> 'Feedback':
+        """
+        Specify the aggregation function in case the selectors for this feedback
+        generate more than one value for implementation argument(s).
+
+        Returns a new Feedback object with the given aggregation function.
+        """
+
         return Feedback(imp=self.imp, selectors=self.selectors, agg=func)
 
     @staticmethod
@@ -753,17 +814,32 @@ class Feedback(FeedbackDefinition):
         )
 
         try:
+            # Total cost, will accumulate.
             cost = Cost()
-
+            
             for ins in self.extract_selection(app=app_json, record=record):
 
-                result_val, part_cost = Endpoint.track_all_costs_tally(
+                result_and_meta, part_cost = Endpoint.track_all_costs_tally(
                     lambda: self.imp(**ins)
                 )
                 cost += part_cost
+
+                if isinstance(result_and_meta, Tuple):
+                    # If output is a tuple of two, we assume it is the float and the metadata.
+                    assert len(result_and_meta) == 2, "Feedback functions must return either a single float or a float and a dictionary."
+                    result_val, meta = result_and_meta
+
+                    assert isinstance(meta, dict), f"Feedback metadata output must be a dictionary but was {type(call_meta)}."
+                else:
+                    # Otherwise it is just the float. We create empty metadata dict.
+                    result_val = result_and_meta
+                    meta = dict()
+
+                assert isinstance(result_val, float), f"Feedback function output must be a float but was {type(result_val)}."
+                    
                 result_vals.append(result_val)
 
-                feedback_call = FeedbackCall(args=ins, ret=result_val)
+                feedback_call = FeedbackCall(args=ins, ret=result_val, meta=meta)
                 feedback_calls.append(feedback_call)
 
             result_vals = np.array(result_vals)
@@ -906,26 +982,32 @@ def _re_1_10_rating(str_val):
     return int(matches.group())
 
 
-class Provider(SerialModel):
+class Provider(SerialModel, WithClassInfo):
 
     class Config:
         arbitrary_types_allowed = True
 
     endpoint: Optional[Endpoint]
 
+    def __init__(self, *args, **kwargs):
+        # for WithClassInfo:
+        kwargs['obj'] = self
+
+        super().__init__(*args, **kwargs)
+
 
 class OpenAI(Provider):
-    model_engine: str = "gpt-3.5-turbo"
+    model_engine: str
 
-    # Exclude is important here so that pydantic doesn't try to
-    # serialize/deserialize the constant fixed endpoint we need.
-    endpoint: Endpoint = pydantic.Field(
-        default_factory=OpenAIEndpoint, exclude=True
-    )
+    endpoint: Endpoint
+
     model: Any=None
     tokenizer: Any=None
+    def __init__(self, *args, endpoint = None, model_engine = "gpt-3.5-turbo", **kwargs):
+        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
 
-    def __init__(self, **kwargs):
         """
         A set of OpenAI Feedback Functions.
 
@@ -933,10 +1015,17 @@ class OpenAI(Provider):
 
         - model_engine (str, optional): The specific model version. Defaults to
           "gpt-3.5-turbo".
+
+        - All other args/kwargs passed to OpenAIEndpoint constructor.
         """
 
+        # TODO: why was self_kwargs required here independently of kwargs?
+        self_kwargs = dict()
+        self_kwargs['model_engine'] = model_engine
+        self_kwargs['endpoint'] = OpenAIEndpoint(*args, **kwargs)
+
         super().__init__(
-            **kwargs
+            **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
         set_openai_key()
@@ -947,7 +1036,7 @@ class OpenAI(Provider):
         return Provider.to_json(self, model_engine=self.model_engine)
     """
 
-    def _create_chat_completition(self, *args, **kwargs):
+    def _create_chat_completion(self, *args, **kwargs):
         return openai.ChatCompletion.create(*args, **kwargs)
 
     def _moderation(self, text: str):
@@ -1133,7 +1222,7 @@ class OpenAI(Provider):
         print("Contradiction:", predicted_probability[2])
     def find_relevant_string(self, full_source, statement_piece):
         return self.endpoint.run_me(
-                lambda: self._create_chat_completition(
+                lambda: self._create_chat_completion(
                     model=self.model_engine,
                     temperature=0.0,
                     messages=[
@@ -1161,7 +1250,7 @@ class OpenAI(Provider):
             )
     def llm_entailment(self, premise, hypothesis):
         return self.endpoint.run_me(
-                lambda: self._create_chat_completition(
+                lambda: self._create_chat_completion(
                     model=self.model_engine,
                     temperature=0.0,
                     messages=[
@@ -1197,7 +1286,7 @@ class OpenAI(Provider):
         '''
         ans = _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: self._create_chat_completition(
+                lambda: self._create_chat_completion(
                     model=self.model_engine,
                     temperature=0.0,
                     messages=[
@@ -1228,7 +1317,7 @@ class OpenAI(Provider):
                 print("\n")
         
         
-        print("\n================================\n")
+        
         return ans
 
     def relevance(self, prompt: str, response: str) -> float:
@@ -1246,7 +1335,7 @@ class OpenAI(Provider):
         """
         return _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: self._create_chat_completition(
+                lambda: self._create_chat_completion(
                     model=self.model_engine,
                     temperature=0.0,
                     messages=[
@@ -1265,41 +1354,6 @@ class OpenAI(Provider):
             )
         ) / 10
 
-    def model_agreement(self, prompt: str, response: str) -> float:
-        """
-        Uses OpenAI's Chat GPT Model. A function that gives Chat GPT the same
-        prompt and gets a response, encouraging truthfulness. A second template
-        is given to Chat GPT with a prompt that the original response is
-        correct, and measures whether previous Chat GPT's response is similar.
-
-        Parameters:
-            prompt (str): A text prompt to an agent. response (str): The agent's
-            response to the prompt.
-
-        Returns:
-            float: A value between 0 and 1. 0 being "not in agreement" and 1
-            being "in agreement".
-        """
-        oai_chat_response = OpenAI().endpoint.run_me(
-            lambda: self._create_chat_completition(
-                model=self.model_engine,
-                temperature=0.0,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": feedback_prompts.CORRECT_SYSTEM_PROMPT
-                    }, {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
-            )["choices"][0]["message"]["content"]
-        )
-        agreement_txt = _get_answer_agreement(
-            prompt, response, oai_chat_response, self.model_engine
-        )
-        return _re_1_10_rating(agreement_txt) / 10
-
     def sentiment(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -1316,9 +1370,9 @@ class OpenAI(Provider):
 
         return _re_1_10_rating(
             self.endpoint.run_me(
-                lambda: self._create_chat_completition(
+                lambda: self._create_chat_completion(
                     model=self.model_engine,
-                    temperature=0.5,
+                    temperature=0.0,
                     messages=[
                         {
                             "role": "system",
@@ -1331,12 +1385,140 @@ class OpenAI(Provider):
                 )["choices"][0]["message"]["content"]
             )
         )
+    
+    def model_agreement(self, prompt: str, response: str) -> float:
+        """
+        Uses OpenAI's Chat GPT Model. A function that gives Chat GPT the same
+        prompt and gets a response, encouraging truthfulness. A second template
+        is given to Chat GPT with a prompt that the original response is
+        correct, and measures whether previous Chat GPT's response is similar.
+
+        Parameters:
+            prompt (str): A text prompt to an agent. response (str): The agent's
+            response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not in agreement" and 1
+            being "in agreement".
+        """
+        logger.warning("model_agreement has been deprecated. Use GroundTruthAgreement(ground_truth) instead.")
+        oai_chat_response = self.endpoint.run_me(
+            lambda: self._create_chat_completion(
+                model=self.model_engine,
+                temperature=0.0,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": feedback_prompts.CORRECT_SYSTEM_PROMPT
+                    }, {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+        )
+        agreement_txt = self._get_answer_agreement(
+            prompt, response, oai_chat_response, self.model_engine
+        )
+        return _re_1_10_rating(agreement_txt) / 10
+
+    def _get_answer_agreement(self, prompt, response, check_response, model_engine="gpt-3.5-turbo"):
+        oai_chat_response = self.endpoint.run_me(
+            lambda: self._create_chat_completion(
+                model=model_engine,
+                temperature=0.0,
+                messages=[
+                    {
+                        "role":
+                            "system",
+                        "content":
+                            feedback_prompts.AGREEMENT_SYSTEM_PROMPT %
+                            (prompt, response)
+                    }, {
+                        "role": "user",
+                        "content": check_response
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+        )
+        return oai_chat_response
+
+
+
+class GroundTruthAgreement(SerialModel, WithClassInfo):
+    ground_truth: Union[List[str], FunctionOrMethod]
+    provider: OpenAI
+
+    ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
+
+    def __init__(self, ground_truth: Union[List[str], Callable, FunctionOrMethod], provider: OpenAI = OpenAI()):
+        if isinstance(ground_truth, List):
+            ground_truth_imp = None
+        elif isinstance(ground_truth, FunctionOrMethod):
+            ground_truth_imp = ground_truth.load()
+        elif isinstance(ground_truth, Callable):
+            ground_truth_imp = ground_truth
+            ground_truth = FunctionOrMethod.of_callable(ground_truth)
+        elif isinstance(ground_truth, Dict):
+            # Serialized FunctionOrMethod?
+            ground_truth = FunctionOrMethod.pick(**ground_truth)
+            ground_truth_imp = ground_truth.load()
+        else:
+            raise RuntimeError(f"Unhandled ground_truth type: {type(ground_truth)}.")
+
+        super().__init__(
+            ground_truth=ground_truth,
+            ground_truth_imp=ground_truth_imp,
+            provider=provider,
+            obj=self # for WithClassInfo
+        )
+
+    def _find_response(self, prompt: str) -> Optional[str]:
+        if self.ground_truth_imp is not None:
+            return self.ground_truth_imp(prompt)
+
+        responses = [qr["response"] for qr in self.ground_truth if qr["query"] == prompt]
+        if responses:
+            return responses[0]
+        else:
+            return None
+
+    def agreement_measure(self, prompt: str, response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
+        """
+        Uses OpenAI's Chat GPT Model. A function that that measures
+        similarity to ground truth. A second template is given to Chat GPT
+        with a prompt that the original response is correct, and measures
+        whether previous Chat GPT's response is similar.
+
+        Parameters:
+            prompt (str): A text prompt to an agent. response (str): The
+            agent's response to the prompt.
+
+        Returns:
+            - float: A value between 0 and 1. 0 being "not in agreement" and 1
+                being "in agreement".
+            - dict: with key 'ground_truth_response'
+        """
+        ground_truth_response = self._find_response(prompt)
+        if ground_truth_response:
+            agreement_txt = self.provider._get_answer_agreement(
+                prompt, response, ground_truth_response
+            )
+            ret = _re_1_10_rating(agreement_txt) / 10, dict(ground_truth_response=ground_truth_response)
+        else:
+            ret = np.nan
+        return ret
+
 
 
 class AzureOpenAI(OpenAI):
     deployment_id: str
 
-    def __init__(self, **kwargs):
+    def __init__(self, endpoint=None, **kwargs):
+        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
+
         """
         Wrapper to use Azure OpenAI. Please export the following env variables
 
@@ -1360,40 +1542,13 @@ class AzureOpenAI(OpenAI):
         openai.api_base = os.getenv("OPENAI_API_BASE")
         openai.api_version = os.getenv("OPENAI_API_VERSION")
 
-    def _create_chat_completition(self, *args, **kwargs):
+    def _create_chat_completion(self, *args, **kwargs):
         """
         We need to pass `engine`
         """
-        return super()._create_chat_completition(
+        return super()._create_chat_completion(
             *args, deployment_id=self.deployment_id, **kwargs
         )
-
-
-def _get_answer_agreement(prompt, response, check_response, model_engine):
-    print("DEBUG")
-    print(feedback_prompts.AGREEMENT_SYSTEM_PROMPT % (prompt, response))
-    print("MODEL ANSWER")
-    print(check_response)
-    oai_chat_response = OpenAI().endpoint.run_me(
-        lambda: openai.ChatCompletion.create(
-            model=model_engine,
-            temperature=0.5,
-            messages=[
-                {
-                    "role":
-                        "system",
-                    "content":
-                        feedback_prompts.AGREEMENT_SYSTEM_PROMPT %
-                        (prompt, response)
-                }, {
-                    "role": "user",
-                    "content": check_response
-                }
-            ]
-        )["choices"][0]["message"]["content"]
-    )
-    return oai_chat_response
-
 
 # Cannot put these inside Huggingface since it interferes with pydantic.BaseModel.
 HUGS_SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
@@ -1404,20 +1559,24 @@ HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm
 
 class Huggingface(Provider):
 
-    # Exclude is important here so that pydantic doesn't try to
-    # serialize/deserialize the constant fixed endpoint we need.
-    endpoint: Endpoint = pydantic.Field(
-        default_factory=HuggingfaceEndpoint, exclude=True
-    )
+    endpoint: Endpoint
+    
+    def __init__(self, endpoint=None, **kwargs):
+        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
 
-    def __init__(self, **kwargs):
         """
-        A set of Huggingface Feedback Functions. Utilizes huggingface
-        api-inference.
+        A set of Huggingface Feedback Functions.
+
+        All args/kwargs passed to HuggingfaceEndpoint constructor.
         """
+
+        self_kwargs = dict()
+        self_kwargs['endpoint'] = HuggingfaceEndpoint(**kwargs)
 
         super().__init__(
-            **kwargs
+            **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
     def language_match(self, text1: str, text2: str) -> float:
@@ -1465,7 +1624,7 @@ class Huggingface(Provider):
 
         l1 = 1.0 - (np.linalg.norm(diff, ord=1)) / 2.0
 
-        return l1
+        return l1, dict(text1_scores=scores1, text2_scores=scores2)
 
     def positive_sentiment(self, text: str) -> float:
         """
@@ -1515,16 +1674,19 @@ class Huggingface(Provider):
                 return label['score']
 
 
-# cohere
 class Cohere(Provider):
     model_engine: str = "large"
 
-    def __init__(self, model_engine='large'):
-        super().__init__()  # need to include pydantic.BaseModel.__init__
+    def __init__(self, model_engine='large', endpoint=None, **kwargs):
+        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
 
-        Cohere().endpoint = Endpoint(name="cohere")
-        self.model_engine = model_engine
+        kwargs['endpoint'] = Endpoint(name="cohere")
+        kwargs['model_engine'] = model_engine
 
+        super().__init__(**kwargs)  # need to include pydantic.BaseModel.__init__
+        
     def sentiment(
         self,
         text,

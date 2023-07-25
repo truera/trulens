@@ -3,10 +3,10 @@ CONDA_ENV := py38_trulens
 CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate $(CONDA_ENV)
 
 trubot:
-	$(CONDA); (PYTHONPATH=. python -u trulens_eval/examples/trubot.py)
+	$(CONDA); (PYTHONPATH=. python -u examples/trubot/trubot.py)
 
 test:
-	$(CONDA); python -m pytest -s test_tru_chain.py
+	$(CONDA); python -m unittest discover tests.unit
 
 format:
 	$(CONDA); bash format.sh
