@@ -838,7 +838,7 @@ class Feedback(FeedbackDefinition):
 
                 if isinstance(result_val, dict):
                     for val in result_val.values():
-                        assert isinstance(val, float), f"Feedback function output with multivalye must be a dict with float values but encountered {type(val)}."
+                        assert isinstance(val, float), f"Feedback function output with multivalue must be a dict with float values but encountered {type(val)}."
                     # TODO: Better handling of multi-output
                     result_val = list(result_val.values())
                     feedback_call = FeedbackCall(args=ins, ret =np.mean(result_val), meta=meta)
