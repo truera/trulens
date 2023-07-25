@@ -1380,14 +1380,41 @@ class Groundedness(SerialModel, WithClassInfo):
     summarize_provider: Provider
     groundedness_provider: Provider
     def __init__(self,groundedness_provider: Provider = OpenAI()):
+        """Instantiates the groundedness providers. Currently the groundedness functions work well with a summarizer.
+        This class will use an OpenAI summarizer to find the relevant strings in a text. The groundedness_provider can 
+        either be an llm with OpenAI or NLI with huggingface.
+
+        Args:
+            groundedness_provider (Provider, optional): _description_. Defaults to OpenAI().
+        """
         summarize_provider = OpenAI()
+        if not isinstance(groundedness_provider, (OpenAI, Huggingface)):
+            raise Exception("Groundedness is only supported groundedness_provider as OpenAI or Huggingface Providers.")
         super().__init__(
             summarize_provider=summarize_provider,
             groundedness_provider=groundedness_provider,
             obj=self # for WithClassInfo
         )
     
-    def groundedness_measure(self, source:str, statement:str):
+    def _groundedness_measure_experimental(self, source:str, statement:str) -> float:
+        """A measure to track if the source material supports each sentence in the statement.
+        Current limitations are that this is a slow feedback function as it must check each sentence and each source.
+        ```
+        grounded = feedback.Groundedness(groundedness_provider=OpenAI())
+
+
+        f_groundedness = feedback.Feedback(grounded._groundedness_measure_experimental).on(
+            # Source documents
+            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content
+        ).on_output().aggregate(np.mean)
+        ```
+        Args:
+            source (str): The source that should support the statement
+            statement (str): The statement to check groundedness
+
+        Returns:
+            float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
+        """
         groundedness_measures = []
         hypotheses = []
         llm_discovered_relevant_statements = []
