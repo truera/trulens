@@ -836,11 +836,19 @@ class Feedback(FeedbackDefinition):
                     result_val = result_and_meta
                     meta = dict()
 
-                assert isinstance(result_val, float), f"Feedback function output must be a float but was {type(result_val)}."
-                    
-                result_vals.append(result_val)
+                if isinstance(result_val, dict):
+                    for val in result_val.values():
+                        assert isinstance(val, float), f"Feedback function output with multivalye must be a dict with float values but encountered {type(val)}."
+                    # TODO: Better handling of multi-output
+                    result_val = list(result_val.values())
+                    feedback_call = FeedbackCall(args=ins, ret =np.mean(result_val), meta=meta)
+                
+                else:
+                    assert isinstance(result_val, float), f"Feedback function output must be a float or dict but was {type(result_val)}."
+                    feedback_call = FeedbackCall(args=ins, ret=result_val, meta=meta)
+                
 
-                feedback_call = FeedbackCall(args=ins, ret=result_val, meta=meta)
+                result_vals.append(result_val)
                 feedback_calls.append(feedback_call)
 
             result_vals = np.array(result_vals)
@@ -1404,9 +1412,9 @@ class Groundedness(SerialModel, WithClassInfo):
 
 
         f_groundedness = feedback.Feedback(grounded._groundedness_measure_experimental).on(
-            # Source documents
+            # Source Documents
             Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content
-        ).on_output().aggregate(np.mean)
+        ).on_output().aggregate(grounded._groundedness_measure_experimental_aggregator)
         ```
         Args:
             source (str): The source that should support the statement
@@ -1415,23 +1423,31 @@ class Groundedness(SerialModel, WithClassInfo):
         Returns:
             float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
-        groundedness_measures = []
-        hypotheses = []
-        llm_discovered_relevant_statements = []
-        for hypothesis in tqdm(statement.split("."), desc="Groundendess per statement in source"):
+        groundedness_scores = {}
+        hypotheses = {}
+        llm_discovered_relevant_statements = {}
+        for i, hypothesis in enumerate(tqdm(statement.split("."), desc="Groundendess per statement in source")):
             plausible_junk_char_min = 4 # very likely "sentences" under 4 characters are punctuation, spaces, etc
             if len(hypothesis) > plausible_junk_char_min:
-                hypotheses.append(hypothesis)
+                hypotheses[f"statement_{i}"] = hypothesis
                 supporting_premise = self.summarize_provider._find_relevant_string(source, hypothesis)
-                llm_discovered_relevant_statements.append(supporting_premise)
-                groundedness_measures.append(self.groundedness_provider._groundedness(premise=supporting_premise, hypothesis=hypothesis))
+                llm_discovered_relevant_statements[f"statement_{i}"] = supporting_premise
+                groundedness_scores[f"statement_{i}"] = self.groundedness_provider._groundedness(premise=supporting_premise, hypothesis=hypothesis)
                 
-        ans = np.mean(groundedness_measures)
-        return ans, {"source_txt":source,
-                     "statement":statement,
-                     "hypotheses":hypotheses,
-                     "llm_discovered_relevant_statements":llm_discovered_relevant_statements,
-                     "groundedness_measures":groundedness_measures,}
+        return groundedness_scores, {"groundedness_scores":groundedness_scores, "hypotheses":hypotheses, "llm_discovered_relevant_statements": llm_discovered_relevant_statements}
+    def _groundedness_measure_experimental_aggregator(self, source_statements_matrix: np.ndarray) -> float:
+        """Aggregates multi-input, mulit-output information from the _groundedness_measure_experimental methods.
+
+
+        Args:
+            source_statements_matrix (np.ndarray): a 2D array with the first dimension corresponding to a source text,
+                and the second dimension corresponding to each sentence in a statement; it's groundedness score
+
+        Returns:
+            float: for each statement, gets the max groundedness, then averages over that.
+        """
+        max_over_sources = np.max(source_statements_matrix, axis = 0)
+        return np.mean(max_over_sources)
 
 class GroundTruthAgreement(SerialModel, WithClassInfo):
     ground_truth: Union[List[str], FunctionOrMethod]
