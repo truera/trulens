@@ -91,12 +91,6 @@ class LlamaInstrument(Instrument):
                     lambda o: isinstance(
                         o, llama_index.indices.query.base.BaseQueryEngine
                     ),
-                "generate_question":
-                    lambda o: isinstance(
-                        o, llama_index.question_gen.types.BaseQuestionGenerator
-                    ),
-                "agent":
-                    lambda o: isinstance(o, llama_index.agent.OpenAIAgent),
             }, LangChainInstrument.Default.METHODS
         )
     def __init__(self):
