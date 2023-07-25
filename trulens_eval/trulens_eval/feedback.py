@@ -403,6 +403,7 @@ import logging
 from multiprocessing.pool import AsyncResult
 import re
 import traceback
+from tqdm import tqdm
 from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple, Type,
                     Union)
 
@@ -998,11 +999,8 @@ class Provider(SerialModel, WithClassInfo):
 
 class OpenAI(Provider):
     model_engine: str
-
     endpoint: Endpoint
 
-    model: Any=None
-    tokenizer: Any=None
     def __init__(self, *args, endpoint = None, model_engine = "gpt-3.5-turbo", **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
@@ -1168,59 +1166,8 @@ class OpenAI(Provider):
         return 1 - int(
             openai_response["results"][0]["category_scores"]["violence/graphic"]
         )
-
-    def _set_if_not(self):
-        if self.tokenizer:
-            return
-        from transformers import AutoTokenizer, AutoModelForSequenceClassification
-
-        
-        premise = "Soccer is a sport where the goal is to get a ball into a net. Soccer is a game with multiple males playing, each goal scoring one point each. Typically score range from 0-4 per each team."
-        hypothesis = "The ball scores two points when it hits the back of the net"
-
-        hg_model_hub_name = "ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
-        # hg_model_hub_name = "ynie/albert-xxlarge-v2-snli_mnli_fever_anli_R1_R2_R3-nli"
-        # hg_model_hub_name = "ynie/bart-large-snli_mnli_fever_anli_R1_R2_R3-nli"
-        # hg_model_hub_name = "ynie/electra-large-discriminator-snli_mnli_fever_anli_R1_R2_R3-nli"
-        # hg_model_hub_name = "ynie/xlnet-large-cased-snli_mnli_fever_anli_R1_R2_R3-nli"
-
-        self.tokenizer = AutoTokenizer.from_pretrained(hg_model_hub_name)
-        self.model = AutoModelForSequenceClassification.from_pretrained(hg_model_hub_name)
-    def _wip_entailment(self, premise, hypothesis):
-        import torch
-        self._set_if_not()
-        tokenizer = self.tokenizer
-        model = self.model
-        max_length = 256
-
-        tokenized_input_seq_pair = tokenizer.encode_plus(premise, hypothesis,
-                                                        max_length=max_length,
-                                                        return_token_type_ids=True, truncation=True)
-
-        input_ids = torch.Tensor(tokenized_input_seq_pair['input_ids']).long().unsqueeze(0)
-        # remember bart doesn't have 'token_type_ids', remove the line below if you are using bart.
-        token_type_ids = torch.Tensor(tokenized_input_seq_pair['token_type_ids']).long().unsqueeze(0)
-        attention_mask = torch.Tensor(tokenized_input_seq_pair['attention_mask']).long().unsqueeze(0)
-
-        outputs = model(input_ids,
-                        attention_mask=attention_mask,
-                        token_type_ids=token_type_ids,
-                        labels=None)
-        # Note:
-        # "id2label": {
-        #     "0": "entailment",
-        #     "1": "neutral",
-        #     "2": "contradiction"
-        # },
-        #print(outputs)
-        predicted_probability = torch.softmax(outputs[0], dim=1)[0].tolist()  # batch_size only one
-
-        #print("Premise:", premise)
-        #print("Hypothesis:", hypothesis)
-        print("Entailment:", predicted_probability[0])
-        print("Neutral:", predicted_probability[1])
-        print("Contradiction:", predicted_probability[2])
-    def find_relevant_string(self, full_source, statement_piece):
+    
+    def _find_relevant_string(self, full_source, hypothesis):
         return self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -1241,15 +1188,15 @@ class OpenAI(Provider):
                             "content":
                                 str.format(
                                     feedback_prompts.USER_FIND_SUPPORTING,
-                                    response=statement_piece
+                                    response=hypothesis
                                 )
                         }
                     
                     ]
                 )["choices"][0]["message"]["content"]
             )
-    def llm_entailment(self, premise, hypothesis):
-        return self.endpoint.run_me(
+    def _groundedness(self, premise, hypothesis):
+        return _re_1_10_rating(self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
                     temperature=0.0,
@@ -1259,7 +1206,7 @@ class OpenAI(Provider):
                                 "system",
                             "content":
                                 str.format(
-                                    feedback_prompts.LLM_ENTAILMENT,
+                                    feedback_prompts.LLM_GROUNDEDNESS,
                                     premise=premise,
                                     hypothesis=hypothesis,
                                 )
@@ -1267,8 +1214,8 @@ class OpenAI(Provider):
                     
                     ]
                 )["choices"][0]["message"]["content"]
-            ) 
-        
+            )) / 10
+    
     def qs_relevance(self, question: str, statement: str) -> float:
         """
         Uses OpenAI's Chat Completion App. A function that completes a
@@ -1282,9 +1229,7 @@ class OpenAI(Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
             "relevant".
         """
-        ans=1
-        '''
-        ans = _re_1_10_rating(
+        return _re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -1305,20 +1250,6 @@ class OpenAI(Provider):
             )
         ) / 10
 
-        print(f"\nRELEVANCE SCORE: {ans} \nQ:{question}\n")
-        '''
-        for statement_piece in statement.split("."):
-            if len(statement_piece) > 4:
-                print(f"PIECE:{statement_piece}")
-                supporting = self.find_relevant_string(question, statement_piece)
-                print(f"Summarized Supporting: {supporting}")
-                #self._wip_entailment(supporting, statement_piece)
-                print(f"LLM ENTAIL SCORE: {self.llm_entailment(premise=supporting, hypothesis=statement_piece)}")
-                print("\n")
-        
-        
-        
-        return ans
 
     def relevance(self, prompt: str, response: str) -> float:
         """
@@ -1442,12 +1373,42 @@ class OpenAI(Provider):
             )["choices"][0]["message"]["content"]
         )
         return oai_chat_response
+    
 
 
+class Groundedness(SerialModel, WithClassInfo):
+    summarize_provider: Provider
+    groundedness_provider: Provider
+    def __init__(self,groundedness_provider: Provider = OpenAI()):
+        summarize_provider = OpenAI()
+        super().__init__(
+            summarize_provider=summarize_provider,
+            groundedness_provider=groundedness_provider,
+            obj=self # for WithClassInfo
+        )
+    
+    def groundedness_measure(self, source:str, statement:str):
+        groundedness_measures = []
+        hypotheses = []
+        llm_discovered_relevant_statements = []
+        for hypothesis in tqdm(statement.split("."), desc="Groundendess per statement in source"):
+            plausible_junk_char_min = 4 # very likely "sentences" under 4 characters are punctuation, spaces, etc
+            if len(hypothesis) > plausible_junk_char_min:
+                hypotheses.append(hypothesis)
+                supporting_premise = self.summarize_provider._find_relevant_string(source, hypothesis)
+                llm_discovered_relevant_statements.append(supporting_premise)
+                groundedness_measures.append(self.groundedness_provider._groundedness(premise=supporting_premise, hypothesis=hypothesis))
+                
+        ans = np.mean(groundedness_measures)
+        return ans, {"source_txt":source,
+                     "statement":statement,
+                     "hypotheses":hypotheses,
+                     "llm_discovered_relevant_statements":llm_discovered_relevant_statements,
+                     "groundedness_measures":groundedness_measures,}
 
 class GroundTruthAgreement(SerialModel, WithClassInfo):
     ground_truth: Union[List[str], FunctionOrMethod]
-    provider: OpenAI
+    provider: Provider
 
     ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
 
@@ -1555,7 +1516,7 @@ HUGS_SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp
 HUGS_TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
 HUGS_CHAT_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-3B"
 HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
-
+HUGS_NLI_API_URL = "https://api-inference.huggingface.co/models/ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
 
 class Huggingface(Provider):
 
@@ -1671,6 +1632,18 @@ class Huggingface(Provider):
 
         for label in hf_response:
             if label['label'] == 'toxic':
+                return label['score']
+    def _groundedness(self, premise, hypothesis):
+        if not '.' == premise[len(premise) - 1]:
+            premise  = premise + '.'
+        nli_string = premise + ' ' + hypothesis
+        payload = {"inputs": nli_string}
+        hf_response = self.endpoint.post(
+            url=HUGS_NLI_API_URL, payload=payload
+        )
+        
+        for label in hf_response:
+            if label['label'] == 'entailment':
                 return label['score']
 
 

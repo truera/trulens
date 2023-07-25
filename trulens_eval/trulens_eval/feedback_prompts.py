@@ -1,6 +1,6 @@
 from cohere.responses.classify import Example
 
-LLM_ENTAILMENT = """You are a INFORMATION OVERLAP classifier; providing the overlap of information between two statements.
+LLM_GROUNDEDNESS = """You are a INFORMATION OVERLAP classifier; providing the overlap of information between two statements.
 Respond only as a number from 1 to 10 where 1 is no information overlap and 10 is all information is overlapping.
 Never elaborate.
 
