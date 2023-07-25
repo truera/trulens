@@ -82,7 +82,7 @@ You are a summarizer that can only answer 'Nothing Found' or return exact senten
 
 USER_FIND_SUPPORTING = """
 I'm looking for related information to a statement from your excerpt. If nothing is directly related, say 'Nothing Found'
-Respond with all sentence, unchanged from the excerpt, that are directly related to this statement: {response}
+Respond with all sentences, unchanged from the excerpt, that are directly related to this statement: {response}
 """
 
 SENTIMENT_SYSTEM_PROMPT = f"Please classify the sentiment of the following text as 1 if positive or 0 if not positive. Respond with only a '1' or '0', nothing more."
