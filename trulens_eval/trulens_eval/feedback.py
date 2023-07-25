@@ -1387,14 +1387,16 @@ class OpenAI(Provider):
 class Groundedness(SerialModel, WithClassInfo):
     summarize_provider: Provider
     groundedness_provider: Provider
-    def __init__(self,groundedness_provider: Provider = OpenAI()):
+    def __init__(self,groundedness_provider: Provider = None):
         """Instantiates the groundedness providers. Currently the groundedness functions work well with a summarizer.
         This class will use an OpenAI summarizer to find the relevant strings in a text. The groundedness_provider can 
         either be an llm with OpenAI or NLI with huggingface.
 
         Args:
-            groundedness_provider (Provider, optional): _description_. Defaults to OpenAI().
+            groundedness_provider (Provider, optional): groundedness provider options: OpenAI LLM or HuggingFace NLI. Defaults to OpenAI().
         """
+        if groundedness_provider is None:
+            groundedness_provider = OpenAI()
         summarize_provider = OpenAI()
         if not isinstance(groundedness_provider, (OpenAI, Huggingface)):
             raise Exception("Groundedness is only supported groundedness_provider as OpenAI or Huggingface Providers.")
@@ -1455,7 +1457,9 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
 
     ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
 
-    def __init__(self, ground_truth: Union[List[str], Callable, FunctionOrMethod], provider: OpenAI = OpenAI()):
+    def __init__(self, ground_truth: Union[List[str], Callable, FunctionOrMethod], provider: Provider = None):
+        if provider is None:
+            provider = OpenAI()
         if isinstance(ground_truth, List):
             ground_truth_imp = None
         elif isinstance(ground_truth, FunctionOrMethod):
