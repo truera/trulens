@@ -257,7 +257,9 @@ else:
             val = record_viewer(record_json, app_json)
 
             match_query = None
-            if val != "":
+
+            # Assumes record_json['perf']['start_time'] is always present
+            if val != record_json['perf']['start_time'] and val != '':
                 match = None
                 for call in record.calls:
                     if call.perf.start_time.isoformat() == val:
@@ -275,8 +277,6 @@ else:
                     )
 
                     draw_call(match)
-                    # with st.expander("Call Details:"):
-                    #     st.json(jsonify_for_ui(match)
 
                     view = classes_map.get(match_query)
                     if view is not None:

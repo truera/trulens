@@ -1,4 +1,4 @@
-import { CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw, StackTreeNode } from './types';
+import { AppJSONRaw, CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw, StackTreeNode } from './types';
 
 /**
  * Gets the name of the calling class in the stack cell.
@@ -69,19 +69,22 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
     if (matchingNode) {
       matchingNode.startTime = startTime;
       matchingNode.endTime = endTime;
+      matchingNode.id = call.stack[index].method.obj.id;
       matchingNode.raw = call;
 
       return;
     }
 
     tree.children.push({
-      children: undefined,
+      children: [],
       name: getClassNameFromCell(stackCell),
       path: getPathName(stackCell),
       methodName: getMethodNameFromCell(stackCell),
+      id: stackCell.method.obj.id,
       startTime,
       endTime,
       raw: call,
+      parentNodes: [...tree.parentNodes, tree],
     });
 
     return;
@@ -93,6 +96,7 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
       name: getClassNameFromCell(stackCell),
       methodName: getMethodNameFromCell(stackCell),
       path: getPathName(stackCell),
+      parentNodes: [...tree.parentNodes, tree],
     };
 
     // otherwise create a new node
@@ -103,12 +107,24 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
   addCallToTree(matchingNode, call, stack, index + 1);
 };
 
-export const createTreeFromCalls = (recordJSON: RecordJSONRaw) => {
+export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appJSON: AppJSONRaw) => {
   const tree: StackTreeNode = {
     children: [],
-    name: 'App',
+    name: appJSON.app_id,
     startTime: new Date(recordJSON.perf.start_time),
     endTime: new Date(recordJSON.perf.end_time),
+    path: '',
+    parentNodes: [],
+    id: 0,
+    raw: {
+      stack: [],
+      args: { str_or_query_bundle: '' },
+      error: null,
+      rets: [],
+      perf: recordJSON.perf,
+      pid: -1,
+      tid: -1,
+    },
   };
 
   recordJSON.calls.forEach((call) => {
