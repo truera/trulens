@@ -33,7 +33,7 @@ pp = PrettyPrinter()
 T = TypeVar("T")
 
 INSTRUMENT = "__tru_instrument"
-
+DEFAULT_RPM = 60
 
 class EndpointCallback(SerialModel):
     """
@@ -120,7 +120,7 @@ class Endpoint(SerialModel, SingletonPerName):
     name: str
 
     # Requests per minute.
-    rpm: float = 60
+    rpm: float = DEFAULT_RPM
 
     # Retries (if performing requests using this class). TODO: wire this up to
     # the various endpoint systems' retries specification.
