@@ -216,16 +216,23 @@ else:
                         return [f'background-color: {cat.color}'] * len(s)
                         
                     if call is not None and len(call) > 0:
+                        
                         df = pd.DataFrame.from_records(
                             [call[i]["args"] for i in range(len(call))]
                         )
                         df["result"] = pd.DataFrame(
                             [float(call[i]["ret"]) for i in range(len(call))]
                         )
+                        df["meta"] = pd.Series(
+                            [call[i]["meta"] for i in range(len(call))]
+                        )
+                        df = df.join(df.meta.apply(lambda m: pd.Series(m))).drop(columns="meta")
+                        
                         st.dataframe(
                             df.style.apply(highlight, axis=1
                                           ).format("{:.2}", subset=["result"])
                         )
+
                     else:
                         st.text("No feedback details.")
 
