@@ -58,7 +58,6 @@ class LlamaInstrument(Instrument):
             llama_index.llm_predictor.base.LLMMetadata,
             llama_index.llm_predictor.base.BaseLLMPredictor,
             llama_index.vector_stores.types.VectorStore,
-            llama_index.question_gen.llm_generators.BaseQuestionGenerator,
             llama_index.indices.service_context.ServiceContext,
             llama_index.indices.prompt_helper.PromptHelper,
             llama_index.embeddings.base.BaseEmbedding,
@@ -94,7 +93,6 @@ class LlamaInstrument(Instrument):
                     ),
             }, LangChainInstrument.Default.METHODS
         )
-
     def __init__(self):
         super().__init__(
             root_method=TruLlama.query_with_record,
