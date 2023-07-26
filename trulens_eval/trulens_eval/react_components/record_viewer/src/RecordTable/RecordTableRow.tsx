@@ -1,18 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowDropDown, ArrowRight } from '@mui/icons-material';
 import { Streamlit } from 'streamlit-component-lib';
 import { Box, IconButton, SxProps, TableCell, TableRow, Theme, Tooltip, Typography } from '@mui/material';
 import { StackTreeNode } from '../utils/types';
 import { getStartAndEndTimesForNode } from '../utils/treeUtils';
 
-type RecordTableProps = {
-  nodeWithDepth: { node: StackTreeNode; depth: number };
+type RecordTableRowRecursiveProps = {
+  node: StackTreeNode;
+  depth: number;
   totalTime: number;
   treeStart: number;
   selectedNode: string | undefined;
   setSelectedNode: (newNode: string | undefined) => void;
-  expanded: Set<number | undefined>;
-  toggleNodeExpanding: (nodeId: number | undefined) => void;
 };
 
 function TooltipDescription({ startTime, endTime }: { startTime: number; endTime: number }) {
@@ -33,19 +32,17 @@ function TooltipDescription({ startTime, endTime }: { startTime: number; endTime
 
 // We can't recursively create the rows because streamlit's frame height update logic
 // is still a little wonky :(
-export default function RecordTableRow({
-  expanded,
-  toggleNodeExpanding,
-  nodeWithDepth,
+export default function RecordTableRowRecursive({
+  node,
+  depth,
   totalTime,
   treeStart,
   selectedNode,
   setSelectedNode,
-}: RecordTableProps) {
-  const { node, depth } = nodeWithDepth;
+}: RecordTableRowRecursiveProps) {
   useEffect(() => Streamlit.setFrameHeight());
 
-  if (node.parentNodes.some(({ id }) => !expanded.has(id))) return null;
+  const [expanded, setExpanded] = useState<boolean>(true);
 
   const { startTime, timeTaken, endTime } = getStartAndEndTimesForNode(node);
 
@@ -55,41 +52,56 @@ export default function RecordTableRow({
   const isNodeSelected = selectedNode === node.raw?.perf.start_time;
 
   return (
-    <TableRow
-      onClick={() => setSelectedNode(node.raw?.perf.start_time ?? undefined)}
-      sx={{
-        ...recordRowSx,
-        background: isNodeSelected ? ({ palette }) => palette.primary.lighter : undefined,
-      }}
-    >
-      <TableCell>
-        <Box sx={{ ml: depth, display: 'flex', flexDirection: 'row' }}>
-          {node.children.length > 0 && (
-            <IconButton onClick={() => toggleNodeExpanding(node.id)} disableRipple>
-              {expanded.has(node.id) ? <ArrowDropDown /> : <ArrowRight />}
-            </IconButton>
-          )}
-          <Box sx={{ display: 'flex', flexDirection: 'column', ml: node.children.length === 0 ? 5 : 0 }}>
-            <Typography>{node.name}</Typography>
-            <Typography variant="subtitle1">{selector}</Typography>
+    <>
+      <TableRow
+        onClick={() => setSelectedNode(node.raw?.perf.start_time ?? undefined)}
+        sx={{
+          ...recordRowSx,
+          background: isNodeSelected ? ({ palette }) => palette.primary.lighter : undefined,
+        }}
+      >
+        <TableCell>
+          <Box sx={{ ml: depth, display: 'flex', flexDirection: 'row' }}>
+            {node.children.length > 0 && (
+              <IconButton onClick={() => setExpanded(!expanded)} disableRipple>
+                {expanded ? <ArrowDropDown /> : <ArrowRight />}
+              </IconButton>
+            )}
+            <Box sx={{ display: 'flex', flexDirection: 'column', ml: node.children.length === 0 ? 5 : 0 }}>
+              <Typography>{node.name}</Typography>
+              <Typography variant="subtitle1">{selector}</Typography>
+            </Box>
           </Box>
-        </Box>
-      </TableCell>
-      <TableCell align="right">{timeTaken} ms</TableCell>
-      <TableCell sx={{ minWidth: 500, padding: 0 }}>
-        <Tooltip title={<TooltipDescription startTime={startTime} endTime={endTime} />}>
-          <Box
-            sx={{
-              left: `${((startTime - treeStart) / totalTime) * 100}%`,
-              width: `${(timeTaken / totalTime) * 100}%`,
-              background: ({ palette }) =>
-                selectedNode === undefined || isNodeSelected ? palette.grey[500] : palette.grey[300],
-              ...recordBarSx,
-            }}
-          />
-        </Tooltip>
-      </TableCell>
-    </TableRow>
+        </TableCell>
+        <TableCell align="right">{timeTaken} ms</TableCell>
+        <TableCell sx={{ minWidth: 500, padding: 0 }}>
+          <Tooltip title={<TooltipDescription startTime={startTime} endTime={endTime} />}>
+            <Box
+              sx={{
+                left: `${((startTime - treeStart) / totalTime) * 100}%`,
+                width: `${(timeTaken / totalTime) * 100}%`,
+                background: ({ palette }) =>
+                  selectedNode === undefined || isNodeSelected ? palette.grey[500] : palette.grey[300],
+                ...recordBarSx,
+              }}
+            />
+          </Tooltip>
+        </TableCell>
+      </TableRow>
+      {expanded
+        ? node.children.map((child) => (
+            <RecordTableRowRecursive
+              selectedNode={selectedNode}
+              setSelectedNode={setSelectedNode}
+              node={child}
+              depth={depth + 1}
+              totalTime={totalTime}
+              treeStart={treeStart}
+              key={`${child.name}-${child.id ?? ''}-${child.endTime?.toISOString() ?? ''}`}
+            />
+          ))
+        : null}
+    </>
   );
 }
 

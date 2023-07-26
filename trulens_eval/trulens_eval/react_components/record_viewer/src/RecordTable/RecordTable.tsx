@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Streamlit } from 'streamlit-component-lib';
 import { Table, TableContainer, TableHead, TableRow, TableCell, TableBody, SxProps, Theme } from '@mui/material';
 import { StackTreeNode } from '../utils/types';
-import RecordTableRow from './RecordTableRow';
-import { getNodesToRender, getStartAndEndTimesForNode } from '../utils/treeUtils';
+import RecordTableRowRecursive from './RecordTableRow';
+import { getStartAndEndTimesForNode } from '../utils/treeUtils';
 
 type RecordTableProps = {
   root: StackTreeNode;
@@ -11,25 +11,10 @@ type RecordTableProps = {
 
 export default function RecordTable({ root }: RecordTableProps) {
   const [selectedNode, setSelectedNode] = useState<string>();
-  const [expanded, setExpanded] = useState<Set<number | undefined>>(new Set([-1, 0]));
 
   useEffect(() => Streamlit.setComponentValue(selectedNode), [selectedNode]);
 
-  const nodesToRender = getNodesToRender(root);
   const { timeTaken: totalTime, startTime: treeStart } = getStartAndEndTimesForNode(root);
-
-  const toggleNodeExpanding = (nodeId: number | undefined) => {
-    setExpanded((curr) => {
-      const updatedSet = new Set(curr.values());
-      if (curr.has(nodeId)) {
-        updatedSet.delete(nodeId);
-      } else {
-        updatedSet.add(nodeId);
-      }
-
-      return updatedSet;
-    });
-  };
 
   return (
     <TableContainer>
@@ -42,20 +27,14 @@ export default function RecordTable({ root }: RecordTableProps) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {nodesToRender.map((nodeWithDepth) => (
-            <RecordTableRow
-              expanded={expanded}
-              toggleNodeExpanding={toggleNodeExpanding}
-              selectedNode={selectedNode}
-              setSelectedNode={setSelectedNode}
-              nodeWithDepth={nodeWithDepth}
-              totalTime={totalTime}
-              treeStart={treeStart}
-              key={`${nodeWithDepth.node.name}-${nodeWithDepth.node.id ?? ''}-${
-                nodeWithDepth.node.endTime?.toISOString() ?? ''
-              }`}
-            />
-          ))}
+          <RecordTableRowRecursive
+            selectedNode={selectedNode}
+            setSelectedNode={setSelectedNode}
+            node={root}
+            depth={0}
+            totalTime={totalTime}
+            treeStart={treeStart}
+          />
         </TableBody>
       </Table>
     </TableContainer>
