@@ -1327,11 +1327,13 @@ class OpenAI(Provider):
 
 class GroundTruthAgreement(SerialModel, WithClassInfo):
     ground_truth: Union[List[str], FunctionOrMethod]
-    provider: OpenAI
+    provider: Provider
 
     ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
 
-    def __init__(self, ground_truth: Union[List[str], Callable, FunctionOrMethod], provider: OpenAI = OpenAI()):
+    def __init__(self, ground_truth: Union[List[str], Callable, FunctionOrMethod], provider: OpenAI = None):
+        if provider is None:
+            provider = OpenAI()
         if isinstance(ground_truth, List):
             ground_truth_imp = None
         elif isinstance(ground_truth, FunctionOrMethod):
