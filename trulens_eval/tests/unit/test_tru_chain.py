@@ -2,18 +2,27 @@
 Tests for TruChain. This is outdated.
 """
 
+import asyncio
+from datetime import datetime
+import os
+from typing import Dict, Sequence
 import unittest
 from unittest import main
 from unittest import TestCase
 
+from langchain import PromptTemplate
+from langchain.callbacks import AsyncIteratorCallbackHandler
+from langchain.chains import LLMChain
+from langchain.chat_models.openai import ChatOpenAI
 import pinecone
-import torch
-from transformers import AutoModelForCausalLM
-from transformers import AutoTokenizer
-from transformers import pipeline
 
+from trulens_eval import feedback
+from trulens_eval import Feedback
+from trulens_eval import Tru
 from trulens_eval.keys import check_keys
 from trulens_eval.tru_chain import TruChain
+from trulens_eval.util import JSONPath
+from trulens_eval.util import JSON_BASES
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LANGCHAIN
 
@@ -32,11 +41,52 @@ with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     from langchain.vectorstores import Pinecone
 
 
-class TestTruChain(TestCase):
+class JSONTestCase(TestCase):
+
+    def assertJSONEqual(
+        self, j1, j2, path: JSONPath = None, skips=None
+    ) -> None:
+        skips = skips or set([])
+        path = path or JSONPath()
+
+        if isinstance(j1, JSON_BASES):
+            self.assertIsInstance(j2, JSON_BASES, str(path))
+            self.assertEqual(j1, j2, str(path))
+
+        elif isinstance(j1, Dict):
+            self.assertIsInstance(j2, Dict, str(path))
+            ks1 = set(list(j1.keys()))
+            ks2 = set(list(j2.keys()))
+            self.assertSetEqual(ks1, ks2, str(path))
+
+            for k in ks1:
+                if k in skips:
+                    continue
+                self.assertJSONEqual(j1[k], j2[k], skips=skips, path=path[k])
+
+        elif isinstance(j1, Sequence):
+            self.assertIsInstance(j2, Sequence, str(path))
+            self.assertEqual(len(j1), len(j2), str(path))
+
+            for i, (v1, v2) in enumerate(zip(j1, j2)):
+                self.assertJSONEqual(v1, v2, skips=skips, path=path[i])
+
+        elif isinstance(j1, datetime):
+            self.assertIsInstance(j2, datetime, str(path))
+            self.assertEqual(j1, j2, str(path))
+
+        else:
+            raise RuntimeError(
+                f"Don't know how to compare objects of type {type(j1)} ."
+            )
+
+
+class TestTruChain(JSONTestCase):
 
     def setUp(self):
-        print("setup")
 
+        # Setup of outdated tests:
+        """
         self.llm_model_id = "gpt2"
         # This model is pretty bad but using it for tests because it is free and
         # relatively small.
@@ -44,6 +94,7 @@ class TestTruChain(TestCase):
         # model_id = "decapoda-research/llama-7b-hf"
         # model_id = "decapoda-research/llama-13b-hf"
 
+ 
         self.model = AutoModelForCausalLM.from_pretrained(
             self.llm_model_id,
             device_map='auto',
@@ -65,21 +116,56 @@ class TestTruChain(TestCase):
         )
 
         self.llm = HuggingFacePipeline(pipeline=self.pipe)
+        """
 
-    @unittest.skip("TODO")
-    async def test_async(self):
+    def test_async_call_with_record(self):
+        asyncio.get_event_loop().run_until_complete(
+            self._test_async_call_with_record()
+        )
+
+    async def _test_async_call_with_record(self):
+        # Check that the async acall_with_record produces the same stuff as the
+        # sync call_with_record.
+
+        # Create simple QA chain.
+        tru = Tru()
+        prompt = PromptTemplate.from_template(
+            """Honestly answer this question: {question}."""
+        )
+        llm = ChatOpenAI(temperature=0.0,)
+        chain = LLMChain(llm=llm, prompt=prompt)
+        tc = tru.Chain(chain)
+
+        message = "What is 1+2? Explain your answer."
+
+        # Get async results.
+        async_res, async_record = await tc.acall_with_record(
+            inputs=dict(question=message),
+        )
+
+        message = "What is 1+2? Explain your answer."
+
+        # Get sync results.
+        sync_res, sync_record = tc.call_with_record(
+            inputs=dict(question=message),
+        )
+
+        self.assertJSONEqual(async_res, sync_res)
+        self.assertJSONEqual(
+            async_record.dict(),
+            sync_record.dict(),
+            skips=set(["method_name", "ts", "start_time", "end_time", "record_id"])
+        )
+
+    @unittest.skip("WIP")
+    def test_async_token_gen(self):
+        asyncio.get_event_loop().run_until_complete(
+            self._test_async_token_gen()
+        )
+
+    @unittest.skip("WIP")
+    async def _test_async_token_gen(self):
         # Test of chain acall methods as requested in https://github.com/truera/trulens/issues/309 .
-
-        import asyncio
-
-        from langchain import PromptTemplate
-        from langchain.callbacks import AsyncIteratorCallbackHandler
-        from langchain.chains import LLMChain
-        from langchain.chat_models.openai import ChatOpenAI
-
-        from trulens_eval import feedback
-        from trulens_eval import Feedback
-        from trulens_eval import Tru
 
         class AsyncAgent:
 
@@ -93,13 +179,12 @@ class TestTruChain(TestCase):
                     """Honestly answer this question: {question}."""
                 )
                 llm = ChatOpenAI(
-                    streaming=True, callbacks=[self.async_callback]
+                    temperature=0.0,
+                    streaming=True,
+                    callbacks=[self.async_callback]
                 )
                 self.agent = LLMChain(llm=llm, prompt=prompt)
-                self.agent = tru.Chain(
-                    self.agent,
-                    feedbacks=[f_lang_match]
-                )
+                self.agent = tru.Chain(self.agent, feedbacks=[f_lang_match])
 
             async def respond_each_token(self, message):
                 f_res_record = asyncio.create_task(
@@ -111,13 +196,29 @@ class TestTruChain(TestCase):
                 async for token in self.async_callback.aiter():
                     yield token
 
+                # Storing these in self as we are an async generator that is
+                # already done.
                 self.res, self.record = await f_res_record
 
-        # TODO: async test cases?
         st = AsyncAgent()
-        async for tok in st.respond_each_token(
-                "What is 1+2? Explain your answer."):
+        message = "What is 1+2? Explain your answer."
+
+        # Get the token stream.
+        async for tok in st.respond_each_token(message):
             print(tok)
+
+        # Get the results of the async acall_with_record.
+        res_async = st.res
+        record_async = st.record
+
+        # Also get the same using the sync version:
+        res_sync, record_sync = st.agent.call_with_record(
+            inputs=dict(question=message),
+        )
+
+        # Check that they are the same.
+        self.assertEqual(res_async, res_sync)
+        self.assertEqual(record_async, record_sync)
 
     @unittest.skip("outdated")
     def test_qa_prompt(self):
