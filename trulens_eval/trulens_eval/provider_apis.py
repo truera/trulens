@@ -529,7 +529,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
     @staticmethod
     def __find_tracker(f):
-        return id(f) == id(Endpoint._track_costs.__code__)
+        return id(f) in [id(m.__code__) for m in [Endpoint._track_costs, Endpoint._atrack_costs]]
 
     def handle_wrapped_call(
         self, bindings: inspect.BoundArguments, response: Any,
@@ -586,6 +586,55 @@ class Endpoint(SerialModel, SingletonPerName):
 
         # If INSTRUMENT is not set, create a wrapper method and return it.
 
+        # TODO: async/sync code duplication
+        async def awrapper(*args, **kwargs):
+            logger.debug(f"Calling async wrapped {func.__name__} for {self.name}.")
+
+            # Get the result of the wrapped function:
+            response: Any = await func(*args, **kwargs)
+
+            bindings = inspect.signature(func).bind(*args, **kwargs)
+
+            # Get all of the callback classes suitable for handling this call.
+            # Note that we stored this in the INSTRUMENT attribute of the
+            # wrapper method.
+            registered_callback_classes = getattr(awrapper, INSTRUMENT)
+
+            # Look up the endpoints that are expecting to be notified and the
+            # callback tracking the tally. See Endpoint._track_costs for
+            # definition.
+            endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
+                get_local_in_call_stack(
+                    key="endpoints",
+                    func=self.__find_tracker,
+                    offset=0
+                )
+
+            # If wrapped method was not called from within _track_costs, we will
+            # get None here and do nothing but return wrapped function's
+            # response.
+            if endpoints is None:
+                return response
+
+            for callback_class in registered_callback_classes:
+                if callback_class not in endpoints:
+                    logger.warning(
+                        f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
+                        " but there are no endpoints waiting to receive the result."
+                    )
+                    continue
+
+                for endpoint, callback in endpoints[callback_class]:
+
+                    endpoint.handle_wrapped_call(
+                        func=func,
+                        bindings=bindings,
+                        response=response,
+                        callback=callback
+                    )
+
+            return response
+
         def wrapper(*args, **kwargs):
             logger.debug(f"Calling wrapped {func.__name__} for {self.name}.")
 
@@ -634,13 +683,17 @@ class Endpoint(SerialModel, SingletonPerName):
 
             return response
 
-        setattr(wrapper, INSTRUMENT, [self.callback_class])
-        wrapper.__name__ = func.__name__
-        wrapper.__signature__ = inspect.signature(func)
+        w = wrapper
+        if inspect.iscoroutinefunction(func):
+            w = awrapper
+
+        setattr(w, INSTRUMENT, [self.callback_class])
+        w.__name__ = func.__name__
+        w.__signature__ = inspect.signature(func)
 
         logger.debug(f"Instrumenting {func.__name__} for {self.name} .")
 
-        return wrapper
+        return w
 
 
 class OpenAIEndpoint(Endpoint, WithClassInfo):
@@ -749,6 +802,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         super().__init__(*args, **kwargs)
 
         self._instrument_module_members(openai, "create")
+        self._instrument_module_members(openai, "acreate")
 
 
 class HuggingfaceEndpoint(Endpoint, WithClassInfo):

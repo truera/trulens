@@ -21,6 +21,7 @@ from trulens_eval import Feedback
 from trulens_eval import Tru
 from trulens_eval.keys import check_keys
 from trulens_eval.tru_chain import TruChain
+from trulens_eval.provider_apis import OpenAIEndpoint
 from trulens_eval.util import JSONPath
 from trulens_eval.util import JSON_BASES
 from trulens_eval.util import OptionalImports
@@ -49,30 +50,31 @@ class JSONTestCase(TestCase):
         skips = skips or set([])
         path = path or JSONPath()
 
+        self.assertIsInstance(j1, type(j2), str(path))
+
         if isinstance(j1, JSON_BASES):
-            self.assertIsInstance(j2, JSON_BASES, str(path))
             self.assertEqual(j1, j2, str(path))
 
         elif isinstance(j1, Dict):
-            self.assertIsInstance(j2, Dict, str(path))
-            ks1 = set(list(j1.keys()))
-            ks2 = set(list(j2.keys()))
+
+            ks1 = set(j1.keys())
+            ks2 = set(j2.keys())
+
             self.assertSetEqual(ks1, ks2, str(path))
 
             for k in ks1:
                 if k in skips:
                     continue
+
                 self.assertJSONEqual(j1[k], j2[k], skips=skips, path=path[k])
 
         elif isinstance(j1, Sequence):
-            self.assertIsInstance(j2, Sequence, str(path))
             self.assertEqual(len(j1), len(j2), str(path))
 
             for i, (v1, v2) in enumerate(zip(j1, j2)):
                 self.assertJSONEqual(v1, v2, skips=skips, path=path[i])
 
         elif isinstance(j1, datetime):
-            self.assertIsInstance(j2, datetime, str(path))
             self.assertEqual(j1, j2, str(path))
 
         else:
@@ -120,41 +122,51 @@ class TestTruChain(JSONTestCase):
 
     def test_async_call_with_record(self):
         asyncio.get_event_loop().run_until_complete(
-            self._test_async_call_with_record()
+            self._async_call_with_record()
         )
 
-    async def _test_async_call_with_record(self):
+    async def _async_call_with_record(self):
         # Check that the async acall_with_record produces the same stuff as the
         # sync call_with_record.
+
+        OpenAIEndpoint()
 
         # Create simple QA chain.
         tru = Tru()
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
         )
-        llm = ChatOpenAI(temperature=0.0,)
-        chain = LLMChain(llm=llm, prompt=prompt)
-        tc = tru.Chain(chain)
-
-        message = "What is 1+2? Explain your answer."
-
-        # Get async results.
-        async_res, async_record = await tc.acall_with_record(
-            inputs=dict(question=message),
-        )
 
         message = "What is 1+2? Explain your answer."
 
         # Get sync results.
+        llm = ChatOpenAI(temperature=0.0)
+        chain = LLMChain(llm=llm, prompt=prompt)
+        tc = tru.Chain(chain)
         sync_res, sync_record = tc.call_with_record(
+            inputs=dict(question=message)
+        )
+
+        # Get async results.
+        llm = ChatOpenAI(temperature=0.0)
+        chain = LLMChain(llm=llm, prompt=prompt)
+        tc = tru.Chain(chain)
+        async_res, async_record = await tc.acall_with_record(
             inputs=dict(question=message),
         )
 
-        self.assertJSONEqual(async_res, sync_res)
+        self.assertJSONEqual(
+            async_res,
+            sync_res
+        )
+
+        print(async_record.dict())
+        print(sync_record.dict())
+
         self.assertJSONEqual(
             async_record.dict(),
             sync_record.dict(),
-            skips=set(["method_name", "ts", "start_time", "end_time", "record_id"])
+            skips=set(["name", "ts", "start_time", "end_time", "record_id"])
         )
 
     @unittest.skip("WIP")
