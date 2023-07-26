@@ -35,6 +35,7 @@ T = TypeVar("T")
 INSTRUMENT = "__tru_instrument"
 DEFAULT_RPM = 60
 
+
 class EndpointCallback(SerialModel):
     """
     Callbacks to be invoked after various API requests and track various metrics
@@ -287,7 +288,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
     @staticmethod
     def track_all_costs(
-        thunk:Thunk[T],
+        thunk: Thunk[T],
         with_openai: bool = True,
         with_hugs: bool = True
     ) -> Tuple[T, Sequence[EndpointCallback]]:
@@ -354,7 +355,6 @@ class Endpoint(SerialModel, SingletonPerName):
                 )
 
         return await Endpoint._atrack_costs(thunk, with_endpoints=endpoints)
-
 
     @staticmethod
     def track_all_costs_tally(
@@ -529,7 +529,10 @@ class Endpoint(SerialModel, SingletonPerName):
 
     @staticmethod
     def __find_tracker(f):
-        return id(f) in [id(m.__code__) for m in [Endpoint._track_costs, Endpoint._atrack_costs]]
+        return id(f) in [
+            id(m.__code__)
+            for m in [Endpoint._track_costs, Endpoint._atrack_costs]
+        ]
 
     def handle_wrapped_call(
         self, bindings: inspect.BoundArguments, response: Any,
@@ -588,10 +591,21 @@ class Endpoint(SerialModel, SingletonPerName):
 
         # TODO: async/sync code duplication
         async def awrapper(*args, **kwargs):
-            logger.debug(f"Calling async wrapped {func.__name__} for {self.name}.")
+            logger.debug(
+                f"Calling async wrapped {func.__name__} for {self.name}."
+            )
+
+            # TODO: Ongoing debugging stack issue with async calls here.
+            # logger.debug("stack:")
+            # for f in inspect.stack():
+            #      logger.debug(f)
 
             # Get the result of the wrapped function:
             response: Any = await func(*args, **kwargs)
+
+            logger.debug(
+                f"Respond from async wrapped {func.__name__} for {self.name}: {response}"
+            )
 
             bindings = inspect.signature(func).bind(*args, **kwargs)
 
@@ -614,9 +628,11 @@ class Endpoint(SerialModel, SingletonPerName):
             # get None here and do nothing but return wrapped function's
             # response.
             if endpoints is None:
+                logger.debug("No endpoints found.")
                 return response
 
             for callback_class in registered_callback_classes:
+                logger.debug(f"Handling callback_class: {callback_class}.")
                 if callback_class not in endpoints:
                     logger.warning(
                         f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
@@ -625,7 +641,7 @@ class Endpoint(SerialModel, SingletonPerName):
                     continue
 
                 for endpoint, callback in endpoints[callback_class]:
-
+                    logger.debug(f"Handling endpoint {endpoint}.")
                     endpoint.handle_wrapped_call(
                         func=func,
                         bindings=bindings,
@@ -783,7 +799,9 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
                     attr_val = getattr(openai, k)
                     if attr_val is not None and attr_val != os.environ.get(v):
-                        print(f"{UNICODE_CHECK} Env. var. {v} set from openai.{k} .")
+                        print(
+                            f"{UNICODE_CHECK} Env. var. {v} set from openai.{k} ."
+                        )
                         os.environ[v] = attr_val
 
         # Will fail if key not set:
