@@ -2,7 +2,6 @@
 # Langchain instrumentation and monitoring.
 """
 
-import asyncio
 from datetime import datetime
 import logging
 from pprint import PrettyPrinter
@@ -108,6 +107,7 @@ class TruChain(App):
 
     app: Chain
 
+    # TODO: what if _acall is being used instead?
     root_callable: ClassVar[FunctionOrMethod] = Field(
         default_factory=lambda: FunctionOrMethod.of_callable(TruChain._call),
         const=True
