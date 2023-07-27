@@ -1,5 +1,39 @@
 from cohere.responses.classify import Example
 
+LLM_GROUNDEDNESS = """You are a INFORMATION OVERLAP classifier; providing the overlap of information between two statements.
+Respond only as a number from 1 to 10 where 1 is no information overlap and 10 is all information is overlapping.
+Never elaborate.
+
+STATEMENT 1: {premise}
+
+STATEMENT 2: {hypothesis}
+
+INFORMATION OVERLAP: """
+
+LLM_GROUNDEDNESS_FULL_SYSTEM = """You are a INFORMATION OVERLAP classifier providing the overlap of information between a SOURCE and STATEMENT.
+For every sentence in the statement, please answer with this template:
+
+TEMPLATE: 
+Statement Sentence: <Sentence>, 
+Supporting Evidence: <Choose the exact unchanged sentences in the source that can answer the statement, if nothing matches, say NOTHING FOUND>
+Score: <Output a number between 1-10 where 1 is no information overlap and 10 is all information is overlapping.
+"""
+
+# Keep this in line with the LLM output template as above
+GROUNDEDNESS_REASON_TEMPLATE = """
+Statement Sentence: {statement_sentence} 
+Supporting Evidence: {supporting_evidence} 
+Score: {score} 
+
+"""
+
+LLM_GROUNDEDNESS_FULL_PROMPT = """Give me the INFORMATION OVERLAP of this SOURCE and STATEMENT.
+
+SOURCE: {premise}
+
+STATEMENT: {hypothesis}
+"""
+
 QS_RELEVANCE = """You are a RELEVANCE grader; providing the relevance of the given STATEMENT to the given QUESTION.
 Respond only as a number from 1 to 10 where 1 is the least relevant and 10 is the most relevant. 
 
@@ -63,6 +97,17 @@ PROMPT: {prompt}
 RESPONSE: {response}
 
 RELEVANCE: """
+
+SYSTEM_FIND_SUPPORTING = """
+You are a summarizer that can only answer 'Nothing Found' or return exact sentences from this excerpt:
+
+{prompt}
+"""
+
+USER_FIND_SUPPORTING = """
+I'm looking for related information to a statement from your excerpt. If nothing is directly related, say 'Nothing Found'
+Respond with all sentences, unchanged from the excerpt, that are directly related to this statement: {response}
+"""
 
 SENTIMENT_SYSTEM_PROMPT = f"Please classify the sentiment of the following text as 1 if positive or 0 if not positive. Respond with only a '1' or '0', nothing more."
 RELEVANCE_SYSTEM_PROMPT = f"You are a relevance classifier, providing the relevance of a given response to a particular prompt. \n"
@@ -137,3 +182,4 @@ The right answer is:
 
 Answer only with an integer from 1 to 10 based on how close the responses are to the right answer.
 """
+
