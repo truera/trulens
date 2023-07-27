@@ -40,7 +40,11 @@ module.exports = {
         js: 'never',
       },
     ],
-    "no-use-before-define": "off",
+    'no-use-before-define': 'off',
+
+    // Note: you must disable the base rule as it can report incorrect errors
+    'no-shadow': 'off',
+    '@typescript-eslint/no-shadow': 'warn',
   },
   settings: {
     'import/resolver': {
