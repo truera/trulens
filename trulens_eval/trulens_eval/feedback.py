@@ -1572,7 +1572,7 @@ class Groundedness(SerialModel, WithClassInfo):
     def grounded_statements_aggregator(
         self, source_statements_matrix: np.ndarray
     ) -> float:
-        """Aggregates multi-input, mulit-output information from the _groundedness_measure_experimental methods.
+        """Aggregates multi-input, mulit-output information from the groundedness_measure methods.
 
 
         Args:
