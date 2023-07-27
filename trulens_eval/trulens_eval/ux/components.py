@@ -1,6 +1,6 @@
 import json
 import random
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pandas as pd
 import streamlit as st
@@ -10,6 +10,7 @@ from trulens_eval.app import ComponentView
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
+from trulens_eval.schema import Metadata
 from trulens_eval.keys import REDACTED_VALUE, should_redact_key
 from trulens_eval.util import CLASS_INFO
 from trulens_eval.util import GetItemOrAttribute
@@ -61,6 +62,23 @@ def render_call_frame(frame: RecordAppCall, path=None) -> str:  # markdown
     return (
         f"__{frame.method.name}__ (__{frame.method.obj.cls.module.module_name}.{frame.method.obj.cls.name}__)"
     )
+
+def dict_to_md(dictionary: dict) -> str:
+    if len(dictionary) == 0:
+        return "No metadata."
+    mdheader = "|"
+    mdseparator = "|"
+    mdbody = "|"
+    for key, value in dictionary.items():
+        mdheader = mdheader + str(key) + "|"
+        mdseparator = mdseparator + "-------|"
+        mdbody = mdbody + str(value) + "|"
+    mdtext = mdheader + "\n" + mdseparator + "\n" + mdbody
+    return mdtext
+
+
+def draw_metadata(metadata: Metadata) -> str:
+    return dict_to_md(metadata)
 
 
 def draw_call(call: RecordAppCall) -> None:
