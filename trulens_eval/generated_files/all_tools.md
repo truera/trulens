@@ -266,14 +266,37 @@ truchain("This will be logged by deferred evaluator.")
 tru.stop_evaluator()
 ```
 
-# Out-of-the-box Feedback Functions
-See: <https://www.trulens.org/trulens_eval/api/feedback/>
+# Feedback Functions
+
+A feedback function scores the output of an LLM application by analyzing generated text as part of an LLM application (or a downstream model or application built on it). This guide provides details about the feedback functions that are implemented out of the box by TruLens. At the end of the guide, you can find additional information about how to create custom feedback functions.
+
+See also: <https://www.trulens.org/trulens_eval/api/feedback/>
 
 ## Relevance
 
 This evaluates the *relevance* of the LLM response to the given text by LLM prompting.
 
 Relevance is currently only available with OpenAI ChatCompletion API.
+
+TruLens offers two particular flavors of relevance:
+1. *Prompt response relevance* is best for measuring the relationship of the final answer to the user inputed question. This flavor of relevance is particularly optimized for the following features:
+
+    * Relevance requires adherence to the entire prompt.
+    * Responses that don't provide a definitive answer can still be relevant
+    * Admitting lack of knowledge and refusals are still relevant.
+    * Feedback mechanism should differentiate between seeming and actual relevance.
+    * Relevant but inconclusive statements should get increasingly high scores as they are more helpful for answering the query.
+
+    You can read more information about the performance of prompt response relevance by viewing its [smoke test results](../pr_relevance_smoke_tests/).
+
+2. *Question statement relevance*, sometimes known as context relevance, is best for measuring the relationship of a provided context to the user inputed question. This flavor of relevance is optimized for a slightly different set of features:
+    * Relevance requires adherence to the entire query.
+    * Long context with small relevant chunks are relevant.
+    * Context that provides no answer can still be relevant.
+    * Feedback mechanism should differentiate between seeming and actual relevance.
+    * Relevant but inconclusive statements should get increasingly high scores as they are more helpful for answering the query.
+
+    You can read more information about the performance of question statement relevance by viewing its [smoke test results](../qs_relevance_smoke_tests/).
 
 ## Sentiment
 
@@ -288,6 +311,10 @@ Sentiment is currently available to use with OpenAI, HuggingFace or Cohere as th
 ## Model Agreement
 
 Model agreement uses OpenAI to attempt an honest answer at your prompt with system prompts for correctness, and then evaluates the agreement of your LLM response to this model on a scale from 1 to 10. The agreement with each honest bot is then averaged and scaled from 0 to 1.
+
+## Groundedness
+
+Groundedness uses OpenAI LLMs or Huggingface NLI to attempt to check if an answer is grounded in its supplied contexts on a scale from 1 to 10. The information overlap or entailment between source and response is then measured, choosing the highest score between sources and then averaged and scaled from 0 to 1.
 
 ## Language Match
 
@@ -307,7 +334,7 @@ The OpenAI Moderation API is made available for use as feedback functions. This 
 
 # Adding new feedback functions
 
-Feedback functions are an extensible framework for evaluating LLMs. You can add your own feedback functions to evaluate the qualities required by your application by updating `trulens_eval/feedback.py`. If your contributions would be useful for others, we encourage you to contribute to TruLens!
+Feedback functions are an extensible framework for evaluating LLMs. You can add your own feedback functions to evaluate the qualities required by your application by updating `trulens_eval/feedback.py`, or simply creating a new provider class and feedback function in youre notebook. If your contributions would be useful for others, we encourage you to contribute to TruLens!
 
 Feedback functions are organized by model provider into Provider classes.
 

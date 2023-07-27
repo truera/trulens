@@ -13,10 +13,10 @@ from trulens_eval.util import second
 from trulens_eval.util import TP
 
 with OptionalImports(message=REQUIREMENT_LLAMA):
-    from llama_index.schema import NodeWithScore
     from llama_index.indices.query.schema import QueryBundle
     from llama_index.indices.vector_store.retrievers import \
         VectorIndexRetriever
+    from llama_index.schema import NodeWithScore
 
 
 class Prompt(app.Prompt, app.LangChainComponent):

@@ -2,25 +2,23 @@
 Tests for TruChain. This is outdated.
 """
 
-import pinecone
 import unittest
 from unittest import main
 from unittest import TestCase
+
+import pinecone
 import torch
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
 from transformers import pipeline
 
+from trulens_eval.keys import check_keys
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LANGCHAIN
-from trulens_eval.keys import check_keys
 
 check_keys(
-    "OPENAI_API_KEY",
-    "HUGGINGFACE_API_KEY",
-    "PINECONE_API_KEY",
-    "PINECONE_ENV"
+    "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
 )
 
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
@@ -124,8 +122,10 @@ class TestTruChain(TestCase):
         )  # 1536 dims
 
         pinecone.init(
-            api_key=os.environ.get('PINECONE_API_KEY'),  # find at app.pinecone.io
-            environment=os.environ.get('PINECONE_ENV')  # next to api key in console
+            api_key=os.environ.get('PINECONE_API_KEY'
+                                  ),  # find at app.pinecone.io
+            environment=os.environ.get('PINECONE_ENV'
+                                      )  # next to api key in console
         )
         docsearch = Pinecone.from_existing_index(
             index_name=index_name, embedding=embedding
@@ -187,6 +187,7 @@ class TestTruChain(TestCase):
         )
 
         assert len(tru_app.db.select()) == 2
+
 
 if __name__ == '__main__':
     main()

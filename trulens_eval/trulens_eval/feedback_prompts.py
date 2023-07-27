@@ -182,4 +182,3 @@ The right answer is:
 
 Answer only with an integer from 1 to 10 based on how close the responses are to the right answer.
 """
-

@@ -1,5 +1,5 @@
-import math
 import json
+import math
 
 from millify import millify
 import numpy as np
@@ -51,12 +51,10 @@ def streamlit_app():
         if app_df.empty:
             continue
         app_str = app_df['app_json'].iloc[0]
-        app_json = json.loads(
-            app_str
-        )
+        app_json = json.loads(app_str)
         metadata = app_json.get('metadata')
         #st.text('Metadata' + str(metadata))
-        st.header(app, help = draw_metadata(metadata))
+        st.header(app, help=draw_metadata(metadata))
         col1, col2, col3, col4, *feedback_cols, col99 = st.columns(
             5 + len(feedback_col_names)
         )
@@ -103,7 +101,8 @@ def streamlit_app():
                     label=col_name,
                     value=f'{round(mean, 2)}',
                     delta=f'{cat.icon} {cat.adjective}',
-                    delta_color="normal" if mean >= CATEGORY.PASS.threshold else "inverse"
+                    delta_color="normal"
+                    if mean >= CATEGORY.PASS.threshold else "inverse"
                 )
 
         with col99:
