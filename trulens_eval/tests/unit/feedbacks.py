@@ -20,7 +20,7 @@ class CustomProvider(Provider):
 
     @classmethod
     def class_method(cls, t1: str) -> float:
-       return 0.3 
+        return 0.3
 
     def method(self, t1: str) -> float:
         return 0.4 + self.attr
@@ -32,7 +32,7 @@ class CustomClassNoArgs():
 
     @staticmethod
     def static_method(t1: str) -> float:
-       return 0.5
+        return 0.5
 
     @classmethod
     def class_method(cls, t1: str) -> float:
@@ -51,7 +51,7 @@ class CustomClassWithArgs():
 
     @staticmethod
     def static_method(t1: str) -> float:
-       return 0.8
+        return 0.8
 
     @classmethod
     def class_method(cls, t1: str) -> float:
@@ -59,8 +59,6 @@ class CustomClassWithArgs():
 
     def method(self, t1: str) -> float:
         return 1.0 + self.attr
-
-
 
 
 def make_nonglobal_feedbacks():
@@ -71,10 +69,10 @@ def make_nonglobal_feedbacks():
     # globally importable ones above, they will get imported as them
     # incorrectly.
 
-    class NG: # "non-global"
+    class NG:  # "non-global"
+
         def NGcustom_feedback_function(t1: str) -> float:
             return 0.1
-
 
         class NGCustomProvider(Provider):
             # Provider inherits WithClassInfo and pydantic.BaseModel which means we can
@@ -88,11 +86,10 @@ def make_nonglobal_feedbacks():
 
             @classmethod
             def class_method(cls, t1: str) -> float:
-               return 0.3 
+                return 0.3
 
             def method(self, t1: str) -> float:
                 return 0.4 + self.attr
-
 
         class NGCustomClassNoArgs():
             # This one is ok as it has no init arguments so we can deserialize it just
@@ -108,7 +105,6 @@ def make_nonglobal_feedbacks():
 
             def method(self, t1: str) -> float:
                 return 0.7
-
 
         class NGCustomClassWithArgs():
             # These should fail as we don't know how to initialize this class during

@@ -20,11 +20,7 @@ from trulens_eval.db import Record
 from trulens_eval.feedback import Feedback
 from trulens_eval.keys import check_keys
 
-check_keys(
-    "OPENAI_API_KEY",
-    "PINECONE_API_KEY",
-    "PINECONE_ENV"
-)
+check_keys("OPENAI_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV")
 
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
