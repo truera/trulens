@@ -1203,7 +1203,17 @@ class OpenAI(Provider):
                     ]
                 )["choices"][0]["message"]["content"]
             )
-    def _groundedness(self, premise, hypothesis):
+    def _summarized_groundedness(self, premise:str, hypothesis:str) -> float:
+        """ A groundedness measure best used for summarized premise against simple hypothesis.
+        This OpenAI implementation uses information overlap prompts.
+
+        Args:
+            premise (str): Summarized source sentences.
+            hypothesis (str): Single statement setnece.
+
+        Returns:
+            float: Information Overlap
+        """
         return _re_1_10_rating(self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -1223,6 +1233,44 @@ class OpenAI(Provider):
                     ]
                 )["choices"][0]["message"]["content"]
             )) / 10
+
+    def _groundedness_doc_in_out(self, premise:str, hypothesis:str)->str:
+        """An LLM prompt using the entire document for premise and entire statement document for hypothesis
+
+        Args:
+            premise (str): A source document
+            hypothesis (str): A statement to check
+
+        Returns:
+            str: An LLM response using a scorecard template
+        """
+        return self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role":
+                                "system",
+                            "content":
+                                str.format(
+                                    feedback_prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,
+                                )
+                        },
+                        {
+                            "role":
+                                "user",
+                            "content":
+                                str.format(
+                                    feedback_prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
+                                    premise=premise,
+                                    hypothesis=hypothesis
+                                )
+                        }
+                    
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
     
     def qs_relevance(self, question: str, statement: str) -> float:
         """
@@ -1405,18 +1453,18 @@ class Groundedness(SerialModel, WithClassInfo):
             groundedness_provider=groundedness_provider,
             obj=self # for WithClassInfo
         )
-    
-    def _groundedness_measure_experimental(self, source:str, statement:str) -> float:
-        """A measure to track if the source material supports each sentence in the statement.
-        Current limitations are that this is a slow feedback function as it must check each sentence and each source.
+
+    def groundedness_measure(self, source:str, statement:str) -> float:
+        """A measure to track if the source material supports each sentence in the statement. 
+        This groundedness measure is faster; but less accurate than `groundedness_measure_with_summarize_step` 
+
         ```
         grounded = feedback.Groundedness(groundedness_provider=OpenAI())
 
 
-        f_groundedness = feedback.Feedback(grounded._groundedness_measure_experimental).on(
-            # Source Documents
+        f_groundedness = feedback.Feedback(grounded.groundedness_measure).on(
             Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content
-        ).on_output().aggregate(grounded._groundedness_measure_experimental_aggregator)
+        ).on_output().aggregate(grounded.grounded_statements_aggregator)
         ```
         Args:
             source (str): The source that should support the statement
@@ -1426,18 +1474,69 @@ class Groundedness(SerialModel, WithClassInfo):
             float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
         groundedness_scores = {}
-        hypotheses = {}
-        llm_discovered_relevant_statements = {}
+        if isinstance(self.groundedness_provider, OpenAI):
+            plausible_junk_char_min = 4 # very likely "sentences" under 4 characters are punctuation, spaces, etc
+            if len(statement) > plausible_junk_char_min:
+                reason = self.summarize_provider._groundedness_doc_in_out(source, statement)
+            i=0
+            for line in reason.split('\n'):
+                if "Score" in line:
+                    groundedness_scores[f"statement_{i}"] = _re_1_10_rating(line) / 10
+                    i += 1
+            return groundedness_scores, {"reason":reason}
+        if isinstance(self.groundedness_provider, Huggingface):
+            reason = ""
+            for i, hypothesis in enumerate(tqdm(statement.split("."), desc="Groundendess per statement in source")):
+                plausible_junk_char_min = 4 # very likely "sentences" under 4 characters are punctuation, spaces, etc
+                if len(hypothesis) > plausible_junk_char_min:
+                    score = self.groundedness_provider._doc_groundedness(premise=source, hypothesis=hypothesis)
+                    reason = reason + str.format(
+                        feedback_prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                        statement_sentence=hypothesis,
+                        supporting_evidence="[Doc NLI Used full source]",
+                        score=score*10,
+                    )
+                    groundedness_scores[f"statement_{i}"] = score
+                    
+            return groundedness_scores, {"reason":reason}
+
+
+    def groundedness_measure_with_summarize_step(self, source:str, statement:str) -> float:
+        """A measure to track if the source material supports each sentence in the statement. 
+        This groundedness measure is more accurate; but slower using a two step process.
+        - First find supporting evidence with an LLM
+        - Then for each statement sentence, check groundendness
+        ```
+        grounded = feedback.Groundedness(groundedness_provider=OpenAI())
+
+
+        f_groundedness = feedback.Feedback(grounded.groundedness_measure_with_summarize_step).on(
+            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content
+        ).on_output().aggregate(grounded.grounded_statements_aggregator)
+        ```
+        Args:
+            source (str): The source that should support the statement
+            statement (str): The statement to check groundedness
+
+        Returns:
+            float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
+        """
+        groundedness_scores = {}    
+        reason = ""
         for i, hypothesis in enumerate(tqdm(statement.split("."), desc="Groundendess per statement in source")):
             plausible_junk_char_min = 4 # very likely "sentences" under 4 characters are punctuation, spaces, etc
             if len(hypothesis) > plausible_junk_char_min:
-                hypotheses[f"statement_{i}"] = hypothesis
                 supporting_premise = self.summarize_provider._find_relevant_string(source, hypothesis)
-                llm_discovered_relevant_statements[f"statement_{i}"] = supporting_premise
-                groundedness_scores[f"statement_{i}"] = self.groundedness_provider._groundedness(premise=supporting_premise, hypothesis=hypothesis)
-                
-        return groundedness_scores, {"groundedness_scores":groundedness_scores, "hypotheses":hypotheses, "llm_discovered_relevant_statements": llm_discovered_relevant_statements}
-    def _groundedness_measure_experimental_aggregator(self, source_statements_matrix: np.ndarray) -> float:
+                score = self.groundedness_provider._summarized_groundedness(premise=supporting_premise, hypothesis=hypothesis)
+                reason = reason + str.format(
+                        feedback_prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                        statement_sentence=hypothesis,
+                        supporting_evidence=supporting_premise,
+                        score=score*10,
+                    )
+                groundedness_scores[f"statement_{i}"] = score
+        return groundedness_scores, {"reason":reason}
+    def grounded_statements_aggregator(self, source_statements_matrix: np.ndarray) -> float:
         """Aggregates multi-input, mulit-output information from the _groundedness_measure_experimental methods.
 
 
@@ -1564,6 +1663,7 @@ HUGS_TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxi
 HUGS_CHAT_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-3B"
 HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
 HUGS_NLI_API_URL = "https://api-inference.huggingface.co/models/ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
+HUGS_DOCNLI_API_URL = "https://api-inference.huggingface.co/models/MoritzLaurer/DeBERTa-v3-base-mnli-fever-docnli-ling-2c"
 
 class Huggingface(Provider):
 
@@ -1680,13 +1780,43 @@ class Huggingface(Provider):
         for label in hf_response:
             if label['label'] == 'toxic':
                 return label['score']
-    def _groundedness(self, premise, hypothesis):
+    def _summarized_groundedness(self, premise: str, hypothesis:str) -> float:
+        """ A groundedness measure best used for summarized premise against simple hypothesis.
+        This Huggingface implementation uses NLI.
+
+        Args:
+            premise (str): NLI Premise
+            hypothesis (str): NLI Hypothesis
+
+        Returns:
+            float: NLI Entailment
+        """
         if not '.' == premise[len(premise) - 1]:
             premise  = premise + '.'
         nli_string = premise + ' ' + hypothesis
         payload = {"inputs": nli_string}
         hf_response = self.endpoint.post(
             url=HUGS_NLI_API_URL, payload=payload
+        )
+        
+        for label in hf_response:
+            if label['label'] == 'entailment':
+                return label['score']
+    def _doc_groundedness(self, premise, hypothesis):
+        """ A groundedness measure for full document premise against hypothesis.
+        This Huggingface implementation uses DocNLI. The Hypoethsis still only works on single small hypothesis.
+
+        Args:
+            premise (str): NLI Premise
+            hypothesis (str): NLI Hypothesis
+
+        Returns:
+            float: NLI Entailment
+        """
+        nli_string = premise + ' [SEP] ' + hypothesis
+        payload = {"inputs": nli_string}
+        hf_response = self.endpoint.post(
+            url=HUGS_DOCNLI_API_URL, payload=payload
         )
         
         for label in hf_response:

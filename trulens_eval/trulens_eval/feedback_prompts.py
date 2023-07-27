@@ -10,6 +10,30 @@ STATEMENT 2: {hypothesis}
 
 INFORMATION OVERLAP: """
 
+LLM_GROUNDEDNESS_FULL_SYSTEM = """You are a INFORMATION OVERLAP classifier providing the overlap of information between a SOURCE and STATEMENT.
+For every sentence in the statement, please answer with this template:
+
+TEMPLATE: 
+Statement Sentence: <Sentence>, 
+Supporting Evidence: <Choose the exact unchanged sentences in the source that can answer the statement, if nothing matches, say NOTHING FOUND>
+Score: <Output a number between 1-10 where 1 is no information overlap and 10 is all information is overlapping.
+"""
+
+# Keep this in line with the LLM output template as above
+GROUNDEDNESS_REASON_TEMPLATE = """
+Statement Sentence: {statement_sentence} 
+Supporting Evidence: {supporting_evidence} 
+Score: {score} 
+
+"""
+
+LLM_GROUNDEDNESS_FULL_PROMPT = """Give me the INFORMATION OVERLAP of this SOURCE and STATEMENT.
+
+SOURCE: {premise}
+
+STATEMENT: {hypothesis}
+"""
+
 QS_RELEVANCE = """You are a RELEVANCE grader; providing the relevance of the given STATEMENT to the given QUESTION.
 Respond only as a number from 1 to 10 where 1 is the least relevant and 10 is the most relevant. 
 
