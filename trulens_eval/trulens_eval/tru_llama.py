@@ -93,6 +93,7 @@ class LlamaInstrument(Instrument):
                     ),
             }, LangChainInstrument.Default.METHODS
         )
+
     def __init__(self):
         super().__init__(
             root_method=TruLlama.query_with_record,

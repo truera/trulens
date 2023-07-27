@@ -403,13 +403,14 @@ import logging
 from multiprocessing.pool import AsyncResult
 import re
 import traceback
-from tqdm import tqdm
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple, Type,
-                    Union)
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
+)
 
 import numpy as np
 import openai
 import pydantic
+from tqdm import tqdm
 
 from trulens_eval import feedback_prompts
 from trulens_eval.keys import *
@@ -448,12 +449,14 @@ def check_provider(cls_or_name: Union[Type, str]) -> None:
 
     assert cls_name in PROVIDER_CLASS_NAMES, f"Unsupported provider class {cls_name}"
 
+
 # Signature of feedback implementations. Take in any number of arguments
 # and return either a single float or a float and a dictionary (of metadata).
 ImpCallable = Callable[..., Union[float, Tuple[float, Dict[str, Any]]]]
 
 # Signature of aggregation functions.
 AggCallable = Callable[[Iterable[float]], float]
+
 
 class Feedback(FeedbackDefinition):
     # Implementation, not serializable, note that FeedbackDefinition contains
@@ -514,7 +517,7 @@ class Feedback(FeedbackDefinition):
         if agg is not None:
             if 'aggregator' not in kwargs:
                 try:
-                    # These are for serialization to/from json and for db storage.            
+                    # These are for serialization to/from json and for db storage.
                     kwargs['aggregator'] = FunctionOrMethod.of_callable(
                         agg, loadable=True
                     )
@@ -523,8 +526,9 @@ class Feedback(FeedbackDefinition):
                     pass
         else:
             if 'aggregator' in kwargs:
-                agg: AggCallable = FunctionOrMethod.pick(**(kwargs['aggregator'])
-                                                     ).load()
+                agg: AggCallable = FunctionOrMethod.pick(
+                    **(kwargs['aggregator'])
+                ).load()
 
         super().__init__(**kwargs)
 
@@ -817,7 +821,7 @@ class Feedback(FeedbackDefinition):
         try:
             # Total cost, will accumulate.
             cost = Cost()
-            
+
             for ins in self.extract_selection(app=app_json, record=record):
 
                 result_and_meta, part_cost = Endpoint.track_all_costs_tally(
@@ -827,10 +831,14 @@ class Feedback(FeedbackDefinition):
 
                 if isinstance(result_and_meta, Tuple):
                     # If output is a tuple of two, we assume it is the float and the metadata.
-                    assert len(result_and_meta) == 2, "Feedback functions must return either a single float or a float and a dictionary."
+                    assert len(
+                        result_and_meta
+                    ) == 2, "Feedback functions must return either a single float or a float and a dictionary."
                     result_val, meta = result_and_meta
 
-                    assert isinstance(meta, dict), f"Feedback metadata output must be a dictionary but was {type(call_meta)}."
+                    assert isinstance(
+                        meta, dict
+                    ), f"Feedback metadata output must be a dictionary but was {type(call_meta)}."
                 else:
                     # Otherwise it is just the float. We create empty metadata dict.
                     result_val = result_and_meta
@@ -838,15 +846,22 @@ class Feedback(FeedbackDefinition):
 
                 if isinstance(result_val, dict):
                     for val in result_val.values():
-                        assert isinstance(val, float), f"Feedback function output with multivalue must be a dict with float values but encountered {type(val)}."
+                        assert isinstance(
+                            val, float
+                        ), f"Feedback function output with multivalue must be a dict with float values but encountered {type(val)}."
                     # TODO: Better handling of multi-output
                     result_val = list(result_val.values())
-                    feedback_call = FeedbackCall(args=ins, ret =np.mean(result_val), meta=meta)
-                
+                    feedback_call = FeedbackCall(
+                        args=ins, ret=np.mean(result_val), meta=meta
+                    )
+
                 else:
-                    assert isinstance(result_val, float), f"Feedback function output must be a float or dict but was {type(result_val)}."
-                    feedback_call = FeedbackCall(args=ins, ret=result_val, meta=meta)
-                
+                    assert isinstance(
+                        result_val, float
+                    ), f"Feedback function output must be a float or dict but was {type(result_val)}."
+                    feedback_call = FeedbackCall(
+                        args=ins, ret=result_val, meta=meta
+                    )
 
                 result_vals.append(result_val)
                 feedback_calls.append(feedback_call)
@@ -1009,11 +1024,12 @@ class OpenAI(Provider):
     model_engine: str
     endpoint: Endpoint
 
-    def __init__(self, *args, endpoint = None, model_engine = "gpt-3.5-turbo", **kwargs):
+    def __init__(
+        self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
+    ):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
-
         """
         A set of OpenAI Feedback Functions.
 
@@ -1035,7 +1051,6 @@ class OpenAI(Provider):
         )  # need to include pydantic.BaseModel.__init__
 
         set_openai_key()
-
 
     """
     def to_json(self) -> Dict:
@@ -1174,36 +1189,35 @@ class OpenAI(Provider):
         return 1 - int(
             openai_response["results"][0]["category_scores"]["violence/graphic"]
         )
-    
+
     def _find_relevant_string(self, full_source, hypothesis):
         return self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    model=self.model_engine,
-                    temperature=0.0,
-                    messages=[
-                        {
-                            "role":
-                                "system",
-                            "content":
-                                str.format(
-                                    feedback_prompts.SYSTEM_FIND_SUPPORTING,
-                                    prompt=full_source,
-                                )
-                        },
-                        {
-                            "role":
-                                "user",
-                            "content":
-                                str.format(
-                                    feedback_prompts.USER_FIND_SUPPORTING,
-                                    response=hypothesis
-                                )
-                        }
-                    
-                    ]
-                )["choices"][0]["message"]["content"]
-            )
-    def _summarized_groundedness(self, premise:str, hypothesis:str) -> float:
+            lambda: self._create_chat_completion(
+                model=self.model_engine,
+                temperature=0.0,
+                messages=[
+                    {
+                        "role":
+                            "system",
+                        "content":
+                            str.format(
+                                feedback_prompts.SYSTEM_FIND_SUPPORTING,
+                                prompt=full_source,
+                            )
+                    }, {
+                        "role":
+                            "user",
+                        "content":
+                            str.format(
+                                feedback_prompts.USER_FIND_SUPPORTING,
+                                response=hypothesis
+                            )
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+        )
+
+    def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
         """ A groundedness measure best used for summarized premise against simple hypothesis.
         This OpenAI implementation uses information overlap prompts.
 
@@ -1214,7 +1228,8 @@ class OpenAI(Provider):
         Returns:
             float: Information Overlap
         """
-        return _re_1_10_rating(self.endpoint.run_me(
+        return _re_1_10_rating(
+            self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
                     temperature=0.0,
@@ -1229,12 +1244,12 @@ class OpenAI(Provider):
                                     hypothesis=hypothesis,
                                 )
                         }
-                    
                     ]
                 )["choices"][0]["message"]["content"]
-            )) / 10
+            )
+        ) / 10
 
-    def _groundedness_doc_in_out(self, premise:str, hypothesis:str)->str:
+    def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
         """An LLM prompt using the entire document for premise and entire statement document for hypothesis
 
         Args:
@@ -1245,33 +1260,31 @@ class OpenAI(Provider):
             str: An LLM response using a scorecard template
         """
         return self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    model=self.model_engine,
-                    temperature=0.0,
-                    messages=[
-                        {
-                            "role":
-                                "system",
-                            "content":
-                                str.format(
-                                    feedback_prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,
-                                )
-                        },
-                        {
-                            "role":
-                                "user",
-                            "content":
-                                str.format(
-                                    feedback_prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
-                                    premise=premise,
-                                    hypothesis=hypothesis
-                                )
-                        }
-                    
-                    ]
-                )["choices"][0]["message"]["content"]
-            )
-    
+            lambda: self._create_chat_completion(
+                model=self.model_engine,
+                temperature=0.0,
+                messages=[
+                    {
+                        "role":
+                            "system",
+                        "content":
+                            str.format(
+                                feedback_prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,
+                            )
+                    }, {
+                        "role":
+                            "user",
+                        "content":
+                            str.format(
+                                feedback_prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
+                                premise=premise,
+                                hypothesis=hypothesis
+                            )
+                    }
+                ]
+            )["choices"][0]["message"]["content"]
+        )
+
     def qs_relevance(self, question: str, statement: str) -> float:
         """
         Uses OpenAI's Chat Completion App. A function that completes a
@@ -1306,7 +1319,6 @@ class OpenAI(Provider):
             )
         ) / 10
 
-
     def relevance(self, prompt: str, response: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -1335,7 +1347,7 @@ class OpenAI(Provider):
                                     prompt=prompt,
                                     response=response
                                 )
-                        }, 
+                        },
                     ]
                 )["choices"][0]["message"]["content"]
             )
@@ -1372,7 +1384,7 @@ class OpenAI(Provider):
                 )["choices"][0]["message"]["content"]
             )
         )
-    
+
     def model_agreement(self, prompt: str, response: str) -> float:
         """
         Uses OpenAI's Chat GPT Model. A function that gives Chat GPT the same
@@ -1388,7 +1400,9 @@ class OpenAI(Provider):
             float: A value between 0 and 1. 0 being "not in agreement" and 1
             being "in agreement".
         """
-        logger.warning("model_agreement has been deprecated. Use GroundTruthAgreement(ground_truth) instead.")
+        logger.warning(
+            "model_agreement has been deprecated. Use GroundTruthAgreement(ground_truth) instead."
+        )
         oai_chat_response = self.endpoint.run_me(
             lambda: self._create_chat_completion(
                 model=self.model_engine,
@@ -1409,7 +1423,9 @@ class OpenAI(Provider):
         )
         return _re_1_10_rating(agreement_txt) / 10
 
-    def _get_answer_agreement(self, prompt, response, check_response, model_engine="gpt-3.5-turbo"):
+    def _get_answer_agreement(
+        self, prompt, response, check_response, model_engine="gpt-3.5-turbo"
+    ):
         oai_chat_response = self.endpoint.run_me(
             lambda: self._create_chat_completion(
                 model=model_engine,
@@ -1429,13 +1445,13 @@ class OpenAI(Provider):
             )["choices"][0]["message"]["content"]
         )
         return oai_chat_response
-    
 
 
 class Groundedness(SerialModel, WithClassInfo):
     summarize_provider: Provider
     groundedness_provider: Provider
-    def __init__(self,groundedness_provider: Provider = None):
+
+    def __init__(self, groundedness_provider: Provider = None):
         """Instantiates the groundedness providers. Currently the groundedness functions work well with a summarizer.
         This class will use an OpenAI summarizer to find the relevant strings in a text. The groundedness_provider can 
         either be an llm with OpenAI or NLI with huggingface.
@@ -1447,14 +1463,16 @@ class Groundedness(SerialModel, WithClassInfo):
             groundedness_provider = OpenAI()
         summarize_provider = OpenAI()
         if not isinstance(groundedness_provider, (OpenAI, Huggingface)):
-            raise Exception("Groundedness is only supported groundedness_provider as OpenAI or Huggingface Providers.")
+            raise Exception(
+                "Groundedness is only supported groundedness_provider as OpenAI or Huggingface Providers."
+            )
         super().__init__(
             summarize_provider=summarize_provider,
             groundedness_provider=groundedness_provider,
-            obj=self # for WithClassInfo
+            obj=self  # for WithClassInfo
         )
 
-    def groundedness_measure(self, source:str, statement:str) -> float:
+    def groundedness_measure(self, source: str, statement: str) -> float:
         """A measure to track if the source material supports each sentence in the statement. 
         This groundedness measure is faster; but less accurate than `groundedness_measure_with_summarize_step` 
 
@@ -1475,33 +1493,41 @@ class Groundedness(SerialModel, WithClassInfo):
         """
         groundedness_scores = {}
         if isinstance(self.groundedness_provider, OpenAI):
-            plausible_junk_char_min = 4 # very likely "sentences" under 4 characters are punctuation, spaces, etc
+            plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
             if len(statement) > plausible_junk_char_min:
-                reason = self.summarize_provider._groundedness_doc_in_out(source, statement)
-            i=0
+                reason = self.summarize_provider._groundedness_doc_in_out(
+                    source, statement
+                )
+            i = 0
             for line in reason.split('\n'):
                 if "Score" in line:
-                    groundedness_scores[f"statement_{i}"] = _re_1_10_rating(line) / 10
+                    groundedness_scores[f"statement_{i}"
+                                       ] = _re_1_10_rating(line) / 10
                     i += 1
-            return groundedness_scores, {"reason":reason}
+            return groundedness_scores, {"reason": reason}
         if isinstance(self.groundedness_provider, Huggingface):
             reason = ""
-            for i, hypothesis in enumerate(tqdm(statement.split("."), desc="Groundendess per statement in source")):
-                plausible_junk_char_min = 4 # very likely "sentences" under 4 characters are punctuation, spaces, etc
+            for i, hypothesis in enumerate(
+                    tqdm(statement.split("."),
+                         desc="Groundendess per statement in source")):
+                plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
                 if len(hypothesis) > plausible_junk_char_min:
-                    score = self.groundedness_provider._doc_groundedness(premise=source, hypothesis=hypothesis)
+                    score = self.groundedness_provider._doc_groundedness(
+                        premise=source, hypothesis=hypothesis
+                    )
                     reason = reason + str.format(
                         feedback_prompts.GROUNDEDNESS_REASON_TEMPLATE,
                         statement_sentence=hypothesis,
                         supporting_evidence="[Doc NLI Used full source]",
-                        score=score*10,
+                        score=score * 10,
                     )
                     groundedness_scores[f"statement_{i}"] = score
-                    
-            return groundedness_scores, {"reason":reason}
 
+            return groundedness_scores, {"reason": reason}
 
-    def groundedness_measure_with_summarize_step(self, source:str, statement:str) -> float:
+    def groundedness_measure_with_summarize_step(
+        self, source: str, statement: str
+    ) -> float:
         """A measure to track if the source material supports each sentence in the statement. 
         This groundedness measure is more accurate; but slower using a two step process.
         - First find supporting evidence with an LLM
@@ -1521,22 +1547,31 @@ class Groundedness(SerialModel, WithClassInfo):
         Returns:
             float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
-        groundedness_scores = {}    
+        groundedness_scores = {}
         reason = ""
-        for i, hypothesis in enumerate(tqdm(statement.split("."), desc="Groundendess per statement in source")):
-            plausible_junk_char_min = 4 # very likely "sentences" under 4 characters are punctuation, spaces, etc
+        for i, hypothesis in enumerate(
+                tqdm(statement.split("."),
+                     desc="Groundendess per statement in source")):
+            plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
             if len(hypothesis) > plausible_junk_char_min:
-                supporting_premise = self.summarize_provider._find_relevant_string(source, hypothesis)
-                score = self.groundedness_provider._summarized_groundedness(premise=supporting_premise, hypothesis=hypothesis)
+                supporting_premise = self.summarize_provider._find_relevant_string(
+                    source, hypothesis
+                )
+                score = self.groundedness_provider._summarized_groundedness(
+                    premise=supporting_premise, hypothesis=hypothesis
+                )
                 reason = reason + str.format(
-                        feedback_prompts.GROUNDEDNESS_REASON_TEMPLATE,
-                        statement_sentence=hypothesis,
-                        supporting_evidence=supporting_premise,
-                        score=score*10,
-                    )
+                    feedback_prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                    statement_sentence=hypothesis,
+                    supporting_evidence=supporting_premise,
+                    score=score * 10,
+                )
                 groundedness_scores[f"statement_{i}"] = score
-        return groundedness_scores, {"reason":reason}
-    def grounded_statements_aggregator(self, source_statements_matrix: np.ndarray) -> float:
+        return groundedness_scores, {"reason": reason}
+
+    def grounded_statements_aggregator(
+        self, source_statements_matrix: np.ndarray
+    ) -> float:
         """Aggregates multi-input, mulit-output information from the _groundedness_measure_experimental methods.
 
 
@@ -1547,8 +1582,9 @@ class Groundedness(SerialModel, WithClassInfo):
         Returns:
             float: for each statement, gets the max groundedness, then averages over that.
         """
-        max_over_sources = np.max(source_statements_matrix, axis = 0)
+        max_over_sources = np.max(source_statements_matrix, axis=0)
         return np.mean(max_over_sources)
+
 
 class GroundTruthAgreement(SerialModel, WithClassInfo):
     ground_truth: Union[List[str], FunctionOrMethod]
@@ -1556,7 +1592,11 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
 
     ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
 
-    def __init__(self, ground_truth: Union[List[str], Callable, FunctionOrMethod], provider: Provider = None):
+    def __init__(
+        self,
+        ground_truth: Union[List[str], Callable, FunctionOrMethod],
+        provider: Provider = None
+    ):
         if provider is None:
             provider = OpenAI()
         if isinstance(ground_truth, List):
@@ -1571,26 +1611,32 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ground_truth = FunctionOrMethod.pick(**ground_truth)
             ground_truth_imp = ground_truth.load()
         else:
-            raise RuntimeError(f"Unhandled ground_truth type: {type(ground_truth)}.")
+            raise RuntimeError(
+                f"Unhandled ground_truth type: {type(ground_truth)}."
+            )
 
         super().__init__(
             ground_truth=ground_truth,
             ground_truth_imp=ground_truth_imp,
             provider=provider,
-            obj=self # for WithClassInfo
+            obj=self  # for WithClassInfo
         )
 
     def _find_response(self, prompt: str) -> Optional[str]:
         if self.ground_truth_imp is not None:
             return self.ground_truth_imp(prompt)
 
-        responses = [qr["response"] for qr in self.ground_truth if qr["query"] == prompt]
+        responses = [
+            qr["response"] for qr in self.ground_truth if qr["query"] == prompt
+        ]
         if responses:
             return responses[0]
         else:
             return None
 
-    def agreement_measure(self, prompt: str, response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
+    def agreement_measure(
+        self, prompt: str, response: str
+    ) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
         Uses OpenAI's Chat GPT Model. A function that that measures
         similarity to ground truth. A second template is given to Chat GPT
@@ -1611,11 +1657,12 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             agreement_txt = self.provider._get_answer_agreement(
                 prompt, response, ground_truth_response
             )
-            ret = _re_1_10_rating(agreement_txt) / 10, dict(ground_truth_response=ground_truth_response)
+            ret = _re_1_10_rating(agreement_txt) / 10, dict(
+                ground_truth_response=ground_truth_response
+            )
         else:
             ret = np.nan
         return ret
-
 
 
 class AzureOpenAI(OpenAI):
@@ -1625,7 +1672,6 @@ class AzureOpenAI(OpenAI):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
-
         """
         Wrapper to use Azure OpenAI. Please export the following env variables
 
@@ -1657,6 +1703,7 @@ class AzureOpenAI(OpenAI):
             *args, deployment_id=self.deployment_id, **kwargs
         )
 
+
 # Cannot put these inside Huggingface since it interferes with pydantic.BaseModel.
 HUGS_SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
 HUGS_TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
@@ -1665,15 +1712,15 @@ HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm
 HUGS_NLI_API_URL = "https://api-inference.huggingface.co/models/ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
 HUGS_DOCNLI_API_URL = "https://api-inference.huggingface.co/models/MoritzLaurer/DeBERTa-v3-base-mnli-fever-docnli-ling-2c"
 
+
 class Huggingface(Provider):
 
     endpoint: Endpoint
-    
+
     def __init__(self, endpoint=None, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
-
         """
         A set of Huggingface Feedback Functions.
 
@@ -1780,7 +1827,8 @@ class Huggingface(Provider):
         for label in hf_response:
             if label['label'] == 'toxic':
                 return label['score']
-    def _summarized_groundedness(self, premise: str, hypothesis:str) -> float:
+
+    def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
         """ A groundedness measure best used for summarized premise against simple hypothesis.
         This Huggingface implementation uses NLI.
 
@@ -1792,16 +1840,15 @@ class Huggingface(Provider):
             float: NLI Entailment
         """
         if not '.' == premise[len(premise) - 1]:
-            premise  = premise + '.'
+            premise = premise + '.'
         nli_string = premise + ' ' + hypothesis
         payload = {"inputs": nli_string}
-        hf_response = self.endpoint.post(
-            url=HUGS_NLI_API_URL, payload=payload
-        )
-        
+        hf_response = self.endpoint.post(url=HUGS_NLI_API_URL, payload=payload)
+
         for label in hf_response:
             if label['label'] == 'entailment':
                 return label['score']
+
     def _doc_groundedness(self, premise, hypothesis):
         """ A groundedness measure for full document premise against hypothesis.
         This Huggingface implementation uses DocNLI. The Hypoethsis still only works on single small hypothesis.
@@ -1818,7 +1865,7 @@ class Huggingface(Provider):
         hf_response = self.endpoint.post(
             url=HUGS_DOCNLI_API_URL, payload=payload
         )
-        
+
         for label in hf_response:
             if label['label'] == 'entailment':
                 return label['score']
@@ -1835,8 +1882,10 @@ class Cohere(Provider):
         kwargs['endpoint'] = Endpoint(name="cohere")
         kwargs['model_engine'] = model_engine
 
-        super().__init__(**kwargs)  # need to include pydantic.BaseModel.__init__
-        
+        super().__init__(
+            **kwargs
+        )  # need to include pydantic.BaseModel.__init__
+
     def sentiment(
         self,
         text,

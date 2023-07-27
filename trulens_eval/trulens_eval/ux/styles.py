@@ -37,7 +37,7 @@ class CATEGORY:
         icon="?"
     )
 
-    ALL = [PASS, WARNING, FAIL] # not including UNKNOWN intentionally
+    ALL = [PASS, WARNING, FAIL]  # not including UNKNOWN intentionally
 
     @staticmethod
     def of_score(score: float) -> Category:
