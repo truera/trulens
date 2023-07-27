@@ -1,4 +1,5 @@
 import math
+import json
 
 from millify import millify
 import numpy as np
@@ -13,6 +14,7 @@ st.runtime.legacy_caching.clear_cache()
 from trulens_eval import db
 from trulens_eval import Tru
 from trulens_eval.ux import styles
+from trulens_eval.ux.components import draw_metadata
 
 st.set_page_config(page_title="Leaderboard", layout="wide")
 
@@ -45,11 +47,19 @@ def streamlit_app():
     st.markdown("""---""")
 
     for app in apps:
-        st.header(app)
+        app_df = df.loc[df.app_id == app]
+        if app_df.empty:
+            continue
+        app_str = app_df['app_json'].iloc[0]
+        app_json = json.loads(
+            app_str
+        )
+        metadata = app_json.get('metadata')
+        #st.text('Metadata' + str(metadata))
+        st.header(app, help = draw_metadata(metadata))
         col1, col2, col3, col4, *feedback_cols, col99 = st.columns(
             5 + len(feedback_col_names)
         )
-        app_df = df.loc[df.app_id == app]
         latency_mean = app_df['latency'].apply(
             lambda td: td if td != MIGRATION_UNKNOWN_STR else None
         ).mean()
@@ -100,6 +110,9 @@ def streamlit_app():
             if st.button('Select App', key=f"app-selector-{app}"):
                 st.session_state.app = app
                 switch_page('Evaluations')
+
+        #with st.expander("Model metadata"):
+        #    st.markdown(draw_metadata(metadata))
 
         st.markdown("""---""")
 
