@@ -589,6 +589,71 @@ class Endpoint(SerialModel, SingletonPerName):
 
         # If INSTRUMENT is not set, create a wrapper method and return it.
 
+        async def _agenwrapper_completion(responses, *args, **kwargs):
+            logger.debug(
+                f"Calling async generator wrapped {func.__name__} for {self.name}."
+            )
+
+            bindings = inspect.signature(func).bind(*args, **kwargs)
+
+            # Get all of the callback classes suitable for handling this call.
+            # Note that we stored this in the INSTRUMENT attribute of the
+            # wrapper method.
+            registered_callback_classes = getattr(_agenwrapper_completion, INSTRUMENT)
+
+            # Look up the endpoints that are expecting to be notified and the
+            # callback tracking the tally. See Endpoint._track_costs for
+            # definition.
+            endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
+                get_local_in_call_stack(
+                    key="endpoints",
+                    func=self.__find_tracker,
+                    offset=0
+                )
+
+            # If wrapped method was not called from within _track_costs, we will
+            # get None here and do nothing but return wrapped function's
+            # response.
+            
+            async for response in responses:
+                yield response
+
+                if endpoints is None:
+                    logger.debug("No endpoints found.")
+                    continue
+
+                logger.debug(
+                    f"Respond from async generator wrapped {func.__name__} for {self.name}: {response}"
+                )
+
+                for callback_class in registered_callback_classes:
+                    logger.debug(f"Handling callback_class: {callback_class}.")
+                    if callback_class not in endpoints:
+                        logger.warning(
+                            f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
+                            " but there are no endpoints waiting to receive the result."
+                        )
+                        continue
+
+                    for endpoint, callback in endpoints[callback_class]:
+                        logger.debug(f"Handling endpoint {endpoint}.")
+                        endpoint.handle_wrapped_call(
+                            func=func,
+                            bindings=bindings,
+                            response=response,
+                            callback=callback
+                        )
+
+        async def agenwrapper(*args, **kwargs):
+            logger.debug(
+                f"Calling async wrapped {func.__name__} for {self.name}."
+            )
+
+            # Get the result of the wrapped function:
+            responses: Any = await func(*args, **kwargs)
+
+            return _agenwrapper_completion(responses, *args, **kwargs)
+
         # TODO: async/sync code duplication
         async def awrapper(*args, **kwargs):
             logger.debug(
@@ -598,8 +663,13 @@ class Endpoint(SerialModel, SingletonPerName):
             # Get the result of the wrapped function:
             responses: Any = await func(*args, **kwargs)
 
-            if inspect.isasyncgen(responses):
-                response = [r async for r in responses][-1]
+            isgen = inspect.isasyncgen(responses)
+
+            if isgen:
+                return _agenwrapper_completion(responses, *args, **kwargs)
+                #async for response in responses:
+                #    return response
+                # response = [r async for r in responses][-1]
             else:
                 response = responses
 
@@ -631,7 +701,10 @@ class Endpoint(SerialModel, SingletonPerName):
             # response.
             if endpoints is None:
                 logger.debug("No endpoints found.")
-                return responses
+                if isgen:
+                    return
+                else:
+                    return response
 
             for callback_class in registered_callback_classes:
                 logger.debug(f"Handling callback_class: {callback_class}.")
@@ -651,68 +724,11 @@ class Endpoint(SerialModel, SingletonPerName):
                         callback=callback
                     )
 
-            return responses
-
-        async def agenwrapper(*args, **kwargs):
-            logger.debug(
-                f"Calling async generator wrapped {func.__name__} for {self.name}."
-            )
-
-            # Get the result of the wrapped function:
-            responses: Any = await func(*args, **kwargs)
-
-            async for res in responses:
-                yield res
-
-            response = res  # last one
-
-            logger.debug(
-                f"Respond from async generator wrapped {func.__name__} for {self.name}: {response}"
-            )
-
-            bindings = inspect.signature(func).bind(*args, **kwargs)
-
-            # Get all of the callback classes suitable for handling this call.
-            # Note that we stored this in the INSTRUMENT attribute of the
-            # wrapper method.
-            registered_callback_classes = getattr(agenwrapper, INSTRUMENT)
-
-            # Look up the endpoints that are expecting to be notified and the
-            # callback tracking the tally. See Endpoint._track_costs for
-            # definition.
-            endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
-                get_local_in_call_stack(
-                    key="endpoints",
-                    func=self.__find_tracker,
-                    offset=0
-                )
-
-            # If wrapped method was not called from within _track_costs, we will
-            # get None here and do nothing but return wrapped function's
-            # response.
-            if endpoints is None:
-                logger.debug("No endpoints found.")
+            if isgen:
                 return
+            else:
+                return response
 
-            for callback_class in registered_callback_classes:
-                logger.debug(f"Handling callback_class: {callback_class}.")
-                if callback_class not in endpoints:
-                    logger.warning(
-                        f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
-                        " but there are no endpoints waiting to receive the result."
-                    )
-                    continue
-
-                for endpoint, callback in endpoints[callback_class]:
-                    logger.debug(f"Handling endpoint {endpoint}.")
-                    endpoint.handle_wrapped_call(
-                        func=func,
-                        bindings=bindings,
-                        response=response,
-                        callback=callback
-                    )
-
-            return
 
         def wrapper(*args, **kwargs):
             logger.debug(f"Calling wrapped {func.__name__} for {self.name}.")
@@ -764,12 +780,17 @@ class Endpoint(SerialModel, SingletonPerName):
 
         if inspect.isasyncgenfunction(func):
             w = agenwrapper
+            w2 = _agenwrapper_completion
         elif inspect.iscoroutinefunction(func):
             w = awrapper
+            w2 = _agenwrapper_completion
         else:
             w = wrapper
+            w2 = None
 
         setattr(w, INSTRUMENT, [self.callback_class])
+        if w2 is not None:
+            setattr(w2, INSTRUMENT, [self.callback_class])
         w.__name__ = func.__name__
         w.__signature__ = inspect.signature(func)
 
@@ -815,6 +836,8 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
             if callback is not None:
                 callback.handle_generation(response=llm_res)
+
+        # TODO: process stream delta object
 
         if results is not None:
             for res in results:
