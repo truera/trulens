@@ -46,10 +46,6 @@ In addition to collecting app parameters, we also collect:
       to deserialize them first. 
     - See `schema.py:Class` for details.
 
-#### Tricky
-
-#### Limitations
-
 ### Functions/Methods
 
 Methods and functions are instrumented by overwriting choice attributes in
@@ -84,10 +80,6 @@ dict, for examople). Presently, we override methods with instrumented versions.
   drawbacks is the need to handle different callback systems for each system and
   potentially missing information not exposed by them.
 
-### Tricky
-
-- 
-
 ### Calls
 
 The instrumented versions of functions/methods record the inputs/outputs and
@@ -117,12 +109,37 @@ tools as App Data (see above).
   global data and instead hide instrumenting data in the call stack frames of
   the instrumentation methods. See `util.py:get_local_in_call_stack.py`.
 
-#### Limitations
+#### Threads
 
-- Threads need to be started using the utility class TP in order for
-  instrumented methods called in a thread to be tracked. As we rely on call
+Threads do not inherit call stacks from their creator. This is a problem due to
+our reliance on info stored on the stack. Therefore we have a limitation:
+
+- **Limitation**: Threads need to be started using the utility class TP in order
+  for instrumented methods called in a thread to be tracked. As we rely on call
   stack for call instrumentation we need to preserve the stack before a thread
   start which python does not do.  See `util.py:TP._thread_starter`.
+
+#### Async
+
+Similar to threads, code run as part of a `asyncio.Task` does not inherit the
+stack of the creator. Our current solution instruments `asyncio.new_event_loop`
+to make sure all tasks that get created in `async` track the stack of their
+creator. This is done in `utils/python.py:_new_event_loop` . The function
+`stack_with_tasks` is then used to integrate this information with the normal
+caller stack when needed. This may cause incompatibility issues when other tools
+use their own event loops or interfere with this instrumentation in other ways.
+Note that some async functions that seem to not involve `Task` do use tasks,
+such as `gather`.
+
+- **Limitation**: `async.Tasks` must be created via our `task_factory` as per
+  `utils/python.py:task_factory_with_stack`. This includes tasks created by
+  function such as `gather`. This limitation is not expected to be a problem
+  given our instrumentation except if other tools are used that modify `async`
+  in some ways.
+
+#### Limitations
+
+- Threading and async limitations. See **Threads** and **Async** .
 
 - If the same wrapped sub-app is called multiple times within a single call to
   the root app, the record of this execution will not be exact with regards to
@@ -150,7 +167,8 @@ tools as App Data (see above).
 
 Should our wrappers behave like the wrapped apps? Current design is like this:
 
-```python chain = ... # some langchain chain
+```python
+chain = ... # some langchain chain
 
 tru = Tru() truchain = tru.Chain(chain, ...)
 
@@ -160,7 +178,6 @@ plain_result = truchain(...) # will be recorded
 
 plain_result, record = truchain.call_with_record(...) # will be recorded, and
 you get the record too
-
 ```
 
 The problem with the above is that "call_" part of "call_with_record" is
@@ -224,7 +241,7 @@ stack for specific frames:
 
 #### Alternatives
 
-- contextvars -- langchain uses these to manage contexts such as those used for
+- `contextvars` -- langchain uses these to manage contexts such as those used for
   instrumenting/tracking LLM usage. These can be used to manage call stack
   information like we do. The drawback is that these are not threadsafe or at
   least need instrumenting thread creation. We have to do a similar thing by
@@ -234,9 +251,9 @@ stack for specific frames:
 """
 
 from datetime import datetime
+import inspect
 from inspect import BoundArguments
 from inspect import signature
-import inspect
 import logging
 import os
 from pprint import PrettyPrinter

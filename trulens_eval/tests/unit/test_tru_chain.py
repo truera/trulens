@@ -23,8 +23,6 @@ from langchain.schema.messages import HumanMessage
 from langchain.vectorstores import Pinecone
 import pinecone
 
-from trulens_eval import feedback
-from trulens_eval import Feedback
 from trulens_eval import Tru
 from trulens_eval.keys import check_keys
 from trulens_eval.provider_apis import Endpoint
@@ -32,8 +30,7 @@ from trulens_eval.provider_apis import OpenAIEndpoint
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.util import JSON_BASES
 from trulens_eval.util import JSONPath
-
-import trulens_eval.utils.python # makes sure asyncio gets instrumented
+import trulens_eval.utils.python  # makes sure asyncio gets instrumented
 
 check_keys(
     "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
