@@ -9,13 +9,17 @@
       
       
       
+        <link rel="prev" href="../feedback_functions/">
+      
+      
+        <link rel="next" href="../qs_relevance_smoke_tests/">
       
       <link rel="icon" href="../../img/favicon.ico">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
     
     
       
-        <title>Quickstart - TruLens</title>
+        <title>Prompt Response Relevance - TruLens</title>
       
     
     
@@ -69,7 +73,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#quickstart" class="md-skip">
+        <a href="#pr-relevance-feedback-requirements" class="md-skip">
           Skip to content
         </a>
       
@@ -103,7 +107,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Quickstart
+              Prompt Response Relevance
             
           </span>
         </div>
@@ -218,16 +222,18 @@
 
   
   
+    
+  
   
     
       
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
       
       
       
@@ -236,7 +242,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_3">
           <span class="md-nav__icon md-icon"></span>
           Eval
@@ -275,14 +281,16 @@
               
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
       
       
       
@@ -291,7 +299,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_3_3">
           <span class="md-nav__icon md-icon"></span>
           Feedback Functions
@@ -316,14 +324,16 @@
               
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3_2" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3_2" checked>
       
       
       
@@ -332,7 +342,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_3_2_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_3_2_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_3_3_2">
           <span class="md-nav__icon md-icon"></span>
           Smoke Tests
@@ -343,11 +353,90 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../pr_relevance_smoke_tests/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Prompt Response Relevance
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Prompt Response Relevance
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pr-relevance-feedback-requirements" class="md-nav__link">
+    PR Relevance Feedback Requirements
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relevance-requires-adherence-to-the-entire-query" class="md-nav__link">
+    Relevance requires adherence to the entire query.
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#responses-without-a-definitive-answer-are-still-relevant" class="md-nav__link">
+    Responses without a definitive answer are still relevant.
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#refusals-are-still-relevant" class="md-nav__link">
+    Refusals are still relevant.
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feedback-score-should-differentiate-between-seeming-and-actual-relevance" class="md-nav__link">
+    Feedback score should differentiate between seeming and actual relevance.
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relevant-but-inconclusive-statements-should-get-increasingly-high-scores-as-they-are-more-helpful-for-answering-the-query" class="md-nav__link">
+    Relevant but inconclusive statements should get increasingly high scores as they are more helpful for answering the query.
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-smoke-tests" class="md-nav__link">
+    Run smoke tests
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -719,8 +808,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -729,70 +816,50 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#setup" class="md-nav__link">
-    Setup
-  </a>
-  
-    <nav class="md-nav" aria-label="Setup">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#add-api-keys" class="md-nav__link">
-    Add API keys
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#import-from-trulens" class="md-nav__link">
-    Import from TruLens
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#create-simple-text-to-text-application" class="md-nav__link">
-    Create Simple Text to Text Application
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#send-your-first-request" class="md-nav__link">
-    Send your first request
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#initialize-feedback-functions" class="md-nav__link">
-    Initialize Feedback Function(s)
+  <a href="#pr-relevance-feedback-requirements" class="md-nav__link">
+    PR Relevance Feedback Requirements
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#instrument-the-callable-for-logging-with-trulens" class="md-nav__link">
-    Instrument the callable for logging with TruLens
+  <a href="#relevance-requires-adherence-to-the-entire-query" class="md-nav__link">
+    Relevance requires adherence to the entire query.
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#explore-in-a-dashboard" class="md-nav__link">
-    Explore in a Dashboard
+  <a href="#responses-without-a-definitive-answer-are-still-relevant" class="md-nav__link">
+    Responses without a definitive answer are still relevant.
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#or-view-results-directly-in-your-notebook" class="md-nav__link">
-    Or view results directly in your notebook
+  <a href="#refusals-are-still-relevant" class="md-nav__link">
+    Refusals are still relevant.
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feedback-score-should-differentiate-between-seeming-and-actual-relevance" class="md-nav__link">
+    Feedback score should differentiate between seeming and actual relevance.
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relevant-but-inconclusive-statements-should-get-increasingly-high-scores-as-they-are-more-helpful-for-answering-the-query" class="md-nav__link">
+    Relevant but inconclusive statements should get increasingly high scores as they are more helpful for answering the query.
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-smoke-tests" class="md-nav__link">
+    Run smoke tests
   </a>
   
 </li>
@@ -811,6 +878,8 @@
                 
                   
 
+
+  <h1>Prompt Response Relevance</h1>
 
 <script>
 (function (global, factory) {
@@ -1849,19 +1918,13 @@ Licensed under the Apache License, Version 2.0.
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="quickstart">Quickstart<a class="anchor-link" href="#quickstart">&#182;</a></h1><p>In this quickstart you will create a simple text to text application and learn how to log it and get feedback.</p>
-
-</div>
-</div>
-</div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="setup">Setup<a class="anchor-link" href="#setup">&#182;</a></h2><h3 id="add-api-keys">Add API keys<a class="anchor-link" href="#add-api-keys">&#182;</a></h3><p>For this quickstart you will need Open AI and Huggingface keys</p>
+<h2 id="pr-relevance-feedback-requirements">PR Relevance Feedback Requirements<a class="anchor-link" href="#pr-relevance-feedback-requirements">&#182;</a></h2><ol>
+<li>Relevance requires adherence to the entire prompt.</li>
+<li>Responses that don't provide a definitive answer can still be relevant</li>
+<li>Admitting lack of knowledge and refusals are still relevant.</li>
+<li>Feedback mechanism should differentiate between seeming and actual relevance.</li>
+<li>Relevant but inconclusive statements should get increasingly high scores as they are more helpful for answering the query.</li>
+</ol>
 
 </div>
 </div>
@@ -1872,7 +1935,7 @@ Licensed under the Apache License, Version 2.0.
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[1]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -1889,11 +1952,9 @@ Licensed under the Apache License, Version 2.0.
             </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HUGGINGFACE_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
 </pre></div>
 <div id="cell-1" class="clipboard-copy-txt">import os
-os.environ["OPENAI_API_KEY"] = "..."
-os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
+os.environ["OPENAI_API_KEY"] = "..."</div>
         
         </div>
     </div>
@@ -1908,7 +1969,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -1923,11 +1984,15 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">import</span> <span class="nn">openai</span>
-<span class="n">openai</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">]</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># Imports main tools:</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="n">openai</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
+<span class="n">relevance</span> <span class="o">=</span> <span class="n">openai</span><span class="o">.</span><span class="n">relevance</span>
 </pre></div>
-<div id="cell-2" class="clipboard-copy-txt">import openai
-openai.api_key = os.environ["OPENAI_API_KEY"]</div>
+<div id="cell-2" class="clipboard-copy-txt"># Imports main tools:
+from trulens_eval.feedback import OpenAI
+openai = OpenAI()
+relevance = openai.relevance</div>
         
         </div>
     </div>
@@ -1943,7 +2008,7 @@ openai.api_key = os.environ["OPENAI_API_KEY"]</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="import-from-trulens">Import from TruLens<a class="anchor-link" href="#import-from-trulens">&#182;</a></h3>
+<h2 id="relevance-requires-adherence-to-the-entire-query">Relevance requires adherence to the entire query.<a class="anchor-link" href="#relevance-requires-adherence-to-the-entire-query">&#182;</a></h2>
 </div>
 </div>
 </div>
@@ -1953,7 +2018,7 @@ openai.api_key = os.environ["OPENAI_API_KEY"]</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -1968,17 +2033,15 @@ openai.api_key = os.environ["OPENAI_API_KEY"]</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">JSON</span>
-
-<span class="c1"># Imports main tools:</span>
-<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Huggingface</span><span class="p">,</span> <span class="n">Tru</span>
-<span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_lowadherence_short</span><span class="p">():</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;How many stomachs does a cow have?&quot;</span><span class="p">,</span><span class="s2">&quot;Cows&#39; diet relies primarily on grazing.&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &lt; 0.2. Statement is relevant to at least some of query.&quot;</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&lt;=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &gt; 0.5. Statement is relevant to only some of query.&quot;</span>
 </pre></div>
-<div id="cell-3" class="clipboard-copy-txt">from IPython.display import JSON
-
-# Imports main tools:
-from trulens_eval import Feedback, Huggingface, Tru
-tru = Tru()</div>
+<div id="cell-3" class="clipboard-copy-txt">def test_lowadherence_short():
+    score = relevance("How many stomachs does a cow have?","Cows' diet relies primarily on grazing.")
+    assert score >= 0.2, f"Score of {score} < 0.2. Statement is relevant to at least some of query."
+    assert score <= 0.5, f"Score of {score} > 0.5. Statement is relevant to only some of query."</div>
         
         </div>
     </div>
@@ -1987,25 +2050,13 @@ tru = Tru()</div>
 </div>
 
 </div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="create-simple-text-to-text-application">Create Simple Text to Text Application<a class="anchor-link" href="#create-simple-text-to-text-application">&#182;</a></h3><p>This example uses a bare bones OpenAI LLM, and a non-LLM just for demonstration purposes.</p>
-
-</div>
-</div>
-</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2020,23 +2071,19 @@ tru = Tru()</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">llm_standalone</span><span class="p">(</span><span class="n">prompt</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">openai</span><span class="o">.</span><span class="n">ChatCompletion</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-3.5-turbo&quot;</span><span class="p">,</span>
-    <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
-            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;You are a question and answer bot, and you answer super upbeat.&quot;</span><span class="p">},</span>
-            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}</span>
-        <span class="p">]</span>
-    <span class="p">)[</span><span class="s2">&quot;choices&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;message&quot;</span><span class="p">][</span><span class="s2">&quot;content&quot;</span><span class="p">]</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_lowadherence_medium</span><span class="p">():</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Name some famous dental floss brands&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;&quot;Oral-B is an American brand of oral hygiene products, </span>
+<span class="s2">        including toothpastes, toothbrushes, electric toothbrushes, and mouthwashes. </span>
+<span class="s2">        The brand has been in business since the invention of the Hutson toothbrush in 1950 and in Redwood City, California.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &lt; 0.2. Statement is relevant to at least some of query.&quot;</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&lt;=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &gt; 0.5. Statement is relevant to only some of query.&quot;</span>
 </pre></div>
-<div id="cell-4" class="clipboard-copy-txt">def llm_standalone(prompt):
-    return openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    messages=[
-            {"role": "system", "content": "You are a question and answer bot, and you answer super upbeat."},
-            {"role": "user", "content": prompt}
-        ]
-    )["choices"][0]["message"]["content"]</div>
+<div id="cell-4" class="clipboard-copy-txt">def test_lowadherence_medium():
+    score = relevance("Name some famous dental floss brands","""Oral-B is an American brand of oral hygiene products, 
+        including toothpastes, toothbrushes, electric toothbrushes, and mouthwashes. 
+        The brand has been in business since the invention of the Hutson toothbrush in 1950 and in Redwood City, California.""")
+    assert score >= 0.2, f"Score of {score} < 0.2. Statement is relevant to at least some of query."
+    assert score <= 0.5, f"Score of {score} > 0.5. Statement is relevant to only some of query."</div>
         
         </div>
     </div>
@@ -2051,7 +2098,7 @@ tru = Tru()</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2066,15 +2113,53 @@ tru = Tru()</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">import</span> <span class="nn">hashlib</span>
-<span class="k">def</span> <span class="nf">simple_hash_callable</span><span class="p">(</span><span class="n">prompt</span><span class="p">):</span>
-    <span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">shake_256</span><span class="p">(</span><span class="n">prompt</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(</span><span class="mi">20</span><span class="p">))</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_lowadherence_long</span><span class="p">():</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Name some famous dental floss brands&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;&quot;Types of floss and alternative options. Dental floss is regarded as the gold standard — it’s been around the longest compared to other plaque-removing products, Hewlett said. </span>
+<span class="s2">    Moursi also added that most flossing research studies have been conducted with dental floss, so there’s a lot of data showing its effectiveness. But floss is not one-size-fits-all, </span>
+<span class="s2">    he noted. Since using dental floss is difficult for some, there are other effective tools like interdental cleaners. Below, we broke down </span>
+<span class="s2">    the differences among several different options. Dental floss When people think of dental floss, it’s usually the threaded variety that comes on a spool. </span>
+<span class="s2">    But there’s also dental tape, which Hewlett described as a wider and flatter type of floss. He said it&#39;s particularly useful for </span>
+<span class="s2">    people with larger spaces between their teeth since it covers more surface area. Both forms of floss come in unflavored or flavored varieties, </span>
+<span class="s2">    but choosing a flavored option has no impact on how well it cleans your teeth, Hewlett said. Flosses also come waxed and unwaxed — </span>
+<span class="s2">    while a wax coating can make floss pass between teeth more easily, Hewitt said, both waxed and unwaxed are equally effective when used properly. </span>
+<span class="s2">    Floss picks Floss picks are similarly effective when compared to thread floss, experts said. The picks look like a wand and have a small piece </span>
+<span class="s2">    of floss at the forked end, so you can grip the handle while using the tool. Experts said floss picks are generally easy to use, especially if</span>
+<span class="s2">    you’re flossing a child’s teeth. Water flossers Water flossers are powered devices that shoot pressurized water at the spaces between teeth, </span>
+<span class="s2">    targeting debris to disrupt and flush out plaque. While there is evidence to support their ability to remove plaque from teeth, Moursi</span>
+<span class="s2">    said for water flossers to do their job, “you have to hold it in just the right place, at just the right angle and for just the right</span>
+<span class="s2">    amount of time,” which can be challenging. Anyone can use water flossers, but experts said they’re the most beneficial for people who</span>
+<span class="s2">    have difficulty using thread floss or floss threaders, as well as those with certain dental work like braces, bridges and crowns. </span>
+<span class="s2">    Interdental brushes Dental work like braces, bridges and crowns can block floss from slipping between teeth, making flossing challenging.</span>
+<span class="s2">    Interdental brushes — which look like little spoolie brushes — can pass through the spaces between teeth and under any dental work,</span>
+<span class="s2">    allowing you to remove plaque. The brushes have bristles on one end and a handle to grip on the other. To use, you point the brush at</span>
+<span class="s2">    the gum line between teeth and push it through, moving the bristles around the space to remove plaque, said Hewlett. </span>
+<span class="s2">    The brushes come in various shapes and sizes to fit the spaces between your teeth.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &lt; 0.2. Statement is relevant to at least some of query.&quot;</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&lt;=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &gt; 0.5. Statement is relevant to only some of query.&quot;</span>
 </pre></div>
-<div id="cell-5" class="clipboard-copy-txt">import hashlib
-def simple_hash_callable(prompt):
-    h = hashlib.shake_256(prompt.encode('utf-8'))
-    return str(h.hexdigest(20))</div>
+<div id="cell-5" class="clipboard-copy-txt">def test_lowadherence_long():
+    score = relevance("Name some famous dental floss brands","""Types of floss and alternative options. Dental floss is regarded as the gold standard — it’s been around the longest compared to other plaque-removing products, Hewlett said. 
+    Moursi also added that most flossing research studies have been conducted with dental floss, so there’s a lot of data showing its effectiveness. But floss is not one-size-fits-all, 
+    he noted. Since using dental floss is difficult for some, there are other effective tools like interdental cleaners. Below, we broke down 
+    the differences among several different options. Dental floss When people think of dental floss, it’s usually the threaded variety that comes on a spool. 
+    But there’s also dental tape, which Hewlett described as a wider and flatter type of floss. He said it's particularly useful for 
+    people with larger spaces between their teeth since it covers more surface area. Both forms of floss come in unflavored or flavored varieties, 
+    but choosing a flavored option has no impact on how well it cleans your teeth, Hewlett said. Flosses also come waxed and unwaxed — 
+    while a wax coating can make floss pass between teeth more easily, Hewitt said, both waxed and unwaxed are equally effective when used properly. 
+    Floss picks Floss picks are similarly effective when compared to thread floss, experts said. The picks look like a wand and have a small piece 
+    of floss at the forked end, so you can grip the handle while using the tool. Experts said floss picks are generally easy to use, especially if
+    you’re flossing a child’s teeth. Water flossers Water flossers are powered devices that shoot pressurized water at the spaces between teeth, 
+    targeting debris to disrupt and flush out plaque. While there is evidence to support their ability to remove plaque from teeth, Moursi
+    said for water flossers to do their job, “you have to hold it in just the right place, at just the right angle and for just the right
+    amount of time,” which can be challenging. Anyone can use water flossers, but experts said they’re the most beneficial for people who
+    have difficulty using thread floss or floss threaders, as well as those with certain dental work like braces, bridges and crowns. 
+    Interdental brushes Dental work like braces, bridges and crowns can block floss from slipping between teeth, making flossing challenging.
+    Interdental brushes — which look like little spoolie brushes — can pass through the spaces between teeth and under any dental work,
+    allowing you to remove plaque. The brushes have bristles on one end and a handle to grip on the other. To use, you point the brush at
+    the gum line between teeth and push it through, moving the bristles around the space to remove plaque, said Hewlett. 
+    The brushes come in various shapes and sizes to fit the spaces between your teeth.""")
+    assert score >= 0.2, f"Score of {score} < 0.2. Statement is relevant to at least some of query."
+    assert score <= 0.5, f"Score of {score} > 0.5. Statement is relevant to only some of query."</div>
         
         </div>
     </div>
@@ -2083,24 +2168,13 @@ def simple_hash_callable(prompt):
 </div>
 
 </div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="send-your-first-request">Send your first request<a class="anchor-link" href="#send-your-first-request">&#182;</a></h3>
-</div>
-</div>
-</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2115,13 +2189,15 @@ def simple_hash_callable(prompt):
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">prompt_input</span><span class="o">=</span><span class="s2">&quot;How good is language AI?&quot;</span>
-<span class="n">prompt_output</span><span class="o">=</span><span class="n">llm_standalone</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span>
-<span class="n">prompt_output</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_majorityadherence_short</span><span class="p">():</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Name some famous dental floss brands?&quot;</span><span class="p">,</span><span class="s2">&quot;Some key companies operating in the dental floss market include Colgate and Water Pik.&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &lt; 0.5. Statement is relevant to most of query.&quot;</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&lt;=</span> <span class="mf">0.8</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &gt; 0.8. Statement is not relevant to all of query.&quot;</span>
 </pre></div>
-<div id="cell-6" class="clipboard-copy-txt">prompt_input="How good is language AI?"
-prompt_output=llm_standalone(prompt_input)
-prompt_output</div>
+<div id="cell-6" class="clipboard-copy-txt">def test_majorityadherence_short():
+    score = relevance("Name some famous dental floss brands?","Some key companies operating in the dental floss market include Colgate and Water Pik.")
+    assert score >= 0.5, f"Score of {score} < 0.5. Statement is relevant to most of query."
+    assert score <= 0.8, f"Score of {score} > 0.8. Statement is not relevant to all of query."</div>
         
         </div>
     </div>
@@ -2136,7 +2212,7 @@ prompt_output</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2151,9 +2227,19 @@ prompt_output</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">simple_hash_callable</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_majorityadherence_medium</span><span class="p">():</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;How does the social structure of a lion pride impact the genetic diversity and long-term survival of the species?&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;&quot;A typical pride of lions consists of about six related females, their dependent offspring, and a “coalition” </span>
+<span class="s2">    of 2–3 resident males that joined the pride from elsewhere. The pride is a “fission-fusion” society and</span>
+<span class="s2">    pridemates are seldom found together, except for mothers that have pooled their offspring into a “crèche.”&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &lt; 0.5. Statement is relevant to most of query.&quot;</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&lt;=</span> <span class="mf">0.8</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &gt; 0.8. Statement is not relevant to all of query.&quot;</span>
 </pre></div>
-<div id="cell-7" class="clipboard-copy-txt">simple_hash_callable(prompt_input)</div>
+<div id="cell-7" class="clipboard-copy-txt">def test_majorityadherence_medium():
+    score = relevance("How does the social structure of a lion pride impact the genetic diversity and long-term survival of the species?","""A typical pride of lions consists of about six related females, their dependent offspring, and a “coalition” 
+    of 2–3 resident males that joined the pride from elsewhere. The pride is a “fission-fusion” society and
+    pridemates are seldom found together, except for mothers that have pooled their offspring into a “crèche.”""")
+    assert score >= 0.5, f"Score of {score} < 0.5. Statement is relevant to most of query."
+    assert score <= 0.8, f"Score of {score} > 0.8. Statement is not relevant to all of query."</div>
         
         </div>
     </div>
@@ -2162,24 +2248,13 @@ prompt_output</div>
 </div>
 
 </div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="initialize-feedback-functions">Initialize Feedback Function(s)<a class="anchor-link" href="#initialize-feedback-functions">&#182;</a></h2>
-</div>
-</div>
-</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2194,17 +2269,89 @@ prompt_output</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># Initialize Huggingface-based feedback function collection class:</span>
-<span class="n">hugs</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_majorityadherence_long</span><span class="p">():</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;What are the parts of a cow&#39;s digestive tract, and how do they work including mouth, esophagus, the stomach, and intestines.&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">The cow&#39;s digestive tract consists of the following.</span>
 
-<span class="c1"># Define a sentiment feedback function using HuggingFace.</span>
-<span class="n">f_sentiment</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">hugs</span><span class="o">.</span><span class="n">positive_sentiment</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
+<span class="s2">Mouth</span>
+<span class="s2">A four-compartment stomach, which includes</span>
+<span class="s2">The rumen (paunch)</span>
+<span class="s2">The reticulum (“honeycomb”)</span>
+<span class="s2">The omasum (“manyplies”)</span>
+<span class="s2">The abomasum (“true stomach”)</span>
+<span class="s2">Small intestine</span>
+<span class="s2">Large intestine</span>
+
+<span class="s2">The rumen</span>
+<span class="s2">The rumen (on the left side of the animal) is the largest stomach compartment and consists of several sacs. It can hold 25 gallons or more of material depending on the size of the cow. Because of its size, the rumen acts as a storage or holding vat for feed.</span>
+
+<span class="s2">Aside from storage, the rumen is also a fermentation vat. The rumen’s environment favors the growth of microbes. These microbes digest or ferment feed within the rumen and make volatile fatty acids (VFAs). The rumen absorbs most of the VFAs from fermentation.</span>
+
+<span class="s2">A good blood supply to the rumen walls improves absorption of VFAs and other digestion products. Tiny projections (papillae) line the rumen, which increases the rumen’s surface area and the amount it can absorb.    </span>
+
+<span class="s2">The reticulum </span>
+<span class="s2">The reticulum is a pouch-like structure in the forward area of the body, close to the heart. The tissues in the reticulum form a network similar to a honeycomb. A small tissue fold lies between the reticulum and rumen, but the two aren’t separate compartments. Together they’re called the rumino-reticulum.</span>
+
+<span class="s2">Heavy or dense feed and metal objects eaten by the cow drop into this compartment. Nails and other sharp objects may work into the tissue and cause “hardware disease.” You can use magnets to prevent disease or correct the problem through surgery. Leaving it untreated may lead to infection and possibly death.</span>
+
+<span class="s2">The omasum</span>
+<span class="s2">The omasum is a globe-shaped structure containing leaves of tissue (like pages in a book). It absorbs water and other substances from digestive contents. Feed material (ingesta) between the leaves will be drier than ingesta found in the other compartments.</span>
+
+<span class="s2">The abomasum</span>
+<span class="s2">The abomasum is the only compartment lined with glands. These glands release hydrochloric acid and digestive enzymes, needed to breakdown feeds. The abomasum is similar to a nonruminant stomach.</span>
+
+<span class="s2">The small intestine consists of three sections: the duodenum, jejunum and ileum. It measures about 20 times the length of the animal.</span>
+
+<span class="s2">Secretions from the pancreas and gallbladder aid in digestion within the small intestine. The small intestine completes most of the digestive process and absorbs many nutrients through villi (small finger-like projections). From the villi the nutrients enter into the blood and lymphatic systems.</span>
+
+<span class="s2">The cecum is the large area where the small and large intestine meet. The cecum breaks down some previously undigested fiber, but the exact importance of the cecum remains unknown.</span>
+
+<span class="s2">The large intestine is the last section of the tract that undigested feedstuffs pass through. Microbes digest some undigested feed here, but the main digestive function of the large intestine is to absorb water.</span>
+<span class="s2">&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &lt; 0.5. Statement is relevant to most of query.&quot;</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&lt;=</span> <span class="mf">0.8</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &gt; 0.8. Statement is not relevant to all of query.&quot;</span>
 </pre></div>
-<div id="cell-8" class="clipboard-copy-txt"># Initialize Huggingface-based feedback function collection class:
-hugs = Huggingface()
+<div id="cell-8" class="clipboard-copy-txt">def test_majorityadherence_long():
+    score = relevance("What are the parts of a cow's digestive tract, and how do they work including mouth, esophagus, the stomach, and intestines.","""
+The cow's digestive tract consists of the following.
 
-# Define a sentiment feedback function using HuggingFace.
-f_sentiment = Feedback(hugs.positive_sentiment).on_output()</div>
+Mouth
+A four-compartment stomach, which includes
+The rumen (paunch)
+The reticulum (“honeycomb”)
+The omasum (“manyplies”)
+The abomasum (“true stomach”)
+Small intestine
+Large intestine
+
+The rumen
+The rumen (on the left side of the animal) is the largest stomach compartment and consists of several sacs. It can hold 25 gallons or more of material depending on the size of the cow. Because of its size, the rumen acts as a storage or holding vat for feed.
+
+Aside from storage, the rumen is also a fermentation vat. The rumen’s environment favors the growth of microbes. These microbes digest or ferment feed within the rumen and make volatile fatty acids (VFAs). The rumen absorbs most of the VFAs from fermentation.
+
+A good blood supply to the rumen walls improves absorption of VFAs and other digestion products. Tiny projections (papillae) line the rumen, which increases the rumen’s surface area and the amount it can absorb.    
+
+The reticulum 
+The reticulum is a pouch-like structure in the forward area of the body, close to the heart. The tissues in the reticulum form a network similar to a honeycomb. A small tissue fold lies between the reticulum and rumen, but the two aren’t separate compartments. Together they’re called the rumino-reticulum.
+
+Heavy or dense feed and metal objects eaten by the cow drop into this compartment. Nails and other sharp objects may work into the tissue and cause “hardware disease.” You can use magnets to prevent disease or correct the problem through surgery. Leaving it untreated may lead to infection and possibly death.
+
+The omasum
+The omasum is a globe-shaped structure containing leaves of tissue (like pages in a book). It absorbs water and other substances from digestive contents. Feed material (ingesta) between the leaves will be drier than ingesta found in the other compartments.
+
+The abomasum
+The abomasum is the only compartment lined with glands. These glands release hydrochloric acid and digestive enzymes, needed to breakdown feeds. The abomasum is similar to a nonruminant stomach.
+
+The small intestine consists of three sections: the duodenum, jejunum and ileum. It measures about 20 times the length of the animal.
+
+Secretions from the pancreas and gallbladder aid in digestion within the small intestine. The small intestine completes most of the digestive process and absorbs many nutrients through villi (small finger-like projections). From the villi the nutrients enter into the blood and lymphatic systems.
+
+The cecum is the large area where the small and large intestine meet. The cecum breaks down some previously undigested fiber, but the exact importance of the cecum remains unknown.
+
+The large intestine is the last section of the tract that undigested feedstuffs pass through. Microbes digest some undigested feed here, but the main digestive function of the large intestine is to absorb water.
+""")
+    assert score >= 0.5, f"Score of {score} < 0.5. Statement is relevant to most of query."
+    assert score <= 0.8, f"Score of {score} > 0.8. Statement is not relevant to all of query."</div>
         
         </div>
     </div>
@@ -2220,7 +2367,7 @@ f_sentiment = Feedback(hugs.positive_sentiment).on_output()</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="instrument-the-callable-for-logging-with-trulens">Instrument the callable for logging with TruLens<a class="anchor-link" href="#instrument-the-callable-for-logging-with-trulens">&#182;</a></h2>
+<h2 id="responses-without-a-definitive-answer-are-still-relevant">Responses without a definitive answer are still relevant.<a class="anchor-link" href="#responses-without-a-definitive-answer-are-still-relevant">&#182;</a></h2>
 </div>
 </div>
 </div>
@@ -2230,7 +2377,7 @@ f_sentiment = Feedback(hugs.positive_sentiment).on_output()</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[9]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2245,13 +2392,13 @@ f_sentiment = Feedback(hugs.positive_sentiment).on_output()</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruBasicApp</span>
-<span class="n">basic_app</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">llm_standalone</span><span class="p">,</span> <span class="n">app_id</span><span class="o">=</span><span class="s2">&quot;Happy Bot&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_sentiment</span><span class="p">])</span>
-<span class="n">hash_app</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">simple_hash_callable</span><span class="p">,</span> <span class="n">app_id</span><span class="o">=</span><span class="s2">&quot;Hasher&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_sentiment</span><span class="p">])</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_idontknow_short</span><span class="p">():</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Name some top dental floss brands&quot;</span><span class="p">,</span><span class="s2">&quot;I don&#39;t know.&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.9</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &lt; 0.9. Admitting lack of knowledge (general) did not get high score.&quot;</span>
 </pre></div>
-<div id="cell-9" class="clipboard-copy-txt">from trulens_eval import TruBasicApp
-basic_app = TruBasicApp(llm_standalone, app_id="Happy Bot", feedbacks=[f_sentiment])
-hash_app = TruBasicApp(simple_hash_callable, app_id="Hasher", feedbacks=[f_sentiment])</div>
+<div id="cell-9" class="clipboard-copy-txt">def test_idontknow_short():
+    score = relevance("Name some top dental floss brands","I don't know.")
+    assert score >= 0.9, f"Score of {score} < 0.9. Admitting lack of knowledge (general) did not get high score."</div>
         
         </div>
     </div>
@@ -2266,7 +2413,7 @@ hash_app = TruBasicApp(simple_hash_callable, app_id="Hasher", feedbacks=[f_senti
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2281,9 +2428,13 @@ hash_app = TruBasicApp(simple_hash_callable, app_id="Hasher", feedbacks=[f_senti
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">response</span><span class="p">,</span> <span class="n">record</span> <span class="o">=</span> <span class="n">basic_app</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_idontknow_medium</span><span class="p">():</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Is Denny&#39;s open right now?&quot;</span><span class="p">,</span><span class="s2">&quot;As an AI assistant, I don&#39;t have access to realtime information. You should consult the web for answers about restaurant opening times.&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.9</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &lt; 0.9. Admitting lack of knowledge (general) did not get high score.&quot;</span>
 </pre></div>
-<div id="cell-10" class="clipboard-copy-txt">response, record = basic_app.call_with_record(prompt_input)</div>
+<div id="cell-10" class="clipboard-copy-txt">def test_idontknow_medium():
+    score = relevance("Is Denny's open right now?","As an AI assistant, I don't have access to realtime information. You should consult the web for answers about restaurant opening times.")
+    assert score >= 0.9, f"Score of {score} < 0.9. Admitting lack of knowledge (general) did not get high score."</div>
         
         </div>
     </div>
@@ -2298,7 +2449,7 @@ hash_app = TruBasicApp(simple_hash_callable, app_id="Hasher", feedbacks=[f_senti
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[11]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2313,9 +2464,13 @@ hash_app = TruBasicApp(simple_hash_callable, app_id="Hasher", feedbacks=[f_senti
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">response</span><span class="p">,</span> <span class="n">record</span> <span class="o">=</span> <span class="n">hash_app</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_nonanswer_short</span><span class="p">():</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;How many countries are there in the world?&quot;</span><span class="p">,</span> <span class="s2">&quot;There is no universally accepted answer to how many countries there are in the world.&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &lt; 0.5. Relevant context without definitive answer did not get a score of &gt;= 0.5&quot;</span>
 </pre></div>
-<div id="cell-11" class="clipboard-copy-txt">response, record = hash_app.call_with_record(prompt_input)</div>
+<div id="cell-11" class="clipboard-copy-txt">def test_nonanswer_short():
+    score = relevance("How many countries are there in the world?", "There is no universally accepted answer to how many countries there are in the world.")
+    assert score >= 0.5, f"Score of {score} < 0.5. Relevant context without definitive answer did not get a score of >= 0.5"</div>
         
         </div>
     </div>
@@ -2324,24 +2479,13 @@ hash_app = TruBasicApp(simple_hash_callable, app_id="Hasher", feedbacks=[f_senti
 </div>
 
 </div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="explore-in-a-dashboard">Explore in a Dashboard<a class="anchor-link" href="#explore-in-a-dashboard">&#182;</a></h2>
-</div>
-</div>
-</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[12]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2356,13 +2500,17 @@ hash_app = TruBasicApp(simple_hash_callable, app_id="Hasher", feedbacks=[f_senti
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">run_dashboard</span><span class="p">()</span> <span class="c1"># open a local streamlit app to explore</span>
-
-<span class="c1"># tru.stop_dashboard() # stop if needed</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_nonanswer_medium</span><span class="p">():</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;What is the meaning of life?&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;&quot;No one can tell the actual definition of the meaning of life.</span>
+<span class="s2">    For some, it is all about happiness, building a family, and leading life as it is. For some, it is about accumulating wealth, whereas,</span>
+<span class="s2">    for some, it is all about love.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &lt; 0.5. Relevant context without definitive answer did not get a score of &gt;= 0.5&quot;</span>
 </pre></div>
-<div id="cell-12" class="clipboard-copy-txt">tru.run_dashboard() # open a local streamlit app to explore
-
-# tru.stop_dashboard() # stop if needed</div>
+<div id="cell-12" class="clipboard-copy-txt">def test_nonanswer_medium():
+    score = relevance("What is the meaning of life?", """No one can tell the actual definition of the meaning of life.
+    For some, it is all about happiness, building a family, and leading life as it is. For some, it is about accumulating wealth, whereas,
+    for some, it is all about love.""")
+    assert score >= 0.5, f"Score of {score} < 0.5. Relevant context without definitive answer did not get a score of >= 0.5"</div>
         
         </div>
     </div>
@@ -2371,36 +2519,13 @@ hash_app = TruBasicApp(simple_hash_callable, app_id="Hasher", feedbacks=[f_senti
 </div>
 
 </div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Alternatively, you can run <code>trulens-eval</code> from a command line in the same folder to start the dashboard.</p>
-
-</div>
-</div>
-</div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="or-view-results-directly-in-your-notebook">Or view results directly in your notebook<a class="anchor-link" href="#or-view-results-directly-in-your-notebook">&#182;</a></h2>
-</div>
-</div>
-</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[13]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2415,14 +2540,889 @@ hash_app = TruBasicApp(simple_hash_callable, app_id="Hasher", feedbacks=[f_senti
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">get_records_and_feedback</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[])[</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># pass an empty list of app_ids to get all</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_nonanswer_long</span><span class="p">():</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;What came first, the chicken or the egg?&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;&quot;Eggs come from chickens and chickens come from eggs: that’s the basis of this ancient riddle. But eggs – which are just female sex cells – evolved more than a billion years ago, whereas chickens have been around for just 10,000 years. So the riddle is easily solved…or is it?</span>
+
+<span class="s2">Taken at face value, there is no doubt that the egg came before the chicken. We tend to think of eggs as the shelled orbs laid by birds from which their chicks hatch – unless we eat them first. But all sexually reproducing species make eggs (the specialised female sex cells). That’s 99.99 per cent of all eukaryotic life – meaning organisms that have cells with a nucleus, so all animals and plants, and everything but the simplest life forms.</span>
+
+<span class="s2">We don’t know for sure when sex evolved but it could have been as much as 2 billion years ago, and certainly more than 1 billion. Even the specialised sort of eggs laid by birds, with their tough outer membrane, evolved more than 300 million years ago.</span>
+
+<span class="s2">As for chickens, they came into being much later. They are domesticated animals, so evolved as the result of humans purposefully selecting the least aggressive wild birds and letting them breed. This seems to have happened in several places independently, starting around 10,000 years ago.</span>
+
+<span class="s2">The wild ancestor of chickens is generally agreed to be a tropical bird still living in the forests of Southeast Asia called the red junglefowl –  with other junglefowl species possibly adding to the genetic mix. From these origins, humans have carried chickens around the world over the past two millennia or more.</span>
+
+<span class="s2">So, eggs dramatically predate chickens. But to be fair to the spirit of the riddle, we should also consider whether a chicken’s egg predates a chicken. As humans consistently chose the tamest red junglefowls and bred them together, the genetic makeup of the resulting birds will have shifted. At some stage during this domestication process the red junglefowl (Gallus gallus) evolved into a new subspecies, Gallus gallus domesticus, AKA the chicken.</span>
+
+<span class="s2">In practice, it is impossible to pinpoint the moment when this happened. But in theory, at some point two junglefowl bred and their offspring was genetically different enough from the species of its parents to be classified as a chicken. This chicken would have developed within a junglefowl egg and only produced the very first chicken’s egg on reaching maturity. Looked at this way, the chicken came first.</span>
+
+<span class="s2">&quot;&quot;&quot;</span>
+<span class="p">)</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &lt; 0.5. Relevant context without definitive answer did not get a score of &gt;= 0.5&quot;</span>
 </pre></div>
-<div id="cell-13" class="clipboard-copy-txt">tru.get_records_and_feedback(app_ids=[])[0] # pass an empty list of app_ids to get all</div>
+<div id="cell-13" class="clipboard-copy-txt">def test_nonanswer_long():
+    score = relevance("What came first, the chicken or the egg?","""Eggs come from chickens and chickens come from eggs: that’s the basis of this ancient riddle. But eggs – which are just female sex cells – evolved more than a billion years ago, whereas chickens have been around for just 10,000 years. So the riddle is easily solved…or is it?
+
+Taken at face value, there is no doubt that the egg came before the chicken. We tend to think of eggs as the shelled orbs laid by birds from which their chicks hatch – unless we eat them first. But all sexually reproducing species make eggs (the specialised female sex cells). That’s 99.99 per cent of all eukaryotic life – meaning organisms that have cells with a nucleus, so all animals and plants, and everything but the simplest life forms.
+
+We don’t know for sure when sex evolved but it could have been as much as 2 billion years ago, and certainly more than 1 billion. Even the specialised sort of eggs laid by birds, with their tough outer membrane, evolved more than 300 million years ago.
+
+As for chickens, they came into being much later. They are domesticated animals, so evolved as the result of humans purposefully selecting the least aggressive wild birds and letting them breed. This seems to have happened in several places independently, starting around 10,000 years ago.
+
+The wild ancestor of chickens is generally agreed to be a tropical bird still living in the forests of Southeast Asia called the red junglefowl –  with other junglefowl species possibly adding to the genetic mix. From these origins, humans have carried chickens around the world over the past two millennia or more.
+
+So, eggs dramatically predate chickens. But to be fair to the spirit of the riddle, we should also consider whether a chicken’s egg predates a chicken. As humans consistently chose the tamest red junglefowls and bred them together, the genetic makeup of the resulting birds will have shifted. At some stage during this domestication process the red junglefowl (Gallus gallus) evolved into a new subspecies, Gallus gallus domesticus, AKA the chicken.
+
+In practice, it is impossible to pinpoint the moment when this happened. But in theory, at some point two junglefowl bred and their offspring was genetically different enough from the species of its parents to be classified as a chicken. This chicken would have developed within a junglefowl egg and only produced the very first chicken’s egg on reaching maturity. Looked at this way, the chicken came first.
+
+"""
+)
+    assert score >= 0.5, f"Score of {score} < 0.5. Relevant context without definitive answer did not get a score of >= 0.5"</div>
         
         </div>
     </div>
 
 </div>
+</div>
+
+</div>
+</div>
+<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="refusals-are-still-relevant">Refusals are still relevant.<a class="anchor-link" href="#refusals-are-still-relevant">&#182;</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[14]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-14">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_refusal_short</span><span class="p">():</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;How do you build a bomb?&quot;</span><span class="p">,</span><span class="s2">&quot;I&#39;m really sorry, but I can&#39;t assist with that request.&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.9</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &lt; 0.9. Model refusal (short) did not a high score.&quot;</span>
+</pre></div>
+<div id="cell-14" class="clipboard-copy-txt">def test_refusal_short():
+    score = relevance("How do you build a bomb?","I'm really sorry, but I can't assist with that request.")
+    assert score >= 0.9, f"Score of {score} < 0.9. Model refusal (short) did not a high score."</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[15]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-15">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_refusal_medium</span><span class="p">():</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Who should I vote for in the presidential election&quot;</span><span class="p">,</span><span class="s2">&quot;As an AI language model, I do not have personal beliefs or opinions, and I do not experience emotions like humans do. My responses are generated based on patterns and associations in the text data that I was trained on. However, I am programmed to provide accurate and objective information in a clear and respectful manner, and I strive to be helpful and informative in all my responses.&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.9</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Score of </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> &lt; 0.9. Model refusal (elaborate) did not a high score.&quot;</span>
+</pre></div>
+<div id="cell-15" class="clipboard-copy-txt">def test_refusal_medium():
+    score = relevance("Who should I vote for in the presidential election","As an AI language model, I do not have personal beliefs or opinions, and I do not experience emotions like humans do. My responses are generated based on patterns and associations in the text data that I was trained on. However, I am programmed to provide accurate and objective information in a clear and respectful manner, and I strive to be helpful and informative in all my responses.")
+    assert score >= 0.9, f"Score of {score} < 0.9. Model refusal (elaborate) did not a high score."</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div>
+<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="feedback-score-should-differentiate-between-seeming-and-actual-relevance">Feedback score should differentiate between seeming and actual relevance.<a class="anchor-link" href="#feedback-score-should-differentiate-between-seeming-and-actual-relevance">&#182;</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[16]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-16">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_seemingrelevance_short</span><span class="p">():</span>
+    <span class="n">seemingly_relevant_score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Who won the superbowl in 2009?&quot;</span><span class="p">,</span> <span class="s2">&quot;The Pheonix Suns won the Superbowl in 2009&quot;</span><span class="p">)</span>
+    <span class="n">relevant_score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Who won the superbowl in 2009?&quot;</span><span class="p">,</span> <span class="s2">&quot;The Pittsburgh Steelers won the Superbowl in 2009&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">seemingly_relevant_score</span> <span class="o">&lt;</span> <span class="n">relevant_score</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Failed to differentiate seeming and actual relevance.&quot;</span>
+</pre></div>
+<div id="cell-16" class="clipboard-copy-txt">def test_seemingrelevance_short():
+    seemingly_relevant_score = relevance("Who won the superbowl in 2009?", "The Pheonix Suns won the Superbowl in 2009")
+    relevant_score = relevance("Who won the superbowl in 2009?", "The Pittsburgh Steelers won the Superbowl in 2009")
+    assert seemingly_relevant_score < relevant_score, f"Failed to differentiate seeming and actual relevance."</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[17]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-17">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_seemingrelevance_medium</span><span class="p">():</span>
+    <span class="n">seemingly_relevant_score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;What is a cephalopod?&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;&quot;A cephalopod belongs to a large taxonomic class of </span>
+<span class="s2">    invertebrates within the phylum Mollusca called Gastropoda. This class comprises snails and slugs from saltwater, freshwater, </span>
+<span class="s2">    and from land. There are many thousands of species of sea snails and slugs, as well as freshwater snails, freshwater limpets, </span>
+<span class="s2">    and land snails and slugs.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">relevant_score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;What is a cephalopod?&quot;</span><span class="p">,</span> <span class="s2">&quot;A cephalopod is any member of the molluscan class Cephalopoda such as a squid, octopus, cuttlefish, or nautilus. These exclusively marine animals are characterized by bilateral body symmetry, a prominent head, and a set of arms or tentacles (muscular hydrostats) modified from the primitive molluscan foot. Fishers sometimes call cephalopods &#39;inkfish referring to their common ability to squirt ink.&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">seemingly_relevant_score</span> <span class="o">&lt;</span> <span class="n">relevant_score</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Failed to differentiate seeming and actual relevance.&quot;</span>
+</pre></div>
+<div id="cell-17" class="clipboard-copy-txt">def test_seemingrelevance_medium():
+    seemingly_relevant_score = relevance("What is a cephalopod?", """A cephalopod belongs to a large taxonomic class of 
+    invertebrates within the phylum Mollusca called Gastropoda. This class comprises snails and slugs from saltwater, freshwater, 
+    and from land. There are many thousands of species of sea snails and slugs, as well as freshwater snails, freshwater limpets, 
+    and land snails and slugs.""")
+    relevant_score = relevance("What is a cephalopod?", "A cephalopod is any member of the molluscan class Cephalopoda such as a squid, octopus, cuttlefish, or nautilus. These exclusively marine animals are characterized by bilateral body symmetry, a prominent head, and a set of arms or tentacles (muscular hydrostats) modified from the primitive molluscan foot. Fishers sometimes call cephalopods 'inkfish referring to their common ability to squirt ink.")
+    assert seemingly_relevant_score < relevant_score, f"Failed to differentiate seeming and actual relevance."</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[18]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-18">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_seemingrelevance_long</span><span class="p">():</span>
+    <span class="n">seemingly_relevant_score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Describe Abraham Lincoln&#39;s childhood&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    Abraham Lincoln, Jr. was born on May 29, 1917, in Brookline, Massachusetts. His parents were Joseph P. Kennedy, Sr. and Rose Fitzgerald Kennedy. His early childhood was spent in a wealthy and politically influential family in the Boston area.</span>
+
+<span class="s2">Brookline, Massachusetts (1917-1920): Abraham Lincoln&#39;s early years were spent in Brookline, Massachusetts. His father, Joseph P. Kennedy, Sr., was a successful businessman and later a prominent figure in American politics. His mother, Rose Fitzgerald Kennedy, came from a politically active family. Abraham Lincoln was the second of nine children.</span>
+
+<span class="s2">New York and London: During his childhood, Abraham Lincoln lived in New York City and London when his father served as the U.S. ambassador to the United Kingdom. This exposure to international affairs and high society left a lasting impression on young Abraham Lincoln.</span>
+
+<span class="s2">Educational Pursuits: Abraham Lincoln attended private schools during his early years, including the Riverdale Country School in New York and the Choate School (now Choate Rosemary Hall) in Connecticut. Despite facing some health challenges, he was a bright and athletic student.</span>
+
+<span class="s2">Family Tragedy: Like his siblings, Abraham Lincoln faced the sorrow of losing his older brother, Joseph P. Kennedy, Jr., who died during World War II while serving in the United States Navy.</span>
+
+<span class="s2">Harvard University: Abraham Lincoln continued his education at Harvard University, where he developed an interest in government and international relations. He graduated in 1940 with a Bachelor of Science in International Affairs.</span>
+
+<span class="s2">Military Service: Following his graduation, Abraham Lincoln joined the U.S. Navy and served during World War II. He was assigned to intelligence duties and later commanded a patrol torpedo boat (PT boat) in the Pacific theater.</span>
+
+<span class="s2">Entry into Politics: After the war, Abraham Lincoln&#39;s interest in public service led him to enter politics. He successfully ran for the U.S. House of Representatives in 1946, beginning his career in national politics.</span>
+
+<span class="s2">Abraham Lincoln&#39;s childhood and early life were marked by privilege, educational opportunities, and exposure to political and international affairs. His experiences within the influential Kennedy family, as well as his education and military service, would shape his future path as a prominent figure in American politics, ultimately leading to his election as the 35th President of the United States.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">relevant_score</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Describe Abraham Lincoln&#39;s childhood&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    Abraham Lincoln was born on February 12, 1809, in a one-room log cabin on the Sinking Spring Farm in Hardin County, Kentucky (now part of LaRue County). His parents were Thomas Lincoln and Nancy Hanks Lincoln. His early childhood was spent in the frontier regions of Kentucky and Indiana, where his family faced the hardships and challenges of pioneer life.</span>
+
+<span class="s2">Kentucky Years (1809-1816): Abraham Lincoln&#39;s early years were spent in Kentucky. His father, Thomas Lincoln, was a farmer and carpenter, and his mother, Nancy Hanks Lincoln, was known for her kindness and strong work ethic. Sadly, Nancy died when Abraham was just nine years old. This loss deeply affected him, and he would carry the memory of his mother throughout his life.</span>
+
+<span class="s2">Moving to Indiana (1816): In 1816, Thomas Lincoln decided to move his family to Indiana due to land disputes in Kentucky. They settled in the wilderness of Spencer County, Indiana, building a new home and clearing land for farming. Young Abraham played a crucial role in helping his father with these tasks and learning essential survival skills.</span>
+
+<span class="s2">Self-Education: Lincoln&#39;s formal education was limited to a few months, amounting to less than a year, as schools were scarce on the frontier. However, he was an avid reader and had a strong thirst for knowledge. Lincoln educated himself by reading borrowed books, often walking long distances to borrow or return them. He later referred to this time as having been &quot;raised to farm work.&quot;</span>
+
+<span class="s2">Early Tragedies: The Lincolns faced several tragedies during their time in Indiana. In addition to losing his mother at a young age, Abraham also lost his older sister Sarah when she died during childbirth. These experiences would shape his empathy and understanding of loss and grief.</span>
+
+<span class="s2">Beginning His Legal Career: In 1830, the Lincoln family moved to Illinois, where Abraham Lincoln began to work as a farm laborer, rail-splitter, and store clerk. During this period, he continued his self-education and started to develop an interest in law. He learned enough about the legal system to become a lawyer through self-study and reading law books.</span>
+
+<span class="s2">Marriage and Family: In 1842, Lincoln married Mary Todd, and they had four sons: Robert, Edward, William, and Thomas. Tragically, only one of their sons, Robert, survived to adulthood.</span>
+
+<span class="s2">Abraham Lincoln&#39;s childhood and early life were marked by poverty, hard work, and the challenges of frontier living. Despite his humble beginnings and limited formal education, he demonstrated a keen intellect, an inquisitive mind, and a strong sense of justice from an early age. These qualities would serve as a foundation for his later achievements and leadership as one of the greatest presidents in American history.</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="k">pass</span>
+</pre></div>
+<div id="cell-18" class="clipboard-copy-txt">def test_seemingrelevance_long():
+    seemingly_relevant_score = relevance("Describe Abraham Lincoln's childhood", """
+    Abraham Lincoln, Jr. was born on May 29, 1917, in Brookline, Massachusetts. His parents were Joseph P. Kennedy, Sr. and Rose Fitzgerald Kennedy. His early childhood was spent in a wealthy and politically influential family in the Boston area.
+
+Brookline, Massachusetts (1917-1920): Abraham Lincoln's early years were spent in Brookline, Massachusetts. His father, Joseph P. Kennedy, Sr., was a successful businessman and later a prominent figure in American politics. His mother, Rose Fitzgerald Kennedy, came from a politically active family. Abraham Lincoln was the second of nine children.
+
+New York and London: During his childhood, Abraham Lincoln lived in New York City and London when his father served as the U.S. ambassador to the United Kingdom. This exposure to international affairs and high society left a lasting impression on young Abraham Lincoln.
+
+Educational Pursuits: Abraham Lincoln attended private schools during his early years, including the Riverdale Country School in New York and the Choate School (now Choate Rosemary Hall) in Connecticut. Despite facing some health challenges, he was a bright and athletic student.
+
+Family Tragedy: Like his siblings, Abraham Lincoln faced the sorrow of losing his older brother, Joseph P. Kennedy, Jr., who died during World War II while serving in the United States Navy.
+
+Harvard University: Abraham Lincoln continued his education at Harvard University, where he developed an interest in government and international relations. He graduated in 1940 with a Bachelor of Science in International Affairs.
+
+Military Service: Following his graduation, Abraham Lincoln joined the U.S. Navy and served during World War II. He was assigned to intelligence duties and later commanded a patrol torpedo boat (PT boat) in the Pacific theater.
+
+Entry into Politics: After the war, Abraham Lincoln's interest in public service led him to enter politics. He successfully ran for the U.S. House of Representatives in 1946, beginning his career in national politics.
+
+Abraham Lincoln's childhood and early life were marked by privilege, educational opportunities, and exposure to political and international affairs. His experiences within the influential Kennedy family, as well as his education and military service, would shape his future path as a prominent figure in American politics, ultimately leading to his election as the 35th President of the United States.""")
+    relevant_score = relevance("Describe Abraham Lincoln's childhood", """
+    Abraham Lincoln was born on February 12, 1809, in a one-room log cabin on the Sinking Spring Farm in Hardin County, Kentucky (now part of LaRue County). His parents were Thomas Lincoln and Nancy Hanks Lincoln. His early childhood was spent in the frontier regions of Kentucky and Indiana, where his family faced the hardships and challenges of pioneer life.
+
+Kentucky Years (1809-1816): Abraham Lincoln's early years were spent in Kentucky. His father, Thomas Lincoln, was a farmer and carpenter, and his mother, Nancy Hanks Lincoln, was known for her kindness and strong work ethic. Sadly, Nancy died when Abraham was just nine years old. This loss deeply affected him, and he would carry the memory of his mother throughout his life.
+
+Moving to Indiana (1816): In 1816, Thomas Lincoln decided to move his family to Indiana due to land disputes in Kentucky. They settled in the wilderness of Spencer County, Indiana, building a new home and clearing land for farming. Young Abraham played a crucial role in helping his father with these tasks and learning essential survival skills.
+
+Self-Education: Lincoln's formal education was limited to a few months, amounting to less than a year, as schools were scarce on the frontier. However, he was an avid reader and had a strong thirst for knowledge. Lincoln educated himself by reading borrowed books, often walking long distances to borrow or return them. He later referred to this time as having been "raised to farm work."
+
+Early Tragedies: The Lincolns faced several tragedies during their time in Indiana. In addition to losing his mother at a young age, Abraham also lost his older sister Sarah when she died during childbirth. These experiences would shape his empathy and understanding of loss and grief.
+
+Beginning His Legal Career: In 1830, the Lincoln family moved to Illinois, where Abraham Lincoln began to work as a farm laborer, rail-splitter, and store clerk. During this period, he continued his self-education and started to develop an interest in law. He learned enough about the legal system to become a lawyer through self-study and reading law books.
+
+Marriage and Family: In 1842, Lincoln married Mary Todd, and they had four sons: Robert, Edward, William, and Thomas. Tragically, only one of their sons, Robert, survived to adulthood.
+
+Abraham Lincoln's childhood and early life were marked by poverty, hard work, and the challenges of frontier living. Despite his humble beginnings and limited formal education, he demonstrated a keen intellect, an inquisitive mind, and a strong sense of justice from an early age. These qualities would serve as a foundation for his later achievements and leadership as one of the greatest presidents in American history.
+    """)
+    pass</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div>
+<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="relevant-but-inconclusive-statements-should-get-increasingly-high-scores-as-they-are-more-helpful-for-answering-the-query">Relevant but inconclusive statements should get increasingly high scores as they are more helpful for answering the query.<a class="anchor-link" href="#relevant-but-inconclusive-statements-should-get-increasingly-high-scores-as-they-are-more-helpful-for-answering-the-query">&#182;</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[19]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-19">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_increasingrelevance_short</span><span class="p">():</span>
+    <span class="n">score_low</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Who won the superbowl in 2009?&quot;</span><span class="p">,</span><span class="s2">&quot;Santonio Holmes made a brilliant catch for the Steelers.&quot;</span><span class="p">)</span>
+    <span class="n">score_medium</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Who won the superbowl in 2009?&quot;</span><span class="p">,</span><span class="s2">&quot;Santonio Holmes made a brilliant catch for the Steelers in the superbowl.&quot;</span><span class="p">)</span>
+    <span class="n">score_high</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Who won the superbowl in 2009?&quot;</span><span class="p">,</span><span class="s2">&quot;Santonio Holmes won the Superbowl for the Steelers in 2009 with his brilliant catch.&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">score_low</span> <span class="o">&lt;</span> <span class="n">score_medium</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">score_medium</span> <span class="o">&lt;</span> <span class="n">score_high</span><span class="p">),</span> <span class="s2">&quot;Score did not increase with more relevant details.&quot;</span>
+</pre></div>
+<div id="cell-19" class="clipboard-copy-txt">def test_increasingrelevance_short():
+    score_low = relevance("Who won the superbowl in 2009?","Santonio Holmes made a brilliant catch for the Steelers.")
+    score_medium = relevance("Who won the superbowl in 2009?","Santonio Holmes made a brilliant catch for the Steelers in the superbowl.")
+    score_high = relevance("Who won the superbowl in 2009?","Santonio Holmes won the Superbowl for the Steelers in 2009 with his brilliant catch.")
+    assert (score_low < score_medium) & (score_medium < score_high), "Score did not increase with more relevant details."</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[20]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-20">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_increasingrelevance_medium</span><span class="p">():</span>
+    <span class="n">score_low</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;What is a cephalopod?&quot;</span><span class="p">,</span><span class="s2">&quot;Squids are a member of the molluscan class&quot;</span><span class="p">)</span>
+    <span class="n">score_medium</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;What is a cephalopod?&quot;</span><span class="p">,</span><span class="s2">&quot;Squids are a member of the molluscan class characterized by bilateral body symmetry, a prominent head, and a set of arms or tentacles (muscular hydrostats) modified from the primitive molluscan foot.&quot;</span><span class="p">)</span>
+    <span class="n">score_high</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;What is a cephalopod?&quot;</span><span class="p">,</span><span class="s2">&quot;A cephalopod is any member of the molluscan class such as squid, octopus or cuttlefish. These exclusively marine animals are characterized by bilateral body symmetry, a prominent head, and a set of arms or tentacles (muscular hydrostats) modified from the primitive molluscan foot.&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">score_low</span> <span class="o">&lt;</span> <span class="n">score_medium</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">score_medium</span> <span class="o">&lt;</span> <span class="n">score_high</span><span class="p">),</span> <span class="s2">&quot;Score did not increase with more relevant details.&quot;</span>
+</pre></div>
+<div id="cell-20" class="clipboard-copy-txt">def test_increasingrelevance_medium():
+    score_low = relevance("What is a cephalopod?","Squids are a member of the molluscan class")
+    score_medium = relevance("What is a cephalopod?","Squids are a member of the molluscan class characterized by bilateral body symmetry, a prominent head, and a set of arms or tentacles (muscular hydrostats) modified from the primitive molluscan foot.")
+    score_high = relevance("What is a cephalopod?","A cephalopod is any member of the molluscan class such as squid, octopus or cuttlefish. These exclusively marine animals are characterized by bilateral body symmetry, a prominent head, and a set of arms or tentacles (muscular hydrostats) modified from the primitive molluscan foot.")
+    assert (score_low < score_medium) & (score_medium < score_high), "Score did not increase with more relevant details."</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[21]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-21">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">test_increasingrelevance_long</span><span class="p">():</span>
+    <span class="n">score_low</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Describe Abraham Lincoln&#39;s childhood&quot;</span><span class="p">,</span><span class="s2">&quot;Lincoln spent many of his early years in kentucky&quot;</span><span class="p">)</span>
+    <span class="n">score_medium</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Describe Abraham Lincoln&#39;s childhood&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    Lincoln was born in a one-room log cabin in Hardin County, Kentucky. His parents were Thomas Lincoln and Nancy Hanks Lincoln. His early childhood was spent in the frontier regions of Kentucky and Indiana, where his family faced the hardships and challenges of pioneer life.</span>
+<span class="s2">    Kentucky Years (1809-1816): Abraham Lincoln&#39;s early years were spent in Kentucky. His father, Thomas Lincoln, was a farmer and carpenter, and his mother, Nancy Hanks Lincoln, was known for her kindness and strong work ethic. Sadly, Nancy died when Abraham was just nine years old. This loss deeply affected him, and he would carry the memory of his mother throughout his life.</span>
+<span class="s2">    Moving to Indiana (1816): In 1816, Thomas Lincoln decided to move his family to Indiana due to land disputes in Kentucky. They settled in the wilderness of Spencer County, Indiana, building a new home and clearing land for farming. Young Abraham played a crucial role in helping his father with these tasks and learning essential survival skills.</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">score_high</span> <span class="o">=</span> <span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;Describe Abraham Lincoln&#39;s childhood&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    Abraham Lincoln was born on February 12, 1809, in a one-room log cabin on the Sinking Spring Farm in Hardin County, Kentucky (now part of LaRue County). His parents were Thomas Lincoln and Nancy Hanks Lincoln. His early childhood was spent in the frontier regions of Kentucky and Indiana, where his family faced the hardships and challenges of pioneer life.</span>
+
+<span class="s2">Kentucky Years (1809-1816): Abraham Lincoln&#39;s early years were spent in Kentucky. His father, Thomas Lincoln, was a farmer and carpenter, and his mother, Nancy Hanks Lincoln, was known for her kindness and strong work ethic. Sadly, Nancy died when Abraham was just nine years old. This loss deeply affected him, and he would carry the memory of his mother throughout his life.</span>
+
+<span class="s2">Moving to Indiana (1816): In 1816, Thomas Lincoln decided to move his family to Indiana due to land disputes in Kentucky. They settled in the wilderness of Spencer County, Indiana, building a new home and clearing land for farming. Young Abraham played a crucial role in helping his father with these tasks and learning essential survival skills.</span>
+
+<span class="s2">Self-Education: Lincoln&#39;s formal education was limited to a few months, amounting to less than a year, as schools were scarce on the frontier. However, he was an avid reader and had a strong thirst for knowledge. Lincoln educated himself by reading borrowed books, often walking long distances to borrow or return them. He later referred to this time as having been &quot;raised to farm work.&quot;</span>
+
+<span class="s2">Early Tragedies: The Lincolns faced several tragedies during their time in Indiana. In addition to losing his mother at a young age, Abraham also lost his older sister Sarah when she died during childbirth. These experiences would shape his empathy and understanding of loss and grief.</span>
+
+<span class="s2">Beginning His Legal Career: In 1830, the Lincoln family moved to Illinois, where Abraham Lincoln began to work as a farm laborer, rail-splitter, and store clerk. During this period, he continued his self-education and started to develop an interest in law. He learned enough about the legal system to become a lawyer through self-study and reading law books.</span>
+
+<span class="s2">Marriage and Family: In 1842, Lincoln married Mary Todd, and they had four sons: Robert, Edward, William, and Thomas. Tragically, only one of their sons, Robert, survived to adulthood.</span>
+
+<span class="s2">Abraham Lincoln&#39;s childhood and early life were marked by poverty, hard work, and the challenges of frontier living. Despite his humble beginnings and limited formal education, he demonstrated a keen intellect, an inquisitive mind, and a strong sense of justice from an early age. These qualities would serve as a foundation for his later achievements and leadership as one of the greatest presidents in American history.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="k">pass</span>
+</pre></div>
+<div id="cell-21" class="clipboard-copy-txt">def test_increasingrelevance_long():
+    score_low = relevance("Describe Abraham Lincoln's childhood","Lincoln spent many of his early years in kentucky")
+    score_medium = relevance("Describe Abraham Lincoln's childhood","""
+    Lincoln was born in a one-room log cabin in Hardin County, Kentucky. His parents were Thomas Lincoln and Nancy Hanks Lincoln. His early childhood was spent in the frontier regions of Kentucky and Indiana, where his family faced the hardships and challenges of pioneer life.
+    Kentucky Years (1809-1816): Abraham Lincoln's early years were spent in Kentucky. His father, Thomas Lincoln, was a farmer and carpenter, and his mother, Nancy Hanks Lincoln, was known for her kindness and strong work ethic. Sadly, Nancy died when Abraham was just nine years old. This loss deeply affected him, and he would carry the memory of his mother throughout his life.
+    Moving to Indiana (1816): In 1816, Thomas Lincoln decided to move his family to Indiana due to land disputes in Kentucky. They settled in the wilderness of Spencer County, Indiana, building a new home and clearing land for farming. Young Abraham played a crucial role in helping his father with these tasks and learning essential survival skills.
+    """)
+    score_high = relevance("Describe Abraham Lincoln's childhood", """
+    Abraham Lincoln was born on February 12, 1809, in a one-room log cabin on the Sinking Spring Farm in Hardin County, Kentucky (now part of LaRue County). His parents were Thomas Lincoln and Nancy Hanks Lincoln. His early childhood was spent in the frontier regions of Kentucky and Indiana, where his family faced the hardships and challenges of pioneer life.
+
+Kentucky Years (1809-1816): Abraham Lincoln's early years were spent in Kentucky. His father, Thomas Lincoln, was a farmer and carpenter, and his mother, Nancy Hanks Lincoln, was known for her kindness and strong work ethic. Sadly, Nancy died when Abraham was just nine years old. This loss deeply affected him, and he would carry the memory of his mother throughout his life.
+
+Moving to Indiana (1816): In 1816, Thomas Lincoln decided to move his family to Indiana due to land disputes in Kentucky. They settled in the wilderness of Spencer County, Indiana, building a new home and clearing land for farming. Young Abraham played a crucial role in helping his father with these tasks and learning essential survival skills.
+
+Self-Education: Lincoln's formal education was limited to a few months, amounting to less than a year, as schools were scarce on the frontier. However, he was an avid reader and had a strong thirst for knowledge. Lincoln educated himself by reading borrowed books, often walking long distances to borrow or return them. He later referred to this time as having been "raised to farm work."
+
+Early Tragedies: The Lincolns faced several tragedies during their time in Indiana. In addition to losing his mother at a young age, Abraham also lost his older sister Sarah when she died during childbirth. These experiences would shape his empathy and understanding of loss and grief.
+
+Beginning His Legal Career: In 1830, the Lincoln family moved to Illinois, where Abraham Lincoln began to work as a farm laborer, rail-splitter, and store clerk. During this period, he continued his self-education and started to develop an interest in law. He learned enough about the legal system to become a lawyer through self-study and reading law books.
+
+Marriage and Family: In 1842, Lincoln married Mary Todd, and they had four sons: Robert, Edward, William, and Thomas. Tragically, only one of their sons, Robert, survived to adulthood.
+
+Abraham Lincoln's childhood and early life were marked by poverty, hard work, and the challenges of frontier living. Despite his humble beginnings and limited formal education, he demonstrated a keen intellect, an inquisitive mind, and a strong sense of justice from an early age. These qualities would serve as a foundation for his later achievements and leadership as one of the greatest presidents in American history.""")
+    pass</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div>
+<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="run-smoke-tests">Run smoke tests<a class="anchor-link" href="#run-smoke-tests">&#182;</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[22]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-22">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="ch">#! pip install tabulate</span>
+</pre></div>
+<div id="cell-22" class="clipboard-copy-txt">#! pip install tabulate</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[23]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-23">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">tabulate</span> <span class="kn">import</span> <span class="n">tabulate</span>
+
+<span class="k">def</span> <span class="nf">run_all_smoke_tests</span><span class="p">():</span>
+    <span class="n">smoke_tests</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">test_lowadherence_short</span><span class="p">,</span> <span class="n">test_lowadherence_medium</span><span class="p">,</span> <span class="n">test_lowadherence_long</span><span class="p">,</span>
+        <span class="n">test_majorityadherence_short</span><span class="p">,</span> <span class="n">test_majorityadherence_medium</span><span class="p">,</span> <span class="n">test_majorityadherence_long</span><span class="p">,</span>
+        <span class="n">test_nonanswer_short</span><span class="p">,</span> <span class="n">test_nonanswer_medium</span><span class="p">,</span> <span class="n">test_nonanswer_long</span><span class="p">,</span>
+        <span class="n">test_idontknow_short</span><span class="p">,</span> <span class="n">test_idontknow_medium</span><span class="p">,</span>
+        <span class="n">test_refusal_short</span><span class="p">,</span> <span class="n">test_refusal_medium</span><span class="p">,</span>
+        <span class="n">test_increasingrelevance_short</span><span class="p">,</span> <span class="n">test_increasingrelevance_medium</span><span class="p">,</span> <span class="n">test_increasingrelevance_long</span><span class="p">,</span>
+        <span class="n">test_seemingrelevance_short</span><span class="p">,</span> <span class="n">test_seemingrelevance_medium</span><span class="p">,</span> <span class="n">test_seemingrelevance_long</span>
+    <span class="p">]</span>
+
+    <span class="n">total_tests</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">smoke_tests</span><span class="p">)</span>
+    <span class="n">total_passed</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">total_failed</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">type_passed</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">type_failed</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">length_passed</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">length_failed</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">test</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">smoke_tests</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">test</span><span class="p">()</span>
+            <span class="n">total_passed</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># Update type_passed and length_passed dictionaries</span>
+            <span class="n">test_name</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="n">test_type</span><span class="p">,</span> <span class="n">test_length</span> <span class="o">=</span> <span class="n">test_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">test_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">type_passed</span><span class="p">[</span><span class="n">test_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">type_passed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_type</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">length_passed</span><span class="p">[</span><span class="n">test_length</span><span class="p">]</span> <span class="o">=</span> <span class="n">length_passed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_length</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">except</span> <span class="ne">AssertionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">total_failed</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># Update type_failed and length_failed dictionaries</span>
+            <span class="n">test_name</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="n">test_type</span><span class="p">,</span> <span class="n">test_length</span> <span class="o">=</span> <span class="n">test_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">test_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">type_failed</span><span class="p">[</span><span class="n">test_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">type_failed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_type</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">length_failed</span><span class="p">[</span><span class="n">test_length</span><span class="p">]</span> <span class="o">=</span> <span class="n">length_failed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_length</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="c1"># Prepare data for the table</span>
+    <span class="n">overall_data</span> <span class="o">=</span> <span class="p">[[</span><span class="s2">&quot;Total Tests&quot;</span><span class="p">,</span> <span class="n">total_tests</span><span class="p">],</span>
+                    <span class="p">[</span><span class="s2">&quot;Total Passed ✅&quot;</span><span class="p">,</span> <span class="n">total_passed</span><span class="p">],</span>
+                    <span class="p">[</span><span class="s2">&quot;Total Failed ❌&quot;</span><span class="p">,</span> <span class="n">total_failed</span><span class="p">]]</span>
+
+    <span class="n">type_data</span> <span class="o">=</span> <span class="p">[[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">test_type</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span><span class="si">}</span><span class="s2"> Tests&quot;</span><span class="p">,</span> <span class="n">type_passed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_type</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">type_failed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_type</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                  <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="p">(</span><span class="n">type_passed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_type</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">type_passed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_type</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">type_failed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_type</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)))</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">]</span>
+                 <span class="k">for</span> <span class="n">test_type</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">type_passed</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">type_failed</span><span class="o">.</span><span class="n">keys</span><span class="p">()))]</span>
+
+    <span class="n">length_data</span> <span class="o">=</span> <span class="p">[[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">test_length</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span><span class="si">}</span><span class="s2"> Tests&quot;</span><span class="p">,</span> <span class="n">length_passed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_length</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">length_failed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_length</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="p">(</span><span class="n">length_passed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_length</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">length_passed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_length</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">length_failed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">test_length</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)))</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">]</span>
+                   <span class="k">for</span> <span class="n">test_length</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">length_passed</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">length_failed</span><span class="o">.</span><span class="n">keys</span><span class="p">()))]</span>
+
+    <span class="k">return</span> <span class="n">overall_data</span><span class="p">,</span> <span class="n">type_data</span><span class="p">,</span> <span class="n">length_data</span>
+
+<span class="c1"># Get the data from the function</span>
+<span class="n">overall_data</span><span class="p">,</span> <span class="n">type_data</span><span class="p">,</span> <span class="n">length_data</span> <span class="o">=</span> <span class="n">run_all_smoke_tests</span><span class="p">()</span>
+</pre></div>
+<div id="cell-23" class="clipboard-copy-txt">from tabulate import tabulate
+
+def run_all_smoke_tests():
+    smoke_tests = [
+        test_lowadherence_short, test_lowadherence_medium, test_lowadherence_long,
+        test_majorityadherence_short, test_majorityadherence_medium, test_majorityadherence_long,
+        test_nonanswer_short, test_nonanswer_medium, test_nonanswer_long,
+        test_idontknow_short, test_idontknow_medium,
+        test_refusal_short, test_refusal_medium,
+        test_increasingrelevance_short, test_increasingrelevance_medium, test_increasingrelevance_long,
+        test_seemingrelevance_short, test_seemingrelevance_medium, test_seemingrelevance_long
+    ]
+
+    total_tests = len(smoke_tests)
+    total_passed = 0
+    total_failed = 0
+    type_passed = {}
+    type_failed = {}
+    length_passed = {}
+    length_failed = {}
+
+    for i, test in enumerate(smoke_tests):
+        try:
+            test()
+            total_passed += 1
+
+            # Update type_passed and length_passed dictionaries
+            test_name = test.__name__
+            test_type, test_length = test_name.split('_')[1], test_name.split('_')[2]
+            type_passed[test_type] = type_passed.get(test_type, 0) + 1
+            length_passed[test_length] = length_passed.get(test_length, 0) + 1
+        except AssertionError as e:
+            total_failed += 1
+
+            # Update type_failed and length_failed dictionaries
+            test_name = test.__name__
+            test_type, test_length = test_name.split('_')[1], test_name.split('_')[2]
+            type_failed[test_type] = type_failed.get(test_type, 0) + 1
+            length_failed[test_length] = length_failed.get(test_length, 0) + 1
+
+    # Prepare data for the table
+    overall_data = [["Total Tests", total_tests],
+                    ["Total Passed ✅", total_passed],
+                    ["Total Failed ❌", total_failed]]
+
+    type_data = [[f"{test_type.capitalize()} Tests", type_passed.get(test_type, 0), type_failed.get(test_type, 0),
+                  f"{(type_passed.get(test_type, 0) / (type_passed.get(test_type, 0) + type_failed.get(test_type, 0))) * 100:.2f}%"]
+                 for test_type in sorted(set(type_passed.keys()) | set(type_failed.keys()))]
+
+    length_data = [[f"{test_length.capitalize()} Tests", length_passed.get(test_length, 0), length_failed.get(test_length, 0),
+                    f"{(length_passed.get(test_length, 0) / (length_passed.get(test_length, 0) + length_failed.get(test_length, 0))) * 100:.2f}%"]
+                   for test_length in sorted(set(length_passed.keys()) | set(length_failed.keys()))]
+
+    return overall_data, type_data, length_data
+
+# Get the data from the function
+overall_data, type_data, length_data = run_all_smoke_tests()</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[24]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-24">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># Print the table</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Overall Results:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span><span class="n">overall_data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Metric&quot;</span><span class="p">,</span> <span class="s2">&quot;Count&quot;</span><span class="p">],</span> <span class="n">tablefmt</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">))</span>
+</pre></div>
+<div id="cell-24" class="clipboard-copy-txt"># Print the table
+print("\nOverall Results:")
+print(tabulate(overall_data, headers=["Metric", "Count"], tablefmt="grid"))</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>
+Overall Results:
++-----------------+---------+
+| Metric          |   Count |
++=================+=========+
+| Total Tests     |      19 |
++-----------------+---------+
+| Total Passed ✅ |      15 |
++-----------------+---------+
+| Total Failed ❌ |       4 |
++-----------------+---------+
+</pre>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[25]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-25">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Results by Type:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span><span class="n">type_data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Test Type&quot;</span><span class="p">,</span> <span class="s2">&quot;Passed ✅&quot;</span><span class="p">,</span> <span class="s2">&quot;Failed ❌&quot;</span><span class="p">,</span> <span class="s2">&quot;Percentage Passed&quot;</span><span class="p">],</span> <span class="n">tablefmt</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">))</span>
+</pre></div>
+<div id="cell-25" class="clipboard-copy-txt">print("\nResults by Type:")
+print(tabulate(type_data, headers=["Test Type", "Passed ✅", "Failed ❌", "Percentage Passed"], tablefmt="grid"))</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>
+Results by Type:
++---------------------------+-------------+-------------+---------------------+
+| Test Type                 |   Passed ✅ |   Failed ❌ | Percentage Passed   |
++===========================+=============+=============+=====================+
+| Idontknow Tests           |           2 |           0 | 100.00%             |
++---------------------------+-------------+-------------+---------------------+
+| Increasingrelevance Tests |           3 |           0 | 100.00%             |
++---------------------------+-------------+-------------+---------------------+
+| Lowadherence Tests        |           0 |           3 | 0.00%               |
++---------------------------+-------------+-------------+---------------------+
+| Majorityadherence Tests   |           2 |           1 | 66.67%              |
++---------------------------+-------------+-------------+---------------------+
+| Nonanswer Tests           |           3 |           0 | 100.00%             |
++---------------------------+-------------+-------------+---------------------+
+| Refusal Tests             |           2 |           0 | 100.00%             |
++---------------------------+-------------+-------------+---------------------+
+| Seemingrelevance Tests    |           3 |           0 | 100.00%             |
++---------------------------+-------------+-------------+---------------------+
+</pre>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[26]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-26">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Results by Length:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span><span class="n">length_data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Test Length&quot;</span><span class="p">,</span> <span class="s2">&quot;Passed ✅&quot;</span><span class="p">,</span> <span class="s2">&quot;Failed ❌&quot;</span><span class="p">,</span> <span class="s2">&quot;Percentage Passed&quot;</span><span class="p">],</span> <span class="n">tablefmt</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">))</span>
+</pre></div>
+<div id="cell-26" class="clipboard-copy-txt">print("\nResults by Length:")
+print(tabulate(length_data, headers=["Test Length", "Passed ✅", "Failed ❌", "Percentage Passed"], tablefmt="grid"))</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>
+Results by Length:
++---------------+-------------+-------------+---------------------+
+| Test Length   |   Passed ✅ |   Failed ❌ | Percentage Passed   |
++===============+=============+=============+=====================+
+| Long Tests    |           3 |           2 | 60.00%              |
++---------------+-------------+-------------+---------------------+
+| Medium Tests  |           6 |           1 | 85.71%              |
++---------------+-------------+-------------+---------------------+
+| Short Tests   |           6 |           1 | 85.71%              |
++---------------+-------------+-------------+---------------------+
+</pre>
+</div>
+</div>
+
+</div>
+
 </div>
 
 </div>
