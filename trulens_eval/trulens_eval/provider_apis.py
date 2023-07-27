@@ -9,22 +9,21 @@ from types import ModuleType
 from typing import (
     Any, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
 )
-from pprint import PrettyPrinter
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import LLMResult
 import pydantic
 import requests
 
+from trulens_eval.keys import _check_key
 from trulens_eval.keys import get_huggingface_headers
 from trulens_eval.schema import Cost
-from trulens_eval.keys import _check_key
-from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.util import get_local_in_call_stack
 from trulens_eval.util import JSON
 from trulens_eval.util import SerialModel
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import WithClassInfo
+from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -33,6 +32,7 @@ T = TypeVar("T")
 
 INSTRUMENT = "__tru_instrument"
 DEFAULT_RPM = 60
+
 
 class EndpointCallback(SerialModel):
     """
@@ -594,8 +594,9 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             api_version=None
         )
 
-        import openai
         import os
+
+        import openai
 
         for k, v in CONF_CLONE.items():
             if k in kwargs:
@@ -613,7 +614,9 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
                     attr_val = getattr(openai, k)
                     if attr_val is not None and attr_val != os.environ.get(v):
-                        print(f"{UNICODE_CHECK} Env. var. {v} set from openai.{k} .")
+                        print(
+                            f"{UNICODE_CHECK} Env. var. {v} set from openai.{k} ."
+                        )
                         os.environ[v] = attr_val
 
         # Will fail if key not set:

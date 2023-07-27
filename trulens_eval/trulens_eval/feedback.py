@@ -403,8 +403,9 @@ import logging
 from multiprocessing.pool import AsyncResult
 import re
 import traceback
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple, Type,
-                    Union)
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
+)
 
 import numpy as np
 import openai
@@ -447,12 +448,14 @@ def check_provider(cls_or_name: Union[Type, str]) -> None:
 
     assert cls_name in PROVIDER_CLASS_NAMES, f"Unsupported provider class {cls_name}"
 
+
 # Signature of feedback implementations. Take in any number of arguments
 # and return either a single float or a float and a dictionary (of metadata).
 ImpCallable = Callable[..., Union[float, Tuple[float, Dict[str, Any]]]]
 
 # Signature of aggregation functions.
 AggCallable = Callable[[Iterable[float]], float]
+
 
 class Feedback(FeedbackDefinition):
     # Implementation, not serializable, note that FeedbackDefinition contains
@@ -513,7 +516,7 @@ class Feedback(FeedbackDefinition):
         if agg is not None:
             if 'aggregator' not in kwargs:
                 try:
-                    # These are for serialization to/from json and for db storage.            
+                    # These are for serialization to/from json and for db storage.
                     kwargs['aggregator'] = FunctionOrMethod.of_callable(
                         agg, loadable=True
                     )
@@ -522,8 +525,9 @@ class Feedback(FeedbackDefinition):
                     pass
         else:
             if 'aggregator' in kwargs:
-                agg: AggCallable = FunctionOrMethod.pick(**(kwargs['aggregator'])
-                                                     ).load()
+                agg: AggCallable = FunctionOrMethod.pick(
+                    **(kwargs['aggregator'])
+                ).load()
 
         super().__init__(**kwargs)
 
@@ -816,7 +820,7 @@ class Feedback(FeedbackDefinition):
         try:
             # Total cost, will accumulate.
             cost = Cost()
-            
+
             for ins in self.extract_selection(app=app_json, record=record):
 
                 result_and_meta, part_cost = Endpoint.track_all_costs_tally(
@@ -826,20 +830,28 @@ class Feedback(FeedbackDefinition):
 
                 if isinstance(result_and_meta, Tuple):
                     # If output is a tuple of two, we assume it is the float and the metadata.
-                    assert len(result_and_meta) == 2, "Feedback functions must return either a single float or a float and a dictionary."
+                    assert len(
+                        result_and_meta
+                    ) == 2, "Feedback functions must return either a single float or a float and a dictionary."
                     result_val, meta = result_and_meta
 
-                    assert isinstance(meta, dict), f"Feedback metadata output must be a dictionary but was {type(call_meta)}."
+                    assert isinstance(
+                        meta, dict
+                    ), f"Feedback metadata output must be a dictionary but was {type(call_meta)}."
                 else:
                     # Otherwise it is just the float. We create empty metadata dict.
                     result_val = result_and_meta
                     meta = dict()
 
-                assert isinstance(result_val, float), f"Feedback function output must be a float but was {type(result_val)}."
-                    
+                assert isinstance(
+                    result_val, float
+                ), f"Feedback function output must be a float but was {type(result_val)}."
+
                 result_vals.append(result_val)
 
-                feedback_call = FeedbackCall(args=ins, ret=result_val, meta=meta)
+                feedback_call = FeedbackCall(
+                    args=ins, ret=result_val, meta=meta
+                )
                 feedback_calls.append(feedback_call)
 
             result_vals = np.array(result_vals)
@@ -1001,11 +1013,12 @@ class OpenAI(Provider):
 
     endpoint: Endpoint
 
-    def __init__(self, *args, endpoint = None, model_engine = "gpt-3.5-turbo", **kwargs):
+    def __init__(
+        self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
+    ):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
-
         """
         A set of OpenAI Feedback Functions.
 
@@ -1265,7 +1278,7 @@ class OpenAI(Provider):
                 )["choices"][0]["message"]["content"]
             )
         )
-    
+
     def model_agreement(self, prompt: str, response: str) -> float:
         """
         Uses OpenAI's Chat GPT Model. A function that gives Chat GPT the same
@@ -1281,7 +1294,9 @@ class OpenAI(Provider):
             float: A value between 0 and 1. 0 being "not in agreement" and 1
             being "in agreement".
         """
-        logger.warning("model_agreement has been deprecated. Use GroundTruthAgreement(ground_truth) instead.")
+        logger.warning(
+            "model_agreement has been deprecated. Use GroundTruthAgreement(ground_truth) instead."
+        )
         oai_chat_response = self.endpoint.run_me(
             lambda: self._create_chat_completion(
                 model=self.model_engine,
@@ -1302,7 +1317,9 @@ class OpenAI(Provider):
         )
         return _re_1_10_rating(agreement_txt) / 10
 
-    def _get_answer_agreement(self, prompt, response, check_response, model_engine="gpt-3.5-turbo"):
+    def _get_answer_agreement(
+        self, prompt, response, check_response, model_engine="gpt-3.5-turbo"
+    ):
         oai_chat_response = self.endpoint.run_me(
             lambda: self._create_chat_completion(
                 model=model_engine,
@@ -1324,14 +1341,17 @@ class OpenAI(Provider):
         return oai_chat_response
 
 
-
 class GroundTruthAgreement(SerialModel, WithClassInfo):
     ground_truth: Union[List[str], FunctionOrMethod]
     provider: Provider
 
     ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
 
-    def __init__(self, ground_truth: Union[List[str], Callable, FunctionOrMethod], provider: OpenAI = None):
+    def __init__(
+        self,
+        ground_truth: Union[List[str], Callable, FunctionOrMethod],
+        provider: OpenAI = None
+    ):
         if provider is None:
             provider = OpenAI()
         if isinstance(ground_truth, List):
@@ -1346,26 +1366,32 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ground_truth = FunctionOrMethod.pick(**ground_truth)
             ground_truth_imp = ground_truth.load()
         else:
-            raise RuntimeError(f"Unhandled ground_truth type: {type(ground_truth)}.")
+            raise RuntimeError(
+                f"Unhandled ground_truth type: {type(ground_truth)}."
+            )
 
         super().__init__(
             ground_truth=ground_truth,
             ground_truth_imp=ground_truth_imp,
             provider=provider,
-            obj=self # for WithClassInfo
+            obj=self  # for WithClassInfo
         )
 
     def _find_response(self, prompt: str) -> Optional[str]:
         if self.ground_truth_imp is not None:
             return self.ground_truth_imp(prompt)
 
-        responses = [qr["response"] for qr in self.ground_truth if qr["query"] == prompt]
+        responses = [
+            qr["response"] for qr in self.ground_truth if qr["query"] == prompt
+        ]
         if responses:
             return responses[0]
         else:
             return None
 
-    def agreement_measure(self, prompt: str, response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
+    def agreement_measure(
+        self, prompt: str, response: str
+    ) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
         Uses OpenAI's Chat GPT Model. A function that that measures
         similarity to ground truth. A second template is given to Chat GPT
@@ -1386,11 +1412,12 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             agreement_txt = self.provider._get_answer_agreement(
                 prompt, response, ground_truth_response
             )
-            ret = _re_1_10_rating(agreement_txt) / 10, dict(ground_truth_response=ground_truth_response)
+            ret = _re_1_10_rating(agreement_txt) / 10, dict(
+                ground_truth_response=ground_truth_response
+            )
         else:
             ret = np.nan
         return ret
-
 
 
 class AzureOpenAI(OpenAI):
@@ -1400,7 +1427,6 @@ class AzureOpenAI(OpenAI):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
-
         """
         Wrapper to use Azure OpenAI. Please export the following env variables
 
@@ -1432,6 +1458,7 @@ class AzureOpenAI(OpenAI):
             *args, deployment_id=self.deployment_id, **kwargs
         )
 
+
 # Cannot put these inside Huggingface since it interferes with pydantic.BaseModel.
 HUGS_SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
 HUGS_TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
@@ -1442,12 +1469,11 @@ HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm
 class Huggingface(Provider):
 
     endpoint: Endpoint
-    
+
     def __init__(self, endpoint=None, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
-
         """
         A set of Huggingface Feedback Functions.
 
@@ -1567,8 +1593,10 @@ class Cohere(Provider):
         kwargs['endpoint'] = Endpoint(name="cohere")
         kwargs['model_engine'] = model_engine
 
-        super().__init__(**kwargs)  # need to include pydantic.BaseModel.__init__
-        
+        super().__init__(
+            **kwargs
+        )  # need to include pydantic.BaseModel.__init__
+
     def sentiment(
         self,
         text,
