@@ -37,7 +37,7 @@ otherwise you might get circular import errors.
     - `utils/python.py` `utils/text.py`
 """
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Huggingface
