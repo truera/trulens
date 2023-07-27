@@ -24,3 +24,33 @@ export const getTreeDepth = (node: StackTreeNode): number => {
 
   return Math.max.apply(null, node.children.map(getTreeDepth)) + 1;
 };
+
+/**
+ * Get a list of nodes to be rendered.
+ *
+ * @param root - the root of the tree to recursively get the nodes for
+ * @returns Array of nodes found via DFS
+ */
+export const getNodesToRender = (root: StackTreeNode) => {
+  const children: { node: StackTreeNode; depth: number }[] = [];
+  const { endTime: treeEnd } = getStartAndEndTimesForNode(root);
+
+  const recursiveGetChildrenToRender = (node: StackTreeNode, depth: number) => {
+    const { startTime } = getStartAndEndTimesForNode(node);
+
+    // Ignore calls that happen after the app time. This is indicative of errors.
+    if (startTime >= treeEnd) return;
+
+    children.push({ node, depth });
+
+    if (!node.children) return;
+
+    node.children.forEach((child) => {
+      recursiveGetChildrenToRender(child, depth + 1);
+    });
+  };
+
+  recursiveGetChildrenToRender(root, 0);
+
+  return children;
+};
