@@ -37,3 +37,5 @@ millify
 # local vector store requirements
 docarray
 hnswlib
+# feedback function smoke testing display
+tabulate
