@@ -104,7 +104,7 @@ import logging
 import os
 from pathlib import Path
 import re
-from typing import Any, Optional, Set, Tuple, Union, Dict
+from typing import Any, Dict, Optional, Set, Tuple, Union
 
 import cohere
 import dotenv
@@ -301,7 +301,8 @@ def _relative_path(path: Path, relative_to: Path) -> str:
             relative_to = relative_to.parent
 
 
-def _collect_keys(*args: Tuple[str], **kwargs: Dict[str, str]) -> Dict[str, str]:
+def _collect_keys(*args: Tuple[str], **kwargs: Dict[str,
+                                                    str]) -> Dict[str, str]:
     """
     Collect values for keys from all of the currently supported sources. This includes:
 
