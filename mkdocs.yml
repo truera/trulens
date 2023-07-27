@@ -63,8 +63,12 @@ nav:
   - Eval:
       - Installation: trulens_eval/install.md
       - Quickstart: trulens_eval/quickstart.ipynb
+      - Feedback Functions:
+          - Overview: trulens_eval/feedback_functions.ipynb
+          - Smoke Tests:
+              - Prompt Response Relevance: trulens_eval/pr_relevance_smoke_tests.ipynb
+              - Question Statement Relevance: trulens_eval/qs_relevance_smoke_tests.ipynb
       - Logging: trulens_eval/logging.ipynb
-      - Feedback Functions: trulens_eval/feedback_functions.ipynb
       - API Reference:
           - Tru: trulens_eval/api/tru.md
           - TruBasicApp: trulens_eval/api/trubasicapp.md
