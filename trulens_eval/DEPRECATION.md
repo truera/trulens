@@ -4,7 +4,7 @@
 
 ### Backwards compatible
 
-- Class `Cost` has no field `n_stream_chunks` to count the number of received
+- Class `Cost` has new field `n_stream_chunks` to count the number of received
   chunks in streams. This is only counted when streaming mode (i.e. in OpenAI)
   is used.
 
