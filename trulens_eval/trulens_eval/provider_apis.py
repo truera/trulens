@@ -1,18 +1,21 @@
-import asyncio
 import inspect
 import json
 import logging
 from pprint import PrettyPrinter
 from queue import Queue
-import threading
 from threading import Thread
 from time import sleep
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple,
-                    Type, TypeVar)
+from types import AsyncGeneratorType
+from typing import (
+    Any, Awaitable, Callable, Dict, List, Optional, Sequence, Tuple, Type,
+    TypeVar
+)
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import LLMResult
+from langchain.schema import Generation
+
 import pydantic
 import requests
 
@@ -47,8 +50,14 @@ class EndpointCallback(SerialModel):
     def handle(self, response: Any) -> None:
         self.cost.n_requests += 1
 
+    def handle_chunk(self, response: Any) -> None:
+        self.cost.n_stream_chunks += 1
+
     def handle_generation(self, response: Any) -> None:
         self.handle(response)
+
+    def handle_generation_chunk(self, response: Any) -> None:
+        self.handle_chunk(response)
 
     def handle_classification(self, response: Any) -> None:
         self.handle(response)
@@ -83,6 +92,10 @@ class OpenAICallback(EndpointCallback):
         default_factory=OpenAICallbackHandler, exclude=True
     )
 
+    chunks: List[Generation] = pydantic.Field(
+        default_factory=list, exclude=True
+    )
+
     def handle_classification(self, response: Dict) -> None:
         # OpenAI's moderation API is not text generation and does not return
         # usage information. Will count those as a classification.
@@ -93,7 +106,33 @@ class OpenAICallback(EndpointCallback):
             self.cost.n_successful_requests += 1
             self.cost.n_classes += len(response['categories'])
 
+    def handle_generation_chunk(self, response: Any) -> None:
+        """
+        Called on every streaming chunk from an openai text generation process.
+        """
+
+        # self.langchain_handler.on_llm_new_token() # does nothing
+
+        super().handle_generation_chunk(response=response)
+
+        self.chunks.append(response)
+
+        if response.generation_info['choices'][0]['finish_reason'] == 'stop':
+            llm_result = LLMResult(
+                llm_output=dict(
+                    token_usage=dict(),
+                    model_name=response.generation_info['model']
+                ),
+                generations=[self.chunks]
+            )
+            self.chunks = []
+            self.handle_generation(response=llm_result)
+
     def handle_generation(self, response: LLMResult) -> None:
+        """
+        Called upon a non-streaming text generation or at the completion of a
+        streamed generation.
+        """
 
         super().handle_generation(response)
 
@@ -589,17 +628,18 @@ class Endpoint(SerialModel, SingletonPerName):
 
         # If INSTRUMENT is not set, create a wrapper method and return it.
 
-        async def _agenwrapper_completion(responses, *args, **kwargs):
-            logger.debug(
-                f"Calling async generator wrapped {func.__name__} for {self.name}."
-            )
+        async def _agenwrapper_completion(
+            responses: AsyncGeneratorType, *args, **kwargs
+        ):
 
             bindings = inspect.signature(func).bind(*args, **kwargs)
 
             # Get all of the callback classes suitable for handling this call.
             # Note that we stored this in the INSTRUMENT attribute of the
             # wrapper method.
-            registered_callback_classes = getattr(_agenwrapper_completion, INSTRUMENT)
+            registered_callback_classes = getattr(
+                _agenwrapper_completion, INSTRUMENT
+            )
 
             # Look up the endpoints that are expecting to be notified and the
             # callback tracking the tally. See Endpoint._track_costs for
@@ -614,17 +654,16 @@ class Endpoint(SerialModel, SingletonPerName):
             # If wrapped method was not called from within _track_costs, we will
             # get None here and do nothing but return wrapped function's
             # response.
-            
+
+            if endpoints is None:
+                logger.debug("No endpoints found.")
+                # Still need to yield the responses below.
+
             async for response in responses:
                 yield response
 
                 if endpoints is None:
-                    logger.debug("No endpoints found.")
                     continue
-
-                logger.debug(
-                    f"Respond from async generator wrapped {func.__name__} for {self.name}: {response}"
-                )
 
                 for callback_class in registered_callback_classes:
                     logger.debug(f"Handling callback_class: {callback_class}.")
@@ -646,11 +685,11 @@ class Endpoint(SerialModel, SingletonPerName):
 
         async def agenwrapper(*args, **kwargs):
             logger.debug(
-                f"Calling async wrapped {func.__name__} for {self.name}."
+                f"Calling async generator wrapped {func.__name__} for {self.name}."
             )
 
             # Get the result of the wrapped function:
-            responses: Any = await func(*args, **kwargs)
+            responses: AsyncGeneratorType = await func(*args, **kwargs)
 
             return _agenwrapper_completion(responses, *args, **kwargs)
 
@@ -661,23 +700,18 @@ class Endpoint(SerialModel, SingletonPerName):
             )
 
             # Get the result of the wrapped function:
-            responses: Any = await func(*args, **kwargs)
+            response_or_generator = await func(*args, **kwargs)
 
-            isgen = inspect.isasyncgen(responses)
+            # Check that it is an async generator first. Sometimes we cannot
+            # tell statically (via inspect) that a function will produce a
+            # generator.
+            if inspect.isasyncgen(response_or_generator):
+                return _agenwrapper_completion(
+                    response_or_generator, *args, **kwargs
+                )
 
-            if isgen:
-                return _agenwrapper_completion(responses, *args, **kwargs)
-                #async for response in responses:
-                #    return response
-                # response = [r async for r in responses][-1]
-            else:
-                response = responses
-
-            # assert not inspect.isasyncgen(response), f"Did not expect an async generator: {func} ."
-
-            logger.debug(
-                f"Respond from async wrapped {func.__name__} for {self.name}: {response}"
-            )
+            # Otherwise this is not an async generator.
+            response = response_or_generator
 
             bindings = inspect.signature(func).bind(*args, **kwargs)
 
@@ -701,10 +735,7 @@ class Endpoint(SerialModel, SingletonPerName):
             # response.
             if endpoints is None:
                 logger.debug("No endpoints found.")
-                if isgen:
-                    return
-                else:
-                    return response
+                return response
 
             for callback_class in registered_callback_classes:
                 logger.debug(f"Handling callback_class: {callback_class}.")
@@ -724,11 +755,7 @@ class Endpoint(SerialModel, SingletonPerName):
                         callback=callback
                     )
 
-            if isgen:
-                return
-            else:
-                return response
-
+            return response
 
         def wrapper(*args, **kwargs):
             logger.debug(f"Calling wrapped {func.__name__} for {self.name}.")
@@ -778,21 +805,31 @@ class Endpoint(SerialModel, SingletonPerName):
 
             return response
 
+        # Determine which of the wrapper variants to return and to annotate.
+
         if inspect.isasyncgenfunction(func):
+            # This is not always accurate hence.
             w = agenwrapper
             w2 = _agenwrapper_completion
+
         elif inspect.iscoroutinefunction(func):
+            # An async coroutine can actually be an async generator so we
+            # annotate both the async and async generator wrappers.
             w = awrapper
             w2 = _agenwrapper_completion
+
         else:
             w = wrapper
             w2 = None
 
         setattr(w, INSTRUMENT, [self.callback_class])
-        if w2 is not None:
-            setattr(w2, INSTRUMENT, [self.callback_class])
         w.__name__ = func.__name__
         w.__signature__ = inspect.signature(func)
+
+        if w2 is not None:
+            # This attribute is internally by _agenwrapper_completion hence we
+            # need this.
+            setattr(w2, INSTRUMENT, [self.callback_class])
 
         logger.debug(f"Instrumenting {func.__name__} for {self.name} .")
 
@@ -837,7 +874,17 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             if callback is not None:
                 callback.handle_generation(response=llm_res)
 
-        # TODO: process stream delta object
+        if 'choices' in response and 'delta' in response['choices'][0]:
+            # Streaming data.
+
+            content = response['choices'][0]['delta'].get('content')
+
+            gen = Generation(text=content or '', generation_info=response)
+            self.global_callback.handle_generation_chunk(gen)
+            if callback is not None:
+                callback.handle_generation_chunk(gen)
+
+            counted_something = True
 
         if results is not None:
             for res in results:

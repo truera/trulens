@@ -150,12 +150,17 @@ class TestTruChain(JSONTestCase):
 
         # Results are not the same as they involve different prompts but should
         # not be empty at least:
-        self.assertTrue(len(res1.generations[0].text) > 5)
-        self.assertTrue(len(res2['text']) > 5)
+        self.assertGreater(len(res1.generations[0].text), 5)
+        self.assertGreater(len(res2['text']), 5)
 
         # And cost tracking should have counted some number of tokens.
-        self.assertTrue(costs1[0].cost.n_tokens > 3)
-        self.assertTrue(costs2[0].cost.n_tokens > 3)
+        self.assertGreater(costs1[0].cost.n_tokens, 3)
+        self.assertGreater(costs2[0].cost.n_tokens, 3)
+
+        # If streaming were used, should count some number of chunks.
+        # TODO: test with streaming
+        # self.assertGreater(costs1[0].cost.n_stream_chunks, 0)
+        # self.assertGreater(costs2[0].cost.n_stream_chunks, 0)
 
     def test_async_call_with_record(self):
         asyncio.run(self._async_call_with_record())
@@ -197,7 +202,6 @@ class TestTruChain(JSONTestCase):
             sync_record.dict(),
             skips=set(
                 [
-                    "cost",
                     "name",
                     "ts",
                     "start_time",
@@ -270,7 +274,7 @@ class TestTruChain(JSONTestCase):
             sync_record.dict(),
             skips=set(
                 [
-                    "cost",  # cost tracking in streaming mode not done yet
+                    "cost",  # usage info in streaming mode seems to not be available for openai by default https://community.openai.com/t/usage-info-in-api-responses/18862
                     "name",
                     "ts",
                     "start_time",
@@ -279,6 +283,9 @@ class TestTruChain(JSONTestCase):
                 ]
             )
         )
+
+        # Check that we counted the number of chunks at least.
+        self.assertGreater(async_record.cost.n_stream_chunks, 0)
 
     @unittest.skip("outdated")
     def test_qa_prompt(self):
