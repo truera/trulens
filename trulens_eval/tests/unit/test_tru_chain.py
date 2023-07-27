@@ -263,16 +263,15 @@ class TestTruChain(JSONTestCase):
             inputs=dict(question=message),
         )
 
-        # In streaming mode (with async), the response is empty.
-        # self.assertJSONEqual(async_res, sync_res)
+        self.assertJSONEqual(async_res, sync_res)
 
         self.assertJSONEqual(
             async_record.dict(),
             sync_record.dict(),
             skips=set(
                 [
-                    "text", # output in stream mode is empty
-                    "main_output", # same
+                    # "text", # output in stream mode is empty
+                    # "main_output", # same
                     "cost",  # similar problem
                     "name",
                     "ts",
