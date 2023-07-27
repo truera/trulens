@@ -25,6 +25,7 @@ from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
+from trulens_eval.ux.components import draw_metadata
 from trulens_eval.ux.components import draw_prompt_info
 from trulens_eval.ux.components import render_selector_markdown
 from trulens_eval.ux.components import write_or_json
@@ -182,7 +183,7 @@ else:
         selected_rows = pd.DataFrame(selected_rows)
 
         if len(selected_rows) == 0:
-            st.write("Hint: select a row to display app metadata")
+            st.write("Hint: select a row to display details of a record")
 
         else:
             st.header(f"Selected LLM Application: {selected_rows['app_id'][0]}")
@@ -190,7 +191,11 @@ else:
 
             prompt = selected_rows['input'][0]
             response = selected_rows['output'][0]
+            details = selected_rows['app_json'][0]
 
+            app_json = json.loads(
+                details
+            )  # apps may not be deserializable, don't try to, keep it json.
             with st.expander(
                     f"Input {render_selector_markdown(Select.RecordInput)}",
                     expanded=True):
@@ -200,6 +205,11 @@ else:
                     f"Response {render_selector_markdown(Select.RecordOutput)}",
                     expanded=True):
                 write_or_json(st, obj=response)
+
+            metadata = app_json.get('metadata')
+            if metadata:
+                with st.expander("Metadata"):
+                    st.markdown(draw_metadata(metadata))
 
             row = selected_rows.head().iloc[0]
 
@@ -214,20 +224,24 @@ else:
                     def highlight(s):
                         cat = CATEGORY.of_score(s.result)
                         return [f'background-color: {cat.color}'] * len(s)
-                        
+
                     if call is not None and len(call) > 0:
-                        
+
                         df = pd.DataFrame.from_records(
                             [call[i]["args"] for i in range(len(call))]
                         )
                         df["result"] = pd.DataFrame(
-                            [float(call[i]["ret"]) for i in range(len(call))]
+                            [
+                                float(call[i]["ret"] or -1)
+                                for i in range(len(call))
+                            ]
                         )
                         df["meta"] = pd.Series(
                             [call[i]["meta"] for i in range(len(call))]
                         )
-                        df = df.join(df.meta.apply(lambda m: pd.Series(m))).drop(columns="meta")
-                        
+                        df = df.join(df.meta.apply(lambda m: pd.Series(m))
+                                    ).drop(columns="meta")
+
                         st.dataframe(
                             df.style.apply(highlight, axis=1
                                           ).format("{:.2}", subset=["result"])
@@ -243,11 +257,6 @@ else:
             record_str = selected_rows['record_json'][0]
             record_json = json.loads(record_str)
             record = Record(**record_json)
-
-            details = selected_rows['app_json'][0]
-            app_json = json.loads(
-                details
-            )  # apps may not be deserializable, don't try to, keep it json.
 
             classes: Iterable[Tuple[JSONPath, ComponentView]
                              ] = list(instrumented_component_views(app_json))

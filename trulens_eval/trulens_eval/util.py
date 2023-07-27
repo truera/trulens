@@ -43,8 +43,10 @@ from pprint import PrettyPrinter
 from queue import Queue
 from time import sleep
 from types import ModuleType
-from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
-                    Sequence, Set, Tuple, TypeVar, Union)
+from typing import (
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
+    Tuple, TypeVar, Union
+)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -58,7 +60,6 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 T = TypeVar("T")
-
 
 # Optional requirements.
 
@@ -1184,7 +1185,6 @@ class TP(SingletonPerName):  # "thread processing"
 # python instrumentation utilities
 
 
-
 def get_local_in_call_stack(
     key: str,
     func: Callable[[Callable], bool],
@@ -1399,13 +1399,13 @@ class Obj(SerialModel):
         obj: object,
         cls: Optional[type] = None,
         loadable: bool = False
-    ) -> Union['Obj', 'ObjSerial']:        
+    ) -> Union['Obj', 'ObjSerial']:
         if loadable:
             return ObjSerial.of_object(obj=obj, cls=cls, loadable=loadable)
-        
+
         if cls is None:
             cls = obj.__class__
-        
+
         return Obj(cls=Class.of_class(cls), id=id(obj))
 
     def load(self) -> object:
@@ -1484,7 +1484,7 @@ class ObjSerial(Obj):
         sig = _safe_init_sig(cls.__call__)
         # NOTE: Something related to pydantic models incorrectly sets signature
         # of cls so we need to check cls.__call__ instead.
-        
+
         b = sig.bind(*init_args, **init_kwargs)
         bindings = Bindings.of_bound_arguments(b)
 
@@ -1536,9 +1536,9 @@ class FunctionOrMethod(SerialModel):
         if inspect.ismethod(c):
             self = c.__self__
             return Method.of_method(c, obj=self, loadable=loadable)
-        
+
         else:
-            
+
             return Function.of_function(c, loadable=loadable)
 
     def load(self) -> Callable:
@@ -1621,14 +1621,14 @@ class Function(FunctionOrMethod):
 
             cls = self.cls.load()  # does not create object instance
             return getattr(cls, self.name)  # lookup static/class method
-        
+
         else:
             mod = self.module.load()
             try:
                 return getattr(mod, self.name)  # function not inside a class
             except Exception:
                 raise ImportError(
-                   f"Function {self} is not importable. "
+                    f"Function {self} is not importable. "
                     "If you are defining custom feedback function implementations, make sure they can be imported by python scripts. "
                     "If you defined a function in a notebook, it will not be importable."
                 )

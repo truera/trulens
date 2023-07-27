@@ -5,17 +5,14 @@ from pprint import PrettyPrinter
 from queue import Queue
 from threading import Thread
 from time import sleep
-from types import ModuleType
 from types import AsyncGeneratorType
-from typing import (
-    Any, Awaitable, Callable, Dict, List, Optional, Sequence, Tuple, Type,
-    TypeVar
-)
+from types import ModuleType
+from typing import (Any, Awaitable, Callable, Dict, List, Optional, Sequence,
+                    Tuple, Type, TypeVar)
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
-from langchain.schema import LLMResult
 from langchain.schema import Generation
-
+from langchain.schema import LLMResult
 import pydantic
 import requests
 

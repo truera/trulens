@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
 RecordID = str
 AppID = str
 Tags = str
+Metadata = dict
 FeedbackDefinitionID = str
 FeedbackResultID = str
 
@@ -411,6 +412,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
 
     app_id: AppID
     tags: Tags
+    metadata: Metadata
 
     # Feedback functions to evaluate on each record. Unlike the above, these are
     # meant to be serialized.
@@ -434,6 +436,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         self,
         app_id: Optional[AppID] = None,
         tags: Optional[Tags] = None,
+        metadata: Optional[Metadata] = None,
         feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
         **kwargs
     ):
@@ -442,6 +445,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         kwargs['app_id'] = "temporary"  # will be adjusted below
         kwargs['feedback_mode'] = feedback_mode
         kwargs['tags'] = ""
+        kwargs['metadata'] = {}
 
         # for WithClassInfo:
         kwargs['obj'] = self
@@ -456,6 +460,10 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         if tags is None:
             tags = "-"  # Set tags to a "-" if None is provided
         self.tags = tags
+
+        if metadata is None:
+            metadata = {}
+        self.metadata = metadata
 
     @classmethod
     def select_inputs(cls) -> JSONPath:
