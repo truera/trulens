@@ -270,9 +270,7 @@ class TestTruChain(JSONTestCase):
             sync_record.dict(),
             skips=set(
                 [
-                    # "text", # output in stream mode is empty
-                    # "main_output", # same
-                    "cost",  # similar problem
+                    "cost",  # cost tracking in streaming mode not done yet
                     "name",
                     "ts",
                     "start_time",
