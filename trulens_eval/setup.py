@@ -61,5 +61,6 @@ setup(
         'munch>=3.0.0',
         'ipywidgets>=8.0.6',
         'numpy>=1.23.5',
+        # 'nest_asyncio>=1.5.6',  # NOTE(piotrm): disabling for now, need more investigation of compatibility issues
     ],
 )
