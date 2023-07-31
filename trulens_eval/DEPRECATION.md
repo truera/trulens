@@ -1,5 +1,13 @@
 # Deprecation Notes
 
+## Changes in 0.7.0
+
+### Backwards compatible
+
+- Class `Cost` has new field `n_stream_chunks` to count the number of received
+  chunks in streams. This is only counted when streaming mode (i.e. in OpenAI)
+  is used.
+
 ## Changes in 0.6.0
 
 ### Backwards compatible
@@ -8,7 +16,8 @@
   excluded from serialization but is now included.
 
 - Class `FeedbackCall` has new attribute `meta` for storing additional feedback
-  results. The value will be set to an empty dict if loaded from an older database that does not have this attribute.
+  results. The value will be set to an empty dict if loaded from an older
+  database that does not have this attribute.
 
 - Class `FeedbackCall` has new attribute `meta` for storing additional feedback
 

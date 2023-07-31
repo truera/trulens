@@ -8,6 +8,9 @@ trubot:
 test:
 	$(CONDA); python -m unittest discover tests.unit
 
+test-tru-chain:
+	$(CONDA); python -m unittest tests.unit.test_tru_chain
+
 format:
 	$(CONDA); bash format.sh
 
