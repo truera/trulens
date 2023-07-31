@@ -54,6 +54,7 @@ import pandas as pd
 import pydantic
 
 from trulens_eval.keys import redact_value
+from trulens_eval.utils.python import stack_with_tasks
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -1201,7 +1202,7 @@ def get_local_in_call_stack(
 
     """
 
-    frames = stack()[offset + 1:]  # + 1 to skip this method itself
+    frames = stack_with_tasks()[offset + 1:]  # + 1 to skip this method itself
 
     # Using queue for frames as additional frames may be added due to handling threads.
     q = Queue()
@@ -1209,24 +1210,24 @@ def get_local_in_call_stack(
         q.put(f)
 
     while not q.empty():
-        fi = q.get()
+        f = q.get()
 
-        logger.debug(f"{fi.frame.f_code}")
+        logger.debug(f"{f.f_code}")
 
-        if id(fi.frame.f_code) == id(_future_target_wrapper.__code__):
+        if id(f.f_code) == id(_future_target_wrapper.__code__):
             logger.debug(
                 "Found thread starter frame. "
                 "Will walk over frames prior to thread start."
             )
-            locs = fi.frame.f_locals
+            locs = f.f_locals
             assert "pre_start_stack" in locs, "Pre thread start stack expected but not found."
-            for f in locs['pre_start_stack']:
-                q.put(f)
+            for fi in locs['pre_start_stack']:
+                q.put(fi.frame)
             continue
 
-        if func(fi.frame.f_code):
-            logger.debug(f"looking via {func.__name__}; found {fi}")
-            locs = fi.frame.f_locals
+        if func(f.f_code):
+            logger.debug(f"looking via {func.__name__}; found {f}")
+            locs = f.f_locals
             if key in locs:
                 return locs[key]
             else:
