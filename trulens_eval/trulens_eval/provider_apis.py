@@ -5,12 +5,13 @@ from pprint import PrettyPrinter
 from queue import Queue
 from threading import Thread
 from time import sleep
+from types import AsyncGeneratorType
 from types import ModuleType
-from typing import (
-    Any, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
-)
+from typing import (Any, Awaitable, Callable, Dict, List, Optional, Sequence,
+                    Tuple, Type, TypeVar)
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
+from langchain.schema import Generation
 from langchain.schema import LLMResult
 import pydantic
 import requests
@@ -23,6 +24,7 @@ from trulens_eval.util import JSON
 from trulens_eval.util import SerialModel
 from trulens_eval.util import SingletonPerName
 from trulens_eval.util import WithClassInfo
+from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
@@ -45,8 +47,14 @@ class EndpointCallback(SerialModel):
     def handle(self, response: Any) -> None:
         self.cost.n_requests += 1
 
+    def handle_chunk(self, response: Any) -> None:
+        self.cost.n_stream_chunks += 1
+
     def handle_generation(self, response: Any) -> None:
         self.handle(response)
+
+    def handle_generation_chunk(self, response: Any) -> None:
+        self.handle_chunk(response)
 
     def handle_classification(self, response: Any) -> None:
         self.handle(response)
@@ -81,6 +89,10 @@ class OpenAICallback(EndpointCallback):
         default_factory=OpenAICallbackHandler, exclude=True
     )
 
+    chunks: List[Generation] = pydantic.Field(
+        default_factory=list, exclude=True
+    )
+
     def handle_classification(self, response: Dict) -> None:
         # OpenAI's moderation API is not text generation and does not return
         # usage information. Will count those as a classification.
@@ -91,7 +103,33 @@ class OpenAICallback(EndpointCallback):
             self.cost.n_successful_requests += 1
             self.cost.n_classes += len(response['categories'])
 
+    def handle_generation_chunk(self, response: Any) -> None:
+        """
+        Called on every streaming chunk from an openai text generation process.
+        """
+
+        # self.langchain_handler.on_llm_new_token() # does nothing
+
+        super().handle_generation_chunk(response=response)
+
+        self.chunks.append(response)
+
+        if response.generation_info['choices'][0]['finish_reason'] == 'stop':
+            llm_result = LLMResult(
+                llm_output=dict(
+                    token_usage=dict(),
+                    model_name=response.generation_info['model']
+                ),
+                generations=[self.chunks]
+            )
+            self.chunks = []
+            self.handle_generation(response=llm_result)
+
     def handle_generation(self, response: LLMResult) -> None:
+        """
+        Called upon a non-streaming text generation or at the completion of a
+        streamed generation.
+        """
 
         super().handle_generation(response)
 
@@ -230,7 +268,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
         return j[0]
 
-    def run_me(self, thunk: Callable[[], T]) -> T:
+    def run_me(self, thunk: Thunk[T]) -> T:
         """
         Run the given thunk, returning itse output, on pace with the api.
         Retries request multiple times if self.retries > 0.
@@ -286,7 +324,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
     @staticmethod
     def track_all_costs(
-        thunk: Callable[[], T],
+        thunk: Thunk[T],
         with_openai: bool = True,
         with_hugs: bool = True
     ) -> Tuple[T, Sequence[EndpointCallback]]:
@@ -320,8 +358,43 @@ class Endpoint(SerialModel, SingletonPerName):
         return Endpoint._track_costs(thunk, with_endpoints=endpoints)
 
     @staticmethod
+    async def atrack_all_costs(
+        thunk: Thunk[Awaitable],
+        with_openai: bool = True,
+        with_hugs: bool = True
+    ) -> Tuple[T, Sequence[EndpointCallback]]:
+        """
+        Track costs of all of the apis we can currently track, over the
+        execution of thunk.
+        """
+
+        endpoints = []
+
+        if with_openai:
+            try:
+                e = OpenAIEndpoint()
+                endpoints.append(e)
+            except:
+                logger.warning(
+                    "OpenAI API keys are not set. "
+                    "Will not track usage."
+                )
+
+        if with_hugs:
+            try:
+                e = HuggingfaceEndpoint()
+                endpoints.append(e)
+            except:
+                logger.warning(
+                    "Huggingface API keys are not set. "
+                    "Will not track usage."
+                )
+
+        return await Endpoint._atrack_costs(thunk, with_endpoints=endpoints)
+
+    @staticmethod
     def track_all_costs_tally(
-        thunk: Callable[[], T],
+        thunk: Thunk[T],
         with_openai: bool = True,
         with_hugs: bool = True
     ) -> Tuple[T, Cost]:
@@ -336,8 +409,24 @@ class Endpoint(SerialModel, SingletonPerName):
         return result, sum(cb.cost for cb in cbs)
 
     @staticmethod
+    async def atrack_all_costs_tally(
+        thunk: Thunk[Awaitable],
+        with_openai: bool = True,
+        with_hugs: bool = True
+    ) -> Tuple[T, Cost]:
+        """
+        Track costs of all of the apis we can currently track, over the
+        execution of thunk.
+        """
+
+        result, cbs = await Endpoint.atrack_all_costs(
+            thunk, with_openai=with_openai, with_hugs=with_hugs
+        )
+        return result, sum(cb.cost for cb in cbs)
+
+    @staticmethod
     def _track_costs(
-        thunk: Callable[[], T],
+        thunk: Thunk[T],
         with_endpoints: Sequence['Endpoint'] = None,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
@@ -399,7 +488,71 @@ class Endpoint(SerialModel, SingletonPerName):
         # return others.
         return result, callbacks
 
-    def track_cost(self, thunk: Callable[[], T]) -> Tuple[T, EndpointCallback]:
+    @staticmethod
+    async def _atrack_costs(
+        thunk: Thunk[Awaitable],
+        with_endpoints: Sequence['Endpoint'] = None,
+    ) -> Tuple[T, Sequence[EndpointCallback]]:
+        """
+        Root of all cost tracking methods. Runs the given `thunk`, tracking
+        costs using each of the provided endpoints' callbacks.
+        """
+
+        # Check to see if this call is within another _track_costs call:
+        endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
+            get_local_in_call_stack(
+                key="endpoints",
+                func=Endpoint.__find_tracker,
+                offset=1
+            )
+
+        if endpoints is None:
+            # If not, lets start a new collection of endpoints here along with
+            # the callbacks for each. See type above.
+
+            endpoints = dict()
+
+        else:
+            # We copy the dict here so that the outer call to _track_costs will
+            # have their own version unaffacted by our additions below. Once
+            # this frame returns, the outer frame will have its own endpoints
+            # again and any wrapped method will get that smaller set of
+            # endpoints.
+
+            # TODO: check if deep copy is needed given we are storing lists in
+            # the values and don't want to affect the existing ones here.
+            endpoints = endpoints.copy()
+
+        # Collect any new endpoints requested of us.
+        with_endpoints = with_endpoints or []
+
+        # Keep track of the new callback objects we create here for returning
+        # later.
+        callbacks = []
+
+        # Create the callbacks for the new requested endpoints only. Existing
+        # endpoints from other frames will keep their callbacks.
+        for endpoint in with_endpoints:
+            callback_class = endpoint.callback_class
+            callback = callback_class()
+
+            if callback_class not in endpoints:
+                endpoints[callback_class] = []
+
+            # And add them to the endpoints dict. This will be retrieved from
+            # locals of this frame later in the wrapped methods.
+            endpoints[callback_class].append((endpoint, callback))
+
+            callbacks.append(callback)
+
+        # Call the thunk.
+        result: T = await thunk()
+
+        # Return result and only the callbacks created here. Outer thunks might
+        # return others.
+        return result, callbacks
+
+    def track_cost(self, thunk: Thunk[T]) -> Tuple[T, EndpointCallback]:
         """
         Tally only the usage performed within the execution of the given thunk.
         Returns the thunk's result alongside the EndpointCallback object that
@@ -412,7 +565,10 @@ class Endpoint(SerialModel, SingletonPerName):
 
     @staticmethod
     def __find_tracker(f):
-        return id(f) == id(Endpoint._track_costs.__code__)
+        return id(f) in [
+            id(m.__code__)
+            for m in [Endpoint._track_costs, Endpoint._atrack_costs]
+        ]
 
     def handle_wrapped_call(
         self, bindings: inspect.BoundArguments, response: Any,
@@ -469,6 +625,135 @@ class Endpoint(SerialModel, SingletonPerName):
 
         # If INSTRUMENT is not set, create a wrapper method and return it.
 
+        async def _agenwrapper_completion(
+            responses: AsyncGeneratorType, *args, **kwargs
+        ):
+
+            bindings = inspect.signature(func).bind(*args, **kwargs)
+
+            # Get all of the callback classes suitable for handling this call.
+            # Note that we stored this in the INSTRUMENT attribute of the
+            # wrapper method.
+            registered_callback_classes = getattr(
+                _agenwrapper_completion, INSTRUMENT
+            )
+
+            # Look up the endpoints that are expecting to be notified and the
+            # callback tracking the tally. See Endpoint._track_costs for
+            # definition.
+            endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
+                get_local_in_call_stack(
+                    key="endpoints",
+                    func=self.__find_tracker,
+                    offset=0
+                )
+
+            # If wrapped method was not called from within _track_costs, we will
+            # get None here and do nothing but return wrapped function's
+            # response.
+
+            if endpoints is None:
+                logger.debug("No endpoints found.")
+                # Still need to yield the responses below.
+
+            async for response in responses:
+                yield response
+
+                if endpoints is None:
+                    continue
+
+                for callback_class in registered_callback_classes:
+                    logger.debug(f"Handling callback_class: {callback_class}.")
+                    if callback_class not in endpoints:
+                        logger.warning(
+                            f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
+                            " but there are no endpoints waiting to receive the result."
+                        )
+                        continue
+
+                    for endpoint, callback in endpoints[callback_class]:
+                        logger.debug(f"Handling endpoint {endpoint}.")
+                        endpoint.handle_wrapped_call(
+                            func=func,
+                            bindings=bindings,
+                            response=response,
+                            callback=callback
+                        )
+
+        async def agenwrapper(*args, **kwargs):
+            logger.debug(
+                f"Calling async generator wrapped {func.__name__} for {self.name}."
+            )
+
+            # Get the result of the wrapped function:
+            responses: AsyncGeneratorType = await func(*args, **kwargs)
+
+            return _agenwrapper_completion(responses, *args, **kwargs)
+
+        # TODO: async/sync code duplication
+        async def awrapper(*args, **kwargs):
+            logger.debug(
+                f"Calling async wrapped {func.__name__} for {self.name}."
+            )
+
+            # Get the result of the wrapped function:
+            response_or_generator = await func(*args, **kwargs)
+
+            # Check that it is an async generator first. Sometimes we cannot
+            # tell statically (via inspect) that a function will produce a
+            # generator.
+            if inspect.isasyncgen(response_or_generator):
+                return _agenwrapper_completion(
+                    response_or_generator, *args, **kwargs
+                )
+
+            # Otherwise this is not an async generator.
+            response = response_or_generator
+
+            bindings = inspect.signature(func).bind(*args, **kwargs)
+
+            # Get all of the callback classes suitable for handling this call.
+            # Note that we stored this in the INSTRUMENT attribute of the
+            # wrapper method.
+            registered_callback_classes = getattr(awrapper, INSTRUMENT)
+
+            # Look up the endpoints that are expecting to be notified and the
+            # callback tracking the tally. See Endpoint._track_costs for
+            # definition.
+            endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
+                get_local_in_call_stack(
+                    key="endpoints",
+                    func=self.__find_tracker,
+                    offset=0
+                )
+
+            # If wrapped method was not called from within _track_costs, we will
+            # get None here and do nothing but return wrapped function's
+            # response.
+            if endpoints is None:
+                logger.debug("No endpoints found.")
+                return response
+
+            for callback_class in registered_callback_classes:
+                logger.debug(f"Handling callback_class: {callback_class}.")
+                if callback_class not in endpoints:
+                    logger.warning(
+                        f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
+                        " but there are no endpoints waiting to receive the result."
+                    )
+                    continue
+
+                for endpoint, callback in endpoints[callback_class]:
+                    logger.debug(f"Handling endpoint {endpoint}.")
+                    endpoint.handle_wrapped_call(
+                        func=func,
+                        bindings=bindings,
+                        response=response,
+                        callback=callback
+                    )
+
+            return response
+
         def wrapper(*args, **kwargs):
             logger.debug(f"Calling wrapped {func.__name__} for {self.name}.")
 
@@ -517,13 +802,35 @@ class Endpoint(SerialModel, SingletonPerName):
 
             return response
 
-        setattr(wrapper, INSTRUMENT, [self.callback_class])
-        wrapper.__name__ = func.__name__
-        wrapper.__signature__ = inspect.signature(func)
+        # Determine which of the wrapper variants to return and to annotate.
+
+        if inspect.isasyncgenfunction(func):
+            # This is not always accurate hence.
+            w = agenwrapper
+            w2 = _agenwrapper_completion
+
+        elif inspect.iscoroutinefunction(func):
+            # An async coroutine can actually be an async generator so we
+            # annotate both the async and async generator wrappers.
+            w = awrapper
+            w2 = _agenwrapper_completion
+
+        else:
+            w = wrapper
+            w2 = None
+
+        setattr(w, INSTRUMENT, [self.callback_class])
+        w.__name__ = func.__name__
+        w.__signature__ = inspect.signature(func)
+
+        if w2 is not None:
+            # This attribute is internally by _agenwrapper_completion hence we
+            # need this.
+            setattr(w2, INSTRUMENT, [self.callback_class])
 
         logger.debug(f"Instrumenting {func.__name__} for {self.name} .")
 
-        return wrapper
+        return w
 
 
 class OpenAIEndpoint(Endpoint, WithClassInfo):
@@ -563,6 +870,18 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
             if callback is not None:
                 callback.handle_generation(response=llm_res)
+
+        if 'choices' in response and 'delta' in response['choices'][0]:
+            # Streaming data.
+
+            content = response['choices'][0]['delta'].get('content')
+
+            gen = Generation(text=content or '', generation_info=response)
+            self.global_callback.handle_generation_chunk(gen)
+            if callback is not None:
+                callback.handle_generation_chunk(gen)
+
+            counted_something = True
 
         if results is not None:
             for res in results:
@@ -635,6 +954,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         super().__init__(*args, **kwargs)
 
         self._instrument_module_members(openai, "create")
+        self._instrument_module_members(openai, "acreate")
 
 
 class HuggingfaceEndpoint(Endpoint, WithClassInfo):
