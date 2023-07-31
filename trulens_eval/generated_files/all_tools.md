@@ -2,6 +2,8 @@
 
 In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart.ipynb)
+
 ## Setup
 ### Add API keys
 For this quickstart you will need Open AI and Huggingface keys

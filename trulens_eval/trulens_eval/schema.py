@@ -78,6 +78,9 @@ class Cost(SerialModel):
     # Total tokens processed.
     n_tokens: int = 0
 
+    # In streaming mode, number of chunks produced.
+    n_stream_chunks: int = 0
+
     # Number of prompt tokens supplied.
     n_prompt_tokens: int = 0
 
