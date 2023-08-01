@@ -20,7 +20,8 @@ TruLens-Eval has two key value propositions:
     * TruLens' instrumentation can be applied to any LLM application without being tied down to a given framework. Additionally, deep integrations with [LangChain]() and [Llama-Index]() allow the capture of internal metadata and text.
     * Anything that is tracked by the instrumentation can be evaluated!
 
-The process for building your evaluated and tracked LLM application with TruLens is shown below 👇
+The process for building your evaluated and tracked LLM application with TruLens is below 👇
+
 ![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
 
 ### Get going with TruLens-Eval
