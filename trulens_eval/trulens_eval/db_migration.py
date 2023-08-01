@@ -19,7 +19,7 @@ class VersionException(Exception):
 
 
 MIGRATION_UNKNOWN_STR = "unknown[db_migration]"
-migration_versions: list = ["0.3.0", "0.2.0", "0.1.2"]
+migration_versions: list = ["0.8.0", "0.3.0", "0.2.0", "0.1.2"]
 
 
 def _update_db_json_col(
@@ -39,7 +39,14 @@ def _update_db_json_col(
     migrate_record = tuple(migrate_record)
     db._insert_or_replace_vals(table=table, vals=migrate_record)
 
-
+def migrate_0_3_0(db):
+    conn, c = db._connect()
+    c.execute(
+        f"""ALTER TABLE feedbacks
+        ADD multi_result TEXT;"""
+    )
+    conn.commit()
+    
 def migrate_0_2_0(db):
     """
     Migrates from 0.2.0 to 0.3.0
@@ -194,8 +201,10 @@ def migrate_0_1_2(db):
 
 
 upgrade_paths = {
+    #"from_version":("to_version", migrate_method)
     "0.1.2": ("0.2.0", migrate_0_1_2),
-    "0.2.0": ("0.3.0", migrate_0_2_0)
+    "0.2.0": ("0.3.0", migrate_0_2_0),
+    "0.3.0": ("0.8.0", migrate_0_3_0)
 }
 
 
@@ -287,6 +296,7 @@ def _check_needs_migration(version: str, warn=False) -> None:
     """
     compat_version = _get_compatibility_version(version)
     if migration_versions.index(compat_version) > 0:
+
         if _upgrade_possible(compat_version):
             msg = f"Detected that your db version {version} is from an older release that is incompatible with this release. you can either reset your db with `tru.reset_database()`, or you can initiate a db migration with `tru.migrate_database()`"
         else:
@@ -329,9 +339,14 @@ def _serialization_asserts(db) -> None:
                         test_json = json.loads(row[col_idx])
                         # special implementation checks for serialized classes
                         if 'implementation' in test_json:
-                            FunctionOrMethod.pick(
-                                **(test_json['implementation'])
-                            ).load()
+                            try:
+                                FunctionOrMethod.pick(
+                                    **(test_json['implementation'])
+                                ).load()
+                            except ImportError:
+                                # Import error is not a migration problem. 
+                                # It signals that the function cannot be used for deferred evaluation.
+                                pass
 
                         if col_name == "record_json":
                             Record(**test_json)
@@ -350,12 +365,12 @@ def _serialization_asserts(db) -> None:
                             # If this happens, trulens needs to add a migration
                             SAVED_DB_FILE_LOC = saved_db_locations[db.filename]
                             raise VersionException(
-                                f"serialized column migration not implemented. Please open a ticket on trulens github page including details on the old and new trulens versions. Your original DB file is saved here: {SAVED_DB_FILE_LOC}"
+                                f"serialized column migration not implemented. Please open a ticket on trulens github page including details on the old and new trulens versions. Your original DB file is saved here: {SAVED_DB_FILE_LOC}, or you can `tru.reset_database()`"
                             )
                     except Exception as e:
                         tb = traceback.format_exc()
                         raise VersionException(
-                            f"Migration failed on {table} {col_name} {row[col_idx]}.\n\n{tb}"
+                            f"Migration failed on {table} {col_name} {row[col_idx]}.\n\n{tb}\n\nPlease open a ticket on trulens github page including details on the old and new trulens versions. Your original DB file is saved here: {SAVED_DB_FILE_LOC}, or you can `tru.reset_database()`"
                         )
 
 

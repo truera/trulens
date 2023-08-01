@@ -467,10 +467,14 @@ class Feedback(FeedbackDefinition):
     # result.
     agg: Optional[AggCallable] = pydantic.Field(exclude=True)
 
+    # An optional name. Only will affect display tables
+    supplied_name: Optional[str]
+
     def __init__(
         self,
         imp: Optional[Callable] = None,
         agg: Optional[Callable] = None,
+        name: Optional[str] = None,
         **kwargs
     ):
         """
@@ -485,11 +489,11 @@ class Feedback(FeedbackDefinition):
         """
 
         agg = agg or np.mean
-
+        if name is not None:
+            kwargs['supplied_name'] = name
         # imp is the python function/method while implementation is a serialized
         # json structure. Create the one that is missing based on the one that
         # is provided:
-
         if imp is not None:
             # These are for serialization to/from json and for db storage.
             if 'implementation' not in kwargs:
@@ -534,6 +538,7 @@ class Feedback(FeedbackDefinition):
 
         self.imp = imp
         self.agg = agg
+        self.supplied_name = name
 
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:
@@ -709,17 +714,17 @@ class Feedback(FeedbackDefinition):
         Returns a new Feedback object with the given aggregation function.
         """
 
-        return Feedback(imp=self.imp, selectors=self.selectors, agg=func)
+        return Feedback(imp=self.imp, selectors=self.selectors, agg=func, name=self.supplied_name)
 
     @staticmethod
     def of_feedback_definition(f: FeedbackDefinition):
         implementation = f.implementation
         aggregator = f.aggregator
-
+        supplied_name = f.supplied_name
         imp_func = implementation.load()
         agg_func = aggregator.load()
 
-        return Feedback(imp=imp_func, agg=agg_func, **f.dict())
+        return Feedback(imp=imp_func, agg=agg_func, name=supplied_name, **f.dict())
 
     def _next_unselected_arg_name(self):
         if self.imp is not None:
@@ -752,7 +757,7 @@ class Feedback(FeedbackDefinition):
 
         new_selectors[arg] = Select.RecordInput
 
-        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg)
+        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg, name=self.supplied_name)
 
     on_input = on_prompt
 
@@ -770,7 +775,7 @@ class Feedback(FeedbackDefinition):
 
         new_selectors[arg] = Select.RecordOutput
 
-        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg)
+        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg, name=self.supplied_name)
 
     on_output = on_response
 
@@ -790,7 +795,7 @@ class Feedback(FeedbackDefinition):
             new_selectors[argname] = path
             self._print_guessed_selector(argname, path)
 
-        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg)
+        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg, name=self.supplied_name)
 
     def run(
         self, app: Union[AppDefinition, JSON], record: Record

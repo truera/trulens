@@ -290,7 +290,8 @@ class LocalSQLite(DB):
                 calls_json {self.TYPE_JSON} NOT NULL,
                 result FLOAT,
                 name TEXT NOT NULL,
-                cost_json {self.TYPE_JSON} NOT NULL
+                cost_json {self.TYPE_JSON} NOT NULL,
+                multi_result {self.TYPE_JSON}
             )'''
         )
         c.execute(

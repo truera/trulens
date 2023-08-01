@@ -343,12 +343,15 @@ class FeedbackDefinition(SerialModel):
     # arguments for `imp`.
     selectors: Dict[str, JSONPath]
 
+    supplied_name: Optional[str] = None
+
     def __init__(
         self,
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
         implementation: Optional[Union[Function, Method]] = None,
         aggregator: Optional[Union[Function, Method]] = None,
-        selectors: Dict[str, JSONPath] = None
+        selectors: Dict[str, JSONPath] = None,
+        supplied_name: Optional[str] = None
     ):
         """
         - selectors: Optional[Dict[str, JSONPath]] -- mapping of implementation
@@ -364,12 +367,13 @@ class FeedbackDefinition(SerialModel):
         """
 
         selectors = selectors or dict()
-
+        
         super().__init__(
             feedback_definition_id="temporary",
             selectors=selectors,
             implementation=implementation,
             aggregator=aggregator,
+            supplied_name=supplied_name,
         )
 
         if feedback_definition_id is None:
