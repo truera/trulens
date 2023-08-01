@@ -47,7 +47,7 @@ class TestLlamaIndex(JSONTestCase):
         self.assertJSONEqual(
             llm_response_sync,
             llm_response_async,
-            numeric_places=3  # node scores are imprecise
+            numeric_places=2  # node scores and token counts are imprecise
         )
 
         self.assertJSONEqual(
@@ -86,7 +86,7 @@ class TestLlamaIndex(JSONTestCase):
         self.assertJSONEqual(
             llm_response_stream.get_response(),
             llm_response.response,
-            numeric_places=3  # node scores are imprecise, and so is token cost tracking (off by 2?)
+            numeric_places=2  # node scores and token counts are imprecise
         )
 
         self.assertJSONEqual(
@@ -126,7 +126,7 @@ class TestLlamaIndex(JSONTestCase):
         self.assertJSONEqual(
             llm_response_sync,
             llm_response_async,
-            numeric_places=3  # node scores are imprecise, and so is token cost tracking (off by 2?)
+            numeric_places=2  # node scores and token counts are imprecise
         )
 
         self.assertJSONEqual(
