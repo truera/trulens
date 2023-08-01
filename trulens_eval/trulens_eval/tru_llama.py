@@ -5,7 +5,8 @@
 from datetime import datetime
 import logging
 from pprint import PrettyPrinter
-from typing import ClassVar, Sequence, Tuple
+import traceback
+from typing import ClassVar, Sequence, Tuple, Union
 
 from pydantic import Field
 
@@ -31,7 +32,10 @@ pp = PrettyPrinter()
 with OptionalImports(message=REQUIREMENT_LLAMA):
     import llama_index
     from llama_index.indices.query.base import BaseQueryEngine
-    from llama_index.response.schema import Response
+    from llama_index.chat_engine.types import BaseChatEngine
+    from llama_index.chat_engine.types import AgentChatResponse, StreamingAgentChatResponse
+    from llama_index.response.schema import Response, StreamingResponse, RESPONSE_TYPE
+    from llama_index.indices.query.schema import QueryBundle, QueryType
 
 from trulens_eval.tru_chain import LangChainInstrument
 
@@ -80,6 +84,16 @@ class LlamaInstrument(Instrument):
                     lambda o: isinstance(
                         o, llama_index.indices.query.base.BaseQueryEngine
                     ),
+                "aquery":
+                    lambda o: isinstance(
+                        o, llama_index.indices.query.base.BaseQueryEngine
+                    ),
+                "chat":
+                    lambda o:
+                    isinstance(o, llama_index.chat_engine.types.BaseChatEngine),
+                "achat":
+                    lambda o:
+                    isinstance(o, llama_index.chat_engine.types.BaseChatEngine),
                 "retrieve":
                     lambda o: isinstance(
                         o, (
@@ -96,7 +110,12 @@ class LlamaInstrument(Instrument):
 
     def __init__(self):
         super().__init__(
-            root_methods=set([TruLlama.query_with_record]),
+            root_methods=set(
+                [
+                    TruLlama.query_with_record, TruLlama.aquery_with_record,
+                    TruLlama.chat_with_record, TruLlama.achat_with_record
+                ]
+            ),
             modules=LlamaInstrument.Default.MODULES,
             classes=LlamaInstrument.Default.CLASSES(),  # was thunk
             methods=LlamaInstrument.Default.METHODS
@@ -108,7 +127,7 @@ class TruLlama(App):
     Wrap a llama index engine for monitoring.
 
     Arguments:
-    - app: RetrieverQueryEngine -- the engine to wrap.
+    - app: BaseQueryEngine | BaseChatEngine -- the engine to wrap.
     - More args in App
     - More args in AppDefinition
     - More args in WithClassInfo
@@ -117,7 +136,7 @@ class TruLlama(App):
     class Config:
         arbitrary_types_allowed = True
 
-    app: BaseQueryEngine
+    app: Union[BaseQueryEngine, BaseChatEngine]
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
         default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query),
@@ -135,10 +154,6 @@ class TruLlama(App):
 
         super().__init__(**kwargs)
 
-    def query(self, *args, **kwargs) -> Response:
-        res, _ = self.query_with_record(*args, **kwargs)
-        return res
-
     @classmethod
     def select_source_nodes(cls) -> JSONPath:
         """
@@ -146,7 +161,51 @@ class TruLlama(App):
         """
         return cls.select_outputs().source_nodes[:]
 
-    def query_with_record(self, str_or_query_bundle) -> Tuple[Response, Record]:
+    # llama_index.chat_engine.types.BaseChatEngine
+    def chat(self, *args,
+             **kwargs) -> Union[AgentChatResponse, StreamingAgentChatResponse]:
+        assert isinstance(
+            self.app, llama_index.chat_engine.types.BaseChatEngine
+        )
+
+        res, _ = self.chat_with_record(*args, **kwargs)
+        return res
+
+    # llama_index.chat_engine.types.BaseChatEngine
+    async def achat(self, *args, **kwargs) -> Response:
+        assert isinstance(
+            self.app, llama_index.chat_engine.types.BaseChatEngine
+        )
+
+        res, _ = self.achat_with_record(*args, **kwargs)
+        return res
+
+    # llama_index.indices.query.base.BaseQueryEngine
+    def query(self, *args, **kwargs) -> RESPONSE_TYPE:
+        assert isinstance(
+            self.app, llama_index.indices.query.base.BaseQueryEngine
+        )
+
+        res, _ = self.query_with_record(*args, **kwargs)
+        return res
+
+    # llama_index.indices.query.base.BaseQueryEngine
+    async def aquery(self, *args, **kwargs) -> RESPONSE_TYPE:
+        assert isinstance(
+            self.app, llama_index.indices.query.base.BaseQueryEngine
+        )
+
+        res, _ = await self.aquery_with_record(*args, **kwargs)
+        return res
+
+    # Mirrors llama_index.indices.query.base.BaseQueryEngine.query .
+    def query_with_record(
+        self, str_or_query_bundle: QueryType
+    ) -> Tuple[RESPONSE_TYPE, Record]:
+        assert isinstance(
+            self.app, llama_index.indices.query.base.BaseQueryEngine
+        )
+
         # Wrapped calls will look this up by traversing the call stack. This
         # should work with threads.
         record: Sequence[RecordAppCall] = []
@@ -161,6 +220,7 @@ class TruLlama(App):
 
         try:
             start_time = datetime.now()
+
             ret, cost = Endpoint.track_all_costs_tally(
                 lambda: self.app.query(str_or_query_bundle)
             )
@@ -171,6 +231,7 @@ class TruLlama(App):
             end_time = datetime.now()
             error = e
             logger.error(f"Engine raised an exception: {e}")
+            logger.error(traceback.format_exc())
 
         assert len(record) > 0, "No information recorded in call."
 
@@ -178,6 +239,177 @@ class TruLlama(App):
 
         # TODO: generalize
         ret_record_args['main_input'] = str_or_query_bundle
+        if ret is not None:
+
+            if isinstance(ret, Response):
+                ret_record_args['main_output'] = ret.response
+
+                ret_record = self._post_record(
+                    ret_record_args, error, cost, start_time, end_time, record
+                )
+
+                return ret, ret_record
+
+            elif isinstance(ret, StreamingResponse):
+                # Need to arrange the rest of this method to be called after the
+                # stream is complete. For now lets create a record of things as
+                # they are when the stream is created, but not completed.
+
+                logger.warn(
+                    "App produced a streaming response. "
+                    "Tracking content of streams in llama_index is not yet supported."
+                )
+
+                ret_record_args['main_output'] = None
+
+                ret_record = self._post_record(
+                    ret_record_args, error, cost, start_time, end_time, record
+                )
+
+                return ret, ret_record
+
+    # Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .
+    async def aquery_with_record(
+        self, str_or_query_bundle: QueryType
+    ) -> Tuple[RESPONSE_TYPE, Record]:
+        assert isinstance(
+            self.app, llama_index.indices.query.base.BaseQueryEngine
+        )
+
+        # Wrapped calls will look this up by traversing the call stack. This
+        # should work with threads.
+        record: Sequence[RecordAppCall] = []
+
+        ret = None
+        error = None
+
+        start_time = None
+        end_time = None
+
+        cost = Cost()
+
+        try:
+            start_time = datetime.now()
+
+            ret, cost = await Endpoint.atrack_all_costs_tally(
+                lambda: self.app.aquery(str_or_query_bundle)
+            )
+
+            end_time = datetime.now()
+
+        except BaseException as e:
+            end_time = datetime.now()
+            error = e
+            logger.error(f"Engine raised an exception: {e}")
+            logger.error(traceback.format_exc())
+
+        assert len(record) > 0, "No information recorded in call."
+
+        ret_record_args = dict()
+
+        # TODO: generalize
+        ret_record_args['main_input'] = str_or_query_bundle
+        if ret is not None:
+            # TODO: generalize and error check
+            ret_record_args['main_output'] = ret.response
+
+        ret_record = self._post_record(
+            ret_record_args, error, cost, start_time, end_time, record
+        )
+
+        return ret, ret_record
+
+    # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
+    def chat_with_record(self, message: str,
+                         **kwargs) -> Tuple[AgentChatResponse, Record]:
+        assert isinstance(
+            self.app, llama_index.chat_engine.types.BaseChatEngine
+        )
+
+        # Wrapped calls will look this up by traversing the call stack. This
+        # should work with threads.
+        record: Sequence[RecordAppCall] = []
+
+        ret = None
+        error = None
+
+        start_time = None
+        end_time = None
+
+        cost = Cost()
+
+        try:
+            start_time = datetime.now()
+
+            ret, cost = Endpoint.track_all_costs_tally(
+                lambda: self.app.chat(message, **kwargs)
+            )
+
+            end_time = datetime.now()
+
+        except BaseException as e:
+            end_time = datetime.now()
+            error = e
+            logger.error(f"Engine raised an exception: {e}")
+            logger.error(traceback.format_exc())
+
+        assert len(record) > 0, "No information recorded in call."
+
+        ret_record_args = dict()
+
+        # TODO: generalize
+        ret_record_args['main_input'] = message
+        if ret is not None:
+            # TODO: generalize and error check
+            ret_record_args['main_output'] = ret.response
+
+        ret_record = self._post_record(
+            ret_record_args, error, cost, start_time, end_time, record
+        )
+
+        return ret, ret_record
+
+    # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
+    async def achat_with_record(
+        self, message: str, **kwargs
+    ) -> Tuple[StreamingAgentChatResponse, Record]:
+        assert isinstance(
+            self.app, llama_index.chat_engine.types.BaseChatEngine
+        )
+
+        # Wrapped calls will look this up by traversing the call stack. This
+        # should work with threads.
+        record: Sequence[RecordAppCall] = []
+
+        ret = None
+        error = None
+
+        start_time = None
+        end_time = None
+
+        cost = Cost()
+
+        try:
+            start_time = datetime.now()
+
+            ret, cost = await Endpoint.atrack_all_costs_tally(
+                lambda: self.app.achat(message, **kwargs)
+            )
+
+            end_time = datetime.now()
+
+        except BaseException as e:
+            end_time = datetime.now()
+            error = e
+            logger.error(f"Engine raised an exception: {e}")
+            logger.error(traceback.format_exc())
+
+        assert len(record) > 0, "No information recorded in call."
+
+        ret_record_args = dict()
+
+        # TODO: generalize
+        ret_record_args['main_input'] = message
         if ret is not None:
             # TODO: generalize and error check
             ret_record_args['main_output'] = ret.response

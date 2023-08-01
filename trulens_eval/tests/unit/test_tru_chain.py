@@ -1,14 +1,11 @@
 """
-Tests for TruChain. This is outdated.
+Tests for TruChain. Some of the tests are outdated.
 """
 
 import asyncio
-from datetime import datetime
 import os
-from typing import Dict, Sequence
 import unittest
 from unittest import main
-from unittest import TestCase
 
 from langchain import LLMChain
 from langchain import PromptTemplate
@@ -22,60 +19,18 @@ from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema.messages import HumanMessage
 from langchain.vectorstores import Pinecone
 import pinecone
+from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
 from trulens_eval.keys import check_keys
 from trulens_eval.provider_apis import Endpoint
 from trulens_eval.provider_apis import OpenAIEndpoint
 from trulens_eval.tru_chain import TruChain
-from trulens_eval.util import JSON_BASES
-from trulens_eval.util import JSONPath
 import trulens_eval.utils.python  # makes sure asyncio gets instrumented
 
 check_keys(
     "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
 )
-
-
-class JSONTestCase(TestCase):
-
-    def assertJSONEqual(
-        self, j1, j2, path: JSONPath = None, skips=None
-    ) -> None:
-        skips = skips or set([])
-        path = path or JSONPath()
-
-        self.assertIsInstance(j1, type(j2), str(path))
-
-        if isinstance(j1, JSON_BASES):
-            self.assertEqual(j1, j2, str(path))
-
-        elif isinstance(j1, Dict):
-
-            ks1 = set(j1.keys())
-            ks2 = set(j2.keys())
-
-            self.assertSetEqual(ks1, ks2, str(path))
-
-            for k in ks1:
-                if k in skips:
-                    continue
-
-                self.assertJSONEqual(j1[k], j2[k], skips=skips, path=path[k])
-
-        elif isinstance(j1, Sequence):
-            self.assertEqual(len(j1), len(j2), str(path))
-
-            for i, (v1, v2) in enumerate(zip(j1, j2)):
-                self.assertJSONEqual(v1, v2, skips=skips, path=path[i])
-
-        elif isinstance(j1, datetime):
-            self.assertEqual(j1, j2, str(path))
-
-        else:
-            raise RuntimeError(
-                f"Don't know how to compare objects of type {type(j1)} ."
-            )
 
 
 class TestTruChain(JSONTestCase):
@@ -197,15 +152,7 @@ class TestTruChain(JSONTestCase):
         self.assertJSONEqual(
             async_record.dict(),
             sync_record.dict(),
-            skips=set(
-                [
-                    "name",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id"
-                ]
-            )
+            skips=set(["name", "ts", "start_time", "end_time", "record_id"])
         )
 
     def test_async_token_gen(self):
