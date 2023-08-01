@@ -5,7 +5,7 @@ rm -rf break.md
 nbmerge quickstart.ipynb logging.ipynb feedback_functions.ipynb >> all_tools.ipynb
 
 # Colab quickstarts
-nbmerge colab_dependencies.ipynb quickstart.ipynb >> langchain_quickstart_colab.ipynb
+nbmerge colab_dependencies.ipynb langchain_quickstart.ipynb >> langchain_quickstart_colab.ipynb
 nbmerge colab_dependencies.ipynb llama_index_quickstart.ipynb >> llama_index_quickstart_colab.ipynb
 nbmerge colab_dependencies.ipynb no_framework_quickstart.ipynb >> no_framework_quickstart_colab.ipynb
 
@@ -19,7 +19,7 @@ jupyter nbconvert --to markdown trulens_eval_gh_top_readme.ipynb
 cat gh_top_intro.md break.md trulens_eval_gh_top_readme.md break.md ../trulens_explain/gh_top_intro.md > TOP_README.md
 
 # Create non-jupyter scripts
-jupyter nbconvert --to script quickstart.ipynb
+jupyter nbconvert --to script langchian_quickstart.ipynb
 jupyter nbconvert --to script llama_index_quickstart.ipynb
 jupyter nbconvert --to script no_framework_quickstart.ipynb
 jupyter nbconvert --to script all_tools.ipynb
