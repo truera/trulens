@@ -1043,6 +1043,7 @@ class OpenAI(Provider):
 
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
+        self_kwargs.update(**kwargs)
         self_kwargs['model_engine'] = model_engine
         self_kwargs['endpoint'] = OpenAIEndpoint(*args, **kwargs)
 
