@@ -5,6 +5,7 @@
 from datetime import datetime
 import logging
 from pprint import PrettyPrinter
+import traceback
 from typing import Any, ClassVar, Dict, List, Sequence, Tuple, Union
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
@@ -225,6 +226,8 @@ class TruChain(App):
             end_time = datetime.now()
             error = e
             logger.error(f"App raised an exception: {e}")
+            logger.error(traceback.format_exc())
+            
 
         assert len(record) > 0, "No information recorded in call."
 
@@ -285,6 +288,7 @@ class TruChain(App):
             end_time = datetime.now()
             error = e
             logger.error(f"App raised an exception: {e}")
+            logger.error(traceback.format_exc())
 
         assert len(record) > 0, "No information recorded in call."
 

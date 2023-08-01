@@ -258,6 +258,7 @@ import logging
 import os
 from pprint import PrettyPrinter
 import threading as th
+import traceback
 from typing import Callable, Dict, Iterable, Optional, Sequence, Set
 
 from pydantic import BaseModel
@@ -413,6 +414,8 @@ class Instrument(object):
             start_time = None
             end_time = None
 
+            bindings = dict()
+
             try:
                 # Using sig bind here so we can produce a list of key-value
                 # pairs even if positional arguments were provided.
@@ -427,6 +430,9 @@ class Instrument(object):
                 end_time = datetime.now()
                 error = e
                 error_str = str(e)
+
+                logger.error(f"Error calling wrapped function {func.__name__}.")
+                logger.error(traceback.format_exc())
 
             # Don't include self in the recorded arguments.
             nonself = {
@@ -498,6 +504,8 @@ class Instrument(object):
             start_time = None
             end_time = None
 
+            bindings = dict()
+
             try:
                 # Using sig bind here so we can produce a list of key-value
                 # pairs even if positional arguments were provided.
@@ -510,6 +518,9 @@ class Instrument(object):
                 end_time = datetime.now()
                 error = e
                 error_str = str(e)
+
+                logger.error(f"Error calling wrapped function {func.__name__}.")
+                logger.error(traceback.format_exc())
 
             # Don't include self in the recorded arguments.
             nonself = {
