@@ -272,7 +272,7 @@ class LocalSQLite(DB):
                 app_id TEXT NOT NULL,
                 convo_id TEXT NOT NULL,
                 record_id TEXT NOT NULL,
-                prior_record_id TEXT NOT NULL,
+                prior_record_id TEXT,
                 input TEXT,
                 output TEXT,
                 record_json {self.TYPE_JSON} NOT NULL,
