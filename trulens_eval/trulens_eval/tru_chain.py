@@ -2,21 +2,19 @@
 # Langchain instrumentation and monitoring.
 """
 
-from datetime import datetime
+
+from inspect import BoundArguments, Signature
 import logging
 from pprint import PrettyPrinter
-import traceback
-from typing import Any, ClassVar, Dict, List, Sequence, Tuple, Union
+
+from typing import Any, Callable, ClassVar, Dict, List, Tuple, Union
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.provider_apis import Endpoint
-from trulens_eval.schema import Cost
 from trulens_eval.schema import Record
-from trulens_eval.schema import RecordAppCall
 from trulens_eval.util import Class
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
@@ -40,13 +38,10 @@ class LangChainInstrument(Instrument):
 
         # Thunk because langchain is optional.
         CLASSES = lambda: {
-            langchain.chains.base.Chain,
-            langchain.vectorstores.base.BaseRetriever,
-            langchain.schema.BaseRetriever,
-            langchain.llms.base.BaseLLM,
-            langchain.prompts.base.BasePromptTemplate,
-            langchain.schema.BaseMemory,
-            langchain.schema.BaseChatMessageHistory
+            langchain.chains.base.Chain, langchain.vectorstores.base.
+            BaseRetriever, langchain.schema.BaseRetriever, langchain.llms.base.
+            BaseLLM, langchain.prompts.base.BasePromptTemplate, langchain.schema
+            .BaseMemory, langchain.schema.BaseChatMessageHistory
         }
 
         # Instrument only methods with these names and of these classes.
@@ -61,7 +56,7 @@ class LangChainInstrument(Instrument):
 
     def __init__(self):
         super().__init__(
-            root_methods=set([TruChain.call_with_record, TruChain.acall_with_record]),
+            root_methods=set([TruChain.with_record, TruChain.awith_record]),
             modules=LangChainInstrument.Default.MODULES,
             classes=LangChainInstrument.Default.CLASSES(),
             methods=LangChainInstrument.Default.METHODS
@@ -153,6 +148,40 @@ class TruChain(App):
     def output_keys(self) -> List[str]:
         return self.app.output_keys
 
+    def main_input(
+        self, func: Callable, sig: Signature, bindings: BoundArguments
+    ) -> str:
+        """
+        Determine the main input string for the given function `func` with
+        signature `sig` if it is to be called with the given bindings
+        `bindings`.
+        """
+
+        if 'inputs' in bindings.arguments:
+            # langchain specific:
+            ins = self.app.prep_inputs(bindings.arguments['inputs'])
+
+            return ins[self.app.input_keys[0]]
+
+        return App.main_input(self, func, sig, bindings)
+
+    def main_output(
+        self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
+    ) -> str:
+        """
+        Determine the main out string for the given function `func` with
+        signature `sig` after it is called with the given `bindings` and has
+        returned `ret`.
+        """
+
+        if isinstance(ret, Dict):
+            # langchain specific:
+            if self.app.output_keys[0] in ret:
+                return ret[self.app.output_keys[0]]
+
+        return App.main_output(self, func, sig, bindings, ret)
+
+
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped
         # chain has but we do not wrap yet.
@@ -192,129 +221,19 @@ class TruChain(App):
         return evl.run_until_complete(self._eval_async_root_method(func_async, inputs, **kwargs))
     """
 
-    # NOTE: Input signature compatible with langchain.chains.base.Chain.acall
-    async def acall_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs) -> Tuple[Any, Record]:
+    async def acall_with_record(self, *args, **kwargs) -> Tuple[Any, Record]:
         """
-        Run the chain and also return a record metadata object.
-
-        Returns:
-            Any: chain output
-            dict: record metadata
+        Run the chain acall method and also return a record metadata object.
         """
+        return self.awith_record(self.app.__call__, *args, **kwargs)
 
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
-
-        ret = None
-        error = None
-
-        cost: Cost = Cost()
-
-        start_time = None
-        end_time = None
-
-        # langchain.__call__ specific:
-        inputs = self.app.prep_inputs(inputs)
-
-        try:
-            start_time = datetime.now()
-            ret, cost = await Endpoint.atrack_all_costs_tally(
-                lambda: self.app.acall(inputs=inputs, **kwargs)
-            )
-            end_time = datetime.now()
-
-        except BaseException as e:
-            end_time = datetime.now()
-            error = e
-            logger.error(f"App raised an exception: {e}")
-            logger.error(traceback.format_exc())
-            
-        assert len(record) > 0, "No information recorded in call."
-
-        ret_record_args = dict()
-
-        # Figure out the content of the "inputs" arg that __call__ constructs
-        # for _call so we can lookup main input and output.
-        input_key = self.input_keys[0]
-        output_key = self.output_keys[0]
-
-        ret_record_args['main_input'] = jsonify(inputs[input_key])
-
-        if ret is not None:
-            ret_record_args['main_output'] = jsonify(ret[output_key])
-
-        if error is not None:
-            ret_record_args['main_error'] = jsonify(error)
-
-        ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
-        )
-
-        return ret, ret_record
-
-    # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
-    def call_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs) -> Tuple[Any, Record]:
+    def call_with_record(self, *args, **kwargs) -> Tuple[Any, Record]:
         """
-        Run the chain and also return a record metadata object.
-
-        Returns:
-            Any: chain output
-            dict: record metadata
+        Run the chain call method and also return a record metadata object.
         """
 
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
+        return self.with_record(self.app.__call__, *args, **kwargs)
 
-        ret = None
-        error = None
-
-        cost: Cost = Cost()
-
-        start_time = None
-        end_time = None
-
-        # langchain.__call__ specific:
-        inputs = self.app.prep_inputs(inputs)
-
-        try:
-            start_time = datetime.now()
-            ret, cost = Endpoint.track_all_costs_tally(
-                lambda: self.app.__call__(inputs=inputs, **kwargs)
-            )
-            end_time = datetime.now()
-
-        except BaseException as e:
-            end_time = datetime.now()
-            error = e
-            logger.error(f"App raised an exception: {e}")
-            logger.error(traceback.format_exc())
-
-        assert len(record) > 0, "No information recorded in call."
-
-        ret_record_args = dict()
-
-        # Figure out the content of the "inputs" arg that __call__ constructs
-        # for _call so we can lookup main input and output.
-        input_key = self.input_keys[0]
-        output_key = self.output_keys[0]
-
-        ret_record_args['main_input'] = jsonify(inputs[input_key])
-
-        if ret is not None:
-            ret_record_args['main_output'] = jsonify(ret[output_key])
-
-        if error is not None:
-            ret_record_args['main_error'] = jsonify(error)
-
-        ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
-        )
-
-        return ret, ret_record
-
-    
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         """
         Wrapped call to self.app._call with instrumentation. If you need to
@@ -322,7 +241,7 @@ class TruChain(App):
         """
 
         return self._call(*args, **kwargs)
-    
+
     # langchain.chains.base.py:Chain requirement:
     def _call(self, *args, **kwargs) -> Any:
         ret, _ = self.call_with_record(*args, **kwargs)

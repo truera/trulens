@@ -4,9 +4,15 @@ Generalized root type for various libraries like llama_index and langchain .
 
 from abc import ABC
 from abc import abstractmethod
+from datetime import datetime
+from inspect import BoundArguments
+from inspect import signature
+from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Dict, Iterable, Optional, Sequence, Set, Tuple
+import traceback
+from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
+                    Tuple)
 
 import pydantic
 from pydantic import Field
@@ -14,12 +20,14 @@ from pydantic import Field
 from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
 from trulens_eval.instruments import Instrument
+from trulens_eval.provider_apis import Endpoint
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
+from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
 from trulens_eval.util import all_objects
@@ -294,6 +302,168 @@ class App(AppDefinition, SerialModel):
     def dict(self):
         # Same problem as in json.
         return jsonify(self, instrument=self.instrument)
+    
+    def main_input(
+        self, func: Callable, sig: Signature, bindings: BoundArguments
+    ) -> str:
+        """
+        Determine the main input string for the given function `func` with
+        signature `sig` if it is to be called with the given bindings
+        `bindings`.
+        """
+        logger.warning(f"Unsure what the main input string is for the call to {func.__name__}.")
+
+        all_args = list(bindings.arguments.values())
+
+        if len(all_args) > 0:
+            return all_args[0]
+        else:
+            return None
+
+    def main_output(
+        self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
+    ) -> str:
+        """
+        Determine the main out string for the given function `func` with
+        signature `sig` after it is called with the given `bindings` and has
+        returned `ret`.
+        """
+
+        if isinstance(ret, str):
+            return ret
+        
+        logger.warning(f"Unsure what the main output string is for the call to {func.__name__}.")
+
+        if isinstance(ret, Dict):
+            return next(iter(ret.values()))
+        
+        elif isinstance(ret, Sequence):
+            if len(ret) > 0:
+                return ret[0]
+            else:
+                return None
+            
+        else:
+            return str(ret)
+
+    async def awith_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
+        """
+        Call the given instrumented async function `func` with the given `args`,
+        `kwargs`, producing its results as well as a record.
+        """
+
+        # Wrapped calls will look this up by traversing the call stack. This
+        # should work with threads.
+        record: Sequence[RecordAppCall] = []
+
+        ret = None
+        error = None
+
+        cost: Cost = Cost()
+
+        start_time = None
+        end_time = None
+
+        main_in = None
+        main_out = None
+
+        try:
+            sig = signature(func)
+            bindings = sig.bind(*args, **kwargs)
+
+            main_in = self.main_input(func, sig, bindings)
+
+            start_time = datetime.now()
+            ret, cost = await Endpoint.atrack_all_costs_tally(
+                lambda: func(*bindings.args, **bindings.kwargs)
+            )
+            end_time = datetime.now()
+
+            main_out = self.main_output(func, sig, bindings, ret)
+
+        except BaseException as e:
+            end_time = datetime.now()
+            error = e
+            logger.error(f"App raised an exception: {e}")
+            logger.error(traceback.format_exc())
+            
+        assert len(record) > 0, "No information recorded in call."
+
+        ret_record_args = dict()
+
+        ret_record_args['main_input'] = jsonify(main_in)
+
+        if ret is not None:
+            ret_record_args['main_output'] = jsonify(main_out)
+
+        if error is not None:
+            ret_record_args['main_error'] = jsonify(error)
+
+        ret_record = self._post_record(
+            ret_record_args, error, cost, start_time, end_time, record
+        )
+
+        return ret, ret_record
+
+    def with_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
+        """
+        Call the given instrumented function `func` with the given `args`,
+        `kwargs`, producing its results as well as a record.
+        """
+
+        # Wrapped calls will look this up by traversing the call stack. This
+        # should work with threads.
+        record: Sequence[RecordAppCall] = []
+
+        ret = None
+        error = None
+
+        cost: Cost = Cost()
+
+        start_time = None
+        end_time = None
+
+        main_in = None
+        main_out = None
+
+        try:
+            sig = signature(func)
+            bindings = sig.bind(*args, **kwargs)
+
+            main_in = self.main_input(func, sig, bindings)
+
+            start_time = datetime.now()
+            ret, cost = Endpoint.track_all_costs_tally(
+                lambda: func(*bindings.args, **bindings.kwargs)
+            )
+            end_time = datetime.now()
+
+            main_out = self.main_output(func, sig, bindings, ret)
+
+        except BaseException as e:
+            end_time = datetime.now()
+            error = e
+            logger.error(f"App raised an exception: {e}")
+            logger.error(traceback.format_exc())
+            
+        assert len(record) > 0, "No information recorded in call."
+
+        ret_record_args = dict()
+
+        ret_record_args['main_input'] = jsonify(main_in)
+
+        if ret is not None:
+            ret_record_args['main_output'] = jsonify(main_out)
+
+        if error is not None:
+            ret_record_args['main_error'] = jsonify(error)
+
+        ret_record = self._post_record(
+            ret_record_args, error, cost, start_time, end_time, record
+        )
+
+        return ret, ret_record
+
 
     def _post_record(
         self, ret_record_args, error, cost, start_time, end_time, record
