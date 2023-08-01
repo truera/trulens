@@ -268,15 +268,18 @@ class LocalSQLite(DB):
         self._create_db_meta_table(c)
         c.execute(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_RECORDS} (
-                record_id TEXT NOT NULL PRIMARY KEY,
                 app_id TEXT NOT NULL,
+                convo_id TEXT NOT NULL,
+                record_id TEXT NOT NULL,
+                prior_record_id TEXT NOT NULL,
                 input TEXT,
                 output TEXT,
                 record_json {self.TYPE_JSON} NOT NULL,
                 tags TEXT NOT NULL,
                 ts {self.TYPE_TIMESTAMP} NOT NULL,
                 cost_json {self.TYPE_JSON} NOT NULL,
-                perf_json {self.TYPE_JSON} NOT NULL
+                perf_json {self.TYPE_JSON} NOT NULL,
+                PRIMARY KEY (app_id, convo_id, record_id)
             )'''
         )
         c.execute(

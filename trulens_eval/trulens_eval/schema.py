@@ -47,8 +47,9 @@ logger = logging.getLogger(__name__)
 
 # Identifier types.
 
-RecordID = str
 AppID = str
+ConvoID = str
+RecordID = str
 Tags = str
 Metadata = dict
 FeedbackDefinitionID = str
@@ -148,9 +149,36 @@ class RecordAppCall(SerialModel):
         return self.top().method
 
 
-class Record(SerialModel):
-    record_id: RecordID
+class Conversation(SerialModel):
+    """
+    A conversation is a sequence of records from the same interaction.
+    """
+
     app_id: AppID
+
+    convo_id: ConvoID
+
+    # Order not meaningful. Use Record.prior_record_id to order a conversation.
+    records: Set[Record]
+
+    def get_record_sequences(self) -> Iterable[Sequence[Record]]:
+        """
+        Return all orderered record sequences. There may be more then one.
+        """
+
+        raise NotImplementedError()
+
+
+class Record(SerialModel):
+    app_id: AppID
+
+    convo_id: ConvoID
+
+    record_id: RecordID
+
+    # If this record follows up a prior record in a conversation, this is its
+    # id. If None, this is the first record in a conversation.
+    prior_record_id: Optional[RecordID]
 
     cost: Optional[Cost] = None  # pydantic.Field(default_factory=Cost)
     perf: Optional[Perf] = None  # pydantic.Field(default_factory=Perf)
