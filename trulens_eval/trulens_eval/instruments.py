@@ -258,6 +258,7 @@ import logging
 import os
 from pprint import PrettyPrinter
 import threading as th
+import traceback
 from typing import Callable, Dict, Iterable, Optional, Sequence, Set
 
 from pydantic import BaseModel
@@ -389,7 +390,6 @@ class Instrument(object):
 
             if record is None:
                 logger.debug(f"{query}: no record found, not recording.")
-
                 return await func(*args, **kwargs)
 
             # Otherwise keep track of inputs and outputs (or exception).
@@ -413,6 +413,8 @@ class Instrument(object):
             start_time = None
             end_time = None
 
+            bindings = dict()
+
             try:
                 # Using sig bind here so we can produce a list of key-value
                 # pairs even if positional arguments were provided.
@@ -427,6 +429,9 @@ class Instrument(object):
                 end_time = datetime.now()
                 error = e
                 error_str = str(e)
+
+                logger.error(f"Error calling wrapped function {func.__name__}.")
+                logger.error(traceback.format_exc())
 
             # Don't include self in the recorded arguments.
             nonself = {
@@ -498,6 +503,8 @@ class Instrument(object):
             start_time = None
             end_time = None
 
+            bindings = dict()
+
             try:
                 # Using sig bind here so we can produce a list of key-value
                 # pairs even if positional arguments were provided.
@@ -510,6 +517,9 @@ class Instrument(object):
                 end_time = datetime.now()
                 error = e
                 error_str = str(e)
+
+                logger.error(f"Error calling wrapped function {func.__name__}.")
+                logger.error(traceback.format_exc())
 
             # Don't include self in the recorded arguments.
             nonself = {
@@ -548,6 +558,11 @@ class Instrument(object):
         # deceptive if the same subchain appears multiple times in the wrapped
         # chain.
         setattr(w, Instrument.PATH, query)
+
+        # NOTE(piotrm): This is important; langchain checks signatures to adjust
+        # behaviour and we need to match. Without this, wrapper signatures will
+        # show up only as *args, **kwargs .
+        w.__signature__ = inspect.signature(func)
 
         return w
 
