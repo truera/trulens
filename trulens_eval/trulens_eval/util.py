@@ -43,10 +43,8 @@ from pprint import PrettyPrinter
 from queue import Queue
 from time import sleep
 from types import ModuleType
-from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
-    Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
+                    Sequence, Set, Tuple, TypeVar, Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -924,7 +922,7 @@ class GetItems(Step):
         return obj
 
     def __repr__(self):
-        return f"[{','.join(self.indices)}]"
+        return f"[{','.join(self.items)}]"
 
 
 class JSONPath(SerialModel):
