@@ -62,7 +62,10 @@ nav:
   - Welcome to TruLens!: welcome.md
   - Eval:
       - Installation: trulens_eval/install.md
-      - Quickstart: trulens_eval/quickstart.ipynb
+      - Quickstarts:
+          - LangChain Quickstart: trulens_eval/langchain_quickstart.ipynb
+          - Llama-Index Quickstart: trulens_eval/llama_index_quickstart.ipynb
+          - No Framework Quickstart: trulens_eval/no_framework_quickstart.ipynb
       - Feedback Functions:
           - Overview: trulens_eval/feedback_functions.ipynb
           - Smoke Tests:
