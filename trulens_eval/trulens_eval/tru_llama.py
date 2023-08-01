@@ -94,6 +94,12 @@ class LlamaInstrument(Instrument):
                 "achat":
                     lambda o:
                     isinstance(o, llama_index.chat_engine.types.BaseChatEngine),
+                "stream_chat":
+                    lambda o:
+                    isinstance(o, llama_index.chat_engine.types.BaseChatEngine),
+                "astream_achat":
+                    lambda o:
+                    isinstance(o, llama_index.chat_engine.types.BaseChatEngine),
                 "retrieve":
                     lambda o: isinstance(
                         o, (
@@ -163,7 +169,7 @@ class TruLlama(App):
 
     # llama_index.chat_engine.types.BaseChatEngine
     def chat(self, *args,
-             **kwargs) -> Union[AgentChatResponse, StreamingAgentChatResponse]:
+             **kwargs) -> AgentChatResponse:
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -172,12 +178,31 @@ class TruLlama(App):
         return res
 
     # llama_index.chat_engine.types.BaseChatEngine
-    async def achat(self, *args, **kwargs) -> Response:
+    async def achat(self, *args, **kwargs) -> AgentChatResponse:
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
 
-        res, _ = self.achat_with_record(*args, **kwargs)
+        res, _ = await self.achat_with_record(*args, **kwargs)
+        return res
+
+    # llama_index.chat_engine.types.BaseChatEngine
+    def stream_chat(self, *args,
+             **kwargs) -> StreamingAgentChatResponse:
+        assert isinstance(
+            self.app, llama_index.chat_engine.types.BaseChatEngine
+        )
+
+        res, _ = self.stream_chat_with_record(*args, **kwargs)
+        return res
+
+    # llama_index.chat_engine.types.BaseChatEngine
+    async def astream_chat(self, *args, **kwargs) -> StreamingAgentChatResponse:
+        assert isinstance(
+            self.app, llama_index.chat_engine.types.BaseChatEngine
+        )
+
+        res, _ = await self.astream_chat_with_record(*args, **kwargs)
         return res
 
     # llama_index.indices.query.base.BaseQueryEngine
@@ -309,15 +334,33 @@ class TruLlama(App):
 
         # TODO: generalize
         ret_record_args['main_input'] = str_or_query_bundle
-        if ret is not None:
-            # TODO: generalize and error check
+
+        if isinstance(ret, Response):
             ret_record_args['main_output'] = ret.response
 
-        ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
-        )
+            ret_record = self._post_record(
+                ret_record_args, error, cost, start_time, end_time, record
+            )
 
-        return ret, ret_record
+            return ret, ret_record
+
+        elif isinstance(ret, StreamingResponse):
+            # Need to arrange the rest of this method to be called after the
+            # stream is complete. For now lets create a record of things as
+            # they are when the stream is created, but not completed.
+
+            logger.warn(
+                "App produced a streaming response. "
+                "Tracking content of streams in llama_index is not yet supported."
+            )
+
+            ret_record_args['main_output'] = None
+
+            ret_record = self._post_record(
+                ret_record_args, error, cost, start_time, end_time, record
+            )
+
+            return ret, ret_record
 
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
     def chat_with_record(self, message: str,
@@ -359,9 +402,10 @@ class TruLlama(App):
 
         # TODO: generalize
         ret_record_args['main_input'] = message
-        if ret is not None:
-            # TODO: generalize and error check
-            ret_record_args['main_output'] = ret.response
+
+        assert isinstance(ret, AgentChatResponse)
+
+        ret_record_args['main_output'] = ret.response
 
         ret_record = self._post_record(
             ret_record_args, error, cost, start_time, end_time, record
@@ -369,10 +413,11 @@ class TruLlama(App):
 
         return ret, ret_record
 
+
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
     async def achat_with_record(
         self, message: str, **kwargs
-    ) -> Tuple[StreamingAgentChatResponse, Record]:
+    ) -> Tuple[AgentChatResponse, Record]:
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -410,12 +455,136 @@ class TruLlama(App):
 
         # TODO: generalize
         ret_record_args['main_input'] = message
-        if ret is not None:
-            # TODO: generalize and error check
-            ret_record_args['main_output'] = ret.response
+
+        assert isinstance(ret, AgentChatResponse)
+
+        ret_record_args['main_output'] = ret.response
 
         ret_record = self._post_record(
             ret_record_args, error, cost, start_time, end_time, record
         )
 
         return ret, ret_record
+
+    # Compatible with llama_index.chat_engine.types.BaseChatEngine.stream_chat .
+    def stream_chat_with_record(
+        self, message: str, **kwargs
+    ) -> Tuple[StreamingAgentChatResponse, Record]:
+        assert isinstance(
+            self.app, llama_index.chat_engine.types.BaseChatEngine
+        )
+
+        # Wrapped calls will look this up by traversing the call stack. This
+        # should work with threads.
+        record: Sequence[RecordAppCall] = []
+
+        ret = None
+        error = None
+
+        start_time = None
+        end_time = None
+
+        cost = Cost()
+
+        try:
+            start_time = datetime.now()
+
+            ret, cost = Endpoint.track_all_costs_tally(
+                lambda: self.app.stream_chat(message, **kwargs)
+            )
+
+            end_time = datetime.now()
+
+        except BaseException as e:
+            end_time = datetime.now()
+            error = e
+            logger.error(f"Engine raised an exception: {e}")
+            logger.error(traceback.format_exc())
+
+        assert len(record) > 0, "No information recorded in call."
+
+        ret_record_args = dict()
+
+        # TODO: generalize
+        ret_record_args['main_input'] = message
+
+        assert isinstance(ret, StreamingAgentChatResponse)
+        # Need to arrange the rest of this method to be called after the
+        # stream is complete. For now lets create a record of things as
+        # they are when the stream is created, but not completed.
+
+        logger.warn(
+            "App produced a streaming response. "
+            "Tracking content of streams in llama_index is not yet supported."
+        )
+
+        ret_record_args['main_output'] = None
+
+        ret_record = self._post_record(
+            ret_record_args, error, cost, start_time, end_time, record
+        )
+
+        return ret, ret_record
+
+
+
+    # Compatible with llama_index.chat_engine.types.BaseChatEngine.astream_chat .
+    async def astream_chat_with_record(
+        self, message: str, **kwargs
+    ) -> Tuple[StreamingAgentChatResponse, Record]:
+        assert isinstance(
+            self.app, llama_index.chat_engine.types.BaseChatEngine
+        )
+
+        # Wrapped calls will look this up by traversing the call stack. This
+        # should work with threads.
+        record: Sequence[RecordAppCall] = []
+
+        ret = None
+        error = None
+
+        start_time = None
+        end_time = None
+
+        cost = Cost()
+
+        try:
+            start_time = datetime.now()
+
+            ret, cost = await Endpoint.atrack_all_costs_tally(
+                lambda: self.app.astream_chat(message, **kwargs)
+            )
+
+            end_time = datetime.now()
+
+        except BaseException as e:
+            end_time = datetime.now()
+            error = e
+            logger.error(f"Engine raised an exception: {e}")
+            logger.error(traceback.format_exc())
+
+        assert len(record) > 0, "No information recorded in call."
+
+        ret_record_args = dict()
+
+        # TODO: generalize
+        ret_record_args['main_input'] = message
+
+        assert isinstance(ret, StreamingAgentChatResponse)
+        # Need to arrange the rest of this method to be called after the
+        # stream is complete. For now lets create a record of things as
+        # they are when the stream is created, but not completed.
+
+        logger.warn(
+            "App produced a streaming response. "
+            "Tracking content of streams in llama_index is not yet supported."
+        )
+
+        ret_record_args['main_output'] = None
+
+        ret_record = self._post_record(
+            ret_record_args, error, cost, start_time, end_time, record
+        )
+
+        return ret, ret_record
+
