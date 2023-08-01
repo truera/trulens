@@ -390,7 +390,6 @@ class Instrument(object):
 
             if record is None:
                 logger.debug(f"{query}: no record found, not recording.")
-
                 return await func(*args, **kwargs)
 
             # Otherwise keep track of inputs and outputs (or exception).
@@ -559,6 +558,11 @@ class Instrument(object):
         # deceptive if the same subchain appears multiple times in the wrapped
         # chain.
         setattr(w, Instrument.PATH, query)
+
+        # NOTE(piotrm): This is important; langchain checks signatures to adjust
+        # behaviour and we need to match. Without this, wrapper signatures will
+        # show up only as *args, **kwargs .
+        w.__signature__ = inspect.signature(func)
 
         return w
 
