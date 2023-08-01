@@ -96,7 +96,7 @@ class LlamaInstrument(Instrument):
 
     def __init__(self):
         super().__init__(
-            root_method=TruLlama.query_with_record,
+            root_methods=set([TruLlama.query_with_record]),
             modules=LlamaInstrument.Default.MODULES,
             classes=LlamaInstrument.Default.CLASSES(),  # was thunk
             methods=LlamaInstrument.Default.METHODS
