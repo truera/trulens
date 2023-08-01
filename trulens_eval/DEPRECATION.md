@@ -8,7 +8,7 @@
 
 ### Breaking changes to databases
 
-- Records table has no columns: `convo_id` and `prior_record_id` for the new
+- Records table has new columns: `convo_id` and `prior_record_id` for the new
   conversation tracking features. 
 
 - Reordered record table columns to start with `app_id`, `convo_id`,
