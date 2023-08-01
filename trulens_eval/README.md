@@ -1,11 +1,18 @@
 # Welcome to TruLens-Eval!
 
-![TruLens](https://www.trulens.org/Assets/image/Neural_Network_Explainability.png)
+**TruLens-Eval** contains instrumentation and evaluation tools for large language model (LLM) based applications. It supports the iterative development and monitoring of a wide range of LLM applications by wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine. Importantly, it also gives you the tools you need to evaluate the quality of your LLM-based applications.
 
-Evaluate and track your LLM experiments with TruLens. As you work on your models and prompts TruLens-Eval supports the iterative development and of a wide range of LLM applications by wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine.
+TruLens-Eval has two key value propositions:
 
-Using feedback functions, you can objectively evaluate the quality of the responses provided by an LLM to your requests. This is completed with minimal latency, as this is achieved in a sequential call for your application, and evaluations are logged to your local machine. Finally, we provide an easy to use Streamlit dashboard run locally on your machine for you to better understand your LLM’s performance.
+1. Evaluation:
+    * TruLens supports the the evaluation of inputs, outputs and internals of your LLM application using any model (including LLMs). 
+    * A number of feedback functions for evaluation are implemented out-of-the-box such as groundedness, relevance and toxicity. The framework is also easily extensible for custom evaluation requirements.
+2. Tracking:
+    * TruLens contains instrumentation for any LLM application including question answering, retrieval-augmented generation, agent-based applications and more. This instrumentation allows for the tracking of a wide variety of usage metrics and metadata. Read more in the [instrumentation overview](basic_instrumentation.ipynb).
+    * TruLens' instrumentation can be applied to any LLM application without being tied down to a given framework. Additionally, deep integrations with [LangChain]() and [Llama-Index]() allow the capture of internal metadata and text.
+    * Anything that is tracked by the instrumentation can be evaluated!
 
+The process for building your evaluated and tracked LLM application with TruLens is shown below 👇
 ![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
 
 ## Quick Usage
