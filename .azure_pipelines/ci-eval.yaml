@@ -82,6 +82,7 @@ jobs:
           source activate $(condaEnvFileSuffix)
           pip install pytest==7.0.1 pytest-azurepipelines langchain>=0.0.170 llama_index>=0.7.0 
           pip install docarray hnswlib
+          pip install faiss-cpu
           echo '::group::piplist'
           echo "$(pip list)"
           echo '::endgroup::'

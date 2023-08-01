@@ -97,17 +97,37 @@ class ComponentView(ABC):
 
         return ret
 
+    @staticmethod
+    def innermost_base(
+        bases: Sequence[Class],
+        among_modules=set(["langchain", "llama_index", "trulens_eval"])
+    ) -> str:
+        """
+        Given a sequence of classes, return the first one which comes from one
+        of the `among_modules`. You can use this to determine where ultimately
+        the encoded class comes from in terms of langchain, llama_index, or
+        trulens_eval even in cases they extend each other's classes. Returns
+        None if no module from `among_modules` is named in `bases`.
+        """
+
+        for base in bases:
+            if "." in base.module.module_name:
+                root_module = base.module.module_name.split(".")[0]
+            else:
+                root_module = base.module.module_name
+
+            if root_module in among_modules:
+                return root_module
+
+        return None
+
 
 class LangChainComponent(ComponentView):
 
     @staticmethod
     def class_is(cls: Class) -> bool:
-        if cls.module.module_name.startswith("langchain."):
+        if ComponentView.innermost_base(cls.bases) == "langchain":
             return True
-
-        #if any(base.module.module_name.startswith("langchain.")
-        #       for base in cls.bases):
-        #    return True
 
         return False
 
@@ -121,12 +141,8 @@ class LlamaIndexComponent(ComponentView):
 
     @staticmethod
     def class_is(cls: Class) -> bool:
-        if cls.module.module_name.startswith("llama_index."):
+        if ComponentView.innermost_base(cls.bases) == "llama_index":
             return True
-
-        #if any(base.module.module_name.startswith("llama_index.")
-        #       for base in cls.bases):
-        #    return True
 
         return False
 
@@ -142,7 +158,7 @@ class TrulensComponent(ComponentView):
     """
 
     def class_is(cls: Class) -> bool:
-        if cls.module.module_name.startswith("trulens_eval."):
+        if ComponentView.innermost_base(cls.bases) == "trulens_eval":
             return True
 
         #if any(base.module.module_name.startswith("trulens.") for base in cls.bases):
