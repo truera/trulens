@@ -6,9 +6,7 @@ from abc import ABC
 from abc import abstractmethod
 import logging
 from pprint import PrettyPrinter
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
-)
+from typing import Any, Dict, Iterable, Optional, Sequence, Set, Tuple
 
 import pydantic
 from pydantic import Field

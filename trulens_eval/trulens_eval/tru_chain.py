@@ -5,6 +5,7 @@
 from datetime import datetime
 import logging
 from pprint import PrettyPrinter
+import traceback
 from typing import Any, ClassVar, Dict, List, Sequence, Tuple, Union
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
@@ -51,7 +52,9 @@ class LangChainInstrument(Instrument):
         # Instrument only methods with these names and of these classes.
         METHODS = {
             "_call": lambda o: isinstance(o, langchain.chains.base.Chain),
+            "__call__": lambda o: isinstance(o, langchain.chains.base.Chain),
             "_acall": lambda o: isinstance(o, langchain.chains.base.Chain),
+            "acall": lambda o: isinstance(o, langchain.chains.base.Chain),
             "_get_relevant_documents":
                 lambda o: True,  # VectorStoreRetriever, langchain >= 0.230
         }
@@ -189,7 +192,7 @@ class TruChain(App):
         return evl.run_until_complete(self._eval_async_root_method(func_async, inputs, **kwargs))
     """
 
-    # NOTE: Input signature compatible with langchain.chains.base.Chain._acall
+    # NOTE: Input signature compatible with langchain.chains.base.Chain.acall
     async def acall_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs) -> Tuple[Any, Record]:
         """
         Run the chain and also return a record metadata object.
@@ -217,7 +220,7 @@ class TruChain(App):
         try:
             start_time = datetime.now()
             ret, cost = await Endpoint.atrack_all_costs_tally(
-                lambda: self.app._acall(inputs=inputs, **kwargs)
+                lambda: self.app.acall(inputs=inputs, **kwargs)
             )
             end_time = datetime.now()
 
@@ -225,7 +228,8 @@ class TruChain(App):
             end_time = datetime.now()
             error = e
             logger.error(f"App raised an exception: {e}")
-
+            logger.error(traceback.format_exc())
+            
         assert len(record) > 0, "No information recorded in call."
 
         ret_record_args = dict()
@@ -249,7 +253,7 @@ class TruChain(App):
 
         return ret, ret_record
 
-    # NOTE: Input signature compatible with langchain.chains.base.Chain._call
+    # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
     def call_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs) -> Tuple[Any, Record]:
         """
         Run the chain and also return a record metadata object.
@@ -277,7 +281,7 @@ class TruChain(App):
         try:
             start_time = datetime.now()
             ret, cost = Endpoint.track_all_costs_tally(
-                lambda: self.app._call(inputs=inputs, **kwargs)
+                lambda: self.app.__call__(inputs=inputs, **kwargs)
             )
             end_time = datetime.now()
 
@@ -285,6 +289,7 @@ class TruChain(App):
             end_time = datetime.now()
             error = e
             logger.error(f"App raised an exception: {e}")
+            logger.error(traceback.format_exc())
 
         assert len(record) > 0, "No information recorded in call."
 
