@@ -340,7 +340,6 @@ p {
   font-size: 0.938rem;
   line-height: 1.875rem;
   color: var(--color-primary);
-  text-transform: uppercase;
 }
 
 .header__btn--text .strong {
@@ -529,7 +528,6 @@ p {
 .nav a:visited {
   color: var(--color-text-highlight);
   font-family: "Space Grotesk", sans-serif;
-  font-weight: 500;
 }
 
 .nav a:hover,
@@ -620,11 +618,6 @@ p {
   list-style: none;
   height: 60px;
   padding-top: 5px;
-}
-
-.nav__item-left {
-  margin-right: auto;
-  text-align: right;
 }
 
 .nav__items a {
