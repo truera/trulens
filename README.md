@@ -54,8 +54,6 @@ TruLens supports the evaluation of tracking for any LLM app framework. Choose a 
 
 [no_framework_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/no_framework_quickstart.py)
 
-For more information, see [TruLens-Eval Documentation](https://www.trulens.org/trulens_eval/quickstart/).
-
 ## TruLens-Explain
 
 **TruLens-Explain** is a cross-framework library for deep learning explainability. It provides a uniform abstraction over a number of different frameworks. It provides a uniform abstraction layer over TensorFlow, Pytorch, and Keras and allows input and internal explanations.
