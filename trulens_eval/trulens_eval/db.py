@@ -583,7 +583,7 @@ class LocalSQLite(DB):
             app_id_list = ', '.join('?' * len(app_ids))
             query = query + f" WHERE r.app_id IN ({app_id_list})"
 
-        c.execute(query)
+        c.execute(query, app_ids)
         rows = c.fetchall()
         conn.close()
 
@@ -605,7 +605,7 @@ class LocalSQLite(DB):
             app_id_list = ', '.join('?' * len(app_ids))
             query = query + f" WHERE r.app_id IN ({app_id_list})"
 
-        c.execute(query)
+        c.execute(query, app_ids)
         rows = c.fetchall()
         conn.close()
 
