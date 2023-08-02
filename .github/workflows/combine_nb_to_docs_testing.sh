@@ -1,4 +1,8 @@
 rm -rf break.md
+rm -rf alltools.ipynb
+
+# Combined notebook flow - will be tested
+nbmerge quickstart.ipynb logging.ipynb feedback_functions.ipynb >> all_tools.ipynb
 
 # Colab quickstarts
 nbmerge colab_dependencies.ipynb langchain_quickstart.ipynb >> langchain_quickstart_colab.ipynb
@@ -41,6 +45,9 @@ $SED -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" langchain_quickstart.py llama_index
 mv README.md ../../trulens_eval/README.md
 mv TOP_README.md ../../README.md
 
+mv *.py ../../trulens_eval/examples/
+mv *quickstart_colab.ipynb ../../trulens_eval/examples/colab/quickstarts/
+mv all_tools* ../../trulens_eval/generated_files/
 mv *langchain_quickstart_colab.ipynb ../../trulens_eval/examples/colab/quickstarts/
 mv llama_index_quickstart.py ../../trulens_eval/examples/llama_index_quickstart.py
 mv no_framework_quickstart.py ../../trulens_eval/examples/no_framework_quickstart.py
