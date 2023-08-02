@@ -65,8 +65,8 @@ T = TypeVar("T")
 
 llama_version = "0.7.16"
 REQUIREMENT_LLAMA = (
-    "llama_index 0.6.24 or above is required for instrumenting llama_index apps. "
-    "Please install it before use: `pip install llama_index>=0.7.0`."
+    f"llama_index {llama_version} or above is required for instrumenting llama_index apps. "
+    f"Please install it before use: `pip install llama_index>={llama_version}`."
 )
 
 langchain_version = "0.0.230"
