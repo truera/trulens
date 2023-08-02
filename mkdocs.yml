@@ -1,4 +1,5 @@
 site_name: TruLens
+repo_url: https://github.com/truera/trulens
 
 markdown_extensions:
   # https://squidfunk.github.io/mkdocs-material/reference/mathjax/
