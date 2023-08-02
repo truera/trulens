@@ -137,16 +137,19 @@ class TruChain(App):
 
         super().__init__(**kwargs)
 
+    # TODO: remove
     # Chain requirement
     @property
     def _chain_type(self):
         return "TruChain"
 
+    # TODO: remove
     # Chain requirement
     @property
     def input_keys(self) -> List[str]:
         return self.app.input_keys
 
+    # TODO: remove
     # Chain requirement
     @property
     def output_keys(self) -> List[str]:
@@ -229,7 +232,7 @@ class TruChain(App):
         """
         Run the chain acall method and also return a record metadata object.
         """
-        return self.awith_record(self.app.__call__, *args, **kwargs)
+        return self.awith_record(self.app.acall, *args, **kwargs)
 
     def call_with_record(self, *args, **kwargs) -> Tuple[Any, Record]:
         """
@@ -238,6 +241,7 @@ class TruChain(App):
 
         return self.with_record(self.app.__call__, *args, **kwargs)
 
+    # TODO: remove
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         """
         Wrapped call to self.app._call with instrumentation. If you need to
@@ -246,12 +250,14 @@ class TruChain(App):
 
         return self._call(*args, **kwargs)
 
+    # TODO: remove
     # langchain.chains.base.py:Chain requirement:
     def _call(self, *args, **kwargs) -> Any:
         ret, _ = self.call_with_record(*args, **kwargs)
 
         return ret
 
+    # TODO: remove
     # optional langchain.chains.base.py:Chain requirement:
     async def _acall(self, *args, **kwargs) -> Any:
         ret, _ = await self.acall_with_record(*args, **kwargs)
