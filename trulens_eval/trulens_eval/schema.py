@@ -35,6 +35,7 @@ from trulens_eval.util import Function
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
+from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.util import Method
 from trulens_eval.util import obj_id_of_obj
@@ -172,7 +173,7 @@ class Record(SerialModel):
         super().__init__(record_id="temporary", **kwargs)
 
         if record_id is None:
-            record_id = obj_id_of_obj(self.dict(), prefix="record")
+            record_id = obj_id_of_obj(jsonify(self), prefix="record")
 
         self.record_id = record_id
 
