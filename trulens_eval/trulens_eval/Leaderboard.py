@@ -1,5 +1,8 @@
+import argparse
 import json
 import math
+import os
+import sys
 
 from millify import millify
 import numpy as np
@@ -22,7 +25,18 @@ from trulens_eval.ux.add_logo import add_logo
 
 add_logo()
 
-tru = Tru()
+parser = argparse.ArgumentParser()
+parser.add_argument('--database-file', default=Tru.DEFAULT_DATABASE_FILE)
+
+try:
+    args = parser.parse_args()
+except SystemExit as e:
+    # This exception will be raised if --help or invalid command line arguments
+    # are used. Currently, streamlit prevents the program from exiting normally,
+    # so we have to do a hard exit.
+    sys.exit(e.code)
+
+tru = Tru(database_file=args.database_file)
 lms = tru.db
 
 
