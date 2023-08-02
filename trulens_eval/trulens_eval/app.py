@@ -9,10 +9,12 @@ from inspect import BoundArguments
 from inspect import signature
 from inspect import Signature
 import logging
+import contextvars
 from pprint import PrettyPrinter
 import traceback
-from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
-                    Tuple)
+from typing import (
+    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
+)
 
 import pydantic
 from pydantic import Field
@@ -238,6 +240,12 @@ class App(AppDefinition, SerialModel):
     # Instrumentation class.
     instrument: Instrument = Field(exclude=True)
 
+    # Sequnces of records produced by the this class used as a context manager.
+    # Using a context var so that context managers can be nested.
+    records: contextvars.ContextVar[Sequence[Record]] = Field(exclude=True)
+    # Contextvars token controls the records statck under nested managers.
+    records_token: contextvars.Token = Field(None, exclude=True)
+
     def __init__(
         self,
         tru: Optional[Tru] = None,
@@ -250,6 +258,7 @@ class App(AppDefinition, SerialModel):
         # for us:
         kwargs['tru'] = tru
         kwargs['feedbacks'] = feedbacks
+        kwargs['records'] = contextvars.ContextVar("records")
 
         super().__init__(**kwargs)
 
@@ -302,7 +311,7 @@ class App(AppDefinition, SerialModel):
     def dict(self):
         # Same problem as in json.
         return jsonify(self, instrument=self.instrument)
-    
+
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
@@ -311,7 +320,9 @@ class App(AppDefinition, SerialModel):
         signature `sig` if it is to be called with the given bindings
         `bindings`.
         """
-        logger.warning(f"Unsure what the main input string is for the call to {func.__name__}.")
+        logger.warning(
+            f"Unsure what the main input string is for the call to {func.__name__}."
+        )
 
         all_args = list(bindings.arguments.values())
 
@@ -331,20 +342,76 @@ class App(AppDefinition, SerialModel):
 
         if isinstance(ret, str):
             return ret
-        
-        logger.warning(f"Unsure what the main output string is for the call to {func.__name__}.")
+
+        logger.warning(
+            f"Unsure what the main output string is for the call to {func.__name__}."
+        )
 
         if isinstance(ret, Dict):
             return next(iter(ret.values()))
-        
+
         elif isinstance(ret, Sequence):
             if len(ret) > 0:
                 return ret[0]
             else:
                 return None
-            
+
         else:
             return str(ret)
+
+    # For use as a context manager.
+    def __enter__(self):
+        q = []
+        self.records_token = self.records.set(q)
+        return q
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        self.records.reset(self.records_token)
+
+        if exc_type is not None:
+            raise exc_value
+
+        return
+
+    def _on_new_record(self, func):
+        """
+        Called by instrumented methods in cases where they cannot find a record
+        call list in the stack. If we are inside a context manager, return a new
+        call list.
+        """
+        if self.records.get(None) is not None:
+            return []
+
+        return None
+
+    def _on_add_record(self, record: Sequence[RecordAppCall], func: Callable, sig: Signature, bindings: BoundArguments, start_time, end_time, ret: Any, error: Any, cost: Cost):
+        """
+        Called by instrumented methods if they use _new_record to construct a
+        record call list. 
+        """
+        assert self.records.get(None) is not None, "App was not expecting to keep track of a record."
+
+        assert len(record) > 0, "No information recorded in call."
+
+        main_in = self.main_input(func, sig, bindings)
+        main_out = self.main_output(func, sig, bindings, ret)
+
+        ret_record_args = dict()
+        ret_record_args['main_input'] = jsonify(main_in)
+
+        if ret is not None:
+            ret_record_args['main_output'] = jsonify(main_out)
+
+        if error is not None:
+            ret_record_args['main_error'] = jsonify(error)
+
+        ret_record = self._post_record(
+            ret_record_args, error, cost, start_time, end_time, record
+        )
+
+        records = self.records.get()
+        records += [ret_record]
+
 
     async def awith_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
         """
@@ -386,7 +453,7 @@ class App(AppDefinition, SerialModel):
             error = e
             logger.error(f"App raised an exception: {e}")
             logger.error(traceback.format_exc())
-            
+
         assert len(record) > 0, "No information recorded in call."
 
         ret_record_args = dict()
@@ -445,7 +512,7 @@ class App(AppDefinition, SerialModel):
             error = e
             logger.error(f"App raised an exception: {e}")
             logger.error(traceback.format_exc())
-            
+
         assert len(record) > 0, "No information recorded in call."
 
         ret_record_args = dict()
@@ -463,7 +530,6 @@ class App(AppDefinition, SerialModel):
         )
 
         return ret, ret_record
-
 
     def _post_record(
         self, ret_record_args, error, cost, start_time, end_time, record

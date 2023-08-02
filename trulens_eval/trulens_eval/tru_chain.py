@@ -54,12 +54,13 @@ class LangChainInstrument(Instrument):
                 lambda o: True,  # VectorStoreRetriever, langchain >= 0.230
         }
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super().__init__(
             root_methods=set([TruChain.with_record, TruChain.awith_record]),
             modules=LangChainInstrument.Default.MODULES,
             classes=LangChainInstrument.Default.CLASSES(),
-            methods=LangChainInstrument.Default.METHODS
+            methods=LangChainInstrument.Default.METHODS,
+            *args, **kwargs
         )
 
     def _instrument_dict(self, cls, obj: Any, with_class_info: bool = False):
@@ -129,7 +130,10 @@ class TruChain(App):
         # TruChain specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
-        kwargs['instrument'] = LangChainInstrument()
+        kwargs['instrument'] = LangChainInstrument(
+            on_new_record=self._on_new_record,
+            on_add_record=self._on_add_record
+        )
 
         super().__init__(**kwargs)
 
