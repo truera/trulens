@@ -23,10 +23,35 @@ TruLens-Eval has two key value propositions:
 The process for building your evaluated and tracked LLM application with TruLens is shown below 👇
 ![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
 
-### Get going with TruLens-Eval
+### Installation and setup
 
 Install trulens-eval from PyPI.
 
 ```bash
 pip install trulens-eval
 ```
+
+### Quick Usage
+
+TruLens supports the evaluation of tracking for any LLM app framework. Choose a framework below to get started:
+
+**Langchain**
+
+[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/colab/quickstarts/langchain_quickstart_colab.ipynb)
+
+[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/quickstart.py).
+
+**Llama-Index**
+
+[llama_index_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/frameworks/llama_index/llama_index_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/colab/quickstarts/llama_index_quickstart_colab.ipynb)
+
+[llama_index_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/llama_index_quickstart.py)
+
+**No Framework**
+
+[no_framework_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/no_framework_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/colab/quickstarts/no_framework_quickstart_colab.ipynb)
+
+[no_framework_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/no_framework_quickstart.py)
