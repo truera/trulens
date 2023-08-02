@@ -11,6 +11,9 @@ test:
 test-tru-chain:
 	$(CONDA); python -m unittest tests.unit.test_tru_chain
 
+test-tru-llama:
+	$(CONDA); python -m unittest tests.unit.test_tru_llama
+
 format:
 	$(CONDA); bash format.sh
 
