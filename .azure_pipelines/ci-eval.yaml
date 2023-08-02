@@ -81,8 +81,8 @@ jobs:
       - bash: |
           source activate $(condaEnvFileSuffix)
           pip install pytest==7.0.1 pytest-azurepipelines langchain>=0.0.170 llama_index>=0.7.0 
-          pip install docarray hnswlib
-          pip install faiss-cpu
+          pip install docarray hnswlib # requirements for HNSW local Vector DB
+          pip install faiss-cpu        # requirements for FAISS local Vector DB
           echo '::group::piplist'
           echo "$(pip list)"
           echo '::endgroup::'
