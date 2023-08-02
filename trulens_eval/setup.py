@@ -19,6 +19,7 @@ class javascript_build(build):
 
 
 langchain_version = "0.0.230"  # duplicated in trulens_eval.util, don't know how to dedup
+llama_version = "0.7.16" # duplicated in trulens_eval.util, don't know how to dedup
 
 setup(
     name="trulens_eval",
@@ -41,7 +42,7 @@ setup(
         'python-dotenv>=1.0.0',
         'kaggle>=1.5.13',
         f'langchain>={langchain_version}',  # required for cost tracking even outside of langchain
-        'llama_index>=0.7.0',
+        f'llama_index>={llama_version}',
         'merkle-json>=1.0.0',
         'millify>=0.1.1',
         'openai>=0.27.6',
