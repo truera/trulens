@@ -843,7 +843,7 @@ class Feedback(FeedbackDefinition):
 
                     assert isinstance(
                         meta, dict
-                    ), f"Feedback metadata output must be a dictionary but was {type(call_meta)}."
+                    ), f"Feedback metadata output must be a dictionary but was {type(meta)}."
                 else:
                     # Otherwise it is just the float. We create empty metadata dict.
                     result_val = result_and_meta

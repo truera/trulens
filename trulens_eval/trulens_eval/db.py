@@ -427,7 +427,8 @@ class LocalSQLite(DB):
                            ),  # extra dict is needed json's root must be a dict
             feedback_result.result,
             feedback_result.name,
-            json_str_of_obj(feedback_result.cost)
+            json_str_of_obj(feedback_result.cost),
+            feedback_result.multi_result
         )
 
         self._insert_or_replace_vals(table=self.TABLE_FEEDBACKS, vals=vals)
