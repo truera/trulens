@@ -453,7 +453,7 @@ class LocalSQLite(DB):
         vars = []
 
         if record_id is not None:
-            clauses.append("record_id=?")
+            clauses.append("f.record_id=?")
             vars.append(record_id)
 
         if feedback_result_id is not None:
