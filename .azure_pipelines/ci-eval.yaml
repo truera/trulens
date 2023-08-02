@@ -80,9 +80,12 @@ jobs:
         displayName: Run combine docs for testing
       - bash: |
           source activate $(condaEnvFileSuffix)
+
           pip install pytest==7.0.1 pytest-azurepipelines langchain>=0.0.230 llama_index>=0.7.16
-          pip install html2text==2020.1.16
-          pip install docarray hnswlib
+          pip install html2text==2020.1.16 # requirement for llama_index VectorStoreIndex local Vector DB
+          pip install docarray hnswlib # requirements for HNSW local Vector DB
+          pip install faiss-cpu unstructured # requirements for FAISS local Vector DB
+          
           echo '::group::piplist'
           echo "$(pip list)"
           echo '::endgroup::'
