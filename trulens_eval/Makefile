@@ -25,3 +25,8 @@ example_trubot:
 
 leaderboard:
 	$(CONDA); PYTHONPATH=. streamlit run trulens_eval/Leaderboard.py
+
+react:
+	$(CONDA); \
+		npm i --prefix trulens_eval/react_components/record_viewer; \
+		npm run --prefix trulens_eval/react_components/record_viewer build
