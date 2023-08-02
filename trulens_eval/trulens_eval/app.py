@@ -6,7 +6,7 @@ from abc import ABC
 from abc import abstractmethod
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Dict, Iterable, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, Iterable, Optional, Sequence, Set, Tuple, Callable
 
 import pydantic
 from pydantic import Field
@@ -230,6 +230,24 @@ class App(AppDefinition, SerialModel):
     # Instrumentation class.
     instrument: Instrument = Field(exclude=True)
 
+    # Mapping of instrumented methods (by id(.) ) to their path in this app:
+    instrumented_methods: Dict[Any, JSONPath] = Field(exclude=True, default_factory=dict)
+
+    def _on_method_instrumented(self, func: Callable, path: JSONPath):
+        """
+        Called by instrumentation system for every function requested to be
+        instrumented by this app.
+        """
+
+        self.instrumented_methods[func] = path
+
+    def _get_method_path(self, func) -> JSONPath:
+        """
+        Get the path of the instrumented function `func` relative to this app.
+        """
+
+        return self.instrumented_methods.get(func)
+
     def __init__(
         self,
         tru: Optional[Tru] = None,
@@ -280,6 +298,9 @@ class App(AppDefinition, SerialModel):
                 # mode will do this but we want to fail earlier at app
                 # constructor here.
                 f.implementation.load()
+
+        self.instrument._on_method_instrumented = self._on_method_instrumented 
+        self.instrument._get_method_path = self._get_method_path
 
         self.instrument.instrument_object(
             obj=self.app, query=Select.Query().app
