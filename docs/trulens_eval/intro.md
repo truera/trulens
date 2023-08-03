@@ -30,6 +30,16 @@ Install the trulens-eval pip package from PyPI.
     pip install trulens-eval
 ```
 
+## Setting Keys
+
+In any of the quickstarts, you will need [OpenAI](https://platform.openai.com/account/api-keys) and [Huggingface](https://huggingface.co/settings/tokens) keys. You can add keys by setting the environmental variables:
+
+```python
+import os
+os.environ["OPENAI_API_KEY"] = "..."
+os.environ["HUGGINGFACE_API_KEY"] = "..."
+```
+
 ## Quick Usage
 
 TruLens supports the evaluation of tracking for any LLM app framework. Choose a framework below to get started:
@@ -54,7 +64,6 @@ TruLens supports the evaluation of tracking for any LLM app framework. Choose a 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.8.0/trulens_eval/examples/colab/quickstarts/no_framework_quickstart_colab.ipynb)
 
 [no_framework_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.8.0/trulens_eval/examples/no_framework_quickstart.py)
-
 
 ### 💡 Contributing
 
