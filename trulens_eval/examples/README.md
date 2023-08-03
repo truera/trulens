@@ -2,14 +2,11 @@
 
 ## Contents
 
-- `models`
-
-    Examples using a variety of large language models from different sources.
+- **`models/`** -- Examples using a variety of large language models from different sources.
 
     - `alpaca7b_local_llm.ipynb` -- Personal assistant with Alpaca7B running locally using HuggingFacePipeline's from_model_id.
 
-- `frameworks/`
-    Collection of examples using different frameworks for constructing an LLM app.
+- **`frameworks/`** -- Collection of examples using different frameworks for constructing an LLM app.
 
     - `llama_index/`
 
@@ -25,9 +22,7 @@
      
         - `llamaindex-yelp-agent.ipynb` -- Evaluate hallucination of an Llama-Index data agent.
 
-    - `langchain/`
-
-        Examples using langchain as a framework.
+    - `langchain/` -- Examples using langchain as a framework.
  
         - `langchain_async.ipynb` -- How to use the streaming capability of Langchain and monitor the results using trulens.
      
@@ -40,7 +35,7 @@
         - `langchain_summarize.ipynb` -- A summarization model using langchain. This type of model does not
             take as input a piece of text but rather a set of documents.
 
-- `vector-dbs/`
+- **`vector-dbs/`**
 
     Collection of examples that makes use of vector stores for context
     retrieval in question answering.
@@ -56,19 +51,8 @@
     - `faiss/` -- Examples that use faiss as the vector store.
         
         - `langchain_faiss_example.ipynb` - Example using FAISS as the vector store.
-
-- `app_with_human_feedback.py`-- Streamlit app with a langchain-based chat and the use of feedback functions
-    based on user input.
-
-- `feedback_functions.ipynb` -- A list of out of the box feedback functions.
-
-- `logging.ipynb` -- Different ways to log your app with TruLens.
-
-- `quickstart.ipynb` -- Quickstart with LangChain.
-
-- `quickstart.py` -- .py version of quickstart with LangChain.
-
-- `trubot/` - Examples based on a question-answering chain with context indexed from the TruEra website.
+     
+- **`trubot/`** - End-to-end examples based on a question-answering chain with context indexed from the TruEra website.
 
     - `hnswlib_trubot/` -- local vector db data indexing the Truera website for
       trubot examples.
@@ -87,3 +71,13 @@
     - `webindex.ipynb` -- tools for indexing a website to produce a vector db
       for context.
 
+- `app_with_human_feedback.py`-- Streamlit app with a langchain-based chat and the use of feedback functions
+    based on user input.
+
+- `feedback_functions.ipynb` -- A list of out of the box feedback functions.
+
+- `logging.ipynb` -- Different ways to log your app with TruLens.
+
+- `quickstart.ipynb` -- Quickstart with LangChain.
+
+- `quickstart.py` -- .py version of quickstart with LangChain.
