@@ -1091,7 +1091,7 @@ def _future_target_wrapper(stack, func, *args, **kwargs):
     the stack and need to do this to the frames prior to thread starts.
     """
 
-    # Keep this for looking up via get_local_in_call_stack .
+    # Keep this for looking up via get_first_local_in_call_stack .
     pre_start_stack = stack
 
     return func(*args, **kwargs)
@@ -1186,21 +1186,20 @@ class TP(SingletonPerName):  # "thread processing"
 # python instrumentation utilities
 
 
-def get_local_in_call_stack(
+def get_all_local_in_call_stack(
     key: str,
     func: Callable[[Callable], bool],
     offset: int = 1
-) -> Optional[Any]:
+) -> Iterator[Any]:
     """
-    Get the value of the local variable named `key` in the stack at the nearest
-    frame executing a function which `func` recognizes (returns True on).
-    Returns None if `func` does not recognize the correct function. Raises
-    RuntimeError if a function is recognized but does not have `key` in its
-    locals.
+    Get the value of the local variable named `key` in the stack at all of the
+    frames executing a function which `func` recognizes (returns True on)
+    starting from the top of the stack except `offset` top frames. Returns None
+    if `func` does not recognize the correct function. Raises RuntimeError if a
+    function is recognized but does not have `key` in its locals.
 
     This method works across threads as long as they are started using the TP
     class above.
-
     """
 
     frames = stack_with_tasks()[offset + 1:]  # + 1 to skip this method itself
@@ -1230,11 +1229,32 @@ def get_local_in_call_stack(
             logger.debug(f"looking via {func.__name__}; found {f}")
             locs = f.f_locals
             if key in locs:
-                return locs[key]
+                yield locs[key]
             else:
-                raise RuntimeError(f"No local named {key} found.")
+                raise KeyError(f"No local named {key} found.")
 
-    return None
+    return
+
+def get_first_local_in_call_stack(
+    key: str,
+    func: Callable[[Callable], bool],
+    offset: int = 1    
+) -> Optional[Any]:
+    """
+    Get the value of the local variable named `key` in the stack at the nearest
+    frame executing a function which `func` recognizes (returns True on).
+    Returns None if `func` does not recognize the correct function. Raises
+    RuntimeError if a function is recognized but does not have `key` in its
+    locals.
+
+    This method works across threads as long as they are started using the TP
+    class above.
+    """
+
+    try:
+        return next(iter(get_all_local_in_call_stack(key, func, offset)))
+    except StopIteration:
+        return None
 
 
 class Module(SerialModel):

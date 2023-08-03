@@ -45,8 +45,8 @@ class LangChainInstrument(Instrument):
             langchain.schema.BaseRetriever,
             langchain.llms.base.BaseLLM,
             langchain.prompts.base.BasePromptTemplate,
-            langchain.schema.BaseMemory,
-            langchain.schema.BaseChatMessageHistory
+            langchain.schema.BaseMemory, # no methods instrumented
+            langchain.schema.BaseChatMessageHistory # subclass of above
         }
 
         # Instrument only methods with these names and of these classes.
@@ -203,8 +203,10 @@ class TruChain(App):
         """
 
         # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
+        # should work with threads. We also store self there are multiple apps
+        # may have instrumented the same methods.
+        record = []
+        record_and_app: Tuple[Sequence[RecordAppCall], App] = (record, self)
 
         ret = None
         error = None
