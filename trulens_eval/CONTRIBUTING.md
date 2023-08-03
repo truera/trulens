@@ -39,7 +39,12 @@ Please feel free to open an issue and/or assign an issue to yourself.
 ## 🎉 Add Usage Examples
 If you have applied TruLens to track and evalaute a unique use-case, we would love your contribution in the form of:
 
-an example notebook: e.g. [Optimizing Llama-Index Parameters for Complex Questions](https://github.com/truera/trulens/blob/main/trulens_eval/examples/frameworks/llama_index/llamaindex-subquestion-query.ipynb)
+an example notebook: e.g. [Evaluating Pinecone Configuration Choices on Downstream App Performance](https://github.com/truera/trulens/blob/main/trulens_eval/examples/vector-dbs/pinecone/constructing_optimal_pinecone.ipynb)
+
+All example notebooks are expected to:
+* Start with a title and description of the example
+* Include a linked button to a Google colab version of the notebook
+* Add any additional requirements
 
 ## 🧪 Add Experimental Features
 If you have a crazy idea, make a PR for it! Whether if it's the latest research, or what you thought of in the shower, we'd love to see creative ways to improve TruLens.
