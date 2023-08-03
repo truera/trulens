@@ -106,8 +106,8 @@ nav:
               - TruChain: trulens_eval/api/truchain.md
               - TruLlama: trulens_eval/api/trullama.md
               - AppDefinition: trulens_eval/api/appdefinition.md
-          - 🤝 Contributing:
-              - Contrbution Guidelines: trulens_eval/CONTRIBUTING.md
+      - Contributing:
+          - 🤝 Contrbution Guidelines: trulens_eval/CONTRIBUTING.md
 
   - Explain:
       - Getting Started:
