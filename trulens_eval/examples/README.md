@@ -40,7 +40,7 @@
         - `langchain_summarize.ipynb` -- A summarization model using langchain. This type of model does not
             take as input a piece of text but rather a set of documents.
 
-- `vector-stores/`
+- `vector-dbs/`
 
     Collection of examples that makes use of vector stores for context
     retrieval in question answering.
