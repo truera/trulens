@@ -19,7 +19,7 @@ jupyter nbconvert --to markdown trulens_eval_gh_top_readme.ipynb
 cat gh_top_intro.md break.md ../trulens_explain/gh_top_intro.md > TOP_README.md
 
 # Create non-jupyter scripts
-jupyter nbconvert --to script langchian_quickstart.ipynb
+jupyter nbconvert --to script langchain_quickstart.ipynb
 jupyter nbconvert --to script llama_index_quickstart.ipynb
 jupyter nbconvert --to script no_framework_quickstart.ipynb
 jupyter nbconvert --to script all_tools.ipynb
