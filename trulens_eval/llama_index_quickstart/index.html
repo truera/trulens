@@ -1884,6 +1884,7 @@ Licensed under the Apache License, Version 2.0.
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h1 id="quickstart">Quickstart<a class="anchor-link" href="#quickstart">&#182;</a></h1><p>In this quickstart you will create a simple Llama Index App and learn how to log it and get feedback on an LLM response.</p>
+<p><a href="https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/frameworks/llama_index/llama_index_quickstart.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
 
 </div>
 </div>
@@ -1921,11 +1922,9 @@ Licensed under the Apache License, Version 2.0.
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">trulens</span><span class="o">-</span><span class="nb">eval</span><span class="o">==</span><span class="mf">0.7.0</span>
-<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">llama_index</span><span class="o">==</span><span class="mf">0.7.11</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="err">!</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">trulens</span><span class="o">-</span><span class="nb">eval</span><span class="o">==</span><span class="mf">0.8.0</span> <span class="n">llama_index</span><span class="o">==</span><span class="mf">0.7.0</span> <span class="n">html2text</span><span class="o">==</span><span class="mf">2020.1.16</span>
 </pre></div>
-<div id="cell-1" class="clipboard-copy-txt">!pip install trulens-eval==0.7.0
-!pip install llama_index==0.7.11</div>
+<div id="cell-1" class="clipboard-copy-txt">! pip install trulens-eval==0.8.0 llama_index==0.7.0 html2text==2020.1.16</div>
         
         </div>
     </div>
@@ -2063,22 +2062,20 @@ tru = Tru()
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># LLama Index starter example from: https://gpt-index.readthedocs.io/en/latest/getting_started/starter_example.html</span>
-<span class="c1"># In order to run this, download into data/ Paul Graham&#39;s Essay &#39;What I Worked On&#39; from https://github.com/jerryjliu/llama_index/blob/main/examples/paul_graham_essay/data/paul_graham_essay.txt </span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span><span class="p">,</span> <span class="n">SimpleWebPageReader</span>
 
-<span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span><span class="p">,</span> <span class="n">SimpleDirectoryReader</span>
-
-<span class="n">documents</span> <span class="o">=</span> <span class="n">SimpleDirectoryReader</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
+<span class="n">documents</span> <span class="o">=</span> <span class="n">SimpleWebPageReader</span><span class="p">(</span><span class="n">html_to_text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span>
+    <span class="p">[</span><span class="s2">&quot;http://paulgraham.com/worked.html&quot;</span><span class="p">]</span>
+<span class="p">)</span>
 <span class="n">index</span> <span class="o">=</span> <span class="n">VectorStoreIndex</span><span class="o">.</span><span class="n">from_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
 
 <span class="n">query_engine</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">as_query_engine</span><span class="p">()</span>
 </pre></div>
-<div id="cell-4" class="clipboard-copy-txt"># LLama Index starter example from: https://gpt-index.readthedocs.io/en/latest/getting_started/starter_example.html
-# In order to run this, download into data/ Paul Graham's Essay 'What I Worked On' from https://github.com/jerryjliu/llama_index/blob/main/examples/paul_graham_essay/data/paul_graham_essay.txt 
+<div id="cell-4" class="clipboard-copy-txt">from llama_index import VectorStoreIndex, SimpleWebPageReader
 
-from llama_index import VectorStoreIndex, SimpleDirectoryReader
-
-documents = SimpleDirectoryReader('data').load_data()
+documents = SimpleWebPageReader(html_to_text=True).load_data(
+    ["http://paulgraham.com/worked.html"]
+)
 index = VectorStoreIndex.from_documents(documents)
 
 query_engine = index.as_query_engine()</div>
