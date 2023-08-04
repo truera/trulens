@@ -71,6 +71,7 @@ theme:
     - search.share
     - search.suggest
     - toc.follow
+    - content.code.copy
 
 nav:
   - Home: index.md
