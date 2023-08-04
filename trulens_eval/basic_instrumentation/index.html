@@ -6,20 +6,22 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
+        <meta name="description" content="Evaluate and track LLM applications. Explain Deep Neural Nets.">
       
       
       
-        <link rel="prev" href="../quickstart/">
+      
+        <link rel="prev" href="../api/feedback/">
       
       
-        <link rel="next" href="../pr_relevance_smoke_tests/">
+        <link rel="next" href="../langchain_instrumentation/">
       
       <link rel="icon" href="../../img/favicon.ico">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
     
     
       
-        <title>Feedback Functions - TruLens</title>
+        <title>Overview - TruLens</title>
       
     
     
@@ -73,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#feedback-functions" class="md-skip">
+        <a href="#overview" class="md-skip">
           Skip to content
         </a>
       
@@ -87,7 +89,7 @@
 
   
 
-<header class="md-header md-header--shadow" data-md-component="header">
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="TruLens" class="md-header__button md-logo" aria-label="TruLens" data-md-component="logo">
       
@@ -107,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Feedback Functions
+              Overview
             
           </span>
         </div>
@@ -132,10 +134,16 @@
       </label>
       <nav class="md-search__options" aria-label="Search">
         
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08Z"/></svg>
+          </a>
+        
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
         </button>
       </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
       
     </form>
     <div class="md-search__output">
@@ -152,15 +160,108 @@
 </div>
     
     
+      <div class="md-header__source">
+        <a href="https://github.com/truera/trulens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    truera/trulens
+  </div>
+</a>
+      </div>
+    
   </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../welcome/" class="md-tabs__link">
+      Welcome to TruLens!
+    </a>
+  </li>
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../install/" class="md-tabs__link md-tabs__link--active">
+        Eval
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../trulens_explain/install/" class="md-tabs__link">
+        Explain
+      </a>
+    </li>
+  
+
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
   
 </header>
     
     <div class="md-container" data-md-component="container">
       
       
-        
-          
         
       
       <main class="md-main" data-md-component="main">
@@ -173,8 +274,10 @@
                   <div class="md-sidebar__inner">
                     
 
+  
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="TruLens" class="md-nav__button md-logo" aria-label="TruLens" data-md-component="logo">
       
@@ -183,6 +286,18 @@
     </a>
     TruLens
   </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/truera/trulens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    truera/trulens
+  </div>
+</a>
+    </div>
   
   <ul class="md-nav__list" data-md-scrollfix>
     
@@ -226,15 +341,23 @@
   
   
     
-      
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
       
       
       <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
       
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
       
       
         <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -254,55 +377,33 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../install/" class="md-nav__link">
-        Installation
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../quickstart/" class="md-nav__link">
-        Quickstart
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
     
-  
-  
+      
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
       
       
+        
+          
+        
+          
+        
       
-        <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
-          Feedback Functions
+      
+        <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+          Getting Started
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
-        <label class="md-nav__title" for="__nav_3_3">
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_1">
           <span class="md-nav__icon md-icon"></span>
-          Feedback Functions
+          Getting Started
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -310,94 +411,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Feedback Functions
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        Feedback Functions
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        🚀 Installation
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#relevance" class="md-nav__link">
-    Relevance
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sentiment" class="md-nav__link">
-    Sentiment
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#model-agreement" class="md-nav__link">
-    Model Agreement
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#groundedness" class="md-nav__link">
-    Groundedness
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#language-match" class="md-nav__link">
-    Language Match
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#toxicity" class="md-nav__link">
-    Toxicity
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#moderation" class="md-nav__link">
-    Moderation
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -414,17 +432,212 @@
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3_2" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1_2" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_1_2" id="__nav_3_1_2_label" tabindex="0">
+          ⚡ Quickstarts
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_1_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_1_2">
+          <span class="md-nav__icon md-icon"></span>
+          ⚡ Quickstarts
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../langchain_quickstart/" class="md-nav__link">
+        Langchain Quickstart
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llama_index_quickstart/" class="md-nav__link">
+        Llama-Index Quickstart
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../no_framework_quickstart/" class="md-nav__link">
+        No Framework Quickstart
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
       
       
-        <label class="md-nav__link" for="__nav_3_3_2" id="__nav_3_3_2_label" tabindex="0">
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+      
+      
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+          Evaluation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_2">
+          <span class="md-nav__icon md-icon"></span>
+          Evaluation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_1" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_1" id="__nav_3_2_1_label" tabindex="0">
+          🎯 Feedback Functions
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_1_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_2_1">
+          <span class="md-nav__icon md-icon"></span>
+          🎯 Feedback Functions
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../function_definitions/" class="md-nav__link">
+        Function Definitions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../custom_feedback_functions/" class="md-nav__link">
+        Custom Functions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_1_3" >
+      
+      
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_1_3" id="__nav_3_2_1_3_label" tabindex="0">
           Smoke Tests
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_3_2_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_3_3_2">
+      <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_1_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_2_1_3">
           <span class="md-nav__icon md-icon"></span>
           Smoke Tests
         </label>
@@ -477,10 +690,255 @@
   
   
   
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2" >
+      
+      
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_2" id="__nav_3_2_2_label" tabindex="0">
+          📚 API Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_2_2">
+          <span class="md-nav__icon md-icon"></span>
+          📚 API Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
     <li class="md-nav__item">
-      <a href="../logging/" class="md-nav__link">
-        Logging
+      <a href="../api/feedback/" class="md-nav__link">
+        Feedback Functions
       </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+      
+      
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+          Tracking
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          Tracking
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3_1" checked>
+      
+      
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_3_1" id="__nav_3_3_1_label" tabindex="0">
+          🎺 Instrumentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_3_1_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_3_3_1">
+          <span class="md-nav__icon md-icon"></span>
+          🎺 Instrumentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Overview
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Overview
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-can-you-track" class="md-nav__link">
+    What can you track?
+  </a>
+  
+    <nav class="md-nav" aria-label="What can you track?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage-metrics" class="md-nav__link">
+    Usage Metrics
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#app-metadata" class="md-nav__link">
+    App Metadata
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#record-metadata" class="md-nav__link">
+    Record Metadata
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tracking-custom-applications" class="md-nav__link">
+    Tracking custom applications
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../langchain_instrumentation/" class="md-nav__link">
+        LangChain Integration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llama_index_instrumentation/" class="md-nav__link">
+        Llama-Index Integration
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
     </li>
   
 
@@ -497,19 +955,83 @@
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3_2" >
       
       
+        
+          
+        
       
-        <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
-          API Reference
+      
+        <label class="md-nav__link" for="__nav_3_3_2" id="__nav_3_3_2_label" tabindex="0">
+          🚚 Logging
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_3_5">
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_3_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_3_2">
           <span class="md-nav__icon md-icon"></span>
-          API Reference
+          🚚 Logging
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../logging/" class="md-nav__link">
+        Logging
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3_3" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_3_3" id="__nav_3_3_3_label" tabindex="0">
+          📚 API Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_3_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          📚 API Reference
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -575,8 +1097,69 @@
   
   
     <li class="md-nav__item">
-      <a href="../api/feedback/" class="md-nav__link">
-        Feedback Functions
+      <a href="../api/appdefinition/" class="md-nav__link">
+        AppDefinition
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+      
+      
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+          Contributing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_4">
+          <span class="md-nav__icon md-icon"></span>
+          Contributing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONTRIBUTING/" class="md-nav__link">
+        🤝 Contrbution Guidelines
       </a>
     </li>
   
@@ -604,15 +1187,21 @@
   
   
     
-      
-    
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
       
       
       <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
       
+      
+        
+          
+        
+          
+        
+          
+        
       
       
         <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -632,9 +1221,44 @@
   
   
   
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_1" >
+      
+      
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+          Getting Started
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_1_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_4_1">
+          <span class="md-nav__icon md-icon"></span>
+          Getting Started
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
     <li class="md-nav__item">
       <a href="../../trulens_explain/install/" class="md-nav__link">
-        Installation
+        🚀 Installation
       </a>
     </li>
   
@@ -648,8 +1272,15 @@
   
     <li class="md-nav__item">
       <a href="../../trulens_explain/quickstart/" class="md-nav__link">
-        Quickstart
+        ⚡ Quickstart
       </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
     </li>
   
 
@@ -662,7 +1293,7 @@
   
     <li class="md-nav__item">
       <a href="../../trulens_explain/attribution_parameterization/" class="md-nav__link">
-        Attributions for Different Use Cases
+        Attributions
       </a>
     </li>
   
@@ -675,22 +1306,38 @@
   
   
     
-    <li class="md-nav__item md-nav__item--nested">
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
       
       
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
       
-        <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+      
+        <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
           API Reference
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_4_4">
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_4_3">
           <span class="md-nav__icon md-icon"></span>
           API Reference
         </label>
@@ -820,50 +1467,42 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#relevance" class="md-nav__link">
-    Relevance
+  <a href="#what-can-you-track" class="md-nav__link">
+    What can you track?
   </a>
+  
+    <nav class="md-nav" aria-label="What can you track?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage-metrics" class="md-nav__link">
+    Usage Metrics
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#app-metadata" class="md-nav__link">
+    App Metadata
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#record-metadata" class="md-nav__link">
+    Record Metadata
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#sentiment" class="md-nav__link">
-    Sentiment
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#model-agreement" class="md-nav__link">
-    Model Agreement
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#groundedness" class="md-nav__link">
-    Groundedness
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#language-match" class="md-nav__link">
-    Language Match
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#toxicity" class="md-nav__link">
-    Toxicity
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#moderation" class="md-nav__link">
-    Moderation
+  <a href="#tracking-custom-applications" class="md-nav__link">
+    Tracking custom applications
   </a>
   
 </li>
@@ -881,6 +1520,9 @@
               <article class="md-content__inner md-typeset">
                 
                   
+
+  
+  
 
 
 <script>
@@ -1914,65 +2556,53 @@ Licensed under the Apache License, Version 2.0.
     init_mathjax();
     </script>
     <!-- End of mathjax configuration --><div class="jupyter-wrapper">
-<div id="cell-id=691ec232" class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="feedback-functions">Feedback Functions<a class="anchor-link" href="#feedback-functions">&#182;</a></h1><p>A feedback function scores the output of an LLM application by analyzing generated text as part of an LLM application (or a downstream model or application built on it). This guide provides details about the feedback functions that are implemented out of the box by TruLens. At the end of the guide, you can find additional information about how to create custom feedback functions.</p>
-<p>See also: <a href="https://www.trulens.org/trulens_eval/api/feedback/">https://www.trulens.org/trulens_eval/api/feedback/</a></p>
-<h2 id="relevance">Relevance<a class="anchor-link" href="#relevance">&#182;</a></h2><p>This evaluates the <em>relevance</em> of the LLM response to the given text by LLM prompting.</p>
-<p>Relevance is currently only available with OpenAI ChatCompletion API.</p>
-<p>TruLens offers two particular flavors of relevance:</p>
-<ol>
-<li><p><em>Prompt response relevance</em> is best for measuring the relationship of the final answer to the user inputed question. This flavor of relevance is particularly optimized for the following features:</p>
-<ul>
-<li>Relevance requires adherence to the entire prompt.</li>
-<li>Responses that don't provide a definitive answer can still be relevant</li>
-<li>Admitting lack of knowledge and refusals are still relevant.</li>
-<li>Feedback mechanism should differentiate between seeming and actual relevance.</li>
-<li>Relevant but inconclusive statements should get increasingly high scores as they are more helpful for answering the query.</li>
+<h1 id="overview">Overview<a class="anchor-link" href="#overview">&#182;</a></h1><p>TruLens provides a number of different instrumentation frameworks to allow you to inspect and evaluate the internals of your application and its associated records. In any framework you can track a wide variety of usage metrics and metadata, detailed below, along with the inputs and outputs of the application. For frameworks with deep integrations, TruLens can expose additional internals of the application for tracking.</p>
+<h2 id="what-can-you-track">What can you track?<a class="anchor-link" href="#what-can-you-track">&#182;</a></h2><h3 id="usage-metrics"><strong>Usage Metrics</strong><a class="anchor-link" href="#usage-metrics">&#182;</a></h3><ul>
+<li>Number of requests (n_requests)</li>
+<li>Number of successful ones (n_successful_requests)</li>
+<li>Number of class scores retrieved (n_classes)</li>
+<li>Total tokens processed (n_tokens)</li>
+<li>In streaming mode, number of chunks produced (n_stream_chunks)</li>
+<li>Number of prompt tokens supplied (n_prompt_tokens)</li>
+<li>Number of completion tokens generated (n_completion_tokens)</li>
+<li>Cost in USD (cost)</li>
 </ul>
-<p>You can read more information about the performance of prompt response relevance by viewing its <a href="../pr_relevance_smoke_tests/">smoke test results</a>.</p>
-</li>
-<li><p><em>Question statement relevance</em>, sometimes known as context relevance, is best for measuring the relationship of a provided context to the user inputed question. This flavor of relevance is optimized for a slightly different set of features:</p>
-<ul>
-<li>Relevance requires adherence to the entire query.</li>
-<li>Long context with small relevant chunks are relevant.</li>
-<li>Context that provides no answer can still be relevant.</li>
-<li>Feedback mechanism should differentiate between seeming and actual relevance.</li>
-<li>Relevant but inconclusive statements should get increasingly high scores as they are more helpful for answering the query.</li>
+<h3 id="app-metadata"><strong>App Metadata</strong><a class="anchor-link" href="#app-metadata">&#182;</a></h3><ul>
+<li>App ID (app_id) - user supplied string or automatically generated hash</li>
+<li>Tags (tags) - user supplied string</li>
+<li>Model metadata - user supplied json</li>
 </ul>
-<p>You can read more information about the performance of question statement relevance by viewing its <a href="../qs_relevance_smoke_tests/">smoke test results</a>.</p>
-</li>
-</ol>
-<h2 id="sentiment">Sentiment<a class="anchor-link" href="#sentiment">&#182;</a></h2><p>This evaluates the <em>positive sentiment</em> of either the prompt or response.</p>
-<p>Sentiment is currently available to use with OpenAI, HuggingFace or Cohere as the model provider.</p>
-<ul>
-<li>The OpenAI sentiment feedback function prompts a Chat Completion model to rate the sentiment from 1 to 10, and then scales the response down to 0-1.</li>
-<li>The HuggingFace sentiment feedback function returns a raw score from 0 to 1.</li>
-<li>The Cohere sentiment feedback function uses the classification endpoint and a small set of examples stored in <code>feedback_prompts.py</code> to return either a 0 or a 1.</li>
+<h3 id="record-metadata"><strong>Record Metadata</strong><a class="anchor-link" href="#record-metadata">&#182;</a></h3><ul>
+<li>Record ID (record_id) - automatically generated, track individual application calls</li>
+<li>Timestamp (ts) - automatcially tracked, the timestamp of the application call</li>
+<li>Latency (latency) - the difference between the application call start and end time.</li>
 </ul>
-<h2 id="model-agreement">Model Agreement<a class="anchor-link" href="#model-agreement">&#182;</a></h2><p>Model agreement uses OpenAI to attempt an honest answer at your prompt with system prompts for correctness, and then evaluates the agreement of your LLM response to this model on a scale from 1 to 10. The agreement with each honest bot is then averaged and scaled from 0 to 1.</p>
-<h2 id="groundedness">Groundedness<a class="anchor-link" href="#groundedness">&#182;</a></h2><p>Groundedness uses OpenAI LLMs or Huggingface NLI to attempt to check if an answer is grounded in its supplied contexts on a scale from 1 to 10. The information overlap or entailment between source and response is then measured, choosing the highest score between sources and then averaged and scaled from 0 to 1.</p>
-<h2 id="language-match">Language Match<a class="anchor-link" href="#language-match">&#182;</a></h2><p>This evaluates if the language of the prompt and response match.</p>
-<p>Language match is currently only available to use with HuggingFace as the model provider. This feedback function returns a score in the range from 0 to 1, where 1 indicates match and 0 indicates mismatch.</p>
-<h2 id="toxicity">Toxicity<a class="anchor-link" href="#toxicity">&#182;</a></h2><p>This evaluates the toxicity of the prompt or response.</p>
-<p>Toxicity is currently only available to be used with HuggingFace, and uses a classification endpoint to return a score from 0 to 1. The feedback function is negated as not_toxicity, and returns a 1 if not toxic and a 0 if toxic.</p>
-<h2 id="moderation">Moderation<a class="anchor-link" href="#moderation">&#182;</a></h2><p>The OpenAI Moderation API is made available for use as feedback functions. This includes hate, hate/threatening, self-harm, sexual, sexual/minors, violence, and violence/graphic. Each is negated (ex: not_hate) so that a 0 would indicate that the moderation rule is violated. These feedback functions return a score in the range 0 to 1.</p>
-<h1 id="adding-new-feedback-functions">Adding new feedback functions<a class="anchor-link" href="#adding-new-feedback-functions">&#182;</a></h1><p>Feedback functions are an extensible framework for evaluating LLMs. You can add your own feedback functions to evaluate the qualities required by your application by updating <code>trulens_eval/feedback.py</code>, or simply creating a new provider class and feedback function in youre notebook. If your contributions would be useful for others, we encourage you to contribute to TruLens!</p>
-<p>Feedback functions are organized by model provider into Provider classes.</p>
-<p>The process for adding new feedback functions is:</p>
-<ol>
-<li>Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class. Add the new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).</li>
-</ol>
+
+</div>
+</div>
+</div>
+</div>
+<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="tracking-custom-applications">Tracking custom applications<a class="anchor-link" href="#tracking-custom-applications">&#182;</a></h2><p>Outside of integrations, TruLens supports the instrumentation of any text-to-text application, including custom ones.</p>
+<p>The way to track this type of application is through TruBasicApp.</p>
+<p>Suppose you have a generic text-to-text application as follows:</p>
 
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div id="cell-id=b32ec934" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1992,36 +2622,11 @@ Licensed under the Apache License, Version 2.0.
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Provider</span><span class="p">,</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Select</span><span class="p">,</span> <span class="n">Tru</span>
-
-<span class="k">class</span> <span class="nc">StandAlone</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">my_custom_feedback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">my_text_field</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        A dummy function of text inputs to float outputs.</span>
-
-<span class="sd">        Parameters:</span>
-<span class="sd">            my_text_field (str): Text to evaluate.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            float: square length of the text</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">my_text_field</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">my_text_field</span><span class="p">))</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">custom_application</span><span class="p">(</span><span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="s2">&quot;a response&quot;</span>
 </pre></div>
-<div id="cell-1" class="clipboard-copy-txt">from trulens_eval import Provider, Feedback, Select, Tru
-
-class StandAlone(Provider):
-    def my_custom_feedback(self, my_text_field: str) -> float:
-        """
-        A dummy function of text inputs to float outputs.
-
-        Parameters:
-            my_text_field (str): Text to evaluate.
-
-        Returns:
-            float: square length of the text
-        """
-        return 1.0 / (1.0 + len(my_text_field) * len(my_text_field))
-</div>
+<div id="cell-1" class="clipboard-copy-txt">def custom_application(prompt: str) -> str:
+    return "a response"</div>
         
         </div>
     </div>
@@ -2031,21 +2636,19 @@ class StandAlone(Provider):
 
 </div>
 </div>
-<div id="cell-id=4056c677" class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<ol start="2">
-<li>Instantiate your provider and feedback functions. The feedback function is wrapped by the trulens-eval Feedback class which helps specify what will get sent to your function parameters (For example: Select.RecordInput or Select.RecordOutput)</li>
-</ol>
+<p>After creating the application, TruBasicApp allows you to instrument it in one line of code:</p>
 
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div id="cell-id=db77781f" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2065,15 +2668,11 @@ class StandAlone(Provider):
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">my_standalone</span> <span class="o">=</span> <span class="n">StandAlone</span><span class="p">()</span>
-<span class="n">my_feedback_function_standalone</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">my_standalone</span><span class="o">.</span><span class="n">my_custom_feedback</span><span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
-    <span class="n">my_text_field</span><span class="o">=</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordOutput</span>
-<span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruBasicApp</span>
+<span class="n">basic_app</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">custom_application</span><span class="p">,</span> <span class="n">app_id</span><span class="o">=</span><span class="s2">&quot;Custom Application v1&quot;</span><span class="p">)</span>
 </pre></div>
-<div id="cell-2" class="clipboard-copy-txt">my_standalone = StandAlone()
-my_feedback_function_standalone = Feedback(my_standalone.my_custom_feedback).on(
-    my_text_field=Select.RecordOutput
-)</div>
+<div id="cell-2" class="clipboard-copy-txt">from trulens_eval import TruBasicApp
+basic_app = TruBasicApp(custom_application, app_id="Custom Application v1")</div>
         
         </div>
     </div>
@@ -2083,21 +2682,19 @@ my_feedback_function_standalone = Feedback(my_standalone.my_custom_feedback).on(
 
 </div>
 </div>
-<div id="cell-id=66987343" class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<ol start="3">
-<li>Your feedback function is now ready to use just like the out of the box feedback functions. Below is an example of it being used.</li>
-</ol>
+<p>Then, you can operate the application like normal:</p>
 
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div id="cell-id=8db425de" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2117,19 +2714,9 @@ my_feedback_function_standalone = Feedback(my_standalone.my_custom_feedback).on(
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
-<span class="n">feedback_results</span> <span class="o">=</span> <span class="n">tru</span><span class="o">.</span><span class="n">run_feedback_functions</span><span class="p">(</span>
-    <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">,</span>
-    <span class="n">feedback_functions</span><span class="o">=</span><span class="p">[</span><span class="n">my_feedback_function_standalone</span><span class="p">]</span>
-<span class="p">)</span>
-<span class="n">tru</span><span class="o">.</span><span class="n">add_feedbacks</span><span class="p">(</span><span class="n">feedback_results</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">basic_app</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="s2">&quot;What is the phone number for HR?&quot;</span><span class="p">)</span>
 </pre></div>
-<div id="cell-3" class="clipboard-copy-txt">tru = Tru()
-feedback_results = tru.run_feedback_functions(
-    record=record,
-    feedback_functions=[my_feedback_function_standalone]
-)
-tru.add_feedbacks(feedback_results)</div>
+<div id="cell-3" class="clipboard-copy-txt">basic_app.call_with_record("What is the phone number for HR?")</div>
         
         </div>
     </div>
@@ -2137,6 +2724,18 @@ tru.add_feedbacks(feedback_results)</div>
 </div>
 </div>
 
+</div>
+</div>
+<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>Read more about TruBasicApp in the <a href="../api/trubasicapp">API reference</a> or check out the <a href="../no_framework_quickstart">non-framework quickstart</a>.</p>
+
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -2153,6 +2752,11 @@ tru.add_feedbacks(feedback_results)</div>
           
           
         </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+            Back to top
+          </button>
         
       </main>
       
@@ -2179,7 +2783,7 @@ tru.add_feedbacks(feedback_results)</div>
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.instant.prefetch", "navigation.sections", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../../assets/javascripts/bundle.a51614de.min.js"></script>
