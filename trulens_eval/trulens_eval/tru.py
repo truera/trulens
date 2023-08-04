@@ -78,7 +78,9 @@ class Tru(SingletonPerName):
             # Already initialized by SingletonByName mechanism.
             return
 
-        self.db = LocalSQLite(filename=Path(database_file or Tru.DEFAULT_DATABASE_FILE))
+        self.db = LocalSQLite(
+            filename=Path(database_file or Tru.DEFAULT_DATABASE_FILE)
+        )
 
     def reset_database(self):
         """
@@ -89,7 +91,7 @@ class Tru(SingletonPerName):
 
     def migrate_database(self):
         """
-        Migrates the database. 
+        Migrates the database. This should be run whenever there are breaking changes in a database created with an older version of trulens_eval.
         """
 
         self.db.migrate_database()
@@ -208,7 +210,11 @@ class Tru(SingletonPerName):
 
     def get_records_and_feedback(self, app_ids: List[str]):
         """
-        Get records, their feeback results, and feedback names from the database.
+        Get records, their feeback results, and feedback names from the database. Pass an empty list of app_ids to return all.
+
+        ```python
+        tru.get_records_and_feedback(app_ids=[])
+        ```
         """
 
         df, feedback_columns = self.db.get_records_and_feedback(app_ids)
@@ -401,8 +407,10 @@ class Tru(SingletonPerName):
             env_opts['env']['PYTHONPATH'] = str(_dev)
 
         proc = subprocess.Popen(
-            ["streamlit", "run", "--server.headless=True", leaderboard_path,
-             "--", "--database-file", self.db.filename],
+            [
+                "streamlit", "run", "--server.headless=True", leaderboard_path,
+                "--", "--database-file", self.db.filename
+            ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,

@@ -1,11 +1,13 @@
-from dataclasses import fields, is_dataclass
+from dataclasses import fields
+from dataclasses import is_dataclass
+from datetime import datetime
 from typing import Dict, Sequence
 from unittest import TestCase
 
 from pydantic import BaseModel
 
-from trulens_eval.util import JSON_BASES, JSONPath
-from datetime import datetime
+from trulens_eval.util import JSON_BASES
+from trulens_eval.util import JSONPath
 
 
 class JSONTestCase(TestCase):

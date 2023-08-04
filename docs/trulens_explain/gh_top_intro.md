@@ -2,7 +2,7 @@
 
 **TruLens-Explain** is a cross-framework library for deep learning explainability. It provides a uniform abstraction over a number of different frameworks. It provides a uniform abstraction layer over TensorFlow, Pytorch, and Keras and allows input and internal explanations.
 
-### Get going with TruLens-Explain
+### Installation and Setup
 
 These installation instructions assume that you have conda installed and added to your path.
 
@@ -24,7 +24,8 @@ conda install matplotlib        # For visualizations.
 pip install trulens
 ```
 
-3. Get started!
+### Quick Usage
+
 To quickly play around with the TruLens library, check out the following Colab notebooks:
 
 * PyTorch: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1n77IGrPDO2XpeIVo_LQW0gY78enV-tY9?usp=sharing)
