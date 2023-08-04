@@ -78,7 +78,9 @@ class Tru(SingletonPerName):
             # Already initialized by SingletonByName mechanism.
             return
 
-        self.db = LocalSQLite(filename=Path(database_file or Tru.DEFAULT_DATABASE_FILE))
+        self.db = LocalSQLite(
+            filename=Path(database_file or Tru.DEFAULT_DATABASE_FILE)
+        )
 
     def reset_database(self):
         """
@@ -405,8 +407,10 @@ class Tru(SingletonPerName):
             env_opts['env']['PYTHONPATH'] = str(_dev)
 
         proc = subprocess.Popen(
-            ["streamlit", "run", "--server.headless=True", leaderboard_path,
-             "--", "--database-file", self.db.filename],
+            [
+                "streamlit", "run", "--server.headless=True", leaderboard_path,
+                "--", "--database-file", self.db.filename
+            ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,

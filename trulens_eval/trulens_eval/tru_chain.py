@@ -40,13 +40,10 @@ class LangChainInstrument(Instrument):
 
         # Thunk because langchain is optional.
         CLASSES = lambda: {
-            langchain.chains.base.Chain,
-            langchain.vectorstores.base.BaseRetriever,
-            langchain.schema.BaseRetriever,
-            langchain.llms.base.BaseLLM,
-            langchain.prompts.base.BasePromptTemplate,
-            langchain.schema.BaseMemory,
-            langchain.schema.BaseChatMessageHistory
+            langchain.chains.base.Chain, langchain.vectorstores.base.
+            BaseRetriever, langchain.schema.BaseRetriever, langchain.llms.base.
+            BaseLLM, langchain.prompts.base.BasePromptTemplate, langchain.schema
+            .BaseMemory, langchain.schema.BaseChatMessageHistory
         }
 
         # Instrument only methods with these names and of these classes.
@@ -61,7 +58,9 @@ class LangChainInstrument(Instrument):
 
     def __init__(self):
         super().__init__(
-            root_methods=set([TruChain.call_with_record, TruChain.acall_with_record]),
+            root_methods=set(
+                [TruChain.call_with_record, TruChain.acall_with_record]
+            ),
             modules=LangChainInstrument.Default.MODULES,
             classes=LangChainInstrument.Default.CLASSES(),
             methods=LangChainInstrument.Default.METHODS
@@ -193,7 +192,9 @@ class TruChain(App):
     """
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.acall
-    async def acall_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs) -> Tuple[Any, Record]:
+    async def acall_with_record(
+        self, inputs: Union[Dict[str, Any], Any], **kwargs
+    ) -> Tuple[Any, Record]:
         """
         Run the chain and also return a record metadata object.
 
@@ -229,7 +230,7 @@ class TruChain(App):
             error = e
             logger.error(f"App raised an exception: {e}")
             logger.error(traceback.format_exc())
-            
+
         assert len(record) > 0, "No information recorded in call."
 
         ret_record_args = dict()
@@ -254,7 +255,8 @@ class TruChain(App):
         return ret, ret_record
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
-    def call_with_record(self, inputs: Union[Dict[str, Any], Any], **kwargs) -> Tuple[Any, Record]:
+    def call_with_record(self, inputs: Union[Dict[str, Any], Any],
+                         **kwargs) -> Tuple[Any, Record]:
         """
         Run the chain and also return a record metadata object.
 
@@ -314,7 +316,6 @@ class TruChain(App):
 
         return ret, ret_record
 
-    
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         """
         Wrapped call to self.app._call with instrumentation. If you need to
@@ -322,7 +323,7 @@ class TruChain(App):
         """
 
         return self._call(*args, **kwargs)
-    
+
     # langchain.chains.base.py:Chain requirement:
     def _call(self, *args, **kwargs) -> Any:
         ret, _ = self.call_with_record(*args, **kwargs)
