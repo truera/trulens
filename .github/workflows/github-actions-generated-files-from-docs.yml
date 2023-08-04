@@ -1,17 +1,17 @@
 name: GitHub Actions Generate Files from Docs Notebooks
-run-name: GitHub Actions Generate Files from Docs Notebooks 
+run-name: GitHub Actions Generate Files from Docs Notebooks
 on:
   push:
     branches:
       - main
     paths:
-      - 'docs/trulens_eval/gh_top_intro.md'
-      - 'docs/trulens_eval/trulens_eval_gh_top_readme.ipynb'
-      - 'trulens_eval/examples/frameworks/llama_index/llama_index_example.ipynb'
-      - 'trulens_eval/examples/quickstart.ipynb'
-      - 'trulens_eval/examples/logging.ipynb'
-      - 'trulens_eval/examples/feedback_functions.ipynb'
-      - '.github/workflows/*'
+      - "docs/trulens_eval/gh_top_intro.md"
+      - "docs/trulens_eval/trulens_eval_gh_top_readme.ipynb"
+      - "trulens_eval/examples/frameworks/llama_index/llama_index_example.ipynb"
+      - "trulens_eval/examples/langchain_quickstart.ipynb"
+      - "trulens_eval/examples/logging.ipynb"
+      - "trulens_eval/examples/custom_feedback_functions.ipynb"
+      - ".github/workflows/*"
 jobs:
   Generate-Docs-and-Testing-Files:
     runs-on: ubuntu-latest
@@ -35,15 +35,13 @@ jobs:
       - name: Commit Branch
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: Automated File Generation from Docs Notebook Changes 
+          commit_message: Automated File Generation from Docs Notebook Changes
           branch: generated_files_branch_${{ steps.date.outputs.date }}
-          status_options: '--untracked-files=normal'
-          add_options: '-A'
-          skip_dirty_check: true   
+          status_options: "--untracked-files=normal"
+          add_options: "-A"
+          skip_dirty_check: true
           create_branch: true
       - name: create pull request
         run: gh pr create -B main -H generated_files_branch_${{ steps.date.outputs.date }} --title 'Merge generated docs and test files into main' --body 'Created by Github action'
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-        
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
