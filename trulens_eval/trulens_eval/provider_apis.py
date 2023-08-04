@@ -377,7 +377,7 @@ class Endpoint(SerialModel, SingletonPerName):
                 e = OpenAIEndpoint()
                 endpoints.append(e)
             except:
-                logger.warning(
+                logger.debug(
                     "OpenAI API keys are not set. "
                     "Will not track usage."
                 )
@@ -387,7 +387,7 @@ class Endpoint(SerialModel, SingletonPerName):
                 e = HuggingfaceEndpoint()
                 endpoints.append(e)
             except:
-                logger.warning(
+                logger.debug(
                     "Huggingface API keys are not set. "
                     "Will not track usage."
                 )
