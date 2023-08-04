@@ -25,6 +25,8 @@
     - `langchain/` -- Examples using langchain as a framework.
  
         - `langchain_async.ipynb` -- How to use the streaming capability of Langchain and monitor the results using trulens.
+
+        - `langchain_agents.ipynb` -- How to use the agents capability of Langchain and evaluate tool coverage using trulens.
      
         - `langchain_groundtruth.ipynb` -- Evaluate an LangChain application using ground truth.
 
