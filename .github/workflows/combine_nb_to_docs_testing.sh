@@ -2,7 +2,7 @@ rm -rf break.md
 rm -rf alltools.ipynb
 
 # Combined notebook flow - will be tested
-nbmerge quickstart.ipynb logging.ipynb feedback_functions.ipynb >> all_tools.ipynb
+nbmerge langchain_quickstart.ipynb logging.ipynb custom_feedback_functions.ipynb >> all_tools.ipynb
 
 # Colab quickstarts
 nbmerge colab_dependencies.ipynb langchain_quickstart.ipynb >> langchain_quickstart_colab.ipynb
@@ -15,7 +15,6 @@ cat intro.md > README.md
 
 # Create top level readme from testable code trulens_eval_gh_top_readme.ipynb
 printf  "\n\n" >> break.md
-jupyter nbconvert --to markdown trulens_eval_gh_top_readme.ipynb
 cat gh_top_intro.md break.md ../trulens_explain/gh_top_intro.md > TOP_README.md
 
 # Create non-jupyter scripts
@@ -48,7 +47,3 @@ mv TOP_README.md ../../README.md
 mv *.py ../../trulens_eval/examples/
 mv *quickstart_colab.ipynb ../../trulens_eval/examples/colab/quickstarts/
 mv all_tools* ../../trulens_eval/generated_files/
-mv *langchain_quickstart_colab.ipynb ../../trulens_eval/examples/colab/quickstarts/
-mv llama_index_quickstart.py ../../trulens_eval/examples/llama_index_quickstart.py
-mv no_framework_quickstart.py ../../trulens_eval/examples/no_framework_quickstart.py
-mv *.py ../../trulens_eval/examples/
