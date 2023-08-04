@@ -47,7 +47,3 @@ mv TOP_README.md ../../README.md
 mv *.py ../../trulens_eval/examples/
 mv *quickstart_colab.ipynb ../../trulens_eval/examples/colab/quickstarts/
 mv all_tools* ../../trulens_eval/generated_files/
-mv *langchain_quickstart_colab.ipynb ../../trulens_eval/examples/colab/quickstarts/
-mv llama_index_quickstart.py ../../trulens_eval/examples/llama_index_quickstart.py
-mv no_framework_quickstart.py ../../trulens_eval/examples/no_framework_quickstart.py
-mv *.py ../../trulens_eval/examples/
