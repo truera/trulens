@@ -7,8 +7,10 @@ from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, Dict, List, Optional, Sequence,
-                    Tuple, Type, TypeVar)
+from typing import (
+    Any, Awaitable, Callable, Dict, List, Optional, Sequence, Tuple, Type,
+    TypeVar
+)
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation

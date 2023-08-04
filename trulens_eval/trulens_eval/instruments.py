@@ -379,7 +379,9 @@ class Instrument(object):
 
             def find_root_methods(f):
                 # TODO: generalize
-                return id(f) in set([id(rm.__code__) for rm in self.root_methods])
+                return id(f) in set(
+                    [id(rm.__code__) for rm in self.root_methods]
+                )
 
             # Look up whether the root instrumented method was called earlier in
             # the stack and "record" variable was defined there. Will use that
@@ -469,7 +471,9 @@ class Instrument(object):
 
             def find_root_methods(f):
                 # TODO: generalize
-                return id(f) in set([id(rm.__code__) for rm in self.root_methods])
+                return id(f) in set(
+                    [id(rm.__code__) for rm in self.root_methods]
+                )
 
             # Look up whether the root instrumented method was called earlier in
             # the stack and "record" variable was defined there. Will use that
@@ -544,7 +548,7 @@ class Instrument(object):
                 raise error
 
             return rets
-        
+
         w = wrapper
         if inspect.iscoroutinefunction(func):
             w = awrapper

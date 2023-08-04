@@ -6,7 +6,7 @@ hide:
 
 # 🦑 **Welcome to TruLens!**
 
-TruLens provides a set of tools for developing and monitoring neural nets, including large language models. This includes both tools for evaluation of LLMs and LLM-based applications with TruLens-Eval and deep learning explainability with TruLens-Explain. *TruLens-Eval* and *TruLens-Explain* are housed in separate packages and can be used independently.
+TruLens provides a set of tools for developing and monitoring neural nets, including large language models. This includes both tools for evaluation of LLMs and LLM-based applications with *TruLens-Eval* and deep learning explainability with *TruLens-Explain*. *TruLens-Eval* and *TruLens-Explain* are housed in separate packages and can be used independently.
 
 The best way to support TruLens is to give us a ⭐ and join our [slack community](https://communityinviter.com/apps/aiqualityforum/josh)!
 
@@ -24,11 +24,10 @@ TruLens-Eval has two key value propositions:
     * TruLens' instrumentation can be applied to any LLM application without being tied down to a given framework. Additionally, deep integrations with [LangChain]() and [Llama-Index]() allow the capture of internal metadata and text.
     * Anything that is tracked by the instrumentation can be evaluated!
 
-The process for building your evaluated and tracked LLM application with TruLens is below 👇
-
+The process for building your evaluated and tracked LLM application with TruLens is shown below 👇
 ![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
 
-### Get going with TruLens-Eval
+### Installation and setup
 
 Install trulens-eval from PyPI.
 
@@ -36,34 +35,37 @@ Install trulens-eval from PyPI.
 pip install trulens-eval
 ```
 
+### Quick Usage
+
 TruLens supports the evaluation of tracking for any LLM app framework. Choose a framework below to get started:
 
 **Langchain**
 
-[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/quickstart.ipynb).
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/colab/quickstarts/langchain_quickstart_colab.ipynb)
+[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.8.0/trulens_eval/examples/quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.8.0/trulens_eval/examples/colab/quickstarts/langchain_quickstart_colab.ipynb)
 
-[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/quickstart.py).
+[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.8.0/trulens_eval/examples/quickstart.py).
 
 **Llama-Index**
 
-[llama_index_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/frameworks/llama_index/llama_index_quickstart.ipynb).
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/colab/quickstarts/llama_index_quickstart_colab.ipynb)
+[llama_index_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.8.0/trulens_eval/examples/frameworks/llama_index/llama_index_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.8.0/trulens_eval/examples/colab/quickstarts/llama_index_quickstart_colab.ipynb)
 
-[llama_index_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/llama_index_quickstart.py)
+[llama_index_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.8.0/trulens_eval/examples/llama_index_quickstart.py)
 
 **No Framework**
 
-[no_framework_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/no_framework_quickstart.ipynb).
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/colab/quickstarts/no_framework_quickstart_colab.ipynb)
+[no_framework_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.8.0/trulens_eval/examples/no_framework_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.8.0/trulens_eval/examples/colab/quickstarts/no_framework_quickstart_colab.ipynb)
 
-[no_framework_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/no_framework_quickstart.py)
+[no_framework_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.8.0/trulens_eval/examples/no_framework_quickstart.py)
+
 
 ## TruLens-Explain
 
 **TruLens-Explain** is a cross-framework library for deep learning explainability. It provides a uniform abstraction over a number of different frameworks. It provides a uniform abstraction layer over TensorFlow, Pytorch, and Keras and allows input and internal explanations.
 
-### Get going with TruLens-Explain
+### Installation and Setup
 
 These installation instructions assume that you have conda installed and added to your path.
 
@@ -85,7 +87,8 @@ conda install matplotlib        # For visualizations.
 pip install trulens
 ```
 
-3. Get started!
+### Quick Usage
+
 To quickly play around with the TruLens library, check out the following Colab notebooks:
 
 * PyTorch: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1n77IGrPDO2XpeIVo_LQW0gY78enV-tY9?usp=sharing)

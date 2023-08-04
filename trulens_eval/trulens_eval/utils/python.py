@@ -2,8 +2,8 @@
 Utilities related to core python functionalities.
 """
 
-import inspect
 import asyncio
+import inspect
 from typing import Callable, Sequence, TypeVar
 
 T = TypeVar("T")
@@ -40,15 +40,19 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence['frame']:
 
     return task
 
+
 # Instrument new_event_loop to set the above task_factory upon creation:
 original_new_event_loop = asyncio.events.new_event_loop
+
 
 def _new_event_loop():
     loop = original_new_event_loop()
     loop.set_task_factory(task_factory_with_stack)
     return loop
 
+
 asyncio.events.new_event_loop = _new_event_loop
+
 
 def get_task_stack(task: asyncio.Task) -> Sequence['frame']:
     """
@@ -93,15 +97,12 @@ def stack_with_tasks() -> Sequence['frame']:
     across Tasks.
     """
 
-    ret = [fi.frame for fi in inspect.stack()[1:]] # skip stack_with_task_stack
+    ret = [fi.frame for fi in inspect.stack()[1:]]  # skip stack_with_task_stack
 
     try:
         task_stack = get_task_stack(asyncio.current_task())
 
-        return merge_stacks(
-            ret,  
-            task_stack
-        )
-    
+        return merge_stacks(ret, task_stack)
+
     except:
         return ret
