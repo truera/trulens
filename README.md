@@ -1,14 +1,30 @@
-# Welcome to TruLens!
+---
+hide:
+  - navigation
+  - toc
+---
 
-![TruLens](https://www.trulens.org/Assets/image/Neural_Network_Explainability.png)
+# 🦑 **Welcome to TruLens!**
 
-TruLens provides a set of tools for developing and monitoring neural nets, including large language models. This includes both tools for evaluation of LLMs and LLM-based applications with TruLens-Eval and deep learning explainability with TruLens-Explain. TruLens-Eval and TruLens-Explain are housed in separate packages and can be used independently.
+TruLens provides a set of tools for developing and monitoring neural nets, including large language models. This includes both tools for evaluation of LLMs and LLM-based applications with TruLens-Eval and deep learning explainability with TruLens-Explain. *TruLens-Eval* and *TruLens-Explain* are housed in separate packages and can be used independently.
 
 The best way to support TruLens is to give us a ⭐ and join our [slack community](https://communityinviter.com/apps/aiqualityforum/josh)!
 
 ## TruLens-Eval
 
 **TruLens-Eval** contains instrumentation and evaluation tools for large language model (LLM) based applications. It supports the iterative development and monitoring of a wide range of LLM applications by wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine. Importantly, it also gives you the tools you need to evaluate the quality of your LLM-based applications.
+
+TruLens-Eval has two key value propositions:
+
+1. Evaluation:
+    * TruLens supports the the evaluation of inputs, outputs and internals of your LLM application using any model (including LLMs). 
+    * A number of feedback functions for evaluation are implemented out-of-the-box such as groundedness, relevance and toxicity. The framework is also easily extensible for custom evaluation requirements.
+2. Tracking:
+    * TruLens contains instrumentation for any LLM application including question answering, retrieval-augmented generation, agent-based applications and more. This instrumentation allows for the tracking of a wide variety of usage metrics and metadata. Read more in the [instrumentation overview](basic_instrumentation.ipynb).
+    * TruLens' instrumentation can be applied to any LLM application without being tied down to a given framework. Additionally, deep integrations with [LangChain]() and [Llama-Index]() allow the capture of internal metadata and text.
+    * Anything that is tracked by the instrumentation can be evaluated!
+
+The process for building your evaluated and tracked LLM application with TruLens is below 👇
 
 ![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
 
@@ -20,90 +36,28 @@ Install trulens-eval from PyPI.
 pip install trulens-eval
 ```
 
+TruLens supports the evaluation of tracking for any LLM app framework. Choose a framework below to get started:
 
-```python
-from trulens_eval import Tru
-from trulens_eval import TruChain
+**Langchain**
 
-tru = Tru()
-```
+[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/colab/quickstarts/langchain_quickstart_colab.ipynb)
 
-This example uses LangChain and OpenAI, but the same process can be followed with any framework and model provider.
+[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/quickstart.py).
 
+**Llama-Index**
 
-```python
-# imports from LangChain to build app
-from langchain import PromptTemplate
-from langchain.chains import LLMChain
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts.chat import ChatPromptTemplate
-from langchain.prompts.chat import HumanMessagePromptTemplate
+[llama_index_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/frameworks/llama_index/llama_index_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/colab/quickstarts/llama_index_quickstart_colab.ipynb)
 
-import os
-os.environ["OPENAI_API_KEY"] = "..."
-os.environ["HUGGINGFACE_API_KEY"] = "..."
-```
+[llama_index_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/llama_index_quickstart.py)
 
+**No Framework**
 
-```python
-# create LLM chain
-full_prompt = HumanMessagePromptTemplate(
-    prompt=PromptTemplate(
-        template="Provide a helpful response with relevant background information for the following: {prompt}",
-            input_variables=["prompt"],
-        )
-    )
-chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
+[no_framework_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/no_framework_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/colab/quickstarts/no_framework_quickstart_colab.ipynb)
 
-chat = ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0.9)
-
-chain = LLMChain(llm=chat, prompt=chat_prompt_template)
-```
-
-Now that we created an LLM chain, we can set up our first feedback function. Here, we'll create a feedback function for language matching. After we've created the feedback function, we can include it in the TruChain wrapper. Now, whenever our wrapped chain is used we'll log both the metadata and feedback.
-
-
-```python
-# create a feedback function
-
-from trulens_eval.feedback import Feedback, Huggingface
-```
-
-
-```python
-# Initialize HuggingFace-based feedback function collection class:
-hugs = Huggingface()
-
-# Define a language match feedback function using HuggingFace.
-f_lang_match = Feedback(hugs.language_match).on_input_output()
-# By default this will check language match on the main app input and main app
-# output.
-
-# wrap your chain with TruChain
-truchain = TruChain(
-    chain,
-    app_id='Chain1_ChatApplication',
-    feedbacks=[f_lang_match]
-)
-# Note: any `feedbacks` specified here will be evaluated and logged whenever the chain is used.
-truchain("que hora es?")
-```
-
-Now you can explore your LLM-based application!
-
-Doing so will help you understand how your LLM application is performing at a glance. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up. You'll also be able to view evaluations at a record level, and explore the chain metadata for each record.
-
-
-```python
-tru.run_dashboard() # open a Streamlit app to explore
-```
-
-Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
-
-For more information, see [TruLens-Eval Documentation](https://www.trulens.org/trulens_eval/quickstart/).
-
-
-
+[no_framework_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.7.0/trulens_eval/examples/no_framework_quickstart.py)
 
 ## TruLens-Explain
 

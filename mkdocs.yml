@@ -1,4 +1,8 @@
 site_name: TruLens
+site_description: Evaluate and track LLM applications. Explain Deep Neural Nets.
+
+repo_name: truera/trulens
+repo_url: https://github.com/truera/trulens
 
 markdown_extensions:
   # https://squidfunk.github.io/mkdocs-material/reference/mathjax/
@@ -47,6 +51,8 @@ plugins:
 
 theme:
   name: material
+  icon:
+    repo: fontawesome/brands/github
   custom_dir: docs/overrides/
   palette:
     scheme: trulens
@@ -55,30 +61,59 @@ theme:
   favicon: img/favicon.ico
   logo: img/squid.png
   features:
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.prefetch
     - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - navigation.path
+    - search.share
+    - search.suggest
+    - toc.follow
 
 nav:
   - Home: index.md
   - Welcome to TruLens!: welcome.md
   - Eval:
-      - Installation: trulens_eval/install.md
-      - Quickstart: trulens_eval/quickstart.ipynb
-      - Feedback Functions:
-          - Overview: trulens_eval/feedback_functions.ipynb
-          - Smoke Tests:
-              - Prompt Response Relevance: trulens_eval/pr_relevance_smoke_tests.ipynb
-              - Question Statement Relevance: trulens_eval/qs_relevance_smoke_tests.ipynb
-      - Logging: trulens_eval/logging.ipynb
-      - API Reference:
-          - Tru: trulens_eval/api/tru.md
-          - TruBasicApp: trulens_eval/api/trubasicapp.md
-          - TruChain: trulens_eval/api/truchain.md
-          - TruLlama: trulens_eval/api/trullama.md
-          - Feedback Functions: trulens_eval/api/feedback.md
+      - Getting Started:
+          - 🚀 Installation: trulens_eval/install.md
+          - ⚡ Quickstarts:
+              - LangChain Quickstart: trulens_eval/langchain_quickstart.ipynb
+              - Llama-Index Quickstart: trulens_eval/llama_index_quickstart.ipynb
+              - No Framework Quickstart: trulens_eval/no_framework_quickstart.ipynb
+      - Evaluation:
+          - 🎯 Feedback Functions:
+              - Function Definitions: trulens_eval/function_definitions.md
+              - Custom Feedback Functions: trulens_eval/custom_feedback_functions.ipynb
+              - Smoke Tests:
+                  - Prompt Response Relevance: trulens_eval/pr_relevance_smoke_tests.ipynb
+                  - Question Statement Relevance: trulens_eval/qs_relevance_smoke_tests.ipynb
+          - 📚 API Reference:
+              - Feedback Functions: trulens_eval/api/feedback.md
+      - Tracking:
+          - 🎺 Instrumentation:
+              - Overview: trulens_eval/basic_instrumentation.ipynb
+              - LangChain Integration: trulens_eval/langchain_instrumentation.ipynb
+              - Llama-Index Integration: trulens_eval/llama_index_instrumentation.ipynb
+          - 🚚 Logging:
+              - Logging Methods: trulens_eval/logging.ipynb
+          - 📚 API Reference:
+              - Tru: trulens_eval/api/tru.md
+              - TruBasicApp: trulens_eval/api/trubasicapp.md
+              - TruChain: trulens_eval/api/truchain.md
+              - TruLlama: trulens_eval/api/trullama.md
+              - AppDefinition: trulens_eval/api/appdefinition.md
+      - Contributing:
+          - 🤝 Contrbution Guidelines: trulens_eval/CONTRIBUTING.md
+
   - Explain:
-      - Installation: trulens_explain/install.md
-      - Quickstart: trulens_explain/quickstart.md
-      - Attributions for Different Use Cases: trulens_explain/attribution_parameterization.md
+      - Getting Started:
+          - 🚀 Installation: trulens_explain/install.md
+          - ⚡ Quickstart: trulens_explain/quickstart.md
+      - Attributions: trulens_explain/attribution_parameterization.md
       - API Reference:
           - Attribution: trulens_explain/api/attribution.md
           - Models: trulens_explain/api/model_wrappers.md
