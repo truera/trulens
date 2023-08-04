@@ -62,8 +62,6 @@ theme:
   logo: img/squid.png
   features:
     - navigation.indexes
-    - navigation.instant
-    - navigation.instant.prefetch
     - navigation.sections
     - navigation.tabs
     - navigation.tabs.sticky
