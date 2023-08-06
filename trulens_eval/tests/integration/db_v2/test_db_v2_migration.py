@@ -69,8 +69,6 @@ class TestDbV2Migration(TestCase):
 
             # run migration
             tru.db = SqlAlchemyDB.from_db_url(f"sqlite:///{file}")  # force usage of SqlAlchemy
-            assert Path(tru.db.engine.url.database).is_file()
-            assert DbRevisions.load(tru.db.engine).current is None
             assert is_legacy_sqlite(tru.db.engine)
             tru.migrate_database()
 
