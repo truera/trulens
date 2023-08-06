@@ -1,5 +1,19 @@
 # Deprecation Notes
 
+## Changes in 0.8.0
+
+### Backwards compatible
+
+- New storage class `Conversation` for handling record sequences.
+
+### Breaking changes to databases
+
+- Records table has new columns: `convo_id` and `prior_record_id` for the new
+  conversation tracking features. 
+
+- Reordered record table columns to start with `app_id`, `convo_id`,
+  `record_id`. 
+
 ## Changes in 0.7.0
 
 ### Backwards compatible
