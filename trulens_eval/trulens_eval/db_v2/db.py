@@ -60,15 +60,23 @@ class SqlAlchemyDB(DB):
 
     def insert_app(self, app: schema.AppDefinition) -> schema.AppID:
         with self.Session.begin() as session:
-            if _app := session.query(models.App).filter_by(app_id=app.app_id).first():
+            if _app := session.query(models.AppDefinition).filter_by(app_id=app.app_id).first():
                 _app.app_json = app.json()
             else:
-                _app = models.App.parse(app)
+                _app = models.AppDefinition.parse(app)
                 session.add(_app)
             return _app.app_id
 
     def insert_feedback_definition(self, feedback_definition: schema.FeedbackDefinition) -> schema.FeedbackDefinitionID:
-        pass  # TODO: impl
+        with self.Session.begin() as session:
+            if _fb_def := session.query(models.FeedbackDefinition) \
+                    .filter_by(feedback_definition_id=feedback_definition.feedback_definition_id) \
+                    .first():
+                _fb_def.app_json = feedback_definition.json()
+            else:
+                _fb_def = models.FeedbackDefinition.parse(feedback_definition)
+                session.add(_fb_def)
+            return _fb_def.app_id
 
     def insert_feedback(self, feedback_result: schema.FeedbackResult) -> schema.FeedbackResultID:
         pass  # TODO: impl

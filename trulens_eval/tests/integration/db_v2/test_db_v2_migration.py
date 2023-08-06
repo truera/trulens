@@ -2,7 +2,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase, main
 
-from trulens_eval import Tru, TruBasicApp
+from trulens_eval import Tru, TruBasicApp, Feedback, Provider
 from trulens_eval.db import LocalSQLite
 from trulens_eval.db_v2.db import SqlAlchemyDB
 from trulens_eval.db_v2.utils import is_legacy_sqlite
@@ -65,7 +65,8 @@ class TestDbV2Migration(TestCase):
             tru.db = legacy_db  # force usage of legacy db
 
             # populate the database with some legacy data
-            app = TruBasicApp(text_to_text=lambda x: x, app_id="test", db=legacy_db)
+            fb = Feedback(MockFeedback().length).on_output()
+            app = TruBasicApp(text_to_text=lambda x: x, app_id="test", db=legacy_db, feedbacks=[fb])
             app.call_with_record("boo")
 
             # run migration
@@ -79,7 +80,17 @@ class TestDbV2Migration(TestCase):
 
             # check that database is usable and no data was lost # TODO: check other tables too
             with tru.db.Session.begin() as session:
-                assert session.query(models.App).filter_by(app_id="test").one().app_json == app.json()
+                assert session.query(models.AppDefinition) \
+                    .filter_by(app_id=app.app_id) \
+                    .one().app_json == app.json()
+                assert session.query(models.FeedbackDefinition) \
+                    .filter_by(feedback_definition_id=fb.feedback_definition_id) \
+                    .one().feedback_json == fb.json()
+
+
+class MockFeedback(Provider):
+    def length(self, text: str) -> float:  # noqa
+        return float(len(text))
 
 
 if __name__ == '__main__':

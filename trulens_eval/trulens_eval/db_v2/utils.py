@@ -120,7 +120,7 @@ def migrate_legacy_sqlite(engine: Engine):
         # 3. Copy records from original database to staging
         src_conn = sqlite3.connect(original_file)
         tgt_conn = sqlite3.connect(stg_file)
-        for table in ["apps"]:  # legacy_db.TABLES:  # TODO: copy other tables too
+        for table in ["apps", "feedback_defs"]:  # legacy_db.TABLES:  # TODO: copy other tables too
             logger.debug("Copying table '%s'", table)
             df = pd.read_sql_query(f"SELECT * FROM {table}", src_conn)
             df.to_sql(table, tgt_conn, index=False, if_exists="append")
@@ -158,7 +158,7 @@ def _copy_database(src_url: str, tgt_url: str):
     tgt = SqlAlchemyDB.from_db_url(tgt_url)
     check_db_revision(tgt.engine)
 
-    for table in ["apps"]:  # legacy_db.TABLES:  # TODO: copy other tables too
+    for table in ["apps", "feedback_defs"]:  # legacy_db.TABLES:  # TODO: copy other tables too
         with src.engine.begin() as src_conn:
             with tgt.engine.begin() as tgt_conn:
                 df = pd.read_sql_query(f"SELECT * FROM {table}", src_conn)
