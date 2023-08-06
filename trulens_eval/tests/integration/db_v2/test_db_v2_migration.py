@@ -4,7 +4,8 @@ from unittest import TestCase, main
 
 from trulens_eval import Tru, TruBasicApp
 from trulens_eval.db import LocalSQLite
-from trulens_eval.db_v2.db import SqlAlchemyDB, is_legacy_sqlite
+from trulens_eval.db_v2.db import SqlAlchemyDB
+from trulens_eval.db_v2.utils import is_legacy_sqlite
 from trulens_eval.db_v2.migrations import migrate_db, DbRevisions, get_revision_history
 from trulens_eval.db_v2 import models
 

@@ -1,6 +1,18 @@
 import inspect
 import logging
+import shutil
+import sqlite3
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Optional, List, Callable
+
+import pandas as pd
+from sqlalchemy import Engine, create_engine
+
+from trulens_eval.db import LocalSQLite
+from trulens_eval.db_v2.exceptions import DatabaseVersionException
+
+from trulens_eval.db_v2.migrations import DbRevisions, migrate_db
 
 logger = logging.getLogger(__name__)
 
@@ -31,3 +43,123 @@ def run_before(callback: Callable):
             return func(*args, **kwargs)
         return wrapper
     return decorator
+
+
+def is_legacy_sqlite(engine: Engine) -> bool:
+    """Check if DB is an existing file-based SQLite
+    that was never handled with Alembic"""
+    return (
+            engine.url.drivername.startswith("sqlite")  # The database type is SQLite
+            and Path(engine.url.database).is_file()  # The database location is an existing file
+            and DbRevisions.load(engine).current is None  # Alembic could not determine the revision
+    )
+
+
+def is_memory_sqlite(engine: Engine) -> bool:
+    """Check if DB is an in-memory SQLite instance"""
+    return (
+            engine.url.drivername.startswith("sqlite")  # The database type is SQLite
+            and engine.url.database == ":memory:"  # The database storage is in memory
+    )
+
+
+def check_db_revision(engine: Engine):
+    """Check if database schema is at the expected revision"""
+    if is_legacy_sqlite(engine):
+        logger.info("Found legacy SQLite file: %s", engine.url.database)
+        raise DatabaseVersionException.behind()
+
+    revisions = DbRevisions.load(engine)
+
+    if revisions.current is None:
+        logger.debug("Creating database")
+        migrate_db(engine, revision="head")  # create automatically if it doesn't exist
+    elif revisions.in_sync:
+        logger.debug("Database schema is up to date: %s", revisions)
+    elif revisions.behind:
+        raise DatabaseVersionException.behind()
+    elif revisions.ahead:
+        raise DatabaseVersionException.ahead()
+    else:
+        raise NotImplementedError(f"Cannot handle database revisions: {revisions}")
+
+
+def migrate_legacy_sqlite(engine: Engine):
+    """Migrate legacy file-based SQLite to the latest Alembic revision:
+
+    Migration plan:
+        1. Make sure that original database is at the latest legacy schema
+        2. Create empty staging database at the first Alembic revision
+        3. Copy records from original database to staging
+        4. Migrate staging database to the latest Alembic revision
+        5. Replace original database file with the staging one
+
+    Assumptions:
+        1. The latest legacy schema is not identical to the first Alembic revision,
+           so it is not safe to apply the Alembic migration scripts directly (e.g.:
+           TEXT fields used as primary key needed to be changed to VARCHAR due to
+           limitations in MySQL).
+        2. The latest legacy schema is similar enough to the first Alembic revision,
+           and SQLite typing is lenient enough, so that the data exported from the
+           original database can be loaded into the staging one.
+    """
+    # 1. Make sure that original database is at the latest legacy schema
+    assert is_legacy_sqlite(engine)
+    original_file = Path(engine.url.database)
+    logger.info("Handling legacy SQLite file: %s", original_file)
+    logger.debug("Applying legacy migration scripts")
+    LocalSQLite(filename=original_file).migrate_database()
+
+    with TemporaryDirectory() as tmp:
+        # 2. Create empty staging database at first Alembic revision
+        stg_file = Path(tmp).joinpath("migration-staging.sqlite")
+        logger.debug("Creating staging DB at %s", stg_file)
+        stg_engine = create_engine(f"sqlite:///{stg_file}")
+        migrate_db(stg_engine, revision="1")
+
+        # 3. Copy records from original database to staging
+        src_conn = sqlite3.connect(original_file)
+        tgt_conn = sqlite3.connect(stg_file)
+        for table in ["apps"]:  # legacy_db.TABLES:  # TODO: copy other tables too
+            logger.debug("Copying table '%s'", table)
+            df = pd.read_sql_query(f"SELECT * FROM {table}", src_conn)
+            df.to_sql(table, tgt_conn, index=False, if_exists="append")
+
+        # 4. Migrate staging database to the latest Alembic revision
+        logger.debug("Applying Alembic migration scripts")
+        migrate_db(stg_engine, revision="head")
+
+        # 5. Replace original database file with the staging one
+        logger.debug("Replacing database file at %s", original_file)
+        shutil.copyfile(stg_file, original_file)
+
+
+def _copy_database(src_url: str, tgt_url: str):
+    """Copy all data from a source database to an EMPTY target database.
+
+    Important considerations:
+        - All source data will be appended to the target tables,
+          so it is important that the target database is empty.
+
+        - Will fail if the databases are not at the latest schema revision.
+          That can be fixed with `Tru(database_url="...").migrate_database()`
+
+        - Might fail if the target database enforces relationship constraints,
+          because then the order of inserting data matters.
+
+        - This process is NOT transactional, so it is highly recommended
+          that the databases are NOT used by anyone while this process runs.
+    """
+    from trulens_eval.db_v2.db import SqlAlchemyDB
+
+    src = SqlAlchemyDB.from_db_url(src_url)
+    check_db_revision(src.engine)
+
+    tgt = SqlAlchemyDB.from_db_url(tgt_url)
+    check_db_revision(tgt.engine)
+
+    for table in ["apps"]:  # legacy_db.TABLES:  # TODO: copy other tables too
+        with src.engine.begin() as src_conn:
+            with tgt.engine.begin() as tgt_conn:
+                df = pd.read_sql_query(f"SELECT * FROM {table}", src_conn)
+                df.to_sql(table, tgt_conn, index=False, if_exists="append")

@@ -22,15 +22,19 @@ tru.migrate_database()
 ## Migrating between databases
 Have a look at the help text for `_copy_database` and take into
 account all the items under the section `Important considerations`:
+
 ```python
-from trulens_eval.db_v2.db import _copy_database
+
+from trulens_eval.db_v2.utils import _copy_database
 
 help(_copy_database)
 ```
 
 Copy all data from the source database into an EMPTY target database:
+
 ```python
-from trulens_eval.db_v2.db import _copy_database
+
+from trulens_eval.db_v2.utils import _copy_database
 
 _copy_database(
     src_url="<source_db_url>",
