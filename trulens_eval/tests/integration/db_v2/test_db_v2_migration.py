@@ -2,10 +2,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase, main
 
-from trulens_eval import Tru
+from trulens_eval import Tru, TruBasicApp
 from trulens_eval.db import LocalSQLite
 from trulens_eval.db_v2.db import SqlAlchemyDB, is_legacy_sqlite
 from trulens_eval.db_v2.migrations import migrate_db, DbRevisions, get_revision_history
+from trulens_eval.db_v2 import models
 
 
 class TestDbV2Migration(TestCase):
@@ -20,10 +21,10 @@ class TestDbV2Migration(TestCase):
             "postgresql+psycopg2://pg-test-user:pg-test-pswd@localhost/pg-test-db",
         )
 
-    # def test_db_v2_migration_mysql(self):
-    #     self._test_db_v2_migrations(
-    #         "mysql+pymysql://mysql-test-user:mysql-test-pswd@localhost/mysql-test-db",
-    #     )
+    def test_db_v2_migration_mysql(self):
+        self._test_db_v2_migrations(
+            "mysql+pymysql://mysql-test-user:mysql-test-pswd@localhost/mysql-test-db",
+        )
 
     @classmethod
     def _test_db_v2_migrations(cls, url: str):
@@ -53,21 +54,33 @@ class TestDbV2Migration(TestCase):
         assert revisions.current == history[0]
 
     def test_migrate_legacy_sqlite_file(self):
+        tru = Tru()
         with TemporaryDirectory() as tmp:
             file = Path(tmp).joinpath("legacy.sqlite")
 
-            # trigger database creation
-            LocalSQLite(filename=file)
+            # trigger legacy database creation
+            legacy_db = LocalSQLite(filename=file)
             assert file.exists() and file.is_file()
+            tru.db = legacy_db  # force usage of legacy db
+
+            # populate the database with some legacy data
+            app = TruBasicApp(text_to_text=lambda x: x, app_id="test", db=legacy_db)
+            app.call_with_record("boo")
 
             # run migration
-            tru = Tru(database_file=str(file))
+            tru.db = SqlAlchemyDB.from_db_url(f"sqlite:///{file}")  # force usage of SqlAlchemy
+            assert Path(tru.db.engine.url.database).is_file()
+            assert DbRevisions.load(tru.db.engine).current is None
             assert is_legacy_sqlite(tru.db.engine)
             tru.migrate_database()
 
             # validate final state
             assert not is_legacy_sqlite(tru.db.engine)
             assert DbRevisions.load(tru.db.engine).in_sync
+
+            # check that database is usable and no data was lost # TODO: check other tables too
+            with tru.db.Session.begin() as session:
+                assert session.query(models.App).filter_by(app_id="test").one().app_json == app.json()
 
 
 if __name__ == '__main__':

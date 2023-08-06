@@ -20,7 +20,6 @@ services:
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "pg-test-db"]
       <<: *healthcheck
-    restart: always
     ports:
       - "5432:5432"
 
@@ -34,6 +33,5 @@ services:
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       <<: *healthcheck
-    restart: always
     ports:
       - "3306:3306"

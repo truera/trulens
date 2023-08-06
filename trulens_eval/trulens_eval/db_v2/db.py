@@ -1,19 +1,22 @@
 import logging
+import shutil
+import sqlite3
 import warnings
 from enum import Enum
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import List, Tuple, Sequence
 
 import pandas as pd
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import sessionmaker
 
+from trulens_eval import schema
 from trulens_eval.db import DB
 from trulens_eval.db import LocalSQLite
-from trulens_eval.db_v2.migrations import migrate_db, set_db_revision, DbRevisions
+from trulens_eval.db_v2 import models
+from trulens_eval.db_v2.migrations import migrate_db, DbRevisions
 from trulens_eval.db_v2.utils import for_all_methods, run_before
-from trulens_eval.schema import FeedbackResult, FeedbackResultID, FeedbackDefinition, FeedbackDefinitionID, \
-    AppDefinition, AppID, Record, RecordID
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +37,85 @@ def is_memory_sqlite(engine: Engine) -> bool:
             engine.url.drivername.startswith("sqlite")  # The database type is SQLite
             and engine.url.database == ":memory:"  # The database storage is in memory
     )
+
+
+def migrate_legacy_sqlite(engine: Engine):
+    """Migrate legacy file-based SQLite to the latest Alembic revision:
+
+    Migration plan:
+        1. Make sure that original database is at the latest legacy schema
+        2. Create empty staging database at the first Alembic revision
+        3. Copy records from original database to staging
+        4. Migrate staging database to the latest Alembic revision
+        5. Replace original database file with the staging one
+
+    Assumptions:
+        1. The latest legacy schema is not identical to the first Alembic revision,
+           so it is not safe to apply the Alembic migration scripts directly (e.g.:
+           TEXT fields used as primary key needed to be changed to VARCHAR due to
+           limitations in MySQL).
+        2. The latest legacy schema is similar enough to the first Alembic revision,
+           and SQLite typing is lenient enough, so that the data exported from the
+           original database can be loaded into the staging one.
+    """
+    # 1. Make sure that original database is at the latest legacy schema
+    assert is_legacy_sqlite(engine)
+    original_file = Path(engine.url.database)
+    logger.info("Handling legacy SQLite file: %s", original_file)
+    logger.debug("Applying legacy migration scripts")
+    LocalSQLite(filename=original_file).migrate_database()
+
+    with TemporaryDirectory() as tmp:
+        # 2. Create empty staging database at first Alembic revision
+        stg_file = Path(tmp).joinpath("migration-staging.sqlite")
+        logger.debug("Creating staging DB at %s", stg_file)
+        stg_engine = create_engine(f"sqlite:///{stg_file}")
+        migrate_db(stg_engine, revision="1")
+
+        # 3. Copy records from original database to staging
+        src_conn = sqlite3.connect(original_file)
+        tgt_conn = sqlite3.connect(stg_file)
+        for table in ["apps"]:  # legacy_db.TABLES:  # TODO: copy other tables too
+            logger.debug("Copying table '%s'", table)
+            df = pd.read_sql_query(f"SELECT * FROM {table}", src_conn)
+            df.to_sql(table, tgt_conn, index=False, if_exists="append")
+
+        # 4. Migrate staging database to the latest Alembic revision
+        logger.debug("Applying Alembic migration scripts")
+        migrate_db(stg_engine, revision="head")
+
+        # 5. Replace original database file with the staging one
+        logger.debug("Replacing database file at %s", original_file)
+        shutil.copyfile(stg_file, original_file)
+
+
+def _copy_database(src_url: str, tgt_url: str):
+    """Copy all data from a source database to an EMPTY target database.
+
+    Important considerations:
+        - All source data will be appended to the target tables,
+          so it is important that the target database is empty.
+
+        - Will fail if the databases are not at the latest schema revision.
+          That can be fixed with `Tru(database_url="...").migrate_database()`
+
+        - Might fail if the target database enforces relationship constraints,
+          because then the order of inserting data matters.
+
+        - This process is NOT transactional, so it is highly recommended
+          that the databases are NOT used by anyone while this process runs.
+    """
+    src = SqlAlchemyDB.from_db_url(src_url)
+    check_db_revision(src.engine)
+
+    tgt = SqlAlchemyDB.from_db_url(tgt_url)
+    check_db_revision(tgt.engine)
+
+    for table in ["apps"]:  # legacy_db.TABLES:  # TODO: copy other tables too
+        with src.engine.begin() as src_conn:
+            with tgt.engine.begin() as tgt_conn:
+                df = pd.read_sql_query(f"SELECT * FROM {table}", src_conn)
+                df.to_sql(table, tgt_conn, index=False, if_exists="append")
 
 
 def check_db_revision(engine: Engine):
@@ -80,25 +162,11 @@ class SqlAlchemyDB(DB):
             ))
 
     def migrate_database(self):
-        """Migrate database schema to the latest revision
-
-        If database is a legacy SQLite file, this will:
-            1. Apply the legacy migration scripts in order to
-               bring the database to the latest legacy schema.
-            2. Stamp the database with revision "1", so Alembic
-               will recognize that it is at the first revision.
-            3. Apply any remaining Alembic migration scripts
-               from current revision up to "head" (latest).
-
-        In any other scenarios, only step 3 is applied.
-        If the database is new, step 3 will bring it from
-        revision `None` to "1", then move on until "head".
-        """
+        """Migrate database schema to the latest revision"""
         if is_legacy_sqlite(self.engine):
-            logger.info("Handling legacy SQLite file: %s", self.engine.url.database)
-            LocalSQLite(filename=Path(self.engine.url.database)).migrate_database()  # step 1
-            set_db_revision(self.engine, revision="1")  # step 2
-        migrate_db(self.engine, revision="head")  # step 3
+            migrate_legacy_sqlite(self.engine)
+        else:
+            migrate_db(self.engine, revision="head")
 
     @classmethod
     def from_db_url(cls, url: str, **kwargs) -> "SqlAlchemyDB":
@@ -110,16 +178,22 @@ class SqlAlchemyDB(DB):
             "Please perform this operation by connecting to the database directly"
         )
 
-    def insert_record(self, record: Record) -> RecordID:
+    def insert_record(self, record: schema.Record) -> schema.RecordID:
         pass  # TODO: impl
 
-    def insert_app(self, app: AppDefinition) -> AppID:
+    def insert_app(self, app: schema.AppDefinition) -> schema.AppID:
+        with self.Session.begin() as session:
+            if _app := session.query(models.App).filter_by(app_id=app.app_id).first():
+                _app.app_json = app.json()
+            else:
+                _app = models.App.parse(app)
+                session.add(_app)
+            return _app.app_id
+
+    def insert_feedback_definition(self, feedback_definition: schema.FeedbackDefinition) -> schema.FeedbackDefinitionID:
         pass  # TODO: impl
 
-    def insert_feedback_definition(self, feedback_definition: FeedbackDefinition) -> FeedbackDefinitionID:
-        pass  # TODO: impl
-
-    def insert_feedback(self, feedback_result: FeedbackResult) -> FeedbackResultID:
+    def insert_feedback(self, feedback_result: schema.FeedbackResult) -> schema.FeedbackResultID:
         pass  # TODO: impl
 
     def get_records_and_feedback(self, app_ids: List[str]) -> Tuple[pd.DataFrame, Sequence[str]]:

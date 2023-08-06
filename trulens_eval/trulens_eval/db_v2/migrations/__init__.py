@@ -31,12 +31,6 @@ def migrate_db(engine: Engine, revision: str = "head"):
         command.upgrade(config, revision)
 
 
-def set_db_revision(engine: Engine, revision: str):
-    with alembic_config(engine) as config:
-        command.ensure_version(config)  # create version table if not exists
-        command.stamp(config, revision)  # set version without running migrations
-
-
 def get_current_db_revision(engine: Engine) -> Optional[str]:
     with engine.connect() as conn:
         return MigrationContext.configure(conn).get_current_revision()

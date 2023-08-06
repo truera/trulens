@@ -90,7 +90,7 @@ class Tru(SingletonPerName):
         if database_url is None:
             database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
 
-        self.db = SqlAlchemyDB.from_db_url(database_url)
+        self.db: SqlAlchemyDB = SqlAlchemyDB.from_db_url(database_url)
 
     def reset_database(self):
         """
