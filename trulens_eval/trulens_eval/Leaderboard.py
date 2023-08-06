@@ -26,7 +26,7 @@ from trulens_eval.ux.add_logo import add_logo
 add_logo()
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--database-file', default=Tru.DEFAULT_DATABASE_FILE)
+parser.add_argument('--database-url', default=None)
 
 try:
     args = parser.parse_args()
@@ -36,7 +36,7 @@ except SystemExit as e:
     # so we have to do a hard exit.
     sys.exit(e.code)
 
-tru = Tru(database_file=args.database_file)
+tru = Tru(database_url=args.database_url)
 lms = tru.db
 
 

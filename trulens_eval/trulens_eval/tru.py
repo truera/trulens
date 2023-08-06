@@ -1,4 +1,5 @@
 import logging
+import warnings
 from multiprocessing import Process
 import os
 from pathlib import Path
@@ -12,7 +13,7 @@ from typing import Iterable, List, Optional, Sequence, Union
 import pkg_resources
 
 from trulens_eval.db import JSON
-from trulens_eval.db import LocalSQLite
+from trulens_eval.db_v2.db import SqlAlchemyDB
 from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult
@@ -68,17 +69,28 @@ class Tru(SingletonPerName):
 
         return TruLlama(tru=self, app=engine, **kwargs)
 
-    def __init__(self, database_file: Optional[str] = None):
+    def __init__(self, database_url: Optional[str] = None, database_file: Optional[str] = None):
         """
         TruLens instrumentation, logging, and feedback functions for apps.
-        Creates a local database 'default.sqlite' in current working directory.
-        """
 
+        :param database_url: SQLAlchemy database URL. Defaults to a local
+                             SQLite database file at 'default.sqlite'
+        :param database_file: (Deprecated) Path to a local SQLite database file
+        """
         if hasattr(self, "db"):
             # Already initialized by SingletonByName mechanism.
             return
 
-        self.db = LocalSQLite(filename=Path(database_file or Tru.DEFAULT_DATABASE_FILE))
+        assert None in (database_url, database_file), \
+            "Please specify at most one of `database_url` and `database_file`"
+
+        if database_file:
+            warnings.warn(DeprecationWarning("`database_file` is deprecated, use `database_url` instead"))
+
+        if database_url is None:
+            database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
+
+        self.db = SqlAlchemyDB.from_db_url(database_url)
 
     def reset_database(self):
         """
@@ -402,7 +414,7 @@ class Tru(SingletonPerName):
 
         proc = subprocess.Popen(
             ["streamlit", "run", "--server.headless=True", leaderboard_path,
-             "--", "--database-file", self.db.filename],
+             "--", "--database-url", self.db.engine.url],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
