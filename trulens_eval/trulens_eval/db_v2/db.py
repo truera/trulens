@@ -1,4 +1,5 @@
 import logging
+import warnings
 from enum import Enum
 from pathlib import Path
 from typing import List, Tuple, Sequence
@@ -17,13 +18,21 @@ from trulens_eval.schema import FeedbackResult, FeedbackResultID, FeedbackDefini
 logger = logging.getLogger(__name__)
 
 
-def is_legacy_sqlite(engine: Engine):
+def is_legacy_sqlite(engine: Engine) -> bool:
     """Check if DB is an existing file-based SQLite
     that was never handled with Alembic"""
     return (
             engine.url.drivername.startswith("sqlite")  # The database type is SQLite
             and Path(engine.url.database).is_file()  # The database location is an existing file
             and DbRevisions.load(engine).current is None  # Alembic could not determine the revision
+    )
+
+
+def is_memory_sqlite(engine: Engine) -> bool:
+    """Check if DB is an in-memory SQLite instance"""
+    return (
+            engine.url.drivername.startswith("sqlite")  # The database type is SQLite
+            and engine.url.database == ":memory:"  # The database storage is in memory
     )
 
 
@@ -64,6 +73,12 @@ class SqlAlchemyDB(DB):
         kwargs["Session"] = sessionmaker(engine)
         super().__init__(**kwargs)
 
+        if is_memory_sqlite(self.engine):
+            warnings.warn(UserWarning(
+                "SQLite in-memory may not be threadsafe. "
+                "See https://www.sqlite.org/threadsafe.html"
+            ))
+
     def migrate_database(self):
         """Migrate database schema to the latest revision
 
@@ -86,7 +101,7 @@ class SqlAlchemyDB(DB):
         migrate_db(self.engine, revision="head")  # step 3
 
     @classmethod
-    def from_db_url(cls, url: str, **kwargs):
+    def from_db_url(cls, url: str, **kwargs) -> "SqlAlchemyDB":
         return cls(engine=create_engine(url, **kwargs))
 
     def reset_database(self):
