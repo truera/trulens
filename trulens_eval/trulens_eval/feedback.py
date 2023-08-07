@@ -407,6 +407,7 @@ from typing import (
     Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 )
 
+import json
 import numpy as np
 import openai
 import pydantic
@@ -907,7 +908,7 @@ class Feedback(FeedbackDefinition):
                 status=FeedbackResultStatus.DONE,
                 cost=cost,
                 calls=feedback_calls,
-                multi_result=str(jsonify(multi_result))
+                multi_result=json.dumps(multi_result)
             )
 
             return feedback_result
