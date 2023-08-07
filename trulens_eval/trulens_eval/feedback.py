@@ -901,17 +901,13 @@ class Feedback(FeedbackDefinition):
                     if isinstance(result, dict):
                         multi_result = result
                         result = np.nan
-                        
-                
-                result = self.agg(result_vals)
-
 
             feedback_result.update(
                 result=result,
                 status=FeedbackResultStatus.DONE,
                 cost=cost,
                 calls=feedback_calls,
-                multi_result=multi_result
+                multi_result=str(jsonify(multi_result))
             )
 
             return feedback_result
