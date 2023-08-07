@@ -1,11 +1,14 @@
 import json
 import logging
 import warnings
-from typing import List, Tuple, Sequence, Optional
+from datetime import datetime
+from typing import List, Tuple, Sequence, Optional, Iterable, Union
 
+import numpy as np
 import pandas as pd
 from pydantic import Field
 from sqlalchemy import Engine, create_engine
+from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
 from trulens_eval import schema
@@ -101,9 +104,55 @@ class SqlAlchemyDB(DB):
             return _feedback_result.feedback_result_id
 
     def get_records_and_feedback(self, app_ids: List[str]) -> Tuple[pd.DataFrame, Sequence[str]]:
-        # TODO: impl this
-        pass
-        # with self.Session.begin() as session:
-        #     df = pd.DataFrame([], columns=[])
-        #     for _record in session.query(orm.Record).filter(orm.Record.app_id.in_(app_ids)):
-        #         _record.feedback_results
+        with self.Session.begin() as session:
+            stmt = select(orm.AppDefinition).where(orm.AppDefinition.app_id.in_(app_ids))
+            apps = (row[0] for row in session.execute(stmt).all())
+            return AppsExtractor().get_df_and_cols(apps)
+
+
+class AppsExtractor:
+
+    def __init__(self):
+        self.feedback_columns = set()
+
+    def get_df_and_cols(self, apps: Iterable[orm.AppDefinition]) -> Tuple[pd.DataFrame, Sequence[str]]:
+        df = pd.concat(self.extract_apps(apps))
+        return df, list(self.feedback_columns)
+
+    def extract_apps(self, apps: Iterable[orm.AppDefinition]) -> Iterable[pd.DataFrame]:
+        for _app in apps:
+            df = pd.concat(self.extract_records(_app.records))
+
+            for col in ["app_id", "app_json"]:
+                df[col] = getattr(_app, col)
+
+            yield df
+
+    def extract_records(self, records: Iterable[orm.Record]) -> Iterable[pd.DataFrame]:
+        for _rec in records:
+            df = pd.DataFrame(self.extract_results(_rec.feedback_results), columns=["key", "value"]) \
+                .pivot_table(columns="key", values="value", aggfunc=self.agg_result_or_calls) \
+                .reset_index(drop=True).rename_axis("", axis=1)
+
+            for col in ["record_id", "input", "output", "tags", "record_json", "cost_json", "perf_json"]:
+                df[col] = getattr(_rec, col)
+
+            df["ts"] = datetime.fromisoformat(_rec.ts)
+            yield df
+
+    def extract_results(self, results: Iterable[orm.FeedbackResult]) -> Iterable[Tuple[str, Union[float, dict]]]:
+        for _res in results:
+            self.feedback_columns.add(_res.name)
+            yield _res.name, _res.result
+            yield f"{_res.name}_calls", json.loads(_res.calls_json)["calls"][0]
+
+    @classmethod
+    def agg_result_or_calls(cls, *args):
+        if not args:
+            return None
+        if len(args) == 1:
+            return args[0]
+        if isinstance(args[0], dict):
+            return args
+        else:
+            return np.mean(args)

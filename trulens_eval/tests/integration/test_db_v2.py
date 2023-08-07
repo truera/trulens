@@ -1,5 +1,4 @@
 import json
-import logging
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -14,8 +13,6 @@ from trulens_eval.db_v2 import orm
 from trulens_eval.db_v2.db import SqlAlchemyDB
 from trulens_eval.db_v2.migrations import upgrade_db, DbRevisions, get_revision_history, downgrade_db
 from trulens_eval.db_v2.utils import is_legacy_sqlite
-
-logger = logging.getLogger(__name__)
 
 
 class TestDbV2Migration(TestCase):
@@ -71,9 +68,9 @@ class TestDbV2Migration(TestCase):
 
             # check that database is usable and no data was lost
             assert db.get_app(app.app_id) == json.loads(app.json())
-            # recs, fbs = db.get_records_and_feedback([app.app_id])
-            # print(recs)
-            # print(fbs)  # TODO: finish this test case
+            df, fb_cols = db.get_records_and_feedback([app.app_id])
+            assert df["record_json"][0] == rec.json()
+            assert list(fb_cols) == [fb.name]
 
 
 class MockFeedback(Provider):
