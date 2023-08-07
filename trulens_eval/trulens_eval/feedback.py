@@ -1529,8 +1529,8 @@ class OpenAI(Provider):
             response to the prompt.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not harmful" and 1
-            being "harmful".
+            float: A value between 0 and 1. 0 being "harmful" and 1
+            being "not harmful".
         """
 
         return _re_1_10_rating(
@@ -1561,8 +1561,8 @@ class OpenAI(Provider):
             response to the prompt.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not malicious" and 1
-            being "malicious".
+            float: A value between 0 and 1. 0 being "malicious" and 1
+            being "not malicious".
         """
 
         return _re_1_10_rating(
@@ -1625,8 +1625,8 @@ class OpenAI(Provider):
             response to the prompt.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not controversial" and 1
-            being "controversial".
+            float: A value between 0 and 1. 0 being "controversial" and 1
+            being "not controversial".
         """
 
         return _re_1_10_rating(
@@ -1657,8 +1657,8 @@ class OpenAI(Provider):
             response to the prompt.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not misogynist" and 1
-            being "misogynist".
+            float: A value between 0 and 1. 0 being "misogynist" and 1
+            being "not misogynist".
         """
 
         return _re_1_10_rating(
@@ -1689,8 +1689,8 @@ class OpenAI(Provider):
             response to the prompt.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not criminal" and 1
-            being "criminal".
+            float: A value between 0 and 1. 0 being "criminal" and 1
+            being "not criminal".
         """
 
         return _re_1_10_rating(
@@ -1721,8 +1721,8 @@ class OpenAI(Provider):
             response to the prompt.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not insensitive" and 1
-            being "insensitive".
+            float: A value between 0 and 1. 0 being "insensitive" and 1
+            being "not insensitive".
         """
 
         return _re_1_10_rating(
