@@ -858,7 +858,7 @@ class Feedback(FeedbackDefinition):
                         ), f"Feedback function output with multivalue must be a dict with float values but encountered {type(val)}."
                     multi_result = result_val
                     feedback_call = FeedbackCall(
-                        args=ins, ret=np.mean(result_val), meta=meta
+                        args=ins, ret=np.mean(list(result_val.values())), meta=meta
                     )
 
                 else:
@@ -879,13 +879,30 @@ class Feedback(FeedbackDefinition):
                 )
                 result = np.nan
             else:
-                try:
-                    # Should only succeed in single output modes. Otherwise allow list of dict
-                    np_result_vals = np.array(result_vals)
-                    result_vals = np_result_vals
-                except:
-                    logger.debug("Failed to convert results to array. This is expected for multi-output.")
-                    pass
+                if isinstance(result_vals[0], float):
+                    result_vals = np.array(result_vals)
+                    result = self.agg(result_vals)
+                else:
+                    try:
+                        # Operates on list of dict; Can be a dict output (maintain multi) or a float output (convert to single)
+                        result = self.agg(result_vals)
+                    except:
+                        # Alternatively, operate the agg per key
+                        result = {}
+                        for feedback_output in result_vals:
+                            for key in feedback_output:
+                                if key not in result:
+                                    result[key] = []
+                                result[key].append(feedback_output[key])
+                        for key in result:
+                            result[key] = self.agg(result[key])
+                        
+                    
+                    if isinstance(result, dict):
+                        multi_result = result
+                        result = np.nan
+                        
+                
                 result = self.agg(result_vals)
 
 
