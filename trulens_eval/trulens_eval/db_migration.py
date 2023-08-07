@@ -237,7 +237,7 @@ upgrade_paths = {
     #"from_version":("to_version", migrate_method)
     "0.1.2": ("0.2.0", migrate_0_1_2),
     "0.2.0": ("0.3.0", migrate_0_2_0),
-    "0.3.0": ("0.8.0", migrate_0_3_0)
+    "0.3.0": ("0.9.0", migrate_0_3_0)
 }
 
 
@@ -352,6 +352,7 @@ def _serialization_asserts(db) -> None:
     global saved_db_locations
     conn, c = db._connect()
     SAVED_DB_FILE_LOC = saved_db_locations[db.filename]
+    validation_fail_advice = f"Please open a ticket on trulens github page including details on the old and new trulens versions. The migration completed so you can still proceed; but stability is not guaranteed. Your original DB file is saved here: {SAVED_DB_FILE_LOC} and can be used with the previous version, or you can `tru.reset_database()`"
     for table in db.TABLES:
         c.execute(f"""PRAGMA table_info({table});
                 """)
@@ -399,13 +400,13 @@ def _serialization_asserts(db) -> None:
                             # If this happens, trulens needs to add a migration
                             
                             raise VersionException(
-                                f"serialized column migration not implemented. Please open a ticket on trulens github page including details on the old and new trulens versions. Your original DB file is saved here: {SAVED_DB_FILE_LOC}, or you can `tru.reset_database()`"
+                                f"serialized column migration not implemente: {col_name}. {validation_fail_advice}"
                             )
                     except Exception as e:
                         tb = traceback.format_exc()
                         
                         raise VersionException(
-                            f"Migration failed on {table} {col_name} {row[col_idx]}.\n\n{tb}\n\nPlease open a ticket on trulens github page including details on the old and new trulens versions. Your original DB file is saved here: {SAVED_DB_FILE_LOC}, or you can `tru.reset_database()`"
+                            f"Migration failed on {table} {col_name} {row[col_idx]}.\n\n{tb}\n\n{validation_fail_advice}"
                         )
 
 
@@ -441,5 +442,6 @@ def migrate(db) -> None:
         commit_migrated_version(db=db, version=to_compat_version)
         from_compat_version = to_compat_version
 
-    _serialization_asserts(db)
     print("DB Migration complete!")
+    _serialization_asserts(db)
+    print("DB Validation complete!")
