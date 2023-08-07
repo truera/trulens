@@ -318,7 +318,6 @@ class FeedbackResult(SerialModel):
     def __init__(
         self, feedback_result_id: Optional[FeedbackResultID] = None, **kwargs
     ):
-
         super().__init__(feedback_result_id="temporary", **kwargs)
 
         if feedback_result_id is None:

@@ -468,7 +468,7 @@ class Feedback(FeedbackDefinition):
     agg: Optional[AggCallable] = pydantic.Field(exclude=True)
 
     # An optional name. Only will affect display tables
-    supplied_name: Optional[str]
+    supplied_name: Optional[str] = None
 
     def __init__(
         self,
@@ -582,7 +582,7 @@ class Feedback(FeedbackDefinition):
             alias_info = ""
 
         print(
-            f"{UNICODE_CHECK} In {self.name}, "
+            f"{UNICODE_CHECK} In {self.supplied_name if self.supplied_name is not None else self.name}, "
             f"input {par_name} will be set to {par_path}{alias_info} ."
         )
 
@@ -817,10 +817,11 @@ class Feedback(FeedbackDefinition):
 
         feedback_calls = []
 
+        
         feedback_result = FeedbackResult(
             feedback_definition_id=self.feedback_definition_id,
             record_id=record.record_id,
-            name=self.name
+            name=self.supplied_name if self.supplied_name is not None else self.name
         )
 
         try:
@@ -849,13 +850,13 @@ class Feedback(FeedbackDefinition):
                     result_val = result_and_meta
                     meta = dict()
 
+                multi_result = None
                 if isinstance(result_val, dict):
                     for val in result_val.values():
                         assert isinstance(
                             val, float
                         ), f"Feedback function output with multivalue must be a dict with float values but encountered {type(val)}."
-                    # TODO: Better handling of multi-output
-                    result_val = list(result_val.values())
+                    multi_result = result_val
                     feedback_call = FeedbackCall(
                         args=ins, ret=np.mean(result_val), meta=meta
                     )
@@ -871,20 +872,29 @@ class Feedback(FeedbackDefinition):
                 result_vals.append(result_val)
                 feedback_calls.append(feedback_call)
 
-            result_vals = np.array(result_vals)
+            
             if len(result_vals) == 0:
                 logger.warning(
-                    f"Feedback function {self.name} with aggregation {self.agg} had no inputs."
+                    f"Feedback function {self.supplied_name if self.supplied_name is not None else self.name} with aggregation {self.agg} had no inputs."
                 )
                 result = np.nan
             else:
+                try:
+                    # Should only succeed in single output modes. Otherwise allow list of dict
+                    np_result_vals = np.array(result_vals)
+                    result_vals = np_result_vals
+                except:
+                    logger.debug("Failed to convert results to array. This is expected for multi-output.")
+                    pass
                 result = self.agg(result_vals)
+
 
             feedback_result.update(
                 result=result,
                 status=FeedbackResultStatus.DONE,
                 cost=cost,
-                calls=feedback_calls
+                calls=feedback_calls,
+                multi_result=multi_result
             )
 
             return feedback_result
@@ -914,7 +924,7 @@ class Feedback(FeedbackDefinition):
             feedback_definition_id=self.feedback_definition_id,
             feedback_result_id=feedback_result_id,
             record_id=record_id,
-            name=self.name
+            name=self.supplied_name if self.supplied_name is not None else self.name
         )
 
         if feedback_result_id is None:
@@ -1576,19 +1586,24 @@ class Groundedness(SerialModel, WithClassInfo):
         return groundedness_scores, {"reason": reason}
 
     def grounded_statements_aggregator(
-        self, source_statements_matrix: np.ndarray
+        self, source_statements_multi_output: list[dict]
     ) -> float:
         """Aggregates multi-input, mulit-output information from the groundedness_measure methods.
 
 
         Args:
-            source_statements_matrix (np.ndarray): a 2D array with the first dimension corresponding to a source text,
+            source_statements_multi_output (np.ndarray): a 2D array with the first dimension corresponding to a source text,
                 and the second dimension corresponding to each sentence in a statement; it's groundedness score
 
         Returns:
             float: for each statement, gets the max groundedness, then averages over that.
         """
-        max_over_sources = np.max(source_statements_matrix, axis=0)
+        all_results = []
+        for multi_output in  source_statements_multi_output:
+            result_vals = list(multi_output.values())
+        all_results.append(result_vals)
+        all_results = np.asarray(all_results)
+        max_over_sources = np.max(all_results, axis=0)
         return np.mean(max_over_sources)
 
 
