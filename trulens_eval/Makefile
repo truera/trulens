@@ -11,7 +11,7 @@ test:
 test-it-db-v2:
 	$(CONDA); pip install psycopg2-binary pymysql cryptography
 	docker compose --file docker/test-it-db-v2.yaml up --quiet-pull --detach --force-recreate --renew-anon-volumes --wait --wait-timeout 30
-	$(CONDA); python -m unittest discover tests.integration.db_v2
+	$(CONDA); python -m unittest discover tests.integration.test_db_v2
 	docker compose --file docker/test-it-db-v2.yaml down
 
 test-tru-chain:

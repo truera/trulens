@@ -11,7 +11,6 @@ from sqlalchemy import Engine, create_engine
 
 from trulens_eval.db import LocalSQLite
 from trulens_eval.db_v2.exceptions import DatabaseVersionException
-
 from trulens_eval.db_v2.migrations import DbRevisions, migrate_db
 
 logger = logging.getLogger(__name__)
@@ -120,9 +119,10 @@ def migrate_legacy_sqlite(engine: Engine):
         # 3. Copy records from original database to staging
         src_conn = sqlite3.connect(original_file)
         tgt_conn = sqlite3.connect(stg_file)
-        for table in ["apps", "feedback_defs"]:  # legacy_db.TABLES:  # TODO: copy other tables too
-            logger.debug("Copying table '%s'", table)
+        for table in ["apps", "feedback_defs", "records", "feedbacks"]:
+            logger.info("Copying table '%s'", table)
             df = pd.read_sql_query(f"SELECT * FROM {table}", src_conn)
+            logger.debug("\n\n%s\n", df.head())
             df.to_sql(table, tgt_conn, index=False, if_exists="append")
 
         # 4. Migrate staging database to the latest Alembic revision
@@ -158,7 +158,7 @@ def _copy_database(src_url: str, tgt_url: str):
     tgt = SqlAlchemyDB.from_db_url(tgt_url)
     check_db_revision(tgt.engine)
 
-    for table in ["apps", "feedback_defs"]:  # legacy_db.TABLES:  # TODO: copy other tables too
+    for table in ["apps", "feedback_defs", "records", "feedbacks"]:
         with src.engine.begin() as src_conn:
             with tgt.engine.begin() as tgt_conn:
                 df = pd.read_sql_query(f"SELECT * FROM {table}", src_conn)

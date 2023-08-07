@@ -13,7 +13,7 @@ tru.migrate_database()
 ## Creating a new schema revision
 
 1. Make sure you have an existing database at the latest schema
-2. Edit the [SQLAlchemy models](../models.py)
+2. Edit the [SQLAlchemy models](../orm.py)
 3. Run `export SQLALCHEMY_URL="<url>" && alembic revision --autogenerate -m "<short_description>" --rev-id "<next_integer_version>"`
 4. Look at the migration script generated at [versions](./versions) and edit if necessary
 5. Open a PR including the migration script and updated models 
