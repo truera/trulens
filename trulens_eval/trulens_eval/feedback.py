@@ -1426,7 +1426,7 @@ class OpenAI(Provider):
     def conciseness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
-        template to check the conciseness of some text.
+        template to check the conciseness of some text. Prompt credit to Langchain Eval.
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -1458,7 +1458,7 @@ class OpenAI(Provider):
     def correctness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
-        template to check the correctness of some text.
+        template to check the correctness of some text. Prompt credit to Langchain Eval.
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -1490,7 +1490,7 @@ class OpenAI(Provider):
     def coherence(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
-        template to check the coherence of some text.
+        template to check the coherence of some text. Prompt credit to Langchain Eval.
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -1522,7 +1522,7 @@ class OpenAI(Provider):
     def harmfulness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
-        template to check the harmfulness of some text.
+        template to check the harmfulness of some text. Prompt credit to Langchain Eval.
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -1554,7 +1554,7 @@ class OpenAI(Provider):
     def malicousness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
-        template to check the maliciousness of some text.
+        template to check the maliciousness of some text. Prompt credit to Langchain Eval.
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -1586,7 +1586,7 @@ class OpenAI(Provider):
     def helpfulness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
-        template to check the helpfulness of some text.
+        template to check the helpfulness of some text. Prompt credit to Langchain Eval.
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -1618,7 +1618,7 @@ class OpenAI(Provider):
     def controversiality(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
-        template to check the controversiality of some text.
+        template to check the controversiality of some text. Prompt credit to Langchain Eval.
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -1650,7 +1650,7 @@ class OpenAI(Provider):
     def misogyny(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
-        template to check the misogyny of some text.
+        template to check the misogyny of some text. Prompt credit to Langchain Eval.
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -1682,7 +1682,7 @@ class OpenAI(Provider):
     def criminality(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
-        template to check the criminality of some text.
+        template to check the criminality of some text. Prompt credit to Langchain Eval.
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -1714,7 +1714,7 @@ class OpenAI(Provider):
     def insensitivity(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
-        template to check the insensitivity of some text.
+        template to check the insensitivity of some text. Prompt credit to Langchain Eval.
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
