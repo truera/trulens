@@ -400,7 +400,7 @@ def _serialization_asserts(db) -> None:
                             # If this happens, trulens needs to add a migration
                             
                             raise VersionException(
-                                f"serialized column migration not implemente: {col_name}. {validation_fail_advice}"
+                                f"serialized column migration not implemented: {col_name}. {validation_fail_advice}"
                             )
                     except Exception as e:
                         tb = traceback.format_exc()
