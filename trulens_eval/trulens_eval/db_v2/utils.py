@@ -7,11 +7,12 @@ from tempfile import TemporaryDirectory
 from typing import Optional, List, Callable
 
 import pandas as pd
-from sqlalchemy import Engine, create_engine
+import sqlalchemy
+from sqlalchemy import Engine, create_engine, text
 
 from trulens_eval.db import LocalSQLite
 from trulens_eval.db_v2.exceptions import DatabaseVersionException
-from trulens_eval.db_v2.migrations import DbRevisions, migrate_db
+from trulens_eval.db_v2.migrations import DbRevisions, upgrade_db
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +47,17 @@ def run_before(callback: Callable):
 
 def is_legacy_sqlite(engine: Engine) -> bool:
     """Check if DB is an existing file-based SQLite
-    that was never handled with Alembic"""
-    return (
-            engine.url.drivername.startswith("sqlite")  # The database type is SQLite
-            and Path(engine.url.database).is_file()  # The database location is an existing file
-            and DbRevisions.load(engine).current is None  # Alembic could not determine the revision
-    )
+    created with the `LocalSQLite` implementation"""
+
+    if not engine.url.drivername.startswith("sqlite"):
+        return False
+
+    if not sqlalchemy.inspect(engine).has_table("meta"):
+        return False
+
+    with engine.begin() as conn:
+        query = "SELECT value FROM meta WHERE key='trulens_version'"
+        return conn.execute(text(query)).first() is not None
 
 
 def is_memory_sqlite(engine: Engine) -> bool:
@@ -72,7 +78,7 @@ def check_db_revision(engine: Engine):
 
     if revisions.current is None:
         logger.debug("Creating database")
-        migrate_db(engine, revision="head")  # create automatically if it doesn't exist
+        upgrade_db(engine, revision="head")  # create automatically if it doesn't exist
     elif revisions.in_sync:
         logger.debug("Database schema is up to date: %s", revisions)
     elif revisions.behind:
@@ -114,20 +120,20 @@ def migrate_legacy_sqlite(engine: Engine):
         stg_file = Path(tmp).joinpath("migration-staging.sqlite")
         logger.debug("Creating staging DB at %s", stg_file)
         stg_engine = create_engine(f"sqlite:///{stg_file}")
-        migrate_db(stg_engine, revision="1")
+        upgrade_db(stg_engine, revision="1")
 
         # 3. Copy records from original database to staging
         src_conn = sqlite3.connect(original_file)
         tgt_conn = sqlite3.connect(stg_file)
         for table in ["apps", "feedback_defs", "records", "feedbacks"]:
             logger.info("Copying table '%s'", table)
-            df = pd.read_sql_query(f"SELECT * FROM {table}", src_conn)
+            df = pd.read_sql(f"SELECT * FROM {table}", src_conn)
             logger.debug("\n\n%s\n", df.head())
             df.to_sql(table, tgt_conn, index=False, if_exists="append")
 
         # 4. Migrate staging database to the latest Alembic revision
         logger.debug("Applying Alembic migration scripts")
-        migrate_db(stg_engine, revision="head")
+        upgrade_db(stg_engine, revision="head")
 
         # 5. Replace original database file with the staging one
         logger.debug("Replacing database file at %s", original_file)
@@ -161,5 +167,5 @@ def _copy_database(src_url: str, tgt_url: str):
     for table in ["apps", "feedback_defs", "records", "feedbacks"]:
         with src.engine.begin() as src_conn:
             with tgt.engine.begin() as tgt_conn:
-                df = pd.read_sql_query(f"SELECT * FROM {table}", src_conn)
+                df = pd.read_sql(f"SELECT * FROM {table}", src_conn)
                 df.to_sql(table, tgt_conn, index=False, if_exists="append")

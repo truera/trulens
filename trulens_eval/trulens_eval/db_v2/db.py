@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from trulens_eval import schema
 from trulens_eval.db import DB
 from trulens_eval.db_v2 import orm
-from trulens_eval.db_v2.migrations import migrate_db
+from trulens_eval.db_v2.migrations import upgrade_db
 from trulens_eval.db_v2.utils import for_all_methods, run_before, is_legacy_sqlite, is_memory_sqlite, \
     check_db_revision, migrate_legacy_sqlite
 from trulens_eval.util import JSON
@@ -54,7 +54,7 @@ class SqlAlchemyDB(DB):
         if is_legacy_sqlite(self.engine):
             migrate_legacy_sqlite(self.engine)
         else:
-            migrate_db(self.engine, revision="head")
+            upgrade_db(self.engine, revision="head")
         self.reload_engine()  # let sqlalchemy recognize the migrated schema
 
     def reset_database(self):
