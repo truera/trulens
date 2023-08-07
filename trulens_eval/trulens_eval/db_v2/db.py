@@ -53,9 +53,9 @@ class SqlAlchemyDB(DB):
         """Migrate database schema to the latest revision"""
         if is_legacy_sqlite(self.engine):
             migrate_legacy_sqlite(self.engine)
-            self.reload_engine()
         else:
             migrate_db(self.engine, revision="head")
+        self.reload_engine()  # let sqlalchemy recognize the migrated schema
 
     def reset_database(self):
         raise NotImplementedError(
