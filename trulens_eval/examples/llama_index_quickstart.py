@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Quickstart
+# # Llama-Index Quickstart
 #
 # In this quickstart you will create a simple Llama Index App and learn how to log it and get feedback on an LLM response.
 #
@@ -13,7 +13,7 @@
 # Let's install some of the dependencies for this notebook if we don't have them already
 
 get_ipython().system(
-    ' pip install trulens-eval==0.7.0 llama_index==0.7.0 html2text==2020.1.16'
+    ' pip install trulens-eval==0.8.0 llama_index==0.7.0 html2text==2020.1.16'
 )
 
 # ### Add API keys

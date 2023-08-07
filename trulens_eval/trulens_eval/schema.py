@@ -8,12 +8,12 @@ Only put classes which can be serialized in this file.
 Many of the classes defined here extending SerialModel are meant to be
 serialized into json. Most are extended with non-serialized fields in other files.
 
-Serializable       | Non-serializable
--------------------+------------------------
-AppDefinition      | App, TruChain, TruLlama
-FeedbackDefinition | Feedback
+| Serializable       | Non-serializable        |
+| ------------------ | ----------------------- |
+| AppDefinition      | App, TruChain, TruLlama |
+| FeedbackDefinition | Feedback                |
 
-AppDefinition.app is the JSONized version of a wrapped app while App.app is the
+AppDefinition.app is the JSON-ized version of a wrapped app while App.app is the
 actual wrapped app. We can thus inspect the contents of a wrapped app without
 having to construct it. Additionally, JSONized objects like AppDefinition.app
 feature information about the encoded object types in the dictionary under the
@@ -35,6 +35,7 @@ from trulens_eval.util import Function
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import GetItemOrAttribute
 from trulens_eval.util import JSON
+from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.util import Method
 from trulens_eval.util import obj_id_of_obj
@@ -172,7 +173,7 @@ class Record(SerialModel):
         super().__init__(record_id="temporary", **kwargs)
 
         if record_id is None:
-            record_id = obj_id_of_obj(self.dict(), prefix="record")
+            record_id = obj_id_of_obj(jsonify(self), prefix="record")
 
         self.record_id = record_id
 

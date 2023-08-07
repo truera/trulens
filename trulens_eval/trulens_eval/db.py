@@ -455,7 +455,7 @@ class LocalSQLite(DB):
         vars = []
 
         if record_id is not None:
-            clauses.append("record_id=?")
+            clauses.append("f.record_id=?")
             vars.append(record_id)
 
         if feedback_result_id is not None:
@@ -585,7 +585,7 @@ class LocalSQLite(DB):
             app_id_list = ', '.join('?' * len(app_ids))
             query = query + f" WHERE r.app_id IN ({app_id_list})"
 
-        c.execute(query)
+        c.execute(query, app_ids)
         rows = c.fetchall()
         conn.close()
 
@@ -607,7 +607,7 @@ class LocalSQLite(DB):
             app_id_list = ', '.join('?' * len(app_ids))
             query = query + f" WHERE r.app_id IN ({app_id_list})"
 
-        c.execute(query)
+        c.execute(query, app_ids)
         rows = c.fetchall()
         conn.close()
 
