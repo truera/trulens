@@ -9,7 +9,6 @@ from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
 from streamlit_javascript import st_javascript
-from trulens_eval.db import MULTI_CALL_NAME_DELIMITER
 from ux.add_logo import add_logo
 from ux.styles import CATEGORY
 
@@ -19,6 +18,7 @@ from trulens_eval.app import instrumented_component_views
 from trulens_eval.app import LLM
 from trulens_eval.app import Other
 from trulens_eval.app import Prompt
+from trulens_eval.db import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
