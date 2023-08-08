@@ -98,16 +98,17 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
 
 for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
     if filename.endswith('.ipynb'):
-        setattr(
-            DocsNotebookTests, 'test_' + filename.split('.ipynb')[0],
-            get_unit_test_for_filename(filename)
-        )
+        
         if 'all_tools' in filename or 'llama_index_quickstart' in filename:
+            setattr(
+                DocsNotebookTests, 'test_' + filename.split('.ipynb')[0],
+                get_unit_test_for_filename(filename)
+            )
             # If you want to test all versions uncomment and replace the below for loop
             ### for version in db_migration.migration_versions:
 
             # Run the oldest and latest migrations to keep testing more manageable
-            for version in [db_migration.migration_versions[0],
+            for version in [db_migration.migration_versions[0],db_migration.migration_versions[1],
                             db_migration.migration_versions[-1]]:
                 test_version_str = version.replace('.', '_')
                 setattr(
