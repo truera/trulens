@@ -9,43 +9,43 @@ from sqlalchemy import text, Engine
 
 from trulens_eval import TruBasicApp, Feedback, Provider, FeedbackMode, Tru, Select
 from trulens_eval.db import LocalSQLite, DB
-from trulens_eval.db_v2 import orm
-from trulens_eval.db_v2.db import SqlAlchemyDB, AppsExtractor
-from trulens_eval.db_v2.migrations import upgrade_db, DbRevisions, get_revision_history, downgrade_db
-from trulens_eval.db_v2.utils import is_legacy_sqlite
+from trulens_eval.database import orm
+from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB, AppsExtractor
+from trulens_eval.database.migrations import upgrade_db, DbRevisions, get_revision_history, downgrade_db
+from trulens_eval.database.utils import is_legacy_sqlite
 
 
 class TestDbV2Migration(TestCase):
 
-    def test_db_v2_migration_sqlite_file(self):
+    def test_db_migration_sqlite_file(self):
         with clean_db("sqlite_file") as db:
-            _test_db_v2_migration(db)
+            _test_db_migration(db)
 
-    def test_db_v2_migration_sqlite_memory(self):
+    def test_db_migration_sqlite_memory(self):
         with clean_db("sqlite_memory") as db:
-            _test_db_v2_migration(db)
+            _test_db_migration(db)
 
-    def test_db_v2_migration_postgres(self):
+    def test_db_migration_postgres(self):
         with clean_db("postgres") as db:
-            _test_db_v2_migration(db)
+            _test_db_migration(db)
 
-    def test_db_v2_migration_mysql(self):
+    def test_db_migration_mysql(self):
         with clean_db("mysql") as db:
-            _test_db_v2_migration(db)
+            _test_db_migration(db)
 
-    def test_db_v2_consistency_sqlite_file(self):
+    def test_db_consistency_sqlite_file(self):
         with clean_db("sqlite_file") as db:
             _test_db_consistency(db)
 
-    def test_db_v2_consistency_sqlite_memory(self):
+    def test_db_consistency_sqlite_memory(self):
         with clean_db("sqlite_memory") as db:
             _test_db_consistency(db)
 
-    def test_db_v2_consistency_postgres(self):
+    def test_db_consistency_postgres(self):
         with clean_db("postgres") as db:
             _test_db_consistency(db)
 
-    def test_db_v2_consistency_mysql(self):
+    def test_db_consistency_mysql(self):
         with clean_db("mysql") as db:
             _test_db_consistency(db)
 
@@ -104,7 +104,7 @@ def assert_revision(engine: Engine, expected: Union[None, str], status: Literal[
     assert getattr(revisions, status)
 
 
-def _test_db_v2_migration(db: SqlAlchemyDB):
+def _test_db_migration(db: SqlAlchemyDB):
     engine = db.engine
     history = get_revision_history(engine)
     curr_rev = None

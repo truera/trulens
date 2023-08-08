@@ -13,7 +13,7 @@ from typing import Iterable, List, Optional, Sequence, Union
 import pkg_resources
 
 from trulens_eval.db import JSON
-from trulens_eval.db_v2.db import SqlAlchemyDB
+from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
 from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult

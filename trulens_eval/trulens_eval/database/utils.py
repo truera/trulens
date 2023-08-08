@@ -12,8 +12,8 @@ import sqlalchemy
 from sqlalchemy import Engine, create_engine, text
 
 from trulens_eval.db import LocalSQLite
-from trulens_eval.db_v2.exceptions import DatabaseVersionException
-from trulens_eval.db_v2.migrations import DbRevisions, upgrade_db
+from trulens_eval.database.exceptions import DatabaseVersionException
+from trulens_eval.database.migrations import DbRevisions, upgrade_db
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +170,7 @@ def _copy_database(src_url: str, tgt_url: str):
         - This process is NOT transactional, so it is highly recommended
           that the databases are NOT used by anyone while this process runs.
     """
-    from trulens_eval.db_v2.db import SqlAlchemyDB
+    from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
 
     src = SqlAlchemyDB.from_db_url(src_url)
     check_db_revision(src.engine)

@@ -14,9 +14,9 @@ from sqlalchemy.orm import sessionmaker
 from trulens_eval import schema
 from trulens_eval.db import DB
 from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
-from trulens_eval.db_v2 import orm
-from trulens_eval.db_v2.migrations import upgrade_db
-from trulens_eval.db_v2.utils import for_all_methods, run_before, is_legacy_sqlite, is_memory_sqlite, \
+from trulens_eval.database import orm
+from trulens_eval.database.migrations import upgrade_db
+from trulens_eval.database.utils import for_all_methods, run_before, is_legacy_sqlite, is_memory_sqlite, \
     check_db_revision, migrate_legacy_sqlite
 from trulens_eval.schema import RecordID, FeedbackResultID, FeedbackDefinitionID, FeedbackResultStatus
 from trulens_eval.util import JSON

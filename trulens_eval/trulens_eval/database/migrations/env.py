@@ -5,7 +5,7 @@ from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from trulens_eval.db_v2.orm import Base
+from trulens_eval.database.orm import Base
 
 # Database schema information
 target_metadata = Base.metadata
