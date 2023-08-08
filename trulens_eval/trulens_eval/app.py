@@ -246,6 +246,10 @@ class App(AppDefinition, SerialModel):
     # Instrumentation class.
     instrument: Instrument = Field(exclude=True)
 
+    @classmethod
+    def instrument(cls, func):
+        return function
+
     def __init__(
         self,
         tru: Optional[Tru] = None,
