@@ -69,7 +69,8 @@ export default function RecordTableRowRecursive({
             )}
             <Box sx={{ display: 'flex', flexDirection: 'column', ml: node.children.length === 0 ? 5 : 0 }}>
               <Typography>
-                {node.name} {node.methodName ? `(${node.methodName})` : ''}
+                {node.name}
+                {node.methodName ? `.${node.methodName}` : ''}
               </Typography>
               <Typography variant="subtitle1">{selector}</Typography>
             </Box>
