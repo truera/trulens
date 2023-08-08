@@ -19,11 +19,10 @@ def alembic_config(engine: Engine) -> Config:
     db_url = str(engine.url).replace("%", "%%")  # Escape any '%' in db_url
     config = Config(os.path.join(alembic_dir, "alembic.ini"))
     config.set_main_option("script_location", alembic_dir)
-    config.set_main_option("sqlalchemy.url", db_url)
     config.set_main_option("calling_context", "PYTHON")  # skips CLI-specific setup
-    with engine.begin() as connection:
-        config.attributes["connection"] = connection
-        yield config
+    config.set_main_option("sqlalchemy.url", db_url)
+    config.attributes["engine"] = engine
+    yield config
 
 
 def upgrade_db(engine: Engine, revision: str = "head"):

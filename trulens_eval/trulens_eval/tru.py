@@ -418,8 +418,8 @@ class Tru(SingletonPerName):
 
         proc = subprocess.Popen(
             [
-              "streamlit", "run", "--server.headless=True", leaderboard_path,
-              "--", "--database-url", self.db.engine.url
+              "streamlit", "run", "--server.headless=True", leaderboard_path, "--",
+              "--database-url", self.db.engine.url.render_as_string(hide_password=False)
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

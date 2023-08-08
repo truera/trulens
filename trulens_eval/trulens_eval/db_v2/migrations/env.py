@@ -54,9 +54,7 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    if connection := config.attributes.get("connection"):
-        engine = connection.engine
-    else:
+    if not (engine := config.attributes.get("engine")):
         engine = engine_from_config(
             config.get_section(config.config_ini_section),
             prefix="sqlalchemy.",
