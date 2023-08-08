@@ -141,9 +141,11 @@ class SqlAlchemyDB(DB):
             results = (row[0] for row in session.execute(q))
             return _extract_feedback_results(results)
 
-    def get_records_and_feedback(self, app_ids: List[str]) -> Tuple[pd.DataFrame, Sequence[str]]:
+    def get_records_and_feedback(self, app_ids: Optional[List[str]] = None) -> Tuple[pd.DataFrame, Sequence[str]]:
         with self.Session.begin() as session:
-            stmt = select(orm.AppDefinition).where(orm.AppDefinition.app_id.in_(app_ids))
+            stmt = select(orm.AppDefinition)
+            if app_ids:
+                stmt = stmt.where(orm.AppDefinition.app_id.in_(app_ids))
             apps = (row[0] for row in session.execute(stmt))
             return AppsExtractor().get_df_and_cols(apps)
 
@@ -199,7 +201,7 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
 
 
 class AppsExtractor:
-    app_cols = ["app_id", "app_json"]
+    app_cols = ["app_id", "app_json", "type"]
     rec_cols = ["record_id", "input", "output", "tags", "record_json", "cost_json", "perf_json", "ts"]
     extra_cols = ["latency", "total_tokens", "total_cost"]
     all_cols = app_cols + rec_cols + extra_cols
@@ -220,7 +222,10 @@ class AppsExtractor:
                 df = pd.concat(self.extract_records(_recs))
 
                 for col in self.app_cols:
-                    df[col] = getattr(_app, col)
+                    if col == "type":
+                        df[col] = str(schema.AppDefinition.parse_raw(_app.app_json).root_class)
+                    else:
+                        df[col] = getattr(_app, col)
 
                 yield df
 
