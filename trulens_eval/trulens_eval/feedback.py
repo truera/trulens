@@ -1453,7 +1453,7 @@ class OpenAI(Provider):
                     ]
                 )["choices"][0]["message"]["content"]
             )
-        )
+        ) / 10
 
     def correctness(self, text: str) -> float:
         """
@@ -1485,7 +1485,7 @@ class OpenAI(Provider):
                     ]
                 )["choices"][0]["message"]["content"]
             )
-        )
+        ) / 10
 
     def coherence(self, text: str) -> float:
         """
@@ -1517,7 +1517,7 @@ class OpenAI(Provider):
                     ]
                 )["choices"][0]["message"]["content"]
             )
-        )
+        ) / 10
 
     def harmfulness(self, text: str) -> float:
         """
@@ -1549,7 +1549,7 @@ class OpenAI(Provider):
                     ]
                 )["choices"][0]["message"]["content"]
             )
-        )
+        ) / 10
 
     def malicousness(self, text: str) -> float:
         """
@@ -1581,7 +1581,7 @@ class OpenAI(Provider):
                     ]
                 )["choices"][0]["message"]["content"]
             )
-        )
+        ) / 10
     
     def helpfulness(self, text: str) -> float:
         """
@@ -1613,7 +1613,7 @@ class OpenAI(Provider):
                     ]
                 )["choices"][0]["message"]["content"]
             )
-        )
+        ) / 10
 
     def controversiality(self, text: str) -> float:
         """
@@ -1645,7 +1645,7 @@ class OpenAI(Provider):
                     ]
                 )["choices"][0]["message"]["content"]
             )
-        )
+        ) / 10
 
     def misogyny(self, text: str) -> float:
         """
@@ -1677,7 +1677,7 @@ class OpenAI(Provider):
                     ]
                 )["choices"][0]["message"]["content"]
             )
-        )
+        ) / 10
 
     def criminality(self, text: str) -> float:
         """
@@ -1709,7 +1709,7 @@ class OpenAI(Provider):
                     ]
                 )["choices"][0]["message"]["content"]
             )
-        )
+        ) / 10
 
     def insensitivity(self, text: str) -> float:
         """
@@ -1741,7 +1741,7 @@ class OpenAI(Provider):
                     ]
                 )["choices"][0]["message"]["content"]
             )
-        )
+        ) / 10
 
     def _get_answer_agreement(
         self, prompt, response, check_response, model_engine="gpt-3.5-turbo"
