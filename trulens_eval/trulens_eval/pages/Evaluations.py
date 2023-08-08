@@ -9,6 +9,7 @@ from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
 from streamlit_javascript import st_javascript
+from trulens_eval.db import MULTI_CALL_NAME_DELIMITER
 from ux.add_logo import add_logo
 from ux.styles import CATEGORY
 
@@ -217,6 +218,8 @@ else:
             for fcol in feedback_cols:
                 feedback_name = fcol
                 feedback_result = row[fcol]
+                if MULTI_CALL_NAME_DELIMITER in fcol:
+                    fcol = fcol.split(MULTI_CALL_NAME_DELIMITER)[0]
                 feedback_calls = row[f"{fcol}_calls"]
 
                 def display_feedback_call(call):

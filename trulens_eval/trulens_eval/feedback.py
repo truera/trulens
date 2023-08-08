@@ -407,6 +407,7 @@ from typing import (
     Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 )
 
+import json
 import numpy as np
 import openai
 import pydantic
@@ -467,10 +468,14 @@ class Feedback(FeedbackDefinition):
     # result.
     agg: Optional[AggCallable] = pydantic.Field(exclude=True)
 
+    # An optional name. Only will affect display tables
+    supplied_name: Optional[str] = None
+
     def __init__(
         self,
         imp: Optional[Callable] = None,
         agg: Optional[Callable] = None,
+        name: Optional[str] = None,
         **kwargs
     ):
         """
@@ -485,11 +490,11 @@ class Feedback(FeedbackDefinition):
         """
 
         agg = agg or np.mean
-
+        if name is not None:
+            kwargs['supplied_name'] = name
         # imp is the python function/method while implementation is a serialized
         # json structure. Create the one that is missing based on the one that
         # is provided:
-
         if imp is not None:
             # These are for serialization to/from json and for db storage.
             if 'implementation' not in kwargs:
@@ -534,6 +539,7 @@ class Feedback(FeedbackDefinition):
 
         self.imp = imp
         self.agg = agg
+        self.supplied_name = name
 
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:
@@ -577,7 +583,7 @@ class Feedback(FeedbackDefinition):
             alias_info = ""
 
         print(
-            f"{UNICODE_CHECK} In {self.name}, "
+            f"{UNICODE_CHECK} In {self.supplied_name if self.supplied_name is not None else self.name}, "
             f"input {par_name} will be set to {par_path}{alias_info} ."
         )
 
@@ -709,17 +715,17 @@ class Feedback(FeedbackDefinition):
         Returns a new Feedback object with the given aggregation function.
         """
 
-        return Feedback(imp=self.imp, selectors=self.selectors, agg=func)
+        return Feedback(imp=self.imp, selectors=self.selectors, agg=func, name=self.supplied_name)
 
     @staticmethod
     def of_feedback_definition(f: FeedbackDefinition):
         implementation = f.implementation
         aggregator = f.aggregator
-
+        supplied_name = f.supplied_name
         imp_func = implementation.load()
         agg_func = aggregator.load()
 
-        return Feedback(imp=imp_func, agg=agg_func, **f.dict())
+        return Feedback(imp=imp_func, agg=agg_func, name=supplied_name, **f.dict())
 
     def _next_unselected_arg_name(self):
         if self.imp is not None:
@@ -752,7 +758,7 @@ class Feedback(FeedbackDefinition):
 
         new_selectors[arg] = Select.RecordInput
 
-        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg)
+        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg, name=self.supplied_name)
 
     on_input = on_prompt
 
@@ -770,7 +776,7 @@ class Feedback(FeedbackDefinition):
 
         new_selectors[arg] = Select.RecordOutput
 
-        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg)
+        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg, name=self.supplied_name)
 
     on_output = on_response
 
@@ -790,7 +796,7 @@ class Feedback(FeedbackDefinition):
             new_selectors[argname] = path
             self._print_guessed_selector(argname, path)
 
-        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg)
+        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg, name=self.supplied_name)
 
     def run(
         self, app: Union[AppDefinition, JSON], record: Record
@@ -812,10 +818,11 @@ class Feedback(FeedbackDefinition):
 
         feedback_calls = []
 
+        
         feedback_result = FeedbackResult(
             feedback_definition_id=self.feedback_definition_id,
             record_id=record.record_id,
-            name=self.name
+            name=self.supplied_name if self.supplied_name is not None else self.name
         )
 
         try:
@@ -838,21 +845,20 @@ class Feedback(FeedbackDefinition):
 
                     assert isinstance(
                         meta, dict
-                    ), f"Feedback metadata output must be a dictionary but was {type(call_meta)}."
+                    ), f"Feedback metadata output must be a dictionary but was {type(meta)}."
                 else:
                     # Otherwise it is just the float. We create empty metadata dict.
                     result_val = result_and_meta
                     meta = dict()
 
+                multi_result = None
                 if isinstance(result_val, dict):
                     for val in result_val.values():
                         assert isinstance(
                             val, float
                         ), f"Feedback function output with multivalue must be a dict with float values but encountered {type(val)}."
-                    # TODO: Better handling of multi-output
-                    result_val = list(result_val.values())
                     feedback_call = FeedbackCall(
-                        args=ins, ret=np.mean(result_val), meta=meta
+                        args=ins, ret=np.mean(list(result_val.values())), meta=meta
                     )
 
                 else:
@@ -866,20 +872,42 @@ class Feedback(FeedbackDefinition):
                 result_vals.append(result_val)
                 feedback_calls.append(feedback_call)
 
-            result_vals = np.array(result_vals)
+            
             if len(result_vals) == 0:
                 logger.warning(
-                    f"Feedback function {self.name} with aggregation {self.agg} had no inputs."
+                    f"Feedback function {self.supplied_name if self.supplied_name is not None else self.name} with aggregation {self.agg} had no inputs."
                 )
                 result = np.nan
             else:
-                result = self.agg(result_vals)
+                if isinstance(result_vals[0], float):
+                    result_vals = np.array(result_vals)
+                    result = self.agg(result_vals)
+                else:
+                    try:
+                        # Operates on list of dict; Can be a dict output (maintain multi) or a float output (convert to single)
+                        result = self.agg(result_vals)
+                    except:
+                        # Alternatively, operate the agg per key
+                        result = {}
+                        for feedback_output in result_vals:
+                            for key in feedback_output:
+                                if key not in result:
+                                    result[key] = []
+                                result[key].append(feedback_output[key])
+                        for key in result:
+                            result[key] = self.agg(result[key])
+                        
+                    
+                    if isinstance(result, dict):
+                        multi_result = result
+                        result = np.nan
 
             feedback_result.update(
                 result=result,
                 status=FeedbackResultStatus.DONE,
                 cost=cost,
-                calls=feedback_calls
+                calls=feedback_calls,
+                multi_result=json.dumps(multi_result)
             )
 
             return feedback_result
@@ -909,7 +937,7 @@ class Feedback(FeedbackDefinition):
             feedback_definition_id=self.feedback_definition_id,
             feedback_result_id=feedback_result_id,
             record_id=record_id,
-            name=self.name
+            name=self.supplied_name if self.supplied_name is not None else self.name
         )
 
         if feedback_result_id is None:
@@ -1571,19 +1599,24 @@ class Groundedness(SerialModel, WithClassInfo):
         return groundedness_scores, {"reason": reason}
 
     def grounded_statements_aggregator(
-        self, source_statements_matrix: np.ndarray
+        self, source_statements_multi_output: list[dict]
     ) -> float:
         """Aggregates multi-input, mulit-output information from the groundedness_measure methods.
 
 
         Args:
-            source_statements_matrix (np.ndarray): a 2D array with the first dimension corresponding to a source text,
+            source_statements_multi_output (np.ndarray): a 2D array with the first dimension corresponding to a source text,
                 and the second dimension corresponding to each sentence in a statement; it's groundedness score
 
         Returns:
             float: for each statement, gets the max groundedness, then averages over that.
         """
-        max_over_sources = np.max(source_statements_matrix, axis=0)
+        all_results = []
+        for multi_output in  source_statements_multi_output:
+            result_vals = list(multi_output.values())
+        all_results.append(result_vals)
+        all_results = np.asarray(all_results)
+        max_over_sources = np.max(all_results, axis=0)
         return np.mean(max_over_sources)
 
 

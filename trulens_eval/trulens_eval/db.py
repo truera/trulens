@@ -40,7 +40,7 @@ pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
 
-
+MULTI_CALL_NAME_DELIMITER=":::"
 class DBMeta(pydantic.BaseModel):
     """
     Databasae meta data mostly used for migrating from old db schemas.
@@ -290,7 +290,8 @@ class LocalSQLite(DB):
                 calls_json {self.TYPE_JSON} NOT NULL,
                 result FLOAT,
                 name TEXT NOT NULL,
-                cost_json {self.TYPE_JSON} NOT NULL
+                cost_json {self.TYPE_JSON} NOT NULL,
+                multi_result {self.TYPE_JSON}
             )'''
         )
         c.execute(
@@ -426,7 +427,8 @@ class LocalSQLite(DB):
                            ),  # extra dict is needed json's root must be a dict
             feedback_result.result,
             feedback_result.name,
-            json_str_of_obj(feedback_result.cost)
+            json_str_of_obj(feedback_result.cost),
+            feedback_result.multi_result
         )
 
         self._insert_or_replace_vals(table=self.TABLE_FEEDBACKS, vals=vals)
@@ -574,7 +576,7 @@ class LocalSQLite(DB):
 
         conn, c = self._connect()
         query = f"""
-            SELECT r.record_id, f.calls_json, f.result, f.name
+            SELECT r.record_id, f.calls_json, f.result, f.name, f.multi_result
             FROM {self.TABLE_RECORDS} r 
             LEFT JOIN {self.TABLE_FEEDBACKS} f
                 ON r.record_id = f.record_id
@@ -586,11 +588,9 @@ class LocalSQLite(DB):
         c.execute(query, app_ids)
         rows = c.fetchall()
         conn.close()
-
         df_results = pd.DataFrame(
             rows, columns=[description[0] for description in c.description]
         )
-
         if len(df_results) == 0:
             return df_results, []
 
@@ -637,15 +637,23 @@ class LocalSQLite(DB):
 
         def expand_results(row):
             if row['name'] is not None:
-                result_cols.add(row['name'])
-                row[row['name']] = row.result
+                
+                if row.multi_result is not None and json.loads(row.multi_result) is not None:
+                    multi_dict = json.loads(row.multi_result)
+                    for output_key in multi_dict:
+                        col_name = f"{row['name']}{MULTI_CALL_NAME_DELIMITER}{output_key}"
+                        result_cols.add(col_name)
+                        row[col_name] = multi_dict[output_key]
+                else:
+                    result_cols.add(row['name'])
+                    row[row['name']] = row.result
                 row[row['name'] + "_calls"] = json.loads(row.calls_json
                                                         )['calls']
 
             return pd.Series(row)
 
         df_results = df_results.apply(expand_results, axis=1)
-        df_results = df_results.drop(columns=["name", "result", "calls_json"])
+        df_results = df_results.drop(columns=["name", "result", "multi_result", "calls_json"])
 
         def nonempty(val):
             if isinstance(val, float):
