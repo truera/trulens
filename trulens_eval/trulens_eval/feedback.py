@@ -399,6 +399,7 @@ from datetime import datetime
 from inspect import Signature
 from inspect import signature
 import itertools
+import json
 import logging
 from multiprocessing.pool import AsyncResult
 import re
@@ -407,7 +408,6 @@ from typing import (
     Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 )
 
-import json
 import numpy as np
 import openai
 import pydantic
@@ -715,7 +715,12 @@ class Feedback(FeedbackDefinition):
         Returns a new Feedback object with the given aggregation function.
         """
 
-        return Feedback(imp=self.imp, selectors=self.selectors, agg=func, name=self.supplied_name)
+        return Feedback(
+            imp=self.imp,
+            selectors=self.selectors,
+            agg=func,
+            name=self.supplied_name
+        )
 
     @staticmethod
     def of_feedback_definition(f: FeedbackDefinition):
@@ -725,7 +730,9 @@ class Feedback(FeedbackDefinition):
         imp_func = implementation.load()
         agg_func = aggregator.load()
 
-        return Feedback(imp=imp_func, agg=agg_func, name=supplied_name, **f.dict())
+        return Feedback(
+            imp=imp_func, agg=agg_func, name=supplied_name, **f.dict()
+        )
 
     def _next_unselected_arg_name(self):
         if self.imp is not None:
@@ -758,7 +765,12 @@ class Feedback(FeedbackDefinition):
 
         new_selectors[arg] = Select.RecordInput
 
-        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg, name=self.supplied_name)
+        return Feedback(
+            imp=self.imp,
+            selectors=new_selectors,
+            agg=self.agg,
+            name=self.supplied_name
+        )
 
     on_input = on_prompt
 
@@ -776,7 +788,12 @@ class Feedback(FeedbackDefinition):
 
         new_selectors[arg] = Select.RecordOutput
 
-        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg, name=self.supplied_name)
+        return Feedback(
+            imp=self.imp,
+            selectors=new_selectors,
+            agg=self.agg,
+            name=self.supplied_name
+        )
 
     on_output = on_response
 
@@ -796,7 +813,12 @@ class Feedback(FeedbackDefinition):
             new_selectors[argname] = path
             self._print_guessed_selector(argname, path)
 
-        return Feedback(imp=self.imp, selectors=new_selectors, agg=self.agg, name=self.supplied_name)
+        return Feedback(
+            imp=self.imp,
+            selectors=new_selectors,
+            agg=self.agg,
+            name=self.supplied_name
+        )
 
     def run(
         self, app: Union[AppDefinition, JSON], record: Record
@@ -818,11 +840,11 @@ class Feedback(FeedbackDefinition):
 
         feedback_calls = []
 
-        
         feedback_result = FeedbackResult(
             feedback_definition_id=self.feedback_definition_id,
             record_id=record.record_id,
-            name=self.supplied_name if self.supplied_name is not None else self.name
+            name=self.supplied_name
+            if self.supplied_name is not None else self.name
         )
 
         try:
@@ -858,7 +880,9 @@ class Feedback(FeedbackDefinition):
                             val, float
                         ), f"Feedback function output with multivalue must be a dict with float values but encountered {type(val)}."
                     feedback_call = FeedbackCall(
-                        args=ins, ret=np.mean(list(result_val.values())), meta=meta
+                        args=ins,
+                        ret=np.mean(list(result_val.values())),
+                        meta=meta
                     )
 
                 else:
@@ -872,7 +896,6 @@ class Feedback(FeedbackDefinition):
                 result_vals.append(result_val)
                 feedback_calls.append(feedback_call)
 
-            
             if len(result_vals) == 0:
                 logger.warning(
                     f"Feedback function {self.supplied_name if self.supplied_name is not None else self.name} with aggregation {self.agg} had no inputs."
@@ -896,8 +919,7 @@ class Feedback(FeedbackDefinition):
                                 result[key].append(feedback_output[key])
                         for key in result:
                             result[key] = self.agg(result[key])
-                        
-                    
+
                     if isinstance(result, dict):
                         multi_result = result
                         result = np.nan
@@ -937,7 +959,8 @@ class Feedback(FeedbackDefinition):
             feedback_definition_id=self.feedback_definition_id,
             feedback_result_id=feedback_result_id,
             record_id=record_id,
-            name=self.supplied_name if self.supplied_name is not None else self.name
+            name=self.supplied_name
+            if self.supplied_name is not None else self.name
         )
 
         if feedback_result_id is None:
@@ -1612,7 +1635,7 @@ class Groundedness(SerialModel, WithClassInfo):
             float: for each statement, gets the max groundedness, then averages over that.
         """
         all_results = []
-        for multi_output in  source_statements_multi_output:
+        for multi_output in source_statements_multi_output:
             result_vals = list(multi_output.values())
         all_results.append(result_vals)
         all_results = np.asarray(all_results)
