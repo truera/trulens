@@ -40,7 +40,9 @@ pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
 
-MULTI_CALL_NAME_DELIMITER=":::"
+MULTI_CALL_NAME_DELIMITER = ":::"
+
+
 class DBMeta(pydantic.BaseModel):
     """
     Databasae meta data mostly used for migrating from old db schemas.
@@ -637,8 +639,9 @@ class LocalSQLite(DB):
 
         def expand_results(row):
             if row['name'] is not None:
-                
-                if row.multi_result is not None and json.loads(row.multi_result) is not None:
+
+                if row.multi_result is not None and json.loads(row.multi_result
+                                                              ) is not None:
                     multi_dict = json.loads(row.multi_result)
                     for output_key in multi_dict:
                         col_name = f"{row['name']}{MULTI_CALL_NAME_DELIMITER}{output_key}"
@@ -653,7 +656,9 @@ class LocalSQLite(DB):
             return pd.Series(row)
 
         df_results = df_results.apply(expand_results, axis=1)
-        df_results = df_results.drop(columns=["name", "result", "multi_result", "calls_json"])
+        df_results = df_results.drop(
+            columns=["name", "result", "multi_result", "calls_json"]
+        )
 
         def nonempty(val):
             if isinstance(val, float):

@@ -314,7 +314,7 @@ class FeedbackResult(SerialModel):
     error: Optional[str] = None  # if there was an error
 
     multi_result: Optional[str] = None
-    
+
     def __init__(
         self, feedback_result_id: Optional[FeedbackResultID] = None, **kwargs
     ):
@@ -369,7 +369,7 @@ class FeedbackDefinition(SerialModel):
         """
 
         selectors = selectors or dict()
-        
+
         super().__init__(
             feedback_definition_id="temporary",
             selectors=selectors,
