@@ -14,7 +14,7 @@
 
         - `llama_index_async.ipynb` -- How to use the async and streaming capabilities of Llama-Index and monitor the results using trulens.
      
-        - `langchain_groundtruth.ipynb` -- Evaluate an Llama-Index application using ground truth.
+        - `lllama_index_groundtruth.ipynb` -- Evaluate an Llama-Index application using ground truth.
         
         - `llama_index_example.ipynb` -- Question-answering with a in-memory vector store of contexts loaded from the web.
      
@@ -24,13 +24,15 @@
 
     - `langchain/` -- Examples using langchain as a framework.
  
+        - `langchain_agents.ipynb` -- How to use the agents capability of Langchain and evaluate tool coverage using trulens.
+        
         - `langchain_async.ipynb` -- How to use the streaming capability of Langchain and monitor the results using trulens.
      
         - `langchain_groundtruth.ipynb` -- Evaluate an LangChain application using ground truth.
 
-        - `langchain_quickstart.ipynb` -- Question-answering with LangChain.
-
         - `langchain_model_comparison.ipynb` -- Compare different models with TruLens in a langchain framework.
+
+        - `langchain_quickstart.ipynb` -- Question-answering with LangChain.
 
         - `langchain_summarize.ipynb` -- A summarization model using langchain. This type of model does not
             take as input a piece of text but rather a set of documents.
