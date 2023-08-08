@@ -4,9 +4,16 @@ Generalized root type for various libraries like llama_index and langchain .
 
 from abc import ABC
 from abc import abstractmethod
+from datetime import datetime
+from inspect import BoundArguments
+from inspect import Signature
+from inspect import signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Dict, Iterable, Optional, Sequence, Set, Tuple
+import traceback
+from typing import (
+    Any, Callable, ClassVar, Dict, Iterable, Optional, Sequence, Set, Tuple
+)
 
 import pydantic
 from pydantic import Field
@@ -14,12 +21,14 @@ from pydantic import Field
 from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
 from trulens_eval.instruments import Instrument
+from trulens_eval.provider_apis import Endpoint
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
+from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
 from trulens_eval.util import all_objects
@@ -246,9 +255,8 @@ class App(AppDefinition, SerialModel):
     # Instrumentation class.
     instrument: Instrument = Field(exclude=True)
 
-    @classmethod
-    def instrument(cls, func):
-        return function
+    # Mapping of instrumented methods (by id(.) ) to their path in this app:
+    instrumented_methods: Dict[Any, JSONPath] = Field(exclude=True, default_factory=dict)
 
     def __init__(
         self,
@@ -301,9 +309,249 @@ class App(AppDefinition, SerialModel):
                 # constructor here.
                 f.implementation.load()
 
+        self.instrument.root_methods = set([App.with_record, App.awith_record])
+        self.instrument._on_method_instrumented = self._on_method_instrumented 
+        self.instrument._get_method_path = self._get_method_path
+
         self.instrument.instrument_object(
             obj=self.app, query=Select.Query().app
         )
+
+        # for m in self.root_methods:
+        #    self.instrument.add_root_method(m)
+        # self.instrument.instrument_root_methods()
+
+    def _on_method_instrumented(self, func: Callable, path: JSONPath):
+        """
+        Called by instrumentation system for every function requested to be
+        instrumented by this app.
+        """
+
+        self.instrumented_methods[func] = path
+
+
+    def _get_method_path(self, func) -> JSONPath:
+        """
+        Get the path of the instrumented function `func` relative to this app.
+        """
+
+        return self.instrumented_methods.get(func)
+
+
+    def main_input(
+        self, func: Callable, sig: Signature, bindings: BoundArguments
+    ) -> str:
+        """
+        Determine the main input string for the given function `func` with
+        signature `sig` if it is to be called with the given bindings
+        `bindings`.
+        """
+        logger.warning(
+            f"Unsure what the main input string is for the call to {func.__name__}."
+        )
+
+        all_args = list(bindings.arguments.values())
+
+        if len(all_args) > 0:
+            return all_args[0]
+        else:
+            return None
+
+    def main_output(
+        self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
+    ) -> str:
+        """
+        Determine the main out string for the given function `func` with
+        signature `sig` after it is called with the given `bindings` and has
+        returned `ret`.
+        """
+
+        if isinstance(ret, str):
+            return ret
+
+        logger.warning(
+            f"Unsure what the main output string is for the call to {func.__name__}."
+        )
+
+        if isinstance(ret, Dict):
+            return next(iter(ret.values()))
+
+        elif isinstance(ret, Sequence):
+            if len(ret) > 0:
+                return ret[0]
+            else:
+                return None
+
+        else:
+            return str(ret)
+
+    def _on_new_record(self, func):
+        """
+        Called by instrumented methods in cases where they cannot find a record
+        call list in the stack. If we are inside a context manager, return a new
+        call list.
+        """
+        if self.records.get(None) is not None:
+            return []
+
+        return None
+
+    def _on_add_record(
+        self, record: Sequence[RecordAppCall], func: Callable, sig: Signature,
+        bindings: BoundArguments, start_time, end_time, ret: Any, error: Any,
+        cost: Cost
+    ):
+        """
+        Called by instrumented methods if they use _new_record to construct a
+        record call list. 
+        """
+        assert self.records.get(
+            None
+        ) is not None, "App was not expecting to keep track of a record."
+
+        assert len(record) > 0, "No information recorded in call."
+
+        main_in = self.main_input(func, sig, bindings)
+        main_out = self.main_output(func, sig, bindings, ret)
+
+        ret_record_args = dict()
+        ret_record_args['main_input'] = jsonify(main_in)
+
+        if ret is not None:
+            ret_record_args['main_output'] = jsonify(main_out)
+
+        if error is not None:
+            ret_record_args['main_error'] = jsonify(error)
+
+        ret_record = self._post_record(
+            ret_record_args, error, cost, start_time, end_time, record
+        )
+
+        records = self.records.get()
+        records += [ret_record]
+
+    async def awith_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
+        """
+        Call the given instrumented async function `func` with the given `args`,
+        `kwargs`, producing its results as well as a record.
+        """
+
+        # Wrapped calls will look this up by traversing the call stack. This
+        # should work with threads.
+        record: Sequence[RecordAppCall] = []
+
+        ret = None
+        error = None
+
+        cost: Cost = Cost()
+
+        start_time = None
+        end_time = None
+
+        main_in = None
+        main_out = None
+
+        try:
+            sig = signature(func)
+            bindings = sig.bind(*args, **kwargs)
+
+            main_in = self.main_input(func, sig, bindings)
+
+            start_time = datetime.now()
+            ret, cost = await Endpoint.atrack_all_costs_tally(
+                lambda: func(*bindings.args, **bindings.kwargs)
+            )
+            end_time = datetime.now()
+
+            main_out = self.main_output(func, sig, bindings, ret)
+
+        except BaseException as e:
+            end_time = datetime.now()
+            error = e
+            logger.error(f"App raised an exception: {e}")
+            logger.error(traceback.format_exc())
+
+        assert len(record) > 0, "No information recorded in call."
+
+        ret_record_args = dict()
+
+        ret_record_args['main_input'] = jsonify(main_in)
+
+        if ret is not None:
+            ret_record_args['main_output'] = jsonify(main_out)
+
+        if error is not None:
+            ret_record_args['main_error'] = jsonify(error)
+
+        ret_record = self._post_record(
+            ret_record_args, error, cost, start_time, end_time, record
+        )
+
+        return ret, ret_record
+
+    def with_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
+        """
+        Call the given instrumented function `func` with the given `args`,
+        `kwargs`, producing its results as well as a record.
+        """
+
+        # Wrapped calls will look this up by traversing the call stack. This
+        # should work with threads.
+        record: Sequence[RecordAppCall] = []
+
+        ret = None
+        error = None
+
+        cost: Cost = Cost()
+
+        start_time = None
+        end_time = None
+
+        main_in = None
+        main_out = None
+
+        try:
+            sig = signature(func)
+            bindings = sig.bind(*args, **kwargs)
+
+            main_in = self.main_input(func, sig, bindings)
+
+            start_time = datetime.now()
+            ret, cost = Endpoint.track_all_costs_tally(
+                lambda: func(*bindings.args, **bindings.kwargs)
+            )
+            end_time = datetime.now()
+
+            main_out = self.main_output(func, sig, bindings, ret)
+
+        except BaseException as e:
+            end_time = datetime.now()
+            error = e
+            logger.error(f"App raised an exception: {e}")
+            logger.error(traceback.format_exc())
+
+        if len(record) == 0:
+            logger.warning(
+                "No intrumented methods called. "
+                "This may be due to an error in the wrapped app, a bug in trulens_eval, or missing instrumentation of relevant methods."
+                "Methods currently instrumented are: "
+            )
+
+        ret_record_args = dict()
+
+        ret_record_args['main_input'] = jsonify(main_in)
+
+        if ret is not None:
+            ret_record_args['main_output'] = jsonify(main_out)
+
+        if error is not None:
+            ret_record_args['main_error'] = jsonify(error)
+
+        ret_record = self._post_record(
+            ret_record_args, error, cost, start_time, end_time, record
+        )
+
+        return ret, ret_record
 
     def json(self, *args, **kwargs):
         # Need custom jsonification here because it is likely the model
@@ -404,6 +652,18 @@ class App(AppDefinition, SerialModel):
             yield q, c
 
     def print_instrumented(self) -> None:
+        print("Components:")
+        self.print_instrumented_components()
+        print("\nMethods:")
+        self.print_instrumented_methods()
+
+    def print_instrumented_methods(self) -> None:
+        """
+        Print instrumented components and their categories.
+        """
+        pass
+
+    def print_instrumented_components(self) -> None:
         """
         Print instrumented components and their categories.
         """

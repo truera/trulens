@@ -122,9 +122,9 @@ class LlamaInstrument(Instrument):
                     TruLlama.chat_with_record, TruLlama.achat_with_record
                 ]
             ),
-            modules=LlamaInstrument.Default.MODULES,
-            classes=LlamaInstrument.Default.CLASSES(),  # was thunk
-            methods=LlamaInstrument.Default.METHODS
+            include_modules=LlamaInstrument.Default.MODULES,
+            include_classes=LlamaInstrument.Default.CLASSES(),  # was thunk
+            include_methods=LlamaInstrument.Default.METHODS
         )
 
 
