@@ -168,8 +168,7 @@ class TruLlama(App):
         return cls.select_outputs().source_nodes[:]
 
     # llama_index.chat_engine.types.BaseChatEngine
-    def chat(self, *args,
-             **kwargs) -> AgentChatResponse:
+    def chat(self, *args, **kwargs) -> AgentChatResponse:
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -187,8 +186,7 @@ class TruLlama(App):
         return res
 
     # llama_index.chat_engine.types.BaseChatEngine
-    def stream_chat(self, *args,
-             **kwargs) -> StreamingAgentChatResponse:
+    def stream_chat(self, *args, **kwargs) -> StreamingAgentChatResponse:
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -413,11 +411,9 @@ class TruLlama(App):
 
         return ret, ret_record
 
-
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
-    async def achat_with_record(
-        self, message: str, **kwargs
-    ) -> Tuple[AgentChatResponse, Record]:
+    async def achat_with_record(self, message: str,
+                                **kwargs) -> Tuple[AgentChatResponse, Record]:
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -526,8 +522,6 @@ class TruLlama(App):
 
         return ret, ret_record
 
-
-
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.astream_chat .
     async def astream_chat_with_record(
         self, message: str, **kwargs
@@ -587,4 +581,3 @@ class TruLlama(App):
         )
 
         return ret, ret_record
-
