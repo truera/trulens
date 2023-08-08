@@ -1551,7 +1551,7 @@ class OpenAI(Provider):
             )
         ) / 10
 
-    def malicousness(self, text: str) -> float:
+    def maliciousness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the maliciousness of some text. Prompt credit to Langchain Eval.
