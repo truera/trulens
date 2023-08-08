@@ -68,10 +68,12 @@ class TestDbV2Migration(TestCase):
 
             # check that database is usable and no data was lost
             assert db.get_app(app.app_id) == json.loads(app.json())
-            df, fb_cols = db.get_records_and_feedback([app.app_id])
-            assert set(df.columns).issuperset(set(AppsExtractor.app_cols))
-            assert df["record_json"][0] == rec.json()
+            df_recs, fb_cols = db.get_records_and_feedback([app.app_id])
+            assert set(df_recs.columns).issuperset(set(AppsExtractor.app_cols))
+            assert df_recs["record_json"][0] == rec.json()
             assert list(fb_cols) == [fb.name]
+            df_fb = db.get_feedback(record_id=rec.record_id)
+            assert df_fb["type"][0] == app.root_class
 
 
 class MockFeedback(Provider):

@@ -114,7 +114,7 @@ class SqlAlchemyDB(DB):
         last_ts_before: Optional[datetime] = None
     ) -> pd.DataFrame:
         with self.Session.begin() as session:
-            q = session.query(orm.FeedbackResult)
+            q = select(orm.FeedbackResult)
             if record_id:
                 q = q.filter_by(record_id=record_id)
             if feedback_result_id:
@@ -125,17 +125,64 @@ class SqlAlchemyDB(DB):
                 q = q.filter_by(status=status.value)
             if last_ts_before:
                 q = q.filter(orm.FeedbackResult.last_ts < last_ts_before.timestamp())
-            q.all()  # TODO
+            results = (row[0] for row in session.execute(q))
+            return _extract_feedback_results(results)
 
     def get_records_and_feedback(self, app_ids: List[str]) -> Tuple[pd.DataFrame, Sequence[str]]:
         with self.Session.begin() as session:
             stmt = select(orm.AppDefinition).where(orm.AppDefinition.app_id.in_(app_ids))
-            apps = (row[0] for row in session.execute(stmt).all())
+            apps = (row[0] for row in session.execute(stmt))
             return AppsExtractor().get_df_and_cols(apps)
 
 
-def _extract_feedback_results(results: Iterable[orm.FeedbackResult]):
-    pass  # TODO
+def _extract_feedback_results(results: Iterable[orm.FeedbackResult]) -> pd.DataFrame:
+    def _extract(_result: orm.FeedbackResult):
+        app_json = json.loads(_result.record.app.app_json)
+        _type = schema.AppDefinition(**app_json).root_class
+        return (
+            _result.record_id, _result.feedback_result_id, _result.feedback_definition_id,
+            _result.last_ts, FeedbackResultStatus(_result.status), _result.error, _result.name,
+            _result.result, _result.cost_json, json.loads(_result.record.perf_json),
+            json.loads(_result.calls_json)["calls"], json.loads(_result.feedback_definition.feedback_json),
+            json.loads(_result.record.record_json), app_json, _type,
+        )
+
+    df = pd.DataFrame(
+        data=(_extract(r) for r in results),
+        columns=[
+            'record_id', 'feedback_result_id', 'feedback_definition_id',
+            'last_ts', 'status', 'error', 'fname',
+            'result', 'cost_json', 'perf_json',
+            'calls_json', 'feedback_json',
+            'record_json', 'app_json', "type",
+        ],
+    )
+    df["latency"] = _extract_latency(df["perf_json"])
+    df = pd.concat([df, _extract_tokens_and_cost(df["cost_json"])], axis=1)
+    return df
+
+
+def _extract_latency(perf_json: pd.Series) -> pd.Series:
+    perf = perf_json.apply(
+        lambda p: schema.Perf.parse_raw(p) if isinstance(p, str) else schema.Perf(**p)
+        if p != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
+    )
+    return perf.apply(
+        lambda p: p.latency.seconds
+        if p != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
+    )
+
+
+def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
+    def _extract(_cost_json: Union[str, dict]) -> Tuple[int, float]:
+        if isinstance(_cost_json, str):
+            _cost_json = json.loads(_cost_json)
+        cost = schema.Cost(**_cost_json)
+        return cost.n_tokens, cost.cost
+    return pd.DataFrame(
+        data=(_extract(c) for c in cost_json),
+        columns=["total_tokens", "total_cost"],
+    )
 
 
 class AppsExtractor:
@@ -149,30 +196,9 @@ class AppsExtractor:
 
     def get_df_and_cols(self, apps: Iterable[orm.AppDefinition]) -> Tuple[pd.DataFrame, Sequence[str]]:
         df = pd.concat(self.extract_apps(apps))
-        df["latency"] = self.extract_latency(df["perf_json"])
-        df = pd.concat([df, self.extract_tokens_and_cost(df["cost_json"])], axis=1)
+        df["latency"] = _extract_latency(df["perf_json"])
+        df = pd.concat([df, _extract_tokens_and_cost(df["cost_json"])], axis=1)
         return df, list(self.feedback_columns)
-
-    @classmethod
-    def extract_tokens_and_cost(cls, cost_json: pd.Series) -> pd.DataFrame:
-        def _extract(_cost_json: str) -> Tuple[int, float]:
-            cost = schema.Cost.parse_raw(_cost_json)
-            return cost.n_tokens, cost.cost
-        return pd.DataFrame(
-            data=(_extract(c) for c in cost_json),
-            columns=["total_tokens", "total_cost"],
-        )
-
-    @classmethod
-    def extract_latency(cls, perf_json: pd.Series) -> pd.Series:
-        perf = perf_json.apply(
-            lambda p: schema.Perf.parse_raw(p)
-            if p != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
-        )
-        return perf.apply(
-            lambda p: p.latency.seconds
-            if p != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
-        )
 
     def extract_apps(self, apps: Iterable[orm.AppDefinition]) -> Iterable[pd.DataFrame]:
         yield pd.DataFrame([], columns=self.app_cols + self.rec_cols)  # prevent empty iterator
