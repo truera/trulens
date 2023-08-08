@@ -12,7 +12,6 @@ from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.util import FunctionOrMethod
-
 '''
 How to make a db migrations:
 
@@ -48,6 +47,7 @@ How to make a db migrations:
   * Do a sys.path.insert(0,TRULENS_PATH) to run with your version
 '''
 
+
 class VersionException(Exception):
     pass
 
@@ -73,14 +73,14 @@ def _update_db_json_col(
     migrate_record = tuple(migrate_record)
     db._insert_or_replace_vals(table=table, vals=migrate_record)
 
+
 def migrate_0_3_0(db):
     conn, c = db._connect()
-    c.execute(
-        f"""ALTER TABLE feedbacks
-        ADD multi_result TEXT;"""
-    )
+    c.execute(f"""ALTER TABLE feedbacks
+        ADD multi_result TEXT;""")
     conn.commit()
-    
+
+
 def migrate_0_2_0(db):
     """
     Migrates from 0.2.0 to 0.3.0
@@ -380,7 +380,7 @@ def _serialization_asserts(db) -> None:
                                     **(test_json['implementation'])
                                 ).load()
                             except ImportError:
-                                # Import error is not a migration problem. 
+                                # Import error is not a migration problem.
                                 # It signals that the function cannot be used for deferred evaluation.
                                 pass
 
@@ -399,13 +399,13 @@ def _serialization_asserts(db) -> None:
                             AppDefinition(**test_json)
                         else:
                             # If this happens, trulens needs to add a migration
-                            
+
                             raise VersionException(
                                 f"serialized column migration not implemented: {col_name}. {validation_fail_advice}"
                             )
                     except Exception as e:
                         tb = traceback.format_exc()
-                        
+
                         raise VersionException(
                             f"Migration failed on {table} {col_name} {row[col_idx]}.\n\n{tb}\n\n{validation_fail_advice}"
                         )
