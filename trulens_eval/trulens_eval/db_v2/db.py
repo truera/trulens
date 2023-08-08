@@ -13,6 +13,7 @@ from sqlalchemy.orm import sessionmaker
 
 from trulens_eval import schema
 from trulens_eval.db import DB
+from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.db_v2 import orm
 from trulens_eval.db_v2.migrations import upgrade_db
 from trulens_eval.db_v2.utils import for_all_methods, run_before, is_legacy_sqlite, is_memory_sqlite, \
@@ -105,14 +106,26 @@ class SqlAlchemyDB(DB):
             return _feedback_result.feedback_result_id
 
     def get_feedback(
-            self,
-            record_id: Optional[RecordID] = None,
-            feedback_result_id: Optional[FeedbackResultID] = None,
-            feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-            status: Optional[FeedbackResultStatus] = None,
-            last_ts_before: Optional[datetime] = None
+        self,
+        record_id: Optional[RecordID] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+        status: Optional[FeedbackResultStatus] = None,
+        last_ts_before: Optional[datetime] = None
     ) -> pd.DataFrame:
-        pass  # TODO
+        with self.Session.begin() as session:
+            q = session.query(orm.FeedbackResult)
+            if record_id:
+                q = q.filter_by(record_id=record_id)
+            if feedback_result_id:
+                q = q.filter_by(feedback_result_id=feedback_result_id)
+            if feedback_definition_id:
+                q = q.filter_by(feedback_definition_id=feedback_definition_id)
+            if status:
+                q = q.filter_by(status=status.value)
+            if last_ts_before:
+                q = q.filter(orm.FeedbackResult.last_ts < last_ts_before.timestamp())
+            q.all()  # TODO
 
     def get_records_and_feedback(self, app_ids: List[str]) -> Tuple[pd.DataFrame, Sequence[str]]:
         with self.Session.begin() as session:
@@ -121,16 +134,45 @@ class SqlAlchemyDB(DB):
             return AppsExtractor().get_df_and_cols(apps)
 
 
+def _extract_feedback_results(results: Iterable[orm.FeedbackResult]):
+    pass  # TODO
+
+
 class AppsExtractor:
     app_cols = ["app_id", "app_json"]
     rec_cols = ["record_id", "input", "output", "tags", "record_json", "cost_json", "perf_json", "ts"]
+    extra_cols = ["latency", "total_tokens", "total_cost"]
+    all_cols = app_cols + rec_cols + extra_cols
 
     def __init__(self):
         self.feedback_columns = set()
 
     def get_df_and_cols(self, apps: Iterable[orm.AppDefinition]) -> Tuple[pd.DataFrame, Sequence[str]]:
         df = pd.concat(self.extract_apps(apps))
+        df["latency"] = self.extract_latency(df["perf_json"])
+        df = pd.concat([df, self.extract_tokens_and_cost(df["cost_json"])], axis=1)
         return df, list(self.feedback_columns)
+
+    @classmethod
+    def extract_tokens_and_cost(cls, cost_json: pd.Series) -> pd.DataFrame:
+        def _extract(_cost_json: str) -> Tuple[int, float]:
+            cost = schema.Cost.parse_raw(_cost_json)
+            return cost.n_tokens, cost.cost
+        return pd.DataFrame(
+            data=(_extract(c) for c in cost_json),
+            columns=["total_tokens", "total_cost"],
+        )
+
+    @classmethod
+    def extract_latency(cls, perf_json: pd.Series) -> pd.Series:
+        perf = perf_json.apply(
+            lambda p: schema.Perf.parse_raw(p)
+            if p != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
+        )
+        return perf.apply(
+            lambda p: p.latency.seconds
+            if p != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
+        )
 
     def extract_apps(self, apps: Iterable[orm.AppDefinition]) -> Iterable[pd.DataFrame]:
         yield pd.DataFrame([], columns=self.app_cols + self.rec_cols)  # prevent empty iterator
