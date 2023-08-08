@@ -99,6 +99,17 @@ class SqlAlchemyDB(DB):
                 session.add(_fb_def)
             return _fb_def.feedback_definition_id
 
+    def get_feedback_defs(self, feedback_definition_id: Optional[str] = None) -> pd.DataFrame:
+        with self.Session.begin() as session:
+            q = select(orm.FeedbackDefinition)
+            if feedback_definition_id:
+                q = q.filter_by(feedback_definition_id=feedback_definition_id)
+            fb_defs = (row[0] for row in session.execute(q))
+            return pd.DataFrame(
+                data=((fb.feedback_definition_id, json.loads(fb.feedback_json)) for fb in fb_defs),
+                columns=["feedback_definition_id", "feedback_json"],
+            )
+
     def insert_feedback(self, feedback_result: schema.FeedbackResult) -> schema.FeedbackResultID:
         with self.Session.begin() as session:
             _feedback_result = orm.FeedbackResult.parse(feedback_result)

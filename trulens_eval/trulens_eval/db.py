@@ -96,6 +96,9 @@ class DB(SerialModel, abc.ABC):
 
         raise NotImplementedError()
 
+    def get_feedback_defs(self, feedback_definition_id: Optional[str] = None) -> pd.DataFrame:
+        raise NotImplementedError()
+
     @abc.abstractmethod
     def insert_feedback(
         self,

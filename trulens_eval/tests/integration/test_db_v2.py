@@ -74,6 +74,8 @@ class TestDbV2Migration(TestCase):
             assert list(fb_cols) == [fb.name]
             df_fb = db.get_feedback(record_id=rec.record_id)
             assert df_fb["type"][0] == app.root_class
+            df_defs = db.get_feedback_defs(feedback_definition_id=fb.feedback_definition_id)
+            assert df_defs["feedback_json"][0] == json.loads(fb.json())
 
 
 class MockFeedback(Provider):
