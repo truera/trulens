@@ -110,7 +110,7 @@ class SqlAlchemyDB(DB):
         record_id: Optional[RecordID] = None,
         feedback_result_id: Optional[FeedbackResultID] = None,
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-        status: Optional[FeedbackResultStatus] = None,
+        status: Optional[Union[FeedbackResultStatus, Sequence[FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None
     ) -> pd.DataFrame:
         with self.Session.begin() as session:
@@ -122,7 +122,9 @@ class SqlAlchemyDB(DB):
             if feedback_definition_id:
                 q = q.filter_by(feedback_definition_id=feedback_definition_id)
             if status:
-                q = q.filter_by(status=status.value)
+                if isinstance(status, FeedbackResultStatus):
+                    status = [status.value]
+                q = q.filter(orm.FeedbackResult.status.in_([s.value for s in status]))
             if last_ts_before:
                 q = q.filter(orm.FeedbackResult.last_ts < last_ts_before.timestamp())
             results = (row[0] for row in session.execute(q))

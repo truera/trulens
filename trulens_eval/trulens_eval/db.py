@@ -117,7 +117,7 @@ class DB(SerialModel, abc.ABC):
         record_id: Optional[RecordID] = None,
         feedback_result_id: Optional[FeedbackResultID] = None,
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-        status: Optional[FeedbackResultStatus] = None,
+        status: Optional[Union[FeedbackResultStatus, Sequence[FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None
     ) -> pd.DataFrame:
         raise NotImplementedError()
