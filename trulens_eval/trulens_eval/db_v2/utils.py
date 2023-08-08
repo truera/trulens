@@ -2,9 +2,10 @@ import inspect
 import logging
 import shutil
 import sqlite3
+from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Union
 
 import pandas as pd
 import sqlalchemy
@@ -128,6 +129,9 @@ def migrate_legacy_sqlite(engine: Engine):
         for table in ["apps", "feedback_defs", "records", "feedbacks"]:
             logger.info("Copying table '%s'", table)
             df = pd.read_sql(f"SELECT * FROM {table}", src_conn)
+            for col in ["ts", "last_ts"]:
+                if col in df:
+                    df[col] = df[col].apply(lambda ts: coerce_ts(ts).timestamp())
             logger.debug("\n\n%s\n", df.head())
             df.to_sql(table, tgt_conn, index=False, if_exists="append")
 
@@ -138,6 +142,16 @@ def migrate_legacy_sqlite(engine: Engine):
         # 5. Replace original database file with the staging one
         logger.debug("Replacing database file at %s", original_file)
         shutil.copyfile(stg_file, original_file)
+
+
+def coerce_ts(ts: Union[datetime, str, int, float]) -> datetime:
+    if isinstance(ts, datetime):
+        return ts
+    if isinstance(ts, str):
+        return datetime.fromisoformat(ts)
+    if isinstance(ts, (int, float)):
+        return datetime.fromtimestamp(ts)
+    raise ValueError(f"Cannot coerce to datetime: {ts}")
 
 
 def _copy_database(src_url: str, tgt_url: str):

@@ -111,6 +111,8 @@ class SqlAlchemyDB(DB):
 
 
 class AppsExtractor:
+    app_cols = ["app_id", "app_json"]
+    rec_cols = ["record_id", "input", "output", "tags", "record_json", "cost_json", "perf_json", "ts"]
 
     def __init__(self):
         self.feedback_columns = set()
@@ -120,13 +122,15 @@ class AppsExtractor:
         return df, list(self.feedback_columns)
 
     def extract_apps(self, apps: Iterable[orm.AppDefinition]) -> Iterable[pd.DataFrame]:
+        yield pd.DataFrame([], columns=self.app_cols + self.rec_cols)  # prevent empty iterator
         for _app in apps:
-            df = pd.concat(self.extract_records(_app.records))
+            if _recs := _app.records:
+                df = pd.concat(self.extract_records(_recs))
 
-            for col in ["app_id", "app_json"]:
-                df[col] = getattr(_app, col)
+                for col in self.app_cols:
+                    df[col] = getattr(_app, col)
 
-            yield df
+                yield df
 
     def extract_records(self, records: Iterable[orm.Record]) -> Iterable[pd.DataFrame]:
         for _rec in records:
@@ -134,10 +138,9 @@ class AppsExtractor:
                 .pivot_table(columns="key", values="value", aggfunc=self.agg_result_or_calls) \
                 .reset_index(drop=True).rename_axis("", axis=1)
 
-            for col in ["record_id", "input", "output", "tags", "record_json", "cost_json", "perf_json"]:
-                df[col] = getattr(_rec, col)
+            for col in self.rec_cols:
+                df[col] = datetime.fromtimestamp(_rec.ts).isoformat() if col == "ts" else getattr(_rec, col)
 
-            df["ts"] = datetime.fromisoformat(_rec.ts)
             yield df
 
     def extract_results(self, results: Iterable[orm.FeedbackResult]) -> Iterable[Tuple[str, Union[float, dict]]]:
