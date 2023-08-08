@@ -640,7 +640,6 @@ class LocalSQLite(DB):
                 
                 if row.multi_result is not None and json.loads(row.multi_result) is not None:
                     multi_dict = json.loads(row.multi_result)
-                    print(f"YES {row.multi_result} {multi_dict}")
                     for output_key in multi_dict:
                         col_name = f"{row['name']}{MULTI_CALL_NAME_DELIMITER}{output_key}"
                         result_cols.add(col_name)

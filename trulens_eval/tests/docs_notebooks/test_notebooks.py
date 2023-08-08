@@ -108,7 +108,7 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
             ### for version in db_migration.migration_versions:
 
             # Run the oldest and latest migrations to keep testing more manageable
-            for version in [db_migration.migration_versions[1],
+            for version in [db_migration.migration_versions[0],db_migration.migration_versions[1],
                             db_migration.migration_versions[-1]]:
                 test_version_str = version.replace('.', '_')
                 setattr(

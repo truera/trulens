@@ -20,10 +20,10 @@ How to make a db migrations:
   In trulens/trulens_eval/tests/docs_notebooks/notebooks_to_test 
   remove any local dbs
     * rm rf default.sqlite
-  run 
-    * all_tools.ipynb
-    * llama_index_quickstart.ipynb
-    * langchain-retrieval-augmentation-with-trulens.ipynb
+  run below notebooks (Making sure you also run with the same X.x.x version trulens-eval)
+    * all_tools.ipynb # cp cp ../generated_files/all_tools.ipynb ./
+    * llama_index_quickstart.ipynb # cp frameworks/llama_index/llama_index_quickstart.ipynb ./
+    * langchain-retrieval-augmentation-with-trulens.ipynb # cp vector-dbs/pinecone/langchain-retrieval-augmentation-with-trulens.ipynb ./
     * Add any other notebooks you think may have possible breaking changes
   replace the last compatible db with this new db file
     * See the last COMPAT_VERSION: compatible version in leftmost below: migration_versions
@@ -45,6 +45,7 @@ How to make a db migrations:
   * replace your db file with an old version db first and see if the tru.migrate_database() works.
 
 4. Add a DB file for testing new breaking changes (Same as step 1: but with your new version) 
+  * Do a sys.path.insert(0,TRULENS_PATH) to run with your version
 '''
 
 class VersionException(Exception):
