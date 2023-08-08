@@ -17,6 +17,7 @@ from trulens_eval.db_v2 import orm
 from trulens_eval.db_v2.migrations import upgrade_db
 from trulens_eval.db_v2.utils import for_all_methods, run_before, is_legacy_sqlite, is_memory_sqlite, \
     check_db_revision, migrate_legacy_sqlite
+from trulens_eval.schema import RecordID, FeedbackResultID, FeedbackDefinitionID, FeedbackResultStatus
 from trulens_eval.util import JSON
 
 logger = logging.getLogger(__name__)
@@ -102,6 +103,16 @@ class SqlAlchemyDB(DB):
             _feedback_result = orm.FeedbackResult.parse(feedback_result)
             session.add(_feedback_result)
             return _feedback_result.feedback_result_id
+
+    def get_feedback(
+            self,
+            record_id: Optional[RecordID] = None,
+            feedback_result_id: Optional[FeedbackResultID] = None,
+            feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+            status: Optional[FeedbackResultStatus] = None,
+            last_ts_before: Optional[datetime] = None
+    ) -> pd.DataFrame:
+        pass  # TODO
 
     def get_records_and_feedback(self, app_ids: List[str]) -> Tuple[pd.DataFrame, Sequence[str]]:
         with self.Session.begin() as session:

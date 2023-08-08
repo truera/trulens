@@ -112,6 +112,21 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def get_feedback(
+        self,
+        record_id: Optional[RecordID] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+        status: Optional[FeedbackResultStatus] = None,
+        last_ts_before: Optional[datetime] = None
+    ) -> pd.DataFrame:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_app(self, app_id: str) -> JSON:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def get_records_and_feedback(
         self, app_ids: List[str]
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
