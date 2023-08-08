@@ -244,7 +244,7 @@ class AppsExtractor:
         for _res in results:
             self.feedback_columns.add(_res.name)
             yield _res.name, _res.result
-            yield f"{_res.name}_calls", json.loads(_res.calls_json)["calls"][0]
+            yield f"{_res.name}_calls", json.loads(_res.calls_json)["calls"]
 
     @classmethod
     def agg_result_or_calls(cls, *args):
