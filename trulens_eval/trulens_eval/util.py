@@ -1426,7 +1426,26 @@ class Bindings(SerialModel):
     def of_bound_arguments(b: inspect.BoundArguments) -> Bindings:
         return Bindings(args=b.args, kwargs=b.kwargs)
 
+    def _handle_providers_load(self):
+        # A Hack: reason below
+        # This was introduced with the feedback functions Groundedness and GroundTruthAgreement.
+
+        # `summarize_provider` explanation:
+        ## The use case is a Serialized feedback, with attribute that needs instantiation
+        ## But should not be a user supplied input kwarg. 
+        # `groundedness_provider` and `provider` explanation
+        ## The rest of the providers need to be instantiated, but are currently in circular dependency if done from util.py
+        if 'summarize_provider' in self.kwargs:
+            del self.kwargs['summarize_provider']
+        if 'groundedness_provider' in self.kwargs:
+            del self.kwargs['groundedness_provider']
+        if 'provider' in self.kwargs:
+            del self.kwargs['provider']
+        
     def load(self, sig: inspect.Signature):
+        
+        self._handle_providers_load()
+        
         return sig.bind(*self.args, **self.kwargs)
 
 
