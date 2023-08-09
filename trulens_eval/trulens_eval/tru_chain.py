@@ -101,6 +101,9 @@ class TruChain(App):
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
         kwargs['instrument'] = LangChainInstrument(
+            root_methods=set(
+                [TruChain.with_record, TruChain.awith_record]
+            ),
             callbacks=self
         )
 

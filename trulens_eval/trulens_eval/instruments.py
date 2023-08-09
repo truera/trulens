@@ -452,7 +452,7 @@ class Instrument(object):
                 # TODO: generalize
                 return id(f) in set(
                     [id(rm.__code__) for rm in self.root_methods]
-                )  # or id(f) == id(awrapper.__code__)
+                )  # or id(f) == id(awrapper.__code__)  # TODO ROOTLESS
 
             # Look up whether the root instrumented method was called earlier in
             # the stack and "record_and_app" variable was defined there. Will
@@ -624,7 +624,7 @@ class Instrument(object):
                 # TODO: generalize
                 return id(f) in set(
                     [id(rm.__code__) for rm in self.root_methods]
-                )  # or id(f) == id(awrapper.__code__)
+                )  # or id(f) == id(awrapper.__code__) # TODO ROOTLESS
 
             # Look up whether the root instrumented method was called earlier in
             # the stack and "record_and_app" variable was defined there. Will

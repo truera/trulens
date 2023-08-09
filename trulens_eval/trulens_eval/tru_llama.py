@@ -156,7 +156,12 @@ class TruLlama(App):
         # TruLlama specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)  # TODO: make class property
-        kwargs['instrument'] = LlamaInstrument()
+        kwargs['instrument'] = LlamaInstrument(
+            root_methods=set(
+                [TruLlama.with_record, TruLlama.awith_record]
+            ),
+            callbacks=self
+        )
 
         super().__init__(**kwargs)
 
