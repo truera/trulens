@@ -1,9 +1,7 @@
 """
-# Langchain instrumentation and monitoring.
+# Custom class instrumentation and monitoring.
 """
 
-import functools
-from inspect import signature
 import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Dict, Optional, Set
@@ -21,8 +19,6 @@ from trulens_eval.util import JSONPath
 logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
-
-from pydantic.fields import ModelField
 
 
 class TruCustomApp(App):
@@ -161,6 +157,7 @@ class TruCustomApp(App):
                 f"TruCustomApp nor wrapped app have attribute named {__name}."
             )
 
+
 class instrument:
     """
     Decorator for marking methods to be instrumented in custom classes that are
@@ -174,10 +171,11 @@ class instrument:
 
     def __set_name__(self, cls, name):
         # Add owner of the decorated method, its module, and the name to the
-        # Default instrumentation walk filters. 
+        # Default instrumentation walk filters.
         Instrument.Default.MODULES.add(cls.__module__)
         Instrument.Default.CLASSES.add(cls)
-        Instrument.Default.METHODS[name] = lambda o: True # lambda o: isinstance(o, cls)
+        Instrument.Default.METHODS[
+            name] = lambda o: True  # lambda o: isinstance(o, cls)
         # TODO: fix the last line in case a method with the same name appears in
         # multiple classes.
 
