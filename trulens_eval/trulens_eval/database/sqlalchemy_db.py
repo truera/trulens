@@ -212,7 +212,7 @@ class AppsExtractor:
     def get_df_and_cols(self, apps: Iterable[orm.AppDefinition]) -> Tuple[pd.DataFrame, Sequence[str]]:
         df = pd.concat(self.extract_apps(apps))
         df["latency"] = _extract_latency(df["perf_json"])
-        df.reset_index(drop=True)  # prevent index mismatch on the horizontal concat that follows
+        df.reset_index(drop=True, inplace=True)  # prevent index mismatch on the horizontal concat that follows
         df = pd.concat([df, _extract_tokens_and_cost(df["cost_json"])], axis=1)
         return df, list(self.feedback_columns)
 
