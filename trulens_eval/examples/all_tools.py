@@ -256,3 +256,53 @@ feedback_results = tru.run_feedback_functions(
     record=record, feedback_functions=[f_custom_function]
 )
 tru.add_feedbacks(feedback_results)
+
+# ## Multi-Output Feedback functions
+# Trulens also supports multi-output feedback functions. As a typical feedback function will output a float between 0 and 1, multi-output should output a dictionary of `output_key` to a float between 0 and 1. The feedbacks table will print the feedback with column `feedback_name:::outputkey`
+
+multi_output_feedback = Feedback(
+    lambda input_param: {
+        'output_key1': 0.1,
+        'output_key2': 0.9
+    }, name="multi"
+).on(input_param=Select.RecordOutput)
+feedback_results = tru.run_feedback_functions(
+    record=record, feedback_functions=[multi_output_feedback]
+)
+tru.add_feedbacks(feedback_results)
+
+# Aggregators will run on the same dict keys.
+import numpy as np
+
+multi_output_feedback = Feedback(
+    lambda input_param: {
+        'output_key1': 0.1,
+        'output_key2': 0.9
+    },
+    name="multi-agg"
+).on(input_param=Select.RecordOutput).aggregate(np.mean)
+feedback_results = tru.run_feedback_functions(
+    record=record, feedback_functions=[multi_output_feedback]
+)
+tru.add_feedbacks(feedback_results)
+
+
+# For multi-context chunking, an aggregator can operate on a list of multi output dictionaries.
+def dict_aggregator(list_dict_input):
+    agg = 0
+    for dict_input in list_dict_input:
+        agg += dict_input['output_key1']
+    return agg
+
+
+multi_output_feedback = Feedback(
+    lambda input_param: {
+        'output_key1': 0.1,
+        'output_key2': 0.9
+    },
+    name="multi-agg-dict"
+).on(input_param=Select.RecordOutput).aggregate(dict_aggregator)
+feedback_results = tru.run_feedback_functions(
+    record=record, feedback_functions=[multi_output_feedback]
+)
+tru.add_feedbacks(feedback_results)
