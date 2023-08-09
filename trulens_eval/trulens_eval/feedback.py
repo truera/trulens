@@ -1640,19 +1640,24 @@ class Groundedness(SerialModel, WithClassInfo):
         return groundedness_scores, {"reason": reason}
 
     def grounded_statements_aggregator(
-        self, source_statements_matrix: np.ndarray
+        self, source_statements_multi_output: list[dict]
     ) -> float:
         """Aggregates multi-input, mulit-output information from the groundedness_measure methods.
 
 
         Args:
-            source_statements_matrix (np.ndarray): a 2D array with the first dimension corresponding to a source text,
+            source_statements_multi_output (np.ndarray): a 2D array with the first dimension corresponding to a source text,
                 and the second dimension corresponding to each sentence in a statement; it's groundedness score
 
         Returns:
             float: for each statement, gets the max groundedness, then averages over that.
         """
-        max_over_sources = np.max(source_statements_matrix, axis=0)
+        all_results = []
+        for multi_output in source_statements_multi_output:
+            result_vals = list(multi_output.values())
+        all_results.append(result_vals)
+        all_results = np.asarray(all_results)
+        max_over_sources = np.max(all_results, axis=0)
         return np.mean(max_over_sources)
 
 
