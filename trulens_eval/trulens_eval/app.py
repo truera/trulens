@@ -12,8 +12,9 @@ import logging
 from pprint import PrettyPrinter
 import traceback
 from typing import (
-    Any, Callable, ClassVar, Dict, Iterable, Optional, Sequence, Set, Tuple
+    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
 )
+from typing import Any, Dict, Iterable, Optional, Sequence, Set, Tuple, Callable
 
 import pydantic
 from pydantic import Field
@@ -31,6 +32,7 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
+from trulens_eval.instruments import WithInstrumentCallbacks
 from trulens_eval.util import all_objects
 from trulens_eval.util import Class
 from trulens_eval.util import CLASS_INFO
@@ -230,7 +232,7 @@ def instrumented_component_views(
             yield q, ComponentView.of_json(json=o)
 
 
-class App(AppDefinition, SerialModel):
+class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
     """
     Generalization of a wrapped model.
     """
@@ -256,7 +258,9 @@ class App(AppDefinition, SerialModel):
     instrument: Instrument = Field(exclude=True)
 
     # Mapping of instrumented methods (by id(.) ) to their path in this app:
-    instrumented_methods: Dict[Any, JSONPath] = Field(exclude=True, default_factory=dict)
+    instrumented_methods: Dict[Any, JSONPath] = Field(
+        exclude=True, default_factory=dict
+    )
 
     def __init__(
         self,
@@ -273,10 +277,20 @@ class App(AppDefinition, SerialModel):
 
         super().__init__(**kwargs)
 
-        if tru is None:
+        self.instrument.instrument_object(
+            obj=self.app, query=Select.Query().app
+        )
+
+    def post_init(self):
+        """
+        Database-related initialization.
+        """
+
+        if self.tru is None:
             if self.feedback_mode != FeedbackMode.NONE:
                 logger.debug("Creating default tru.")
-                tru = Tru()
+                self.tru = Tru()
+
         else:
             if self.feedback_mode == FeedbackMode.NONE:
                 logger.warn(
@@ -284,59 +298,29 @@ class App(AppDefinition, SerialModel):
                     "No feedback evaluation and logging will occur."
                 )
 
-        self.tru = tru
         if self.tru is not None:
-            self.db = tru.db
+            self.db = self.tru.db
+
+            self.db.insert_app(app=self)
 
             if self.feedback_mode != FeedbackMode.NONE:
-                logger.debug(
-                    "Inserting app and feedback function definitions to db."
-                )
-                self.db.insert_app(app=self)
+                logger.debug("Inserting feedback function definitions to db.")
+
                 for f in self.feedbacks:
                     self.db.insert_feedback_definition(f)
 
         else:
-            if len(feedbacks) > 0:
+            if len(self.feedbacks) > 0:
                 raise ValueError(
                     "Feedback logging requires `tru` to be specified."
                 )
 
         if self.feedback_mode == FeedbackMode.DEFERRED:
-            for f in feedbacks:
+            for f in self.feedbacks:
                 # Try to load each of the feedback implementations. Deferred
                 # mode will do this but we want to fail earlier at app
                 # constructor here.
                 f.implementation.load()
-
-        self.instrument.root_methods = set([App.with_record, App.awith_record])
-        self.instrument._on_method_instrumented = self._on_method_instrumented 
-        self.instrument._get_method_path = self._get_method_path
-
-        self.instrument.instrument_object(
-            obj=self.app, query=Select.Query().app
-        )
-
-        # for m in self.root_methods:
-        #    self.instrument.add_root_method(m)
-        # self.instrument.instrument_root_methods()
-
-    def _on_method_instrumented(self, func: Callable, path: JSONPath):
-        """
-        Called by instrumentation system for every function requested to be
-        instrumented by this app.
-        """
-
-        self.instrumented_methods[func] = path
-
-
-    def _get_method_path(self, func) -> JSONPath:
-        """
-        Get the path of the instrumented function `func` relative to this app.
-        """
-
-        return self.instrumented_methods.get(func)
-
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
@@ -385,31 +369,49 @@ class App(AppDefinition, SerialModel):
         else:
             return str(ret)
 
+    # WithInstrumentCallbacks requirement
+    def _on_method_instrumented(self, func: Callable, path: JSONPath):
+        """
+        Called by instrumentation system for every function requested to be
+        instrumented by this app.
+        """
+
+        self.instrumented_methods[func] = path
+
+    # WithInstrumentCallbacks requirement
+    def _get_method_path(self, func) -> JSONPath:
+        """
+        Get the path of the instrumented function `func` relative to this app.
+        """
+
+        return self.instrumented_methods.get(func)
+
+    """
+    # TODO: ROOTLESS
+
+    # WithInstrumentCallbacks requirement
     def _on_new_record(self, func):
-        """
-        Called by instrumented methods in cases where they cannot find a record
-        call list in the stack. If we are inside a context manager, return a new
-        call list.
-        """
         if self.records.get(None) is not None:
             return []
 
         return None
 
+    # WithInstrumentCallbacks requirement
     def _on_add_record(
         self, record: Sequence[RecordAppCall], func: Callable, sig: Signature,
         bindings: BoundArguments, start_time, end_time, ret: Any, error: Any,
         cost: Cost
     ):
-        """
-        Called by instrumented methods if they use _new_record to construct a
-        record call list. 
-        """
         assert self.records.get(
             None
         ) is not None, "App was not expecting to keep track of a record."
 
-        assert len(record) > 0, "No information recorded in call."
+        if len(record) == 0:
+            logger.warning(
+                "No intrumented methods called. "
+                "This may be due to missing instrumentation of relevant methods. "
+                f"Methods currently instrumented are: {list(self.instrumented_methods.keys())}"
+            )
 
         main_in = self.main_input(func, sig, bindings)
         main_out = self.main_output(func, sig, bindings, ret)
@@ -429,6 +431,7 @@ class App(AppDefinition, SerialModel):
 
         records = self.records.get()
         records += [ret_record]
+    """
 
     async def awith_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
         """
@@ -437,8 +440,11 @@ class App(AppDefinition, SerialModel):
         """
 
         # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
+        # should work with threads. We also store self there are multiple apps
+        # may have instrumented the same methods.
+        record = []
+        # DO NOT REMOVE
+        record_and_app: Tuple[Sequence[RecordAppCall], App] = (record, self)
 
         ret = None
         error = None
@@ -471,7 +477,12 @@ class App(AppDefinition, SerialModel):
             logger.error(f"App raised an exception: {e}")
             logger.error(traceback.format_exc())
 
-        assert len(record) > 0, "No information recorded in call."
+        if len(record) == 0:
+            logger.warning(
+                "No intrumented methods called. "
+                "This may be due to missing instrumentation of relevant methods. "
+                f"Methods currently instrumented are: {list(self.instrumented_methods.keys())}"
+            )
 
         ret_record_args = dict()
 
@@ -496,8 +507,11 @@ class App(AppDefinition, SerialModel):
         """
 
         # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
+        # should work with threads. We also store self there are multiple apps
+        # may have instrumented the same methods.
+        record = []
+        # DO NOT REMOVE
+        record_and_app: Tuple[Sequence[RecordAppCall], App] = (record, self)
 
         ret = None
         error = None
@@ -512,11 +526,12 @@ class App(AppDefinition, SerialModel):
 
         try:
             sig = signature(func)
+            start_time = datetime.now()
+
             bindings = sig.bind(*args, **kwargs)
 
             main_in = self.main_input(func, sig, bindings)
 
-            start_time = datetime.now()
             ret, cost = Endpoint.track_all_costs_tally(
                 lambda: func(*bindings.args, **bindings.kwargs)
             )
@@ -533,8 +548,8 @@ class App(AppDefinition, SerialModel):
         if len(record) == 0:
             logger.warning(
                 "No intrumented methods called. "
-                "This may be due to an error in the wrapped app, a bug in trulens_eval, or missing instrumentation of relevant methods."
-                "Methods currently instrumented are: "
+                "This may be due to missing instrumentation of relevant methods. "
+                f"Methods currently instrumented are: {list(self.instrumented_methods.keys())}"
             )
 
         ret_record_args = dict()
@@ -547,25 +562,25 @@ class App(AppDefinition, SerialModel):
         if error is not None:
             ret_record_args['main_error'] = jsonify(error)
 
+        perf = Perf(start_time=start_time, end_time=end_time)
         ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
+            ret_record_args, error, cost, perf, record
         )
 
         return ret, ret_record
 
+    
     def json(self, *args, **kwargs):
         # Need custom jsonification here because it is likely the model
         # structure contains loops.
 
         return json_str_of_obj(self.dict(), *args, **kwargs)
-
+    
     def dict(self):
         # Same problem as in json.
         return jsonify(self, instrument=self.instrument)
 
-    def _post_record(
-        self, ret_record_args, error, cost, start_time, end_time, record
-    ):
+    def _post_record(self, ret_record_args, error, cost, perf, record):
         """
         Final steps of record construction common among model types.
         """
@@ -573,7 +588,7 @@ class App(AppDefinition, SerialModel):
         ret_record_args['main_error'] = str(error)
         ret_record_args['calls'] = record
         ret_record_args['cost'] = cost
-        ret_record_args['perf'] = Perf(start_time=start_time, end_time=end_time)
+        ret_record_args['perf'] = perf
         ret_record_args['app_id'] = self.app_id
         ret_record_args['tags'] = self.tags
 
@@ -661,7 +676,12 @@ class App(AppDefinition, SerialModel):
         """
         Print instrumented components and their categories.
         """
-        pass
+        print(
+            "\n".join(
+                f"{m} on: "
+                f"{p}" for m, p in self.instrumented_methods.items()
+            )
+        )
 
     def print_instrumented_components(self) -> None:
         """
