@@ -68,7 +68,10 @@ export default function RecordTableRowRecursive({
               </IconButton>
             )}
             <Box sx={{ display: 'flex', flexDirection: 'column', ml: node.children.length === 0 ? 5 : 0 }}>
-              <Typography>{node.name}</Typography>
+              <Typography>
+                {node.name}
+                {node.methodName ? `.${node.methodName}` : ''}
+              </Typography>
               <Typography variant="subtitle1">{selector}</Typography>
             </Box>
           </Box>

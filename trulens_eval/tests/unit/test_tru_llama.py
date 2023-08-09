@@ -3,16 +3,16 @@ Tests for TruLlama.
 """
 
 import asyncio
-from unittest import main
 import unittest
+from unittest import main
 
 from llama_index import SimpleWebPageReader
 from llama_index import VectorStoreIndex
+from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
-from tests.unit.test import JSONTestCase
-from trulens_eval.tru_llama import TruLlama
 from trulens_eval.keys import check_keys
+from trulens_eval.tru_llama import TruLlama
 import trulens_eval.utils.python  # makes sure asyncio gets instrumented
 
 check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")

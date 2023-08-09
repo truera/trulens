@@ -8,12 +8,12 @@ Only put classes which can be serialized in this file.
 Many of the classes defined here extending SerialModel are meant to be
 serialized into json. Most are extended with non-serialized fields in other files.
 
-Serializable       | Non-serializable
--------------------+------------------------
-AppDefinition      | App, TruChain, TruLlama
-FeedbackDefinition | Feedback
+| Serializable       | Non-serializable        |
+| ------------------ | ----------------------- |
+| AppDefinition      | App, TruChain, TruLlama |
+| FeedbackDefinition | Feedback                |
 
-AppDefinition.app is the JSONized version of a wrapped app while App.app is the
+AppDefinition.app is the JSON-ized version of a wrapped app while App.app is the
 actual wrapped app. We can thus inspect the contents of a wrapped app without
 having to construct it. Additionally, JSONized objects like AppDefinition.app
 feature information about the encoded object types in the dictionary under the
@@ -313,10 +313,11 @@ class FeedbackResult(SerialModel):
 
     error: Optional[str] = None  # if there was an error
 
+    multi_result: Optional[str] = None
+
     def __init__(
         self, feedback_result_id: Optional[FeedbackResultID] = None, **kwargs
     ):
-
         super().__init__(feedback_result_id="temporary", **kwargs)
 
         if feedback_result_id is None:
@@ -344,12 +345,15 @@ class FeedbackDefinition(SerialModel):
     # arguments for `imp`.
     selectors: Dict[str, JSONPath]
 
+    supplied_name: Optional[str] = None
+
     def __init__(
         self,
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
         implementation: Optional[Union[Function, Method]] = None,
         aggregator: Optional[Union[Function, Method]] = None,
-        selectors: Dict[str, JSONPath] = None
+        selectors: Dict[str, JSONPath] = None,
+        supplied_name: Optional[str] = None
     ):
         """
         - selectors: Optional[Dict[str, JSONPath]] -- mapping of implementation
@@ -371,6 +375,7 @@ class FeedbackDefinition(SerialModel):
             selectors=selectors,
             implementation=implementation,
             aggregator=aggregator,
+            supplied_name=supplied_name,
         )
 
         if feedback_definition_id is None:

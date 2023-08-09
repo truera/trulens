@@ -7,8 +7,10 @@ from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, Dict, List, Optional, Sequence,
-                    Tuple, Type, TypeVar)
+from typing import (
+    Any, Awaitable, Callable, Dict, List, Optional, Sequence, Tuple, Type,
+    TypeVar
+)
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
@@ -375,7 +377,7 @@ class Endpoint(SerialModel, SingletonPerName):
                 e = OpenAIEndpoint()
                 endpoints.append(e)
             except:
-                logger.warning(
+                logger.debug(
                     "OpenAI API keys are not set. "
                     "Will not track usage."
                 )
@@ -385,7 +387,7 @@ class Endpoint(SerialModel, SingletonPerName):
                 e = HuggingfaceEndpoint()
                 endpoints.append(e)
             except:
-                logger.warning(
+                logger.debug(
                     "Huggingface API keys are not set. "
                     "Will not track usage."
                 )
