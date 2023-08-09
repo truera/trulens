@@ -251,9 +251,7 @@ class AppsExtractor:
     def agg_result_or_calls(cls, *args):
         if not args:
             return None
-        if len(args) == 1:
-            return args[0]
-        if isinstance(args[0], dict):
+        elif isinstance(args[0], dict):
             return args
         else:
             return np.mean(args)
