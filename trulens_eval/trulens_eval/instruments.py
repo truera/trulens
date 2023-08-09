@@ -443,16 +443,15 @@ class Instrument(object):
             # TODO: figure out how to have less repetition between the async and
             # sync versions of this method.
 
-            logger.debug(f"{query}: calling instrumented async method {func}")
+            logger.debug(f"{query}: calling async instrumented method {func}")
 
             # If not within a root method, call the wrapped function without
             # any recording.
 
             def find_root_methods(f):
-                # TODO: generalize
                 return id(f) in set(
                     [id(rm.__code__) for rm in self.root_methods]
-                )  # or id(f) == id(awrapper.__code__)  # TODO ROOTLESS
+                )  # or id(f) == id(wrapper.__code__) # TODO ROOTLESS
 
             # Look up whether the root instrumented method was called earlier in
             # the stack and "record_and_app" variable was defined there. Will
@@ -462,6 +461,7 @@ class Instrument(object):
                     key="record_and_app", func=find_root_methods, offset=1
                 )
             )
+
             """
             # TODO: ROOTLESS
 
@@ -489,7 +489,7 @@ class Instrument(object):
             rets = None
 
             def find_instrumented(f):
-                return id(f) == id(awrapper.__code__)
+                return id(f) in [id(awrapper.__code__)]
 
             # If a wrapped method was called in this call stack, get the prior
             # calls from this variable. Otherwise create a new chain stack. As
@@ -498,70 +498,29 @@ class Instrument(object):
             # stacks by id of the call record list which is unique to each app.
             stacks = get_first_local_in_call_stack(
                 key="stacks", func=find_instrumented, offset=1
-            ) or dict()
+            )
+            # Note: Empty dict is false-ish.
+            if stacks is None:
+                stacks = dict()
 
             start_time = None
             end_time = None
-            
+
             bindings = None
 
-            try:
-                # Using sig bind here so we can produce a list of key-value
-                # pairs even if positional arguments were provided.
-                bindings: BoundArguments = sig.bind(*args, **kwargs)
-                start_time = datetime.now()
-                """
-                # TODO: ROOTLESS
-                # If this is a root call (first instrumented method), also track
-                # costs:
-                cost: Cost = None
-                if is_root_call:
-                    rets, cost = await Endpoint.atrack_all_costs_tally(
-                        lambda: func(*bindings.args, **bindings.kwargs)
-                    )
-                else:
-                """
+            # Prepare stacks with call information of this wrapped method so
+            # subsequent (inner) calls will see it. For every root_method in the
+            # call stack, we make a call record to add to the existing list
+            # found in the stack. Path stored in `query` of this method may
+            # differ between apps that use it so we have to create a seperate
+            # frame identifier for each, and therefore the stack. We also need
+            # to use a different stack for the same reason. We index the stack
+            # in `stacks` via id of the (unique) list `record`.
 
-                rets = await func(*bindings.args, **bindings.kwargs)
-
-                end_time = datetime.now()
-
-            except BaseException as e:
-                end_time = datetime.now()
-                error = e
-                error_str = str(e)
-
-                logger.error(f"Error calling wrapped function {func.__name__}.")
-                logger.error(traceback.format_exc())
-
-            # Don't include self in the recorded arguments.
-            nonself = {
-                k: jsonify(v)
-                for k, v in
-                (bindings.arguments.items() if bindings is not None else {})
-                if k != "self"
-            }
-
-            row_args = dict(
-                args=nonself,
-                perf=Perf(start_time=start_time, end_time=end_time),
-                pid=os.getpid(),
-                tid=th.get_native_id(),
-                rets=rets,
-                error=error_str if error is not None else None
-            )
-
-            # For every root_method in the call stack, we make a call record to
-            # add to the existing list found in the stack. Path stored in
-            # `query` of this method may differ between apps that use it so we
-            # have to create a seperate frame identifier for each, and therefore
-            # the stack. We also need to use a different stack for the same
-            # reason. We index the stack in `stacks` via id of the (unique) list
-            # `record`.
-
-            for record_and_app in records_and_apps:
+            for record, app in records_and_apps:
                 # Get record and app that has instrumented this method.
-                record, app = record_and_app
+
+                rid = id(record)
 
                 # The path to this method according to the app.
                 path = app._get_method_path(func)
@@ -572,39 +531,93 @@ class Instrument(object):
                     )
                     continue
 
-                if id(record) not in stacks:
+                if rid not in stacks:
                     # If we are the first instrumented method in the chain
                     # stack, make a new stack tuple for subsequent deeper calls
                     # (if any) to look up.
-                    stacks[id(record)] = ()
-
-                stack = stacks[id(record)]
+                    stack = ()
+                else:
+                    stack = stacks[rid]
 
                 frame_ident = RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
                 )
-                stack = stack + (frame_ident,)
 
+                stack = stack + (frame_ident, )
+
+                stacks[rid] = stack # for deeper calls to get
+
+                # Now we will call the wrapped method. We only do so once.
+
+                # Start of run once condition.
+                if start_time is None:
+                    start_time = datetime.now()
+
+                    try:
+                        # Using sig bind here so we can produce a list of key-value
+                        # pairs even if positional arguments were provided.
+                        bindings: BoundArguments = sig.bind(*args, **kwargs)
+                        
+
+                        """
+                        # TODO: ROOTLESS
+                        # If this is a root call (first instrumented method), also track
+                        # costs:
+                        cost: Cost = None
+                        if is_root_call:
+                            rets, cost = Endpoint.track_all_costs_tally(
+                                lambda: func(*bindings.args, **bindings.kwargs)
+                            )
+                        else:
+                        """
+
+                        rets = await func(*bindings.args, **bindings.kwargs)
+
+                        end_time = datetime.now()
+
+                    except BaseException as e:
+                        end_time = datetime.now()
+                        error = e
+                        error_str = str(e)
+
+                        logger.error(f"Error calling wrapped function {func.__name__}.")
+                        logger.error(traceback.format_exc())
+
+                    # Done running the wrapped function. Lets collect the results.
+                    # Create common information across all records.
+
+                    # Don't include self in the recorded arguments.
+                    nonself = {
+                        k: jsonify(v)
+                        for k, v in
+                        (bindings.arguments.items() if bindings is not None else {})
+                        if k != "self"
+                    }
+
+                    row_args = dict(
+                        args=nonself,
+                        perf=Perf(start_time=start_time, end_time=end_time),
+                        pid=os.getpid(),
+                        tid=th.get_native_id(),
+                        rets=rets,
+                        error=error_str if error is not None else None
+                    )
+
+                # End of run once condition.
+
+                # Note that only the stack differs between each of the records in this loop. 
                 row_args['stack'] = stack
-
                 row = RecordAppCall(**row_args)
 
                 record.append(row)
 
-            frame_ident = RecordAppCallMethod(
-                path=query, method=Method.of_method(func, obj=obj, cls=cls)
-            )
-            stack = stack + (frame_ident,)
-
-            row = RecordAppCall(**row_args)
-            record.append(row)
-            """
-            # TODO: ROOTLESS
-            if is_root_call:
-                # If this is a root call, notify app to add the completed record
-                # into its containers:
-                self.on_add_record(record, func, sig, bindings, cost)
-            """
+                """
+                # TODO: ROOTLESS
+                if is_root_call:
+                    # If this is a root call, notify app to add the completed record
+                    # into its containers:
+                    self.on_add_record(record, func, sig, bindings, cost)
+                """
 
             if error is not None:
                 raise error
@@ -621,10 +634,9 @@ class Instrument(object):
             # any recording.
 
             def find_root_methods(f):
-                # TODO: generalize
                 return id(f) in set(
                     [id(rm.__code__) for rm in self.root_methods]
-                )  # or id(f) == id(awrapper.__code__) # TODO ROOTLESS
+                )  # or id(f) == id(wrapper.__code__) # TODO ROOTLESS
 
             # Look up whether the root instrumented method was called earlier in
             # the stack and "record_and_app" variable was defined there. Will
@@ -662,7 +674,7 @@ class Instrument(object):
             rets = None
 
             def find_instrumented(f):
-                return id(f) == id(wrapper.__code__)
+                return id(f) in [id(wrapper.__code__)]
 
             # If a wrapped method was called in this call stack, get the prior
             # calls from this variable. Otherwise create a new chain stack. As
@@ -671,71 +683,29 @@ class Instrument(object):
             # stacks by id of the call record list which is unique to each app.
             stacks = get_first_local_in_call_stack(
                 key="stacks", func=find_instrumented, offset=1
-            ) or dict()
+            )
+            # Note: Empty dict is false-ish.
+            if stacks is None:
+                stacks = dict()
 
             start_time = None
             end_time = None
 
             bindings = None
 
-            try:
-                # Using sig bind here so we can produce a list of key-value
-                # pairs even if positional arguments were provided.
-                bindings: BoundArguments = sig.bind(*args, **kwargs)
-                start_time = datetime.now()
+            # Prepare stacks with call information of this wrapped method so
+            # subsequent (inner) calls will see it. For every root_method in the
+            # call stack, we make a call record to add to the existing list
+            # found in the stack. Path stored in `query` of this method may
+            # differ between apps that use it so we have to create a seperate
+            # frame identifier for each, and therefore the stack. We also need
+            # to use a different stack for the same reason. We index the stack
+            # in `stacks` via id of the (unique) list `record`.
 
-                """
-                # TODO: ROOTLESS
-                # If this is a root call (first instrumented method), also track
-                # costs:
-                cost: Cost = None
-                if is_root_call:
-                    rets, cost = Endpoint.track_all_costs_tally(
-                        lambda: func(*bindings.args, **bindings.kwargs)
-                    )
-                else:
-                """
-
-                rets = func(*bindings.args, **bindings.kwargs)
-
-                end_time = datetime.now()
-
-            except BaseException as e:
-                end_time = datetime.now()
-                error = e
-                error_str = str(e)
-
-                logger.error(f"Error calling wrapped function {func.__name__}.")
-                logger.error(traceback.format_exc())
-
-            # Don't include self in the recorded arguments.
-            nonself = {
-                k: jsonify(v)
-                for k, v in
-                (bindings.arguments.items() if bindings is not None else {})
-                if k != "self"
-            }
-
-            row_args = dict(
-                args=nonself,
-                perf=Perf(start_time=start_time, end_time=end_time),
-                pid=os.getpid(),
-                tid=th.get_native_id(),
-                rets=rets,
-                error=error_str if error is not None else None
-            )
-
-            # For every root_method in the call stack, we make a call record to
-            # add to the existing list found in the stack. Path stored in
-            # `query` of this method may differ between apps that use it so we
-            # have to create a seperate frame identifier for each, and therefore
-            # the stack. We also need to use a different stack for the same
-            # reason. We index the stack in `stacks` via id of the (unique) list
-            # `record`.
-
-            for record_and_app in records_and_apps:
+            for record, app in records_and_apps:
                 # Get record and app that has instrumented this method.
-                record, app = record_and_app
+
+                rid = id(record)
 
                 # The path to this method according to the app.
                 path = app._get_method_path(func)
@@ -746,21 +716,82 @@ class Instrument(object):
                     )
                     continue
 
-                if id(record) not in stacks:
+                if rid not in stacks:
                     # If we are the first instrumented method in the chain
                     # stack, make a new stack tuple for subsequent deeper calls
                     # (if any) to look up.
-                    stacks[id(record)] = ()
-
-                stack = stacks[id(record)]
+                    stack = ()
+                else:
+                    stack = stacks[rid]
 
                 frame_ident = RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
                 )
-                stack = stack + (frame_ident,)
 
+                stack = stack + (frame_ident, )
+
+                stacks[rid] = stack # for deeper calls to get
+
+                # Now we will call the wrapped method. We only do so once.
+
+                # Start of run once condition.
+                if start_time is None:
+                    start_time = datetime.now()
+
+                    try:
+                        # Using sig bind here so we can produce a list of key-value
+                        # pairs even if positional arguments were provided.
+                        bindings: BoundArguments = sig.bind(*args, **kwargs)
+                        
+
+                        """
+                        # TODO: ROOTLESS
+                        # If this is a root call (first instrumented method), also track
+                        # costs:
+                        cost: Cost = None
+                        if is_root_call:
+                            rets, cost = Endpoint.track_all_costs_tally(
+                                lambda: func(*bindings.args, **bindings.kwargs)
+                            )
+                        else:
+                        """
+
+                        rets = func(*bindings.args, **bindings.kwargs)
+
+                        end_time = datetime.now()
+
+                    except BaseException as e:
+                        end_time = datetime.now()
+                        error = e
+                        error_str = str(e)
+
+                        logger.error(f"Error calling wrapped function {func.__name__}.")
+                        logger.error(traceback.format_exc())
+
+                    # Done running the wrapped function. Lets collect the results.
+                    # Create common information across all records.
+
+                    # Don't include self in the recorded arguments.
+                    nonself = {
+                        k: jsonify(v)
+                        for k, v in
+                        (bindings.arguments.items() if bindings is not None else {})
+                        if k != "self"
+                    }
+
+                    row_args = dict(
+                        args=nonself,
+                        perf=Perf(start_time=start_time, end_time=end_time),
+                        pid=os.getpid(),
+                        tid=th.get_native_id(),
+                        rets=rets,
+                        error=error_str if error is not None else None
+                    )
+
+                # End of run once condition.
+
+                # Note that only the stack differs between each of the records in this loop. 
                 row_args['stack'] = stack
-
                 row = RecordAppCall(**row_args)
 
                 record.append(row)

@@ -116,12 +116,6 @@ class LlamaInstrument(Instrument):
 
     def __init__(self):
         super().__init__(
-            root_methods=set(
-                [
-                    TruLlama.query_with_record, TruLlama.aquery_with_record,
-                    TruLlama.chat_with_record, TruLlama.achat_with_record
-                ]
-            ),
             include_modules=LlamaInstrument.Default.MODULES,
             include_classes=LlamaInstrument.Default.CLASSES(),  # was thunk
             include_methods=LlamaInstrument.Default.METHODS
@@ -158,12 +152,17 @@ class TruLlama(App):
         kwargs['root_class'] = Class.of_object(app)  # TODO: make class property
         kwargs['instrument'] = LlamaInstrument(
             root_methods=set(
-                [TruLlama.with_record, TruLlama.awith_record]
+                [
+                    TruLlama.query_with_record, TruLlama.aquery_with_record,
+                    TruLlama.chat_with_record, TruLlama.achat_with_record
+                ]
             ),
             callbacks=self
         )
 
         super().__init__(**kwargs)
+
+        self.post_init()
 
     @classmethod
     def select_source_nodes(cls) -> JSONPath:
@@ -173,8 +172,7 @@ class TruLlama(App):
         return cls.select_outputs().source_nodes[:]
 
     # llama_index.chat_engine.types.BaseChatEngine
-    def chat(self, *args,
-             **kwargs) -> AgentChatResponse:
+    def chat(self, *args, **kwargs) -> AgentChatResponse:
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -192,8 +190,7 @@ class TruLlama(App):
         return res
 
     # llama_index.chat_engine.types.BaseChatEngine
-    def stream_chat(self, *args,
-             **kwargs) -> StreamingAgentChatResponse:
+    def stream_chat(self, *args, **kwargs) -> StreamingAgentChatResponse:
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -418,11 +415,9 @@ class TruLlama(App):
 
         return ret, ret_record
 
-
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
-    async def achat_with_record(
-        self, message: str, **kwargs
-    ) -> Tuple[AgentChatResponse, Record]:
+    async def achat_with_record(self, message: str,
+                                **kwargs) -> Tuple[AgentChatResponse, Record]:
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -531,8 +526,6 @@ class TruLlama(App):
 
         return ret, ret_record
 
-
-
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.astream_chat .
     async def astream_chat_with_record(
         self, message: str, **kwargs
@@ -592,4 +585,3 @@ class TruLlama(App):
         )
 
         return ret, ret_record
-
