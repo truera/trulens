@@ -2,17 +2,21 @@
 # Langchain instrumentation and monitoring.
 """
 
+import functools
+from inspect import signature
 import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Dict, Optional, Set
 
 from pydantic import Field
 
+from trulens_eval import Select
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.util import JSONPath
 from trulens_eval.util import Class
 from trulens_eval.util import FunctionOrMethod
+from trulens_eval.util import JSON
+from trulens_eval.util import JSONPath
 
 logger = logging.getLogger(__name__)
 
@@ -31,53 +35,11 @@ class TruCustomApp(App):
     # TODO: what if _acall is being used instead?
     root_callable: ClassVar[FunctionOrMethod] = Field(None)
 
-    methods_to_instrument: ClassVar[Set[Callable]] = set(
-        []
-    )  # = Field(default_factory=set, exclude=True)
+    # Methods marked as needing instrumentation. These are checked to make sure
+    # the object walk finds them. If not, a message is shown to let user know
+    # how to let the TruCustomApp constructor know where these methods are.
+    methods_to_instrument: ClassVar[Set[Callable]] = set([])
 
-    @classmethod
-    def instrument_method(cls, func):
-        # cls.root_methods.add(func)
-
-        cls.methods_to_instrument.add(func)
-
-        return func
-
-    # https://github.com/pydantic/pydantic/issues/1937
-    @classmethod
-    def add_fields(cls, **field_definitions: Any):
-        new_fields: Dict[str, ModelField] = {}
-        new_annotations: Dict[str, Optional[type]] = {}
-
-        for f_name, f_def in field_definitions.items():
-            if isinstance(f_def, tuple):
-                try:
-                    f_annotation, f_value = f_def
-                except ValueError as e:
-                    raise Exception(
-                        'field definitions should either be a tuple of (<type>, <default>) or just a '
-                        'default value, unfortunately this means tuples as '
-                        'default values are not allowed'
-                    ) from e
-            else:
-                f_annotation, f_value = None, f_def
-
-            if f_annotation:
-                new_annotations[f_name] = f_annotation
-
-            new_fields[f_name] = ModelField.infer(
-                name=f_name,
-                value=f_value,
-                annotation=f_annotation,
-                class_validators=None,
-                config=cls.__config__
-            )
-
-        cls.__fields__.update(new_fields)
-        cls.__annotations__.update(new_annotations)
-
-    # Normally pydantic does not like positional args but chain here is
-    # important enough to make an exception.
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs):
         """
         Wrap a langchain chain for monitoring.
@@ -89,44 +51,101 @@ class TruCustomApp(App):
         - More args in WithClassInfo
         """
 
-        super().update_forward_refs()
-
         # TruChain specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
+
+        # Need to initialize this one here instead of where it is defined in
+        # AppDefinition since we change it here.
+        #kwargs['app_extra_json'] = kwargs.get('app_extra_json') or dict()
+
+        # Same design problem here.
+        #kwargs['instrumented_methods'] = kwargs.get('instrumented_methods') or dict()
+
         kwargs['instrument'] = Instrument(
             root_methods=set(
                 [TruCustomApp.with_record, TruCustomApp.awith_record]
             ),
-            on_new_record=self._on_new_record,
-            on_add_record=self._on_add_record
+            callbacks=self  # App mixes in WithInstrumentCallbacks
         )
 
         super().__init__(**kwargs)
 
-        #for m in self.root_methods:
-        #    m_with_record = lambda inner_self, *args, **kwargs: TruCustomApp.with_record(inner_self, m, *args, **kwargs)
-        #    m_with_record_name = m.__name__ + "_with_record"
-        # self.__fields__[m_with_record_name] = Field(None, final=False)
-        #    print(f"created method {m_with_record_name}")
-        # TruCustomApp.add_fields(**{m_with_record_name: m_with_record})
-        #    setattr(TruCustomApp, m_with_record_name, m_with_record)
+        methods_to_instrument = methods_to_instrument or dict()
 
-        #print(self.__fields__)
+        for m, path in methods_to_instrument.items():
+            #if hasattr(m, Instrument.INSTRUMENT):
+            # Was instrumented earlier. Lookup the original function so we
+            # dont try to wrap the wrapper again.
+            #    method_name = getattr(m, Instrument.INSTRUMENT).__name__
+            #else:
+            method_name = m.__name__
 
-        methods_to_instrument = methods_to_instrument or set([])
+            full_path = Select.Query().app + path
 
-        for m, query in methods_to_instrument.items():
-            setattr(
-                m.__self__, m.__name__,
-                self.instrument.instrument_tracked_method(
-                    query=query,
-                    func=m,
-                    method_name=m.__name__,
-                    cls=m.__self__.__class__,
-                    obj=m.__self__
-                )
+            self.instrument.instrument_method(
+                method_name=method_name, obj=m.__self__, query=full_path
             )
+
+            # Check whether the path/location of the method is in app_json and
+            # if not, add a placeholder there.
+            try:
+                # app_extra_json is in AppDefinition
+                component = next(path(self.app_extra_json))
+
+                print(
+                    f"Added method {m.__name__} under component at path {full_path}"
+                )
+
+            except Exception:
+                logger.warning(
+                    f"App has no serialized component at path {full_path}. "
+                    f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
+                    f"Creating a placeholder there for now."
+                )
+                path.set(
+                    self.app_extra_json, {
+                        "__tru_placeholder":
+                            "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
+                        m.__name__:
+                            f"Placeholder for method {m.__name__}."
+                    }
+                )
+
+        # Check that any methods marked with TruCustomApp.instrument_method
+        # statically has been instrumented.
+        for m in TruCustomApp.methods_to_instrument:
+            if m not in self.instrumented_methods:
+                logger.warning(
+                    f"Method {m} was not found during instrumentation walk. "
+                    f"Make sure it is accessible by traversing app {app} or provide it to TruCustomApp constructor in the `methods_to_instrument`."
+                )
+            else:
+                # Need to chop off the "app" part that the path is expected to start with:
+                path = JSONPath(path=self.instrumented_methods[m].path[1:])
+
+                try:
+                    # Because we are checking whether the path refers to something in app_extra_json.
+
+                    # app_extra_json is in AppDefinition
+                    component = next(path(self.app_extra_json))
+
+                except Exception:
+                    logger.warning(
+                        f"App has no serialized component at path {path}. "
+                        f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
+                        f"Creating a placeholder there for now."
+                    )
+                    path.set(
+                        self.app_extra_json, {
+                            "__tru_placeholder":
+                                "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
+                            m.__name__:
+                                f"Placeholder for method {m.__name__}."
+                        }
+                    )
+
+        self.post_init()
 
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped
@@ -141,3 +160,29 @@ class TruCustomApp(App):
             raise RuntimeError(
                 f"TruCustomApp nor wrapped app have attribute named {__name}."
             )
+
+class instrument:
+    """
+    Decorator for marking methods to be instrumented in custom classes that are
+    wrapped by TruCustomApp.
+    """
+
+    # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
+
+    def __init__(self, func):
+        self.func = func
+
+    def __set_name__(self, cls, name):
+        # Add owner of the decorated method, its module, and the name to the
+        # Default instrumentation walk filters. 
+        Instrument.Default.MODULES.add(cls.__module__)
+        Instrument.Default.CLASSES.add(cls)
+        Instrument.Default.METHODS[name] = lambda o: True # lambda o: isinstance(o, cls)
+        # TODO: fix the last line in case a method with the same name appears in
+        # multiple classes.
+
+        # Also make note of it for verification that it was found by the walk
+        # after init.
+        TruCustomApp.methods_to_instrument.add(self.func)
+
+        setattr(cls, name, self.func)

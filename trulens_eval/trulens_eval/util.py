@@ -402,10 +402,12 @@ def jsonify(
         redact_keys=redact_keys
     )
 
-    if isinstance(obj, Enum):
-        return obj.name
+    content = None
 
-    if isinstance(obj, Dict):
+    if isinstance(obj, Enum):
+        content = obj.name
+
+    elif isinstance(obj, Dict):
         temp = {}
         new_dicted[id(obj)] = temp
         temp.update({k: recur(v) for k, v in obj.items() if recur_key(k)})
@@ -415,21 +417,23 @@ def jsonify(
             for k, v in temp.items():
                 temp[k] = redact_value(v=v, k=k)
 
-        return temp
+        content = temp
 
     elif isinstance(obj, Sequence):
         temp = []
         new_dicted[id(obj)] = temp
         for x in (recur(v) for v in obj):
             temp.append(x)
-        return temp
+
+        content = temp
 
     elif isinstance(obj, Set):
         temp = []
         new_dicted[id(obj)] = temp
         for x in (recur(v) for v in obj):
             temp.append(x)
-        return temp
+
+        content = temp
 
     elif isinstance(obj, pydantic.BaseModel):
         # Not even trying to use pydantic.dict here.
@@ -454,7 +458,7 @@ def jsonify(
                 cls=obj.__class__, with_bases=True
             ).dict()
 
-        return temp
+        content = temp
 
     elif obj.__class__.__module__.startswith("llama_index."):
         # Most of llama_index classes do not inherit a storage-utility class
@@ -481,14 +485,19 @@ def jsonify(
                 cls=obj.__class__, with_bases=True
             ).dict()
 
-        return temp
+        content = temp
 
     else:
         logger.debug(
-            f"Don't know how to jsonify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
+            f"Do not know how to jsonify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
         )
 
-        return noserio(obj)
+        content = noserio(obj)
+    
+    if hasattr(obj, "jsonify_extra"):
+        content = obj.jsonify_extra(content)
+
+    return content
 
 
 def leaf_queries(obj_json: JSON, query: JSONPath = None) -> Iterable[JSONPath]:
@@ -816,7 +825,7 @@ class GetItemOrAttribute(Step):
         if isinstance(obj, Dict):
             obj[self.item_or_attribute] = val
         else:
-            setattr(obj, self.item_or_attribute)
+            setattr(obj, self.item_or_attribute, val)
 
         return obj
 
@@ -957,6 +966,9 @@ class JSONPath(SerialModel):
 
     def __len__(self):
         return len(self.path)
+
+    def __add__(self, other: JSONPath):
+        return JSONPath(path=self.path + other.path)
 
     def is_immediate_prefix_of(self, other: JSONPath):
         return self.is_prefix_of(other) and len(self.path) + 1 == len(
@@ -1202,6 +1214,8 @@ def get_all_local_in_call_stack(
     class above.
     """
 
+    logger.debug(f"Looking for local '{key}' in the stack.")
+
     frames = stack_with_tasks()[offset + 1:]  # + 1 to skip this method itself
 
     # Using queue for frames as additional frames may be added due to handling threads.
@@ -1231,7 +1245,7 @@ def get_all_local_in_call_stack(
             if key in locs:
                 yield locs[key]
             else:
-                raise KeyError(f"No local named {key} found.")
+                raise KeyError(f"No local named '{key}' found in frame {f}.")
 
     return
 
@@ -1252,7 +1266,7 @@ def get_first_local_in_call_stack(
     """
 
     try:
-        return next(iter(get_all_local_in_call_stack(key, func, offset)))
+        return next(iter(get_all_local_in_call_stack(key, func, offset+1)))
     except StopIteration:
         return None
 

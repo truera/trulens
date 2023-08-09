@@ -1,8 +1,10 @@
-from trulens_eval.tru_custom_app import TruCustomApp
+from trulens_eval.tru_custom_app import instrument
 
 class CustomRetriever:
-    # @TruCustomApp.instrument_method
+
+    @instrument
     def retrieve_chunks(self, data):
-        return [f"Relevant chunk: {data.upper()}",
-                f"Relevant chunk: {data[::-1]}"
-                ]
+        return [
+            f"Relevant chunk: {data.upper()}",
+            f"Relevant chunk: {data[::-1]}"
+        ]

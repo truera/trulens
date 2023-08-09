@@ -434,6 +434,8 @@ class Endpoint(SerialModel, SingletonPerName):
         costs using each of the provided endpoints' callbacks.
         """
 
+        logger.debug("Starting to track costs.")
+
         # Check to see if this call is within another _track_costs call:
         endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
             get_first_local_in_call_stack(

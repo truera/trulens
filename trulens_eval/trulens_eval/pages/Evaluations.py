@@ -65,7 +65,7 @@ if state.clipboard:
 
 
 def jsonify_for_ui(*args, **kwargs):
-    return jsonify(*args, **kwargs, redact_keys=True, skip_specials=True)
+    return jsonify(*args, **kwargs, redact_keys=True)#, skip_specials=True)
 
 
 def render_component(query, component, header=True):
