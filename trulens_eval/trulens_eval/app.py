@@ -12,7 +12,7 @@ import logging
 from pprint import PrettyPrinter
 import traceback
 from typing import (
-    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
+    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type
 )
 from typing import Any, Dict, Iterable, Optional, Sequence, Set, Tuple, Callable
 
@@ -137,28 +137,6 @@ class ComponentView(ABC):
         return None
 
 
-class CustomComponent(ComponentView):
-
-    @staticmethod
-    def class_is(cls: Class) -> bool:
-        return True
-        # TODO: look at default instruments?
-        #if ComponentView.innermost_base(cls.bases) == "langchain":
-        #    return True
-
-        return False
-
-
-    @staticmethod
-    def of_json(json: JSON) -> 'CustomComponent':
-        # from trulens_eval.utils.langchain import component_of_json
-        class OtherComp(Other):
-            @staticmethod
-            def class_is(cls: Class) -> bool:
-                return True
-
-        # return component_of_json(json)
-
 
 class LangChainComponent(ComponentView):
 
@@ -240,6 +218,43 @@ class Other(ComponentView):
     # Any component that does not fit into the other named categories.
 
     pass
+
+
+class CustomComponent(ComponentView):
+    class Custom(Other):
+        # No categorization of custom class components for now. Using just one
+        # "Custom" catch-all.
+
+        @staticmethod
+        def class_is(cls: Class) -> bool:
+            return True
+
+    COMPONENT_VIEWS = [Custom]
+
+    @staticmethod
+    def constructor_of_class(cls: Class) -> Type['CustomComponent']:
+        for view in CustomComponent.COMPONENT_VIEWS:
+            if view.class_is(cls):
+                return view
+
+        raise TypeError(f"Unknown custom component type with class {cls}")
+
+    @staticmethod
+    def component_of_json(json: JSON) -> 'CustomComponent':
+        cls = Class.of_json(json)
+
+        view = CustomComponent.constructor_of_class(cls)
+
+        return view(json)
+
+    @staticmethod
+    def class_is(cls: Class) -> bool:
+        # Assumes this is the last check done.
+        return True
+
+    @staticmethod
+    def of_json(json: JSON) -> 'CustomComponent':
+        return CustomComponent.component_of_json(json)
 
 
 def instrumented_component_views(

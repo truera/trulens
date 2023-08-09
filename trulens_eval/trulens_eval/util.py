@@ -453,17 +453,9 @@ def jsonify(
             for k, v in temp.items():
                 temp[k] = redact_value(v=v, k=k)
 
-        if instrument.to_instrument_object(obj):
-            temp[CLASS_INFO] = Class.of_class(
-                cls=obj.__class__, with_bases=True
-            ).dict()
-
         content = temp
 
-    elif instrument.to_instrument_object(obj): # obj.__class__.__module__.startswith("llama_index."):
-        # Most of llama_index classes do not inherit a storage-utility class
-        # like pydantc so we have to enumerate their contents ourselves based on
-        # some heuristics.
+    elif instrument.to_instrument_object(obj):
 
         temp = {}
         new_dicted[id(obj)] = temp
@@ -480,11 +472,6 @@ def jsonify(
             }
         )
 
-        if instrument.to_instrument_object(obj):
-            temp[CLASS_INFO] = Class.of_class(
-                cls=obj.__class__, with_bases=True
-            ).dict()
-
         content = temp
 
     else:
@@ -493,7 +480,14 @@ def jsonify(
         )
 
         content = noserio(obj)
-    
+
+    # Add class information for objects that are to be instrumented, known as
+    # "components".
+    if instrument.to_instrument_object(obj):
+        content[CLASS_INFO] = Class.of_class(
+            cls=obj.__class__, with_bases=True
+        ).dict()
+
     if hasattr(obj, "jsonify_extra"):
         content = obj.jsonify_extra(content)
 
@@ -1249,10 +1243,11 @@ def get_all_local_in_call_stack(
 
     return
 
+
 def get_first_local_in_call_stack(
     key: str,
     func: Callable[[Callable], bool],
-    offset: int = 1    
+    offset: int = 1
 ) -> Optional[Any]:
     """
     Get the value of the local variable named `key` in the stack at the nearest
@@ -1266,7 +1261,7 @@ def get_first_local_in_call_stack(
     """
 
     try:
-        return next(iter(get_all_local_in_call_stack(key, func, offset+1)))
+        return next(iter(get_all_local_in_call_stack(key, func, offset + 1)))
     except StopIteration:
         return None
 

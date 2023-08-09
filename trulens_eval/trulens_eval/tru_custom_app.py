@@ -103,7 +103,7 @@ apps.
 
 Uses of huggingface inference APIs are tracked as long as requests are made
 through the `requests` class's `post` method to the URL
-"https://api-inference.huggingface.co".
+https://api-inference.huggingface.co .
 
 ## Limitations
 
@@ -111,6 +111,17 @@ through the `requests` class's `post` method to the URL
   components. Specifically, an app cannot have a custom class that is not
   instrumented but that contains an instrumented class. The inner instrumented
   class will not be found by trulens.
+
+- All tracked components are categorized as "Custom" (as opposed to Template,
+  LLM, etc.). That is, there is no categorization available for custom
+  components. They will all show up as "uncategorized" in the dashboard.
+
+- Non json-like contents of components (that themselves are not components) are
+  not recorded or available in dashboard. This can be alleviated to some extent
+  with the `app_extra_json` argument to `TruCustomClass` as it allows one to
+  specify in the form of json additional information to store alongside the
+  component hierarchy. Json-like (json bases like string, int, and containers
+  like sequences and dicts are included).
 
 """
 
@@ -127,6 +138,7 @@ from trulens_eval.util import Class
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import JSON
 from trulens_eval.util import JSONPath
+from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
 
@@ -163,13 +175,6 @@ class TruCustomApp(App):
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
 
-        # Need to initialize this one here instead of where it is defined in
-        # AppDefinition since we change it here.
-        #kwargs['app_extra_json'] = kwargs.get('app_extra_json') or dict()
-
-        # Same design problem here.
-        #kwargs['instrumented_methods'] = kwargs.get('instrumented_methods') or dict()
-
         kwargs['instrument'] = Instrument(
             root_methods=set(
                 [TruCustomApp.with_record, TruCustomApp.awith_record]
@@ -181,36 +186,42 @@ class TruCustomApp(App):
 
         methods_to_instrument = methods_to_instrument or dict()
 
+
+        # The rest of this code checks that instrumented methods belong to some
+        # component as per serialized version of this app. If they are not,
+        # placeholders are made in `app_extra_json` so that subsequent
+        # serialization looks like the components exist.
+        json = self.dict()
+
         for m, path in methods_to_instrument.items():
-            #if hasattr(m, Instrument.INSTRUMENT):
-            # Was instrumented earlier. Lookup the original function so we
-            # dont try to wrap the wrapper again.
-            #    method_name = getattr(m, Instrument.INSTRUMENT).__name__
-            #else:
             method_name = m.__name__
 
-            full_path = Select.Query().app + path
+            full_path = JSONPath().app + path
 
             self.instrument.instrument_method(
                 method_name=method_name, obj=m.__self__, query=full_path
             )
 
-            # Check whether the path/location of the method is in app_json and
-            # if not, add a placeholder there.
+            # TODO: deduplicate code here and next condition
+
+            # Check whether the path/location of the method is in json serialization and
+            # if not, add a placeholder to app_extra_json.
             try:
+                
                 # app_extra_json is in AppDefinition
-                component = next(path(self.app_extra_json))
+                component = next(full_path(json))
 
                 print(
-                    f"Added method {m.__name__} under component at path {full_path}"
+                    f"{UNICODE_CHECK} Added method {m.__name__} under component at path {full_path}"
                 )
 
             except Exception:
                 logger.warning(
-                    f"App has no serialized component at path {full_path}. "
+                    f"App has no component at path {full_path} . "
                     f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
                     f"Creating a placeholder there for now."
                 )
+                
                 path.set(
                     self.app_extra_json, {
                         "__tru_placeholder":
@@ -219,6 +230,7 @@ class TruCustomApp(App):
                             f"Placeholder for method {m.__name__}."
                     }
                 )
+                
 
         # Check that any methods marked with TruCustomApp.instrument_method
         # statically has been instrumented.
@@ -229,21 +241,21 @@ class TruCustomApp(App):
                     f"Make sure it is accessible by traversing app {app} or provide it to TruCustomApp constructor in the `methods_to_instrument`."
                 )
             else:
-                # Need to chop off the "app" part that the path is expected to start with:
-                path = JSONPath(path=self.instrumented_methods[m].path[1:])
+                full_path = self.instrumented_methods[m]
 
                 try:
                     # Because we are checking whether the path refers to something in app_extra_json.
 
                     # app_extra_json is in AppDefinition
-                    component = next(path(self.app_extra_json))
+                    component = next(full_path(json))
 
-                except Exception:
+                except Exception as e:
                     logger.warning(
-                        f"App has no serialized component at path {path}. "
+                        f"App has no component owner of instrumented method {m} at path {full_path}. "
                         f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
                         f"Creating a placeholder there for now."
                     )
+                    
                     path.set(
                         self.app_extra_json, {
                             "__tru_placeholder":
@@ -252,6 +264,7 @@ class TruCustomApp(App):
                                 f"Placeholder for method {m.__name__}."
                         }
                     )
+
 
         self.post_init()
 

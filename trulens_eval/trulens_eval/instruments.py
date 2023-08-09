@@ -432,9 +432,8 @@ class Instrument(object):
 
         else:
             # Notify the app instrumenting this method where it is located:
-            
+
             self.callbacks._on_method_instrumented(func, path=query)
-            
 
         logger.debug(f"\t\t\t{query}: instrumenting {method_name}={func}")
 
@@ -453,7 +452,7 @@ class Instrument(object):
                 # TODO: generalize
                 return id(f) in set(
                     [id(rm.__code__) for rm in self.root_methods]
-                )# or id(f) == id(awrapper.__code__)
+                )  # or id(f) == id(awrapper.__code__)
 
             # Look up whether the root instrumented method was called earlier in
             # the stack and "record_and_app" variable was defined there. Will
@@ -463,7 +462,6 @@ class Instrument(object):
                     key="record_and_app", func=find_root_methods, offset=1
                 )
             )
-
             """
             # TODO: ROOTLESS
 
@@ -512,7 +510,6 @@ class Instrument(object):
                 # pairs even if positional arguments were provided.
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
                 start_time = datetime.now()
-
                 """
                 # TODO: ROOTLESS
                 # If this is a root call (first instrumented method), also track
@@ -569,7 +566,9 @@ class Instrument(object):
                 path = app._get_method_path(func)
 
                 if path is None:
-                    logger.warning(f"App of type {type(app)} no longer knows about {func}.")
+                    logger.warning(
+                        f"App of type {type(app)} no longer knows about {func}."
+                    )
                     continue
 
                 if id(record) not in stacks:
@@ -598,7 +597,6 @@ class Instrument(object):
 
             row = RecordAppCall(**row_args)
             record.append(row)
-
             """
             # TODO: ROOTLESS
             if is_root_call:
@@ -625,7 +623,7 @@ class Instrument(object):
                 # TODO: generalize
                 return id(f) in set(
                     [id(rm.__code__) for rm in self.root_methods]
-                )# or id(f) == id(awrapper.__code__)
+                )  # or id(f) == id(awrapper.__code__)
 
             # Look up whether the root instrumented method was called earlier in
             # the stack and "record_and_app" variable was defined there. Will
@@ -733,7 +731,9 @@ class Instrument(object):
                 path = app._get_method_path(func)
 
                 if path is None:
-                    logger.warning(f"App of type {type(app)} no longer knows about {func}.")
+                    logger.warning(
+                        f"App of type {type(app)} no longer knows about {func}."
+                    )
                     continue
 
                 if id(record) not in stacks:
@@ -764,7 +764,6 @@ class Instrument(object):
                 raise error
 
             return rets
-
 
         w = wrapper
         if inspect.iscoroutinefunction(func):
@@ -806,7 +805,9 @@ class Instrument(object):
                 if hasattr(base, method_name):
                     original_fun = getattr(base, method_name)
 
-                    logger.debug(f"\t\t{query}: instrumenting {base.__name__}.{method_name}")
+                    logger.debug(
+                        f"\t\t{query}: instrumenting {base.__name__}.{method_name}"
+                    )
                     setattr(
                         base, method_name,
                         self.tracked_method_wrapper(
@@ -864,7 +865,8 @@ class Instrument(object):
                     # other, even baser class which might come from builtins
                     # which we want to skip instrumenting.
                     if hasattr(original_fun, "__self__"):
-                        if not self.to_instrument_module(original_fun.__self__.__class__.__module__):    
+                        if not self.to_instrument_module(
+                                original_fun.__self__.__class__.__module__):
                             continue
                     else:
                         # Determine module here somehow.
@@ -897,7 +899,8 @@ class Instrument(object):
 
                 elif isinstance(v, Sequence):
                     for i, sv in enumerate(v):
-                        if any(isinstance(sv, cls) for cls in self.include_classes):
+                        if any(isinstance(sv, cls)
+                               for cls in self.include_classes):
                             self.instrument_object(
                                 obj=sv, query=query[k][i], done=done
                             )
@@ -905,9 +908,11 @@ class Instrument(object):
                 # TODO: check if we want to instrument anything in langchain not
                 # accessible through __fields__ .
 
-        elif obj is not None: # obj.__class__.__module__.startswith("llama_index"):
-            # Some llama_index objects are using dataclasses_json but most do
-            # not. Have to enumerate their contents forcefully:
+        elif self.to_instrument_class(obj.__class__):
+            # If an object is not a recognized container type, we check that it
+            # is meant to be instrumented and if so, we  walk over it manually.
+            # NOTE: llama_index objects are using dataclasses_json but most do
+            # not so this section applies.
 
             for k in dir(obj):
                 if k.startswith("_") and k[1:] in dir(obj):
@@ -916,7 +921,7 @@ class Instrument(object):
 
                 sv = _safe_getattr(obj, k)
 
-                if any(isinstance(sv, cls) for cls in self.include_classes):
+                if self.to_instrument_class(sv.__class__):
                     self.instrument_object(obj=sv, query=query[k], done=done)
 
         else:

@@ -1,11 +1,28 @@
 from trulens_eval.tru_custom_app import instrument
-from custom_retriever import CustomRetriever 
+from custom_retriever import CustomRetriever
+from custom_llm import CustomLLM
+
+
+class CustomTemplate:
+
+    def __init__(self, template):
+        self.template = template
+
+    @instrument
+    def fill(self, question, answer):
+        return self.template[:] \
+            .replace("{question}", question) \
+            .replace("{answer}", answer)
 
 
 class CustomApp:
 
     def __init__(self):
         self.retriever = CustomRetriever()
+        self.llm = CustomLLM()
+        self.template = CustomTemplate(
+            "The answer to {question} is probably {answer} or something ..."
+        )
 
     @instrument
     def retrieve_chunks(self, data):
@@ -14,5 +31,7 @@ class CustomApp:
     @instrument
     def respond_to_query(self, input):
         chunks = self.retrieve_chunks(input)
-        output = f"The answer to {input} is probably {chunks[0]} or something ..."
+        answer = self.llm.generate(",".join(chunks))
+        output = self.template.fill(question=input, answer=answer)
+
         return output
