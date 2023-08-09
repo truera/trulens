@@ -404,9 +404,8 @@ import logging
 from multiprocessing.pool import AsyncResult
 import re
 import traceback
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
-)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple, Type,
+                    Union)
 
 import numpy as np
 import openai
@@ -1503,7 +1502,7 @@ class Groundedness(SerialModel, WithClassInfo):
     summarize_provider: Provider
     groundedness_provider: Provider
 
-    def __init__(self, groundedness_provider: Provider = None):
+    def __init__(self, summarize_provider: Provider = None, groundedness_provider: Provider = None):
         """Instantiates the groundedness providers. Currently the groundedness functions work well with a summarizer.
         This class will use an OpenAI summarizer to find the relevant strings in a text. The groundedness_provider can 
         either be an llm with OpenAI or NLI with huggingface.
@@ -1511,12 +1510,13 @@ class Groundedness(SerialModel, WithClassInfo):
         Args:
             groundedness_provider (Provider, optional): groundedness provider options: OpenAI LLM or HuggingFace NLI. Defaults to OpenAI().
         """
+        if summarize_provider is None:
+            summarize_provider = OpenAI()
         if groundedness_provider is None:
             groundedness_provider = OpenAI()
-        summarize_provider = OpenAI()
-        if not isinstance(groundedness_provider, (OpenAI, Huggingface)):
+        if not isinstance(groundedness_provider, (OpenAI, AzureOpenAI, Huggingface)):
             raise Exception(
-                "Groundedness is only supported groundedness_provider as OpenAI or Huggingface Providers."
+                "Groundedness is only supported groundedness_provider as OpenAI, AzureOpenAI or Huggingface Providers."
             )
         super().__init__(
             summarize_provider=summarize_provider,
@@ -1556,6 +1556,24 @@ class Groundedness(SerialModel, WithClassInfo):
                     groundedness_scores[f"statement_{i}"
                                        ] = _re_1_10_rating(line) / 10
                     i += 1
+            return groundedness_scores, {"reason": reason}
+        elif isinstance(self.groundedness_provider, AzureOpenAI):
+            reason = ""
+            for i, hypothesis in enumerate(
+                    tqdm(statement.split("."),
+                         desc="Groundedness per statement in source")):
+                plausible_junk_char_min = 4
+                if len(hypothesis) > plausible_junk_char_min:
+                    score = self.groundedness_provider._doc_groundedness(
+                        premise=source, hypothesis=hypothesis
+                    )
+                    reason = reason + str.format(
+                        feedback_prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                        statement_sentence=hypothesis,
+                        supporting_evidence="[Doc NLI Used full source]",
+                        score=score * 10,
+                    )
+                    groundedness_scores[f"statement_{i}"] = score
             return groundedness_scores, {"reason": reason}
         if isinstance(self.groundedness_provider, Huggingface):
             reason = ""
@@ -1622,24 +1640,19 @@ class Groundedness(SerialModel, WithClassInfo):
         return groundedness_scores, {"reason": reason}
 
     def grounded_statements_aggregator(
-        self, source_statements_multi_output: list[dict]
+        self, source_statements_matrix: np.ndarray
     ) -> float:
         """Aggregates multi-input, mulit-output information from the groundedness_measure methods.
 
 
         Args:
-            source_statements_multi_output (np.ndarray): a 2D array with the first dimension corresponding to a source text,
+            source_statements_matrix (np.ndarray): a 2D array with the first dimension corresponding to a source text,
                 and the second dimension corresponding to each sentence in a statement; it's groundedness score
 
         Returns:
             float: for each statement, gets the max groundedness, then averages over that.
         """
-        all_results = []
-        for multi_output in source_statements_multi_output:
-            result_vals = list(multi_output.values())
-        all_results.append(result_vals)
-        all_results = np.asarray(all_results)
-        max_over_sources = np.max(all_results, axis=0)
+        max_over_sources = np.max(source_statements_matrix, axis=0)
         return np.mean(max_over_sources)
 
 
