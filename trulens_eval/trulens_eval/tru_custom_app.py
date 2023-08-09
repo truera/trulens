@@ -1,5 +1,117 @@
 """
-# Custom class instrumentation and monitoring.
+# Custom class Apps
+
+This wrapper covers apps that are not based on one of the high-level frameworks
+such as langchain or llama-index. We instead assume that some python class or
+classes implements an app which has similar functionality to LLM apps coded in
+the high-level frameworks in that it generally processes text queries to produce
+text outputs while making intermediate queries to things like LLMs, vector DBs,
+and similar.
+
+## Example Usage
+
+Consider a mock question-answering app with a context retriever component coded
+up as two classes in two python, `CustomApp` and `CustomRetriever`:
+
+### `custom_app.py`
+
+```python
+from trulens_eval.tru_custom_app import instrument
+from custom_retriever import CustomRetriever 
+
+
+class CustomApp:
+    # NOTE: No restriction on this class.
+
+    def __init__(self):
+        self.retriever = CustomRetriever()
+
+    @instrument
+    def retrieve_chunks(self, data):
+        return self.retriever.retrieve_chunks(data)
+
+    @instrument
+    def respond_to_query(self, input):
+        chunks = self.retrieve_chunks(input)
+        output = f"The answer to {input} is probably {chunks[0]} or something ..."
+        return output
+```
+
+### `custom_retriever.py`
+
+```python
+from trulens_eval.tru_custom_app import instrument
+
+class CustomRetriever:
+    # NOTE: No restriction on this class either.
+
+    @instrument
+    def retrieve_chunks(self, data):
+        return [
+            f"Relevant chunk: {data.upper()}",
+            f"Relevant chunk: {data[::-1]}"
+        ]
+```
+
+The core tool for instrumenting these classes is the `instrument` method
+(actually class, but details are not important here). trulens needs to be aware
+of two high-level concepts to usefully monitor the app: components and methods
+used by components. The `instrument` must decorate each method that the user
+wishes to watch (for it to show up on the dashboard). In the example, all of the
+functionalities are decorated. Additionally, the owner classes of any decorated
+method is viewed as an app component. In this case `CustomApp` and
+`CustomRetriever` are components. 
+
+Following the instrumentation, the app can be used with or without tracking:
+
+### `example.py`
+
+```python
+from custom_app import CustomApp
+from trulens_eval.tru_custom_app import TruCustomApp
+
+ca = CustomApp()
+
+# Normal app usage:
+response = ca.respond_to_query("What is the capital of Indonesia?")
+
+# Wrapping app with `TruCustomApp`:
+ta = TruCustomApp(ca)
+
+# Wrapped usage: must use the general `with_record` (or `awith_record`) method:
+response, record = ta.with_record(
+    ca.respond_to_query,
+    input="What is the capital of Indonesia?"
+)
+```
+
+The `with_record` use above returns both the response of the app normally
+produces as well as the record of the app as is the case with the higher-level
+wrappers. `TruCustomApp` constructor arguments are like in those higher-level
+apps as well including the feedback functions, metadata, etc.
+
+## API Usage Tracking
+
+Uses of python libraries for common LLMs like OpenAI are tracked in custom class
+apps.
+
+### Covered LLM Libraries
+
+- Official OpenAI python package (https://github.com/openai/openai-python).
+
+### Huggingface
+
+Uses of huggingface inference APIs are tracked as long as requests are made
+through the `requests` class's `post` method to the URL
+"https://api-inference.huggingface.co".
+
+## Limitations
+
+- Tracked (instrumented) Components must be accessible through other tracked
+  components. Specifically, an app cannot have a custom class that is not
+  instrumented but that contains an instrumented class. The inner instrumented
+  class will not be found by trulens.
+
 """
 
 import logging

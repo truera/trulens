@@ -83,7 +83,11 @@ class ComponentView(ABC):
             return LlamaIndexComponent.of_json(json)
         elif TrulensComponent.class_is(cls):
             return TrulensComponent.of_json(json)
+        elif CustomComponent.class_is(cls):
+            return CustomComponent.of_json(json)
         else:
+            # TODO: custom class
+
             raise TypeError(f"Unhandled component type with class {cls}")
 
     @staticmethod
@@ -131,6 +135,29 @@ class ComponentView(ABC):
                 return root_module
 
         return None
+
+
+class CustomComponent(ComponentView):
+
+    @staticmethod
+    def class_is(cls: Class) -> bool:
+        return True
+        # TODO: look at default instruments?
+        #if ComponentView.innermost_base(cls.bases) == "langchain":
+        #    return True
+
+        return False
+
+
+    @staticmethod
+    def of_json(json: JSON) -> 'CustomComponent':
+        # from trulens_eval.utils.langchain import component_of_json
+        class OtherComp(Other):
+            @staticmethod
+            def class_is(cls: Class) -> bool:
+                return True
+
+        # return component_of_json(json)
 
 
 class LangChainComponent(ComponentView):

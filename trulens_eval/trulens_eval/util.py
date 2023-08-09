@@ -460,7 +460,7 @@ def jsonify(
 
         content = temp
 
-    elif obj.__class__.__module__.startswith("llama_index."):
+    elif instrument.to_instrument_object(obj): # obj.__class__.__module__.startswith("llama_index."):
         # Most of llama_index classes do not inherit a storage-utility class
         # like pydantc so we have to enumerate their contents ourselves based on
         # some heuristics.
