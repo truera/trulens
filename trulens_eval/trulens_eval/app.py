@@ -454,6 +454,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
                 "This may be due to missing instrumentation of relevant methods. "
                 f"Methods currently instrumented are: {list(self.instrumented_methods.keys())}"
             )
+            raise RuntimeError("Empty record.")
 
         main_in = self.main_input(func, sig, bindings)
         main_out = self.main_output(func, sig, bindings, ret)
@@ -525,6 +526,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
                 "This may be due to missing instrumentation of relevant methods. "
                 f"Methods currently instrumented are: {list(self.instrumented_methods.keys())}"
             )
+            raise RuntimeError("Empty record.")
 
         ret_record_args = dict()
 
@@ -593,6 +595,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
                 "This may be due to missing instrumentation of relevant methods. "
                 f"Methods currently instrumented are: {list(self.instrumented_methods.keys())}"
             )
+            raise RuntimeError("Empty record.")
 
         ret_record_args = dict()
 

@@ -502,7 +502,7 @@ class Instrument(object):
 
             start_time = None
             end_time = None
-            cost: Cost = None
+            
             bindings = None
 
             try:
@@ -514,6 +514,7 @@ class Instrument(object):
                 # TODO: ROOTLESS
                 # If this is a root call (first instrumented method), also track
                 # costs:
+                cost: Cost = None
                 if is_root_call:
                     rets, cost = await Endpoint.atrack_all_costs_tally(
                         lambda: func(*bindings.args, **bindings.kwargs)
@@ -634,6 +635,9 @@ class Instrument(object):
                 )
             )
 
+            """
+            # TODO: ROOTLESS
+
             is_root_call = False
 
             if len(records_and_apps) == 0:
@@ -643,6 +647,7 @@ class Instrument(object):
 
                 # If so, indicate that this is a root instrumented call.
                 is_root_call = True
+            """
 
             if records_and_apps is None or len(records_and_apps) == 0:
                 # Otherwise return result without instrumentation.
@@ -670,7 +675,7 @@ class Instrument(object):
 
             start_time = None
             end_time = None
-            cost: Cost = None
+
             bindings = None
 
             try:
@@ -679,14 +684,19 @@ class Instrument(object):
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
                 start_time = datetime.now()
 
+                """
+                # TODO: ROOTLESS
                 # If this is a root call (first instrumented method), also track
                 # costs:
+                cost: Cost = None
                 if is_root_call:
                     rets, cost = Endpoint.track_all_costs_tally(
                         lambda: func(*bindings.args, **bindings.kwargs)
                     )
                 else:
-                    rets = func(*bindings.args, **bindings.kwargs)
+                """
+
+                rets = func(*bindings.args, **bindings.kwargs)
 
                 end_time = datetime.now()
 
@@ -755,10 +765,13 @@ class Instrument(object):
 
                 record.append(row)
 
+                """
+                # TODO: ROOTLESS
                 if is_root_call:
                     # If this is a root call, notify app to add the completed record
                     # into its containers:
-                    app._on_add_record(record, func, sig, bindings, cost)
+                    self.on_add_record(record, func, sig, bindings, cost)
+                """
 
             if error is not None:
                 raise error

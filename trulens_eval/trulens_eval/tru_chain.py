@@ -68,41 +68,6 @@ class LangChainInstrument(Instrument):
             *args, **kwargs
         )
 
-    def _instrument_dict(self, cls, obj: Any, with_class_info: bool = False):
-        """
-        Replacement for langchain's dict method to one that does not fail under
-        non-serialization situations.
-        """
-
-        return jsonify
-
-    def _instrument_type_method(self, obj, prop):
-        """
-        Instrument the Langchain class's method _*_type which is presently used
-        to control chain saving. Override the exception behaviour. Note that
-        _chain_type is defined as a property in langchain.
-        """
-
-        # Properties doesn't let us new define new attributes like "_instrument"
-        # so we put it on fget instead.
-        if hasattr(prop.fget, Instrument.INSTRUMENT):
-            prop = getattr(prop.fget, Instrument.INSTRUMENT)
-
-        def safe_type(s) -> Union[str, Dict]:
-            # self should be chain
-            try:
-                ret = prop.fget(s)
-                return ret
-
-            except NotImplementedError as e:
-
-                return noserio(obj, error=f"{e.__class__.__name__}='{str(e)}'")
-
-        safe_type._instrumented = prop
-        new_prop = property(fget=safe_type)
-
-        return new_prop
-
 
 class TruChain(App):
     """
@@ -136,11 +101,12 @@ class TruChain(App):
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
         kwargs['instrument'] = LangChainInstrument(
-            on_new_record=self._on_new_record,
-            on_add_record=self._on_add_record
+            callbacks=self
         )
 
         super().__init__(**kwargs)
+
+        self.post_init()
 
     # TODEP
     # Chain requirement
