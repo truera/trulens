@@ -172,6 +172,21 @@ def dict_set_with(dict1: Dict, dict2: Dict):
     return dict1
 
 
+def dict_merge_with(dict1: Dict, dict2: Dict, merge: Callable) -> Dict:
+    """
+    Merge values from the second dictionary into the first. If both dicts
+    contain the same key, the given `merge` function is used to merge the
+    values.
+    """
+    for k, v in dict2.items():
+        if k in dict1:
+            dict1[k] = merge(dict1[k], v)
+        else:
+            dict1[k] = v
+
+    return dict1
+
+
 # Generator utils
 
 
@@ -402,10 +417,12 @@ def jsonify(
         redact_keys=redact_keys
     )
 
-    if isinstance(obj, Enum):
-        return obj.name
+    content = None
 
-    if isinstance(obj, Dict):
+    if isinstance(obj, Enum):
+        content = obj.name
+
+    elif isinstance(obj, Dict):
         temp = {}
         new_dicted[id(obj)] = temp
         temp.update({k: recur(v) for k, v in obj.items() if recur_key(k)})
@@ -415,21 +432,23 @@ def jsonify(
             for k, v in temp.items():
                 temp[k] = redact_value(v=v, k=k)
 
-        return temp
+        content = temp
 
     elif isinstance(obj, Sequence):
         temp = []
         new_dicted[id(obj)] = temp
         for x in (recur(v) for v in obj):
             temp.append(x)
-        return temp
+
+        content = temp
 
     elif isinstance(obj, Set):
         temp = []
         new_dicted[id(obj)] = temp
         for x in (recur(v) for v in obj):
             temp.append(x)
-        return temp
+
+        content = temp
 
     elif isinstance(obj, pydantic.BaseModel):
         # Not even trying to use pydantic.dict here.
@@ -449,17 +468,9 @@ def jsonify(
             for k, v in temp.items():
                 temp[k] = redact_value(v=v, k=k)
 
-        if instrument.to_instrument_object(obj):
-            temp[CLASS_INFO] = Class.of_class(
-                cls=obj.__class__, with_bases=True
-            ).dict()
+        content = temp
 
-        return temp
-
-    elif obj.__class__.__module__.startswith("llama_index."):
-        # Most of llama_index classes do not inherit a storage-utility class
-        # like pydantc so we have to enumerate their contents ourselves based on
-        # some heuristics.
+    elif instrument.to_instrument_object(obj):
 
         temp = {}
         new_dicted[id(obj)] = temp
@@ -476,19 +487,26 @@ def jsonify(
             }
         )
 
-        if instrument.to_instrument_object(obj):
-            temp[CLASS_INFO] = Class.of_class(
-                cls=obj.__class__, with_bases=True
-            ).dict()
-
-        return temp
+        content = temp
 
     else:
         logger.debug(
-            f"Don't know how to jsonify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
+            f"Do not know how to jsonify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
         )
 
-        return noserio(obj)
+        content = noserio(obj)
+
+    # Add class information for objects that are to be instrumented, known as
+    # "components".
+    if instrument.to_instrument_object(obj):
+        content[CLASS_INFO] = Class.of_class(
+            cls=obj.__class__, with_bases=True
+        ).dict()
+
+    if hasattr(obj, "jsonify_extra"):
+        content = obj.jsonify_extra(content)
+
+    return content
 
 
 def leaf_queries(obj_json: JSON, query: JSONPath = None) -> Iterable[JSONPath]:
@@ -816,7 +834,7 @@ class GetItemOrAttribute(Step):
         if isinstance(obj, Dict):
             obj[self.item_or_attribute] = val
         else:
-            setattr(obj, self.item_or_attribute)
+            setattr(obj, self.item_or_attribute, val)
 
         return obj
 
@@ -958,6 +976,9 @@ class JSONPath(SerialModel):
     def __len__(self):
         return len(self.path)
 
+    def __add__(self, other: JSONPath):
+        return JSONPath(path=self.path + other.path)
+
     def is_immediate_prefix_of(self, other: JSONPath):
         return self.is_prefix_of(other) and len(self.path) + 1 == len(
             other.path
@@ -1091,7 +1112,7 @@ def _future_target_wrapper(stack, func, *args, **kwargs):
     the stack and need to do this to the frames prior to thread starts.
     """
 
-    # Keep this for looking up via get_local_in_call_stack .
+    # Keep this for looking up via get_first_local_in_call_stack .
     pre_start_stack = stack
 
     return func(*args, **kwargs)
@@ -1186,22 +1207,23 @@ class TP(SingletonPerName):  # "thread processing"
 # python instrumentation utilities
 
 
-def get_local_in_call_stack(
+def get_all_local_in_call_stack(
     key: str,
     func: Callable[[Callable], bool],
     offset: int = 1
-) -> Optional[Any]:
+) -> Iterator[Any]:
     """
-    Get the value of the local variable named `key` in the stack at the nearest
-    frame executing a function which `func` recognizes (returns True on).
-    Returns None if `func` does not recognize the correct function. Raises
-    RuntimeError if a function is recognized but does not have `key` in its
-    locals.
+    Get the value of the local variable named `key` in the stack at all of the
+    frames executing a function which `func` recognizes (returns True on)
+    starting from the top of the stack except `offset` top frames. Returns None
+    if `func` does not recognize the correct function. Raises RuntimeError if a
+    function is recognized but does not have `key` in its locals.
 
     This method works across threads as long as they are started using the TP
     class above.
-
     """
+
+    logger.debug(f"Looking for local '{key}' in the stack.")
 
     frames = stack_with_tasks()[offset + 1:]  # + 1 to skip this method itself
 
@@ -1230,11 +1252,33 @@ def get_local_in_call_stack(
             logger.debug(f"looking via {func.__name__}; found {f}")
             locs = f.f_locals
             if key in locs:
-                return locs[key]
+                yield locs[key]
             else:
-                raise RuntimeError(f"No local named {key} found.")
+                raise KeyError(f"No local named '{key}' found in frame {f}.")
 
-    return None
+    return
+
+
+def get_first_local_in_call_stack(
+    key: str,
+    func: Callable[[Callable], bool],
+    offset: int = 1
+) -> Optional[Any]:
+    """
+    Get the value of the local variable named `key` in the stack at the nearest
+    frame executing a function which `func` recognizes (returns True on).
+    Returns None if `func` does not recognize the correct function. Raises
+    RuntimeError if a function is recognized but does not have `key` in its
+    locals.
+
+    This method works across threads as long as they are started using the TP
+    class above.
+    """
+
+    try:
+        return next(iter(get_all_local_in_call_stack(key, func, offset + 1)))
+    except StopIteration:
+        return None
 
 
 class Module(SerialModel):

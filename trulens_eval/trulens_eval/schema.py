@@ -438,12 +438,26 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
     # Wrapped app in jsonized form.
     app: JSON
 
+    # Info to store about the app and to display in dashboard. This is useful if
+    # app itself cannot be serialized. `app_extra_json`, then, can stand in place for
+    # whatever the user might want to see about the app.
+    app_extra_json: JSON
+
+    def jsonify_extra(self, content):
+        # Called by jsonify for us to add any data we might want to add to the
+        # serialization of `app`.
+        if self.app_extra_json is not None:
+            content['app'].update(self.app_extra_json)
+
+        return content
+
     def __init__(
         self,
         app_id: Optional[AppID] = None,
         tags: Optional[Tags] = None,
         metadata: Optional[Metadata] = None,
         feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
+        app_extra_json: JSON = None,
         **kwargs
     ):
 
@@ -452,6 +466,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         kwargs['feedback_mode'] = feedback_mode
         kwargs['tags'] = ""
         kwargs['metadata'] = {}
+        kwargs['app_extra_json'] = app_extra_json or dict()
 
         # for WithClassInfo:
         kwargs['obj'] = self
