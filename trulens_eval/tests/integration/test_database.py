@@ -8,21 +8,17 @@ from unittest import TestCase, main
 from sqlalchemy import text, Engine
 
 from trulens_eval import TruBasicApp, Feedback, Provider, FeedbackMode, Tru, Select
-from trulens_eval.db import LocalSQLite, DB
 from trulens_eval.database import orm
-from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB, AppsExtractor
 from trulens_eval.database.migrations import upgrade_db, DbRevisions, get_revision_history, downgrade_db
+from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB, AppsExtractor
 from trulens_eval.database.utils import is_legacy_sqlite
+from trulens_eval.db import LocalSQLite, DB
 
 
 class TestDbV2Migration(TestCase):
 
     def test_db_migration_sqlite_file(self):
         with clean_db("sqlite_file") as db:
-            _test_db_migration(db)
-
-    def test_db_migration_sqlite_memory(self):
-        with clean_db("sqlite_memory") as db:
             _test_db_migration(db)
 
     def test_db_migration_postgres(self):
@@ -35,10 +31,6 @@ class TestDbV2Migration(TestCase):
 
     def test_db_consistency_sqlite_file(self):
         with clean_db("sqlite_file") as db:
-            _test_db_consistency(db)
-
-    def test_db_consistency_sqlite_memory(self):
-        with clean_db("sqlite_memory") as db:
             _test_db_consistency(db)
 
     def test_db_consistency_postgres(self):
@@ -88,13 +80,17 @@ def clean_db(alias: str) -> SqlAlchemyDB:
     with TemporaryDirectory() as tmp:
         url = {
             "sqlite_file": f"sqlite:///{Path(tmp).joinpath('test.sqlite')}",
-            "sqlite_memory": "sqlite:///:memory:",  # warn: built-in memory sqlite is not threadsafe
             "postgres": "postgresql+psycopg2://pg-test-user:pg-test-pswd@localhost/pg-test-db",
             "mysql": "mysql+pymysql://mysql-test-user:mysql-test-pswd@localhost/mysql-test-db",
         }[alias]
 
         db = SqlAlchemyDB.from_db_url(url)
-        downgrade_db(db.engine, revision="base")  # drops all tables
+
+        downgrade_db(db.engine, revision="base")  # drops all tables except `alembic_version`
+
+        with db.engine.connect() as conn:
+            conn.execute(text("DROP TABLE alembic_version"))
+
         yield db
 
 
