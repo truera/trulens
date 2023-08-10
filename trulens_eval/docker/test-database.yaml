@@ -1,0 +1,37 @@
+# Docker compose environment setup for running
+# integration tests of `trulens_eval.db_v2`
+# Use with `make test-it-db-v2`
+
+version: "3.9"
+
+x-healthcheck: &healthcheck
+  start_period: 10s # wait 10 seconds before first check
+  interval: 5s # wait 5 seconds between checks
+  timeout: 3s # count 1 failure if check is not answered in 3 seconds
+  retries: 5 # mark as unhealthy after 5 failures
+
+services:
+  pg-test:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: pg-test-db
+      POSTGRES_USER: pg-test-user
+      POSTGRES_PASSWORD: pg-test-pswd
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "pg-test-db"]
+      <<: *healthcheck
+    ports:
+      - "5432:5432"
+
+  mysql-test:
+    image: mysql:8
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: yes
+      MYSQL_DATABASE: mysql-test-db
+      MYSQL_USER: mysql-test-user
+      MYSQL_PASSWORD: mysql-test-pswd
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      <<: *healthcheck
+    ports:
+      - "3306:3306"
