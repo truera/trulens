@@ -185,15 +185,20 @@ def _extract_feedback_results(results: Iterable[orm.FeedbackResult]) -> pd.DataF
     return df
 
 
-def _extract_latency(perf_json: pd.Series) -> pd.Series:
-    perf = perf_json.apply(
-        lambda p: schema.Perf.parse_raw(p) if isinstance(p, str) else schema.Perf(**p)
-        if p != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
-    )
-    return perf.apply(
-        lambda p: p.latency.seconds
-        if p != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
-    )
+def _extract_latency(series: Iterable[Union[str, dict, schema.Perf]]) -> pd.Series:
+
+    def _extract(perf_json: Union[str, dict, schema.Perf]) -> int:
+        if perf_json == MIGRATION_UNKNOWN_STR:
+            return np.nan
+        if isinstance(perf_json, str):
+            perf_json = json.loads(perf_json)
+        if isinstance(perf_json, dict):
+            perf_json = schema.Perf(**perf_json)
+        if isinstance(perf_json, schema.Perf):
+            return perf_json.latency.seconds
+        raise ValueError(f"Failed to parse perf_json: {perf_json}")
+
+    return pd.Series(data=(_extract(p) for p in series))
 
 
 def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
