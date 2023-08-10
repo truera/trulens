@@ -1,6 +1,7 @@
 import json
 import logging
 import warnings
+from collections import defaultdict
 from datetime import datetime
 from typing import List, Tuple, Sequence, Optional, Iterable, Union, Any
 
@@ -12,12 +13,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
 from trulens_eval import schema
-from trulens_eval.db import DB
-from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.database import orm
 from trulens_eval.database.migrations import upgrade_db
 from trulens_eval.database.utils import for_all_methods, run_before, is_legacy_sqlite, is_memory_sqlite, \
     check_db_revision, migrate_legacy_sqlite
+from trulens_eval.db import DB
+from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.schema import RecordID, FeedbackResultID, FeedbackDefinitionID, FeedbackResultStatus
 from trulens_eval.util import JSON
 
@@ -69,10 +70,13 @@ class SqlAlchemyDB(DB):
         )
 
     def insert_record(self, record: schema.Record) -> schema.RecordID:
+        _rec = orm.Record.parse(record)
         with self.Session.begin() as session:
-            _record = orm.Record.parse(record)
-            session.add(_record)
-            return _record.record_id
+            if session.query(orm.Record).filter_by(record_id=record.record_id).first():
+                session.merge(_rec)  # update existing
+            else:
+                session.add(_rec)  # add new record
+            return _rec.record_id
 
     def get_app(self, app_id: str) -> Optional[JSON]:
         with self.Session.begin() as session:
@@ -220,7 +224,7 @@ class AppsExtractor:
         yield pd.DataFrame([], columns=self.app_cols + self.rec_cols)  # prevent empty iterator
         for _app in apps:
             if _recs := _app.records:
-                df = pd.concat(self.extract_records(_recs))
+                df = pd.DataFrame(data=self.extract_records(_recs))
 
                 for col in self.app_cols:
                     if col == "type":
@@ -230,34 +234,31 @@ class AppsExtractor:
 
                 yield df
 
-    def extract_records(self, records: Iterable[orm.Record]) -> Iterable[pd.DataFrame]:
+    def extract_records(self, records: Iterable[orm.Record]) -> Iterable[pd.Series]:
         for _rec in records:
-            df = pd.DataFrame(self.extract_results(_rec.feedback_results), columns=["key", "value"]) \
-                .pivot_table(columns="key", values="value", aggfunc=self.agg_result_or_calls) \
-                .reset_index(drop=True).rename_axis("", axis=1)
+            calls = defaultdict(list)
+            values = defaultdict(list)
+
+            for _res in _rec.feedback_results:
+                self.feedback_columns.add(_res.name)
+                calls[_res.name].append(json.loads(_res.calls_json)["calls"])
+                if _res.result is not None:  # avoid getting Nones into np.mean
+                    values[_res.name].append(_res.result)
+
+            row = {
+                **{k: np.mean(v) for k, v in values.items()},
+                **{k + "_calls": flatten(v) for k, v in calls.items()},
+            }
 
             for col in self.rec_cols:
-                df[col] = datetime.fromtimestamp(_rec.ts).isoformat() if col == "ts" else getattr(_rec, col)
+                row[col] = datetime.fromtimestamp(_rec.ts).isoformat() if col == "ts" else getattr(_rec, col)
 
-            yield df
-
-    def extract_results(self, results: Iterable[orm.FeedbackResult]) -> Iterable[Tuple[str, Union[float, dict]]]:
-        for _res in results:
-            self.feedback_columns.add(_res.name)
-            yield _res.name, _res.result
-            yield f"{_res.name}_calls", json.loads(_res.calls_json)["calls"]
-
-    @classmethod
-    def agg_result_or_calls(cls, *args):
-        if not args:
-            return None  # no type inferred
-        elif isinstance(args[0], list):
-            return list(flatten(*args))  # aggregate calls
-        else:
-            return np.mean(args)  # aggregate results
+            yield row
 
 
-def flatten(*iterables: Iterable[Any]) -> Iterable[Any]:
-    for iterable in iterables:
-        for x in iterable:
-            yield x
+def flatten(nested: Iterable[Iterable[Any]]) -> List[Any]:
+    def _flatten(_nested):
+        for iterable in _nested:
+            for element in iterable:
+                yield element
+    return list(_flatten(nested))
