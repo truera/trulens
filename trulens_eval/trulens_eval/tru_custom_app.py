@@ -15,9 +15,8 @@ up as two classes in two python, `CustomApp` and `CustomRetriever`:
 
 ### `custom_app.py`
 
-```python
-from trulens_eval.tru_custom_app import instrument
-from custom_retriever import CustomRetriever 
+```python from trulens_eval.tru_custom_app import instrument from
+custom_retriever import CustomRetriever 
 
 
 class CustomApp:
@@ -26,30 +25,24 @@ class CustomApp:
     def __init__(self):
         self.retriever = CustomRetriever()
 
-    @instrument
-    def retrieve_chunks(self, data):
+    @instrument def retrieve_chunks(self, data):
         return self.retriever.retrieve_chunks(data)
 
-    @instrument
-    def respond_to_query(self, input):
-        chunks = self.retrieve_chunks(input)
-        output = f"The answer to {input} is probably {chunks[0]} or something ..."
-        return output
+    @instrument def respond_to_query(self, input):
+        chunks = self.retrieve_chunks(input) output = f"The answer to {input} is
+        probably {chunks[0]} or something ..." return output
 ```
 
 ### `custom_retriever.py`
 
-```python
-from trulens_eval.tru_custom_app import instrument
+```python from trulens_eval.tru_custom_app import instrument
 
 class CustomRetriever:
     # NOTE: No restriction on this class either.
 
-    @instrument
-    def retrieve_chunks(self, data):
+    @instrument def retrieve_chunks(self, data):
         return [
-            f"Relevant chunk: {data.upper()}",
-            f"Relevant chunk: {data[::-1]}"
+            f"Relevant chunk: {data.upper()}", f"Relevant chunk: {data[::-1]}"
         ]
 ```
 
@@ -66,22 +59,19 @@ Following the instrumentation, the app can be used with or without tracking:
 
 ### `example.py`
 
-```python
-from custom_app import CustomApp
-from trulens_eval.tru_custom_app import TruCustomApp
+```python from custom_app import CustomApp from trulens_eval.tru_custom_app
+import TruCustomApp
 
 ca = CustomApp()
 
-# Normal app usage:
-response = ca.respond_to_query("What is the capital of Indonesia?")
+# Normal app usage: response = ca.respond_to_query("What is the capital of
+Indonesia?")
 
-# Wrapping app with `TruCustomApp`:
-ta = TruCustomApp(ca)
+# Wrapping app with `TruCustomApp`: ta = TruCustomApp(ca)
 
 # Wrapped usage: must use the general `with_record` (or `awith_record`) method:
 response, record = ta.with_record(
-    ca.respond_to_query,
-    input="What is the capital of Indonesia?"
+    ca.respond_to_query, input="What is the capital of Indonesia?"
 )
 ```
 
@@ -107,7 +97,7 @@ https://api-inference.huggingface.co .
 
 ## Limitations
 
-- Tracked (instrumented) Components must be accessible through other tracked
+- Tracked (instrumented) components must be accessible through other tracked
   components. Specifically, an app cannot have a custom class that is not
   instrumented but that contains an instrumented class. The inner instrumented
   class will not be found by trulens.
@@ -123,6 +113,72 @@ https://api-inference.huggingface.co .
   component hierarchy. Json-like (json bases like string, int, and containers
   like sequences and dicts are included).
 
+## What can go wrong
+
+- If a `with_record` or `awith_record` call does not encounter any instrumented
+  method, it will raise an error. You can check which methods are instrumented
+  using `App.print_instrumented`. You may have forgotten to decorate relevant
+  methods with `@instrument`.
+
+```python
+
+app.print_instrumented()
+
+### output example:
+
+Components:
+Other of trulens_eval.utils.langchain component: *.__app__.app
+Other of trulens_eval.utils.langchain component: *.__app__.app.memory
+LLM of trulens_eval.utils.langchain component: *.__app__.app.memory.llm
+Prompt of trulens_eval.utils.langchain component: *.__app__.app.memory.prompt
+Other of trulens_eval.utils.langchain component: *.__app__.app.memory.chat_memory
+Other of trulens_eval.utils.langchain component: *.__app__.app.combine_docs_chain
+Other of trulens_eval.utils.langchain component: *.__app__.app.combine_docs_chain.llm_chain
+Prompt of trulens_eval.utils.langchain component: *.__app__.app.combine_docs_chain.llm_chain.prompt
+LLM of trulens_eval.utils.langchain component: *.__app__.app.combine_docs_chain.llm_chain.llm
+Prompt of trulens_eval.utils.langchain component: *.__app__.app.combine_docs_chain.document_prompt
+Other of trulens_eval.utils.langchain component: *.__app__.app.question_generator
+Prompt of trulens_eval.utils.langchain component: *.__app__.app.question_generator.prompt
+LLM of trulens_eval.utils.langchain component: *.__app__.app.question_generator.llm
+Other of trulens_eval.utils.langchain component: *.__app__.app.retriever
+
+Methods:
+<function Chain.__call__ at 0x11ac675e0> on: *.app.question_generator
+<function BaseConversationalRetrievalChain._call at 0x11b1b7dc0> on: *.app
+<function BaseConversationalRetrievalChain._acall at 0x11b1b7ee0> on: *.app
+<function Chain.acall at 0x11ac67670> on: *.app.question_generator
+<function Chain._call at 0x11ac674c0> on: *.app.question_generator
+<function Chain._acall at 0x11ac67550> on: *.app.question_generator
+<function BaseCombineDocumentsChain._call at 0x11acf7a60> on: *.app.combine_docs_chain
+<function BaseCombineDocumentsChain._acall at 0x11acf7af0> on: *.app.combine_docs_chain
+<function LLMChain._call at 0x11ac67ca0> on: *.app.question_generator
+<function LLMChain._acall at 0x11ac791f0> on: *.app.question_generator
+<function VectorStoreRetriever._get_relevant_documents at 0x11a4e0ee0> on: *.app.retriever
+<function BaseRetriever._get_relevant_documents at 0x10f0ef700> on: *.app.retriever
+```
+
+- If an instrumented / decorated method's owner object cannot be found when
+  traversing your custom class, you will get a warning. This may be ok in the
+  end but may be indicative of a problem. Specifically, note the "Tracked"
+  limitation above. You can also use the `app_extra_json` argument to `App` /
+  `TruCustomApp` to provide a structure to stand in place for (or augment) the
+  data produced by walking over instrumented components to make sure this
+  hierarchy contains the owner of each instrumented method.
+
+  The owner-not-found error looks like this:
+
+```python
+Method <function CustomLLM.generate at 0x175723b80> was not found during instrumentation walk. Make sure it is accessible by traversing app <custom_app.CustomApp object at 0x1075c2fa0> or provide it to TruCustomApp constructor in the `methods_to_instrument`.
+Method <function CustomTemplate.fill at 0x175723d30> was not found during instrumentation walk. Make sure it is accessible by traversing app <custom_app.CustomApp object at 0x1075c2fa0> or provide it to TruCustomApp constructor in the `methods_to_instrument`.
+Method <function CustomRetriever.retrieve_chunks at 0x1757235e0> was not found during instrumentation walk. Make sure it is accessible by traversing app <custom_app.CustomApp object at 0x1075c2fa0> or provide it to TruCustomApp constructor in the `methods_to_instrument`.
+```
+
+- Usage tracking not tracking. We presently have limited coverage over which
+  APIs we track and make some assumptions with regards to accessible APIs
+  through lower-level interfaces. Specifically, we only instrument the
+  `requests` module's `post` method for the lower level tracking. Please file an
+  issue on github with your use cases so we can work out a more complete
+  solution as needed.
 """
 
 import logging
@@ -291,18 +347,17 @@ class instrument:
 
     # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
 
-    def __init__(self, func):
+    def __init__(self, func: Callable):
         self.func = func
 
-    def __set_name__(self, cls, name):
+    def __set_name__(self, cls: type, name: str):
         # Add owner of the decorated method, its module, and the name to the
         # Default instrumentation walk filters.
         Instrument.Default.MODULES.add(cls.__module__)
         Instrument.Default.CLASSES.add(cls)
-        Instrument.Default.METHODS[
-            name] = lambda o: True  # lambda o: isinstance(o, cls)
-        # TODO: fix the last line in case a method with the same name appears in
-        # multiple classes.
+
+        check_o = Instrument.Default.METHODS.get(name, lambda o: False)
+        Instrument.Default.METHODS[name] = lambda o: check_o(o) or isinstance(o, cls)
 
         # Also make note of it for verification that it was found by the walk
         # after init.
