@@ -7,7 +7,6 @@ from typing import List, Tuple, Sequence, Optional, Iterable, Union, Any
 
 import numpy as np
 import pandas as pd
-import sqlalchemy
 from pydantic import Field
 from sqlalchemy import Engine, create_engine
 from sqlalchemy import select
@@ -24,17 +23,7 @@ from trulens_eval.schema import RecordID, FeedbackResultID, FeedbackDefinitionID
 from trulens_eval.util import JSON
 
 logger = logging.getLogger(__name__)
-import threading
 
-
-def synchronized(func):
-    func.__lock__ = threading.Lock()
-
-    def synced_func(*args, **kws):
-        with func.__lock__:
-            return func(*args, **kws)
-
-    return synced_func
 
 @for_all_methods(
     run_before(lambda self, *args, **kwargs: check_db_revision(self.engine)),
@@ -66,7 +55,6 @@ class SqlAlchemyDB(DB):
     def from_db_url(cls, url: str) -> "SqlAlchemyDB":
         return cls(engine_params={"url": url})
 
-    @synchronized
     def migrate_database(self):
         """Migrate database schema to the latest revision"""
         if is_legacy_sqlite(self.engine):

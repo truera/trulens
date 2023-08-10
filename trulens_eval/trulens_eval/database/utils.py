@@ -8,12 +8,11 @@ from tempfile import TemporaryDirectory
 from typing import Optional, List, Callable, Union
 
 import pandas as pd
-import sqlalchemy
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import Engine, create_engine
 
-from trulens_eval.db import LocalSQLite
 from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.database.migrations import DbRevisions, upgrade_db
+from trulens_eval.db import LocalSQLite
 
 logger = logging.getLogger(__name__)
 
@@ -48,17 +47,21 @@ def run_before(callback: Callable):
 
 def is_legacy_sqlite(engine: Engine) -> bool:
     """Check if DB is an existing file-based SQLite
-    created with the `LocalSQLite` implementation"""
+    created with the `LocalSQLite` implementation
+
+    Will also return True for an empty, brand-new SQLite file,
+    but applying the legacy migrations on the empty database
+    before the Alembic scripts will not hurt, so this should
+    be a harmless false positive.
+
+    Checking for the existence of the `meta` table is not safe
+    because in trulens_eval 0.1.2 the meta table may not exist.
+    """
 
     if not engine.url.drivername.startswith("sqlite"):
         return False
 
-    if not sqlalchemy.inspect(engine).has_table("meta"):
-        return False
-
-    with engine.begin() as conn:
-        query = "SELECT value FROM meta WHERE key='trulens_version'"
-        return conn.execute(text(query)).first() is not None
+    return DbRevisions.load(engine).current is None
 
 
 def is_memory_sqlite(engine: Engine) -> bool:
