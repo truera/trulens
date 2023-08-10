@@ -1,5 +1,7 @@
 from time import sleep
+
 from trulens_eval.tru_custom_app import instrument
+
 
 class CustomRetriever:
 
@@ -8,6 +10,5 @@ class CustomRetriever:
         sleep(0.5)
 
         return [
-            f"Relevant chunk: {data.upper()}",
-            f"Relevant chunk: {data[::-1]}"
+            f"Relevant chunk: {data.upper()}", f"Relevant chunk: {data[::-1]}"
         ]

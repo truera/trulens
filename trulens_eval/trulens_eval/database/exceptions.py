@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class DatabaseVersionException(Exception):
+
     class Reason(Enum):
         AHEAD = 1
         BEHIND = 2

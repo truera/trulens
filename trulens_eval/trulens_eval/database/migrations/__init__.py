@@ -1,7 +1,7 @@
+from contextlib import contextmanager
 import logging
 import os
-from contextlib import contextmanager
-from typing import Optional, List
+from typing import List, Optional
 
 from alembic import command
 from alembic.config import Config
@@ -19,7 +19,9 @@ def alembic_config(engine: Engine) -> Config:
     db_url = str(engine.url).replace("%", "%%")  # Escape any '%' in db_url
     config = Config(os.path.join(alembic_dir, "alembic.ini"))
     config.set_main_option("script_location", alembic_dir)
-    config.set_main_option("calling_context", "PYTHON")  # skips CLI-specific setup
+    config.set_main_option(
+        "calling_context", "PYTHON"
+    )  # skips CLI-specific setup
     config.set_main_option("sqlalchemy.url", db_url)
     config.attributes["engine"] = engine
     yield config
@@ -45,10 +47,14 @@ def get_revision_history(engine: Engine) -> List[str]:
     Warn: Branching not supported, fails if there's more than one head"""
     with alembic_config(engine) as config:
         scripts = ScriptDirectory.from_config(config)
-        return list(reversed([
-            rev.revision for rev in
-            scripts.iterate_revisions(lower="base", upper="head")
-        ]))
+        return list(
+            reversed(
+                [
+                    rev.revision for rev in
+                    scripts.iterate_revisions(lower="base", upper="head")
+                ]
+            )
+        )
 
 
 class DbRevisions(BaseModel):
