@@ -849,6 +849,7 @@ class Feedback(FeedbackDefinition):
         try:
             # Total cost, will accumulate.
             cost = Cost()
+            multi_result = None
 
             for ins in self.extract_selection(app=app_json, record=record):
 
@@ -858,10 +859,11 @@ class Feedback(FeedbackDefinition):
                 cost += part_cost
 
                 if isinstance(result_and_meta, Tuple):
-                    # If output is a tuple of two, we assume it is the float and the metadata.
+                    # If output is a tuple of two, we assume it is the float/multifloat and the metadata.
                     assert len(
                         result_and_meta
-                    ) == 2, "Feedback functions must return either a single float or a float and a dictionary."
+                    ) == 2, (f"Feedback functions must return either a single float, "
+                            f"a float-valued dict, or these in combination with a dictionary as a tuple.")
                     result_val, meta = result_and_meta
 
                     assert isinstance(
@@ -872,12 +874,13 @@ class Feedback(FeedbackDefinition):
                     result_val = result_and_meta
                     meta = dict()
 
-                multi_result = None
+            
                 if isinstance(result_val, dict):
                     for val in result_val.values():
                         assert isinstance(
                             val, float
-                        ), f"Feedback function output with multivalue must be a dict with float values but encountered {type(val)}."
+                        ), (f"Feedback function output with multivalue must be "
+                            f"a dict with float values but encountered {type(val)}.")
                     feedback_call = FeedbackCall(
                         args=ins,
                         ret=np.mean(list(result_val.values())),
@@ -900,13 +903,15 @@ class Feedback(FeedbackDefinition):
                     f"Feedback function {self.supplied_name if self.supplied_name is not None else self.name} with aggregation {self.agg} had no inputs."
                 )
                 result = np.nan
+
             else:
                 if isinstance(result_vals[0], float):
                     result_vals = np.array(result_vals)
                     result = self.agg(result_vals)
                 else:
                     try:
-                        # Operates on list of dict; Can be a dict output (maintain multi) or a float output (convert to single)
+                        # Operates on list of dict; Can be a dict output
+                        # (maintain multi) or a float output (convert to single)
                         result = self.agg(result_vals)
                     except:
                         # Alternatively, operate the agg per key
@@ -1941,7 +1946,7 @@ class Groundedness(SerialModel, WithClassInfo):
         return groundedness_scores, {"reason": reason}
 
     def grounded_statements_aggregator(
-        self, source_statements_multi_output: list[dict]
+        self, source_statements_multi_output: List[Dict]
     ) -> float:
         """Aggregates multi-input, mulit-output information from the groundedness_measure methods.
 
