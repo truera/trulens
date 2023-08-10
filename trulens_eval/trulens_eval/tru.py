@@ -1,5 +1,4 @@
 import logging
-import warnings
 from multiprocessing import Process
 import os
 from pathlib import Path
@@ -9,11 +8,12 @@ import threading
 from threading import Thread
 from time import sleep
 from typing import Iterable, List, Optional, Sequence, Union
+import warnings
 
 import pkg_resources
 
-from trulens_eval.db import JSON
 from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
+from trulens_eval.db import JSON
 from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult
@@ -69,7 +69,11 @@ class Tru(SingletonPerName):
 
         return TruLlama(tru=self, app=engine, **kwargs)
 
-    def __init__(self, database_url: Optional[str] = None, database_file: Optional[str] = None):
+    def __init__(
+        self,
+        database_url: Optional[str] = None,
+        database_file: Optional[str] = None
+    ):
         """
         TruLens instrumentation, logging, and feedback functions for apps.
 
@@ -85,7 +89,11 @@ class Tru(SingletonPerName):
             "Please specify at most one of `database_url` and `database_file`"
 
         if database_file:
-            warnings.warn(DeprecationWarning("`database_file` is deprecated, use `database_url` instead"))
+            warnings.warn(
+                DeprecationWarning(
+                    "`database_file` is deprecated, use `database_url` instead"
+                )
+            )
 
         if database_url is None:
             database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
@@ -418,8 +426,9 @@ class Tru(SingletonPerName):
 
         proc = subprocess.Popen(
             [
-              "streamlit", "run", "--server.headless=True", leaderboard_path, "--",
-              "--database-url", self.db.engine.url.render_as_string(hide_password=False)
+                "streamlit", "run", "--server.headless=True", leaderboard_path,
+                "--", "--database-url",
+                self.db.engine.url.render_as_string(hide_password=False)
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

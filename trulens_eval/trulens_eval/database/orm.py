@@ -1,7 +1,14 @@
 from sqlite3 import Connection as SQLite3Connection
 
-from sqlalchemy import Column, Text, VARCHAR, Float, event, Engine
-from sqlalchemy.orm import declarative_base, relationship, backref
+from sqlalchemy import Column
+from sqlalchemy import Engine
+from sqlalchemy import event
+from sqlalchemy import Float
+from sqlalchemy import Text
+from sqlalchemy import VARCHAR
+from sqlalchemy.orm import backref
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import relationship
 
 from trulens_eval import schema
 from trulens_eval.util import json_str_of_obj
@@ -27,12 +34,17 @@ class AppDefinition(Base):
 class FeedbackDefinition(Base):
     __tablename__ = "feedback_defs"
 
-    feedback_definition_id = Column(VARCHAR(256), nullable=False, primary_key=True)
+    feedback_definition_id = Column(
+        VARCHAR(256), nullable=False, primary_key=True
+    )
     feedback_json = Column(TYPE_JSON, nullable=False)
 
     @classmethod
     def parse(cls, obj: schema.FeedbackDefinition) -> "FeedbackDefinition":
-        return cls(feedback_definition_id=obj.feedback_definition_id, feedback_json=obj.json())
+        return cls(
+            feedback_definition_id=obj.feedback_definition_id,
+            feedback_json=obj.json()
+        )
 
 
 class Record(Base):
@@ -95,7 +107,8 @@ class FeedbackResult(Base):
     feedback_definition = relationship(
         "FeedbackDefinition",
         backref=backref("feedback_results", cascade="all,delete"),
-        primaryjoin="FeedbackDefinition.feedback_definition_id == FeedbackResult.feedback_definition_id",
+        primaryjoin=
+        "FeedbackDefinition.feedback_definition_id == FeedbackResult.feedback_definition_id",
         foreign_keys=[feedback_definition_id],
     )
 
