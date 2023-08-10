@@ -2,28 +2,25 @@
 # Langchain instrumentation and monitoring.
 """
 
-from datetime import datetime
-from inspect import BoundArguments, Signature
+from inspect import BoundArguments
+from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-import traceback
-from typing import Any, Callable, ClassVar, Dict, List, Sequence, Tuple, Union
+from typing import Any, Callable, ClassVar, Dict, List, Tuple, Union
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.provider_apis import Endpoint
-from trulens_eval.schema import Cost
 from trulens_eval.schema import Record
-from trulens_eval.schema import RecordAppCall
 from trulens_eval.util import Class
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import jsonify
 from trulens_eval.util import noserio
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LANGCHAIN
+from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +43,9 @@ class LangChainInstrument(Instrument):
             langchain.schema.BaseRetriever,
             langchain.llms.base.BaseLLM,
             langchain.prompts.base.BasePromptTemplate,
-            langchain.schema.BaseMemory, # no methods instrumented
-            langchain.schema.BaseChatMessageHistory # subclass of above
+            langchain.schema.BaseMemory,  # no methods instrumented
+            langchain.schema.BaseChatMessageHistory,  # subclass of above
+            WithFeedbackFilterDocuments
         }
 
         # Instrument only methods with these names and of these classes.
@@ -65,7 +63,8 @@ class LangChainInstrument(Instrument):
             include_modules=LangChainInstrument.Default.MODULES,
             include_classes=LangChainInstrument.Default.CLASSES(),
             include_methods=LangChainInstrument.Default.METHODS,
-            *args, **kwargs
+            *args,
+            **kwargs
         )
 
 
@@ -101,9 +100,7 @@ class TruChain(App):
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
         kwargs['instrument'] = LangChainInstrument(
-            root_methods=set(
-                [TruChain.with_record, TruChain.awith_record]
-            ),
+            root_methods=set([TruChain.with_record, TruChain.awith_record]),
             callbacks=self
         )
 
@@ -162,7 +159,6 @@ class TruChain(App):
 
         return App.main_output(self, func, sig, bindings, ret)
 
-
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped
         # chain has but we do not wrap yet.
@@ -175,7 +171,6 @@ class TruChain(App):
             )
         else:
             raise RuntimeError(f"TruChain has no attribute named {__name}.")
-
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.acall
     # TODEP
@@ -192,7 +187,7 @@ class TruChain(App):
         Run the chain call method and also return a record metadata object.
         """
         return self.with_record(self.app.__call__, *args, **kwargs)
-    
+
     # TODEP
     # Mimics Chain
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
@@ -202,7 +197,7 @@ class TruChain(App):
         """
 
         return self._call(*args, **kwargs)
-    
+
     # TODEP
     # Chain requirement
     def _call(self, *args, **kwargs) -> Any:

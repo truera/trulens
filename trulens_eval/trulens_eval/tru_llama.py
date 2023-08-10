@@ -11,6 +11,7 @@ from inspect import Signature, BoundArguments
 
 from pydantic import Field
 
+from trulens_eval.utils.llama import WithFeedbackFilterNodes
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.provider_apis import Endpoint
@@ -66,7 +67,8 @@ class LlamaInstrument(Instrument):
             llama_index.indices.service_context.ServiceContext,
             llama_index.indices.prompt_helper.PromptHelper,
             llama_index.embeddings.base.BaseEmbedding,
-            llama_index.node_parser.interface.NodeParser
+            llama_index.node_parser.interface.NodeParser,
+            WithFeedbackFilterNodes
         }.union(LangChainInstrument.Default.CLASSES())
 
         # Instrument only methods with these names and of these classes. Ok to
@@ -105,7 +107,8 @@ class LlamaInstrument(Instrument):
                     lambda o: isinstance(
                         o, (
                             llama_index.indices.query.base.BaseQueryEngine,
-                            llama_index.indices.base_retriever.BaseRetriever
+                            llama_index.indices.base_retriever.BaseRetriever,
+                            WithFeedbackFilterNodes
                         )
                     ),
                 "synthesize":

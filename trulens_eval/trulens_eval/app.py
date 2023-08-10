@@ -412,21 +412,34 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
             return str(ret)
 
     # WithInstrumentCallbacks requirement
-    def _on_method_instrumented(self, func: Callable, path: JSONPath):
+    def _on_method_instrumented(self, obj: object, func: Callable, path: JSONPath):
         """
         Called by instrumentation system for every function requested to be
         instrumented by this app.
         """
 
-        self.instrumented_methods[func] = path
+        k = (id(obj), func)
+
+        if k in self.instrumented_methods:
+            old_path = self.instrumented_methods[k]
+            if path != old_path:
+                logger.warning(
+                    f"Method {func} was already instrumented on path {old_path} . "
+                    f"Calls at {path} may not be recorded."
+                )
+            return
+
+        self.instrumented_methods[k] = path
 
     # WithInstrumentCallbacks requirement
-    def _get_method_path(self, func) -> JSONPath:
+    def _get_method_path(self, obj: object, func: Callable) -> JSONPath:
         """
         Get the path of the instrumented function `func` relative to this app.
         """
 
-        return self.instrumented_methods.get(func)
+        k = (id(obj), func)
+
+        return self.instrumented_methods.get(k)
 
     """
     # TODO: ROOTLESS
@@ -500,25 +513,27 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         main_in = None
         main_out = None
 
+        start_time = datetime.now()
+
         try:
             sig = signature(func)
             bindings = sig.bind(*args, **kwargs)
 
             main_in = self.main_input(func, sig, bindings)
 
-            start_time = datetime.now()
             ret, cost = await Endpoint.atrack_all_costs_tally(
                 lambda: func(*bindings.args, **bindings.kwargs)
             )
-            end_time = datetime.now()
 
             main_out = self.main_output(func, sig, bindings, ret)
 
         except BaseException as e:
-            end_time = datetime.now()
             error = e
             logger.error(f"App raised an exception: {e}")
             logger.error(traceback.format_exc())
+
+        finally:
+            end_time = datetime.now()
 
         if len(record) == 0:
             logger.warning(
@@ -569,9 +584,10 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         main_in = None
         main_out = None
 
+        start_time = datetime.now()
+
         try:
             sig = signature(func)
-            start_time = datetime.now()
 
             bindings = sig.bind(*args, **kwargs)
 
@@ -580,15 +596,15 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
             ret, cost = Endpoint.track_all_costs_tally(
                 lambda: func(*bindings.args, **bindings.kwargs)
             )
-            end_time = datetime.now()
 
             main_out = self.main_output(func, sig, bindings, ret)
 
         except BaseException as e:
-            end_time = datetime.now()
             error = e
             logger.error(f"App raised an exception: {e}")
             logger.error(traceback.format_exc())
+        finally:
+            end_time = datetime.now()
 
         if len(record) == 0:
             logger.warning(

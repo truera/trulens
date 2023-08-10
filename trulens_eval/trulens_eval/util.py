@@ -172,6 +172,21 @@ def dict_set_with(dict1: Dict, dict2: Dict):
     return dict1
 
 
+def dict_merge_with(dict1: Dict, dict2: Dict, merge: Callable) -> Dict:
+    """
+    Merge values from the second dictionary into the first. If both dicts
+    contain the same key, the given `merge` function is used to merge the
+    values.
+    """
+    for k, v in dict2.items():
+        if k in dict1:
+            dict1[k] = merge(dict1[k], v)
+        else:
+            dict1[k] = v
+
+    return dict1
+
+
 # Generator utils
 
 

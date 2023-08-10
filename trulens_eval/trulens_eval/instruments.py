@@ -277,7 +277,7 @@ from trulens_eval.util import _safe_getattr
 from trulens_eval.util import get_all_local_in_call_stack
 from trulens_eval.util import get_first_local_in_call_stack
 from trulens_eval.util import jsonify
-from trulens_eval.util import Method
+from trulens_eval.util import Method, dict_merge_with
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -290,7 +290,7 @@ class WithInstrumentCallbacks:
     """
 
     # Called during instrumentation.
-    def _on_method_instrumented(self, func: Callable, path: JSONPath):
+    def _on_method_instrumented(self, obj: object, func: Callable, path: JSONPath):
         """
         Called by instrumentation system for every function requested to be
         instrumented.
@@ -299,7 +299,7 @@ class WithInstrumentCallbacks:
         raise NotImplementedError
 
     # Called during invocation.
-    def _get_method_path(self, func) -> JSONPath:
+    def _get_method_path(self, obj: object, func: Callable) -> JSONPath:
         """
         Get the path of the instrumented function `func` relative to this app.
         """
@@ -338,6 +338,10 @@ class Instrument(object):
     # Attribute name to be used to flag instrumented objects/methods/others.
     INSTRUMENT = "__tru_instrumented"
 
+    # Set this attribute to object's methods (bound) to indicate where that
+    # object is relative to an app.
+    PATH = "__tru_path"
+
     # TODO: ROOTLESS
     # APPS = "__tru_apps"
 
@@ -349,7 +353,7 @@ class Instrument(object):
         MODULES = {"trulens_eval."}
 
         # Classes to instrument.
-        CLASSES = set()
+        CLASSES = set([Feedback])
 
         # Methods to instrument. Methods matching name have to pass the filter
         # to be instrumented. TODO: redesign this to be a dict with classes
@@ -401,8 +405,10 @@ class Instrument(object):
             set(include_classes)
         )
 
-        self.include_methods = Instrument.Default.METHODS
-        self.include_methods.update(include_methods)
+        self.include_methods = dict_merge_with(
+            dict1=Instrument.Default.METHODS,
+            dict2=include_methods,
+            merge=lambda f1, f2: lambda o: f1(o) or f2(o))
 
         self.callbacks = callbacks
 
@@ -423,7 +429,7 @@ class Instrument(object):
             # we store the method being instrumented in the attribute
             # Instrument.INSTRUMENT of the wrapped variant.
             original_func = getattr(func, Instrument.INSTRUMENT)
-            self.callbacks._on_method_instrumented(original_func, path=query)
+            self.callbacks._on_method_instrumented(obj, original_func, path=query)
 
             return func
 
@@ -433,7 +439,7 @@ class Instrument(object):
         else:
             # Notify the app instrumenting this method where it is located:
 
-            self.callbacks._on_method_instrumented(func, path=query)
+            self.callbacks._on_method_instrumented(obj, func, path=query)
 
         logger.debug(f"\t\t\t{query}: instrumenting {method_name}={func}")
 
@@ -496,12 +502,17 @@ class Instrument(object):
             # another wrinke, the addresses of methods in the stack may vary
             # from app to app that are watching this method. Hence we index the
             # stacks by id of the call record list which is unique to each app.
-            stacks = get_first_local_in_call_stack(
+            pstacks = get_first_local_in_call_stack(
                 key="stacks", func=find_instrumented, offset=1
             )
             # Note: Empty dict is false-ish.
-            if stacks is None:
-                stacks = dict()
+            if pstacks is None:
+                pstacks = dict()
+
+            # My own stacks to be looked up by further subcalls by the logic
+            # right above. We make a copy here since we need subcalls to access
+            # it but we don't want them to modify it.
+            stacks = dict() 
 
             start_time = None
             end_time = None
@@ -523,21 +534,21 @@ class Instrument(object):
                 rid = id(record)
 
                 # The path to this method according to the app.
-                path = app._get_method_path(func)
+                path = app._get_method_path(args[0], func) # hopefully args[0] is self
 
                 if path is None:
                     logger.warning(
-                        f"App of type {type(app)} no longer knows about {func}."
+                        f"App of type {type(app)} no longer knows about object {id(args[0])} {func}."
                     )
                     continue
 
-                if rid not in stacks:
+                if rid not in pstacks:
                     # If we are the first instrumented method in the chain
                     # stack, make a new stack tuple for subsequent deeper calls
                     # (if any) to look up.
                     stack = ()
                 else:
-                    stack = stacks[rid]
+                    stack = pstacks[rid]
 
                 frame_ident = RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
@@ -681,12 +692,17 @@ class Instrument(object):
             # another wrinke, the addresses of methods in the stack may vary
             # from app to app that are watching this method. Hence we index the
             # stacks by id of the call record list which is unique to each app.
-            stacks = get_first_local_in_call_stack(
+            pstacks = get_first_local_in_call_stack(
                 key="stacks", func=find_instrumented, offset=1
             )
             # Note: Empty dict is false-ish.
-            if stacks is None:
-                stacks = dict()
+            if pstacks is None:
+                pstacks = dict()
+
+            # My own stacks to be looked up by further subcalls by the logic
+            # right above. We make a copy here since we need subcalls to access
+            # it but we don't want them to modify it.
+            stacks = dict() 
 
             start_time = None
             end_time = None
@@ -708,21 +724,22 @@ class Instrument(object):
                 rid = id(record)
 
                 # The path to this method according to the app.
-                path = app._get_method_path(func)
+                path = app._get_method_path(args[0], func) # args[0] is owner of wrapped method, hopefully
+                # path = getattr(wrapper, Instrument.PATH)
 
                 if path is None:
                     logger.warning(
-                        f"App of type {type(app)} no longer knows about {func}."
+                        f"App of type {type(app)} no longer knows about object {id(args[0])} {func}."
                     )
                     continue
 
-                if rid not in stacks:
+                if rid not in pstacks:
                     # If we are the first instrumented method in the chain
                     # stack, make a new stack tuple for subsequent deeper calls
                     # (if any) to look up.
                     stack = ()
                 else:
-                    stack = stacks[rid]
+                    stack = pstacks[rid]
 
                 frame_ident = RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
@@ -742,7 +759,6 @@ class Instrument(object):
                         # Using sig bind here so we can produce a list of key-value
                         # pairs even if positional arguments were provided.
                         bindings: BoundArguments = sig.bind(*args, **kwargs)
-                        
 
                         """
                         # TODO: ROOTLESS
@@ -819,6 +835,8 @@ class Instrument(object):
 
         w.__name__ = func.__name__
 
+        setattr(w, Instrument.PATH, query)
+
         # Add a list of apps that want to record calls to this method starting
         # with self.
         # setattr(w, Instrument.APPS, [self])
@@ -889,6 +907,13 @@ class Instrument(object):
             if not self.to_instrument_module(base.__module__):
                 continue
 
+            try:
+                if not self.to_instrument_class(base):
+                    continue
+            except Exception:
+                # subclass check may raise exception
+                continue
+
             logger.debug(f"\t{query}: instrumenting base {base.__name__}")
 
             for method_name in self.include_methods:
@@ -932,8 +957,7 @@ class Instrument(object):
                 if isinstance(v, str):
                     pass
 
-                elif any(type(v).__module__.startswith(module_name)
-                         for module_name in self.include_modules):
+                elif self.to_instrument_module(type(v).__module__):
                     self.instrument_object(obj=v, query=query[k], done=done)
 
                 elif isinstance(v, Sequence):
