@@ -14,7 +14,6 @@ import traceback
 from typing import (
     Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type
 )
-from typing import Any, Dict, Iterable, Optional, Sequence, Set, Tuple, Callable
 
 import pydantic
 from pydantic import Field
@@ -22,6 +21,7 @@ from pydantic import Field
 from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
 from trulens_eval.instruments import Instrument
+from trulens_eval.instruments import WithInstrumentCallbacks
 from trulens_eval.provider_apis import Endpoint
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
@@ -32,7 +32,6 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
-from trulens_eval.instruments import WithInstrumentCallbacks
 from trulens_eval.util import all_objects
 from trulens_eval.util import Class
 from trulens_eval.util import CLASS_INFO
@@ -137,7 +136,6 @@ class ComponentView(ABC):
         return None
 
 
-
 class LangChainComponent(ComponentView):
 
     @staticmethod
@@ -221,6 +219,7 @@ class Other(ComponentView):
 
 
 class CustomComponent(ComponentView):
+
     class Custom(Other):
         # No categorization of custom class components for now. Using just one
         # "Custom" catch-all.
@@ -413,7 +412,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
             return str(ret)
 
     # WithInstrumentCallbacks requirement
-    def _on_method_instrumented(self, obj: object, func: Callable, path: JSONPath):
+    def _on_method_instrumented(
+        self, obj: object, func: Callable, path: JSONPath
+    ):
         """
         Called by instrumentation system for every function requested to be
         instrumented by this app.
@@ -444,7 +445,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
             funcs[func] = path
 
     # WithInstrumentCallbacks requirement
-    def _get_methods_for_func(self, func: Callable) -> Iterable[Tuple[Callable, JSONPath]]:
+    def _get_methods_for_func(
+        self, func: Callable
+    ) -> Iterable[Tuple[Callable, JSONPath]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
@@ -665,13 +668,12 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         return ret, ret_record
 
-    
     def json(self, *args, **kwargs):
         # Need custom jsonification here because it is likely the model
         # structure contains loops.
 
         return json_str_of_obj(self.dict(), *args, **kwargs)
-    
+
     def dict(self):
         # Same problem as in json.
         return jsonify(self, instrument=self.instrument)
@@ -774,8 +776,10 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         """
         print(
             "\n".join(
-                f"Object at 0x{obj:x}:\n\t" +
-                "\n\t".join(f"{m} with path {Select.App + path}" for m, path in p.items())
+                f"Object at 0x{obj:x}:\n\t" + "\n\t".join(
+                    f"{m} with path {Select.App + path}"
+                    for m, path in p.items()
+                )
                 for obj, p in self.instrumented_methods.items()
             )
         )

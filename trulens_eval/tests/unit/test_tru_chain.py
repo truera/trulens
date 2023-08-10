@@ -16,11 +16,11 @@ from langchain.chains import SimpleSequentialChain
 from langchain.chat_models.openai import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.memory import ConversationBufferWindowMemory
+from langchain.memory import ConversationSummaryBufferMemory
 from langchain.schema.messages import HumanMessage
 from langchain.vectorstores import Pinecone
 import pinecone
 from tests.unit.test import JSONTestCase
-from langchain.memory import ConversationSummaryBufferMemory
 
 from trulens_eval import Tru
 from trulens_eval.keys import check_keys
@@ -73,7 +73,6 @@ class TestTruChain(JSONTestCase):
     def test_multiple_instruments(self):
         # Multiple wrapped apps use the same components. Make sure paths are correctly tracked.
 
-        
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
         )
@@ -84,12 +83,9 @@ class TestTruChain(JSONTestCase):
         memory = ConversationSummaryBufferMemory(
             memory_key="chat_history",
             input_key="question",
-            llm=llm, # same llm now appears in a different spot
+            llm=llm,  # same llm now appears in a different spot
         )
         chain2 = LLMChain(llm=llm, prompt=prompt, memory=memory)
-
-        
-
 
     def test_async_with_task(self):
         asyncio.run(self._async_with_task())
