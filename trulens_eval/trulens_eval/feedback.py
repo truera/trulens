@@ -1544,7 +1544,7 @@ class Groundedness(SerialModel, WithClassInfo):
             float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
         groundedness_scores = {}
-        if isinstance(self.groundedness_provider, OpenAI):
+        if isinstance(self.groundedness_provider, (AzureOpenAI, OpenAI)):
             plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
             if len(statement) > plausible_junk_char_min:
                 reason = self.summarize_provider._groundedness_doc_in_out(
@@ -1556,24 +1556,6 @@ class Groundedness(SerialModel, WithClassInfo):
                     groundedness_scores[f"statement_{i}"
                                        ] = _re_1_10_rating(line) / 10
                     i += 1
-            return groundedness_scores, {"reason": reason}
-        elif isinstance(self.groundedness_provider, AzureOpenAI):
-            reason = ""
-            for i, hypothesis in enumerate(
-                    tqdm(statement.split("."),
-                         desc="Groundedness per statement in source")):
-                plausible_junk_char_min = 4
-                if len(hypothesis) > plausible_junk_char_min:
-                    score = self.groundedness_provider._doc_groundedness(
-                        premise=source, hypothesis=hypothesis
-                    )
-                    reason = reason + str.format(
-                        feedback_prompts.GROUNDEDNESS_REASON_TEMPLATE,
-                        statement_sentence=hypothesis,
-                        supporting_evidence="[Doc NLI Used full source]",
-                        score=score * 10,
-                    )
-                    groundedness_scores[f"statement_{i}"] = score
             return groundedness_scores, {"reason": reason}
         if isinstance(self.groundedness_provider, Huggingface):
             reason = ""
