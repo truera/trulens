@@ -372,9 +372,9 @@ class instrument:
         instrument.method(cls, name)
 
     @staticmethod
-    def method(cls: type, name: str):
-        # Add owner of the decorated method, its module, and the name to the
-        # Default instrumentation walk filters.
+    def method(cls: type, name: str) -> None:
+        # Add the class with a method named `name`, its module, and the method
+        # `name` to the Default instrumentation walk filters.
         Instrument.Default.MODULES.add(cls.__module__)
         Instrument.Default.CLASSES.add(cls)
 
@@ -387,7 +387,6 @@ class instrument:
         TruCustomApp.functions_to_instrument.add(getattr(cls, name))
 
     @staticmethod
-    def methods(cls: type, names: Iterable[str]):
-        for method_name in names:
+    def methods(cls: type, names: Iterable[str]) -> None:
+        for name in names:
             instrument.method(cls, name)
-    
