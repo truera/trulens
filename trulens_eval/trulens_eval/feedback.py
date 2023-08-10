@@ -1622,7 +1622,7 @@ class Groundedness(SerialModel, WithClassInfo):
         return groundedness_scores, {"reason": reason}
 
     def grounded_statements_aggregator(
-        self, source_statements_multi_output: list[dict]
+        self, source_statements_multi_output: List[dict]
     ) -> float:
         """Aggregates multi-input, mulit-output information from the groundedness_measure methods.
 

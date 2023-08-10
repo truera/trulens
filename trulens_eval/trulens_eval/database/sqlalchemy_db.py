@@ -2,7 +2,7 @@ import json
 import logging
 import warnings
 from datetime import datetime
-from typing import List, Tuple, Sequence, Optional, Iterable, Union
+from typing import List, Tuple, Sequence, Optional, Iterable, Union, Any
 
 import numpy as np
 import pandas as pd
@@ -250,8 +250,14 @@ class AppsExtractor:
     @classmethod
     def agg_result_or_calls(cls, *args):
         if not args:
-            return None
-        elif isinstance(args[0], dict):
-            return args
+            return None  # no type inferred
+        elif isinstance(args[0], list):
+            return list(flatten(*args))  # aggregate calls
         else:
-            return np.mean(args)
+            return np.mean(args)  # aggregate results
+
+
+def flatten(*iterables: Iterable[Any]) -> Iterable[Any]:
+    for iterable in iterables:
+        for x in iterable:
+            yield x
