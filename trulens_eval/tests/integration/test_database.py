@@ -1,18 +1,30 @@
-import json
 from contextlib import contextmanager
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Union, Literal
-from unittest import TestCase, main
+from typing import Literal, Union
+from unittest import main
+from unittest import TestCase
 
-from sqlalchemy import text, Engine
+from sqlalchemy import Engine
+from sqlalchemy import text
 
-from trulens_eval import TruBasicApp, Feedback, Provider, FeedbackMode, Tru, Select
+from trulens_eval import Feedback
+from trulens_eval import FeedbackMode
+from trulens_eval import Provider
+from trulens_eval import Select
+from trulens_eval import Tru
+from trulens_eval import TruBasicApp
 from trulens_eval.database import orm
-from trulens_eval.database.migrations import upgrade_db, DbRevisions, get_revision_history, downgrade_db
-from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB, AppsExtractor
+from trulens_eval.database.migrations import DbRevisions
+from trulens_eval.database.migrations import downgrade_db
+from trulens_eval.database.migrations import get_revision_history
+from trulens_eval.database.migrations import upgrade_db
+from trulens_eval.database.sqlalchemy_db import AppsExtractor
+from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
 from trulens_eval.database.utils import is_legacy_sqlite
-from trulens_eval.db import LocalSQLite, DB
+from trulens_eval.db import DB
+from trulens_eval.db import LocalSQLite
 
 
 class TestDbV2Migration(TestCase):
@@ -66,11 +78,14 @@ class TestDbV2Migration(TestCase):
             assert list(fb_cols) == [fb.name]
             df_fb = db.get_feedback(record_id=rec.record_id)
             assert df_fb["type"][0] == app.root_class
-            df_defs = db.get_feedback_defs(feedback_definition_id=fb.feedback_definition_id)
+            df_defs = db.get_feedback_defs(
+                feedback_definition_id=fb.feedback_definition_id
+            )
             assert df_defs["feedback_json"][0] == json.loads(fb.json())
 
 
 class MockFeedback(Provider):
+
     def length(self, text: str) -> float:  # noqa
         return float(len(text))
 
@@ -79,14 +94,19 @@ class MockFeedback(Provider):
 def clean_db(alias: str) -> SqlAlchemyDB:
     with TemporaryDirectory() as tmp:
         url = {
-            "sqlite_file": f"sqlite:///{Path(tmp).joinpath('test.sqlite')}",
-            "postgres": "postgresql+psycopg2://pg-test-user:pg-test-pswd@localhost/pg-test-db",
-            "mysql": "mysql+pymysql://mysql-test-user:mysql-test-pswd@localhost/mysql-test-db",
+            "sqlite_file":
+                f"sqlite:///{Path(tmp).joinpath('test.sqlite')}",
+            "postgres":
+                "postgresql+psycopg2://pg-test-user:pg-test-pswd@localhost/pg-test-db",
+            "mysql":
+                "mysql+pymysql://mysql-test-user:mysql-test-pswd@localhost/mysql-test-db",
         }[alias]
 
         db = SqlAlchemyDB.from_db_url(url)
 
-        downgrade_db(db.engine, revision="base")  # drops all tables except `alembic_version`
+        downgrade_db(
+            db.engine, revision="base"
+        )  # drops all tables except `alembic_version`
 
         with db.engine.connect() as conn:
             conn.execute(text("DROP TABLE alembic_version"))
@@ -94,7 +114,10 @@ def clean_db(alias: str) -> SqlAlchemyDB:
         yield db
 
 
-def assert_revision(engine: Engine, expected: Union[None, str], status: Literal["in_sync", "behind"]):
+def assert_revision(
+    engine: Engine, expected: Union[None, str], status: Literal["in_sync",
+                                                                "behind"]
+):
     revisions = DbRevisions.load(engine)
     assert revisions.current == expected, f"{revisions.current} != {expected}"
     assert getattr(revisions, status)
@@ -107,7 +130,9 @@ def _test_db_migration(db: SqlAlchemyDB):
 
     # apply each upgrade at a time up to head revision
     for i, next_rev in enumerate(history):
-        assert int(next_rev) == i + 1, f"Versions must be monotonically increasing from 1: {history}"
+        assert int(
+            next_rev
+        ) == i + 1, f"Versions must be monotonically increasing from 1: {history}"
         assert_revision(engine, curr_rev, "behind")
         upgrade_db(engine, revision=next_rev)
         curr_rev = next_rev
@@ -125,17 +150,26 @@ def _test_db_consistency(db: SqlAlchemyDB):
 
     _populate_data(db)
     with db.Session.begin() as session:
-        session.delete(session.query(orm.AppDefinition).one())  # delete the only app
-        assert session.query(orm.Record).all() == []  # records are deleted in cascade
-        assert session.query(orm.FeedbackResult).all() == []  # feedbacks results are deleted in cascade
-        session.query(orm.FeedbackDefinition).one()  # feedback defs are preserved
+        session.delete(
+            session.query(orm.AppDefinition).one()
+        )  # delete the only app
+        assert session.query(orm.Record
+                            ).all() == []  # records are deleted in cascade
+        assert session.query(orm.FeedbackResult).all() == [
+        ]  # feedbacks results are deleted in cascade
+        session.query(orm.FeedbackDefinition
+                     ).one()  # feedback defs are preserved
 
     _populate_data(db)
     with db.Session.begin() as session:
-        session.delete(session.query(orm.Record).one())  # delete the only record
-        assert session.query(orm.FeedbackResult).all() == []  # feedbacks results are deleted in cascade
+        session.delete(
+            session.query(orm.Record).one()
+        )  # delete the only record
+        assert session.query(orm.FeedbackResult).all() == [
+        ]  # feedbacks results are deleted in cascade
         session.query(orm.AppDefinition).one()  # apps are preserved
-        session.query(orm.FeedbackDefinition).one()  # feedback defs are preserved
+        session.query(orm.FeedbackDefinition
+                     ).one()  # feedback defs are preserved
 
 
 def _populate_data(db: DB):

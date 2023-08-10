@@ -98,7 +98,9 @@ class DB(SerialModel, abc.ABC):
 
         raise NotImplementedError()
 
-    def get_feedback_defs(self, feedback_definition_id: Optional[str] = None) -> pd.DataFrame:
+    def get_feedback_defs(
+        self, feedback_definition_id: Optional[str] = None
+    ) -> pd.DataFrame:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -122,7 +124,8 @@ class DB(SerialModel, abc.ABC):
         record_id: Optional[RecordID] = None,
         feedback_result_id: Optional[FeedbackResultID] = None,
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-        status: Optional[Union[FeedbackResultStatus, Sequence[FeedbackResultStatus]]] = None,
+        status: Optional[Union[FeedbackResultStatus,
+                               Sequence[FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None
     ) -> pd.DataFrame:
         raise NotImplementedError()
@@ -133,7 +136,8 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def get_records_and_feedback(
-        self, app_ids: Optional[List[str]] = None
+        self,
+        app_ids: Optional[List[str]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """
         Get the records logged for the given set of `app_ids` (otherwise all)

@@ -1,5 +1,5 @@
-import os
 from logging.config import fileConfig
+import os
 
 from alembic import context
 from sqlalchemy import engine_from_config
@@ -20,7 +20,9 @@ if config.get_main_option("calling_context", default="CLI") == "CLI":
         fileConfig(config.config_file_name)
 
     # Evaluate `sqlalchemy.url` from the environment
-    config.set_main_option("sqlalchemy.url", os.environ.get("SQLALCHEMY_URL", ""))
+    config.set_main_option(
+        "sqlalchemy.url", os.environ.get("SQLALCHEMY_URL", "")
+    )
 
 
 def run_migrations_offline() -> None:

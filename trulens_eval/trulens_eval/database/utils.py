@@ -1,17 +1,19 @@
+from datetime import datetime
 import inspect
 import logging
+from pathlib import Path
 import shutil
 import sqlite3
-from datetime import datetime
-from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional, List, Callable, Union
+from typing import Callable, List, Optional, Union
 
 import pandas as pd
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import create_engine
+from sqlalchemy import Engine
 
 from trulens_eval.database.exceptions import DatabaseVersionException
-from trulens_eval.database.migrations import DbRevisions, upgrade_db
+from trulens_eval.database.migrations import DbRevisions
+from trulens_eval.database.migrations import upgrade_db
 from trulens_eval.db import LocalSQLite
 
 logger = logging.getLogger(__name__)
@@ -20,8 +22,10 @@ logger = logging.getLogger(__name__)
 def for_all_methods(decorator, _except: Optional[List[str]] = None):
     """Applies decorator to all methods except classmethods,
     private methods and the ones specified with `_except`"""
+
     def decorate(cls):
-        for attr_name, attr in cls.__dict__.items():  # does not include classmethods
+        for attr_name, attr in cls.__dict__.items(
+        ):  # does not include classmethods
             if not inspect.isfunction(attr):
                 continue  # skips non-method attributes
             if attr_name.startswith("_"):
@@ -37,11 +41,15 @@ def for_all_methods(decorator, _except: Optional[List[str]] = None):
 
 def run_before(callback: Callable):
     """Create decorator to run the callback before the function"""
+
     def decorator(func):
+
         def wrapper(*args, **kwargs):
             callback(*args, **kwargs)
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -67,8 +75,10 @@ def is_legacy_sqlite(engine: Engine) -> bool:
 def is_memory_sqlite(engine: Engine) -> bool:
     """Check if DB is an in-memory SQLite instance"""
     return (
-            engine.url.drivername.startswith("sqlite")  # The database type is SQLite
-            and engine.url.database == ":memory:"  # The database storage is in memory
+        engine.url.drivername.startswith("sqlite"
+                                        )  # The database type is SQLite
+        and
+        engine.url.database == ":memory:"  # The database storage is in memory
     )
 
 
@@ -82,7 +92,9 @@ def check_db_revision(engine: Engine):
 
     if revisions.current is None:
         logger.debug("Creating database")
-        upgrade_db(engine, revision="head")  # create automatically if it doesn't exist
+        upgrade_db(
+            engine, revision="head"
+        )  # create automatically if it doesn't exist
     elif revisions.in_sync:
         logger.debug("Database schema is up to date: %s", revisions)
     elif revisions.behind:
@@ -90,7 +102,9 @@ def check_db_revision(engine: Engine):
     elif revisions.ahead:
         raise DatabaseVersionException.ahead()
     else:
-        raise NotImplementedError(f"Cannot handle database revisions: {revisions}")
+        raise NotImplementedError(
+            f"Cannot handle database revisions: {revisions}"
+        )
 
 
 def migrate_legacy_sqlite(engine: Engine):
@@ -134,7 +148,9 @@ def migrate_legacy_sqlite(engine: Engine):
             df = pd.read_sql(f"SELECT * FROM {table}", src_conn)
             for col in ["ts", "last_ts"]:
                 if col in df:
-                    df[col] = df[col].apply(lambda ts: coerce_ts(ts).timestamp())
+                    df[col] = df[col].apply(
+                        lambda ts: coerce_ts(ts).timestamp()
+                    )
             logger.debug("\n\n%s\n", df.head())
             df.to_sql(table, tgt_conn, index=False, if_exists="append")
 
