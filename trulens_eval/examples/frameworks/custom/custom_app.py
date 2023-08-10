@@ -25,11 +25,11 @@ class CustomApp:
             "The answer to {question} is probably {answer} or something ..."
         )
 
-    #@instrument
+    @instrument
     def retrieve_chunks(self, data):
         return self.retriever.retrieve_chunks(data)
 
-    #@instrument
+    @instrument
     def respond_to_query(self, input):
         chunks = self.retrieve_chunks(input)
         answer = self.llm.generate(",".join(chunks))
