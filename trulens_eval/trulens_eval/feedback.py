@@ -404,9 +404,8 @@ import logging
 from multiprocessing.pool import AsyncResult
 import re
 import traceback
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
-)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple, Type,
+                    Union)
 
 import numpy as np
 import openai
@@ -1474,6 +1473,326 @@ class OpenAI(Provider):
             prompt, response, oai_chat_response, self.model_engine
         )
         return _re_1_10_rating(agreement_txt) / 10
+
+    def conciseness(self, text: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the conciseness of some text. Prompt credit to Langchain Eval.
+
+        Parameters:
+            text (str): A prompt to an agent. response (str): The agent's
+            response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not concise" and 1
+            being "concise".
+        """
+
+        return _re_1_10_rating(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": feedback_prompts.LANGCHAIN_CONCISENESS_PROMPT
+                        }, {
+                            "role": "user",
+                            "content": text
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+        ) / 10
+
+    def correctness(self, text: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the correctness of some text. Prompt credit to Langchain Eval.
+
+        Parameters:
+            text (str): A prompt to an agent. response (str): The agent's
+            response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not correct" and 1
+            being "correct".
+        """
+
+        return _re_1_10_rating(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": feedback_prompts.LANGCHAIN_CORRECTNESS_PROMPT
+                        }, {
+                            "role": "user",
+                            "content": text
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+        ) / 10
+
+    def coherence(self, text: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the coherence of some text. Prompt credit to Langchain Eval.
+
+        Parameters:
+            text (str): A prompt to an agent. response (str): The agent's
+            response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not coherent" and 1
+            being "coherent".
+        """
+
+        return _re_1_10_rating(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": feedback_prompts.LANGCHAIN_COHERENCE_PROMPT
+                        }, {
+                            "role": "user",
+                            "content": text
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+        ) / 10
+
+    def harmfulness(self, text: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the harmfulness of some text. Prompt credit to Langchain Eval.
+
+        Parameters:
+            text (str): A prompt to an agent. response (str): The agent's
+            response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "harmful" and 1
+            being "not harmful".
+        """
+
+        return _re_1_10_rating(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": feedback_prompts.LANGCHAIN_HARMFULNESS_PROMPT
+                        }, {
+                            "role": "user",
+                            "content": text
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+        ) / 10
+
+    def maliciousness(self, text: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the maliciousness of some text. Prompt credit to Langchain Eval.
+
+        Parameters:
+            text (str): A prompt to an agent. response (str): The agent's
+            response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "malicious" and 1
+            being "not malicious".
+        """
+
+        return _re_1_10_rating(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": feedback_prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
+                        }, {
+                            "role": "user",
+                            "content": text
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+        ) / 10
+    
+    def helpfulness(self, text: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the helpfulness of some text. Prompt credit to Langchain Eval.
+
+        Parameters:
+            text (str): A prompt to an agent. response (str): The agent's
+            response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not helpful" and 1
+            being "helpful".
+        """
+
+        return _re_1_10_rating(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": feedback_prompts.LANGCHAIN_HELPFULNESS_PROMPT
+                        }, {
+                            "role": "user",
+                            "content": text
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+        ) / 10
+
+    def controversiality(self, text: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the controversiality of some text. Prompt credit to Langchain Eval.
+
+        Parameters:
+            text (str): A prompt to an agent. response (str): The agent's
+            response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "controversial" and 1
+            being "not controversial".
+        """
+
+        return _re_1_10_rating(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": feedback_prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
+                        }, {
+                            "role": "user",
+                            "content": text
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+        ) / 10
+
+    def misogyny(self, text: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the misogyny of some text. Prompt credit to Langchain Eval.
+
+        Parameters:
+            text (str): A prompt to an agent. response (str): The agent's
+            response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "misogynist" and 1
+            being "not misogynist".
+        """
+
+        return _re_1_10_rating(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": feedback_prompts.LANGCHAIN_MISOGYNY_PROMPT
+                        }, {
+                            "role": "user",
+                            "content": text
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+        ) / 10
+
+    def criminality(self, text: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the criminality of some text. Prompt credit to Langchain Eval.
+
+        Parameters:
+            text (str): A prompt to an agent. response (str): The agent's
+            response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "criminal" and 1
+            being "not criminal".
+        """
+
+        return _re_1_10_rating(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": feedback_prompts.LANGCHAIN_CRIMINALITY_PROMPT
+                        }, {
+                            "role": "user",
+                            "content": text
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+        ) / 10
+
+    def insensitivity(self, text: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check the insensitivity of some text. Prompt credit to Langchain Eval.
+
+        Parameters:
+            text (str): A prompt to an agent. response (str): The agent's
+            response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "insensitive" and 1
+            being "not insensitive".
+        """
+
+        return _re_1_10_rating(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": feedback_prompts.LANGCHAIN_INSENSITIVITY_PROMPT
+                        }, {
+                            "role": "user",
+                            "content": text
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+        ) / 10
 
     def _get_answer_agreement(
         self, prompt, response, check_response, model_engine="gpt-3.5-turbo"
