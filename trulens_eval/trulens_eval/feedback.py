@@ -404,8 +404,9 @@ import logging
 from multiprocessing.pool import AsyncResult
 import re
 import traceback
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple, Type,
-                    Union)
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
+)
 
 import numpy as np
 import openai
@@ -860,10 +861,10 @@ class Feedback(FeedbackDefinition):
 
                 if isinstance(result_and_meta, Tuple):
                     # If output is a tuple of two, we assume it is the float/multifloat and the metadata.
-                    assert len(
-                        result_and_meta
-                    ) == 2, (f"Feedback functions must return either a single float, "
-                            f"a float-valued dict, or these in combination with a dictionary as a tuple.")
+                    assert len(result_and_meta) == 2, (
+                        f"Feedback functions must return either a single float, "
+                        f"a float-valued dict, or these in combination with a dictionary as a tuple."
+                    )
                     result_val, meta = result_and_meta
 
                     assert isinstance(
@@ -874,13 +875,12 @@ class Feedback(FeedbackDefinition):
                     result_val = result_and_meta
                     meta = dict()
 
-            
                 if isinstance(result_val, dict):
                     for val in result_val.values():
-                        assert isinstance(
-                            val, float
-                        ), (f"Feedback function output with multivalue must be "
-                            f"a dict with float values but encountered {type(val)}.")
+                        assert isinstance(val, float), (
+                            f"Feedback function output with multivalue must be "
+                            f"a dict with float values but encountered {type(val)}."
+                        )
                     feedback_call = FeedbackCall(
                         args=ins,
                         ret=np.mean(list(result_val.values())),
@@ -1500,8 +1500,10 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role": "system",
-                            "content": feedback_prompts.LANGCHAIN_CONCISENESS_PROMPT
+                            "role":
+                                "system",
+                            "content":
+                                feedback_prompts.LANGCHAIN_CONCISENESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -1532,8 +1534,10 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role": "system",
-                            "content": feedback_prompts.LANGCHAIN_CORRECTNESS_PROMPT
+                            "role":
+                                "system",
+                            "content":
+                                feedback_prompts.LANGCHAIN_CORRECTNESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -1564,8 +1568,10 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role": "system",
-                            "content": feedback_prompts.LANGCHAIN_COHERENCE_PROMPT
+                            "role":
+                                "system",
+                            "content":
+                                feedback_prompts.LANGCHAIN_COHERENCE_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -1596,8 +1602,10 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role": "system",
-                            "content": feedback_prompts.LANGCHAIN_HARMFULNESS_PROMPT
+                            "role":
+                                "system",
+                            "content":
+                                feedback_prompts.LANGCHAIN_HARMFULNESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -1628,8 +1636,10 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role": "system",
-                            "content": feedback_prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
+                            "role":
+                                "system",
+                            "content":
+                                feedback_prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -1638,7 +1648,7 @@ class OpenAI(Provider):
                 )["choices"][0]["message"]["content"]
             )
         ) / 10
-    
+
     def helpfulness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -1660,8 +1670,10 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role": "system",
-                            "content": feedback_prompts.LANGCHAIN_HELPFULNESS_PROMPT
+                            "role":
+                                "system",
+                            "content":
+                                feedback_prompts.LANGCHAIN_HELPFULNESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -1692,8 +1704,11 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role": "system",
-                            "content": feedback_prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
+                            "role":
+                                "system",
+                            "content":
+                                feedback_prompts.
+                                LANGCHAIN_CONTROVERSIALITY_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -1724,8 +1739,10 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role": "system",
-                            "content": feedback_prompts.LANGCHAIN_MISOGYNY_PROMPT
+                            "role":
+                                "system",
+                            "content":
+                                feedback_prompts.LANGCHAIN_MISOGYNY_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -1756,8 +1773,10 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role": "system",
-                            "content": feedback_prompts.LANGCHAIN_CRIMINALITY_PROMPT
+                            "role":
+                                "system",
+                            "content":
+                                feedback_prompts.LANGCHAIN_CRIMINALITY_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -1788,8 +1807,10 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role": "system",
-                            "content": feedback_prompts.LANGCHAIN_INSENSITIVITY_PROMPT
+                            "role":
+                                "system",
+                            "content":
+                                feedback_prompts.LANGCHAIN_INSENSITIVITY_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -1827,7 +1848,11 @@ class Groundedness(SerialModel, WithClassInfo):
     summarize_provider: Provider
     groundedness_provider: Provider
 
-    def __init__(self, summarize_provider: Provider = None, groundedness_provider: Provider = None):
+    def __init__(
+        self,
+        summarize_provider: Provider = None,
+        groundedness_provider: Provider = None
+    ):
         """Instantiates the groundedness providers. Currently the groundedness functions work well with a summarizer.
         This class will use an OpenAI summarizer to find the relevant strings in a text. The groundedness_provider can 
         either be an llm with OpenAI or NLI with huggingface.
@@ -1839,7 +1864,8 @@ class Groundedness(SerialModel, WithClassInfo):
             summarize_provider = OpenAI()
         if groundedness_provider is None:
             groundedness_provider = OpenAI()
-        if not isinstance(groundedness_provider, (OpenAI, AzureOpenAI, Huggingface)):
+        if not isinstance(groundedness_provider,
+                          (OpenAI, AzureOpenAI, Huggingface)):
             raise Exception(
                 "Groundedness is only supported groundedness_provider as OpenAI, AzureOpenAI or Huggingface Providers."
             )
