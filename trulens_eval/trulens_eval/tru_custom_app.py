@@ -15,7 +15,8 @@ up as two classes in two python, `CustomApp` and `CustomRetriever`:
 
 ### `custom_app.py`
 
-```python from trulens_eval.tru_custom_app import instrument from
+```python
+from trulens_eval.tru_custom_app import instrument from
 custom_retriever import CustomRetriever 
 
 
@@ -25,22 +26,26 @@ class CustomApp:
     def __init__(self):
         self.retriever = CustomRetriever()
 
-    @instrument def retrieve_chunks(self, data):
+    @instrument
+    def retrieve_chunks(self, data):
         return self.retriever.retrieve_chunks(data)
 
-    @instrument def respond_to_query(self, input):
+    @instrument
+    def respond_to_query(self, input):
         chunks = self.retrieve_chunks(input) output = f"The answer to {input} is
         probably {chunks[0]} or something ..." return output
 ```
 
 ### `custom_retriever.py`
 
-```python from trulens_eval.tru_custom_app import instrument
+```python
+from trulens_eval.tru_custom_app import instrument
 
 class CustomRetriever:
     # NOTE: No restriction on this class either.
 
-    @instrument def retrieve_chunks(self, data):
+    @instrument
+    def retrieve_chunks(self, data):
         return [
             f"Relevant chunk: {data.upper()}", f"Relevant chunk: {data[::-1]}"
         ]
@@ -59,15 +64,17 @@ Following the instrumentation, the app can be used with or without tracking:
 
 ### `example.py`
 
-```python from custom_app import CustomApp from trulens_eval.tru_custom_app
+```python
+from custom_app import CustomApp from trulens_eval.tru_custom_app
 import TruCustomApp
 
 ca = CustomApp()
 
-# Normal app usage: response = ca.respond_to_query("What is the capital of
-Indonesia?")
+# Normal app usage:
+response = ca.respond_to_query("What is the capital of Indonesia?")
 
-# Wrapping app with `TruCustomApp`: ta = TruCustomApp(ca)
+# Wrapping app with `TruCustomApp`: 
+ta = TruCustomApp(ca)
 
 # Wrapped usage: must use the general `with_record` (or `awith_record`) method:
 response, record = ta.with_record(
@@ -121,7 +128,6 @@ https://api-inference.huggingface.co .
   methods with `@instrument`.
 
 ```python
-
 app.print_instrumented()
 
 ### output example:
