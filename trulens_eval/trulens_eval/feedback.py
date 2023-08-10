@@ -1827,7 +1827,7 @@ class Groundedness(SerialModel, WithClassInfo):
     summarize_provider: Provider
     groundedness_provider: Provider
 
-    def __init__(self, groundedness_provider: Provider = None):
+    def __init__(self, summarize_provider: Provider = None, groundedness_provider: Provider = None):
         """Instantiates the groundedness providers. Currently the groundedness functions work well with a summarizer.
         This class will use an OpenAI summarizer to find the relevant strings in a text. The groundedness_provider can 
         either be an llm with OpenAI or NLI with huggingface.
@@ -1835,12 +1835,13 @@ class Groundedness(SerialModel, WithClassInfo):
         Args:
             groundedness_provider (Provider, optional): groundedness provider options: OpenAI LLM or HuggingFace NLI. Defaults to OpenAI().
         """
+        if summarize_provider is None:
+            summarize_provider = OpenAI()
         if groundedness_provider is None:
             groundedness_provider = OpenAI()
-        summarize_provider = OpenAI()
-        if not isinstance(groundedness_provider, (OpenAI, Huggingface)):
+        if not isinstance(groundedness_provider, (OpenAI, AzureOpenAI, Huggingface)):
             raise Exception(
-                "Groundedness is only supported groundedness_provider as OpenAI or Huggingface Providers."
+                "Groundedness is only supported groundedness_provider as OpenAI, AzureOpenAI or Huggingface Providers."
             )
         super().__init__(
             summarize_provider=summarize_provider,
@@ -1868,7 +1869,7 @@ class Groundedness(SerialModel, WithClassInfo):
             float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
         groundedness_scores = {}
-        if isinstance(self.groundedness_provider, OpenAI):
+        if isinstance(self.groundedness_provider, (AzureOpenAI, OpenAI)):
             plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
             if len(statement) > plausible_junk_char_min:
                 reason = self.summarize_provider._groundedness_doc_in_out(
