@@ -83,6 +83,7 @@ class FeedbackResult(Base):
     result = Column(Float)
     name = Column(Text, nullable=False)
     cost_json = Column(TYPE_JSON, nullable=False)
+    multi_result = Column(TYPE_JSON)
 
     record = relationship("Record", back_populates="feedback_results")
     feedback_definition = relationship("FeedbackDefinition", back_populates="feedback_results")
@@ -100,6 +101,7 @@ class FeedbackResult(Base):
             result=obj.result,
             name=obj.name,
             cost_json=json_str_of_obj(obj.cost),
+            multi_result=obj.multi_result
         )
 
 

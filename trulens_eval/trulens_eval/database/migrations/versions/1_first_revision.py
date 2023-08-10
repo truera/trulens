@@ -44,7 +44,7 @@ def upgrade() -> None:
     op.create_table('feedbacks',
     sa.Column('feedback_result_id', sa.VARCHAR(length=256), nullable=False),
     sa.Column('record_id', sa.VARCHAR(length=256), nullable=False),
-    sa.Column('feedback_definition_id', sa.VARCHAR(length=256), nullable=False),
+    sa.Column('feedback_definition_id', sa.VARCHAR(length=256), nullable=True),
     sa.Column('last_ts', sa.Float(), nullable=False),
     sa.Column('status', sa.Text(), nullable=False),
     sa.Column('error', sa.Text(), nullable=True),
@@ -52,6 +52,7 @@ def upgrade() -> None:
     sa.Column('result', sa.Float(), nullable=True),
     sa.Column('name', sa.Text(), nullable=False),
     sa.Column('cost_json', sa.Text(), nullable=False),
+    sa.Column('multi_result', sa.Text(), nullable=True),
     sa.ForeignKeyConstraint(['feedback_definition_id'], ['feedback_defs.feedback_definition_id'], ),
     sa.ForeignKeyConstraint(['record_id'], ['records.record_id'], ),
     sa.PrimaryKeyConstraint('feedback_result_id')
