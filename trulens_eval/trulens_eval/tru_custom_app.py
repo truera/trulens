@@ -100,7 +100,7 @@ is via:
 from trulens_eval.tru_custom_app import instrument
 from somepackage.from custom_retriever import CustomRetriever
 
-instrument.method_in_class(CustomRetriever, "retrieve_chunks")
+instrument.method(CustomRetriever, "retrieve_chunks")
 
 # ... rest of the custom class follows ...
 ```
@@ -149,36 +149,22 @@ https://api-inference.huggingface.co .
 app.print_instrumented()
 
 ### output example:
-
 Components:
-Other of trulens_eval.utils.langchain component: *.__app__.app
-Other of trulens_eval.utils.langchain component: *.__app__.app.memory
-LLM of trulens_eval.utils.langchain component: *.__app__.app.memory.llm
-Prompt of trulens_eval.utils.langchain component: *.__app__.app.memory.prompt
-Other of trulens_eval.utils.langchain component: *.__app__.app.memory.chat_memory
-Other of trulens_eval.utils.langchain component: *.__app__.app.combine_docs_chain
-Other of trulens_eval.utils.langchain component: *.__app__.app.combine_docs_chain.llm_chain
-Prompt of trulens_eval.utils.langchain component: *.__app__.app.combine_docs_chain.llm_chain.prompt
-LLM of trulens_eval.utils.langchain component: *.__app__.app.combine_docs_chain.llm_chain.llm
-Prompt of trulens_eval.utils.langchain component: *.__app__.app.combine_docs_chain.document_prompt
-Other of trulens_eval.utils.langchain component: *.__app__.app.question_generator
-Prompt of trulens_eval.utils.langchain component: *.__app__.app.question_generator.prompt
-LLM of trulens_eval.utils.langchain component: *.__app__.app.question_generator.llm
-Other of trulens_eval.utils.langchain component: *.__app__.app.retriever
+Custom of trulens_eval.app component: *.__app__.app
+Custom of trulens_eval.app component: *.__app__.app.llm
+Custom of trulens_eval.app component: *.__app__.app.retriever
+Custom of trulens_eval.app component: *.__app__.app.template
 
 Methods:
-<function Chain.__call__ at 0x11ac675e0> on: *.app.question_generator
-<function BaseConversationalRetrievalChain._call at 0x11b1b7dc0> on: *.app
-<function BaseConversationalRetrievalChain._acall at 0x11b1b7ee0> on: *.app
-<function Chain.acall at 0x11ac67670> on: *.app.question_generator
-<function Chain._call at 0x11ac674c0> on: *.app.question_generator
-<function Chain._acall at 0x11ac67550> on: *.app.question_generator
-<function BaseCombineDocumentsChain._call at 0x11acf7a60> on: *.app.combine_docs_chain
-<function BaseCombineDocumentsChain._acall at 0x11acf7af0> on: *.app.combine_docs_chain
-<function LLMChain._call at 0x11ac67ca0> on: *.app.question_generator
-<function LLMChain._acall at 0x11ac791f0> on: *.app.question_generator
-<function VectorStoreRetriever._get_relevant_documents at 0x11a4e0ee0> on: *.app.retriever
-<function BaseRetriever._get_relevant_documents at 0x10f0ef700> on: *.app.retriever
+Object at 0x1064c6d30:
+	<function CustomApp.retrieve_chunks at 0x14c6c5700> with path *.__app__.app
+	<function CustomApp.respond_to_query at 0x14c6c5790> with path *.__app__.app
+Object at 0x1064c6dc0:
+	<function CustomLLM.generate at 0x14c6c51f0> with path *.__app__.app.llm
+Object at 0x1064c6f70:
+	<function CustomRetriever.retrieve_chunks at 0x14c6b5c10> with path *.__app__.app.retriever
+Object at 0x106272100:
+	<function CustomTemplate.fill at 0x14c6c54c0> with path *.__app__.app.template
 ```
 
 - If an instrumented / decorated method's owner object cannot be found when
@@ -192,10 +178,13 @@ Methods:
   The owner-not-found error looks like this:
 
 ```python
-Method <function CustomLLM.generate at 0x175723b80> was not found during instrumentation walk. Make sure it is accessible by traversing app <custom_app.CustomApp object at 0x1075c2fa0> or provide it to TruCustomApp constructor in the `methods_to_instrument`.
-Method <function CustomTemplate.fill at 0x175723d30> was not found during instrumentation walk. Make sure it is accessible by traversing app <custom_app.CustomApp object at 0x1075c2fa0> or provide it to TruCustomApp constructor in the `methods_to_instrument`.
-Method <function CustomRetriever.retrieve_chunks at 0x1757235e0> was not found during instrumentation walk. Make sure it is accessible by traversing app <custom_app.CustomApp object at 0x1075c2fa0> or provide it to TruCustomApp constructor in the `methods_to_instrument`.
+Function <function CustomRetriever.retrieve_chunks at 0x177935d30> was not found during instrumentation walk. Make sure it is accessible by traversing app <custom_app.CustomApp object at 0x112a005b0> or provide a bound method for it as TruCustomApp constructor argument `methods_to_instrument`.
+Function <function CustomTemplate.fill at 0x1779474c0> was not found during instrumentation walk. Make sure it is accessible by traversing app <custom_app.CustomApp object at 0x112a005b0> or provide a bound method for it as TruCustomApp constructor argument `methods_to_instrument`.
+Function <function CustomLLM.generate at 0x1779471f0> was not found during instrumentation walk. Make sure it is accessible by traversing app <custom_app.CustomApp object at 0x112a005b0> or provide a bound method for it as TruCustomApp constructor argument `methods_to_instrument`.
 ```
+
+  Subsequent attempts at `with_record`/`awith_record` may result in the "Empty
+  record" exception.
 
 - Usage tracking not tracking. We presently have limited coverage over which
   APIs we track and make some assumptions with regards to accessible APIs
@@ -237,7 +226,7 @@ class TruCustomApp(App):
     # Methods marked as needing instrumentation. These are checked to make sure
     # the object walk finds them. If not, a message is shown to let user know
     # how to let the TruCustomApp constructor know where these methods are.
-    methods_to_instrument: ClassVar[Set[Callable]] = set([])
+    functions_to_instrument: ClassVar[Set[Callable]] = set([])
 
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs):
         """
@@ -308,43 +297,38 @@ class TruCustomApp(App):
                     }
                 )
 
-        # Check that any methods marked with `TruCustomApp.instrument` has been
-        # instrumented.
-        for f in TruCustomApp.methods_to_instrument: # actually functions without self
-            methods_and_full_paths = self._get_methods_by_func(f)
+        # Check that any functions marked with `TruCustomApp.instrument` has been
+        # instrumented as a method under some object.
+        for f in TruCustomApp.functions_to_instrument: 
+            methods_and_full_paths = list(self._get_methods_for_func(f))
 
-            if len(methods_and_full_paths) == 0:
-                # TODO: finished here
-
-            for m, full_path in methods_and_full_paths:
-
-            if m not in self.instrumented_methods: # TODO: fix, 
+            if len(methods_and_full_paths) == 0: 
                 logger.warning(
-                    f"Method {m} was not found during instrumentation walk. "
+                    f"Function {f} was not found during instrumentation walk. "
                     f"Make sure it is accessible by traversing app {app} "
-                    f"or provide it to TruCustomApp constructor in the `methods_to_instrument`."
+                    f"or provide a bound method for it as TruCustomApp constructor argument `methods_to_instrument`."
                 )
+
             else:
-                full_path = self.instrumented_methods[m]
+                for m, full_path in methods_and_full_paths:
+                    try:
+                        next(full_path(json))
 
-                try:
-                    next(full_path(json))
+                    except Exception as e:
+                        logger.warning(
+                            f"App has no component owner of instrumented method {m} at path {full_path}. "
+                            f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
+                            f"Creating a placeholder there for now."
+                        )
 
-                except Exception as e:
-                    logger.warning(
-                        f"App has no component owner of instrumented method {m} at path {full_path}. "
-                        f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
-                        f"Creating a placeholder there for now."
-                    )
-
-                    path.set(
-                        self.app_extra_json, {
-                            PLACEHOLDER:
-                                "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
-                            m.__name__:
-                                f"Placeholder for method {m.__name__}."
-                        }
-                    )
+                        path.set(
+                            self.app_extra_json, {
+                                PLACEHOLDER:
+                                    "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
+                                m.__name__:
+                                    f"Placeholder for method {m.__name__}."
+                            }
+                        )
 
         # DB stuff and checks:
         self.post_init()
@@ -385,10 +369,10 @@ class instrument:
 
         # Note that this does not actually change the method, just adds it to
         # list of filters.
-        instrument.method_in_class(cls, name)
+        instrument.method(cls, name)
 
     @staticmethod
-    def method_in_class(cls: type, name: str):
+    def method(cls: type, name: str):
         # Add owner of the decorated method, its module, and the name to the
         # Default instrumentation walk filters.
         Instrument.Default.MODULES.add(cls.__module__)
@@ -400,11 +384,10 @@ class instrument:
 
         # Also make note of it for verification that it was found by the walk
         # after init.
-        TruCustomApp.methods_to_instrument.add(getattr(cls, name))
-
+        TruCustomApp.functions_to_instrument.add(getattr(cls, name))
 
     @staticmethod
-    def methods_in_class(cls: type, names: Iterable[str]):
+    def methods(cls: type, names: Iterable[str]):
         for method_name in names:
-            instrument.method_in_class(cls, name)
+            instrument.method(cls, name)
     

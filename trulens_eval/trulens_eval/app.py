@@ -299,11 +299,11 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
     # Instrumentation class.
     instrument: Instrument = Field(exclude=True)
 
-    # Mapping of instrumented methods (by id(.) of owner function) to their path in this app:
-    instrumented_methods: Dict[Any, JSONPath] = Field(
+    # Mapping of instrumented methods (by id(.) of owner object and the
+    # function) to their path in this app:
+    instrumented_methods: Dict[int, Dict[Callable, JSONPath]] = Field(
         exclude=True, default_factory=dict
     )
-
 
     def __init__(
         self,
@@ -419,29 +419,61 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         instrumented by this app.
         """
 
-        k = (id(obj), func)
+        if id(obj) in self.instrumented_methods:
 
-        if k in self.instrumented_methods:
-            old_path = self.instrumented_methods[k]
-            if path != old_path:
-                logger.warning(
-                    f"Method {func} was already instrumented on path {old_path} . "
-                    f"Calls at {path} may not be recorded."
-                )
-            return
+            funcs = self.instrumented_methods[id(obj)]
 
-        self.instrumented_methods[k] = path
+            if func in funcs:
+                old_path = funcs[func]
 
+                if path != old_path:
+                    logger.warning(
+                        f"Method {func} was already instrumented on path {old_path}. "
+                        f"Calls at {path} may not be recorded."
+                    )
+
+                return
+
+            else:
+
+                funcs[func] = path
+
+        else:
+            funcs = dict()
+            self.instrumented_methods[id(obj)] = funcs
+            funcs[func] = path
+
+    # WithInstrumentCallbacks requirement
+    def _get_methods_for_func(self, func: Callable) -> Iterable[Tuple[Callable, JSONPath]]:
+        """
+        Get the methods (rather the inner functions) matching the given `func`
+        and the path of each.
+        """
+
+        for ids, funcs in self.instrumented_methods.items():
+            for f, path in funcs.items():
+                """
+                # TODO: wider wrapping support
+                if hasattr(f, "__func__"):
+                    if method.__func__ == func:
+                        yield (method, path) 
+                else:
+                """
+                if f == func:
+                    yield (f, path)
 
     # WithInstrumentCallbacks requirement
     def _get_method_path(self, obj: object, func: Callable) -> JSONPath:
         """
-        Get the path of the instrumented function `func` relative to this app.
+        Get the path of the instrumented function `method` relative to this app.
         """
 
-        k = (id(obj), func)
+        funcs = self.instrumented_methods.get(id(obj))
 
-        return self.instrumented_methods.get(k)
+        if funcs is None:
+            return None
+        else:
+            return funcs.get(func)
 
     """
     # TODO: ROOTLESS
@@ -742,8 +774,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         """
         print(
             "\n".join(
-                f"{m} on: "
-                f"{p}" for m, p in self.instrumented_methods.items()
+                f"Object at 0x{obj:x}:\n\t" +
+                "\n\t".join(f"{m} with path {Select.App + path}" for m, path in p.items())
+                for obj, p in self.instrumented_methods.items()
             )
         )
 

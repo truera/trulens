@@ -254,14 +254,16 @@ stack for specific frames:
 
 from datetime import datetime
 import inspect
-from inspect import BoundArguments, Signature
+from inspect import BoundArguments
+from inspect import Signature
 from inspect import signature
 import logging
 import os
 from pprint import PrettyPrinter
 import threading as th
 import traceback
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set
+from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
+                    Tuple)
 
 from pydantic import BaseModel
 
@@ -272,12 +274,13 @@ from trulens_eval.schema import Perf
 from trulens_eval.schema import Query
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordAppCallMethod
-from trulens_eval.util import JSONPath
 from trulens_eval.util import _safe_getattr
+from trulens_eval.util import dict_merge_with
 from trulens_eval.util import get_all_local_in_call_stack
 from trulens_eval.util import get_first_local_in_call_stack
 from trulens_eval.util import jsonify
-from trulens_eval.util import Method, dict_merge_with
+from trulens_eval.util import JSONPath
+from trulens_eval.util import Method
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -293,7 +296,9 @@ class WithInstrumentCallbacks:
     def _on_method_instrumented(self, obj: object, func: Callable, path: JSONPath):
         """
         Called by instrumentation system for every function requested to be
-        instrumented.
+        instrumented. Given are the object of the class in which `func` belongs
+        (i.e. the "self" for that function), the `func` itsels, and the `path`
+        of the owner object in the app hierarchy.
         """
 
         raise NotImplementedError
@@ -301,7 +306,17 @@ class WithInstrumentCallbacks:
     # Called during invocation.
     def _get_method_path(self, obj: object, func: Callable) -> JSONPath:
         """
-        Get the path of the instrumented function `func` relative to this app.
+        Get the path of the instrumented function `func`, a member of the class
+        of `obj` relative to this app.
+        """
+
+        raise NotImplementedError
+
+    # WithInstrumentCallbacks requirement
+    def _get_methods_for_func(self, func: Callable) -> Iterable[Tuple[Callable, JSONPath]]:
+        """
+        Get the methods (rather the inner functions) matching the given `func`
+        and the path of each.
         """
 
         raise NotImplementedError
@@ -337,10 +352,6 @@ class Instrument(object):
 
     # Attribute name to be used to flag instrumented objects/methods/others.
     INSTRUMENT = "__tru_instrumented"
-
-    # Set this attribute to object's methods (bound) to indicate where that
-    # object is relative to an app.
-    PATH = "__tru_path"
 
     # TODO: ROOTLESS
     # APPS = "__tru_apps"
@@ -421,6 +432,8 @@ class Instrument(object):
         """
 
         assert self.root_methods is not None, "Cannot instrument method without `root_methods`."
+
+        assert not hasattr(func, "__func__"), "Function expected but method received."
 
         if hasattr(func, Instrument.INSTRUMENT):
             logger.debug(f"\t\t\t{query}: {func} is already instrumented")
@@ -725,7 +738,6 @@ class Instrument(object):
 
                 # The path to this method according to the app.
                 path = app._get_method_path(args[0], func) # args[0] is owner of wrapped method, hopefully
-                # path = getattr(wrapper, Instrument.PATH)
 
                 if path is None:
                     logger.warning(
@@ -834,8 +846,6 @@ class Instrument(object):
         setattr(w, Instrument.INSTRUMENT, func)
 
         w.__name__ = func.__name__
-
-        setattr(w, Instrument.PATH, query)
 
         # Add a list of apps that want to record calls to this method starting
         # with self.

@@ -3,7 +3,7 @@ from trulens_eval.tru_custom_app import instrument
 
 class CustomRetriever:
 
-    @instrument
+    # @instrument
     def retrieve_chunks(self, data):
         sleep(0.5)
 
