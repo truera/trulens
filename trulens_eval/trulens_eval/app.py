@@ -299,10 +299,11 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
     # Instrumentation class.
     instrument: Instrument = Field(exclude=True)
 
-    # Mapping of instrumented methods (by id(.) ) to their path in this app:
+    # Mapping of instrumented methods (by id(.) of owner function) to their path in this app:
     instrumented_methods: Dict[Any, JSONPath] = Field(
         exclude=True, default_factory=dict
     )
+
 
     def __init__(
         self,
@@ -430,6 +431,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
             return
 
         self.instrumented_methods[k] = path
+
 
     # WithInstrumentCallbacks requirement
     def _get_method_path(self, obj: object, func: Callable) -> JSONPath:

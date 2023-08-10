@@ -16,8 +16,8 @@ up as two classes in two python, `CustomApp` and `CustomRetriever`:
 ### `custom_app.py`
 
 ```python
-from trulens_eval.tru_custom_app import instrument from
-custom_retriever import CustomRetriever 
+from trulens_eval.tru_custom_app import instrument
+from custom_retriever import CustomRetriever 
 
 
 class CustomApp:
@@ -86,6 +86,24 @@ The `with_record` use above returns both the response of the app normally
 produces as well as the record of the app as is the case with the higher-level
 wrappers. `TruCustomApp` constructor arguments are like in those higher-level
 apps as well including the feedback functions, metadata, etc.
+
+### Instrumenting 3rd party classes
+
+In cases you do not have access to a class to make the necessary decorations for
+tracking, you can instead use one of the static methods of `instrument`, for
+example, the alterative for making sure the custom retriever gets instrumented
+is via:
+
+```python
+# custom_app.py`:
+
+from trulens_eval.tru_custom_app import instrument
+from somepackage.from custom_retriever import CustomRetriever
+
+instrument.method_in_class(CustomRetriever, "retrieve_chunks")
+
+# ... rest of the custom class follows ...
+```
 
 ## API Usage Tracking
 
@@ -189,7 +207,7 @@ Method <function CustomRetriever.retrieve_chunks at 0x1757235e0> was not found d
 
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Set
+from typing import Any, Callable, ClassVar, Set, Iterable
 
 from pydantic import Field
 
@@ -246,7 +264,9 @@ class TruCustomApp(App):
 
         methods_to_instrument = methods_to_instrument or dict()
 
-        # The rest of this code checks that instrumented methods belong to some
+        # The rest of this code instruments methods explicitly passed to
+        # constructor as needing instrumentation and checks that methods
+        # decorated with @instrument or passed explicitly belong to some
         # component as per serialized version of this app. If they are not,
         # placeholders are made in `app_extra_json` so that subsequent
         # serialization looks like the components exist.
@@ -290,8 +310,15 @@ class TruCustomApp(App):
 
         # Check that any methods marked with `TruCustomApp.instrument` has been
         # instrumented.
-        for m in TruCustomApp.methods_to_instrument:
-            if m not in self.instrumented_methods:
+        for f in TruCustomApp.methods_to_instrument: # actually functions without self
+            methods_and_full_paths = self._get_methods_by_func(f)
+
+            if len(methods_and_full_paths) == 0:
+                # TODO: finished here
+
+            for m, full_path in methods_and_full_paths:
+
+            if m not in self.instrumented_methods: # TODO: fix, 
                 logger.warning(
                     f"Method {m} was not found during instrumentation walk. "
                     f"Make sure it is accessible by traversing app {app} "
@@ -349,6 +376,19 @@ class instrument:
         self.func = func
 
     def __set_name__(self, cls: type, name: str):
+        """
+        For use as method decorator.
+        """
+
+        # Important: do this first:
+        setattr(cls, name, self.func)
+
+        # Note that this does not actually change the method, just adds it to
+        # list of filters.
+        instrument.method_in_class(cls, name)
+
+    @staticmethod
+    def method_in_class(cls: type, name: str):
         # Add owner of the decorated method, its module, and the name to the
         # Default instrumentation walk filters.
         Instrument.Default.MODULES.add(cls.__module__)
@@ -360,6 +400,11 @@ class instrument:
 
         # Also make note of it for verification that it was found by the walk
         # after init.
-        TruCustomApp.methods_to_instrument.add(self.func)
+        TruCustomApp.methods_to_instrument.add(getattr(cls, name))
 
-        setattr(cls, name, self.func)
+
+    @staticmethod
+    def methods_in_class(cls: type, names: Iterable[str]):
+        for method_name in names:
+            instrument.method_in_class(cls, name)
+    
