@@ -34,8 +34,8 @@ class TruBasicCallableInstrument(Instrument):
     def __init__(self):
         super().__init__(
             root_methods=set([TruBasicApp.call_with_record]),
-            classes=TruBasicCallableInstrument.Default.CLASSES(),
-            methods=TruBasicCallableInstrument.Default.METHODS
+            include_classes=TruBasicCallableInstrument.Default.CLASSES(),
+            include_methods=TruBasicCallableInstrument.Default.METHODS
         )
 
 

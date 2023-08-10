@@ -21,7 +21,7 @@ import requests
 from trulens_eval.keys import _check_key
 from trulens_eval.keys import get_huggingface_headers
 from trulens_eval.schema import Cost
-from trulens_eval.util import get_local_in_call_stack
+from trulens_eval.util import get_first_local_in_call_stack
 from trulens_eval.util import JSON
 from trulens_eval.util import SerialModel
 from trulens_eval.util import SingletonPerName
@@ -436,9 +436,11 @@ class Endpoint(SerialModel, SingletonPerName):
         costs using each of the provided endpoints' callbacks.
         """
 
+        logger.debug("Starting to track costs.")
+
         # Check to see if this call is within another _track_costs call:
         endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
-            get_local_in_call_stack(
+            get_first_local_in_call_stack(
                 key="endpoints",
                 func=Endpoint.__find_tracker,
                 offset=1
@@ -502,7 +504,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
         # Check to see if this call is within another _track_costs call:
         endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
-            get_local_in_call_stack(
+            get_first_local_in_call_stack(
                 key="endpoints",
                 func=Endpoint.__find_tracker,
                 offset=1
@@ -644,7 +646,7 @@ class Endpoint(SerialModel, SingletonPerName):
             # callback tracking the tally. See Endpoint._track_costs for
             # definition.
             endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
-                get_local_in_call_stack(
+                get_first_local_in_call_stack(
                     key="endpoints",
                     func=self.__find_tracker,
                     offset=0
@@ -723,7 +725,7 @@ class Endpoint(SerialModel, SingletonPerName):
             # callback tracking the tally. See Endpoint._track_costs for
             # definition.
             endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
-                get_local_in_call_stack(
+                get_first_local_in_call_stack(
                     key="endpoints",
                     func=self.__find_tracker,
                     offset=0
@@ -773,7 +775,7 @@ class Endpoint(SerialModel, SingletonPerName):
             # callback tracking the tally. See Endpoint._track_costs for
             # definition.
             endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
-                get_local_in_call_stack(
+                get_first_local_in_call_stack(
                     key="endpoints",
                     func=self.__find_tracker,
                     offset=0
