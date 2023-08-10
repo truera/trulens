@@ -157,7 +157,7 @@ def _extract_feedback_results(results: Iterable[orm.FeedbackResult]) -> pd.DataF
         return (
             _result.record_id, _result.feedback_result_id, _result.feedback_definition_id,
             _result.last_ts, FeedbackResultStatus(_result.status), _result.error, _result.name,
-            _result.result, _result.cost_json, json.loads(_result.record.perf_json),
+            _result.result, _result.multi_result,_result.cost_json, json.loads(_result.record.perf_json),
             json.loads(_result.calls_json)["calls"], json.loads(_result.feedback_definition.feedback_json),
             json.loads(_result.record.record_json), app_json, _type,
         )
@@ -167,7 +167,7 @@ def _extract_feedback_results(results: Iterable[orm.FeedbackResult]) -> pd.DataF
         columns=[
             'record_id', 'feedback_result_id', 'feedback_definition_id',
             'last_ts', 'status', 'error', 'fname',
-            'result', 'cost_json', 'perf_json',
+            'result', 'multi_result', 'cost_json', 'perf_json',
             'calls_json', 'feedback_json',
             'record_json', 'app_json', "type",
         ],

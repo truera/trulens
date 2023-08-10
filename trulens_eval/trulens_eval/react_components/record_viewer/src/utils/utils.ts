@@ -110,7 +110,7 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
 export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appJSON: AppJSONRaw) => {
   const tree: StackTreeNode = {
     children: [],
-    name: appJSON.app_id,
+    name: `All calls (${appJSON.app_id})`,
     startTime: new Date(recordJSON.perf.start_time),
     endTime: new Date(recordJSON.perf.end_time),
     path: '',
