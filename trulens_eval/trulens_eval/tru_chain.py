@@ -183,7 +183,7 @@ class TruChain(App):
         """
         Run the chain acall method and also return a record metadata object.
         """
-        return self.awith_record(self.app.acall, *args, **kwargs)
+        return await self.awith_record(self.app.acall, *args, **kwargs)
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
     # TODEP

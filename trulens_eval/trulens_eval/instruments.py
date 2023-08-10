@@ -952,7 +952,7 @@ class Instrument(object):
                 # TODO: check if we want to instrument anything in langchain not
                 # accessible through __fields__ .
 
-        elif self.to_instrument_class(obj.__class__):
+        elif self.to_instrument_object(obj):
             # If an object is not a recognized container type, we check that it
             # is meant to be instrumented and if so, we  walk over it manually.
             # NOTE: llama_index objects are using dataclasses_json but most do
@@ -965,7 +965,7 @@ class Instrument(object):
 
                 sv = _safe_getattr(obj, k)
 
-                if self.to_instrument_class(sv.__class__):
+                if self.to_instrument_object(sv):
                     self.instrument_object(obj=sv, query=query[k], done=done)
 
         else:

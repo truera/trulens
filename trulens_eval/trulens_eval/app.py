@@ -538,8 +538,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         if error is not None:
             ret_record_args['main_error'] = jsonify(error)
 
+        perf = Perf(start_time=start_time, end_time=end_time)
         ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
+            ret_record_args, error, cost, perf, record
         )
 
         return ret, ret_record

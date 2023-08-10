@@ -6,7 +6,8 @@ from datetime import datetime
 import logging
 from pprint import PrettyPrinter
 import traceback
-from typing import ClassVar, Sequence, Tuple, Union
+from typing import ClassVar, Sequence, Tuple, Union, Callable, Any
+from inspect import Signature, BoundArguments
 
 from pydantic import Field
 
@@ -114,11 +115,12 @@ class LlamaInstrument(Instrument):
             }, LangChainInstrument.Default.METHODS
         )
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super().__init__(
             include_modules=LlamaInstrument.Default.MODULES,
-            include_classes=LlamaInstrument.Default.CLASSES(),  # was thunk
-            include_methods=LlamaInstrument.Default.METHODS
+            include_classes=LlamaInstrument.Default.CLASSES(),
+            include_methods=LlamaInstrument.Default.METHODS,
+            *args, **kwargs
         )
 
 
@@ -153,8 +155,7 @@ class TruLlama(App):
         kwargs['instrument'] = LlamaInstrument(
             root_methods=set(
                 [
-                    TruLlama.query_with_record, TruLlama.aquery_with_record,
-                    TruLlama.chat_with_record, TruLlama.achat_with_record
+                    TruLlama.with_record, TruLlama.awith_record,
                 ]
             ),
             callbacks=self
@@ -225,6 +226,55 @@ class TruLlama(App):
         res, _ = await self.aquery_with_record(*args, **kwargs)
         return res
 
+    def main_input(
+        self, func: Callable, sig: Signature, bindings: BoundArguments
+    ) -> str:
+        """
+        Determine the main input string for the given function `func` with
+        signature `sig` if it is to be called with the given bindings
+        `bindings`.
+        """
+
+        if 'str_or_query_bundle' in bindings.arguments:
+            # llama_index specific
+            return bindings.arguments['str_or_query_bundle']
+        
+        elif 'message' in bindings.arguments:
+            # llama_index specific
+            return bindings.arguments['message']
+
+        else:
+
+            return App.main_input(self, func, sig, bindings)
+
+    def main_output(
+        self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
+    ) -> str:
+        """
+        Determine the main out string for the given function `func` with
+        signature `sig` after it is called with the given `bindings` and has
+        returned `ret`.
+        """
+
+        if isinstance(ret, Response): # query, aquery
+            return ret.response
+
+        elif isinstance(ret, AgentChatResponse): #  chat, achat
+            return ret.response
+
+        elif isinstance(ret, (StreamingResponse, StreamingAgentChatResponse)):
+            logger.warn(
+                "App produced a streaming response. "
+                "Tracking content of streams in llama_index is not yet supported. "
+                "App main_output will be None."
+            )
+
+            return None
+
+        else:
+
+            return App.main_output(self, func, sig, bindings, ret)
+
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.query .
     def query_with_record(
         self, str_or_query_bundle: QueryType
@@ -233,67 +283,8 @@ class TruLlama(App):
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
 
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
+        return self.with_record(self.app.query, str_or_query_bundle)
 
-        ret = None
-        error = None
-
-        start_time = None
-        end_time = None
-
-        cost = Cost()
-
-        try:
-            start_time = datetime.now()
-
-            ret, cost = Endpoint.track_all_costs_tally(
-                lambda: self.app.query(str_or_query_bundle)
-            )
-
-            end_time = datetime.now()
-
-        except BaseException as e:
-            end_time = datetime.now()
-            error = e
-            logger.error(f"Engine raised an exception: {e}")
-            logger.error(traceback.format_exc())
-
-        assert len(record) > 0, "No information recorded in call."
-
-        ret_record_args = dict()
-
-        # TODO: generalize
-        ret_record_args['main_input'] = str_or_query_bundle
-        if ret is not None:
-
-            if isinstance(ret, Response):
-                ret_record_args['main_output'] = ret.response
-
-                ret_record = self._post_record(
-                    ret_record_args, error, cost, start_time, end_time, record
-                )
-
-                return ret, ret_record
-
-            elif isinstance(ret, StreamingResponse):
-                # Need to arrange the rest of this method to be called after the
-                # stream is complete. For now lets create a record of things as
-                # they are when the stream is created, but not completed.
-
-                logger.warn(
-                    "App produced a streaming response. "
-                    "Tracking content of streams in llama_index is not yet supported."
-                )
-
-                ret_record_args['main_output'] = None
-
-                ret_record = self._post_record(
-                    ret_record_args, error, cost, start_time, end_time, record
-                )
-
-                return ret, ret_record
 
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .
     async def aquery_with_record(
@@ -303,66 +294,8 @@ class TruLlama(App):
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
 
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
+        return await self.awith_record(self.app.aquery, str_or_query_bundle)
 
-        ret = None
-        error = None
-
-        start_time = None
-        end_time = None
-
-        cost = Cost()
-
-        try:
-            start_time = datetime.now()
-
-            ret, cost = await Endpoint.atrack_all_costs_tally(
-                lambda: self.app.aquery(str_or_query_bundle)
-            )
-
-            end_time = datetime.now()
-
-        except BaseException as e:
-            end_time = datetime.now()
-            error = e
-            logger.error(f"Engine raised an exception: {e}")
-            logger.error(traceback.format_exc())
-
-        assert len(record) > 0, "No information recorded in call."
-
-        ret_record_args = dict()
-
-        # TODO: generalize
-        ret_record_args['main_input'] = str_or_query_bundle
-
-        if isinstance(ret, Response):
-            ret_record_args['main_output'] = ret.response
-
-            ret_record = self._post_record(
-                ret_record_args, error, cost, start_time, end_time, record
-            )
-
-            return ret, ret_record
-
-        elif isinstance(ret, StreamingResponse):
-            # Need to arrange the rest of this method to be called after the
-            # stream is complete. For now lets create a record of things as
-            # they are when the stream is created, but not completed.
-
-            logger.warn(
-                "App produced a streaming response. "
-                "Tracking content of streams in llama_index is not yet supported."
-            )
-
-            ret_record_args['main_output'] = None
-
-            ret_record = self._post_record(
-                ret_record_args, error, cost, start_time, end_time, record
-            )
-
-            return ret, ret_record
 
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
     def chat_with_record(self, message: str,
@@ -371,49 +304,8 @@ class TruLlama(App):
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
 
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
+        return self.with_record(self.app.chat, message, **kwargs)
 
-        ret = None
-        error = None
-
-        start_time = None
-        end_time = None
-
-        cost = Cost()
-
-        try:
-            start_time = datetime.now()
-
-            ret, cost = Endpoint.track_all_costs_tally(
-                lambda: self.app.chat(message, **kwargs)
-            )
-
-            end_time = datetime.now()
-
-        except BaseException as e:
-            end_time = datetime.now()
-            error = e
-            logger.error(f"Engine raised an exception: {e}")
-            logger.error(traceback.format_exc())
-
-        assert len(record) > 0, "No information recorded in call."
-
-        ret_record_args = dict()
-
-        # TODO: generalize
-        ret_record_args['main_input'] = message
-
-        assert isinstance(ret, AgentChatResponse)
-
-        ret_record_args['main_output'] = ret.response
-
-        ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
-        )
-
-        return ret, ret_record
 
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
     async def achat_with_record(self, message: str,
@@ -422,49 +314,8 @@ class TruLlama(App):
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
 
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
+        return await self.awith_record(self.app.achat, message, **kwargs)
 
-        ret = None
-        error = None
-
-        start_time = None
-        end_time = None
-
-        cost = Cost()
-
-        try:
-            start_time = datetime.now()
-
-            ret, cost = await Endpoint.atrack_all_costs_tally(
-                lambda: self.app.achat(message, **kwargs)
-            )
-
-            end_time = datetime.now()
-
-        except BaseException as e:
-            end_time = datetime.now()
-            error = e
-            logger.error(f"Engine raised an exception: {e}")
-            logger.error(traceback.format_exc())
-
-        assert len(record) > 0, "No information recorded in call."
-
-        ret_record_args = dict()
-
-        # TODO: generalize
-        ret_record_args['main_input'] = message
-
-        assert isinstance(ret, AgentChatResponse)
-
-        ret_record_args['main_output'] = ret.response
-
-        ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
-        )
-
-        return ret, ret_record
 
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.stream_chat .
     def stream_chat_with_record(
@@ -474,57 +325,8 @@ class TruLlama(App):
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
 
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
+        return self.with_record(self.app.stream_chat, message, **kwargs)
 
-        ret = None
-        error = None
-
-        start_time = None
-        end_time = None
-
-        cost = Cost()
-
-        try:
-            start_time = datetime.now()
-
-            ret, cost = Endpoint.track_all_costs_tally(
-                lambda: self.app.stream_chat(message, **kwargs)
-            )
-
-            end_time = datetime.now()
-
-        except BaseException as e:
-            end_time = datetime.now()
-            error = e
-            logger.error(f"Engine raised an exception: {e}")
-            logger.error(traceback.format_exc())
-
-        assert len(record) > 0, "No information recorded in call."
-
-        ret_record_args = dict()
-
-        # TODO: generalize
-        ret_record_args['main_input'] = message
-
-        assert isinstance(ret, StreamingAgentChatResponse)
-        # Need to arrange the rest of this method to be called after the
-        # stream is complete. For now lets create a record of things as
-        # they are when the stream is created, but not completed.
-
-        logger.warn(
-            "App produced a streaming response. "
-            "Tracking content of streams in llama_index is not yet supported."
-        )
-
-        ret_record_args['main_output'] = None
-
-        ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
-        )
-
-        return ret, ret_record
 
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.astream_chat .
     async def astream_chat_with_record(
@@ -534,54 +336,4 @@ class TruLlama(App):
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
 
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
-
-        ret = None
-        error = None
-
-        start_time = None
-        end_time = None
-
-        cost = Cost()
-
-        try:
-            start_time = datetime.now()
-
-            ret, cost = await Endpoint.atrack_all_costs_tally(
-                lambda: self.app.astream_chat(message, **kwargs)
-            )
-
-            end_time = datetime.now()
-
-        except BaseException as e:
-            end_time = datetime.now()
-            error = e
-            logger.error(f"Engine raised an exception: {e}")
-            logger.error(traceback.format_exc())
-
-        assert len(record) > 0, "No information recorded in call."
-
-        ret_record_args = dict()
-
-        # TODO: generalize
-        ret_record_args['main_input'] = message
-
-        assert isinstance(ret, StreamingAgentChatResponse)
-        # Need to arrange the rest of this method to be called after the
-        # stream is complete. For now lets create a record of things as
-        # they are when the stream is created, but not completed.
-
-        logger.warn(
-            "App produced a streaming response. "
-            "Tracking content of streams in llama_index is not yet supported."
-        )
-
-        ret_record_args['main_output'] = None
-
-        ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
-        )
-
-        return ret, ret_record
+        return await self.awith_record(self.app.astream_chat, message, **kwargs)
