@@ -189,7 +189,7 @@ Method <function CustomRetriever.retrieve_chunks at 0x1757235e0> was not found d
 
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, Optional, Set
+from typing import Any, Callable, ClassVar, Set
 
 from pydantic import Field
 
@@ -198,7 +198,6 @@ from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.util import Class
 from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import JSON
 from trulens_eval.util import JSONPath
 from trulens_eval.utils.text import UNICODE_CHECK
 
@@ -206,15 +205,15 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
+# Keys used in app_extra_json to indicate an automatically added structure for
+# places an instrumented method exists but no instrumented data exists
+# otherwise.
+PLACEHOLDER = "__tru_placeholder"
+
 
 class TruCustomApp(App):
-    """
-    Wrap a langchain Chain to capture its configuration and evaluation steps. 
-    """
-
     app: Any
 
-    # TODO: what if _acall is being used instead?
     root_callable: ClassVar[FunctionOrMethod] = Field(None)
 
     # Methods marked as needing instrumentation. These are checked to make sure
@@ -224,7 +223,7 @@ class TruCustomApp(App):
 
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs):
         """
-        Wrap a langchain chain for monitoring.
+        Wrap a custom class for recording.
 
         Arguments:
         - app: Any -- the custom app object being wrapped.
@@ -233,7 +232,6 @@ class TruCustomApp(App):
         - More args in WithClassInfo
         """
 
-        # TruChain specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
 
@@ -247,7 +245,6 @@ class TruCustomApp(App):
         super().__init__(**kwargs)
 
         methods_to_instrument = methods_to_instrument or dict()
-
 
         # The rest of this code checks that instrumented methods belong to some
         # component as per serialized version of this app. If they are not,
@@ -264,14 +261,12 @@ class TruCustomApp(App):
                 method_name=method_name, obj=m.__self__, query=full_path
             )
 
-            # TODO: deduplicate code here and next condition
+            # TODO: DEDUP with next condition
 
             # Check whether the path/location of the method is in json serialization and
             # if not, add a placeholder to app_extra_json.
             try:
-                
-                # app_extra_json is in AppDefinition
-                component = next(full_path(json))
+                next(full_path(json))
 
                 print(
                     f"{UNICODE_CHECK} Added method {m.__name__} under component at path {full_path}"
@@ -283,33 +278,30 @@ class TruCustomApp(App):
                     f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
                     f"Creating a placeholder there for now."
                 )
-                
+
                 path.set(
                     self.app_extra_json, {
-                        "__tru_placeholder":
+                        PLACEHOLDER:
                             "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
                         m.__name__:
                             f"Placeholder for method {m.__name__}."
                     }
                 )
-                
 
-        # Check that any methods marked with TruCustomApp.instrument_method
-        # statically has been instrumented.
+        # Check that any methods marked with `TruCustomApp.instrument` has been
+        # instrumented.
         for m in TruCustomApp.methods_to_instrument:
             if m not in self.instrumented_methods:
                 logger.warning(
                     f"Method {m} was not found during instrumentation walk. "
-                    f"Make sure it is accessible by traversing app {app} or provide it to TruCustomApp constructor in the `methods_to_instrument`."
+                    f"Make sure it is accessible by traversing app {app} "
+                    f"or provide it to TruCustomApp constructor in the `methods_to_instrument`."
                 )
             else:
                 full_path = self.instrumented_methods[m]
 
                 try:
-                    # Because we are checking whether the path refers to something in app_extra_json.
-
-                    # app_extra_json is in AppDefinition
-                    component = next(full_path(json))
+                    next(full_path(json))
 
                 except Exception as e:
                     logger.warning(
@@ -317,17 +309,17 @@ class TruCustomApp(App):
                         f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
                         f"Creating a placeholder there for now."
                     )
-                    
+
                     path.set(
                         self.app_extra_json, {
-                            "__tru_placeholder":
+                            PLACEHOLDER:
                                 "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
                             m.__name__:
                                 f"Placeholder for method {m.__name__}."
                         }
                     )
 
-
+        # DB stuff and checks:
         self.post_init()
 
     def __getattr__(self, __name: str) -> Any:
@@ -363,7 +355,8 @@ class instrument:
         Instrument.Default.CLASSES.add(cls)
 
         check_o = Instrument.Default.METHODS.get(name, lambda o: False)
-        Instrument.Default.METHODS[name] = lambda o: check_o(o) or isinstance(o, cls)
+        Instrument.Default.METHODS[
+            name] = lambda o: check_o(o) or isinstance(o, cls)
 
         # Also make note of it for verification that it was found by the walk
         # after init.
