@@ -8,6 +8,12 @@ trubot:
 test:
 	$(CONDA); python -m unittest discover tests.unit
 
+test-database:
+	$(CONDA); pip install psycopg2-binary pymysql cryptography
+	docker compose --file docker/test-database.yaml up --quiet-pull --detach --wait --wait-timeout 30
+	$(CONDA); python -m unittest discover tests.integration.test_database
+	docker compose --file docker/test-database.yaml down
+
 test-tru-chain:
 	$(CONDA); python -m unittest tests.unit.test_tru_chain
 
