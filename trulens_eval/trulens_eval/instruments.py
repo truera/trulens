@@ -59,7 +59,7 @@ Most if not all langchain components use pydantic which imposes some
 restrictions but also provides some utilities. Classes inheriting
 `pydantic.BaseModel` do not allow defining new attributes but existing
 attributes including those provided by pydantic itself can be overwritten (like
-dict, for examople). Presently, we override methods with instrumented versions.
+dict, for example). Presently, we override methods with instrumented versions.
 
 #### Alternatives
 
@@ -72,7 +72,6 @@ dict, for examople). Presently, we override methods with instrumented versions.
   https://docs.python.org/3/library/sys.html#sys.setprofile)
 
     Might incur much overhead and all calls and other event types get
- 
     intercepted and result in a callback.
 
 - langchain/llama_index callbacks. Each of these packages come with some
@@ -83,7 +82,7 @@ dict, for examople). Presently, we override methods with instrumented versions.
 ### Calls
 
 The instrumented versions of functions/methods record the inputs/outputs and
-some additional data (see `schema.py:RecordAppCall`). As more then one
+some additional data (see `schema.py:RecordAppCall`). As more than one
 instrumented call may take place as part of a app invokation, they are collected
 and returned together in the `calls` field of `schema.py:Record`.
 
@@ -182,7 +181,7 @@ you get the record too
 
 The problem with the above is that "call_" part of "call_with_record" is
 langchain specific and implicitly so is __call__ whose behaviour we are
-replicating in TruChaib. Other wrapped apps may not implement their core
+replicating in TruChain. Other wrapped apps may not implement their core
 functionality in "_call" or "__call__".
 
 Alternative #1:
@@ -198,10 +197,11 @@ with truchain.record() as recorder:
 
 records = recorder.records # can get records
 
-truchain(...) # NOT SUPPORTED, use chain instead ```
+truchain(...) # NOT SUPPORTED, use chain instead
+```
 
 Here we have the benefit of not having a special method for each app type like
-call_with_record. We instead use a context to indicate that we want to collect
+`call_with_record`. We instead use a context to indicate that we want to collect
 records and retrieve them afterwards.
 
 ### Calls: Implementation Details
@@ -222,11 +222,11 @@ stack for specific frames:
 - Prior frame -- Each instrumented call also searches for the topmost
   instrumented call (except itself) in the stack to check its immediate caller
   (by immediate we mean only among instrumented methods) which forms the basis
-  of the stack information recorded alongisde the inputs/outputs.
+  of the stack information recorded alongside the inputs/outputs.
 
 #### Drawbacks
 
-- Python call stacks are implementation dependent and we don't expect to operate
+- Python call stacks are implementation dependent and we do not expect to operate
   on anything other than CPython.
 
 - Python creates a fresh empty stack for each thread. Because of this, we need
@@ -238,6 +238,8 @@ stack for specific frames:
 - We require a root method to be placed on the stack to indicate the start of
   tracking. We therefore cannot implement something like a context-manager-based
   setup of the tracking system as suggested in the "To discuss" above.
+
+  TODO: ROOTLESS
 
 #### Alternatives
 
@@ -336,10 +338,8 @@ class Instrument(object):
     # Attribute name to be used to flag instrumented objects/methods/others.
     INSTRUMENT = "__tru_instrumented"
 
-    # Attribute name for marking paths that address app components.
-    PATH = "__tru_path"
-
-    APPS = "__tru_apps"
+    # TODO: ROOTLESS
+    # APPS = "__tru_apps"
 
     class Default:
         # Default instrumentation configuration. Additional components are
@@ -819,15 +819,10 @@ class Instrument(object):
 
         w.__name__ = func.__name__
 
-        # Put the address of the instrumented chain in the wrapper so that we
-        # don't pollute its list of fields. Note that this address may be
-        # deceptive if the same subchain appears multiple times in the wrapped
-        # chain.
-        # setattr(w, Instrument.PATH, query)
-
         # Add a list of apps that want to record calls to this method starting
         # with self.
         # setattr(w, Instrument.APPS, [self])
+        # TODO: ROOTLESS
 
         # NOTE(piotrm): This is important; langchain checks signatures to adjust
         # behaviour and we need to match. Without this, wrapper signatures will
