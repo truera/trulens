@@ -7,6 +7,7 @@ from typing import List, Tuple, Sequence, Optional, Iterable, Union, Any
 
 import numpy as np
 import pandas as pd
+import sqlalchemy
 from pydantic import Field
 from sqlalchemy import Engine, create_engine
 from sqlalchemy import select
@@ -23,7 +24,17 @@ from trulens_eval.schema import RecordID, FeedbackResultID, FeedbackDefinitionID
 from trulens_eval.util import JSON
 
 logger = logging.getLogger(__name__)
+import threading
 
+
+def synchronized(func):
+    func.__lock__ = threading.Lock()
+
+    def synced_func(*args, **kws):
+        with func.__lock__:
+            return func(*args, **kws)
+
+    return synced_func
 
 @for_all_methods(
     run_before(lambda self, *args, **kwargs: check_db_revision(self.engine)),
@@ -55,6 +66,7 @@ class SqlAlchemyDB(DB):
     def from_db_url(cls, url: str) -> "SqlAlchemyDB":
         return cls(engine_params={"url": url})
 
+    @synchronized
     def migrate_database(self):
         """Migrate database schema to the latest revision"""
         if is_legacy_sqlite(self.engine):
@@ -115,9 +127,13 @@ class SqlAlchemyDB(DB):
             )
 
     def insert_feedback(self, feedback_result: schema.FeedbackResult) -> schema.FeedbackResultID:
+        _feedback_result = orm.FeedbackResult.parse(feedback_result)
         with self.Session.begin() as session:
-            _feedback_result = orm.FeedbackResult.parse(feedback_result)
-            session.add(_feedback_result)
+            if session.query(orm.FeedbackResult) \
+                    .filter_by(feedback_result_id=feedback_result.feedback_result_id).first():
+                session.merge(_feedback_result)  # update existing
+            else:
+                session.add(_feedback_result)  # insert new result
             return _feedback_result.feedback_result_id
 
     def get_feedback(
@@ -161,7 +177,7 @@ def _extract_feedback_results(results: Iterable[orm.FeedbackResult]) -> pd.DataF
         return (
             _result.record_id, _result.feedback_result_id, _result.feedback_definition_id,
             _result.last_ts, FeedbackResultStatus(_result.status), _result.error, _result.name,
-            _result.result, _result.multi_result,_result.cost_json, json.loads(_result.record.perf_json),
+            _result.result, _result.multi_result, _result.cost_json, json.loads(_result.record.perf_json),
             json.loads(_result.calls_json)["calls"], json.loads(_result.feedback_definition.feedback_json),
             json.loads(_result.record.record_json), app_json, _type,
         )
