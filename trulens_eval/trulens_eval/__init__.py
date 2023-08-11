@@ -12,7 +12,7 @@ otherwise you might get circular import errors.
 
 - all UI/dashboard components
 
-- `tru_chain.py` 
+- `tru_chain.py` `tru_custom_app.py`
 
 - `tru_llama.py` (note: llama_index uses langchain internally for some things)
 
@@ -45,6 +45,8 @@ otherwise you might get circular import errors.
     - `groundedness.py` `groundtruth.py`
 
     - `feedback.py` `prompts.py`
+
+- `tru_basic_app.py` TODO: bad placement
 
 - `app.py`
 
