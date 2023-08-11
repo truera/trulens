@@ -1,9 +1,5 @@
-import logging
-
 from cohere.responses.classify import Example
 from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
-
-logger = logging.getLogger(__name__)
 
 LLM_GROUNDEDNESS = """You are a INFORMATION OVERLAP classifier; providing the overlap of information between two statements.
 Respond only as a number from 1 to 10 where 1 is no information overlap and 10 is all information is overlapping.

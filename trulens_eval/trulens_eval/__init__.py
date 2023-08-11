@@ -8,67 +8,65 @@ This top-level import should include everything to get started.
 Modules on lower lines should not import modules on same or above lines as
 otherwise you might get circular import errors.
 
+- `__init__.py`
+
+- all UI/dashboard components
+
+- `tru_chain.py` 
+
+- `tru_llama.py` (note: llama_index uses langchain internally for some things)
+
+- `tru.py`
+
+- `utils`
+
+    - `llama.py` `langchain.py` `trulens.py`
+
+- `feedback`
+
     - `__init__.py`
 
-    - all UI/dashboard components
-
-    - `tru_chain.py` 
-    
-    - `tru_llama.py` (note: llama_index uses langchain internally for some things)
-
-    - `tru.py`
-
-    - `utils`
-
-        - `llama.py` `langchain.py` `trulens.py`
-
-    - `feedback`
+    - `provider`
 
         - `__init__.py`
 
-        - `provider`
+        - `endpoint`
 
             - `__init__.py`
 
-            - `endpoint`
+            - `openai.py` `hugs.py`
 
-                - `__init__.py`
+            - `base.py` 
 
-                - `base.py` 
+        - `hugs.py` `openai.py` `cohere.py`
 
-                - `openai.py` `hugs.py`
+        - `base.py`
 
-            - `base.py`
+    - `groundedness.py` `groundtruth.py`
 
-            - `hugs.py` `openai.py` `cohere.py`
-            
-        - `feedback.py`
+    - `feedback.py` `prompts.py`
 
-        - `groundedness.py` `groundtruth.py`
+- `app.py`
 
-        - `prompts.py`
+- `db.py`
 
-    - `app.py`
+- `instruments.py`
 
-    - `db.py`
+- `schema.py`
 
-    - `instruments.py`
+- `util.py` 
 
-    - `schema.py`
-    
-    - `util.py` 
-    
-    - `keys.py`
+- `keys.py`
 
-    - `utils`
-    
-        - `python.py` `text.py` `generated.py`
+- `utils`
 
-    TO PLACE
+    - `python.py` `text.py` `generated.py`
 
-    `utils/command_line.py`
-    `utils/notebook_utils.py`
-    `utils/__init__.py`
+TO PLACE
+
+`utils/command_line.py`
+`utils/notebook_utils.py`
+`utils/__init__.py`
 
 """
 
