@@ -143,7 +143,7 @@ def migrate_legacy_sqlite(engine: Engine):
         # 3. Copy records from original database to staging
         src_conn = sqlite3.connect(original_file)
         tgt_conn = sqlite3.connect(stg_file)
-        for table in ["apps", "feedback_defs", "records", "feedbacks"]:
+        for table in ["meta", "apps", "feedback_defs", "records", "feedbacks"]:
             logger.info("Copying table '%s'", table)
             df = pd.read_sql(f"SELECT * FROM {table}", src_conn)
             for col in ["ts", "last_ts"]:

@@ -25,10 +25,6 @@ class VariableSettingPreprocessor(ExecutePreprocessor):
         self.code_to_run_before_each_cell = "\n".join(
             code_to_run_before_each_cell
         ) + "\n"
-        try:
-            os.remove("./default.sqlite")
-        except OSError:
-            pass
 
     def preprocess_cell(self, cell, resources, index, **kwargs):
         if cell["cell_type"] == "code":
