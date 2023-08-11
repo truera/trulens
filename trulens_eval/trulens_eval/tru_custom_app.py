@@ -302,7 +302,7 @@ class TruCustomApp(App):
         for f in TruCustomApp.functions_to_instrument:
             obj_ids_methods_and_full_paths = list(self._get_methods_for_func(f))
 
-            if len(methods_and_full_paths) == 0:
+            if len(obj_ids_methods_and_full_paths) == 0:
                 logger.warning(
                     f"Function {f} was not found during instrumentation walk. "
                     f"Make sure it is accessible by traversing app {app} "
@@ -310,7 +310,7 @@ class TruCustomApp(App):
                 )
 
             else:
-                for obj_id, m, full_path in methods_and_full_paths:
+                for obj_id, m, full_path inobj_ids_methods_and_full_paths:
                     try:
                         next(full_path(json))
 
