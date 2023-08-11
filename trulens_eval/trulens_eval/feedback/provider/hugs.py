@@ -1,8 +1,18 @@
-
+import logging
+from multiprocessing.pool import AsyncResult
 from typing import Dict
-from trulens_eval.trulens_eval.provider import Provider
-from trulens_eval.trulens_eval.provider.endpoint import Endpoint, HuggingfaceEndpoint
 
+import numpy as np
+
+from trulens_eval.trulens_eval.feedback import prompts
+from trulens_eval.trulens_eval.keys import get_cohere_agent
+from trulens_eval.trulens_eval.provider import Provider
+from trulens_eval.trulens_eval.provider.endpoint.endpoint import Endpoint
+from trulens_eval.trulens_eval.provider.endpoint.endpoint import \
+    HuggingfaceEndpoint
+from trulens_eval.trulens_eval.util import TP
+
+logger = logging.getLogger(__name__)
 
 # Cannot put these inside Huggingface since it interferes with pydantic.BaseModel.
 
@@ -196,7 +206,7 @@ class Cohere(Provider):
                 lambda: get_cohere_agent().classify(
                     model=self.model_engine,
                     inputs=[text],
-                    examples=feedback_prompts.COHERE_SENTIMENT_EXAMPLES
+                    examples=prompts.COHERE_SENTIMENT_EXAMPLES
                 )[0].prediction
             )
         )
@@ -207,7 +217,7 @@ class Cohere(Provider):
                 lambda: get_cohere_agent().classify(
                     model=self.model_engine,
                     inputs=[text],
-                    examples=feedback_prompts.COHERE_NOT_DISINFORMATION_EXAMPLES
+                    examples=prompts.COHERE_NOT_DISINFORMATION_EXAMPLES
                 )[0].prediction
             )
         )

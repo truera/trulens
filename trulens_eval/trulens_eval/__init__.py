@@ -18,13 +18,29 @@ otherwise you might get circular import errors.
 
     - `tru.py`
 
+    - `utils`
+
+        - `llama.py` `langchain.py` `trulens.py`
+
     - `feedback`
 
         - `__init__.py`
 
-        - `groundedness.py`
+        - `provider`
 
-        - `groundtruth.py`
+            - `__init__.py`
+
+            - `endpoint`
+
+                - `__init__.py`
+
+                - `endpoint.py` 
+
+                - `openai.py` `hugs.py`
+
+            - `hugs.py` `openai.py`
+
+        - `groundedness.py` `groundtruth.py`
 
         - `prompts.py`
 
@@ -34,33 +50,20 @@ otherwise you might get circular import errors.
 
     - `instruments.py`
 
-    - `provider`
-
-        - `__init__.py`
-
-        - `endpoint.py` 
-
-        - `hugs.py`
-
-        - `openai.py`
-
     - `schema.py`
-
+    
     - `util.py` 
     
     - `keys.py`
 
-    - `utils/python.py` `utils/text.py`
+    - `utils`
+    
+        - `python.py` `text.py` `generated.py`
 
     TO PLACE
 
-    `utils/llama.py`
-    `utils/langchain.py`
-    `utils/trulenx.py`
-
     `utils/command_line.py`
     `utils/notebook_utils.py`
-
     `utils/__init__.py`
 
 """

@@ -1,8 +1,15 @@
-from trulens_eval.trulens_eval.keys import set_openai_key
-from trulens_eval.trulens_eval.provider import Provider
-from trulens_eval.trulens_eval.provider.endpoint import Endpoint, OpenAIEndpoint
+import logging
 
 import openai
+
+from trulens_eval.trulens_eval.feedback import prompts
+from trulens_eval.trulens_eval.keys import set_openai_key
+from trulens_eval.trulens_eval.provider import Provider
+from trulens_eval.trulens_eval.provider.endpoint.endpoint import Endpoint
+from trulens_eval.trulens_eval.provider.endpoint.endpoint import OpenAIEndpoint
+from trulens_eval.trulens_eval.utils.generated import re_1_10_rating
+
+logger = logging.getLogger(__name__)
 
 class OpenAI(Provider):
     model_engine: str
@@ -186,7 +193,7 @@ class OpenAI(Provider):
                             "system",
                         "content":
                             str.format(
-                                feedback_prompts.SYSTEM_FIND_SUPPORTING,
+                                prompts.SYSTEM_FIND_SUPPORTING,
                                 prompt=full_source,
                             )
                     }, {
@@ -194,7 +201,7 @@ class OpenAI(Provider):
                             "user",
                         "content":
                             str.format(
-                                feedback_prompts.USER_FIND_SUPPORTING,
+                                prompts.USER_FIND_SUPPORTING,
                                 response=hypothesis
                             )
                     }
@@ -213,7 +220,7 @@ class OpenAI(Provider):
         Returns:
             float: Information Overlap
         """
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -224,7 +231,7 @@ class OpenAI(Provider):
                                 "system",
                             "content":
                                 str.format(
-                                    feedback_prompts.LLM_GROUNDEDNESS,
+                                    prompts.LLM_GROUNDEDNESS,
                                     premise=premise,
                                     hypothesis=hypothesis,
                                 )
@@ -254,14 +261,14 @@ class OpenAI(Provider):
                             "system",
                         "content":
                             str.format(
-                                feedback_prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,
+                                prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,
                             )
                     }, {
                         "role":
                             "user",
                         "content":
                             str.format(
-                                feedback_prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
+                                prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
                                 premise=premise,
                                 hypothesis=hypothesis
                             )
@@ -283,7 +290,7 @@ class OpenAI(Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
             "relevant".
         """
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -294,7 +301,7 @@ class OpenAI(Provider):
                                 "system",
                             "content":
                                 str.format(
-                                    feedback_prompts.QS_RELEVANCE,
+                                    prompts.QS_RELEVANCE,
                                     question=question,
                                     statement=statement
                                 )
@@ -317,7 +324,7 @@ class OpenAI(Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
             "relevant".
         """
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -328,7 +335,7 @@ class OpenAI(Provider):
                                 "system",
                             "content":
                                 str.format(
-                                    feedback_prompts.PR_RELEVANCE,
+                                    prompts.PR_RELEVANCE,
                                     prompt=prompt,
                                     response=response
                                 )
@@ -352,7 +359,7 @@ class OpenAI(Provider):
             being "positive sentiment".
         """
 
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -360,7 +367,7 @@ class OpenAI(Provider):
                     messages=[
                         {
                             "role": "system",
-                            "content": feedback_prompts.SENTIMENT_SYSTEM_PROMPT
+                            "content": prompts.SENTIMENT_SYSTEM_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -395,7 +402,7 @@ class OpenAI(Provider):
                 messages=[
                     {
                         "role": "system",
-                        "content": feedback_prompts.CORRECT_SYSTEM_PROMPT
+                        "content": prompts.CORRECT_SYSTEM_PROMPT
                     }, {
                         "role": "user",
                         "content": prompt
@@ -406,7 +413,7 @@ class OpenAI(Provider):
         agreement_txt = self._get_answer_agreement(
             prompt, response, oai_chat_response, self.model_engine
         )
-        return _re_1_10_rating(agreement_txt) / 10
+        return re_1_10_rating(agreement_txt) / 10
 
     def conciseness(self, text: str) -> float:
         """
@@ -422,7 +429,7 @@ class OpenAI(Provider):
             being "concise".
         """
 
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -432,7 +439,7 @@ class OpenAI(Provider):
                             "role":
                                 "system",
                             "content":
-                                feedback_prompts.LANGCHAIN_CONCISENESS_PROMPT
+                                prompts.LANGCHAIN_CONCISENESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -456,7 +463,7 @@ class OpenAI(Provider):
             being "correct".
         """
 
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -466,7 +473,7 @@ class OpenAI(Provider):
                             "role":
                                 "system",
                             "content":
-                                feedback_prompts.LANGCHAIN_CORRECTNESS_PROMPT
+                                prompts.LANGCHAIN_CORRECTNESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -490,7 +497,7 @@ class OpenAI(Provider):
             being "coherent".
         """
 
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -500,7 +507,7 @@ class OpenAI(Provider):
                             "role":
                                 "system",
                             "content":
-                                feedback_prompts.LANGCHAIN_COHERENCE_PROMPT
+                                prompts.LANGCHAIN_COHERENCE_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -524,7 +531,7 @@ class OpenAI(Provider):
             being "not harmful".
         """
 
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -534,7 +541,7 @@ class OpenAI(Provider):
                             "role":
                                 "system",
                             "content":
-                                feedback_prompts.LANGCHAIN_HARMFULNESS_PROMPT
+                                prompts.LANGCHAIN_HARMFULNESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -558,7 +565,7 @@ class OpenAI(Provider):
             being "not malicious".
         """
 
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -568,7 +575,7 @@ class OpenAI(Provider):
                             "role":
                                 "system",
                             "content":
-                                feedback_prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
+                                prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -592,7 +599,7 @@ class OpenAI(Provider):
             being "helpful".
         """
 
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -602,7 +609,7 @@ class OpenAI(Provider):
                             "role":
                                 "system",
                             "content":
-                                feedback_prompts.LANGCHAIN_HELPFULNESS_PROMPT
+                                prompts.LANGCHAIN_HELPFULNESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -626,7 +633,7 @@ class OpenAI(Provider):
             being "not controversial".
         """
 
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -636,7 +643,7 @@ class OpenAI(Provider):
                             "role":
                                 "system",
                             "content":
-                                feedback_prompts.
+                                prompts.
                                 LANGCHAIN_CONTROVERSIALITY_PROMPT
                         }, {
                             "role": "user",
@@ -661,7 +668,7 @@ class OpenAI(Provider):
             being "not misogynist".
         """
 
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -671,7 +678,7 @@ class OpenAI(Provider):
                             "role":
                                 "system",
                             "content":
-                                feedback_prompts.LANGCHAIN_MISOGYNY_PROMPT
+                                prompts.LANGCHAIN_MISOGYNY_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -695,7 +702,7 @@ class OpenAI(Provider):
             being "not criminal".
         """
 
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -705,7 +712,7 @@ class OpenAI(Provider):
                             "role":
                                 "system",
                             "content":
-                                feedback_prompts.LANGCHAIN_CRIMINALITY_PROMPT
+                                prompts.LANGCHAIN_CRIMINALITY_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -729,7 +736,7 @@ class OpenAI(Provider):
             being "not insensitive".
         """
 
-        return _re_1_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -739,7 +746,7 @@ class OpenAI(Provider):
                             "role":
                                 "system",
                             "content":
-                                feedback_prompts.LANGCHAIN_INSENSITIVITY_PROMPT
+                                prompts.LANGCHAIN_INSENSITIVITY_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -761,7 +768,7 @@ class OpenAI(Provider):
                         "role":
                             "system",
                         "content":
-                            feedback_prompts.AGREEMENT_SYSTEM_PROMPT %
+                            prompts.AGREEMENT_SYSTEM_PROMPT %
                             (prompt, response)
                     }, {
                         "role": "user",

@@ -1,3 +1,19 @@
+import logging
+from typing import Callable, Dict, List, Optional, Tuple, Union
+
+import numpy as np
+import pydantic
+
+from trulens_eval.trulens_eval.feedback import _re_1_10_rating
+from trulens_eval.trulens_eval.provider import Provider
+from trulens_eval.trulens_eval.provider.openai import OpenAI
+from trulens_eval.trulens_eval.util import FunctionOrMethod
+from trulens_eval.trulens_eval.util import SerialModel
+from trulens_eval.trulens_eval.util import WithClassInfo
+
+logger = logging.getLogger(__name__)
+
+
 class GroundTruthAgreement(SerialModel, WithClassInfo):
     ground_truth: Union[List[str], FunctionOrMethod]
     provider: Provider
@@ -74,4 +90,5 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             )
         else:
             ret = np.nan
+
         return ret

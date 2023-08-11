@@ -1,3 +1,21 @@
+import logging
+from typing import Dict, List
+
+import numpy as np
+from tqdm.auto import tqdm
+
+from trulens_eval.trulens_eval.feedback import _re_1_10_rating
+from trulens_eval.trulens_eval.feedback import prompts
+from trulens_eval.trulens_eval.provider import Provider
+from trulens_eval.trulens_eval.provider.hugs import Huggingface
+from trulens_eval.trulens_eval.provider.openai import AzureOpenAI
+from trulens_eval.trulens_eval.provider.openai import OpenAI
+from trulens_eval.trulens_eval.util import SerialModel
+from trulens_eval.trulens_eval.util import WithClassInfo
+
+logger = logging.getLogger(__name__)
+
+
 class Groundedness(SerialModel, WithClassInfo):
     summarize_provider: Provider
     groundedness_provider: Provider
@@ -73,7 +91,7 @@ class Groundedness(SerialModel, WithClassInfo):
                         premise=source, hypothesis=hypothesis
                     )
                     reason = reason + str.format(
-                        feedback_prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                        prompts.GROUNDEDNESS_REASON_TEMPLATE,
                         statement_sentence=hypothesis,
                         supporting_evidence="[Doc NLI Used full source]",
                         score=score * 10,
@@ -118,7 +136,7 @@ class Groundedness(SerialModel, WithClassInfo):
                     premise=supporting_premise, hypothesis=hypothesis
                 )
                 reason = reason + str.format(
-                    feedback_prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                    prompts.GROUNDEDNESS_REASON_TEMPLATE,
                     statement_sentence=hypothesis,
                     supporting_evidence=supporting_premise,
                     score=score * 10,

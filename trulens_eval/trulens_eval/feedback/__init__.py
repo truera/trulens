@@ -395,61 +395,10 @@ You can inspect the components making up your app via the `App` method
 `print_instrumented`.
 """
 
-from datetime import datetime
-from inspect import Signature
-from inspect import signature
-import itertools
-import json
 import logging
-from multiprocessing.pool import AsyncResult
-import re
-import traceback
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
-)
-
-import numpy as np
-import openai
-import pydantic
-from tqdm import tqdm
-
-from trulens_eval.feedback import prompts
-from trulens_eval.keys import *
-from trulens_eval.provider_apis import Endpoint
-from trulens_eval.provider_apis import HuggingfaceEndpoint
-from trulens_eval.provider_apis import OpenAIEndpoint
-from trulens_eval.schema import AppDefinition
-from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackCall
-from trulens_eval.schema import FeedbackDefinition
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import FeedbackResultID
-from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.schema import Record
-from trulens_eval.schema import Select
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import JSON
-from trulens_eval.util import jsonify
-from trulens_eval.util import SerialModel
-from trulens_eval.util import TP
-from trulens_eval.util import WithClassInfo
-from trulens_eval.utils.text import UNICODE_CHECK
-from trulens_eval.utils.text import UNICODE_CLOCK
-from trulens_eval.utils.text import UNICODE_YIELD
-
-PROVIDER_CLASS_NAMES = ['OpenAI', 'Huggingface', 'Cohere']
+from typing import Any, Callable, Dict, Iterable, Tuple, Union
 
 logger = logging.getLogger(__name__)
-
-
-def check_provider(cls_or_name: Union[Type, str]) -> None:
-    if isinstance(cls_or_name, str):
-        cls_name = cls_or_name
-    else:
-        cls_name = cls_or_name.__name__
-
-    assert cls_name in PROVIDER_CLASS_NAMES, f"Unsupported provider class {cls_name}"
-
 
 # Signature of feedback implementations. Take in any number of arguments
 # and return either a single float or a float and a dictionary (of metadata).
@@ -458,28 +407,19 @@ ImpCallable = Callable[..., Union[float, Tuple[float, Dict[str, Any]]]]
 # Signature of aggregation functions.
 AggCallable = Callable[[Iterable[float]], float]
 
+# Main class holding and running feedback functions:
+from trulens_eval.feedback.feedback import Feedback
 
-pat_1_10 = re.compile(r"\s*([1-9][0-9]*)\s*")
-
-
-def _re_1_10_rating(str_val):
-    matches = pat_1_10.fullmatch(str_val)
-    if not matches:
-        # Try soft match
-        matches = re.search('[1-9][0-9]*', str_val)
-        if not matches:
-            logger.warn(f"1-10 rating regex failed to match on: '{str_val}'")
-            return -10  # so this will be reported as -1 after division by 10
-
-    return int(matches.group())
-
-
-# TODEP
+# Specific feedback functions:
 from trulens_eval.feedback.groundedness import Groundedness
 from trulens_eval.feedback.groundtruth import GroundTruthAgreement
+from trulens_eval.feedback.provider.hugs import Huggingface
 
-# TODEP
-from trulens_eval.provider.openai import OpenAI, AzureOpenAI
+# Providers of feedback functions evaluation:
+from trulens_eval.feedback.provider.openai import AzureOpenAI
+from trulens_eval.feedback.provider.openai import OpenAI
 
-# TODEP
-from trulens_eval.provider.hugs import Huggingface
+__all__ = [
+    'Feedback', 'Groundedness', 'GroundTruthAgreement', 'OpenAI', 'AzureOpenAI',
+    'Huggingface'
+]
