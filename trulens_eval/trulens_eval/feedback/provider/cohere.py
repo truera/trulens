@@ -1,6 +1,6 @@
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider import Provider
-from trulens_eval.feedback.provider.endpoint.endpoint import Endpoint
+from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.keys import get_cohere_agent
 
 
