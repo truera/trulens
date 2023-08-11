@@ -18,7 +18,15 @@ otherwise you might get circular import errors.
 
     - `tru.py`
 
-    - `feedback.py`
+    - `feedback`
+
+        - `__init__.py`
+
+        - `groundedness.py`
+
+        - `groundtruth.py`
+
+        - `prompts.py`
 
     - `app.py`
 
@@ -26,7 +34,15 @@ otherwise you might get circular import errors.
 
     - `instruments.py`
 
-    - `provider_apis.py` `feedback_prompts.py`
+    - `provider`
+
+        - `__init__.py`
+
+        - `endpoint.py` 
+
+        - `hugs.py`
+
+        - `openai.py`
 
     - `schema.py`
 
@@ -35,6 +51,18 @@ otherwise you might get circular import errors.
     - `keys.py`
 
     - `utils/python.py` `utils/text.py`
+
+    TO PLACE
+
+    `utils/llama.py`
+    `utils/langchain.py`
+    `utils/trulenx.py`
+
+    `utils/command_line.py`
+    `utils/notebook_utils.py`
+
+    `utils/__init__.py`
+
 """
 
 __version__ = "0.9.0"
