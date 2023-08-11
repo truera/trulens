@@ -34,11 +34,15 @@ otherwise you might get circular import errors.
 
                 - `__init__.py`
 
-                - `endpoint.py` 
+                - `base.py` 
 
                 - `openai.py` `hugs.py`
 
+            - `base.py`
+
             - `hugs.py` `openai.py` `cohere.py`
+            
+        - `feedback.py`
 
         - `groundedness.py` `groundtruth.py`
 

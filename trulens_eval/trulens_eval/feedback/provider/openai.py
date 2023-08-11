@@ -3,10 +3,10 @@ import logging
 import openai
 
 from trulens_eval.feedback import prompts
-from trulens_eval.keys import set_openai_key
-from trulens_eval.feedback.provider import Provider
-from trulens_eval.feedback.provider.endpoint import Endpoint
+from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
+from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.keys import set_openai_key
 from trulens_eval.utils.generated import re_1_10_rating
 
 logger = logging.getLogger(__name__)

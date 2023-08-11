@@ -4,10 +4,9 @@ from typing import Dict
 
 import numpy as np
 
-from trulens_eval.feedback.provider import Provider
-from trulens_eval.feedback.provider.endpoint import Endpoint
-from trulens_eval.feedback.provider.endpoint import \
-    HuggingfaceEndpoint
+from trulens_eval.feedback.provider.base import Provider
+from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
+from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.util import TP
 
 logger = logging.getLogger(__name__)
