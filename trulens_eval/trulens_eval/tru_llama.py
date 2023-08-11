@@ -2,28 +2,22 @@
 # Llama_index instrumentation and monitoring. 
 """
 
-from datetime import datetime
+
 from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-import traceback
-from typing import Any, Callable, ClassVar, Sequence, Tuple, Union
+from typing import Any, Callable, ClassVar, Tuple, Union
 
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.provider_apis import Endpoint
-from trulens_eval.provider_apis import OpenAIEndpoint
-from trulens_eval.schema import Cost
 from trulens_eval.schema import Record
-from trulens_eval.schema import RecordAppCall
 from trulens_eval.util import Class
 from trulens_eval.util import dict_set_with
 from trulens_eval.util import FunctionOrMethod
 from trulens_eval.util import JSONPath
-from trulens_eval.util import Method
 from trulens_eval.util import OptionalImports
 from trulens_eval.util import REQUIREMENT_LLAMA
 from trulens_eval.utils.llama import WithFeedbackFilterNodes
@@ -38,7 +32,7 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.chat_engine.types import BaseChatEngine
     from llama_index.chat_engine.types import AgentChatResponse, StreamingAgentChatResponse
     from llama_index.response.schema import Response, StreamingResponse, RESPONSE_TYPE
-    from llama_index.indices.query.schema import QueryBundle, QueryType
+    from llama_index.indices.query.schema import QueryType
 
 from trulens_eval.tru_chain import LangChainInstrument
 

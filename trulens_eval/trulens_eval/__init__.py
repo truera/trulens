@@ -38,7 +38,7 @@ otherwise you might get circular import errors.
 
                 - `openai.py` `hugs.py`
 
-            - `hugs.py` `openai.py`
+            - `hugs.py` `openai.py` `cohere.py`
 
         - `groundedness.py` `groundtruth.py`
 
@@ -73,7 +73,7 @@ __version__ = "0.9.0"
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Huggingface
 from trulens_eval.feedback import OpenAI
-from trulens_eval.feedback import Provider
+from trulens_eval.feedback.provider import Provider
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Query
 from trulens_eval.schema import Select

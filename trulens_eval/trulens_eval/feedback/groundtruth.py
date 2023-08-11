@@ -4,12 +4,13 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pydantic
 
-from trulens_eval.trulens_eval.feedback import _re_1_10_rating
-from trulens_eval.trulens_eval.provider import Provider
-from trulens_eval.trulens_eval.provider.openai import OpenAI
-from trulens_eval.trulens_eval.util import FunctionOrMethod
-from trulens_eval.trulens_eval.util import SerialModel
-from trulens_eval.trulens_eval.util import WithClassInfo
+
+from trulens_eval.feedback.provider import Provider
+from trulens_eval.feedback.provider.openai import OpenAI
+from trulens_eval.utils.generated import re_1_10_rating
+from trulens_eval.util import FunctionOrMethod
+from trulens_eval.util import SerialModel
+from trulens_eval.util import WithClassInfo
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +86,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             agreement_txt = self.provider._get_answer_agreement(
                 prompt, response, ground_truth_response
             )
-            ret = _re_1_10_rating(agreement_txt) / 10, dict(
+            ret = re_1_10_rating(agreement_txt) / 10, dict(
                 ground_truth_response=ground_truth_response
             )
         else:

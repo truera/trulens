@@ -24,8 +24,8 @@ from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
 from trulens_eval.keys import check_keys
-from trulens_eval.provider_apis import Endpoint
-from trulens_eval.provider_apis import OpenAIEndpoint
+from trulens_eval.feedback.provider_apis import Endpoint
+from trulens_eval.feedback.provider_apis import OpenAIEndpoint
 from trulens_eval.tru_chain import TruChain
 import trulens_eval.utils.python  # makes sure asyncio gets instrumented
 

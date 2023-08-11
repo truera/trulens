@@ -10,25 +10,24 @@ from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
 import numpy as np
 import pydantic
 
-from trulens_eval.trulens_eval.feedback import AggCallable
-from trulens_eval.trulens_eval.feedback import ImpCallable
-from trulens_eval.trulens_eval.provider.endpoint.endpoint import Endpoint
-from trulens_eval.trulens_eval.schema import AppDefinition
-from trulens_eval.trulens_eval.schema import Cost
-from trulens_eval.trulens_eval.schema import FeedbackCall
-from trulens_eval.trulens_eval.schema import FeedbackDefinition
-from trulens_eval.trulens_eval.schema import FeedbackResult
-from trulens_eval.trulens_eval.schema import FeedbackResultID
-from trulens_eval.trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.trulens_eval.schema import Record
-from trulens_eval.trulens_eval.schema import Select
-from trulens_eval.trulens_eval.util import FunctionOrMethod
-from trulens_eval.trulens_eval.util import JSON
-from trulens_eval.trulens_eval.util import jsonify
-from trulens_eval.trulens_eval.util import TP
-from trulens_eval.trulens_eval.utils.text import UNICODE_CHECK
-from trulens_eval.trulens_eval.utils.text import UNICODE_CLOCK
-from trulens_eval.trulens_eval.utils.text import UNICODE_YIELD
+from trulens_eval.feedback import AggCallable
+from trulens_eval.feedback import ImpCallable
+from trulens_eval.schema import AppDefinition
+from trulens_eval.schema import Cost
+from trulens_eval.schema import FeedbackCall
+from trulens_eval.schema import FeedbackDefinition
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import FeedbackResultID
+from trulens_eval.schema import FeedbackResultStatus
+from trulens_eval.schema import Record
+from trulens_eval.schema import Select
+from trulens_eval.util import FunctionOrMethod
+from trulens_eval.util import JSON
+from trulens_eval.util import jsonify
+from trulens_eval.util import TP
+from trulens_eval.utils.text import UNICODE_CHECK
+from trulens_eval.utils.text import UNICODE_CLOCK
+from trulens_eval.utils.text import UNICODE_YIELD
 
 logger = logging.getLogger(__name__)
 

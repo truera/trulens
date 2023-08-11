@@ -2,12 +2,12 @@ import logging
 
 import openai
 
-from trulens_eval.trulens_eval.feedback import prompts
-from trulens_eval.trulens_eval.keys import set_openai_key
-from trulens_eval.trulens_eval.provider import Provider
-from trulens_eval.trulens_eval.provider.endpoint.endpoint import Endpoint
-from trulens_eval.trulens_eval.provider.endpoint.endpoint import OpenAIEndpoint
-from trulens_eval.trulens_eval.utils.generated import re_1_10_rating
+from trulens_eval.feedback import prompts
+from trulens_eval.keys import set_openai_key
+from trulens_eval.feedback.provider import Provider
+from trulens_eval.feedback.provider.endpoint import Endpoint
+from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
+from trulens_eval.utils.generated import re_1_10_rating
 
 logger = logging.getLogger(__name__)
 

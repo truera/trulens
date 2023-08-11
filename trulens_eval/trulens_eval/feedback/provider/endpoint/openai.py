@@ -7,12 +7,12 @@ from langchain.schema import Generation
 from langchain.schema import LLMResult
 import pydantic
 
-from trulens_eval.trulens_eval.keys import _check_key
-from trulens_eval.trulens_eval.provider.endpoint.endpoint import Endpoint
-from trulens_eval.trulens_eval.provider.endpoint.endpoint import \
+from trulens_eval.keys import _check_key
+from trulens_eval.feedback.provider.endpoint.endpoint import Endpoint
+from trulens_eval.feedback.provider.endpoint.endpoint import \
     EndpointCallback
-from trulens_eval.trulens_eval.util import WithClassInfo
-from trulens_eval.trulens_eval.utils.text import UNICODE_CHECK
+from trulens_eval.util import WithClassInfo
+from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
 
