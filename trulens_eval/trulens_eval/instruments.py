@@ -262,8 +262,9 @@ import os
 from pprint import PrettyPrinter
 import threading as th
 import traceback
-from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
-                    Tuple)
+from typing import (
+    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
+)
 
 from pydantic import BaseModel
 
@@ -293,7 +294,9 @@ class WithInstrumentCallbacks:
     """
 
     # Called during instrumentation.
-    def _on_method_instrumented(self, obj: object, func: Callable, path: JSONPath):
+    def _on_method_instrumented(
+        self, obj: object, func: Callable, path: JSONPath
+    ):
         """
         Called by instrumentation system for every function requested to be
         instrumented. Given are the object of the class in which `func` belongs
@@ -313,7 +316,9 @@ class WithInstrumentCallbacks:
         raise NotImplementedError
 
     # WithInstrumentCallbacks requirement
-    def _get_methods_for_func(self, func: Callable) -> Iterable[Tuple[Callable, JSONPath]]:
+    def _get_methods_for_func(
+        self, func: Callable
+    ) -> Iterable[Tuple[Callable, JSONPath]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
@@ -419,7 +424,8 @@ class Instrument(object):
         self.include_methods = dict_merge_with(
             dict1=Instrument.Default.METHODS,
             dict2=include_methods,
-            merge=lambda f1, f2: lambda o: f1(o) or f2(o))
+            merge=lambda f1, f2: lambda o: f1(o) or f2(o)
+        )
 
         self.callbacks = callbacks
 
@@ -433,7 +439,9 @@ class Instrument(object):
 
         assert self.root_methods is not None, "Cannot instrument method without `root_methods`."
 
-        assert not hasattr(func, "__func__"), "Function expected but method received."
+        assert not hasattr(
+            func, "__func__"
+        ), "Function expected but method received."
 
         if hasattr(func, Instrument.INSTRUMENT):
             logger.debug(f"\t\t\t{query}: {func} is already instrumented")
@@ -442,7 +450,9 @@ class Instrument(object):
             # we store the method being instrumented in the attribute
             # Instrument.INSTRUMENT of the wrapped variant.
             original_func = getattr(func, Instrument.INSTRUMENT)
-            self.callbacks._on_method_instrumented(obj, original_func, path=query)
+            self.callbacks._on_method_instrumented(
+                obj, original_func, path=query
+            )
 
             return func
 
@@ -480,7 +490,6 @@ class Instrument(object):
                     key="record_and_app", func=find_root_methods, offset=1
                 )
             )
-
             """
             # TODO: ROOTLESS
 
@@ -525,7 +534,7 @@ class Instrument(object):
             # My own stacks to be looked up by further subcalls by the logic
             # right above. We make a copy here since we need subcalls to access
             # it but we don't want them to modify it.
-            stacks = dict() 
+            stacks = dict()
 
             start_time = None
             end_time = None
@@ -547,7 +556,9 @@ class Instrument(object):
                 rid = id(record)
 
                 # The path to this method according to the app.
-                path = app._get_method_path(args[0], func) # hopefully args[0] is self
+                path = app._get_method_path(
+                    args[0], func
+                )  # hopefully args[0] is self
 
                 if path is None:
                     logger.warning(
@@ -567,9 +578,9 @@ class Instrument(object):
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
                 )
 
-                stack = stack + (frame_ident, )
+                stack = stack + (frame_ident,)
 
-                stacks[rid] = stack # for deeper calls to get
+                stacks[rid] = stack  # for deeper calls to get
 
                 # Now we will call the wrapped method. We only do so once.
 
@@ -581,8 +592,6 @@ class Instrument(object):
                         # Using sig bind here so we can produce a list of key-value
                         # pairs even if positional arguments were provided.
                         bindings: BoundArguments = sig.bind(*args, **kwargs)
-                        
-
                         """
                         # TODO: ROOTLESS
                         # If this is a root call (first instrumented method), also track
@@ -604,7 +613,9 @@ class Instrument(object):
                         error = e
                         error_str = str(e)
 
-                        logger.error(f"Error calling wrapped function {func.__name__}.")
+                        logger.error(
+                            f"Error calling wrapped function {func.__name__}."
+                        )
                         logger.error(traceback.format_exc())
 
                     # Done running the wrapped function. Lets collect the results.
@@ -612,10 +623,10 @@ class Instrument(object):
 
                     # Don't include self in the recorded arguments.
                     nonself = {
-                        k: jsonify(v)
-                        for k, v in
-                        (bindings.arguments.items() if bindings is not None else {})
-                        if k != "self"
+                        k: jsonify(v) for k, v in (
+                            bindings.arguments.items(
+                            ) if bindings is not None else {}
+                        ) if k != "self"
                     }
 
                     row_args = dict(
@@ -629,12 +640,11 @@ class Instrument(object):
 
                 # End of run once condition.
 
-                # Note that only the stack differs between each of the records in this loop. 
+                # Note that only the stack differs between each of the records in this loop.
                 row_args['stack'] = stack
                 row = RecordAppCall(**row_args)
 
                 record.append(row)
-
                 """
                 # TODO: ROOTLESS
                 if is_root_call:
@@ -670,7 +680,6 @@ class Instrument(object):
                     key="record_and_app", func=find_root_methods, offset=1
                 )
             )
-
             """
             # TODO: ROOTLESS
 
@@ -715,7 +724,7 @@ class Instrument(object):
             # My own stacks to be looked up by further subcalls by the logic
             # right above. We make a copy here since we need subcalls to access
             # it but we don't want them to modify it.
-            stacks = dict() 
+            stacks = dict()
 
             start_time = None
             end_time = None
@@ -737,7 +746,9 @@ class Instrument(object):
                 rid = id(record)
 
                 # The path to this method according to the app.
-                path = app._get_method_path(args[0], func) # args[0] is owner of wrapped method, hopefully
+                path = app._get_method_path(
+                    args[0], func
+                )  # args[0] is owner of wrapped method, hopefully
 
                 if path is None:
                     logger.warning(
@@ -757,9 +768,9 @@ class Instrument(object):
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
                 )
 
-                stack = stack + (frame_ident, )
+                stack = stack + (frame_ident,)
 
-                stacks[rid] = stack # for deeper calls to get
+                stacks[rid] = stack  # for deeper calls to get
 
                 # Now we will call the wrapped method. We only do so once.
 
@@ -771,7 +782,6 @@ class Instrument(object):
                         # Using sig bind here so we can produce a list of key-value
                         # pairs even if positional arguments were provided.
                         bindings: BoundArguments = sig.bind(*args, **kwargs)
-
                         """
                         # TODO: ROOTLESS
                         # If this is a root call (first instrumented method), also track
@@ -793,7 +803,9 @@ class Instrument(object):
                         error = e
                         error_str = str(e)
 
-                        logger.error(f"Error calling wrapped function {func.__name__}.")
+                        logger.error(
+                            f"Error calling wrapped function {func.__name__}."
+                        )
                         logger.error(traceback.format_exc())
 
                     # Done running the wrapped function. Lets collect the results.
@@ -801,10 +813,10 @@ class Instrument(object):
 
                     # Don't include self in the recorded arguments.
                     nonself = {
-                        k: jsonify(v)
-                        for k, v in
-                        (bindings.arguments.items() if bindings is not None else {})
-                        if k != "self"
+                        k: jsonify(v) for k, v in (
+                            bindings.arguments.items(
+                            ) if bindings is not None else {}
+                        ) if k != "self"
                     }
 
                     row_args = dict(
@@ -818,12 +830,11 @@ class Instrument(object):
 
                 # End of run once condition.
 
-                # Note that only the stack differs between each of the records in this loop. 
+                # Note that only the stack differs between each of the records in this loop.
                 row_args['stack'] = stack
                 row = RecordAppCall(**row_args)
 
                 record.append(row)
-
                 """
                 # TODO: ROOTLESS
                 if is_root_call:
