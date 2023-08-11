@@ -310,7 +310,7 @@ class TruCustomApp(App):
                 )
 
             else:
-                for obj_id, m, full_path inobj_ids_methods_and_full_paths:
+                for obj_id, m, full_path in obj_ids_methods_and_full_paths:
                     try:
                         next(full_path(json))
 
