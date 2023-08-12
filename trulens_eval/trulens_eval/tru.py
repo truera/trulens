@@ -24,6 +24,8 @@ from trulens_eval.utils.notebook_utils import is_notebook
 from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_YIELD
+from trulens_eval.utils.text import UNICODE_SQUID
+
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +84,9 @@ class Tru(SingletonPerName):
         :param database_file: (Deprecated) Path to a local SQLite database file
         """
         if hasattr(self, "db"):
+            if database_url is not None or database_file is not None:
+                logger.warning(f"Tru was already initialized. Cannot change database_url={database_url} or database_file={database_file} .")
+
             # Already initialized by SingletonByName mechanism.
             return
 
@@ -91,7 +96,7 @@ class Tru(SingletonPerName):
         if database_file:
             warnings.warn(
                 DeprecationWarning(
-                    "`database_file` is deprecated, use `database_url` instead"
+                    "`database_file` is deprecated, use `database_url` instead as in `database_url='sqlite:///filename'."
                 )
             )
 
@@ -99,6 +104,8 @@ class Tru(SingletonPerName):
             database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
 
         self.db: SqlAlchemyDB = SqlAlchemyDB.from_db_url(database_url)
+
+        print(f"{UNICODE_SQUID} Tru initialized with db url {self.db.engine.url} .")
 
     def reset_database(self):
         """
@@ -109,7 +116,8 @@ class Tru(SingletonPerName):
 
     def migrate_database(self):
         """
-        Migrates the database. This should be run whenever there are breaking changes in a database created with an older version of trulens_eval.
+        Migrates the database. This should be run whenever there are breaking
+        changes in a database created with an older version of trulens_eval.
         """
 
         self.db.migrate_database()
@@ -228,7 +236,8 @@ class Tru(SingletonPerName):
 
     def get_records_and_feedback(self, app_ids: List[str]):
         """
-        Get records, their feeback results, and feedback names from the database. Pass an empty list of app_ids to return all.
+        Get records, their feeback results, and feedback names from the
+        database. Pass an empty list of app_ids to return all.
 
         ```python
         tru.get_records_and_feedback(app_ids=[])

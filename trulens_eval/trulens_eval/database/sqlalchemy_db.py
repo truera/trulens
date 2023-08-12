@@ -66,7 +66,10 @@ class SqlAlchemyDB(DB):
         return cls(engine_params={"url": url})
 
     def migrate_database(self):
-        """Migrate database schema to the latest revision"""
+        """
+        Migrate database schema to the latest revision.
+        """
+
         if is_legacy_sqlite(self.engine):
             migrate_legacy_sqlite(self.engine)
         else:
