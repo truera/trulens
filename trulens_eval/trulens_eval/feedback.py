@@ -410,6 +410,7 @@ from typing import (
 
 import numpy as np
 import openai
+import litellm
 import pydantic
 from tqdm import tqdm
 
@@ -1114,7 +1115,7 @@ class OpenAI(Provider):
     """
 
     def _create_chat_completion(self, *args, **kwargs):
-        return openai.ChatCompletion.create(*args, **kwargs)
+        return litellm.completion(*args, **kwargs)
 
     def _moderation(self, text: str):
         return self.endpoint.run_me(

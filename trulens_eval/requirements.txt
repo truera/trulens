@@ -1,6 +1,7 @@
 # common requirements
 python-dotenv
 langchain
+litellm
 sqlalchemy
 alembic
 typing-inspect==0.8.0 # langchain with python < 3.9 fix
