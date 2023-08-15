@@ -168,7 +168,6 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         )
 
         import os
-
         import openai
 
         for k, v in CONF_CLONE.items():
@@ -193,7 +192,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
                         os.environ[v] = attr_val
 
         # Will fail if key not set:
-        _check_key("OPENAI_API_KEY")
+        _check_key("OPENAI_API_KEY", silent=True)
 
         if hasattr(self, "name"):
             # Already created with SingletonPerName mechanism

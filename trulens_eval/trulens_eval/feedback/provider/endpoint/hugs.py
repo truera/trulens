@@ -63,7 +63,7 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
 
     def __init__(self, *args, **kwargs):
         # Will fail if key not set:
-        _check_key("HUGGINGFACE_API_KEY")
+        _check_key("HUGGINGFACE_API_KEY", silent=True)
 
         if hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
