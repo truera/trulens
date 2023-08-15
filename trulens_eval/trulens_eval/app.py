@@ -22,7 +22,7 @@ from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
 from trulens_eval.instruments import Instrument
 from trulens_eval.instruments import WithInstrumentCallbacks
-from trulens_eval.provider_apis import Endpoint
+from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackMode

@@ -526,7 +526,9 @@ def jsonify(
             cls=obj.__class__, with_bases=True
         ).dict()
 
-    if hasattr(obj, "jsonify_extra"):
+    if not isinstance(obj, JSONPath) and hasattr(obj, "jsonify_extra"):
+        # Problem with JSONPath and similar objects: they always say they have every attribute.
+
         content = obj.jsonify_extra(content)
 
     return content
@@ -673,6 +675,7 @@ class SerialModel(pydantic.BaseModel):
                 model = cls.model_validate(obj, **kwargs)
 
                 return WithClassInfo.of_model(model=model, cls=cls)
+            
             else:
                 print(
                     f"Warning: May not be able to properly reconstruct object {obj}."
@@ -1745,7 +1748,9 @@ class WithClassInfo(pydantic.BaseModel):
             assert cls is not None, "Either `class_info`, `obj` or `cls` need to be specified."
             class_info = Class.of_class(cls, with_bases=True)
 
-        super().__init__(__tru_class_info=class_info, **kwargs)
+        kwargs['__tru_class_info'] = class_info
+
+        super().__init__(**kwargs)
 
     @staticmethod
     def of_object(obj: object):

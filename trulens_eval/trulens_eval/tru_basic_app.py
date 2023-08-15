@@ -6,18 +6,18 @@ from datetime import datetime
 from inspect import BoundArguments, Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Sequence
+from typing import Callable, ClassVar, Sequence
 
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.provider_apis import Endpoint
+from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.schema import Cost
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.util import Class
 from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import jsonify
+
 
 logger = logging.getLogger(__name__)
 
