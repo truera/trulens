@@ -16,6 +16,10 @@ from sqlalchemy.orm import sessionmaker
 from trulens_eval import schema
 from trulens_eval.database import orm
 from trulens_eval.database.migrations import upgrade_db
+from trulens_eval.database.orm import AppDefinition
+from trulens_eval.database.orm import FeedbackDefinition
+from trulens_eval.database.orm import FeedbackResult
+from trulens_eval.database.orm import Record
 from trulens_eval.database.utils import check_db_revision
 from trulens_eval.database.utils import for_all_methods
 from trulens_eval.database.utils import is_legacy_sqlite
@@ -66,7 +70,10 @@ class SqlAlchemyDB(DB):
         return cls(engine_params={"url": url})
 
     def migrate_database(self):
-        """Migrate database schema to the latest revision"""
+        """
+        Migrate database schema to the latest revision.
+        """
+
         if is_legacy_sqlite(self.engine):
             migrate_legacy_sqlite(self.engine)
         else:
@@ -74,10 +81,14 @@ class SqlAlchemyDB(DB):
         self.reload_engine()  # let sqlalchemy recognize the migrated schema
 
     def reset_database(self):
-        raise NotImplementedError(
-            f"Resetting the database is not implemented for `{self.__class__}`. "
-            "Please perform this operation by connecting to the database directly"
-        )
+        deleted = 0
+        with self.Session.begin() as session:
+            deleted += session.query(AppDefinition).delete()
+            deleted += session.query(FeedbackDefinition).delete()
+            deleted += session.query(Record).delete()
+            deleted += session.query(FeedbackResult).delete()
+
+        print(f"Deleted {deleted} rows.")
 
     def insert_record(self, record: schema.Record) -> schema.RecordID:
         _rec = orm.Record.parse(record)
