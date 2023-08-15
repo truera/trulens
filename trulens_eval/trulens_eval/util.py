@@ -31,7 +31,7 @@ from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from enum import Enum
 import importlib
 import inspect
-from inspect import stack
+from inspect import stack, signature
 import itertools
 import json
 import logging
@@ -292,6 +292,29 @@ CLASS_INFO = "__tru_class_info"
 
 ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
 
+def callable_name(c: Callable):
+    if hasattr(c, "__name__"):
+        return c.__name__
+    elif hasattr(c, "__call__"):
+        return callable_name(c.__call__)
+    else:
+        return str(c)
+
+def safe_signature(func_or_obj: Any):
+    if hasattr(func_or_obj, "__call__"):
+        # If given an obj that is callable (has __call__ defined), we want to
+        # return signature of that call instead of letting inspect.signature
+        # explore that object further. Doing so may produce exceptions due to
+        # contents of those objects producing exceptions when attempting to
+        # retrieve them.
+
+        return signature(func_or_obj.__call__)
+
+    else:
+        assert isinstance(func_or_obj, Callable), f"Expected a Callable. Got {type(func_or_obj)} instead."
+
+        return signature(func_or_obj)
+
 
 def _safe_getattr(obj: Any, k: str) -> Any:
     """
@@ -503,7 +526,9 @@ def jsonify(
             cls=obj.__class__, with_bases=True
         ).dict()
 
-    if hasattr(obj, "jsonify_extra"):
+    if not isinstance(obj, JSONPath) and hasattr(obj, "jsonify_extra"):
+        # Problem with JSONPath and similar objects: they always say they have every attribute.
+
         content = obj.jsonify_extra(content)
 
     return content
@@ -650,6 +675,7 @@ class SerialModel(pydantic.BaseModel):
                 model = cls.model_validate(obj, **kwargs)
 
                 return WithClassInfo.of_model(model=model, cls=cls)
+            
             else:
                 print(
                     f"Warning: May not be able to properly reconstruct object {obj}."
@@ -1722,7 +1748,9 @@ class WithClassInfo(pydantic.BaseModel):
             assert cls is not None, "Either `class_info`, `obj` or `cls` need to be specified."
             class_info = Class.of_class(cls, with_bases=True)
 
-        super().__init__(__tru_class_info=class_info, **kwargs)
+        kwargs['__tru_class_info'] = class_info
+
+        super().__init__(**kwargs)
 
     @staticmethod
     def of_object(obj: object):
