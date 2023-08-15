@@ -45,6 +45,7 @@ class LangChainInstrument(Instrument):
             langchain.prompts.base.BasePromptTemplate,
             langchain.schema.BaseMemory,  # no methods instrumented
             langchain.schema.BaseChatMessageHistory,  # subclass of above
+            # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
             WithFeedbackFilterDocuments
         }
 
