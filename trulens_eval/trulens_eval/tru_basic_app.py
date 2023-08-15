@@ -83,6 +83,9 @@ class TruBasicApp(App):
 
         super().__init__(**kwargs)
 
+        # Setup the DB-related things:
+        self.post_init()
+
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
