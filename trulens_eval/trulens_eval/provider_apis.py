@@ -21,6 +21,7 @@ import requests
 from trulens_eval.keys import _check_key
 from trulens_eval.keys import get_huggingface_headers
 from trulens_eval.schema import Cost
+from trulens_eval.keys import ApiKeyError
 from trulens_eval.util import get_first_local_in_call_stack
 from trulens_eval.util import JSON
 from trulens_eval.util import SerialModel
@@ -341,8 +342,8 @@ class Endpoint(SerialModel, SingletonPerName):
             try:
                 e = OpenAIEndpoint()
                 endpoints.append(e)
-            except:
-                logger.warning(
+            except ApiKeyError:
+                logger.debug(
                     "OpenAI API keys are not set. "
                     "Will not track usage."
                 )
@@ -351,8 +352,8 @@ class Endpoint(SerialModel, SingletonPerName):
             try:
                 e = HuggingfaceEndpoint()
                 endpoints.append(e)
-            except:
-                logger.warning(
+            except ApiKeyError:
+                logger.debug(
                     "Huggingface API keys are not set. "
                     "Will not track usage."
                 )
@@ -376,7 +377,7 @@ class Endpoint(SerialModel, SingletonPerName):
             try:
                 e = OpenAIEndpoint()
                 endpoints.append(e)
-            except:
+            except ApiKeyError:
                 logger.debug(
                     "OpenAI API keys are not set. "
                     "Will not track usage."
@@ -386,7 +387,7 @@ class Endpoint(SerialModel, SingletonPerName):
             try:
                 e = HuggingfaceEndpoint()
                 endpoints.append(e)
-            except:
+            except ApiKeyError:
                 logger.debug(
                     "Huggingface API keys are not set. "
                     "Will not track usage."
@@ -943,7 +944,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
                         os.environ[v] = attr_val
 
         # Will fail if key not set:
-        _check_key("OPENAI_API_KEY")
+        _check_key("OPENAI_API_KEY", silent=True)
 
         if hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
@@ -994,7 +995,7 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
 
     def __init__(self, *args, **kwargs):
         # Will fail if key not set:
-        _check_key("HUGGINGFACE_API_KEY")
+        _check_key("HUGGINGFACE_API_KEY", silent=True)
 
         if hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
