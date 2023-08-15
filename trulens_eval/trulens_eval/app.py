@@ -372,11 +372,18 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         signature `sig` if it is to be called with the given bindings
         `bindings`.
         """
+
+        all_args = list(bindings.arguments.values())
+
+        # If there is only one arg, it is a pretty good guess that it is the
+        # main input.
+        if len(all_args) == 1:
+            return all_args[0]
+
+        # Otherwise we are not sure.
         logger.warning(
             f"Unsure what the main input string is for the call to {func.__name__}."
         )
-
-        all_args = list(bindings.arguments.values())
 
         if len(all_args) > 0:
             return all_args[0]
