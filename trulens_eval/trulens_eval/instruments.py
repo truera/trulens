@@ -269,7 +269,6 @@ from typing import (
 from pydantic import BaseModel
 
 from trulens_eval.feedback import Feedback
-from trulens_eval.provider_apis import Endpoint
 from trulens_eval.schema import Cost
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Query

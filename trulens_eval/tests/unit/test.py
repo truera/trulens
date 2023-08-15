@@ -34,7 +34,7 @@ class JSONTestCase(TestCase):
 
         if isinstance(j1, JSON_BASES):
             if isinstance(j1, (int, float)):
-                self.assertAlmostEqual(j1, j2, places=numeric_places)
+                self.assertAlmostEqual(j1, j2, places=numeric_places, msg=ps)
             else:
                 self.assertEqual(j1, j2, ps)
 

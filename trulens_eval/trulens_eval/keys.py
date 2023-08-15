@@ -61,7 +61,7 @@ openai.api_key = "something"
   `check_keys` check:
 
 ```python
-from trulens_eval.provider_apis import OpenAIEndpoint
+from trulens_eval.feedback.provider_apis import OpenAIEndpoint
 openai_endpoint = OpenAIEndpoint(api_key="something")
 ```
 
@@ -274,7 +274,7 @@ def _check_key(k: str, v: str = None, silent: bool = False) -> None:
   - in your variable environment, 
   - in a .env file in {Path.cwd()} or its parents,
   - explicitly passed to function `check_or_set_keys` of `trulens_eval.keys`,
-  - passed to the endpoint or feedback collection constructor that needs it (`trulens_eval.provider_apis.OpenAIEndpoint`, etc.), or
+  - passed to the endpoint or feedback collection constructor that needs it (`trulens_eval.feedback.provider_apis.OpenAIEndpoint`, etc.), or
   - set in api utility class that expects it (i.e. `openai`, etc.).
 
 For the last two options, the name of the argument may differ from {k} (i.e. `openai.api_key` for `OPENAI_API_KEY`).

@@ -14,6 +14,9 @@ test-database:
 	$(CONDA); python -m unittest discover tests.integration.test_database
 	docker compose --file docker/test-database.yaml down
 
+test-feedback:
+	$(CONDA); python -m unittest tests.unit.test_feedback
+
 test-tru-chain:
 	$(CONDA); python -m unittest tests.unit.test_tru_chain
 

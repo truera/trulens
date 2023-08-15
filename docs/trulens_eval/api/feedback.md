@@ -1,3 +1,1 @@
-# Feedback Functions
-
-::: trulens_eval.trulens_eval.feedback
+../../../trulens_eval/trulens_eval/feedback/README.md
