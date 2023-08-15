@@ -31,7 +31,7 @@ from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from enum import Enum
 import importlib
 import inspect
-from inspect import stack
+from inspect import stack, signature
 import itertools
 import json
 import logging
@@ -291,6 +291,29 @@ ERROR = "__tru_property_error"
 CLASS_INFO = "__tru_class_info"
 
 ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
+
+def callable_name(c: Callable):
+    if hasattr(c, "__name__"):
+        return c.__name__
+    elif hasattr(c, "__call__"):
+        return callable_name(c.__call__)
+    else:
+        return str(c)
+
+def safe_signature(func_or_obj: Any):
+    if hasattr(func_or_obj, "__call__"):
+        # If given an obj that is callable (has __call__ defined), we want to
+        # return signature of that call instead of letting inspect.signature
+        # explore that object further. Doing so may produce exceptions due to
+        # contents of those objects producing exceptions when attempting to
+        # retrieve them.
+
+        return signature(func_or_obj.__call__)
+
+    else:
+        assert isinstance(func_or_obj, Callable), f"Expected a Callable. Got {type(func_or_obj)} instead."
+
+        return signature(func_or_obj)
 
 
 def _safe_getattr(obj: Any, k: str) -> Any:

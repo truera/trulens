@@ -317,7 +317,7 @@ class WithInstrumentCallbacks:
     # WithInstrumentCallbacks requirement
     def _get_methods_for_func(
         self, func: Callable
-    ) -> Iterable[Tuple[Callable, JSONPath]]:
+    ) -> Iterable[Tuple[int, Callable, JSONPath]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
@@ -561,7 +561,7 @@ class Instrument(object):
 
                 if path is None:
                     logger.warning(
-                        f"App of type {type(app)} no longer knows about object {id(args[0])} {func}."
+                        f"App of type {type(app)} no longer knows about Object 0x{id(args[0]):x} method {func}."
                     )
                     continue
 
@@ -751,7 +751,7 @@ class Instrument(object):
 
                 if path is None:
                     logger.warning(
-                        f"App of type {type(app)} no longer knows about object {id(args[0])} {func}."
+                        f"App of type {type(app)} no longer knows about Object 0x{id(args[0]):x} method {func}."
                     )
                     continue
 

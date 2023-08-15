@@ -43,7 +43,7 @@ from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
 from trulens_eval.util import SerialModel
-from trulens_eval.util import TP
+from trulens_eval.util import TP, safe_signature, callable_name
 
 logger = logging.getLogger(__name__)
 
@@ -382,7 +382,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         # Otherwise we are not sure.
         logger.warning(
-            f"Unsure what the main input string is for the call to {func.__name__}."
+            f"Unsure what the main input string is for the call to {callable_name(func)}."
         )
 
         if len(all_args) > 0:
@@ -403,7 +403,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
             return ret
 
         logger.warning(
-            f"Unsure what the main output string is for the call to {func.__name__}."
+            f"Unsure what the main output string is for the call to {callable_name(func)}."
         )
 
         if isinstance(ret, Dict):
@@ -454,13 +454,13 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
     # WithInstrumentCallbacks requirement
     def _get_methods_for_func(
         self, func: Callable
-    ) -> Iterable[Tuple[Callable, JSONPath]]:
+    ) -> Iterable[Tuple[int, Callable, JSONPath]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
         """
 
-        for ids, funcs in self.instrumented_methods.items():
+        for _id, funcs in self.instrumented_methods.items():
             for f, path in funcs.items():
                 """
                 # TODO: wider wrapping support
@@ -470,7 +470,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
                 else:
                 """
                 if f == func:
-                    yield (f, path)
+                    yield (_id, f, path)
 
     # WithInstrumentCallbacks requirement
     def _get_method_path(self, obj: object, func: Callable) -> JSONPath:
@@ -481,9 +481,40 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         funcs = self.instrumented_methods.get(id(obj))
 
         if funcs is None:
-            return None
+            logger.warning(f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. The path of this call may be incorrect.")
+            try:
+                _id, f, path = next(iter(self._get_methods_for_func(func)))
+            except Exception:
+                logger.warning("No other objects use this function so cannot guess path.")
+                return None
+
+            logger.warning(f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function.")
+
+            funcs = {func:path}
+
+            self.instrumented_methods[id(obj)] = funcs
+
+            return path
+
         else:
-            return funcs.get(func)
+            if func not in funcs:
+                logger.warning(f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. The path of this call may be incorrect.")
+
+                try:
+                    _id, f, path = next(iter(self._get_methods_for_func(func)))
+                except Exception:
+                    logger.warning("No other objects use this function so cannot guess path.")
+                    return None
+
+                logger.warning(f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function.")
+
+                return path
+
+            else:
+
+                return funcs.get(func)
+
+
 
     """
     # TODO: ROOTLESS
@@ -560,7 +591,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         start_time = datetime.now()
 
         try:
-            sig = signature(func)
+            sig = safe_signature(func)
             bindings = sig.bind(*args, **kwargs)
 
             main_in = self.main_input(func, sig, bindings)
@@ -631,7 +662,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         start_time = datetime.now()
 
         try:
-            sig = signature(func)
+            sig = safe_signature(func)
 
             bindings = sig.bind(*args, **kwargs)
 
@@ -654,7 +685,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
             logger.warning(
                 "No intrumented methods called. "
                 "This may be due to missing instrumentation of relevant methods. "
-                f"Methods currently instrumented are: {list(self.instrumented_methods.keys())}"
+                f"Methods currently instrumented are: \n{self.format_instrumented_methods()}"
             )
             raise RuntimeError("Empty record.")
 
@@ -777,19 +808,20 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         print("\nMethods:")
         self.print_instrumented_methods()
 
-    def print_instrumented_methods(self) -> None:
-        """
-        Print instrumented components and their categories.
-        """
-        print(
-            "\n".join(
+    def format_instrumented_methods(self) -> None:
+        return "\n".join(
                 f"Object at 0x{obj:x}:\n\t" + "\n\t".join(
                     f"{m} with path {Select.App + path}"
                     for m, path in p.items()
                 )
                 for obj, p in self.instrumented_methods.items()
             )
-        )
+
+    def print_instrumented_methods(self) -> None:
+        """
+        Print instrumented components and their categories.
+        """
+        print(self.format_instrumented_methods())
 
     def print_instrumented_components(self) -> None:
         """
