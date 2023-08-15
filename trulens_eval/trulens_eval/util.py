@@ -681,7 +681,7 @@ class SerialModel(pydantic.BaseModel):
                     f"Warning: May not be able to properly reconstruct object {obj}."
                 )
 
-                return super.model_validate(obj, **kwargs)
+                return super().model_validate(obj, **kwargs)
 
     def update(self, **d):
         for k, v in d.items():
