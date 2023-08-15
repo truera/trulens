@@ -3,7 +3,7 @@ import streamlit as st
 from ux.add_logo import add_logo
 
 from trulens_eval import Tru
-from trulens_eval.provider_apis import DEFAULT_RPM
+from trulens_eval.feedback.provider.endpoint.base import DEFAULT_RPM
 from trulens_eval.schema import FeedbackResultStatus
 
 st.set_page_config(page_title="Feedback Progress", layout="wide")

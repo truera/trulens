@@ -77,7 +77,7 @@ def component_of_json(json: JSON) -> app.LangChainComponent:
 
     return view(json)
 
-
+# TODEP
 class Is:
     """
     TODO: DEPRECATE: Replacing with component view types.

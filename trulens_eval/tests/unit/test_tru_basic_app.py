@@ -28,7 +28,7 @@ class TestTruBasicApp(JSONTestCase):
         self.tru.migrate_database()
 
         # Reset database here.
-        # self.tru.reset_database()
+        self.tru.reset_database()
 
         self.basic_app = custom_application
 

@@ -328,9 +328,12 @@ class FeedbackResult(SerialModel):
         self.feedback_result_id = feedback_result_id
 
 
-class FeedbackDefinition(SerialModel):
+class FeedbackDefinition(SerialModel, WithClassInfo):
     # Serialized parts of a feedback function. The non-serialized parts are in
     # the feedback.py:Feedback class.
+
+    class Config:
+        arbitrary_types_allowed = True
 
     # Implementation serialization info.
     implementation: Optional[Union[Function, Method]] = None
@@ -353,7 +356,8 @@ class FeedbackDefinition(SerialModel):
         implementation: Optional[Union[Function, Method]] = None,
         aggregator: Optional[Union[Function, Method]] = None,
         selectors: Dict[str, JSONPath] = None,
-        supplied_name: Optional[str] = None
+        supplied_name: Optional[str] = None,
+        **kwargs
     ):
         """
         - selectors: Optional[Dict[str, JSONPath]] -- mapping of implementation
@@ -370,12 +374,16 @@ class FeedbackDefinition(SerialModel):
 
         selectors = selectors or dict()
 
+        # for WithClassInfo:
+        kwargs['obj'] = self
+
         super().__init__(
             feedback_definition_id="temporary",
             selectors=selectors,
             implementation=implementation,
             aggregator=aggregator,
             supplied_name=supplied_name,
+            **kwargs
         )
 
         if feedback_definition_id is None:

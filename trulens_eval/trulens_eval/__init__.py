@@ -8,33 +8,68 @@ This top-level import should include everything to get started.
 Modules on lower lines should not import modules on same or above lines as
 otherwise you might get circular import errors.
 
+- `__init__.py`
+
+- all UI/dashboard components
+
+- `tru_chain.py` `tru_custom_app.py`
+
+- `tru_llama.py` (note: llama_index uses langchain internally for some things)
+
+- `tru.py`
+
+- `utils`
+
+    - `llama.py` `langchain.py` `trulens.py`
+
+- `feedback`
+
     - `__init__.py`
 
-    - all UI/dashboard components
+    - `provider`
 
-    - `tru_chain.py` 
-    
-    - `tru_llama.py` (note: llama_index uses langchain internally for some things)
+        - `__init__.py`
 
-    - `tru.py`
+        - `endpoint`
 
-    - `feedback.py`
+            - `__init__.py`
 
-    - `app.py`
+            - `openai.py` `hugs.py`
 
-    - `db.py`
+            - `base.py` 
 
-    - `instruments.py`
+        - `hugs.py` `openai.py` `cohere.py`
 
-    - `provider_apis.py` `feedback_prompts.py`
+        - `base.py`
 
-    - `schema.py`
+    - `groundedness.py` `groundtruth.py`
 
-    - `util.py` 
-    
-    - `keys.py`
+    - `feedback.py` `prompts.py`
 
-    - `utils/python.py` `utils/text.py`
+- `tru_basic_app.py` TODO: bad placement
+
+- `app.py`
+
+- `db.py`
+
+- `instruments.py`
+
+- `schema.py`
+
+- `util.py` 
+
+- `keys.py`
+
+- `utils`
+
+    - `python.py` `text.py` `generated.py`
+
+TO PLACE
+
+`utils/command_line.py`
+`utils/notebook_utils.py`
+`utils/__init__.py`
+
 """
 
 __version__ = "0.9.0"
@@ -42,7 +77,7 @@ __version__ = "0.9.0"
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Huggingface
 from trulens_eval.feedback import OpenAI
-from trulens_eval.feedback import Provider
+from trulens_eval.feedback.provider import Provider
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Query
 from trulens_eval.schema import Select
