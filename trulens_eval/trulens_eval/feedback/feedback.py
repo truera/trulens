@@ -143,8 +143,9 @@ class Feedback(FeedbackDefinition):
         Returns a new Feedback object with this specification.
         """
 
-        ret = Feedback().parse_obj(self)
+        ret = Feedback.parse_obj(self)
         ret._default_selectors()
+
         return ret
 
     def _print_guessed_selector(self, par_name, par_path):
@@ -199,6 +200,8 @@ class Feedback(FeedbackDefinition):
                 f"Cannot determine default paths for feedback function arguments. "
                 f"The feedback function has signature {sig}."
             )
+
+        print(f"setting selectors to {selectors}")
 
         self.selectors = selectors
 
