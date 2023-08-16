@@ -58,11 +58,17 @@ otherwise you might get circular import errors.
 
 - `util.py` 
 
+- `utils`
+
+    - `pyschema.py`
+
+    -  `serial.py`
+
 - `keys.py`
 
 - `utils`
 
-    - `python.py` `text.py` `generated.py`
+    - `python.py` `text.py` `generated.py` `containers.py` `imports.py`
 
 TO PLACE
 
@@ -85,7 +91,7 @@ from trulens_eval.tru import Tru
 from trulens_eval.tru_basic_app import TruBasicApp
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_llama import TruLlama
-from trulens_eval.util import TP
+from trulens_eval.utils.threading import TP
 
 __all__ = [
     'Tru',

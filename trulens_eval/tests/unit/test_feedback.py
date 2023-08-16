@@ -2,6 +2,7 @@
 Tests for Feedback class. 
 """
 
+from pprint import PrettyPrinter
 from unittest import main
 from unittest import TestCase
 
@@ -13,12 +14,11 @@ from tests.unit.feedbacks import CustomProvider
 from tests.unit.feedbacks import make_nonglobal_feedbacks
 
 from trulens_eval import Feedback
+from trulens_eval.keys import check_keys
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.tru_basic_app import TruBasicApp
-from trulens_eval.keys import check_keys
-from trulens_eval.util import jsonify
+from trulens_eval.utils.serial import jsonify
 
-from pprint import PrettyPrinter
 pp = PrettyPrinter()
 
 
