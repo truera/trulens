@@ -663,7 +663,6 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         try:
             sig = safe_signature(func)
-            print("sig = ", sig)
 
             bindings = sig.bind(*args, **kwargs)
 
