@@ -301,19 +301,23 @@ def callable_name(c: Callable):
         return str(c)
 
 def safe_signature(func_or_obj: Any):
-    if hasattr(func_or_obj, "__call__"):
-        # If given an obj that is callable (has __call__ defined), we want to
-        # return signature of that call instead of letting inspect.signature
-        # explore that object further. Doing so may produce exceptions due to
-        # contents of those objects producing exceptions when attempting to
-        # retrieve them.
-
-        return signature(func_or_obj.__call__)
-
-    else:
+    try:
         assert isinstance(func_or_obj, Callable), f"Expected a Callable. Got {type(func_or_obj)} instead."
 
         return signature(func_or_obj)
+
+    except Exception as e:
+        if hasattr(func_or_obj, "__call__"):
+            # If given an obj that is callable (has __call__ defined), we want to
+            # return signature of that call instead of letting inspect.signature
+            # explore that object further. Doing so may produce exceptions due to
+            # contents of those objects producing exceptions when attempting to
+            # retrieve them.
+
+            return signature(func_or_obj.__call__)
+
+        else:
+            raise e
 
 
 def _safe_getattr(obj: Any, k: str) -> Any:
