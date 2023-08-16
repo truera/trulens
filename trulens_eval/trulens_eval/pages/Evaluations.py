@@ -1,5 +1,9 @@
 import json
 from typing import Iterable, List, Tuple
+import asyncio
+
+# https://github.com/jerryjliu/llama_index/issues/7244:
+asyncio.set_event_loop(asyncio.new_event_loop())
 
 import matplotlib.pyplot as plt
 import pandas as pd
