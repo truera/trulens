@@ -62,6 +62,8 @@ class Huggingface(Provider):
             being "same languages".
         """
 
+        assert len(text1) > 0 and len(text2) > 0, "Inputs cannot be blank."
+
         def get_scores(text):
             payload = {"inputs": text}
             hf_response = self.endpoint.post(
@@ -101,6 +103,9 @@ class Huggingface(Provider):
             float: A value between 0 and 1. 0 being "negative sentiment" and 1
             being "positive sentiment".
         """
+
+        assert len(text) > 0, "Input cannot be blank."
+
         max_length = 500
         truncated_text = text[:max_length]
         payload = {"inputs": truncated_text}
@@ -125,6 +130,9 @@ class Huggingface(Provider):
             float: A value between 0 and 1. 0 being "toxic" and 1 being "not
             toxic".
         """
+
+        assert len(text) > 0, "Input cannot be blank."
+
         max_length = 500
         truncated_text = text[:max_length]
         payload = {"inputs": truncated_text}
@@ -147,6 +155,7 @@ class Huggingface(Provider):
         Returns:
             float: NLI Entailment
         """
+
         if not '.' == premise[len(premise) - 1]:
             premise = premise + '.'
         nli_string = premise + ' ' + hypothesis

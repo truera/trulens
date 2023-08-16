@@ -375,9 +375,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         all_args = list(bindings.arguments.values())
 
-        # If there is only one arg, it is a pretty good guess that it is the
-        # main input.
-        if len(all_args) == 1:
+        # If there is only one string arg, it is a pretty good guess that it is
+        # the main input.
+        if len(all_args) == 1 and isinstance(all_args[0], str):
             return all_args[0]
 
         # Otherwise we are not sure.
