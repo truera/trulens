@@ -1,3 +1,8 @@
+import asyncio
+
+# https://github.com/jerryjliu/llama_index/issues/7244:
+asyncio.set_event_loop(asyncio.new_event_loop())
+
 from st_aggrid import AgGrid
 import streamlit as st
 from ux.add_logo import add_logo

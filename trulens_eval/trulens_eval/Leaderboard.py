@@ -1,8 +1,12 @@
 import argparse
+
+import asyncio
 import json
 import math
-import os
 import sys
+
+# https://github.com/jerryjliu/llama_index/issues/7244:
+asyncio.set_event_loop(asyncio.new_event_loop())
 
 from millify import millify
 import numpy as np
@@ -14,7 +18,6 @@ from trulens_eval.ux.styles import CATEGORY
 
 st.runtime.legacy_caching.clear_cache()
 
-from trulens_eval import db
 from trulens_eval import Tru
 from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
