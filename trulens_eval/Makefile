@@ -14,6 +14,12 @@ test-database:
 	$(CONDA); python -m unittest discover tests.integration.test_database
 	docker compose --file docker/test-database.yaml down
 
+test-databasev2-migration:
+	$(CONDA); python -m unittest tests.integration.test_database.TestDbV2Migration.test_migrate_legacy_sqlite_file
+
+test-database-migration:
+	$(CONDA); python -m unittest tests.integration.test_database.TestDbV2Migration.test_migrate_legacy_sqlite_file
+
 test-feedback:
 	$(CONDA); python -m unittest tests.unit.test_feedback
 

@@ -13,7 +13,7 @@
 # Let's install some of the dependencies for this notebook if we don't have them already
 
 get_ipython().system(
-    ' pip install trulens-eval==0.9.0 llama_index==0.7.0 html2text==2020.1.16'
+    ' pip install trulens-eval==0.9.0 llama_index==0.8.3 html2text==2020.1.16'
 )
 
 # ### Add API keys
