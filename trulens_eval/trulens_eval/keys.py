@@ -281,7 +281,7 @@ For the last two options, the name of the argument may differ from {k} (i.e. `op
 """
         if not silent:
             print(f"{UNICODE_STOP} {msg}")
-            
+
         raise ApiKeyError(key=k, msg=msg)
 
 

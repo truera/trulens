@@ -126,7 +126,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 tru.get_records_and_feedback(app_ids=[]
                             )[0]  # pass an empty list of app_ids to get all
 
-# # Logging
+# # Logging Methods
 #
 # ## Automatic Logging
 #
