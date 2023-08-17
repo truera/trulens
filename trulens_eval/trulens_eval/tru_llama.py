@@ -2,7 +2,6 @@
 # Llama_index instrumentation and monitoring. 
 """
 
-
 from inspect import BoundArguments
 from inspect import Signature
 import logging
@@ -29,16 +28,15 @@ pp = PrettyPrinter()
 with OptionalImports(message=REQUIREMENT_LLAMA):
     import llama_index
 
-    
     from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.chat_engine.types import BaseChatEngine
     from llama_index.chat_engine.types import AgentChatResponse, StreamingAgentChatResponse
     from llama_index.response.schema import Response, StreamingResponse, RESPONSE_TYPE
     from llama_index.indices.query.schema import QueryBundle, QueryType
-    
+
     # Tese seemingly unused imports are needed for
     # LlamaInstrument.Default.CLASSES to be able to find the correct classes.
-    
+
     from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.indices.base_retriever import BaseRetriever
     from llama_index.indices.base import BaseIndex

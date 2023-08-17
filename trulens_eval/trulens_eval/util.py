@@ -31,7 +31,8 @@ from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from enum import Enum
 import importlib
 import inspect
-from inspect import stack, signature
+from inspect import signature
+from inspect import stack
 import itertools
 import json
 import logging
@@ -292,6 +293,7 @@ CLASS_INFO = "__tru_class_info"
 
 ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
 
+
 def callable_name(c: Callable):
     if hasattr(c, "__name__"):
         return c.__name__
@@ -300,9 +302,12 @@ def callable_name(c: Callable):
     else:
         return str(c)
 
+
 def safe_signature(func_or_obj: Any):
     try:
-        assert isinstance(func_or_obj, Callable), f"Expected a Callable. Got {type(func_or_obj)} instead."
+        assert isinstance(
+            func_or_obj, Callable
+        ), f"Expected a Callable. Got {type(func_or_obj)} instead."
 
         return signature(func_or_obj)
 
@@ -679,7 +684,7 @@ class SerialModel(pydantic.BaseModel):
                 model = cls.model_validate(obj, **kwargs)
 
                 return WithClassInfo.of_model(model=model, cls=cls)
-            
+
             else:
                 print(
                     f"Warning: May not be able to properly reconstruct object {obj}."

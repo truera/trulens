@@ -7,10 +7,9 @@ from langchain.schema import Generation
 from langchain.schema import LLMResult
 import pydantic
 
-from trulens_eval.keys import _check_key
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.feedback.provider.endpoint.base import \
-    EndpointCallback
+from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
+from trulens_eval.keys import _check_key
 from trulens_eval.util import WithClassInfo
 from trulens_eval.utils.text import UNICODE_CHECK
 
@@ -168,6 +167,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         )
 
         import os
+
         import openai
 
         for k, v in CONF_CLONE.items():
