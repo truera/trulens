@@ -331,8 +331,15 @@ class Endpoint(SerialModel, SingletonPerName):
         result, cbs = Endpoint.track_all_costs(
             thunk, with_openai=with_openai, with_hugs=with_hugs
         )
-        return result, sum(cb.cost for cb in cbs)
 
+        if len(cbs) == 0:
+            # Otherwise sum returns "0" below.
+            costs = Cost()
+        else:
+            costs = sum(cb.cost for cb in cbs)
+
+        return result, costs
+    
     @staticmethod
     async def atrack_all_costs_tally(
         thunk: Thunk[Awaitable],
@@ -347,7 +354,14 @@ class Endpoint(SerialModel, SingletonPerName):
         result, cbs = await Endpoint.atrack_all_costs(
             thunk, with_openai=with_openai, with_hugs=with_hugs
         )
-        return result, sum(cb.cost for cb in cbs)
+
+        if len(cbs) == 0:
+            # Otherwise sum returns "0" below.
+            costs = Cost()
+        else:
+            costs = sum(cb.cost for cb in cbs)
+
+        return result, costs
 
     @staticmethod
     def _track_costs(
