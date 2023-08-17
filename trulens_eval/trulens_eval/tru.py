@@ -43,7 +43,8 @@ class Tru(SingletonPerName):
     * Run and log feedback functions
     * Run streamlit dashboard to view experiment results
 
-    All data is logged to the current working directory to default.sqlite.
+    By default, all data is logged to the current working directory to `default.sqlite`. 
+    Data can be logged to a SQLAlchemy-compatible referred to by `database_url`.
     """
     DEFAULT_DATABASE_FILE = "default.sqlite"
 
@@ -79,9 +80,12 @@ class Tru(SingletonPerName):
         """
         TruLens instrumentation, logging, and feedback functions for apps.
 
-        :param database_url: SQLAlchemy database URL. Defaults to a local
-                             SQLite database file at 'default.sqlite'
-        :param database_file: (Deprecated) Path to a local SQLite database file
+        Args:
+           database_url: SQLAlchemy database URL. Defaults to a local
+                                SQLite database file at 'default.sqlite'
+                                See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
+                                on SQLAlchemy database URLs.
+           database_file: (Deprecated) Path to a local SQLite database file
         """
         if hasattr(self, "db"):
             if database_url is not None or database_file is not None:
@@ -126,11 +130,11 @@ class Tru(SingletonPerName):
         """
         Add a record to the database.
 
-        Parameters:
+        Args:
         
-        - record: Record
+            record: Record
 
-        - **kwargs: Record fields.
+            **kwargs: Record fields.
             
         Returns:
             RecordID: Unique record identifier.
