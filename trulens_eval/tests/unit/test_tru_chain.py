@@ -35,9 +35,7 @@ class TestTruChain(JSONTestCase):
 
     def setUp(self):
         check_keys(
-            "OPENAI_API_KEY",
-            "HUGGINGFACE_API_KEY",
-            "PINECONE_API_KEY",
+            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY",
             "PINECONE_ENV"
         )
 

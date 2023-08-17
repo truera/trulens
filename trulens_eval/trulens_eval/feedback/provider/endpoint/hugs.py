@@ -4,11 +4,10 @@ from typing import Callable, Optional
 
 import requests
 
+from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.keys import _check_key
 from trulens_eval.keys import get_huggingface_headers
-from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.feedback.provider.endpoint.base import \
-    EndpointCallback
 from trulens_eval.util import WithClassInfo
 
 
