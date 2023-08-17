@@ -61,16 +61,17 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
             callback.handle_classification(response=response)
 
     def __init__(self, *args, **kwargs):
-        # Will fail if key not set:
-        _check_key("HUGGINGFACE_API_KEY", silent=True)
-
         if hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
             return
 
         kwargs['name'] = "huggingface"
-        kwargs['post_headers'] = get_huggingface_headers()
         kwargs['callback_class'] = HuggingfaceCallback
+
+        # Returns true in "warn" mode to indicate that key is set. Does not
+        # print anything even if key not set.
+        if _check_key("HUGGINGFACE_API_KEY", silent=True, warn=True):
+            kwargs['post_headers'] = get_huggingface_headers()
 
         # for WithClassInfo:
         kwargs['obj'] = self
