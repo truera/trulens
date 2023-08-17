@@ -6,11 +6,11 @@ import asyncio
 import unittest
 from unittest import main
 
+from llama_index import ServiceContext
+from llama_index import set_global_service_context
 from llama_index import SimpleWebPageReader
 from llama_index import VectorStoreIndex
-from llama_index import ServiceContext, set_global_service_context
 from llama_index.llms import OpenAI
-
 from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
@@ -42,7 +42,7 @@ class TestLlamaIndex(JSONTestCase):
         # Check that the instrumented async aquery method produces the same result as the query method.
 
         query_engine = self.index.as_query_engine()
-        
+
         tru_query_engine = TruLlama(query_engine)
         llm_response_async, record_async = await tru_query_engine.aquery_with_record(
             "What did the author do growing up?"
