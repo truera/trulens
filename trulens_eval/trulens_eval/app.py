@@ -746,8 +746,6 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         ret_record_args['app_id'] = self.app_id
         ret_record_args['tags'] = self.tags
 
-        print(f"cost={cost}")
-
         ret_record = Record(**ret_record_args)
 
         if error is not None:

@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 import json
 from pathlib import Path
+import shutil
 from tempfile import TemporaryDirectory
 from typing import Literal, Union
 from unittest import main
@@ -53,6 +54,38 @@ class TestDbV2Migration(TestCase):
         with clean_db("mysql") as db:
             _test_db_consistency(db)
 
+    def test_migrate_legacy_legacy_sqlite_file(self):
+        # Migration from non-latest lagecy db files all the way to v2 database.
+        # This involves migrating the legacy dbs to the latest legacy first.
+
+        for folder in (Path(__file__).parent.parent.parent /
+                       "release_dbs").iterdir():
+            _dbfile = folder / "default.sqlite"
+            with self.subTest(msg=f"migrate from {folder.name} folder"):
+                with TemporaryDirectory() as tmp:
+                    dbfile = Path(tmp) / f"default-{folder.name}.sqlite"
+                    shutil.copy(str(_dbfile), str(dbfile))
+
+                    print(dbfile)
+
+                    self._test_migrate_legacy_legacy_sqlite_file(dbfile=dbfile)
+
+    def _test_migrate_legacy_legacy_sqlite_file(self, dbfile: Path = None):
+        # run migration
+        db = SqlAlchemyDB.from_db_url(f"sqlite:///{dbfile}")
+        assert is_legacy_sqlite(db.engine)
+        db.migrate_database()
+
+        # validate final state
+        self.assertFalse(is_legacy_sqlite(db.engine))
+        self.assertTrue(DbRevisions.load(db.engine).in_sync)
+
+        records, feedbacks = db.get_records_and_feedback()
+
+        # Very naive checks:
+        self.assertGreater(len(records), 0)
+        self.assertGreater(len(feedbacks), 0)
+
     def test_migrate_legacy_sqlite_file(self):
         with TemporaryDirectory() as tmp:
             file = Path(tmp).joinpath("legacy.sqlite")
@@ -63,25 +96,29 @@ class TestDbV2Migration(TestCase):
 
             # run migration
             db = SqlAlchemyDB.from_db_url(f"sqlite:///{file}")
-            assert is_legacy_sqlite(db.engine)
+            self.assertTrue(is_legacy_sqlite(db.engine))
             db.migrate_database()
 
             # validate final state
-            assert not is_legacy_sqlite(db.engine)
-            assert DbRevisions.load(db.engine).in_sync
+            self.assertFalse(is_legacy_sqlite(db.engine))
+            self.assertTrue(DbRevisions.load(db.engine).in_sync)
 
             # check that database is usable and no data was lost
-            assert db.get_app(app.app_id) == json.loads(app.json())
+            self.assertEqual(db.get_app(app.app_id), json.loads(app.json()))
             df_recs, fb_cols = db.get_records_and_feedback([app.app_id])
-            assert set(df_recs.columns).issuperset(set(AppsExtractor.app_cols))
-            assert df_recs["record_json"][0] == rec.json()
-            assert list(fb_cols) == [fb.name]
+            self.assertTrue(
+                set(df_recs.columns).issuperset(set(AppsExtractor.app_cols))
+            )
+            self.assertEqual(df_recs["record_json"][0], rec.json())
+            self.assertEqual(list(fb_cols), [fb.name])
+
             df_fb = db.get_feedback(record_id=rec.record_id)
-            assert df_fb["type"][0] == app.root_class
+
+            self.assertEqual(df_fb["type"][0], app.root_class)
             df_defs = db.get_feedback_defs(
                 feedback_definition_id=fb.feedback_definition_id
             )
-            assert df_defs["feedback_json"][0] == json.loads(fb.json())
+            self.assertEqual(df_defs["feedback_json"][0], json.loads(fb.json()))
 
 
 class MockFeedback(Provider):

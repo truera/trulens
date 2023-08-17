@@ -78,6 +78,7 @@ class SqlAlchemyDB(DB):
             migrate_legacy_sqlite(self.engine)
         else:
             upgrade_db(self.engine, revision="head")
+            
         self.reload_engine()  # let sqlalchemy recognize the migrated schema
 
     def reset_database(self):

@@ -191,12 +191,12 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
                         )
                         os.environ[v] = attr_val
 
-        # Will fail if key not set:
-        _check_key("OPENAI_API_KEY", silent=True)
-
         if hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
             return
+
+        # Will set up key to env but otherwise will not fail or print anything out.
+        _check_key("OPENAI_API_KEY", silent=True, warn=True)
 
         kwargs['name'] = "openai"
         kwargs['callback_class'] = OpenAICallback
