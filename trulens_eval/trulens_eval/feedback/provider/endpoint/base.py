@@ -339,7 +339,7 @@ class Endpoint(SerialModel, SingletonPerName):
             costs = sum(cb.cost for cb in cbs)
 
         return result, costs
-    
+
     @staticmethod
     async def atrack_all_costs_tally(
         thunk: Thunk[Awaitable],

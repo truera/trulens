@@ -15,6 +15,7 @@ from sqlalchemy.orm import sessionmaker
 
 from trulens_eval import schema
 from trulens_eval.database import orm
+from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.database.migrations import upgrade_db
 from trulens_eval.database.orm import AppDefinition
 from trulens_eval.database.orm import FeedbackDefinition
@@ -32,7 +33,6 @@ from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import RecordID
-from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.util import JSON
 
 logger = logging.getLogger(__name__)
@@ -86,18 +86,19 @@ class SqlAlchemyDB(DB):
                 else:
                     upgrade_db(self.engine, revision="head")
 
-                self.reload_engine()  # let sqlalchemy recognize the migrated schema
+                self.reload_engine(
+                )  # let sqlalchemy recognize the migrated schema
 
                 return
 
             elif e.reason == DatabaseVersionException.Reason.AHEAD:
                 # Rethrow the ahead message suggesting to upgrade trulens_eval.
                 raise e
-            
+
             else:
                 # TODO: better message here for unhandled cases?
                 raise e
-            
+
         # If we get here, our db revision does not need upgrade.
         print("Your database does not migration.")
 
