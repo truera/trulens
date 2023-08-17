@@ -257,12 +257,14 @@ class ApiKeyError(RuntimeError):
         self.msg = msg
 
 
-def _check_key(k: str, v: str = None, silent: bool = False) -> None:
+def _check_key(k: str, v: str = None, silent: bool = False, warn: bool = False) -> bool:
     """
     Check that the given `k` is an env var with a value that indicates a valid
     api key or secret.  If `v` is provided, checks that instead. If value
     indicates the key is not set, raises an informative error telling the user
-    options on how to set that key.
+    options on how to set that key. If `silent` is set, nothing will be printed.
+    If `warn` is set, will log warning to logger and not throw an exception.
+    Returns True if key is set. Silent disable warning logging.
     """
 
     v = v or os.environ.get(k)
@@ -281,8 +283,15 @@ For the last two options, the name of the argument may differ from {k} (i.e. `op
 """
         if not silent:
             print(f"{UNICODE_STOP} {msg}")
-
-        raise ApiKeyError(key=k, msg=msg)
+            if warn:
+                logger.warning(msg)
+        else:
+            if warn:
+                return False
+            else:
+                raise ApiKeyError(key=k, msg=msg)
+        
+    return True
 
 
 def _relative_path(path: Path, relative_to: Path) -> str:

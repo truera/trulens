@@ -64,7 +64,7 @@ T = TypeVar("T")
 
 # Optional requirements.
 
-llama_version = "0.7.16"
+llama_version = "0.8.3"
 REQUIREMENT_LLAMA = (
     f"llama_index {llama_version} or above is required for instrumenting llama_index apps. "
     f"Please install it before use: `pip install llama_index>={llama_version}`."
