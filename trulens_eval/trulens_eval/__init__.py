@@ -72,7 +72,7 @@ TO PLACE
 
 """
 
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Huggingface
