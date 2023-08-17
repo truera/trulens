@@ -11,6 +11,7 @@ from trulens_eval.utils.generated import re_1_10_rating
 
 logger = logging.getLogger(__name__)
 
+
 class OpenAI(Provider):
     model_engine: str
     endpoint: Endpoint
@@ -260,9 +261,7 @@ class OpenAI(Provider):
                         "role":
                             "system",
                         "content":
-                            str.format(
-                                prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,
-                            )
+                            str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,)
                     }, {
                         "role":
                             "user",
@@ -436,10 +435,8 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role":
-                                "system",
-                            "content":
-                                prompts.LANGCHAIN_CONCISENESS_PROMPT
+                            "role": "system",
+                            "content": prompts.LANGCHAIN_CONCISENESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -470,10 +467,8 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role":
-                                "system",
-                            "content":
-                                prompts.LANGCHAIN_CORRECTNESS_PROMPT
+                            "role": "system",
+                            "content": prompts.LANGCHAIN_CORRECTNESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -504,10 +499,8 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role":
-                                "system",
-                            "content":
-                                prompts.LANGCHAIN_COHERENCE_PROMPT
+                            "role": "system",
+                            "content": prompts.LANGCHAIN_COHERENCE_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -538,10 +531,8 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role":
-                                "system",
-                            "content":
-                                prompts.LANGCHAIN_HARMFULNESS_PROMPT
+                            "role": "system",
+                            "content": prompts.LANGCHAIN_HARMFULNESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -572,10 +563,8 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role":
-                                "system",
-                            "content":
-                                prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
+                            "role": "system",
+                            "content": prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -606,10 +595,8 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role":
-                                "system",
-                            "content":
-                                prompts.LANGCHAIN_HELPFULNESS_PROMPT
+                            "role": "system",
+                            "content": prompts.LANGCHAIN_HELPFULNESS_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -640,11 +627,8 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role":
-                                "system",
-                            "content":
-                                prompts.
-                                LANGCHAIN_CONTROVERSIALITY_PROMPT
+                            "role": "system",
+                            "content": prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -675,10 +659,8 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role":
-                                "system",
-                            "content":
-                                prompts.LANGCHAIN_MISOGYNY_PROMPT
+                            "role": "system",
+                            "content": prompts.LANGCHAIN_MISOGYNY_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -709,10 +691,8 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role":
-                                "system",
-                            "content":
-                                prompts.LANGCHAIN_CRIMINALITY_PROMPT
+                            "role": "system",
+                            "content": prompts.LANGCHAIN_CRIMINALITY_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -743,10 +723,8 @@ class OpenAI(Provider):
                     temperature=0.0,
                     messages=[
                         {
-                            "role":
-                                "system",
-                            "content":
-                                prompts.LANGCHAIN_INSENSITIVITY_PROMPT
+                            "role": "system",
+                            "content": prompts.LANGCHAIN_INSENSITIVITY_PROMPT
                         }, {
                             "role": "user",
                             "content": text
@@ -778,7 +756,6 @@ class OpenAI(Provider):
             )["choices"][0]["message"]["content"]
         )
         return oai_chat_response
-
 
 
 class AzureOpenAI(OpenAI):

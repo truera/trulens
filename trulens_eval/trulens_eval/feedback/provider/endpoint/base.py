@@ -6,21 +6,20 @@ from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
 from types import ModuleType
-from typing import (Any, Awaitable, Dict, Optional, Sequence,
-                    Tuple, Type, TypeVar)
+from typing import (
+    Any, Awaitable, Dict, Optional, Sequence, Tuple, Type, TypeVar
+)
 
 import pydantic
 import requests
 
-from trulens_eval.schema import Cost
 from trulens_eval.keys import ApiKeyError
+from trulens_eval.schema import Cost
 from trulens_eval.util import get_first_local_in_call_stack
 from trulens_eval.util import JSON
 from trulens_eval.util import SerialModel
 from trulens_eval.util import SingletonPerName
-
 from trulens_eval.utils.python import Thunk
-
 
 logger = logging.getLogger(__name__)
 
@@ -246,7 +245,8 @@ class Endpoint(SerialModel, SingletonPerName):
 
         if with_openai:
             # TODO: DEPS
-            from trulens_eval.feedback.provider.endpoint.openai import OpenAIEndpoint
+            from trulens_eval.feedback.provider.endpoint.openai import \
+                OpenAIEndpoint
 
             try:
                 e = OpenAIEndpoint()
@@ -259,7 +259,8 @@ class Endpoint(SerialModel, SingletonPerName):
 
         if with_hugs:
             # TODO: DEPS
-            from trulens_eval.feedback.provider.endpoint.hugs import HuggingfaceEndpoint
+            from trulens_eval.feedback.provider.endpoint.hugs import \
+                HuggingfaceEndpoint
 
             try:
                 e = HuggingfaceEndpoint()
@@ -288,7 +289,8 @@ class Endpoint(SerialModel, SingletonPerName):
 
         if with_openai:
             # TODO: DEPS
-            from trulens_eval.feedback.provider.endpoint.openai import OpenAIEndpoint
+            from trulens_eval.feedback.provider.endpoint.openai import \
+                OpenAIEndpoint
 
             try:
                 e = OpenAIEndpoint()
@@ -301,7 +303,8 @@ class Endpoint(SerialModel, SingletonPerName):
 
         if with_hugs:
             # TODO: DEPS
-            from trulens_eval.feedback.provider.endpoint.hugs import HuggingfaceEndpoint
+            from trulens_eval.feedback.provider.endpoint.hugs import \
+                HuggingfaceEndpoint
 
             try:
                 e = HuggingfaceEndpoint()

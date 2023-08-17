@@ -20,9 +20,9 @@ from pydantic import Field
 
 from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
+from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.instruments import Instrument
 from trulens_eval.instruments import WithInstrumentCallbacks
-from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackMode
@@ -33,6 +33,7 @@ from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
 from trulens_eval.util import all_objects
+from trulens_eval.util import callable_name
 from trulens_eval.util import Class
 from trulens_eval.util import CLASS_INFO
 from trulens_eval.util import GetItemOrAttribute
@@ -42,8 +43,9 @@ from trulens_eval.util import JSON_BASES_T
 from trulens_eval.util import json_str_of_obj
 from trulens_eval.util import jsonify
 from trulens_eval.util import JSONPath
+from trulens_eval.util import safe_signature
 from trulens_eval.util import SerialModel
-from trulens_eval.util import TP, safe_signature, callable_name
+from trulens_eval.util import TP
 
 logger = logging.getLogger(__name__)
 
@@ -481,16 +483,22 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         funcs = self.instrumented_methods.get(id(obj))
 
         if funcs is None:
-            logger.warning(f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. The path of this call may be incorrect.")
+            logger.warning(
+                f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. The path of this call may be incorrect."
+            )
             try:
                 _id, f, path = next(iter(self._get_methods_for_func(func)))
             except Exception:
-                logger.warning("No other objects use this function so cannot guess path.")
+                logger.warning(
+                    "No other objects use this function so cannot guess path."
+                )
                 return None
 
-            logger.warning(f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function.")
+            logger.warning(
+                f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function."
+            )
 
-            funcs = {func:path}
+            funcs = {func: path}
 
             self.instrumented_methods[id(obj)] = funcs
 
@@ -498,23 +506,27 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         else:
             if func not in funcs:
-                logger.warning(f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. The path of this call may be incorrect.")
+                logger.warning(
+                    f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. The path of this call may be incorrect."
+                )
 
                 try:
                     _id, f, path = next(iter(self._get_methods_for_func(func)))
                 except Exception:
-                    logger.warning("No other objects use this function so cannot guess path.")
+                    logger.warning(
+                        "No other objects use this function so cannot guess path."
+                    )
                     return None
 
-                logger.warning(f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function.")
+                logger.warning(
+                    f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function."
+                )
 
                 return path
 
             else:
 
                 return funcs.get(func)
-
-
 
     """
     # TODO: ROOTLESS
@@ -810,12 +822,11 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
     def format_instrumented_methods(self) -> None:
         return "\n".join(
-                f"Object at 0x{obj:x}:\n\t" + "\n\t".join(
-                    f"{m} with path {Select.App + path}"
-                    for m, path in p.items()
-                )
-                for obj, p in self.instrumented_methods.items()
-            )
+            f"Object at 0x{obj:x}:\n\t" + "\n\t".
+            join(f"{m} with path {Select.App + path}"
+                 for m, path in p.items())
+            for obj, p in self.instrumented_methods.items()
+        )
 
     def print_instrumented_methods(self) -> None:
         """
