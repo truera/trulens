@@ -29,12 +29,127 @@ from types import ModuleType
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 import pydantic
-from trulens_eval.trulens_eval.utils.serial import CLASS_INFO, JSON
-
+from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
+
+
+# Field/key name used to indicate a circular reference in dictified objects.
+CIRCLE = "__tru_circular_reference"
+
+# Field/key name used to indicate an exception in property retrieval (properties
+# execute code in property.fget).
+ERROR = "__tru_property_error"
+
+
+
+# Key for indicating non-serialized objects in json dumps.
+NOSERIO = "__tru_non_serialized_object"
+
+
+def is_noserio(obj):
+    """
+    Determines whether the given json object represents some non-serializable
+    object. See `noserio`.
+    """
+    return isinstance(obj, dict) and NOSERIO in obj
+
+
+def noserio(obj, **extra: Dict) -> dict:
+    """
+    Create a json structure to represent a non-serializable object. Any
+    additional keyword arguments are included.
+    """
+
+    inner = Obj.of_object(obj).dict()
+    inner.update(extra)
+
+    return {NOSERIO: inner}
+
+
+def callable_name(c: Callable):
+    if hasattr(c, "__name__"):
+        return c.__name__
+    elif hasattr(c, "__call__"):
+        return callable_name(c.__call__)
+    else:
+        return str(c)
+
+def safe_signature(func_or_obj: Any):
+    try:
+        assert isinstance(
+            func_or_obj, Callable
+        ), f"Expected a Callable. Got {type(func_or_obj)} instead."
+
+        return inspect.signature(func_or_obj)
+
+    except Exception as e:
+        if hasattr(func_or_obj, "__call__"):
+            # If given an obj that is callable (has __call__ defined), we want to
+            # return signature of that call instead of letting inspect.signature
+            # explore that object further. Doing so may produce exceptions due to
+            # contents of those objects producing exceptions when attempting to
+            # retrieve them.
+
+            return inspect.signature(func_or_obj.__call__)
+
+        else:
+            raise e
+
+
+def _safe_getattr(obj: Any, k: str) -> Any:
+    """
+    Try to get the attribute `k` of the given object. This may evaluate some
+    code if the attribute is a property and may fail. In that case, an dict
+    indicating so is returned.
+    """
+
+    v = inspect.getattr_static(obj, k)
+
+    if isinstance(v, property):
+        try:
+            v = v.fget(obj)
+            return v
+        except Exception as e:
+            return {ERROR: ObjSerial.of_object(e)}
+    else:
+        return v
+
+
+def _clean_attributes(obj) -> Dict[str, Any]:
+    """
+    Determine which attributes of the given object should be enumerated for
+    storage and/or display in UI. Returns a dict of those attributes and their
+    values.
+
+    For enumerating contents of objects that do not support utility classes like
+    pydantic, we use this method to guess what should be enumerated when
+    serializing/displaying.
+    """
+
+    keys = dir(obj)
+
+    ret = {}
+
+    for k in keys:
+        if k.startswith("__"):
+            # These are typically very internal components not meant to be
+            # exposed beyond immediate definitions. Ignoring these.
+            continue
+
+        if k.startswith("_") and k[1:] in keys:
+            # Objects often have properties named `name` with their values
+            # coming from `_name`. Lets avoid including both the property and
+            # the value.
+            continue
+
+        v = _safe_getattr(obj, k)
+        ret[k] = v
+
+    return ret
+
 
 
 class Module(SerialModel):
@@ -454,12 +569,17 @@ class Function(FunctionOrMethod):
                 )
 
 
+# Key of structure where class information is stored.
+CLASS_INFO = "__tru_class_info"
+
+
 class WithClassInfo(pydantic.BaseModel):
     """
     Mixin to track class information to aid in querying serialized components
     without having to load them.
     """
 
+    
     # Using this odd key to not pollute attribute names in whatever class we mix
     # this into. Should be the same as CLASS_INFO.
     __tru_class_info: Class

@@ -274,12 +274,12 @@ from trulens_eval.schema import Perf
 from trulens_eval.schema import Query
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordAppCallMethod
+from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.containers import dict_merge_with
+from trulens_eval.utils.pyschema import _safe_getattr
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.python import get_all_local_in_call_stack
 from trulens_eval.utils.python import get_first_local_in_call_stack
-from trulens_eval.utils.serial import _safe_getattr
-from trulens_eval.utils.serial import jsonify
 from trulens_eval.utils.serial import JSONPath
 
 logger = logging.getLogger(__name__)

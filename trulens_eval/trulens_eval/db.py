@@ -28,7 +28,7 @@ from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordID
 from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.serial import json_str_of_obj
+from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK

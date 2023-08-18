@@ -24,7 +24,7 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import Select
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.serial import jsonify
+from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
 from trulens_eval.utils.text import UNICODE_YIELD

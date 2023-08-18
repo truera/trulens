@@ -3,21 +3,24 @@
 Multi-threading utilities.
 """
 
+from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from inspect import stack
 import logging
 from multiprocessing.pool import AsyncResult
 from multiprocessing.pool import ThreadPool
 from queue import Queue
 from time import sleep
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, TypeVar
 
 import pandas as pd
 
-from trulens_eval.trulens_eval.utils.python import _future_target_wrapper
-from trulens_eval.trulens_eval.utils.python import SingletonPerName
+from trulens_eval.utils.python import _future_target_wrapper
+from trulens_eval.utils.python import SingletonPerName
 
 logger = logging.getLogger(__name__)
 
+
+T = TypeVar("T")
 
 class ThreadPoolExecutor(fThreadPoolExecutor):
 

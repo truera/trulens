@@ -1,27 +1,19 @@
 """
-Serialization utilities mostly with regards to JSON.
+Serialization utilities.
 """
 
 from __future__ import annotations
 
-from enum import Enum
-import inspect
-from inspect import signature
-import json
 import logging
-from pathlib import Path
 from pprint import PrettyPrinter
-from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
-                    Tuple, TypeVar, Union)
+from typing import (Any, Dict, Iterable, Optional, Sequence, Set, Tuple,
+                    TypeVar, Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
 
-from trulens_eval.trulens_eval.keys import redact_value
-from trulens_eval.trulens_eval.utils.containers import iterable_peek
-from trulens_eval.trulens_eval.utils.pyschema import Class
-from trulens_eval.trulens_eval.utils.pyschema import Obj
+from trulens_eval.utils.containers import iterable_peek
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -29,13 +21,11 @@ pp = PrettyPrinter()
 
 T = TypeVar("T")
 
-# JSON utilities
+# JSON types
 
 JSON_BASES = (str, int, float, type(None))
 JSON_BASES_T = Union[str, int, float, type(None)]
 
-# JSON = (List, Dict) + JSON_BASES
-# JSON_T = Union[JSON_BASES_T, List, Dict]
 
 # TODO: rename to "JSON_LIKE" as it is not stringly json.
 # JSON = Union[JSON_BASES_T, Sequence['JSON'], Dict[str, 'JSON']]
@@ -56,9 +46,8 @@ class SerialModel(pydantic.BaseModel):
     @classmethod
     def model_validate(cls, obj: Any, **kwargs):
         # import hierarchy circle here
-
-        from trulens_eval.keys import redact_value
         from trulens_eval.utils.pyschema import Class
+        from trulens_eval.utils.pyschema import CLASS_INFO
         from trulens_eval.utils.pyschema import WithClassInfo
 
         if isinstance(obj, dict):
@@ -491,325 +480,6 @@ class JSONPath(SerialModel):
     def __getattr__(self, attr: str) -> JSONPath:
         return self._append(GetItemOrAttribute(item_or_attribute=attr))
     
-
-# Key for indicating non-serialized objects in json dumps.
-NOSERIO = "__tru_non_serialized_object"
-
-
-def is_noserio(obj):
-    """
-    Determines whether the given json object represents some non-serializable
-    object. See `noserio`.
-    """
-    return isinstance(obj, dict) and NOSERIO in obj
-
-
-def noserio(obj, **extra: Dict) -> dict:
-    """
-    Create a json structure to represent a non-serializable object. Any
-    additional keyword arguments are included.
-    """
-
-    inner = Obj.of_object(obj).dict()
-    inner.update(extra)
-
-    return {NOSERIO: inner}
-
-
-def obj_id_of_obj(obj: dict, prefix="obj"):
-    """
-    Create an id from a json-able structure/definition. Should produce the same
-    name if definition stays the same.
-    """
-
-    return f"{prefix}_hash_{mj.hash(obj)}"
-
-
-def json_str_of_obj(obj: Any, *args, **kwargs) -> str:
-    """
-    Encode the given json object as a string.
-    """
-
-    if isinstance(obj, pydantic.BaseModel):
-        kwargs['encoder'] = json_default
-        return obj.json(*args, **kwargs)
-
-    return json.dumps(obj, default=json_default)
-
-
-def json_default(obj: Any) -> str:
-    """
-    Produce a representation of an object which cannot be json-serialized.
-    """
-
-    # Try the encoders included with pydantic first (should handle things like
-    # Datetime):
-    try:
-        return pydantic.json.pydantic_encoder(obj)
-    except:
-        # Otherwise give up and indicate a non-serialization.
-        return noserio(obj)
-
-
-# Field/key name used to indicate a circular reference in jsonified objects.
-CIRCLE = "__tru_circular_reference"
-
-# Field/key name used to indicate an exception in property retrieval (properties
-# execute code in property.fget).
-ERROR = "__tru_property_error"
-
-# Key of structure where class information is stored. See WithClassInfo mixin.
-CLASS_INFO = "__tru_class_info"
-
-ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
-
-def callable_name(c: Callable):
-    if hasattr(c, "__name__"):
-        return c.__name__
-    elif hasattr(c, "__call__"):
-        return callable_name(c.__call__)
-    else:
-        return str(c)
-
-def safe_signature(func_or_obj: Any):
-    try:
-        assert isinstance(
-            func_or_obj, Callable
-        ), f"Expected a Callable. Got {type(func_or_obj)} instead."
-
-        return signature(func_or_obj)
-
-    except Exception as e:
-        if hasattr(func_or_obj, "__call__"):
-            # If given an obj that is callable (has __call__ defined), we want to
-            # return signature of that call instead of letting inspect.signature
-            # explore that object further. Doing so may produce exceptions due to
-            # contents of those objects producing exceptions when attempting to
-            # retrieve them.
-
-            return signature(func_or_obj.__call__)
-
-        else:
-            raise e
-
-
-def _safe_getattr(obj: Any, k: str) -> Any:
-    """
-    Try to get the attribute `k` of the given object. This may evaluate some
-    code if the attribute is a property and may fail. In that case, an dict
-    indicating so is returned.
-    """
-
-    v = inspect.getattr_static(obj, k)
-
-    if isinstance(v, property):
-        try:
-            v = v.fget(obj)
-            return v
-        except Exception as e:
-            return {ERROR: ObjSerial.of_object(e)}
-    else:
-        return v
-
-
-def _clean_attributes(obj) -> Dict[str, Any]:
-    """
-    Determine which attributes of the given object should be enumerated for
-    storage and/or display in UI. Returns a dict of those attributes and their
-    values.
-
-    For enumerating contents of objects that do not support utility classes like
-    pydantic, we use this method to guess what should be enumerated when
-    serializing/displaying.
-    """
-
-    keys = dir(obj)
-
-    ret = {}
-
-    for k in keys:
-        if k.startswith("__"):
-            # These are typically very internal components not meant to be
-            # exposed beyond immediate definitions. Ignoring these.
-            continue
-
-        if k.startswith("_") and k[1:] in keys:
-            # Objects often have properties named `name` with their values
-            # coming from `_name`. Lets avoid including both the property and
-            # the value.
-            continue
-
-        v = _safe_getattr(obj, k)
-        ret[k] = v
-
-    return ret
-
-
-# TODO: refactor to somewhere else or change instrument to a generic filter
-def jsonify(
-    obj: Any,
-    dicted: Optional[Dict[int, JSON]] = None,
-    instrument: Optional['Instrument'] = None,
-    skip_specials: bool = False,
-    redact_keys: bool = False
-) -> JSON:
-    """
-    Convert the given object into types that can be serialized in json.
-
-    Args:
-
-        - obj: Any -- the object to jsonify.
-
-        - dicted: Optional[Dict[int, JSON]] -- the mapping from addresses of
-          already jsonifed objects (via id) to their json.
-
-        - instrument: Optional[Instrument] -- instrumentation functions for
-          checking whether to recur into components of `obj`.
-
-        - skip_specials: bool (default is False) -- if set, will remove
-          specially keyed structures from the json. These have keys that start
-          with "__tru_".
-
-        - redact_keys: bool (default is False) -- if set, will redact secrets
-          from the output. Secrets are detremined by `keys.py:redact_value` .
-
-    Returns:
-
-        JSON | Sequence[JSON]
-    """
-
-    from trulens_eval.instruments import Instrument
-
-    instrument = instrument or Instrument()
-    dicted = dicted or dict()
-
-    if skip_specials:
-        recur_key = lambda k: k not in ALL_SPECIAL_KEYS
-    else:
-        recur_key = lambda k: True
-
-    if id(obj) in dicted:
-        if skip_specials:
-            return None
-        else:
-            return {CIRCLE: id(obj)}
-
-    if isinstance(obj, JSON_BASES):
-        if redact_keys and isinstance(obj, str):
-            return redact_value(obj)
-        else:
-            return obj
-
-    if isinstance(obj, Path):
-        return str(obj)
-
-    if type(obj) in pydantic.json.ENCODERS_BY_TYPE:
-        return obj
-
-    # TODO: should we include duplicates? If so, dicted needs to be adjusted.
-    new_dicted = {k: v for k, v in dicted.items()}
-
-    recur = lambda o: jsonify(
-        obj=o,
-        dicted=new_dicted,
-        instrument=instrument,
-        skip_specials=skip_specials,
-        redact_keys=redact_keys
-    )
-
-    content = None
-
-    if isinstance(obj, Enum):
-        content = obj.name
-
-    elif isinstance(obj, Dict):
-        temp = {}
-        new_dicted[id(obj)] = temp
-        temp.update({k: recur(v) for k, v in obj.items() if recur_key(k)})
-
-        # Redact possible secrets based on key name and value.
-        if redact_keys:
-            for k, v in temp.items():
-                temp[k] = redact_value(v=v, k=k)
-
-        content = temp
-
-    elif isinstance(obj, Sequence):
-        temp = []
-        new_dicted[id(obj)] = temp
-        for x in (recur(v) for v in obj):
-            temp.append(x)
-
-        content = temp
-
-    elif isinstance(obj, Set):
-        temp = []
-        new_dicted[id(obj)] = temp
-        for x in (recur(v) for v in obj):
-            temp.append(x)
-
-        content = temp
-
-    elif isinstance(obj, pydantic.BaseModel):
-        # Not even trying to use pydantic.dict here.
-
-        temp = {}
-        new_dicted[id(obj)] = temp
-        temp.update(
-            {
-                k: recur(_safe_getattr(obj, k))
-                for k, v in obj.__fields__.items()
-                if not v.field_info.exclude and recur_key(k)
-            }
-        )
-
-        # Redact possible secrets based on key name and value.
-        if redact_keys:
-            for k, v in temp.items():
-                temp[k] = redact_value(v=v, k=k)
-
-        content = temp
-
-    elif instrument.to_instrument_object(obj):
-
-        temp = {}
-        new_dicted[id(obj)] = temp
-
-        kvs = _clean_attributes(obj)
-
-        temp.update(
-            {
-                k: recur(v) for k, v in kvs.items() if recur_key(k) and (
-                    isinstance(v, JSON_BASES) or isinstance(v, Dict) or
-                    isinstance(v, Sequence) or
-                    instrument.to_instrument_object(v)
-                )
-            }
-        )
-
-        content = temp
-
-    else:
-        logger.debug(
-            f"Do not know how to jsonify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
-        )
-
-        content = noserio(obj)
-
-    # Add class information for objects that are to be instrumented, known as
-    # "components".
-    if instrument.to_instrument_object(obj):
-        content[CLASS_INFO] = Class.of_class(
-            cls=obj.__class__, with_bases=True
-        ).dict()
-
-    if not isinstance(obj, JSONPath) and hasattr(obj, "jsonify_extra"):
-        # Problem with JSONPath and similar objects: they always say they have every attribute.
-
-        content = obj.jsonify_extra(content)
-
-    return content
-
 
 def leaf_queries(obj_json: JSON, query: JSONPath = None) -> Iterable[JSONPath]:
     """

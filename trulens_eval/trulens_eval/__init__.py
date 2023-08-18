@@ -60,6 +60,8 @@ otherwise you might get circular import errors.
 
 - `utils`
 
+    - `json.py`
+
     - `pyschema.py`
 
     - `serial.py`
