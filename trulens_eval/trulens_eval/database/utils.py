@@ -140,11 +140,11 @@ def migrate_legacy_sqlite(engine: Engine):
     Migrate legacy file-based SQLite to the latest Alembic revision:
 
     Migration plan:
-        1. Make sure that original database is at the latest legacy schema
-        2. Create empty staging database at the first Alembic revision
-        3. Copy records from original database to staging
-        4. Migrate staging database to the latest Alembic revision
-        5. Replace original database file with the staging one
+        1. Make sure that original database is at the latest legacy schema.
+        2. Create empty staging database at the first Alembic revision.
+        3. Copy records from original database to staging.
+        4. Migrate staging database to the latest Alembic revision.
+        5. Replace original database file with the staging one.
 
     Assumptions:
         1. The latest legacy schema is not identical to the first Alembic

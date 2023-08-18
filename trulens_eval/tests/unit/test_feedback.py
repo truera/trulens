@@ -26,12 +26,9 @@ class TestFeedbackConstructors(TestCase):
 
     def setUp(self):
         check_keys(
-            "OPENAI_API_KEY",
-            "HUGGINGFACE_API_KEY",
-            "PINECONE_API_KEY",
+            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY",
             "PINECONE_ENV"
         )
-
 
         self.app = TruBasicApp(text_to_text=lambda t: f"returning {t}")
         _, self.record = self.app.call_with_record(input="hello")

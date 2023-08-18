@@ -376,9 +376,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         all_args = list(bindings.arguments.values())
 
-        # If there is only one arg, it is a pretty good guess that it is the
-        # main input.
-        if len(all_args) == 1:
+        # If there is only one string arg, it is a pretty good guess that it is
+        # the main input.
+        if len(all_args) == 1 and isinstance(all_args[0], str):
             return all_args[0]
 
         # Otherwise we are not sure.
@@ -712,7 +712,11 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         perf = Perf(start_time=start_time, end_time=end_time)
         ret_record = self._post_record(
-            ret_record_args, error, cost, perf, record
+            ret_record_args=ret_record_args,
+            error=error,
+            cost=cost,
+            perf=perf,
+            calls=record
         )
 
         return ret, ret_record
@@ -727,13 +731,16 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         # Same problem as in json.
         return jsonify(self, instrument=self.instrument)
 
-    def _post_record(self, ret_record_args, error, cost, perf, record):
+    def _post_record(
+        self, *, ret_record_args: Dict, error: Optional[Exception], cost: Cost,
+        perf: Perf, calls: Sequence[RecordAppCall]
+    ):
         """
         Final steps of record construction common among model types.
         """
 
         ret_record_args['main_error'] = str(error)
-        ret_record_args['calls'] = record
+        ret_record_args['calls'] = calls
         ret_record_args['cost'] = cost
         ret_record_args['perf'] = perf
         ret_record_args['app_id'] = self.app_id

@@ -98,6 +98,7 @@ nav:
               - LangChain Integration: trulens_eval/langchain_instrumentation.ipynb
               - Llama-Index Integration: trulens_eval/llama_index_instrumentation.ipynb
           - 🚚 Logging:
+              - Where to Log: trulens_eval/where_to_log.md
               - Logging Methods: trulens_eval/logging.ipynb
           - 📚 API Reference:
               - Tru: trulens_eval/api/tru.md
