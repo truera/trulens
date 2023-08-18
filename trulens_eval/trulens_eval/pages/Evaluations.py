@@ -26,8 +26,8 @@ from trulens_eval.db import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
-from trulens_eval.util import jsonify
-from trulens_eval.util import JSONPath
+from trulens_eval.utils.json import jsonify
+from trulens_eval.utils.serial import JSONPath
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
 from trulens_eval.ux.components import draw_metadata

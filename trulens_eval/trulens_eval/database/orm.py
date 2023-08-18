@@ -11,7 +11,7 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 
 from trulens_eval import schema
-from trulens_eval.util import json_str_of_obj
+from trulens_eval.utils.json import json_str_of_obj
 
 Base = declarative_base()
 
