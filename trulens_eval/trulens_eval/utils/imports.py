@@ -1,4 +1,6 @@
-# Optional requirements.
+"""
+Utilities for importing python modules and optional importing.
+"""
 
 import builtins
 import inspect

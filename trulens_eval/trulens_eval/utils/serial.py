@@ -12,15 +12,22 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
-                    Tuple, Union)
+                    Tuple, TypeVar, Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
 
+from trulens_eval.trulens_eval.keys import redact_value
+from trulens_eval.trulens_eval.utils.containers import iterable_peek
+from trulens_eval.trulens_eval.utils.pyschema import Class
+from trulens_eval.trulens_eval.utils.pyschema import Obj
+
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
+
+T = TypeVar("T")
 
 # JSON utilities
 
@@ -565,19 +572,25 @@ def callable_name(c: Callable):
         return str(c)
 
 def safe_signature(func_or_obj: Any):
-    if hasattr(func_or_obj, "__call__"):
-        # If given an obj that is callable (has __call__ defined), we want to
-        # return signature of that call instead of letting inspect.signature
-        # explore that object further. Doing so may produce exceptions due to
-        # contents of those objects producing exceptions when attempting to
-        # retrieve them.
-
-        return signature(func_or_obj.__call__)
-
-    else:
-        assert isinstance(func_or_obj, Callable), f"Expected a Callable. Got {type(func_or_obj)} instead."
+    try:
+        assert isinstance(
+            func_or_obj, Callable
+        ), f"Expected a Callable. Got {type(func_or_obj)} instead."
 
         return signature(func_or_obj)
+
+    except Exception as e:
+        if hasattr(func_or_obj, "__call__"):
+            # If given an obj that is callable (has __call__ defined), we want to
+            # return signature of that call instead of letting inspect.signature
+            # explore that object further. Doing so may produce exceptions due to
+            # contents of those objects producing exceptions when attempting to
+            # retrieve them.
+
+            return signature(func_or_obj.__call__)
+
+        else:
+            raise e
 
 
 def _safe_getattr(obj: Any, k: str) -> Any:

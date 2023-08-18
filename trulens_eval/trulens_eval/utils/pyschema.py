@@ -1,17 +1,18 @@
 """
-## Serialization of Python objects
+# Serialization of Python objects
 
-For deferred feedback evaluation, we need to serialize and deserialize python
-functions/methods. We feature several storage classes to accomplish this:
+In order to serialize (and optionally deserialize) python entities while still
+being able to inspect them in their serialized form, we employ several storage
+classes that mimic basic python entities:
 
-Serializable representation | Python thing
+Serializable representation | Python entity
 ----------------------------+------------------
-Class                       | (python class)
-Module                      | (python module)
-Obj                         | (python object)
-ObjSerial*                  | (python object)
-Function                    | (python function)
-Method                      | (python method)
+Class                       | (python) class
+Module                      | (python) module
+Obj                         | (python) object
+ObjSerial*                  | (python) object
+Function                    | (python) function
+Method                      | (python) method
 
 * ObjSerial differs from Obj in that it contains the information necessary to
   reconstruct the object whereas Obj does not. This information is its
@@ -25,13 +26,12 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from types import ModuleType
-from typing import (Any, Callable, Dict, Optional,
-                    Sequence, Tuple, Union)
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 import pydantic
+from trulens_eval.trulens_eval.utils.serial import CLASS_INFO, JSON
 
 from trulens_eval.utils.serial import SerialModel
-
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()

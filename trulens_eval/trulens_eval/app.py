@@ -53,10 +53,6 @@ pp = PrettyPrinter()
 # App component.
 COMPONENT = Any
 
-# Component category.
-# TODO: Enum
-COMPONENT_CATEGORY = str
-
 
 class ComponentView(ABC):
     """
