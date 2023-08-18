@@ -1,6 +1,7 @@
 import json
 import shutil
 import traceback
+from typing import List
 import uuid
 
 from tqdm import tqdm
@@ -53,7 +54,7 @@ class VersionException(Exception):
 
 
 MIGRATION_UNKNOWN_STR = "unknown[db_migration]"
-migration_versions: list = ["0.9.0", "0.3.0", "0.2.0", "0.1.2"]
+migration_versions: List[str] = ["0.9.0", "0.3.0", "0.2.0", "0.1.2"]
 
 
 def _update_db_json_col(
@@ -242,50 +243,63 @@ upgrade_paths = {
 }
 
 
-def _parse_version(version_str: str) -> list:
-    """takes a version string and returns a list of major, minor, patch
+def _parse_version(version_str: str) -> List[str]:
+    """
+    Takes a version string and returns a list of major, minor, patch.
 
     Args:
-        version_str (str): a version string
+        - version_str (str): a version string
 
     Returns:
-        list: [major, minor, patch]
+        list: [major, minor, patch] strings
     """
     return version_str.split(".")
 
 
 def _get_compatibility_version(version: str) -> str:
-    """Gets the db version that the pypi version is compatible with
+    """
+    Gets the db version that the pypi version is compatible with.
 
     Args:
-        version (str): a pypi version
+        - version (str): a pypi version
 
     Returns:
-        str: a backwards compat db version
+        - str: a backwards compat db version
     """
+
     version_split = _parse_version(version)
+
     for m_version_str in migration_versions:
         for i, m_version_split in enumerate(_parse_version(m_version_str)):
-            if version_split[i] > m_version_split:
+
+            if int(version_split[i]) > int(m_version_split):
                 return m_version_str
-            elif version_split[i] == m_version_split:
+
+            elif int(version_split[i]) == int(m_version_split):
                 if i == 2:  #patch version
                     return m_version_str
-                # Can't make a choice here, move to next endian
+                # Can't make a choice here, move to next endian.
                 continue
+
             else:
-                # the m_version from m_version_str is larger than this version. check the next m_version
+                # The m_version from m_version_str is larger than this version
+                # check the next m_version.
                 break
 
 
-def _migration_checker(db, warn=False) -> None:
-    """Checks whether this db, if pre-populated, is comptible with this pypi version
+def _migration_checker(db, warn: bool = False) -> None:
+    """
+    Checks whether this db, if pre-populated, is comptible with this pypi
+    version.
 
     Args:
-        db (DB): the db object to check
-        warn (bool, optional): if warn is False, then a migration issue will raise an exception, otherwise allow passing but only warn. Defaults to False.
+        - db (DB): the db object to check
+        - warn (bool, optional): if warn is False, then a migration issue will
+          raise an exception, otherwise allow passing but only warn. Defaults to
+          False.
     """
     meta = db.get_meta()
+
     _check_needs_migration(meta.trulens_version, warn=warn)
 
 
@@ -308,13 +322,15 @@ def commit_migrated_version(db, version: str) -> None:
 
 
 def _upgrade_possible(compat_version: str) -> bool:
-    """Checks the upgrade paths to see if there is a valid migration from the DB to the current pypi version
+    """
+    Checks the upgrade paths to see if there is a valid migration from the DB to
+    the current pypi version
 
     Args:
-        compat_version (str): the current db version
+        - compat_version (str): the current db version.
 
     Returns:
-        bool: True if there is an upgrade path. False if not.
+        - bool: True if there is an upgrade path. False if not.
     """
     while compat_version in upgrade_paths:
         compat_version = upgrade_paths[compat_version][0]
@@ -322,19 +338,32 @@ def _upgrade_possible(compat_version: str) -> bool:
 
 
 def _check_needs_migration(version: str, warn=False) -> None:
-    """Checks whether the from DB version can be updated to the current DB version.
+    """
+    Checks whether the from DB version can be updated to the current DB version.
 
     Args:
-        version (str): the pypi version
-        warn (bool, optional): if warn is False, then a migration issue will raise an exception, otherwise allow passing but only warn. Defaults to False.
+        - version (str): the pypi version
+        - warn (bool, optional): if warn is False, then a migration issue will
+          raise an exception, otherwise allow passing but only warn. Defaults to
+          False.
     """
     compat_version = _get_compatibility_version(version)
+
+    print("compat_version=", compat_version)
+
     if migration_versions.index(compat_version) > 0:
 
         if _upgrade_possible(compat_version):
-            msg = f"Detected that your db version {version} is from an older release that is incompatible with this release. you can either reset your db with `tru.reset_database()`, or you can initiate a db migration with `tru.migrate_database()`"
+            msg = (
+                f"Detected that your db version {version} is from an older release that is incompatible with this release. "
+                f"You can either reset your db with `tru.reset_database()`, "
+                f"or you can initiate a db migration with `tru.migrate_database()`"
+            )
         else:
-            msg = f"Detected that your db version {version} is from an older release that is incompatible with this release and cannot be migrated. Reset your db with `tru.reset_database()`"
+            msg = (
+                f"Detected that your db version {version} is from an older release that is incompatible with this release and cannot be migrated. "
+                f"Reset your db with `tru.reset_database()`"
+            )
         if warn:
             print(f"Warning! {msg}")
         else:
