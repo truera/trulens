@@ -62,7 +62,7 @@ otherwise you might get circular import errors.
 
     - `pyschema.py`
 
-    -  `serial.py`
+    - `serial.py`
 
 - `keys.py`
 
