@@ -16,10 +16,10 @@ test-database:
 	docker compose --file docker/test-database.yaml down
 
 # The next 3 database migration/versioning tests:
-test-database-versioning: test-databasev2-migration test-database-legacy-migration test-database-future
+test-database-versioning: test-database-v2migration test-database-legacy-migration test-database-future
 
 # Test migrating a latest legacy sqlite database to sqlalchemy database.
-test-databasev2-migration:
+test-database-v2migration:
 	$(CONDA); python -m unittest \
 		tests.integration.test_database.TestDbV2Migration.test_migrate_legacy_sqlite_file
 
