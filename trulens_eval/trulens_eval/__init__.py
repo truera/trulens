@@ -56,19 +56,17 @@ otherwise you might get circular import errors.
 
 - `schema.py`
 
-- `util.py` 
-
 - `utils`
 
     - `json.py`
 
-    - `pyschema.py`
-
-    - `serial.py`
-
 - `keys.py`
 
 - `utils`
+
+    - `pyschema.py`
+
+    - `threading.py` `serial.py`
 
     - `python.py` `text.py` `generated.py` `containers.py` `imports.py`
 
