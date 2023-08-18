@@ -6,9 +6,9 @@ import pydantic
 
 from trulens_eval.feedback.provider import Provider
 from trulens_eval.feedback.provider.openai import OpenAI
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import SerialModel
-from trulens_eval.util import WithClassInfo
+from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.generated import re_1_10_rating
 
 logger = logging.getLogger(__name__)
