@@ -6,7 +6,7 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, List, Tuple, Union
+from typing import Any, Callable, ClassVar, Dict, List, Tuple
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
@@ -14,13 +14,11 @@ from pydantic import Field
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
-from trulens_eval.util import Class
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import jsonify
-from trulens_eval.util import noserio
-from trulens_eval.util import OptionalImports
-from trulens_eval.util import REQUIREMENT_LANGCHAIN
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import FunctionOrMethod
 
 logger = logging.getLogger(__name__)
 

@@ -203,9 +203,9 @@ from pydantic import Field
 from trulens_eval import Select
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.util import Class
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import JSONPath
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.serial import JSONPath
 from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)

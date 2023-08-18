@@ -6,8 +6,8 @@ from unittest import TestCase
 
 from pydantic import BaseModel
 
-from trulens_eval.util import JSON_BASES
-from trulens_eval.util import JSONPath
+from trulens_eval.utils.serial import JSON_BASES
+from trulens_eval.utils.serial import JSONPath
 
 
 class JSONTestCase(TestCase):

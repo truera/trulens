@@ -33,7 +33,7 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import RecordID
 from trulens_eval.database.exceptions import DatabaseVersionException
-from trulens_eval.util import JSON
+from trulens_eval.utils.serial import JSON
 
 logger = logging.getLogger(__name__)
 
