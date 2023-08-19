@@ -2,30 +2,23 @@
 # Llama_index instrumentation and monitoring. 
 """
 
-from datetime import datetime
 from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-import traceback
-from typing import Any, Callable, ClassVar, Sequence, Tuple, Union
+from typing import Any, Callable, ClassVar, Tuple, Union
 
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.provider_apis import Endpoint
-from trulens_eval.provider_apis import OpenAIEndpoint
-from trulens_eval.schema import Cost
 from trulens_eval.schema import Record
-from trulens_eval.schema import RecordAppCall
-from trulens_eval.util import Class
-from trulens_eval.util import dict_set_with
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import JSONPath
-from trulens_eval.util import Method
-from trulens_eval.util import OptionalImports
-from trulens_eval.util import REQUIREMENT_LLAMA
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.containers import dict_set_with
+from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.llama import WithFeedbackFilterNodes
 
 logger = logging.getLogger(__name__)
@@ -35,16 +28,15 @@ pp = PrettyPrinter()
 with OptionalImports(message=REQUIREMENT_LLAMA):
     import llama_index
 
-    
     from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.chat_engine.types import BaseChatEngine
     from llama_index.chat_engine.types import AgentChatResponse, StreamingAgentChatResponse
     from llama_index.response.schema import Response, StreamingResponse, RESPONSE_TYPE
     from llama_index.indices.query.schema import QueryBundle, QueryType
-    
+
     # Tese seemingly unused imports are needed for
     # LlamaInstrument.Default.CLASSES to be able to find the correct classes.
-    
+
     from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.indices.base_retriever import BaseRetriever
     from llama_index.indices.base import BaseIndex
@@ -61,7 +53,6 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.indices.prompt_helper import PromptHelper
     from llama_index.embeddings.base import BaseEmbedding
     from llama_index.node_parser.interface import NodeParser
-    
 
 from trulens_eval.tru_chain import LangChainInstrument
 
