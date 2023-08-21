@@ -25,7 +25,7 @@ from trulens_eval.feedback import Feedback
 from trulens_eval.keys import check_keys
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.tru_chain import TruChain
-from trulens_eval.util import TP
+from trulens_eval.utils.threading import TP
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 
 check_keys(

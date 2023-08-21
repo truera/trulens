@@ -1,5 +1,14 @@
 # Deprecation Notes
 
+## Changes in 0.10.0
+
+### Backwards compatible
+
+- Database interfaces changed from sqlite to sqlalchemy. Sqlite databases are
+  supported under the sqlaclchemy interface and other databases such as mysql
+  and postgress are also now usable. Running the migration scripts via
+  `Tru().migrate_database()` may be necessary.
+
 ## Changes in 0.7.0
 
 ### Backwards compatible

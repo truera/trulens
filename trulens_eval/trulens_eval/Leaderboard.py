@@ -1,5 +1,11 @@
+import argparse
+import asyncio
 import json
 import math
+import sys
+
+# https://github.com/jerryjliu/llama_index/issues/7244:
+asyncio.set_event_loop(asyncio.new_event_loop())
 
 from millify import millify
 import numpy as np
@@ -11,7 +17,6 @@ from trulens_eval.ux.styles import CATEGORY
 
 st.runtime.legacy_caching.clear_cache()
 
-from trulens_eval import db
 from trulens_eval import Tru
 from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
@@ -22,7 +27,18 @@ from trulens_eval.ux.add_logo import add_logo
 
 add_logo()
 
-tru = Tru()
+parser = argparse.ArgumentParser()
+parser.add_argument('--database-url', default=None)
+
+try:
+    args = parser.parse_args()
+except SystemExit as e:
+    # This exception will be raised if --help or invalid command line arguments
+    # are used. Currently, streamlit prevents the program from exiting normally,
+    # so we have to do a hard exit.
+    sys.exit(e.code)
+
+tru = Tru(database_url=args.database_url)
 lms = tru.db
 
 

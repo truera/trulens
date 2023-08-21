@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Quickstart
+# # No Framework Quickstart
 #
 # In this quickstart you will create a simple text to text application and learn how to log it and get feedback.
 #

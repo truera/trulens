@@ -8,12 +8,12 @@ Only put classes which can be serialized in this file.
 Many of the classes defined here extending SerialModel are meant to be
 serialized into json. Most are extended with non-serialized fields in other files.
 
-Serializable       | Non-serializable
--------------------+------------------------
-AppDefinition      | App, TruChain, TruLlama
-FeedbackDefinition | Feedback
+| Serializable       | Non-serializable        |
+| ------------------ | ----------------------- |
+| AppDefinition      | App, TruChain, TruLlama |
+| FeedbackDefinition | Feedback                |
 
-AppDefinition.app is the JSONized version of a wrapped app while App.app is the
+AppDefinition.app is the JSON-ized version of a wrapped app while App.app is the
 actual wrapped app. We can thus inspect the contents of a wrapped app without
 having to construct it. Additionally, JSONized objects like AppDefinition.app
 feature information about the encoded object types in the dictionary under the
@@ -21,7 +21,6 @@ util.py:CLASS_INFO key.
 """
 
 from abc import ABC
-from abc import abstractmethod
 from datetime import datetime
 from enum import Enum
 import logging
@@ -30,16 +29,17 @@ from typing import Any, ClassVar, Dict, Optional, Sequence, TypeVar, Union
 from munch import Munch as Bunch
 import pydantic
 
-from trulens_eval.util import Class
-from trulens_eval.util import Function
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import GetItemOrAttribute
-from trulens_eval.util import JSON
-from trulens_eval.util import JSONPath
-from trulens_eval.util import Method
-from trulens_eval.util import obj_id_of_obj
-from trulens_eval.util import SerialModel
-from trulens_eval.util import WithClassInfo
+from trulens_eval.utils.json import jsonify
+from trulens_eval.utils.json import obj_id_of_obj
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import Function
+from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.pyschema import Method
+from trulens_eval.utils.serial import GetItemOrAttribute
+from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils.pyschema import WithClassInfo
 
 T = TypeVar("T")
 
@@ -172,7 +172,7 @@ class Record(SerialModel):
         super().__init__(record_id="temporary", **kwargs)
 
         if record_id is None:
-            record_id = obj_id_of_obj(self.dict(), prefix="record")
+            record_id = obj_id_of_obj(jsonify(self), prefix="record")
 
         self.record_id = record_id
 
@@ -282,7 +282,7 @@ class FeedbackResultStatus(Enum):
 
 
 class FeedbackCall(SerialModel):
-    args: Dict[str, str]
+    args: Dict[str, Optional[str]]
     ret: float
 
     # New in 0.6.0: Any additional data a feedback function returns to display
@@ -312,10 +312,11 @@ class FeedbackResult(SerialModel):
 
     error: Optional[str] = None  # if there was an error
 
+    multi_result: Optional[str] = None
+
     def __init__(
         self, feedback_result_id: Optional[FeedbackResultID] = None, **kwargs
     ):
-
         super().__init__(feedback_result_id="temporary", **kwargs)
 
         if feedback_result_id is None:
@@ -326,9 +327,12 @@ class FeedbackResult(SerialModel):
         self.feedback_result_id = feedback_result_id
 
 
-class FeedbackDefinition(SerialModel):
+class FeedbackDefinition(SerialModel, WithClassInfo):
     # Serialized parts of a feedback function. The non-serialized parts are in
     # the feedback.py:Feedback class.
+
+    class Config:
+        arbitrary_types_allowed = True
 
     # Implementation serialization info.
     implementation: Optional[Union[Function, Method]] = None
@@ -343,12 +347,16 @@ class FeedbackDefinition(SerialModel):
     # arguments for `imp`.
     selectors: Dict[str, JSONPath]
 
+    supplied_name: Optional[str] = None
+
     def __init__(
         self,
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
         implementation: Optional[Union[Function, Method]] = None,
         aggregator: Optional[Union[Function, Method]] = None,
-        selectors: Dict[str, JSONPath] = None
+        selectors: Dict[str, JSONPath] = None,
+        supplied_name: Optional[str] = None,
+        **kwargs
     ):
         """
         - selectors: Optional[Dict[str, JSONPath]] -- mapping of implementation
@@ -365,11 +373,16 @@ class FeedbackDefinition(SerialModel):
 
         selectors = selectors or dict()
 
+        # for WithClassInfo:
+        kwargs['obj'] = self
+
         super().__init__(
             feedback_definition_id="temporary",
             selectors=selectors,
             implementation=implementation,
             aggregator=aggregator,
+            supplied_name=supplied_name,
+            **kwargs
         )
 
         if feedback_definition_id is None:
@@ -432,12 +445,26 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
     # Wrapped app in jsonized form.
     app: JSON
 
+    # Info to store about the app and to display in dashboard. This is useful if
+    # app itself cannot be serialized. `app_extra_json`, then, can stand in place for
+    # whatever the user might want to see about the app.
+    app_extra_json: JSON
+
+    def jsonify_extra(self, content):
+        # Called by jsonify for us to add any data we might want to add to the
+        # serialization of `app`.
+        if self.app_extra_json is not None:
+            content['app'].update(self.app_extra_json)
+
+        return content
+
     def __init__(
         self,
         app_id: Optional[AppID] = None,
         tags: Optional[Tags] = None,
         metadata: Optional[Metadata] = None,
         feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
+        app_extra_json: JSON = None,
         **kwargs
     ):
 
@@ -446,6 +473,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         kwargs['feedback_mode'] = feedback_mode
         kwargs['tags'] = ""
         kwargs['metadata'] = {}
+        kwargs['app_extra_json'] = app_extra_json or dict()
 
         # for WithClassInfo:
         kwargs['obj'] = self

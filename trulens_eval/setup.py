@@ -19,6 +19,7 @@ class javascript_build(build):
 
 
 langchain_version = "0.0.230"  # duplicated in trulens_eval.util, don't know how to dedup
+llama_version = "0.8.3"  # duplicated in trulens_eval.util, don't know how to dedup
 
 setup(
     name="trulens_eval",
@@ -41,7 +42,7 @@ setup(
         'python-dotenv>=1.0.0',
         'kaggle>=1.5.13',
         f'langchain>={langchain_version}',  # required for cost tracking even outside of langchain
-        'llama_index>=0.7.0',
+        f'llama_index>={llama_version}',
         'merkle-json>=1.0.0',
         'millify>=0.1.1',
         'openai>=0.27.6',
@@ -61,6 +62,8 @@ setup(
         'munch>=3.0.0',
         'ipywidgets>=8.0.6',
         'numpy>=1.23.5',
+        'sqlalchemy>=2.0.19',
+        'alembic>=1.11.2',
         # 'nest_asyncio>=1.5.6',  # NOTE(piotrm): disabling for now, need more investigation of compatibility issues
     ],
 )

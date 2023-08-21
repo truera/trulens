@@ -1,14 +1,11 @@
 """
-Tests for TruChain. This is outdated.
+Tests for TruChain. Some of the tests are outdated.
 """
 
 import asyncio
-from datetime import datetime
 import os
-from typing import Dict, Sequence
 import unittest
 from unittest import main
-from unittest import TestCase
 
 from langchain import LLMChain
 from langchain import PromptTemplate
@@ -18,69 +15,30 @@ from langchain.chains import LLMChain
 from langchain.chains import SimpleSequentialChain
 from langchain.chat_models.openai import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.llms.openai import OpenAI
 from langchain.memory import ConversationBufferWindowMemory
+from langchain.memory import ConversationSummaryBufferMemory
 from langchain.schema.messages import HumanMessage
 from langchain.vectorstores import Pinecone
 import pinecone
+from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
+from trulens_eval.feedback.provider.endpoint import Endpoint
+from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.keys import check_keys
-from trulens_eval.provider_apis import Endpoint
-from trulens_eval.provider_apis import OpenAIEndpoint
 from trulens_eval.tru_chain import TruChain
-from trulens_eval.util import JSON_BASES
-from trulens_eval.util import JSONPath
 import trulens_eval.utils.python  # makes sure asyncio gets instrumented
-
-check_keys(
-    "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
-)
-
-
-class JSONTestCase(TestCase):
-
-    def assertJSONEqual(
-        self, j1, j2, path: JSONPath = None, skips=None
-    ) -> None:
-        skips = skips or set([])
-        path = path or JSONPath()
-
-        self.assertIsInstance(j1, type(j2), str(path))
-
-        if isinstance(j1, JSON_BASES):
-            self.assertEqual(j1, j2, str(path))
-
-        elif isinstance(j1, Dict):
-
-            ks1 = set(j1.keys())
-            ks2 = set(j2.keys())
-
-            self.assertSetEqual(ks1, ks2, str(path))
-
-            for k in ks1:
-                if k in skips:
-                    continue
-
-                self.assertJSONEqual(j1[k], j2[k], skips=skips, path=path[k])
-
-        elif isinstance(j1, Sequence):
-            self.assertEqual(len(j1), len(j2), str(path))
-
-            for i, (v1, v2) in enumerate(zip(j1, j2)):
-                self.assertJSONEqual(v1, v2, skips=skips, path=path[i])
-
-        elif isinstance(j1, datetime):
-            self.assertEqual(j1, j2, str(path))
-
-        else:
-            raise RuntimeError(
-                f"Don't know how to compare objects of type {type(j1)} ."
-            )
 
 
 class TestTruChain(JSONTestCase):
 
     def setUp(self):
+        check_keys(
+            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY",
+            "PINECONE_ENV"
+        )
+
         # Setup of outdated tests:
         """
         self.llm_model_id = "gpt2"
@@ -113,6 +71,23 @@ class TestTruChain(JSONTestCase):
 
         self.llm = HuggingFacePipeline(pipeline=self.pipe)
         """
+
+    def test_multiple_instruments(self):
+        # Multiple wrapped apps use the same components. Make sure paths are correctly tracked.
+
+        prompt = PromptTemplate.from_template(
+            """Honestly answer this question: {question}."""
+        )
+        llm = OpenAI(temperature=0.0, streaming=False, cache=False)
+
+        chain1 = LLMChain(llm=llm, prompt=prompt)
+
+        memory = ConversationSummaryBufferMemory(
+            memory_key="chat_history",
+            input_key="question",
+            llm=llm,  # same llm now appears in a different spot
+        )
+        chain2 = LLMChain(llm=llm, prompt=prompt, memory=memory)
 
     def test_async_with_task(self):
         asyncio.run(self._async_with_task())
@@ -198,13 +173,7 @@ class TestTruChain(JSONTestCase):
             async_record.dict(),
             sync_record.dict(),
             skips=set(
-                [
-                    "name",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id"
-                ]
+                ["id", "name", "ts", "start_time", "end_time", "record_id"]
             )
         )
 
@@ -271,6 +240,7 @@ class TestTruChain(JSONTestCase):
             sync_record.dict(),
             skips=set(
                 [
+                    "id",
                     "cost",  # usage info in streaming mode seems to not be available for openai by default https://community.openai.com/t/usage-info-in-api-responses/18862
                     "name",
                     "ts",

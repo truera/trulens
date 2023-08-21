@@ -2,6 +2,7 @@
 Tests for Feedback class. 
 """
 
+from pprint import PrettyPrinter
 from unittest import main
 from unittest import TestCase
 
@@ -13,14 +14,22 @@ from tests.unit.feedbacks import CustomProvider
 from tests.unit.feedbacks import make_nonglobal_feedbacks
 
 from trulens_eval import Feedback
+from trulens_eval.keys import check_keys
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.tru_basic_app import TruBasicApp
-from trulens_eval.util import jsonify
+from trulens_eval.utils.json import jsonify
+
+pp = PrettyPrinter()
 
 
 class TestFeedbackConstructors(TestCase):
 
     def setUp(self):
+        check_keys(
+            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY",
+            "PINECONE_ENV"
+        )
+
         self.app = TruBasicApp(text_to_text=lambda t: f"returning {t}")
         _, self.record = self.app.call_with_record(input="hello")
 
@@ -50,6 +59,7 @@ class TestFeedbackConstructors(TestCase):
 
                 # Serialize and deserialize the feedback function.
                 fs = jsonify(f)
+
                 fds = Feedback(**fs)
 
                 # Run it again.

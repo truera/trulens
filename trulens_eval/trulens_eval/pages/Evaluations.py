@@ -1,5 +1,9 @@
+import asyncio
 import json
 from typing import Iterable, List, Tuple
+
+# https://github.com/jerryjliu/llama_index/issues/7244:
+asyncio.set_event_loop(asyncio.new_event_loop())
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -18,11 +22,12 @@ from trulens_eval.app import instrumented_component_views
 from trulens_eval.app import LLM
 from trulens_eval.app import Other
 from trulens_eval.app import Prompt
+from trulens_eval.db import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
-from trulens_eval.util import jsonify
-from trulens_eval.util import JSONPath
+from trulens_eval.utils.json import jsonify
+from trulens_eval.utils.serial import JSONPath
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
 from trulens_eval.ux.components import draw_metadata
@@ -217,6 +222,8 @@ else:
             for fcol in feedback_cols:
                 feedback_name = fcol
                 feedback_result = row[fcol]
+                if MULTI_CALL_NAME_DELIMITER in fcol:
+                    fcol = fcol.split(MULTI_CALL_NAME_DELIMITER)[0]
                 feedback_calls = row[f"{fcol}_calls"]
 
                 def display_feedback_call(call):

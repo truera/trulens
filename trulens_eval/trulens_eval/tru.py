@@ -8,20 +8,22 @@ import threading
 from threading import Thread
 from time import sleep
 from typing import Iterable, List, Optional, Sequence, Union
+import warnings
 
 import pkg_resources
 
+from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
 from trulens_eval.db import JSON
-from trulens_eval.db import LocalSQLite
 from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import Record
-from trulens_eval.util import SingletonPerName
-from trulens_eval.util import TP
+from trulens_eval.utils.python import SingletonPerName
+from trulens_eval.utils.threading import TP
 from trulens_eval.utils.notebook_utils import is_notebook
 from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
 from trulens_eval.utils.text import UNICODE_CHECK
+from trulens_eval.utils.text import UNICODE_SQUID
 from trulens_eval.utils.text import UNICODE_YIELD
 
 logger = logging.getLogger(__name__)
@@ -40,7 +42,8 @@ class Tru(SingletonPerName):
     * Run and log feedback functions
     * Run streamlit dashboard to view experiment results
 
-    All data is logged to the current working directory to default.sqlite.
+    By default, all data is logged to the current working directory to `default.sqlite`. 
+    Data can be logged to a SQLAlchemy-compatible referred to by `database_url`.
     """
     DEFAULT_DATABASE_FILE = "default.sqlite"
 
@@ -68,17 +71,48 @@ class Tru(SingletonPerName):
 
         return TruLlama(tru=self, app=engine, **kwargs)
 
-    def __init__(self):
+    def __init__(
+        self,
+        database_url: Optional[str] = None,
+        database_file: Optional[str] = None
+    ):
         """
         TruLens instrumentation, logging, and feedback functions for apps.
-        Creates a local database 'default.sqlite' in current working directory.
-        """
 
+        Args:
+           database_url: SQLAlchemy database URL. Defaults to a local
+                                SQLite database file at 'default.sqlite'
+                                See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
+                                on SQLAlchemy database URLs.
+           database_file: (Deprecated) Path to a local SQLite database file
+        """
         if hasattr(self, "db"):
+            if database_url is not None or database_file is not None:
+                logger.warning(
+                    f"Tru was already initialized. Cannot change database_url={database_url} or database_file={database_file} ."
+                )
+
             # Already initialized by SingletonByName mechanism.
             return
 
-        self.db = LocalSQLite(filename=Path(Tru.DEFAULT_DATABASE_FILE))
+        assert None in (database_url, database_file), \
+            "Please specify at most one of `database_url` and `database_file`"
+
+        if database_file:
+            warnings.warn(
+                DeprecationWarning(
+                    "`database_file` is deprecated, use `database_url` instead as in `database_url='sqlite:///filename'."
+                )
+            )
+
+        if database_url is None:
+            database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
+
+        self.db: SqlAlchemyDB = SqlAlchemyDB.from_db_url(database_url)
+
+        print(
+            f"{UNICODE_SQUID} Tru initialized with db url {self.db.engine.url} ."
+        )
 
     def reset_database(self):
         """
@@ -89,7 +123,8 @@ class Tru(SingletonPerName):
 
     def migrate_database(self):
         """
-        Migrates the database. 
+        Migrates the database. This should be run whenever there are breaking
+        changes in a database created with an older version of trulens_eval.
         """
 
         self.db.migrate_database()
@@ -98,11 +133,11 @@ class Tru(SingletonPerName):
         """
         Add a record to the database.
 
-        Parameters:
+        Args:
         
-        - record: Record
+            record: Record
 
-        - **kwargs: Record fields.
+            **kwargs: Record fields.
             
         Returns:
             RecordID: Unique record identifier.
@@ -208,7 +243,12 @@ class Tru(SingletonPerName):
 
     def get_records_and_feedback(self, app_ids: List[str]):
         """
-        Get records, their feeback results, and feedback names from the database.
+        Get records, their feeback results, and feedback names from the
+        database. Pass an empty list of app_ids to return all.
+
+        ```python
+        tru.get_records_and_feedback(app_ids=[])
+        ```
         """
 
         df, feedback_columns = self.db.get_records_and_feedback(app_ids)
@@ -401,7 +441,11 @@ class Tru(SingletonPerName):
             env_opts['env']['PYTHONPATH'] = str(_dev)
 
         proc = subprocess.Popen(
-            ["streamlit", "run", "--server.headless=True", leaderboard_path],
+            [
+                "streamlit", "run", "--server.headless=True", leaderboard_path,
+                "--", "--database-url",
+                self.db.engine.url.render_as_string(hide_password=False)
+            ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
