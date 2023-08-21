@@ -1,6 +1,7 @@
 import logging
 
 import openai
+import os
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import Provider
