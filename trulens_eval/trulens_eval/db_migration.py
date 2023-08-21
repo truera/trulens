@@ -12,7 +12,7 @@ from trulens_eval.schema import FeedbackCall
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
-from trulens_eval.util import FunctionOrMethod
+from trulens_eval.utils.pyschema import FunctionOrMethod
 '''
 How to make a db migrations:
 
