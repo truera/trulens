@@ -2,7 +2,6 @@
 # Llama_index instrumentation and monitoring. 
 """
 
-
 from inspect import BoundArguments
 from inspect import Signature
 import logging
@@ -14,12 +13,12 @@ from pydantic import Field
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
-from trulens_eval.util import Class
-from trulens_eval.util import dict_set_with
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import JSONPath
-from trulens_eval.util import OptionalImports
-from trulens_eval.util import REQUIREMENT_LLAMA
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.containers import dict_set_with
+from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.llama import WithFeedbackFilterNodes
 
 logger = logging.getLogger(__name__)
@@ -29,16 +28,15 @@ pp = PrettyPrinter()
 with OptionalImports(message=REQUIREMENT_LLAMA):
     import llama_index
 
-    
     from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.chat_engine.types import BaseChatEngine
     from llama_index.chat_engine.types import AgentChatResponse, StreamingAgentChatResponse
     from llama_index.response.schema import Response, StreamingResponse, RESPONSE_TYPE
     from llama_index.indices.query.schema import QueryBundle, QueryType
-    
+
     # Tese seemingly unused imports are needed for
     # LlamaInstrument.Default.CLASSES to be able to find the correct classes.
-    
+
     from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.indices.base_retriever import BaseRetriever
     from llama_index.indices.base import BaseIndex

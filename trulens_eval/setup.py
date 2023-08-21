@@ -19,7 +19,7 @@ class javascript_build(build):
 
 
 langchain_version = "0.0.230"  # duplicated in trulens_eval.util, don't know how to dedup
-llama_version = "0.7.16"  # duplicated in trulens_eval.util, don't know how to dedup
+llama_version = "0.8.3"  # duplicated in trulens_eval.util, don't know how to dedup
 
 setup(
     name="trulens_eval",

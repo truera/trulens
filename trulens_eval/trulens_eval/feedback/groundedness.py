@@ -4,15 +4,14 @@ from typing import Dict, List
 import numpy as np
 from tqdm.auto import tqdm
 
-
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider import Provider
 from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.feedback.provider.openai import AzureOpenAI
 from trulens_eval.feedback.provider.openai import OpenAI
+from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.generated import re_1_10_rating
-from trulens_eval.util import SerialModel
-from trulens_eval.util import WithClassInfo
 
 logger = logging.getLogger(__name__)
 

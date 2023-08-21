@@ -1,8 +1,8 @@
 from typing import Optional
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.util import SerialModel
-from trulens_eval.util import WithClassInfo
+from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils.pyschema import WithClassInfo
 
 
 class Provider(SerialModel, WithClassInfo):

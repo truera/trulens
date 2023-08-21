@@ -7,11 +7,10 @@ from langchain.schema import Generation
 from langchain.schema import LLMResult
 import pydantic
 
-from trulens_eval.keys import _check_key
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.feedback.provider.endpoint.base import \
-    EndpointCallback
-from trulens_eval.util import WithClassInfo
+from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
+from trulens_eval.keys import _check_key
+from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
@@ -168,6 +167,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         )
 
         import os
+
         import openai
 
         for k, v in CONF_CLONE.items():
@@ -191,12 +191,12 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
                         )
                         os.environ[v] = attr_val
 
-        # Will fail if key not set:
-        _check_key("OPENAI_API_KEY", silent=True)
-
         if hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
             return
+
+        # Will set up key to env but otherwise will not fail or print anything out.
+        _check_key("OPENAI_API_KEY", silent=True, warn=True)
 
         kwargs['name'] = "openai"
         kwargs['callback_class'] = OpenAICallback

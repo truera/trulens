@@ -43,8 +43,10 @@ def get_current_db_revision(engine: Engine) -> Optional[str]:
 
 
 def get_revision_history(engine: Engine) -> List[str]:
-    """Return list of all revisions, from base to head.
-    Warn: Branching not supported, fails if there's more than one head"""
+    """
+    Return list of all revisions, from base to head.
+    Warn: Branching not supported, fails if there's more than one head.
+    """
     with alembic_config(engine) as config:
         scripts = ScriptDirectory.from_config(config)
         return list(

@@ -18,14 +18,13 @@ from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import Record
-from trulens_eval.util import SingletonPerName
-from trulens_eval.util import TP
+from trulens_eval.utils.python import SingletonPerName
+from trulens_eval.utils.threading import TP
 from trulens_eval.utils.notebook_utils import is_notebook
 from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
 from trulens_eval.utils.text import UNICODE_CHECK
-from trulens_eval.utils.text import UNICODE_YIELD
 from trulens_eval.utils.text import UNICODE_SQUID
-
+from trulens_eval.utils.text import UNICODE_YIELD
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +42,8 @@ class Tru(SingletonPerName):
     * Run and log feedback functions
     * Run streamlit dashboard to view experiment results
 
-    All data is logged to the current working directory to default.sqlite.
+    By default, all data is logged to the current working directory to `default.sqlite`. 
+    Data can be logged to a SQLAlchemy-compatible referred to by `database_url`.
     """
     DEFAULT_DATABASE_FILE = "default.sqlite"
 
@@ -79,13 +79,18 @@ class Tru(SingletonPerName):
         """
         TruLens instrumentation, logging, and feedback functions for apps.
 
-        :param database_url: SQLAlchemy database URL. Defaults to a local
-                             SQLite database file at 'default.sqlite'
-        :param database_file: (Deprecated) Path to a local SQLite database file
+        Args:
+           database_url: SQLAlchemy database URL. Defaults to a local
+                                SQLite database file at 'default.sqlite'
+                                See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
+                                on SQLAlchemy database URLs.
+           database_file: (Deprecated) Path to a local SQLite database file
         """
         if hasattr(self, "db"):
             if database_url is not None or database_file is not None:
-                logger.warning(f"Tru was already initialized. Cannot change database_url={database_url} or database_file={database_file} .")
+                logger.warning(
+                    f"Tru was already initialized. Cannot change database_url={database_url} or database_file={database_file} ."
+                )
 
             # Already initialized by SingletonByName mechanism.
             return
@@ -105,7 +110,9 @@ class Tru(SingletonPerName):
 
         self.db: SqlAlchemyDB = SqlAlchemyDB.from_db_url(database_url)
 
-        print(f"{UNICODE_SQUID} Tru initialized with db url {self.db.engine.url} .")
+        print(
+            f"{UNICODE_SQUID} Tru initialized with db url {self.db.engine.url} ."
+        )
 
     def reset_database(self):
         """
@@ -126,11 +133,11 @@ class Tru(SingletonPerName):
         """
         Add a record to the database.
 
-        Parameters:
+        Args:
         
-        - record: Record
+            record: Record
 
-        - **kwargs: Record fields.
+            **kwargs: Record fields.
             
         Returns:
             RecordID: Unique record identifier.
