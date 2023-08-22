@@ -4,14 +4,11 @@ Generalized root type for various libraries like llama_index and langchain .
 
 from abc import ABC
 from abc import abstractmethod
-from datetime import datetime
 from inspect import BoundArguments
-from inspect import signature
 from inspect import Signature
 import logging
 import contextvars
 from pprint import PrettyPrinter
-import traceback
 from typing import (
     Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type
 )
@@ -21,7 +18,6 @@ from pydantic import Field
 
 from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
-from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.instruments import Instrument
 from trulens_eval.instruments import WithInstrumentCallbacks
 from trulens_eval.schema import AppDefinition
@@ -44,7 +40,6 @@ from trulens_eval.utils.serial import JSON_BASES_T
 from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.serial import JSONPath
-from trulens_eval.utils.pyschema import safe_signature
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.threading import TP
 
@@ -370,6 +365,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
                 # constructor here.
                 f.implementation.load()
 
+
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
@@ -379,7 +375,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         `bindings`.
         """
 
-        all_args = list(bindings.arguments.values())
+        # ignore self
+        all_args = list(v for k, v in bindings.arguments.items() if k != "self")
 
         # If there is only one string arg, it is a pretty good guess that it is
         # the main input.
@@ -388,7 +385,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         # Otherwise we are not sure.
         logger.warning(
-            f"Unsure what the main input string is for the call to {callable_name(func)}."
+            f"Unsure what the main input string is for the call to {callable_name(func)} with args {all_args}."
         )
 
         if len(all_args) > 0:
@@ -532,199 +529,6 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
                 return funcs.get(func)
 
-    """
-    # TODO: ROOTLESS
-
-    # WithInstrumentCallbacks requirement
-    def _on_new_record(self, func):
-        if self.records.get(None) is not None:
-            return []
-
-        return None
-
-    # WithInstrumentCallbacks requirement
-    def _on_add_record(
-        self, record: Sequence[RecordAppCall], func: Callable, sig: Signature,
-        bindings: BoundArguments, start_time, end_time, ret: Any, error: Any,
-        cost: Cost
-    ):
-        assert self.records.get(
-            None
-        ) is not None, "App was not expecting to keep track of a record."
-
-        if len(record) == 0:
-            logger.warning(
-                "No intrumented methods called. "
-                "This may be due to missing instrumentation of relevant methods. "
-                f"Methods currently instrumented are: {list(self.instrumented_methods.keys())}"
-            )
-            raise RuntimeError("Empty record.")
-
-        main_in = self.main_input(func, sig, bindings)
-        main_out = self.main_output(func, sig, bindings, ret)
-
-        ret_record_args = dict()
-        ret_record_args['main_input'] = jsonify(main_in)
-
-        if ret is not None:
-            ret_record_args['main_output'] = jsonify(main_out)
-
-        if error is not None:
-            ret_record_args['main_error'] = jsonify(error)
-
-        ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
-        )
-
-        records = self.records.get()
-        records += [ret_record]
-    """
-
-    async def awith_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
-        """
-        Call the given instrumented async function `func` with the given `args`,
-        `kwargs`, producing its results as well as a record.
-        """
-
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads. We also store self there are multiple apps
-        # may have instrumented the same methods.
-        record = []
-        # DO NOT REMOVE
-        record_and_app: Tuple[Sequence[RecordAppCall], App] = (record, self)
-
-        ret = None
-        error = None
-
-        cost: Cost = Cost()
-
-        start_time = None
-        end_time = None
-
-        main_in = None
-        main_out = None
-
-        start_time = datetime.now()
-
-        try:
-            sig = safe_signature(func)
-            bindings = sig.bind(*args, **kwargs)
-
-            main_in = self.main_input(func, sig, bindings)
-
-            ret, cost = await Endpoint.atrack_all_costs_tally(
-                lambda: func(*bindings.args, **bindings.kwargs)
-            )
-
-            main_out = self.main_output(func, sig, bindings, ret)
-
-        except BaseException as e:
-            error = e
-            logger.error(f"App raised an exception: {e}")
-            logger.error(traceback.format_exc())
-
-        finally:
-            end_time = datetime.now()
-
-        if len(record) == 0:
-            logger.warning(
-                "No intrumented methods called. "
-                "This may be due to missing instrumentation of relevant methods. "
-                f"Methods currently instrumented are: {list(self.instrumented_methods.keys())}"
-            )
-            raise RuntimeError("Empty record.")
-
-        ret_record_args = dict()
-
-        ret_record_args['main_input'] = jsonify(main_in)
-
-        if ret is not None:
-            ret_record_args['main_output'] = jsonify(main_out)
-
-        if error is not None:
-            ret_record_args['main_error'] = jsonify(error)
-
-        perf = Perf(start_time=start_time, end_time=end_time)
-        ret_record = self._post_record(
-            ret_record_args, error, cost, perf, record
-        )
-
-        return ret, ret_record
-
-    def with_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
-        """
-        Call the given instrumented function `func` with the given `args`,
-        `kwargs`, producing its results as well as a record.
-        """
-
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads. We also store self there are multiple apps
-        # may have instrumented the same methods.
-        record = []
-        # DO NOT REMOVE
-        record_and_app: Tuple[Sequence[RecordAppCall], App] = (record, self)
-
-        ret = None
-        error = None
-
-        cost: Cost = Cost()
-
-        start_time = None
-        end_time = None
-
-        main_in = None
-        main_out = None
-
-        start_time = datetime.now()
-
-        try:
-            sig = safe_signature(func)
-
-            bindings = sig.bind(*args, **kwargs)
-
-            main_in = self.main_input(func, sig, bindings)
-
-            ret, cost = Endpoint.track_all_costs_tally(
-                lambda: func(*bindings.args, **bindings.kwargs)
-            )
-
-            main_out = self.main_output(func, sig, bindings, ret)
-
-        except BaseException as e:
-            error = e
-            logger.error(f"App raised an exception: {e}")
-            logger.error(traceback.format_exc())
-        finally:
-            end_time = datetime.now()
-
-        if len(record) == 0:
-            logger.warning(
-                "No intrumented methods called. "
-                "This may be due to missing instrumentation of relevant methods. "
-                f"Methods currently instrumented are: \n{self.format_instrumented_methods()}"
-            )
-            raise RuntimeError("Empty record.")
-
-        ret_record_args = dict()
-
-        ret_record_args['main_input'] = jsonify(main_in)
-
-        if ret is not None:
-            ret_record_args['main_output'] = jsonify(main_out)
-
-        if error is not None:
-            ret_record_args['main_error'] = jsonify(error)
-
-        perf = Perf(start_time=start_time, end_time=end_time)
-        ret_record = self._post_record(
-            ret_record_args=ret_record_args,
-            error=error,
-            cost=cost,
-            perf=perf,
-            calls=record
-        )
-
-        return ret, ret_record
 
     def json(self, *args, **kwargs):
         # Need custom jsonification here because it is likely the model
@@ -736,67 +540,27 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         # Same problem as in json.
         return jsonify(self, instrument=self.instrument)
 
-    def main_input(
-        self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> str:
-        """
-        Determine the main input string for the given function `func` with
-        signature `sig` if it is to be called with the given bindings
-        `bindings`.
-        """
-        logger.warning(
-            f"Unsure what the main input string is for the call to {func.__name__}."
-        )
-
-        all_args = list(bindings.arguments.values())
-
-        if len(all_args) > 0:
-            return all_args[0]
-        else:
-            return None
-
-    def main_output(
-        self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
-    ) -> str:
-        """
-        Determine the main out string for the given function `func` with
-        signature `sig` after it is called with the given `bindings` and has
-        returned `ret`.
-        """
-
-        if isinstance(ret, str):
-            return ret
-
-        logger.warning(
-            f"Unsure what the main output string is for the call to {func.__name__}."
-        )
-
-        if isinstance(ret, Dict):
-            return next(iter(ret.values()))
-
-        elif isinstance(ret, Sequence):
-            if len(ret) > 0:
-                return ret[0]
-            else:
-                return None
-
-        else:
-            return str(ret)
-
     # For use as a context manager.
     def __enter__(self):
+        print("creating new recording context")
+
         q = []
         self.records_token = self.records.set(q)
         return q
 
     def __exit__(self, exc_type, exc_value, exc_tb):
+        print(f"finishing context with {len(self.records.get())} records.")
+
         self.records.reset(self.records_token)
+
+        
 
         if exc_type is not None:
             raise exc_value
 
         return
 
+   # WithInstrumentCallbacks requirement
     def _on_new_record(self, func):
         """
         Called by instrumented methods in cases where they cannot find a record
@@ -808,169 +572,49 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         return None
 
-    def _on_add_record(self, record: Sequence[RecordAppCall], func: Callable, sig: Signature, bindings: BoundArguments, start_time, end_time, ret: Any, error: Any, cost: Cost):
+    # WithInstrumentCallbacks requirement
+    def _on_add_record(
+        self,
+        calls: Sequence[RecordAppCall], 
+        func: Callable, 
+        sig: Signature, 
+        bindings: BoundArguments,
+        ret: Any, 
+        error: Any,
+        perf: Perf,
+        cost: Cost
+    ):
         """
         Called by instrumented methods if they use _new_record to construct a
         record call list. 
         """
-        assert self.records.get(None) is not None, "App was not expecting to keep track of a record."
 
-        assert len(record) > 0, "No information recorded in call."
+        print(f"_on_add_record, bindings={bindings}")
+
+        # assert self.records.get(None) is not None, "App was not expecting to keep track of a record."
+        if self.records.get(None):
+            return
+
+        assert len(calls) > 0, "No information recorded in call."
 
         main_in = self.main_input(func, sig, bindings)
         main_out = self.main_output(func, sig, bindings, ret)
 
-        ret_record_args = dict()
-        ret_record_args['main_input'] = jsonify(main_in)
-
-        if ret is not None:
-            ret_record_args['main_output'] = jsonify(main_out)
-
-        if error is not None:
-            ret_record_args['main_error'] = jsonify(error)
-
-        ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
+        ret_record = Record(
+            main_input = jsonify(main_in),
+            main_output = jsonify(main_out),
+            main_error = jsonify(error),
+            calls=calls,
+            cost=cost,
+            perf=perf, 
+            app_id=self.app_id, 
+            tags=self.tags
         )
+
+        print("adding a record")
 
         records = self.records.get()
         records += [ret_record]
-
-
-    async def awith_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
-        """
-        Call the given instrumented async function `func` with the given `args`,
-        `kwargs`, producing its results as well as a record.
-        """
-
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
-
-        ret = None
-        error = None
-
-        cost: Cost = Cost()
-
-        start_time = None
-        end_time = None
-
-        main_in = None
-        main_out = None
-
-        try:
-            sig = signature(func)
-            bindings = sig.bind(*args, **kwargs)
-
-            main_in = self.main_input(func, sig, bindings)
-
-            start_time = datetime.now()
-            ret, cost = await Endpoint.atrack_all_costs_tally(
-                lambda: func(*bindings.args, **bindings.kwargs)
-            )
-            end_time = datetime.now()
-
-            main_out = self.main_output(func, sig, bindings, ret)
-
-        except BaseException as e:
-            end_time = datetime.now()
-            error = e
-            logger.error(f"App raised an exception: {e}")
-            logger.error(traceback.format_exc())
-
-        assert len(record) > 0, "No information recorded in call."
-
-        ret_record_args = dict()
-
-        ret_record_args['main_input'] = jsonify(main_in)
-
-        if ret is not None:
-            ret_record_args['main_output'] = jsonify(main_out)
-
-        if error is not None:
-            ret_record_args['main_error'] = jsonify(error)
-
-        ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
-        )
-
-        return ret, ret_record
-
-    def with_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
-        """
-        Call the given instrumented function `func` with the given `args`,
-        `kwargs`, producing its results as well as a record.
-        """
-
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
-
-        ret = None
-        error = None
-
-        cost: Cost = Cost()
-
-        start_time = None
-        end_time = None
-
-        main_in = None
-        main_out = None
-
-        try:
-            sig = signature(func)
-            bindings = sig.bind(*args, **kwargs)
-
-            main_in = self.main_input(func, sig, bindings)
-
-            start_time = datetime.now()
-            ret, cost = Endpoint.track_all_costs_tally(
-                lambda: func(*bindings.args, **bindings.kwargs)
-            )
-            end_time = datetime.now()
-
-            main_out = self.main_output(func, sig, bindings, ret)
-
-        except BaseException as e:
-            end_time = datetime.now()
-            error = e
-            logger.error(f"App raised an exception: {e}")
-            logger.error(traceback.format_exc())
-
-        assert len(record) > 0, "No information recorded in call."
-
-        ret_record_args = dict()
-
-        ret_record_args['main_input'] = jsonify(main_in)
-
-        if ret is not None:
-            ret_record_args['main_output'] = jsonify(main_out)
-
-        if error is not None:
-            ret_record_args['main_error'] = jsonify(error)
-
-        ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
-        )
-
-        return ret, ret_record
-
-    def _post_record(
-        self, *, ret_record_args: Dict, error: Optional[Exception], cost: Cost,
-        perf: Perf, calls: Sequence[RecordAppCall]
-    ):
-        """
-        Final steps of record construction common among model types.
-        """
-
-        ret_record_args['main_error'] = str(error)
-        ret_record_args['calls'] = calls
-        ret_record_args['cost'] = cost
-        ret_record_args['perf'] = perf
-        ret_record_args['app_id'] = self.app_id
-        ret_record_args['tags'] = self.tags
-
-        ret_record = Record(**ret_record_args)
 
         if error is not None:
             if self.feedback_mode == FeedbackMode.WITH_APP:
@@ -991,7 +635,138 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
                                     FeedbackMode.WITH_APP_THREAD]:
             TP().runlater(self._handle_record, record=ret_record)
 
-        return ret_record
+        
+    """
+    def _with_record_inits(self):
+        # First part of (a)with_record.
+
+        # Wrapped calls will look this up by traversing the call stack. This
+        # should work with threads. We also store self there are multiple apps
+        # may have instrumented the same methods.
+        # DO NOT REMOVE
+        record: Sequence[RecordAppCall] = []
+        record_and_app: Tuple[Sequence[RecordAppCall], App] = (record, self)
+
+        ret = None
+
+        cost: Cost = Cost()
+        start_time = datetime.now()
+
+        main_in = None
+        error = None
+
+        return ret, record, record_and_app, cost, start_time, main_in, error
+
+    def _with_record_pre(self, func, *args, **kwargs):
+        # Second part of (a)with_record. May fail so to be inside try block with
+        # func invocation.
+
+        sig = safe_signature(func)
+        bindings = sig.bind(*args, **kwargs)
+        main_in = self.main_input(func, sig, bindings)
+
+        return sig, bindings, main_in
+
+    def _with_record_post(self, ret, record, error, start_time, cost, main_in, func, sig, bindings):
+        # Final part of (a)with_record. Return structure construction.
+
+        if len(record) == 0:
+            logger.warning(
+                "No intrumented methods called. "
+                "This may be due to missing instrumentation of relevant methods. "
+                f"Methods currently instrumented are: \n{self.format_instrumented_methods()}"
+            )
+            raise RuntimeError("Empty record.")
+
+        end_time = datetime.now()
+
+        main_out = self.main_output(func, sig, bindings, ret)
+
+        calls: Sequence[RecordAppCall] = record
+        perf = Perf(start_time=start_time, end_time=end_time)
+        
+        ret_record = Record(
+            main_input = jsonify(main_in),
+            main_output = jsonify(main_out),
+            main_error = jsonify(error),
+            calls=calls,
+            cost=cost,
+            perf=perf, 
+            app_id=self.app_id, 
+            tags=self.tags
+        )
+        
+        # The rest is related to invoking feedback functions.
+
+        if error is not None:
+            if self.feedback_mode == FeedbackMode.WITH_APP:
+                self._handle_error(record=ret_record, error=error)
+
+            elif self.feedback_mode in [FeedbackMode.DEFERRED,
+                                        FeedbackMode.WITH_APP_THREAD]:
+                TP().runlater(
+                    self._handle_error, record=ret_record, error=error
+                )
+
+            raise error
+
+        if self.feedback_mode == FeedbackMode.WITH_APP:
+            self._handle_record(record=ret_record)
+
+        elif self.feedback_mode in [FeedbackMode.DEFERRED,
+                                    FeedbackMode.WITH_APP_THREAD]:
+            TP().runlater(self._handle_record, record=ret_record)
+
+        return ret, ret_record
+    """
+
+    async def awith_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
+        """
+        Call the given instrumented async function `func` with the given `args`,
+        `kwargs`, producing its results as well as a record.
+        """
+        
+        with self as records:
+            ret = await func(*args, **kwargs)
+            
+        assert len(records) > 0, (f"Did not create any records. "
+                                  f"This means that no instrumented methods were invoked in the process of calling {func}.")
+
+        return ret, records[0]
+
+    def with_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
+        """
+        Call the given instrumented function `func` with the given `args`,
+        `kwargs`, producing its results as well as a record.
+        """
+
+        with self as records:
+            ret = func(*args, **kwargs)
+
+        assert len(records) > 0, (f"Did not create any records. "
+                                  f"This means that no instrumented methods were invoked in the process of calling {func}.")
+
+        
+        return ret, records[0]
+
+        """
+        ret, record, record_and_app, cost, start_time, main_in, error = self._with_record_inits()
+
+        try:
+            sig, bindings, main_in = self._with_record_pre(func, *args, **kwargs)
+
+            ret, cost = Endpoint.track_all_costs_tally(
+                lambda: func(*bindings.args, **bindings.kwargs)
+            )
+
+        except BaseException as e:
+            error = e
+            logger.error(f"App raised an exception: {e}")
+            logger.error(traceback.format_exc())
+
+        return self._with_record_post(ret, record, error, start_time, cost, main_in, func, sig, bindings)
+        """
+
 
     def _handle_record(self, record: Record):
         """
