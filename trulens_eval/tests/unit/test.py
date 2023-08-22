@@ -6,8 +6,8 @@ from unittest import TestCase
 
 from pydantic import BaseModel
 
-from trulens_eval.util import JSON_BASES
-from trulens_eval.util import JSONPath
+from trulens_eval.utils.serial import JSON_BASES
+from trulens_eval.utils.serial import JSONPath
 
 
 class JSONTestCase(TestCase):
@@ -34,7 +34,7 @@ class JSONTestCase(TestCase):
 
         if isinstance(j1, JSON_BASES):
             if isinstance(j1, (int, float)):
-                self.assertAlmostEqual(j1, j2, places=numeric_places)
+                self.assertAlmostEqual(j1, j2, places=numeric_places, msg=ps)
             else:
                 self.assertEqual(j1, j2, ps)
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-from trulens_eval.util import SerialModel
+from trulens_eval.utils.serial import SerialModel
 
 
 class CATEGORY:

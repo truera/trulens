@@ -19,7 +19,7 @@ class javascript_build(build):
 
 
 langchain_version = "0.0.230"  # duplicated in trulens_eval.util, don't know how to dedup
-llama_version = "0.7.16"  # duplicated in trulens_eval.util, don't know how to dedup
+llama_version = "0.8.3"  # duplicated in trulens_eval.util, don't know how to dedup
 
 setup(
     name="trulens_eval",
@@ -62,6 +62,8 @@ setup(
         'munch>=3.0.0',
         'ipywidgets>=8.0.6',
         'numpy>=1.23.5',
+        'sqlalchemy>=2.0.19',
+        'alembic>=1.11.2',
         # 'nest_asyncio>=1.5.6',  # NOTE(piotrm): disabling for now, need more investigation of compatibility issues
     ],
 )

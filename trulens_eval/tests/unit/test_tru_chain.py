@@ -15,28 +15,30 @@ from langchain.chains import LLMChain
 from langchain.chains import SimpleSequentialChain
 from langchain.chat_models.openai import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.llms.openai import OpenAI
 from langchain.memory import ConversationBufferWindowMemory
+from langchain.memory import ConversationSummaryBufferMemory
 from langchain.schema.messages import HumanMessage
 from langchain.vectorstores import Pinecone
 import pinecone
 from tests.unit.test import JSONTestCase
-from langchain.memory import ConversationSummaryBufferMemory
 
 from trulens_eval import Tru
+from trulens_eval.feedback.provider.endpoint import Endpoint
+from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.keys import check_keys
-from trulens_eval.provider_apis import Endpoint
-from trulens_eval.provider_apis import OpenAIEndpoint
 from trulens_eval.tru_chain import TruChain
 import trulens_eval.utils.python  # makes sure asyncio gets instrumented
-
-check_keys(
-    "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
-)
 
 
 class TestTruChain(JSONTestCase):
 
     def setUp(self):
+        check_keys(
+            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY",
+            "PINECONE_ENV"
+        )
+
         # Setup of outdated tests:
         """
         self.llm_model_id = "gpt2"
@@ -73,7 +75,6 @@ class TestTruChain(JSONTestCase):
     def test_multiple_instruments(self):
         # Multiple wrapped apps use the same components. Make sure paths are correctly tracked.
 
-        
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
         )
@@ -84,12 +85,9 @@ class TestTruChain(JSONTestCase):
         memory = ConversationSummaryBufferMemory(
             memory_key="chat_history",
             input_key="question",
-            llm=llm, # same llm now appears in a different spot
+            llm=llm,  # same llm now appears in a different spot
         )
         chain2 = LLMChain(llm=llm, prompt=prompt, memory=memory)
-
-        
-
 
     def test_async_with_task(self):
         asyncio.run(self._async_with_task())
@@ -174,7 +172,9 @@ class TestTruChain(JSONTestCase):
         self.assertJSONEqual(
             async_record.dict(),
             sync_record.dict(),
-            skips=set(["name", "ts", "start_time", "end_time", "record_id"])
+            skips=set(
+                ["id", "name", "ts", "start_time", "end_time", "record_id"]
+            )
         )
 
     def test_async_token_gen(self):
@@ -240,6 +240,7 @@ class TestTruChain(JSONTestCase):
             sync_record.dict(),
             skips=set(
                 [
+                    "id",
                     "cost",  # usage info in streaming mode seems to not be available for openai by default https://community.openai.com/t/usage-info-in-api-responses/18862
                     "name",
                     "ts",

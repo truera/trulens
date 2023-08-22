@@ -7,22 +7,21 @@ from abc import abstractmethod
 from datetime import datetime
 from inspect import BoundArguments
 from inspect import Signature
-from inspect import signature
 import logging
 from pprint import PrettyPrinter
 import traceback
 from typing import (
     Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type
 )
-from typing import Any, Dict, Iterable, Optional, Sequence, Set, Tuple, Callable
 
 import pydantic
 from pydantic import Field
 
 from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
+from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.instruments import Instrument
-from trulens_eval.provider_apis import Endpoint
+from trulens_eval.instruments import WithInstrumentCallbacks
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackMode
@@ -32,19 +31,20 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
-from trulens_eval.instruments import WithInstrumentCallbacks
-from trulens_eval.util import all_objects
-from trulens_eval.util import Class
-from trulens_eval.util import CLASS_INFO
-from trulens_eval.util import GetItemOrAttribute
-from trulens_eval.util import JSON
-from trulens_eval.util import JSON_BASES
-from trulens_eval.util import JSON_BASES_T
-from trulens_eval.util import json_str_of_obj
-from trulens_eval.util import jsonify
-from trulens_eval.util import JSONPath
-from trulens_eval.util import SerialModel
-from trulens_eval.util import TP
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.serial import all_objects
+from trulens_eval.utils.pyschema import callable_name
+from trulens_eval.utils.pyschema import CLASS_INFO
+from trulens_eval.utils.serial import GetItemOrAttribute
+from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSON_BASES
+from trulens_eval.utils.serial import JSON_BASES_T
+from trulens_eval.utils.json import json_str_of_obj
+from trulens_eval.utils.json import jsonify
+from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.pyschema import safe_signature
+from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
 
@@ -52,10 +52,6 @@ pp = PrettyPrinter()
 
 # App component.
 COMPONENT = Any
-
-# Component category.
-# TODO: Enum
-COMPONENT_CATEGORY = str
 
 
 class ComponentView(ABC):
@@ -135,7 +131,6 @@ class ComponentView(ABC):
                 return root_module
 
         return None
-
 
 
 class LangChainComponent(ComponentView):
@@ -221,6 +216,7 @@ class Other(ComponentView):
 
 
 class CustomComponent(ComponentView):
+
     class Custom(Other):
         # No categorization of custom class components for now. Using just one
         # "Custom" catch-all.
@@ -373,11 +369,18 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         signature `sig` if it is to be called with the given bindings
         `bindings`.
         """
-        logger.warning(
-            f"Unsure what the main input string is for the call to {func.__name__}."
-        )
 
         all_args = list(bindings.arguments.values())
+
+        # If there is only one string arg, it is a pretty good guess that it is
+        # the main input.
+        if len(all_args) == 1 and isinstance(all_args[0], str):
+            return all_args[0]
+
+        # Otherwise we are not sure.
+        logger.warning(
+            f"Unsure what the main input string is for the call to {callable_name(func)}."
+        )
 
         if len(all_args) > 0:
             return all_args[0]
@@ -397,7 +400,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
             return ret
 
         logger.warning(
-            f"Unsure what the main output string is for the call to {func.__name__}."
+            f"Unsure what the main output string is for the call to {callable_name(func)}."
         )
 
         if isinstance(ret, Dict):
@@ -413,7 +416,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
             return str(ret)
 
     # WithInstrumentCallbacks requirement
-    def _on_method_instrumented(self, obj: object, func: Callable, path: JSONPath):
+    def _on_method_instrumented(
+        self, obj: object, func: Callable, path: JSONPath
+    ):
         """
         Called by instrumentation system for every function requested to be
         instrumented by this app.
@@ -444,13 +449,15 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
             funcs[func] = path
 
     # WithInstrumentCallbacks requirement
-    def _get_methods_for_func(self, func: Callable) -> Iterable[Tuple[Callable, JSONPath]]:
+    def _get_methods_for_func(
+        self, func: Callable
+    ) -> Iterable[Tuple[int, Callable, JSONPath]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
         """
 
-        for ids, funcs in self.instrumented_methods.items():
+        for _id, funcs in self.instrumented_methods.items():
             for f, path in funcs.items():
                 """
                 # TODO: wider wrapping support
@@ -460,7 +467,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
                 else:
                 """
                 if f == func:
-                    yield (f, path)
+                    yield (_id, f, path)
 
     # WithInstrumentCallbacks requirement
     def _get_method_path(self, obj: object, func: Callable) -> JSONPath:
@@ -471,9 +478,50 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         funcs = self.instrumented_methods.get(id(obj))
 
         if funcs is None:
-            return None
+            logger.warning(
+                f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. The path of this call may be incorrect."
+            )
+            try:
+                _id, f, path = next(iter(self._get_methods_for_func(func)))
+            except Exception:
+                logger.warning(
+                    "No other objects use this function so cannot guess path."
+                )
+                return None
+
+            logger.warning(
+                f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function."
+            )
+
+            funcs = {func: path}
+
+            self.instrumented_methods[id(obj)] = funcs
+
+            return path
+
         else:
-            return funcs.get(func)
+            if func not in funcs:
+                logger.warning(
+                    f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. The path of this call may be incorrect."
+                )
+
+                try:
+                    _id, f, path = next(iter(self._get_methods_for_func(func)))
+                except Exception:
+                    logger.warning(
+                        "No other objects use this function so cannot guess path."
+                    )
+                    return None
+
+                logger.warning(
+                    f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function."
+                )
+
+                return path
+
+            else:
+
+                return funcs.get(func)
 
     """
     # TODO: ROOTLESS
@@ -550,7 +598,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         start_time = datetime.now()
 
         try:
-            sig = signature(func)
+            sig = safe_signature(func)
             bindings = sig.bind(*args, **kwargs)
 
             main_in = self.main_input(func, sig, bindings)
@@ -621,7 +669,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         start_time = datetime.now()
 
         try:
-            sig = signature(func)
+            sig = safe_signature(func)
 
             bindings = sig.bind(*args, **kwargs)
 
@@ -644,7 +692,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
             logger.warning(
                 "No intrumented methods called. "
                 "This may be due to missing instrumentation of relevant methods. "
-                f"Methods currently instrumented are: {list(self.instrumented_methods.keys())}"
+                f"Methods currently instrumented are: \n{self.format_instrumented_methods()}"
             )
             raise RuntimeError("Empty record.")
 
@@ -660,29 +708,35 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         perf = Perf(start_time=start_time, end_time=end_time)
         ret_record = self._post_record(
-            ret_record_args, error, cost, perf, record
+            ret_record_args=ret_record_args,
+            error=error,
+            cost=cost,
+            perf=perf,
+            calls=record
         )
 
         return ret, ret_record
 
-    
     def json(self, *args, **kwargs):
         # Need custom jsonification here because it is likely the model
         # structure contains loops.
 
         return json_str_of_obj(self.dict(), *args, **kwargs)
-    
+
     def dict(self):
         # Same problem as in json.
         return jsonify(self, instrument=self.instrument)
 
-    def _post_record(self, ret_record_args, error, cost, perf, record):
+    def _post_record(
+        self, *, ret_record_args: Dict, error: Optional[Exception], cost: Cost,
+        perf: Perf, calls: Sequence[RecordAppCall]
+    ):
         """
         Final steps of record construction common among model types.
         """
 
         ret_record_args['main_error'] = str(error)
-        ret_record_args['calls'] = record
+        ret_record_args['calls'] = calls
         ret_record_args['cost'] = cost
         ret_record_args['perf'] = perf
         ret_record_args['app_id'] = self.app_id
@@ -768,17 +822,19 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         print("\nMethods:")
         self.print_instrumented_methods()
 
+    def format_instrumented_methods(self) -> None:
+        return "\n".join(
+            f"Object at 0x{obj:x}:\n\t" + "\n\t".
+            join(f"{m} with path {Select.App + path}"
+                 for m, path in p.items())
+            for obj, p in self.instrumented_methods.items()
+        )
+
     def print_instrumented_methods(self) -> None:
         """
         Print instrumented components and their categories.
         """
-        print(
-            "\n".join(
-                f"Object at 0x{obj:x}:\n\t" +
-                "\n\t".join(f"{m} with path {Select.App + path}" for m, path in p.items())
-                for obj, p in self.instrumented_methods.items()
-            )
-        )
+        print(self.format_instrumented_methods())
 
     def print_instrumented_components(self) -> None:
         """

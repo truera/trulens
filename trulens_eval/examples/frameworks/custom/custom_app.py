@@ -1,8 +1,10 @@
-from trulens_eval.tru_custom_app import instrument
-from custom_retriever import CustomRetriever
 from custom_llm import CustomLLM
+from custom_retriever import CustomRetriever
+
+from trulens_eval.tru_custom_app import instrument
 
 instrument.method(CustomRetriever, "retrieve_chunks")
+
 
 class CustomTemplate:
 

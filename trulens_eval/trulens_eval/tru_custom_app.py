@@ -196,16 +196,16 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
 
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Set, Iterable
+from typing import Any, Callable, ClassVar, Iterable, Set
 
 from pydantic import Field
 
 from trulens_eval import Select
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.util import Class
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import JSONPath
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.serial import JSONPath
 from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
@@ -299,10 +299,10 @@ class TruCustomApp(App):
 
         # Check that any functions marked with `TruCustomApp.instrument` has been
         # instrumented as a method under some object.
-        for f in TruCustomApp.functions_to_instrument: 
-            methods_and_full_paths = list(self._get_methods_for_func(f))
+        for f in TruCustomApp.functions_to_instrument:
+            obj_ids_methods_and_full_paths = list(self._get_methods_for_func(f))
 
-            if len(methods_and_full_paths) == 0: 
+            if len(obj_ids_methods_and_full_paths) == 0:
                 logger.warning(
                     f"Function {f} was not found during instrumentation walk. "
                     f"Make sure it is accessible by traversing app {app} "
@@ -310,7 +310,7 @@ class TruCustomApp(App):
                 )
 
             else:
-                for m, full_path in methods_and_full_paths:
+                for obj_id, m, full_path in obj_ids_methods_and_full_paths:
                     try:
                         next(full_path(json))
 

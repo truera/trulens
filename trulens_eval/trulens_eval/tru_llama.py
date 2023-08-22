@@ -2,30 +2,24 @@
 # Llama_index instrumentation and monitoring. 
 """
 
-from datetime import datetime
+from inspect import BoundArguments
+from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-import traceback
-from typing import ClassVar, Sequence, Tuple, Union, Callable, Any
-from inspect import Signature, BoundArguments
+from typing import Any, Callable, ClassVar, Tuple, Union
 
 from pydantic import Field
 
-from trulens_eval.utils.llama import WithFeedbackFilterNodes
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.provider_apis import Endpoint
-from trulens_eval.provider_apis import OpenAIEndpoint
-from trulens_eval.schema import Cost
 from trulens_eval.schema import Record
-from trulens_eval.schema import RecordAppCall
-from trulens_eval.util import Class
-from trulens_eval.util import dict_set_with
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import JSONPath
-from trulens_eval.util import Method
-from trulens_eval.util import OptionalImports
-from trulens_eval.util import REQUIREMENT_LLAMA
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.containers import dict_set_with
+from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_LLAMA
+from trulens_eval.utils.llama import WithFeedbackFilterNodes
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +27,32 @@ pp = PrettyPrinter()
 
 with OptionalImports(message=REQUIREMENT_LLAMA):
     import llama_index
+
     from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.chat_engine.types import BaseChatEngine
     from llama_index.chat_engine.types import AgentChatResponse, StreamingAgentChatResponse
     from llama_index.response.schema import Response, StreamingResponse, RESPONSE_TYPE
     from llama_index.indices.query.schema import QueryBundle, QueryType
+
+    # Tese seemingly unused imports are needed for
+    # LlamaInstrument.Default.CLASSES to be able to find the correct classes.
+
+    from llama_index.indices.query.base import BaseQueryEngine
+    from llama_index.indices.base_retriever import BaseRetriever
+    from llama_index.indices.base import BaseIndex
+    from llama_index.chat_engine.types import BaseChatEngine
+    from llama_index.prompts.base import Prompt
+    from llama_index.question_gen.types import BaseQuestionGenerator
+    from llama_index.response_synthesizers.base import BaseSynthesizer
+    from llama_index.response_synthesizers.refine import Refine
+    from llama_index.llm_predictor import LLMPredictor
+    from llama_index.llm_predictor.base import LLMMetadata
+    from llama_index.llm_predictor.base import BaseLLMPredictor
+    from llama_index.vector_stores.types import VectorStore
+    from llama_index.indices.service_context import ServiceContext
+    from llama_index.indices.prompt_helper import PromptHelper
+    from llama_index.embeddings.base import BaseEmbedding
+    from llama_index.node_parser.interface import NodeParser
 
 from trulens_eval.tru_chain import LangChainInstrument
 
@@ -123,7 +138,8 @@ class LlamaInstrument(Instrument):
             include_modules=LlamaInstrument.Default.MODULES,
             include_classes=LlamaInstrument.Default.CLASSES(),
             include_methods=LlamaInstrument.Default.METHODS,
-            *args, **kwargs
+            *args,
+            **kwargs
         )
 
 
@@ -156,11 +172,10 @@ class TruLlama(App):
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)  # TODO: make class property
         kwargs['instrument'] = LlamaInstrument(
-            root_methods=set(
-                [
-                    TruLlama.with_record, TruLlama.awith_record,
-                ]
-            ),
+            root_methods=set([
+                TruLlama.with_record,
+                TruLlama.awith_record,
+            ]),
             callbacks=self
         )
 
@@ -241,7 +256,7 @@ class TruLlama(App):
         if 'str_or_query_bundle' in bindings.arguments:
             # llama_index specific
             return bindings.arguments['str_or_query_bundle']
-        
+
         elif 'message' in bindings.arguments:
             # llama_index specific
             return bindings.arguments['message']
@@ -259,10 +274,10 @@ class TruLlama(App):
         returned `ret`.
         """
 
-        if isinstance(ret, Response): # query, aquery
+        if isinstance(ret, Response):  # query, aquery
             return ret.response
 
-        elif isinstance(ret, AgentChatResponse): #  chat, achat
+        elif isinstance(ret, AgentChatResponse):  #  chat, achat
             return ret.response
 
         elif isinstance(ret, (StreamingResponse, StreamingAgentChatResponse)):
@@ -288,7 +303,6 @@ class TruLlama(App):
 
         return self.with_record(self.app.query, str_or_query_bundle)
 
-
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .
     async def aquery_with_record(
         self, str_or_query_bundle: QueryType
@@ -299,7 +313,6 @@ class TruLlama(App):
 
         return await self.awith_record(self.app.aquery, str_or_query_bundle)
 
-
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
     def chat_with_record(self, message: str,
                          **kwargs) -> Tuple[AgentChatResponse, Record]:
@@ -308,7 +321,6 @@ class TruLlama(App):
         )
 
         return self.with_record(self.app.chat, message, **kwargs)
-
 
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
     async def achat_with_record(self, message: str,
@@ -319,7 +331,6 @@ class TruLlama(App):
 
         return await self.awith_record(self.app.achat, message, **kwargs)
 
-
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.stream_chat .
     def stream_chat_with_record(
         self, message: str, **kwargs
@@ -329,7 +340,6 @@ class TruLlama(App):
         )
 
         return self.with_record(self.app.stream_chat, message, **kwargs)
-
 
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.astream_chat .
     async def astream_chat_with_record(

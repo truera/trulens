@@ -27,9 +27,9 @@ from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordID
-from trulens_eval.util import JSON
-from trulens_eval.util import json_str_of_obj
-from trulens_eval.util import SerialModel
+from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.json import json_str_of_obj
+from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
 
@@ -98,6 +98,11 @@ class DB(SerialModel, abc.ABC):
 
         raise NotImplementedError()
 
+    def get_feedback_defs(
+        self, feedback_definition_id: Optional[str] = None
+    ) -> pd.DataFrame:
+        raise NotImplementedError()
+
     @abc.abstractmethod
     def insert_feedback(
         self,
@@ -114,8 +119,25 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def get_feedback(
+        self,
+        record_id: Optional[RecordID] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+        status: Optional[Union[FeedbackResultStatus,
+                               Sequence[FeedbackResultStatus]]] = None,
+        last_ts_before: Optional[datetime] = None
+    ) -> pd.DataFrame:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_app(self, app_id: str) -> JSON:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def get_records_and_feedback(
-        self, app_ids: List[str]
+        self,
+        app_ids: Optional[List[str]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """
         Get the records logged for the given set of `app_ids` (otherwise all)
