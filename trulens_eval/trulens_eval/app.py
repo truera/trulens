@@ -10,7 +10,7 @@ import logging
 import contextvars
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Type
 )
 
 import pydantic
@@ -266,6 +266,38 @@ def instrumented_component_views(
         if isinstance(o, Dict) and CLASS_INFO in o:
             yield q, ComponentView.of_json(json=o)
 
+class RecordingContext():
+    def __init__(self, app: 'App'):
+        # A record (in terms of its RecordAppCall) in process of being created
+        # are kept here:
+        self.calls: List[RecordAppCall] = []
+
+        # Completed records go here:
+        self.records: List[Record] = []
+
+        # Token for context management. See contextvars.
+        self.token: contextvars.Token = None
+
+        # App managing this recording.
+        self.app: 'App' = app
+
+    def __len__(self):
+        return len(self.records)
+
+    def __hash__(self):
+        # The same app can have multiple recording contexts.
+        return hash(id(self.app)) + hash(id(self.records))
+
+    def __eq__(self, other):
+        return id(self.app) == id(other.app) and id(self.records) == id(other.records)
+
+    def finish_record(self):
+        # TODO: create record from calls and other info.
+        record = ...
+        self.records.append(record)
+
+        # TODO: call app's handle record for feedback starting and db stuff
+
 
 class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
     """
@@ -294,9 +326,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
     # Sequnces of records produced by the this class used as a context manager.
     # Using a context var so that context managers can be nested.
-    records: contextvars.ContextVar[Sequence[Record]] = Field(exclude=True)
+    recording_contexts: contextvars.ContextVar[Sequence[Record]] = Field(exclude=True)
     # Contextvars token controls the records statck under nested managers.
-    records_token: contextvars.Token = Field(None, exclude=True)
+    # recording_contexts_token: contextvars.Token = Field(None, exclude=True)
     
     # Mapping of instrumented methods (by id(.) of owner object and the
     # function) to their path in this app:
@@ -316,7 +348,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         # for us:
         kwargs['tru'] = tru
         kwargs['feedbacks'] = feedbacks
-        kwargs['records'] = contextvars.ContextVar("records")
+        kwargs['recording_contexts'] = contextvars.ContextVar("recording_contexts")
 
         super().__init__(**kwargs)
 
@@ -544,16 +576,18 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
     def __enter__(self):
         print("creating new recording context")
 
-        q = []
-        self.records_token = self.records.set(q)
-        return q
+        ctx = RecordingContext(app=self)
+
+        token = self.recording_contexts.set(ctx)
+        ctx.token = token
+
+        return ctx
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        print(f"finishing context with {len(self.records.get())} records.")
+        print(f"finishing context with {len(self.recording_contexts.get())} records.")
 
-        self.records.reset(self.records_token)
-
-        
+        ctx = self.recording_contexts.get()
+        self.recording_contexts.reset(ctx.token)
 
         if exc_type is not None:
             raise exc_value
@@ -561,21 +595,18 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         return
 
    # WithInstrumentCallbacks requirement
-    def _on_new_record(self, func):
-        """
-        Called by instrumented methods in cases where they cannot find a record
-        call list in the stack. If we are inside a context manager, return a new
-        call list.
-        """
-        if self.records.get(None) is not None:
-            return []
+    def _on_new_record(self, func) -> Iterable[RecordingContext]:
+        ctx = self.recording_contexts.get(contextvars.Token.MISSING)
 
-        return None
+        while ctx is not contextvars.Token.MISSING:
+            yield ctx
+            ctx = ctx.token.old_value
+
 
     # WithInstrumentCallbacks requirement
     def _on_add_record(
         self,
-        calls: Sequence[RecordAppCall], 
+        ctx: RecordingContext,
         func: Callable, 
         sig: Signature, 
         bindings: BoundArguments,
@@ -589,11 +620,14 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         record call list. 
         """
 
+        calls = ctx.calls
+
         print(f"_on_add_record, bindings={bindings}")
 
         # assert self.records.get(None) is not None, "App was not expecting to keep track of a record."
-        if self.records.get(None):
-            return
+        #if self.records.get(None) is None:
+        #    print("did not expect to track")
+        #    return
 
         assert len(calls) > 0, "No information recorded in call."
 
@@ -613,8 +647,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         print("adding a record")
 
-        records = self.records.get()
-        records += [ret_record]
+        # records = self.records.get()
+        # records += [ret_record]
 
         if error is not None:
             if self.feedback_mode == FeedbackMode.WITH_APP:
@@ -634,6 +668,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         elif self.feedback_mode in [FeedbackMode.DEFERRED,
                                     FeedbackMode.WITH_APP_THREAD]:
             TP().runlater(self._handle_record, record=ret_record)
+
+        return ret_record
 
         
     """
@@ -726,13 +762,13 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         `kwargs`, producing its results as well as a record.
         """
         
-        with self as records:
+        with self as ctx:
             ret = await func(*args, **kwargs)
             
-        assert len(records) > 0, (f"Did not create any records. "
+        assert len(ctx.records) > 0, (f"Did not create any records. "
                                   f"This means that no instrumented methods were invoked in the process of calling {func}.")
 
-        return ret, records[0]
+        return ret, ctx.records[0]
 
     def with_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
         """
@@ -740,14 +776,14 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         `kwargs`, producing its results as well as a record.
         """
 
-        with self as records:
+        with self as ctx:
             ret = func(*args, **kwargs)
 
-        assert len(records) > 0, (f"Did not create any records. "
+        assert len(ctx.records) > 0, (f"Did not create any records. "
                                   f"This means that no instrumented methods were invoked in the process of calling {func}.")
 
         
-        return ret, records[0]
+        return ret, ctx.records[0]
 
         """
         ret, record, record_and_app, cost, start_time, main_in, error = self._with_record_inits()

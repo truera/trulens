@@ -670,56 +670,44 @@ class Instrument(object):
             def find_instrumented(f):
                 return id(f) in [id(awrapper.__code__)]
 
-            def find_root_methods(f):
-                return id(f) in set(
-                    [id(rm.__code__) for rm in self.root_methods]
-                )  # or id(f) == id(wrapper.__code__) # TODO ROOTLESS
-
-            # Look up whether the root instrumented method was called earlier in
-            # the stack and "record_and_app" variable was defined there. Will
-            # use that for recording the wrapped call.
-            calls_and_apps = get_first_local_in_call_stack(
-                key="calls_and_apps", func=find_instrumented, offset=1
+            # Get any contexts already known from higher in the call stack.
+            contexts = get_first_local_in_call_stack(
+                key="contexts", func=find_instrumented, offset=1
             )
+            # Note: are empty sets false?
+            if contexts is None:
+                contexts = set([])
 
-            is_root_call = False
+            # And add any new contexts from all apps wishing to record this
+            # function. This may produce some of the same contexts that were
+            # already being tracked which is ok. Importantly, this might produce
+            # contexts for apps that didn't instrument a method higher in the
+            # call stack hence this might be the first time they are seeing an
+            # instrumented method being called.
+            for app in apps:
+                for ctx in app._on_new_record(func):
+                    contexts.add(ctx)
 
-            if calls_and_apps is None:
-                # TODO: what if a method is a root call in one app but a
-                # non-root method in another?
-
-                # If this is the first instrumented method in the stack, check
-                # that any app wants it recorded.
-                calls_and_apps = []
-
-                for app in apps:
-                    calls = app._on_new_record(func)
-
-                    if calls is not None:
-                        is_root_call = True
-
-                        calls_and_apps.append((calls, app))
-
-            if len(calls_and_apps) == 0:        
+            if len(contexts) == 0:        
                 # If no app wants this call recorded, run and return without instrumentation.
                 logger.debug(f"{query}: no record found or requested, not recording.")
 
                 return func(*args, **kwargs)
-
-            error = None
-            rets = None
 
             # If a wrapped method was called in this call stack, get the prior
             # calls from this variable. Otherwise create a new chain stack. As
             # another wrinke, the addresses of methods in the stack may vary
             # from app to app that are watching this method. Hence we index the
             # stacks by id of the call record list which is unique to each app.
-            pstacks = get_first_local_in_call_stack(
+            ctx_stacks = get_first_local_in_call_stack(
                 key="stacks", func=find_instrumented, offset=1
             )
-            # Note: Empty dict is false-ish.
-            if pstacks is None:
-                pstacks = dict()
+            # Note: Empty dicts are false.
+            if ctx_stacks is None:
+                ctx_stacks = dict()
+
+            error = None
+            rets = None
 
             # My own stacks to be looked up by further subcalls by the logic
             # right above. We make a copy here since we need subcalls to access
@@ -740,10 +728,8 @@ class Instrument(object):
             # to use a different stack for the same reason. We index the stack
             # in `stacks` via id of the (unique) list `record`.
 
-            for calls, app in calls_and_apps:
+            for ctx in contexts:
                 # Get record and app that has instrumented this method.
-
-                rid = id(calls)
 
                 # The path to this method according to the app.
                 path = app._get_method_path(
@@ -756,13 +742,13 @@ class Instrument(object):
                     )
                     continue
 
-                if rid not in pstacks:
+                if ctx not in ctx_stacks:
                     # If we are the first instrumented method in the chain
                     # stack, make a new stack tuple for subsequent deeper calls
                     # (if any) to look up.
                     stack = ()
                 else:
-                    stack = pstacks[rid]
+                    stack = ctx_stacks[ctx]
 
                 frame_ident = RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
@@ -770,7 +756,7 @@ class Instrument(object):
 
                 stack = stack + (frame_ident,)
 
-                stacks[rid] = stack  # for deeper calls to get
+                stacks[ctx] = stack  # for deeper calls to get
 
                 # Now we will call the wrapped method. We only do so once.
 
@@ -782,16 +768,11 @@ class Instrument(object):
                         # Using sig bind here so we can produce a list of key-value
                         # pairs even if positional arguments were provided.
                         bindings: BoundArguments = sig.bind(*args, **kwargs)
-
-                        # If this is a root call (first instrumented method), also track
-                        # costs:
-                        if is_root_call:
-                            rets, cost = Endpoint.track_all_costs_tally(
-                                lambda: func(*bindings.args, **bindings.kwargs)
-                            )
-                        else:
-                            rets = func(*bindings.args, **bindings.kwargs)
-
+    
+                        rets, cost = Endpoint.track_all_costs_tally(
+                            lambda: func(*bindings.args, **bindings.kwargs)
+                        )
+                    
                     except BaseException as e:
                         error = e
                         error_str = str(e)
@@ -829,13 +810,13 @@ class Instrument(object):
                 record_app_args['stack'] = stack
                 call = RecordAppCall(**record_app_args)
 
-                calls.append(call)
+                ctx.calls.append(call)
                 
-                if is_root_call:
+                if len(stack) == 1:
                     # If this is a root call, notify app to add the completed record
                     # into its containers:
-                    self.callbacks._on_add_record(
-                        calls=calls,
+                    record = self.callbacks._on_add_record(
+                        ctx=ctx,
                         func=func,
                         sig=sig,
                         bindings=bindings,
@@ -844,6 +825,8 @@ class Instrument(object):
                         perf=Perf(start_time=start_time, end_time=end_time),
                         cost=cost
                     )
+                    ctx.calls = []
+                    ctx.records.append(record)
 
             if error is not None:
                 raise error
