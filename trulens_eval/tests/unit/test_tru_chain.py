@@ -120,7 +120,9 @@ class TestTruChain(JSONTestCase):
     def test_record_metadata_plain(self):
         # Test inclusion of metadata in records.
 
-        tc = self._create_basic_chain(app_id="metaplain")
+        # Need unique app_id per test as they may be run in parallel and have
+        # same ids.
+        tc = self._create_basic_chain(app_id="metaplain") 
 
         message = "What is 1+2?"
         meta = "this is plain metadata"
@@ -166,14 +168,14 @@ class TestTruChain(JSONTestCase):
     def test_record_metadata_json(self):
         # Test inclusion of metadata in records.
 
+        # Need unique app_id per test as they may be run in parallel and have
+        # same ids.
         tc = self._create_basic_chain(app_id="metajson")
 
         message = "What is 1+2?"
         meta = dict(field1="hello", field2="there")
 
         _, rec = tc.call_with_record(message, meta=meta)
-
-        sleep(1)
 
         # Check record has metadata.
         self.assertEqual(rec.meta, meta)
