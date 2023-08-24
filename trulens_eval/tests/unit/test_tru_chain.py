@@ -4,7 +4,6 @@ Tests for TruChain. Some of the tests are outdated.
 
 import asyncio
 import os
-from time import sleep
 import unittest
 from unittest import main
 
