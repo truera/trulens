@@ -27,6 +27,7 @@ from trulens_eval import Tru
 from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.keys import check_keys
+from trulens_eval.schema import Record
 from trulens_eval.tru_chain import TruChain
 import trulens_eval.utils.python  # makes sure asyncio gets instrumented
 
@@ -73,7 +74,8 @@ class TestTruChain(JSONTestCase):
         """
 
     def test_multiple_instruments(self):
-        # Multiple wrapped apps use the same components. Make sure paths are correctly tracked.
+        # Multiple wrapped apps use the same components. Make sure paths are
+        # correctly tracked.
 
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
@@ -88,6 +90,62 @@ class TestTruChain(JSONTestCase):
             llm=llm,  # same llm now appears in a different spot
         )
         chain2 = LLMChain(llm=llm, prompt=prompt, memory=memory)
+
+    def _create_basic_chain(self):
+        OpenAIEndpoint()
+
+        # Create simple QA chain.
+        tru = Tru()
+        tru.reset_database()
+        prompt = PromptTemplate.from_template(
+            """Honestly answer this question: {question}."""
+        )
+
+        # Get sync results.
+        llm = ChatOpenAI(temperature=0.0)
+        chain = LLMChain(llm=llm, prompt=prompt)
+        tc = tru.Chain(chain)
+
+        return tc
+
+    def test_record_metadata_plain(self):
+        # Test inclusion of metadata in records.
+
+        tc = self._create_basic_chain()
+
+        message = "What is 1+2?"
+        meta = "this is plain metadata"
+
+        res, rec = tc.call_with_record(message, meta=meta)
+
+        # Check record has metadata.
+        self.assertEqual(rec.meta, meta)
+
+        # Check the record has the metadata when retrieved back from db.
+        recs, feedbacks =  Tru().get_records_and_feedback([tc.app_id])
+        self.assertGreater(len(recs), 0)
+        rec = Record.parse_raw(recs.iloc[0].record_json)
+        self.assertEqual(rec.meta, meta)
+
+    def test_record_metadata_json(self):
+        # Test inclusion of metadata in records.
+
+        tc = self._create_basic_chain()
+
+        message = "What is 1+2?"
+        meta = dict(field1="hello", field2="there")
+
+        res, rec = tc.call_with_record(message, meta=meta)
+
+        # Check record has metadata.
+        self.assertEqual(rec.meta, meta)
+
+        # Check the record has the metadata when retrieved back from db.
+        recs, feedbacks =  Tru().get_records_and_feedback([tc.app_id])
+        self.assertGreater(len(recs), 0)
+        rec = Record.parse_raw(recs.iloc[0].record_json)
+        self.assertEqual(rec.meta, meta)
+
 
     def test_async_with_task(self):
         asyncio.run(self._async_with_task())
