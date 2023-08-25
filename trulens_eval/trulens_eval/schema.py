@@ -282,7 +282,7 @@ class FeedbackResultStatus(Enum):
 
 
 class FeedbackCall(SerialModel):
-    args: Dict[str, Optional[str]]
+    args: Dict[str, Optional[JSON]]
     ret: float
 
     # New in 0.6.0: Any additional data a feedback function returns to display
