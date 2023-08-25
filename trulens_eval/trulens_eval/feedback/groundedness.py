@@ -15,10 +15,30 @@ from trulens_eval.utils.generated import re_1_10_rating
 
 logger = logging.getLogger(__name__)
 
+"""
+TODO: feedback collections refactor
 
+class FeedbackCollection(SerialModel, WithClassInfo):
+    ...
+
+class Syntax():
+    ...
+
+class Truth():
+    ...
+
+class Relevance():
+    ...
+
+class Safety(RequiresCompletionProvider):
+
+    of_prompt(...) -> ...
+    ...
+"""
+    
 class Groundedness(SerialModel, WithClassInfo):
-    summarize_provider: Provider
     groundedness_provider: Provider
+    summarize_provider: Provider
 
     def __init__(
         self,

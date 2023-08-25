@@ -178,6 +178,8 @@ class TruChain(App):
         """
         Run the chain acall method and also return a record metadata object.
         """
+        self._with_dep_message(method="acall", is_async=True, with_record=True)
+
         return await self.awith_record(self.app.acall, *args, **kwargs)
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
@@ -186,6 +188,9 @@ class TruChain(App):
         """
         Run the chain call method and also return a record metadata object.
         """
+
+        self._with_dep_message(method="__call__", is_async=False, with_record=True)
+
         return self.with_record(self.app.__call__, *args, **kwargs)
 
     # TODEP
@@ -196,6 +201,8 @@ class TruChain(App):
         get the record, use `call_with_record` instead. 
         """
 
+        self._with_dep_message(method="_call", is_async=False, with_record=False)
+
         return self._call(*args, **kwargs)
 
     # TODEP
@@ -203,11 +210,15 @@ class TruChain(App):
     def _call(self, *args, **kwargs) -> Any:
         ret, _ = self.call_with_record(*args, **kwargs)
 
+        self._with_dep_message(method="_call", is_async=False, with_record=False)
+
         return ret
 
     # TODEP
     # Optional Chain requirement
     async def _acall(self, *args, **kwargs) -> Any:
-        ret, _ = await self.acall_with_record(*args, **kwargs)
+        self._with_dep_message(method="_acall", is_async=True, with_record=False)
+
+        ret, _ = await self.acall_with_record(*args, **kwargs, with_record=False)
 
         return ret

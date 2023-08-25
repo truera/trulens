@@ -10,7 +10,7 @@ import logging
 import contextvars
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Type
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set, Tuple, Type
 )
 
 import pydantic
@@ -266,7 +266,26 @@ def instrumented_component_views(
         if isinstance(o, Dict) and CLASS_INFO in o:
             yield q, ComponentView.of_json(json=o)
 
+
+from threading import Lock
+
 class RecordingContext():
+    """
+    Manager of the creation of records from record calls. Each instance of this
+    class will result in a record for every "root" instrumented method called.
+    Root method here means the first instrumented method in a call stack. Note
+    that there may be more than one of these contexts in play at the same time
+    due to:
+
+    - More than one wrapper of the same app.
+    - More than one context manager ("with" statement) surrounding calls to the
+      same app.
+    - Calls to "with_record" on methods that themselves contain recording.
+    - Calls to apps that use trulens internally to track records in any of the
+      supported ways.
+    - Combinations of the above.
+    """
+
     def __init__(self, app: 'App'):
         # A record (in terms of its RecordAppCall) in process of being created
         # are kept here:
@@ -275,31 +294,68 @@ class RecordingContext():
         # Completed records go here:
         self.records: List[Record] = []
 
+        # Lock calls and records when adding calls or finishing a record.
+        self.lock: Lock = Lock()
+
         # Token for context management. See contextvars.
         self.token: contextvars.Token = None
 
         # App managing this recording.
         self.app: 'App' = app
 
+    def __iter__(self):
+        return iter(self.records)
+
+    def get(self) -> Record:
+        """
+        Get the single record only if there was exactly one. Otherwise throw an error.
+        """
+
+        if len(self.records) == 0:
+            raise RuntimeError("Recording context did not record any records.")
+
+        if len(self.records) > 1:
+            raise RuntimeError(
+                "Recording context recorded more than 1 record. "
+                "You can get them with ctx.records, ctx[i], or `for r in ctx: ...`."
+            )
+
+        return self.records[0]
+
+    def __getitem__(self, idx: int) -> Record:
+        return self.records[idx]
+
     def __len__(self):
         return len(self.records)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         # The same app can have multiple recording contexts.
         return hash(id(self.app)) + hash(id(self.records))
 
     def __eq__(self, other):
-        return id(self.app) == id(other.app) and id(self.records) == id(other.records)
+        return hash(self) == hash(other)
+        # return id(self.app) == id(other.app) and id(self.records) == id(other.records)
 
-    def finish_record(self):
-        # TODO: create record from calls and other info.
-        record = ...
-        self.records.append(record)
+    def add_call(self, call: RecordAppCall):
+        """
+        Add the given call to the currently tracked call list.
+        """
+        with self.lock:
+            self.calls.append(call)
 
-        # TODO: call app's handle record for feedback starting and db stuff
+    def finish_record(self, calls_to_record: Callable[[List[RecordAppCall]], Record]):
+        """
+        Run the given function to build a record from the tracked calls.
+        """
+        with self.lock:
+            record = calls_to_record(self.calls)
+            self.calls = []
+            self.records.append(record)
+
+        return record
 
 
-class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
+class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     """
     Generalization of a wrapped model.
     """
@@ -355,6 +411,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         self.instrument.instrument_object(
             obj=self.app, query=Select.Query().app
         )
+
+    def __hash__(self):
+        return hash(id(self))
 
     def post_init(self):
         """
@@ -513,21 +572,23 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         Get the path of the instrumented function `method` relative to this app.
         """
 
+        # TODO: cleanup and/or figure out why references to objects change when executing langchain chains.
+
         funcs = self.instrumented_methods.get(id(obj))
 
         if funcs is None:
-            logger.warning(
+            logger.debug(
                 f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. The path of this call may be incorrect."
             )
             try:
                 _id, f, path = next(iter(self._get_methods_for_func(func)))
             except Exception:
-                logger.warning(
+                logger.debug(
                     "No other objects use this function so cannot guess path."
                 )
                 return None
 
-            logger.warning(
+            logger.debug(
                 f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function."
             )
 
@@ -539,19 +600,19 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         else:
             if func not in funcs:
-                logger.warning(
+                logger.debug(
                     f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. The path of this call may be incorrect."
                 )
 
                 try:
                     _id, f, path = next(iter(self._get_methods_for_func(func)))
                 except Exception:
-                    logger.warning(
+                    logger.debug(
                         "No other objects use this function so cannot guess path."
                     )
                     return None
 
-                logger.warning(
+                logger.debug(
                     f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function."
                 )
 
@@ -574,8 +635,6 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
     # For use as a context manager.
     def __enter__(self):
-        print("creating new recording context")
-
         ctx = RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
@@ -583,9 +642,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         return ctx
 
+    # For use as a context manager.
     def __exit__(self, exc_type, exc_value, exc_tb):
-        print(f"finishing context with {len(self.recording_contexts.get())} records.")
-
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
 
@@ -620,141 +678,50 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         record call list. 
         """
 
-        calls = ctx.calls
+        def build_record(calls):
+            assert len(calls) > 0, "No information recorded in call."
 
-        print(f"_on_add_record, bindings={bindings}")
+            main_in = self.main_input(func, sig, bindings)
+            main_out = self.main_output(func, sig, bindings, ret)
 
-        # assert self.records.get(None) is not None, "App was not expecting to keep track of a record."
-        #if self.records.get(None) is None:
-        #    print("did not expect to track")
-        #    return
-
-        assert len(calls) > 0, "No information recorded in call."
-
-        main_in = self.main_input(func, sig, bindings)
-        main_out = self.main_output(func, sig, bindings, ret)
-
-        ret_record = Record(
-            main_input = jsonify(main_in),
-            main_output = jsonify(main_out),
-            main_error = jsonify(error),
-            calls=calls,
-            cost=cost,
-            perf=perf, 
-            app_id=self.app_id, 
-            tags=self.tags
-        )
-
-        print("adding a record")
-
-        # records = self.records.get()
-        # records += [ret_record]
-
-        if error is not None:
-            if self.feedback_mode == FeedbackMode.WITH_APP:
-                self._handle_error(record=ret_record, error=error)
-
-            elif self.feedback_mode in [FeedbackMode.DEFERRED,
-                                        FeedbackMode.WITH_APP_THREAD]:
-                TP().runlater(
-                    self._handle_error, record=ret_record, error=error
-                )
-
-            raise error
-
-        if self.feedback_mode == FeedbackMode.WITH_APP:
-            self._handle_record(record=ret_record)
-
-        elif self.feedback_mode in [FeedbackMode.DEFERRED,
-                                    FeedbackMode.WITH_APP_THREAD]:
-            TP().runlater(self._handle_record, record=ret_record)
-
-        return ret_record
-
-        
-    """
-    def _with_record_inits(self):
-        # First part of (a)with_record.
-
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads. We also store self there are multiple apps
-        # may have instrumented the same methods.
-        # DO NOT REMOVE
-        record: Sequence[RecordAppCall] = []
-        record_and_app: Tuple[Sequence[RecordAppCall], App] = (record, self)
-
-        ret = None
-
-        cost: Cost = Cost()
-        start_time = datetime.now()
-
-        main_in = None
-        error = None
-
-        return ret, record, record_and_app, cost, start_time, main_in, error
-
-    def _with_record_pre(self, func, *args, **kwargs):
-        # Second part of (a)with_record. May fail so to be inside try block with
-        # func invocation.
-
-        sig = safe_signature(func)
-        bindings = sig.bind(*args, **kwargs)
-        main_in = self.main_input(func, sig, bindings)
-
-        return sig, bindings, main_in
-
-    def _with_record_post(self, ret, record, error, start_time, cost, main_in, func, sig, bindings):
-        # Final part of (a)with_record. Return structure construction.
-
-        if len(record) == 0:
-            logger.warning(
-                "No intrumented methods called. "
-                "This may be due to missing instrumentation of relevant methods. "
-                f"Methods currently instrumented are: \n{self.format_instrumented_methods()}"
+            return Record(
+                main_input = jsonify(main_in),
+                main_output = jsonify(main_out),
+                main_error = jsonify(error),
+                calls=calls,
+                cost=cost,
+                perf=perf, 
+                app_id=self.app_id, 
+                tags=self.tags
             )
-            raise RuntimeError("Empty record.")
-
-        end_time = datetime.now()
-
-        main_out = self.main_output(func, sig, bindings, ret)
-
-        calls: Sequence[RecordAppCall] = record
-        perf = Perf(start_time=start_time, end_time=end_time)
         
-        ret_record = Record(
-            main_input = jsonify(main_in),
-            main_output = jsonify(main_out),
-            main_error = jsonify(error),
-            calls=calls,
-            cost=cost,
-            perf=perf, 
-            app_id=self.app_id, 
-            tags=self.tags
-        )
-        
-        # The rest is related to invoking feedback functions.
+        # Finishing record needs to be done in a thread lock, done there:
+        record = ctx.finish_record(build_record)
 
         if error is not None:
             if self.feedback_mode == FeedbackMode.WITH_APP:
-                self._handle_error(record=ret_record, error=error)
+                self._handle_error(record=record, error=error)
 
             elif self.feedback_mode in [FeedbackMode.DEFERRED,
                                         FeedbackMode.WITH_APP_THREAD]:
                 TP().runlater(
-                    self._handle_error, record=ret_record, error=error
+                    self._handle_error, record=record, error=error
                 )
 
             raise error
 
         if self.feedback_mode == FeedbackMode.WITH_APP:
-            self._handle_record(record=ret_record)
+            self._handle_record(record=record)
 
         elif self.feedback_mode in [FeedbackMode.DEFERRED,
                                     FeedbackMode.WITH_APP_THREAD]:
-            TP().runlater(self._handle_record, record=ret_record)
+            TP().runlater(self._handle_record, record=record)
 
-        return ret, ret_record
-    """
+        return record
+
+    async def awith_(self, func, *args, **kwargs) -> Any:
+        res, _ = await self.awith_record(func, *args, **kwargs)
+        return res
 
     async def awith_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
         """
@@ -765,10 +732,53 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         with self as ctx:
             ret = await func(*args, **kwargs)
             
-        assert len(ctx.records) > 0, (f"Did not create any records. "
-                                  f"This means that no instrumented methods were invoked in the process of calling {func}.")
+        assert len(ctx.records) > 0, (
+            f"Did not create any records. "
+            f"This means that no instrumented methods were invoked in the process of calling {func}."
+        )
 
         return ret, ctx.records[0]
+
+    def with_(self, func, *args, **kwargs) -> Any:
+        res, _ = self.with_record(func, *args, **kwargs)
+        return res
+
+    def _with_dep_message(self, method, is_async=False, with_record=False):
+        # Deprecation message for the various methods that pass through to
+        # wrapped app while recording.
+        
+        cname = self.__class__.__name__
+
+        iscall = method == "__call__"
+
+        old_method = f"""{method}{"_with_record" if with_record else ""}"""
+        if iscall:
+            old_method = f"""call{"_with_record" if with_record else ""}"""
+        new_method = f"""{"a" if is_async else ""}with_{"record" if with_record else ""}"""
+
+        app_callable = f"""app.{method}"""
+        if iscall:
+            app_callable = f"app"
+
+        print(
+f"""
+`{old_method}` will be deprecated; To record results of your app's execution, use one of these options to invoke your app:
+    (1) Use the `{"a" if is_async else ""}with_{"record" if with_record else ""}` method:
+        ```python
+        app # your app
+        tru_app: {cname} = {cname}(app, ...)
+        result{", record" if with_record else ""} = {"await " if is_async else ""}tru_app.{new_method}({app_callable}, ...args-to-{app_callable}...)
+        ```
+    (2) Use {cname} as a context manager: 
+        ```python
+        app # your app
+        tru_app: {cname} = {cname}(app, ...)
+        with tru_app{" as records" if with_record else ""}:
+            result = {"await " if is_async else ""}{app_callable}(...args-to-{app_callable}...)
+        {"record = records.get()" if with_record else ""}
+        ```
+"""
+    )
 
     def with_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
         """
@@ -779,30 +789,13 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         with self as ctx:
             ret = func(*args, **kwargs)
 
-        assert len(ctx.records) > 0, (f"Did not create any records. "
-                                  f"This means that no instrumented methods were invoked in the process of calling {func}.")
+        assert len(ctx.records) > 0, (
+            f"Did not create any records. "
+            f"This means that no instrumented methods were invoked in the process of calling {func}."
+        )
 
         
         return ret, ctx.records[0]
-
-        """
-        ret, record, record_and_app, cost, start_time, main_in, error = self._with_record_inits()
-
-        try:
-            sig, bindings, main_in = self._with_record_pre(func, *args, **kwargs)
-
-            ret, cost = Endpoint.track_all_costs_tally(
-                lambda: func(*bindings.args, **bindings.kwargs)
-            )
-
-        except BaseException as e:
-            error = e
-            logger.error(f"App raised an exception: {e}")
-            logger.error(traceback.format_exc())
-
-        return self._with_record_post(ret, record, error, start_time, cost, main_in, func, sig, bindings)
-        """
-
 
     def _handle_record(self, record: Record):
         """
