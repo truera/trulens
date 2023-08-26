@@ -797,14 +797,14 @@ f"""
         ```python
         app # your app
         tru_app: {cname} = {cname}(app, ...)
-        result{", record" if with_record else ""} = {"await " if is_async else ""}tru_app.{new_method}({app_callable}, ...args-to-{app_callable}...)
+        result{", record" if with_record else ""} = {"await " if is_async else ""}tru_app.{new_method}({app_callable}, ...args/kwargs-to-{app_callable}...)
         ```
     (2) Use {cname} as a context manager: 
         ```python
         app # your app
         tru_app: {cname} = {cname}(app, ...)
         with tru_app{" as records" if with_record else ""}:
-            result = {"await " if is_async else ""}{app_callable}(...args-to-{app_callable}...)
+            result = {"await " if is_async else ""}{app_callable}(...args/kwargs-to-{app_callable}...)
         {"record = records.get()" if with_record else ""}
         ```
 """
