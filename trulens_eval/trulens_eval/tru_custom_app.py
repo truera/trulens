@@ -243,10 +243,7 @@ class TruCustomApp(App):
         kwargs['root_class'] = Class.of_object(app)
 
         kwargs['instrument'] = Instrument(
-            root_methods=set(
-                [TruCustomApp.with_record, TruCustomApp.awith_record]
-            ),
-            callbacks=self  # App mixes in WithInstrumentCallbacks
+            app=self  # App mixes in WithInstrumentCallbacks
         )
 
         super().__init__(**kwargs)

@@ -100,8 +100,7 @@ class TruChain(App):
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
         kwargs['instrument'] = LangChainInstrument(
-            root_methods=set([TruChain.with_record, TruChain.awith_record]),
-            callbacks=self
+            app=self
         )
 
         super().__init__(**kwargs)
@@ -201,16 +200,16 @@ class TruChain(App):
         get the record, use `call_with_record` instead. 
         """
 
-        self._with_dep_message(method="_call", is_async=False, with_record=False)
+        self._with_dep_message(method="__call__", is_async=False, with_record=False)
 
-        return self._call(*args, **kwargs)
+        return self.with_(self.app, *args, **kwargs)
 
     # TODEP
     # Chain requirement
     def _call(self, *args, **kwargs) -> Any:
-        ret, _ = self.call_with_record(*args, **kwargs)
-
         self._with_dep_message(method="_call", is_async=False, with_record=False)
+
+        ret, _ = self.with_(self.app._call, *args, **kwargs)
 
         return ret
 
@@ -219,6 +218,6 @@ class TruChain(App):
     async def _acall(self, *args, **kwargs) -> Any:
         self._with_dep_message(method="_acall", is_async=True, with_record=False)
 
-        ret, _ = await self.acall_with_record(*args, **kwargs, with_record=False)
+        ret, _ = await self.awith_(self.app.acall, *args, **kwargs)
 
         return ret

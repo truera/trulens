@@ -4,14 +4,14 @@ Generalized root type for various libraries like llama_index and langchain .
 
 from abc import ABC
 from abc import abstractmethod
+import contextvars
 from inspect import BoundArguments
 from inspect import Signature
 import logging
-import contextvars
 from pprint import PrettyPrinter
-from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set, Tuple, Type
-)
+from threading import Lock
+from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
+                    Sequence, Set, Tuple, Type)
 
 import pydantic
 from pydantic import Field
@@ -29,16 +29,16 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
-from trulens_eval.utils.pyschema import Class
-from trulens_eval.utils.serial import all_objects
+from trulens_eval.utils.json import json_str_of_obj
+from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import callable_name
+from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
+from trulens_eval.utils.serial import all_objects
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSON_BASES_T
-from trulens_eval.utils.json import json_str_of_obj
-from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.serial import JSONPath
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.threading import TP
@@ -267,8 +267,6 @@ def instrumented_component_views(
             yield q, ComponentView.of_json(json=o)
 
 
-from threading import Lock
-
 class RecordingContext():
     """
     Manager of the creation of records from record calls. Each instance of this
@@ -301,7 +299,7 @@ class RecordingContext():
         self.token: contextvars.Token = None
 
         # App managing this recording.
-        self.app: 'App' = app
+        self.app: WithInstrumentCallbacks = app
 
     def __iter__(self):
         return iter(self.records)
@@ -382,9 +380,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
     # Sequnces of records produced by the this class used as a context manager.
     # Using a context var so that context managers can be nested.
-    recording_contexts: contextvars.ContextVar[Sequence[Record]] = Field(exclude=True)
-    # Contextvars token controls the records statck under nested managers.
-    # recording_contexts_token: contextvars.Token = Field(None, exclude=True)
+    recording_contexts: contextvars.ContextVar[Sequence[RecordingContext]] = Field(exclude=True)
     
     # Mapping of instrumented methods (by id(.) of owner object and the
     # function) to their path in this app:
@@ -737,7 +733,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             f"This means that no instrumented methods were invoked in the process of calling {func}."
         )
 
-        return ret, ctx.records[0]
+        return ret, ctx.get()
 
     def with_(self, func, *args, **kwargs) -> Any:
         res, _ = self.with_record(func, *args, **kwargs)
@@ -795,7 +791,7 @@ f"""
         )
 
         
-        return ret, ctx.records[0]
+        return ret, ctx.get()
 
     def _handle_record(self, record: Record):
         """
