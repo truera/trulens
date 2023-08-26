@@ -199,15 +199,12 @@ stack for specific frames:
 from datetime import datetime
 import inspect
 from inspect import BoundArguments
-from inspect import Signature
-from inspect import signature
 import logging
 import os
 from pprint import PrettyPrinter
 import threading as th
 import traceback
-from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
-                    Tuple)
+from typing import Callable, Dict, Iterable, Sequence, Set, Tuple
 import weakref
 
 from pydantic import BaseModel
@@ -217,16 +214,14 @@ from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.schema import Cost
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Query
+from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordAppCallMethod
-from trulens_eval.schema import Record
-from trulens_eval.schema import Select
-from trulens_eval.utils.pyschema import safe_signature
 from trulens_eval.utils.containers import dict_merge_with
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import _safe_getattr
 from trulens_eval.utils.pyschema import Method
-from trulens_eval.utils.python import get_all_local_in_call_stack
+from trulens_eval.utils.pyschema import safe_signature
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.serial import JSONPath
 

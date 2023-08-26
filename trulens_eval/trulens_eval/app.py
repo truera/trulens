@@ -811,7 +811,6 @@ f"""
     )
 
 
-
     def _handle_record(self, record: Record):
         """
         Write out record-related info to database if set.
