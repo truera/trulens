@@ -574,7 +574,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         if funcs is None:
             logger.debug(
-                f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. The path of this call may be incorrect."
+                f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. "
+                "The path of this call may be incorrect."
             )
             try:
                 _id, f, path = next(iter(self._get_methods_for_func(func)))
@@ -597,7 +598,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         else:
             if func not in funcs:
                 logger.debug(
-                    f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. The path of this call may be incorrect."
+                    f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. "
+                    "The path of this call may be incorrect."
                 )
 
                 try:
@@ -716,13 +718,21 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         return record
 
     async def awith_(self, func, *args, **kwargs) -> Any:
+        """
+        Call the given async `func` with the given `*args` and `**kwargs` while
+        recording, producing `func` results. The record of the computation is
+        available through other means like the database or dashboard. If you
+        need a record of this execution immediately, you can use `awith_record`
+        or the `App` as a context mananger instead.
+        """
+
         res, _ = await self.awith_record(func, *args, **kwargs)
         return res
 
     async def awith_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
         """
-        Call the given instrumented async function `func` with the given `args`,
-        `kwargs`, producing its results as well as a record.
+        Call the given async `func` with the given `*args` and `**kwargs`,
+        producing its results as well as a record of the execution.
         """
         
         with self as ctx:
@@ -736,8 +746,32 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         return ret, ctx.get()
 
     def with_(self, func, *args, **kwargs) -> Any:
+        """
+        Call the given `func` with the given `*args` and `**kwargs` while
+        recording, producing `func` results. The record of the computation is
+        available through other means like the database or dashboard.  If you
+        need a record of this execution immediately, you can use `awith_record`
+        or the `App` as a context mananger instead.
+        """
+
         res, _ = self.with_record(func, *args, **kwargs)
         return res
+    
+    def with_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
+        """
+        Call the given `func` with the given `*args` and `**kwargs`, producing
+        its results as well as a record of the execution.
+        """
+
+        with self as ctx:
+            ret = func(*args, **kwargs)
+
+        assert len(ctx.records) > 0, (
+            f"Did not create any records. "
+            f"This means that no instrumented methods were invoked in the process of calling {func}."
+        )
+
+        return ret, ctx.get()
 
     def _with_dep_message(self, method, is_async=False, with_record=False):
         # Deprecation message for the various methods that pass through to
@@ -758,7 +792,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         print(
 f"""
-`{old_method}` will be deprecated; To record results of your app's execution, use one of these options to invoke your app:
+`{old_method}` is deprecated; To record results of your app's execution, use one of these options to invoke your app:
     (1) Use the `{"a" if is_async else ""}with_{"record" if with_record else ""}` method:
         ```python
         app # your app
@@ -776,22 +810,7 @@ f"""
 """
     )
 
-    def with_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
-        """
-        Call the given instrumented function `func` with the given `args`,
-        `kwargs`, producing its results as well as a record.
-        """
 
-        with self as ctx:
-            ret = func(*args, **kwargs)
-
-        assert len(ctx.records) > 0, (
-            f"Did not create any records. "
-            f"This means that no instrumented methods were invoked in the process of calling {func}."
-        )
-
-        
-        return ret, ctx.get()
 
     def _handle_record(self, record: Record):
         """
@@ -860,8 +879,9 @@ f"""
 
     def print_instrumented_methods(self) -> None:
         """
-        Print instrumented components and their categories.
+        Print instrumented methods.
         """
+
         print(self.format_instrumented_methods())
 
     def print_instrumented_components(self) -> None:
