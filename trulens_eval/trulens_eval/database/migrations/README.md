@@ -22,7 +22,7 @@ If upgrading DB, You must do this step!!
 1. Look at the migration script generated at [versions](./versions) and edit if necessary
 1. Add the version to `db_data_migration.py` in variable: `sql_alchemy_migration_versions`
 1. Make any `data_migrate` updates in `db_data_migration.py` if python changes were made
-1. git add `truera/trulens_eval/database/migrations/versions`
+1. `git add truera/trulens_eval/database/migrations/versions`
 
 ## Creating a DB at the latest schema
 If upgrading DB, You must do this step!!
@@ -40,8 +40,9 @@ Note: You must create a new schema revision before doing this
     * Add any other notebooks you think may have possible breaking changes
 1. replace the last compatible db with this new db file
     * Use the version you chose for --rev-id
-    * mv default.sqlite trulens/trulens_eval/release_dbs/sql_alchemy_<NEW_VERSION>/default.sqlite
-1. git add `trulens/trulens_eval/release_dbs`
+    * `mkdir trulens/trulens_eval/release_dbs/sql_alchemy_<NEW_VERSION>/`
+    * `cp default.sqlite trulens/trulens_eval/release_dbs/sql_alchemy_<NEW_VERSION>/`
+1. `git add trulens/trulens_eval/release_dbs`
 
 
 
