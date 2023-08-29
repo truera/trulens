@@ -25,7 +25,6 @@ class AppDefinition(Base):
 
     app_id = Column(VARCHAR(256), nullable=False, primary_key=True)
     app_json = Column(TYPE_JSON, nullable=False)
-    app_test_json = Column(TYPE_JSON, nullable=True)
 
     @classmethod
     def parse(cls, obj: schema.AppDefinition) -> "AppDefinition":
