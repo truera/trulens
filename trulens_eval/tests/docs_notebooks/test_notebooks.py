@@ -111,10 +111,9 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
             # Run the oldest and latest migrations to keep testing more manageable
             legacy_sqllite_migrations = [db_migration.migration_versions[0],
                             db_migration.migration_versions[-1]]
-            sqlalchemy_versions  = [compat_versions.split('sql_alchemy_') for compat_versions in listdir('./release_dbs') if 'sql_alchemy_' in compat_versions]
-            sqlalchemy_migrations = [sqlalchemy_versions[0], #sqlalchemy_versions[1], # to add once there are multiple migrations to test
-                                     sqlalchemy_versions[-1]]
-            migrations_to_test = legacy_sqllite_migrations.extend(sqlalchemy_migrations)
+            sqlalchemy_versions  = [compat_versions for compat_versions in listdir('./release_dbs') if 'sql_alchemy_' in compat_versions]
+            # Todo: once there are more than 2 migrations; make tests only check most 2 recent, and oldest migrations to make testing faster
+            migrations_to_test = legacy_sqllite_migrations + sqlalchemy_versions
             for version in migrations_to_test:
                 test_version_str = version.replace('.', '_')
                 setattr(
