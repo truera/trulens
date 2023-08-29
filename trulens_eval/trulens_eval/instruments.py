@@ -974,7 +974,7 @@ class Instrument(object):
                 # NOTE(piotrm): may be better to use inspect.getmembers_static .
                 v = getattr(obj, k)
 
-                if isinstance(v, str):
+                if isinstance(v, (str, bool, int, float)):
                     pass
 
                 elif self.to_instrument_module(type(v).__module__):
@@ -982,11 +982,20 @@ class Instrument(object):
 
                 elif isinstance(v, Sequence):
                     for i, sv in enumerate(v):
-                        if any(isinstance(sv, cls)
-                               for cls in self.include_classes):
+                        if self.to_instrument_class(type(sv)):
                             self.instrument_object(
                                 obj=sv, query=query[k][i], done=done
                             )
+
+                elif isinstance(v, Dict):
+                    for k2, sv in v.items():
+                        if self.to_instrument_class(type(sv)):
+                            self.instrument_object(
+                                obj=sv, query=query[k][k2], done=done
+                            )
+
+                else:
+                    logger.debug(f"Instrumentation of component {v} (of type {type(v)}) is not yet supported.")
 
                 # TODO: check if we want to instrument anything in langchain not
                 # accessible through __fields__ .
