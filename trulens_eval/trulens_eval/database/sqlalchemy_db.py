@@ -39,7 +39,6 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import RecordID
 from trulens_eval.database.exceptions import DatabaseVersionException
-from trulens_eval.database.utils import _copy_database
 
 from trulens_eval.utils.serial import JSON
 
@@ -78,7 +77,7 @@ class SqlAlchemyDB(DB):
     def from_db_url(cls, url: str) -> "SqlAlchemyDB":
         return cls(engine_params={"url": url})
 
-    def migrate_database(self, backup_database_url="warn"):
+    def migrate_database(self):
         """
         Migrate database schema to the latest revision.
         """
@@ -95,10 +94,6 @@ class SqlAlchemyDB(DB):
                 if is_legacy_sqlite(self.engine):
                     migrate_legacy_sqlite(self.engine)
                 else:
-                    if backup_database_url == "warn":
-                        raise DatabaseVersionException("It is recommended to backup your database before migration. You can do this by supplying `tru.migrate_database(backup_database_url='...')`. Or you can skip the backup by running tru.migrate_database(backup_database_url=None).")
-                    elif backup_database_url is not None:
-                        _copy_database(self.engine.url, backup_database_url)
                     upgrade_db(self.engine, revision="head")
 
                 self.reload_engine()  # let sqlalchemy recognize the migrated schema

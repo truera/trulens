@@ -6,9 +6,8 @@ import shutil
 import sqlite3
 from tempfile import TemporaryDirectory
 from typing import Callable, List, Optional, Union
-import pandas as pd
-import uuid
 
+import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import inspect as sql_inspect
@@ -162,12 +161,6 @@ def migrate_legacy_sqlite(engine: Engine):
     assert is_legacy_sqlite(engine)
 
     original_file = Path(engine.url.database)
-
-    saved_db_file = original_file.parent / f"{original_file.name}_saved_{uuid.uuid1()}"
-    shutil.copy(original_file, saved_db_file)
-    logger.info(
-        f"Saved original db file: `{original_file}` to new file: `{saved_db_file}`"
-    )
     logger.info("Handling legacy SQLite file: %s", original_file)
     logger.debug("Applying legacy migration scripts")
     LocalSQLite(filename=original_file).migrate_database()
