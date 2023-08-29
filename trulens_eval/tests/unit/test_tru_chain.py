@@ -126,7 +126,7 @@ class TestTruChain(JSONTestCase):
         message = "What is 1+2?"
         meta = "this is plain metadata"
 
-        _, rec = tc.call_with_record(message, meta=meta)
+        _, rec = tc.call_with_record(message, record_metadata=meta)
 
         # Check record has metadata.
         self.assertEqual(rec.meta, meta)
@@ -174,7 +174,7 @@ class TestTruChain(JSONTestCase):
         message = "What is 1+2?"
         meta = dict(field1="hello", field2="there")
 
-        _, rec = tc.call_with_record(message, meta=meta)
+        _, rec = tc.call_with_record(message, record_metadata=meta)
 
         # Check record has metadata.
         self.assertEqual(rec.meta, meta)
