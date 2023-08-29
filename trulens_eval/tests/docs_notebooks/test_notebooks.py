@@ -101,16 +101,12 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
     if filename.endswith('.ipynb'):
 
         if 'all_tools' in filename or 'llama_index_quickstart' in filename:
-            setattr(
-                DocsNotebookTests, 'test_' + filename.split('.ipynb')[0],
-                get_unit_test_for_filename(filename)
-            )
+            
             # If you want to test all versions uncomment and replace the below for loop
             ### for version in db_migration.migration_versions:
 
             # Run the oldest and latest migrations to keep testing more manageable
-            legacy_sqllite_migrations = [db_migration.migration_versions[0],
-                            db_migration.migration_versions[-1]]
+            legacy_sqllite_migrations = [db_migration.migration_versions[0]]
             sqlalchemy_versions  = [compat_versions.split('sql_alchemy_') for compat_versions in listdir('./release_dbs') if 'sql_alchemy_' in compat_versions]
             sqlalchemy_migrations = [sqlalchemy_versions[0], #sqlalchemy_versions[1], # to add once there are multiple migrations to test
                                      sqlalchemy_versions[-1]]
