@@ -47,16 +47,20 @@ def obj_id_of_obj(obj: dict, prefix="obj"):
     return f"{prefix}_hash_{mj.hash(obj)}"
 
 
-def json_str_of_obj(obj: Any, *args, **kwargs) -> str:
+def json_str_of_obj(obj: Any, *args, redact_keys: bool = False, **kwargs) -> str:
     """
     Encode the given json object as a string.
     """
 
-    if isinstance(obj, pydantic.BaseModel):
-        kwargs['encoder'] = json_default
-        return obj.json(*args, **kwargs)
-
-    return json.dumps(obj, default=json_default)
+    return json.dumps(
+        jsonify(
+            obj,
+            *args,
+            redact_keys=redact_keys,
+            **kwargs
+        ),
+        default=json_default
+    )
 
 
 def json_default(obj: Any) -> str:
