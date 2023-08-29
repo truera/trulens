@@ -8,9 +8,7 @@
 
 - **`frameworks/`** -- Collection of examples using different frameworks for constructing an LLM app.
 
-  - `llama_index/`
-
-    Examples using llama-index as a framework.
+  - `llama_index/` -- Examples using llama-index as a framework.
 
     - `llama_index_async.ipynb` -- How to use the async and streaming capabilities of Llama-Index and monitor the results using trulens.
 
@@ -18,9 +16,9 @@
 
     - `llama_index_example.ipynb` -- Question-answering with a in-memory vector store of contexts loaded from the web.
 
-    - `llamaindex-subquestion-query.ipynb` -- Evaluate the impact of query planning and embedding choice.
+    - `llama_index_query_planning.ipynb` -- Evaluate the impact of query planning and embedding choice.
 
-    - `llamaindex-yelp-agent.ipynb` -- Evaluate hallucination of an Llama-Index data agent.
+    - `llama_index_agents.ipynb` -- Evaluate hallucination of an Llama-Index data agent.
 
   - `langchain/` -- Examples using langchain as a framework.
 
