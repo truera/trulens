@@ -25,7 +25,9 @@ class TestLlamaIndex(JSONTestCase):
 
     def setUp(self):
 
-        # need temp = 0 for consistent tests
+        # NOTE: Need temp = 0 for consistent tests. Some tests are still
+        # non-deterministic despite this temperature, perhaps there is some
+        # other temperature setting or this one is not taken up.
         llm = OpenAI(temperature=0.0)
         service_context = ServiceContext.from_defaults(llm=llm)
         set_global_service_context(service_context)
