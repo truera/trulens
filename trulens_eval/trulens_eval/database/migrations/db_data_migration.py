@@ -19,6 +19,7 @@ from trulens_eval.utils.pyschema import FunctionOrMethod
 
 
 # Keeps track of any db versions that need data migration
+# Should be most recent is the leftmost in the list
 sql_alchemy_migration_versions: List[str] = ["1"]
 
 # A DAG of upgrade functions to get to most recent DB.
