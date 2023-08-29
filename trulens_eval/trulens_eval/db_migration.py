@@ -1,3 +1,4 @@
+# This is pre-sqlalchemy db migration. This file should not need changes. It is here for backwards compatibility of oldest trulens-eval versions.
 import json
 import shutil
 import traceback
@@ -12,7 +13,6 @@ from trulens_eval.schema import FeedbackCall
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
-from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.utils.pyschema import FunctionOrMethod
 '''
 How to make a db migrations:

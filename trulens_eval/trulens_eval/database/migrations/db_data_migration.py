@@ -16,12 +16,29 @@ from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.utils.pyschema import FunctionOrMethod
 
 
-sqlalchemy_upgrade_paths = {    
-    # "1":("2"), migrate_alembic_1_to_2
-}
+
+# Keeps track of any db versions that need data migration
 sql_alchemy_migration_versions: List[str] = ["1"]
 
+# A DAG of upgrade functions to get to most recent DB.
+sqlalchemy_upgrade_paths = {    
+    # Dict Structure:
+    # "from_version":("to_version", migrate_method)
+
+    # Example:
+    # "1":("2"), migrate_alembic_1_to_2
+}
+
+
 def _get_sql_alchemy_compatibility_version(version: str) -> str:
+    """Gets the last compatible version of a DB that needed data migration
+
+    Args:
+        version (str): The alembic version
+
+    Returns:
+        str: An alembic version of the oldest compatible DB
+    """
     compat_version = int(sql_alchemy_migration_versions[-1])
     for candidate_version in sql_alchemy_migration_versions:
         candidate_version_int = int(candidate_version)
@@ -29,7 +46,15 @@ def _get_sql_alchemy_compatibility_version(version: str) -> str:
             compat_version = candidate_version_int
     return compat_version
 
-def _sql_alchemy_serialization_asserts(db) -> None:
+def _sql_alchemy_serialization_asserts(db: "DB") -> None:
+    """Checks that data migrated JSONs can be deserialized from DB to Python objects.
+
+    Args:
+        db (DB): The database object
+
+    Raises:
+        VersionException: raises if a serialization fails
+    """
     session = Session(db.engine)
     
     import inspect
@@ -94,7 +119,17 @@ def _sql_alchemy_serialization_asserts(db) -> None:
                                     )
 
 
-def data_migrate(db, from_version):
+def data_migrate(db: "DB", from_version: str):
+    """Makes any data changes needed for upgrading from the from_version
+
+    Args:
+        db (DB): The Database Object
+        from_version (str): The current version
+
+    Raises:
+        VersionException: Can raise a migration or validation upgrade error
+    """
+
     ### TODO Create backups. This is not sqlalchemy's strong suit: https://stackoverflow.com/questions/56990946/how-to-backup-up-a-sqlalchmey-database
     
     from_compat_version = _get_sql_alchemy_compatibility_version(from_version)
@@ -109,7 +144,7 @@ def data_migrate(db, from_version):
             from_compat_version = to_compat_version
         
         print("DB Migration complete!")
-    except Exception as e:
+    except Exception:
         tb = traceback.format_exc()
         current_revision = DbRevisions.load(db.engine).current
         raise VersionException(
@@ -118,7 +153,7 @@ def data_migrate(db, from_version):
     try:
         _sql_alchemy_serialization_asserts(db)
         print("DB Validation complete!")
-    except Exception as e:
+    except Exception:
         tb = traceback.format_exc()
         current_revision = DbRevisions.load(db.engine).current
         raise VersionException(
