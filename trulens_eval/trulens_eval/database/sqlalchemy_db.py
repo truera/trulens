@@ -32,7 +32,7 @@ from trulens_eval.database.utils import run_before
 
 from trulens_eval.db import DB
 
-from trulens_eval.db_migration import data_migrate
+from trulens_eval.database.migrations.db_data_migration import data_migrate
 from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResultID

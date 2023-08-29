@@ -99,9 +99,7 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
 for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
     if filename.endswith('.ipynb'):
 
-        # TODO UNDO TEST CHANGE
-        # ASDAOSDNAS
-        if 'all_tools' in filename:
+        if 'all_tools' in filename or 'llama_index_quickstart' in filename:
             setattr(
                 DocsNotebookTests, 'test_' + filename.split('.ipynb')[0],
                 get_unit_test_for_filename(filename)
