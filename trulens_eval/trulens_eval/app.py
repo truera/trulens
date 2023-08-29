@@ -284,7 +284,7 @@ class RecordingContext():
     - Combinations of the above.
     """
 
-    def __init__(self, app: 'App'):
+    def __init__(self, app: 'App', record_metadata: JSON = None):
         # A record (in terms of its RecordAppCall) in process of being created
         # are kept here:
         self.calls: List[RecordAppCall] = []
@@ -300,6 +300,9 @@ class RecordingContext():
 
         # App managing this recording.
         self.app: WithInstrumentCallbacks = app
+
+        # Metadata to attach to all records produced in this context.
+        self.record_metadata = record_metadata
 
     def __iter__(self):
         return iter(self.records)
@@ -341,12 +344,14 @@ class RecordingContext():
         with self.lock:
             self.calls.append(call)
 
-    def finish_record(self, calls_to_record: Callable[[List[RecordAppCall]], Record]):
+    def finish_record(self, calls_to_record: Callable[[List[RecordAppCall], JSON], Record]):
         """
-        Run the given function to build a record from the tracked calls.
+        Run the given function to build a record from the tracked calls and any
+        pre-specified metadata.
         """
+
         with self.lock:
-            record = calls_to_record(self.calls)
+            record = calls_to_record(self.calls, record_metadata=self.record_metadata)
             self.calls = []
             self.records.append(record)
 
@@ -632,8 +637,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         return jsonify(self, instrument=self.instrument)
 
     # For use as a context manager.
-    def __enter__(self):
-        ctx = RecordingContext(app=self)
+    def __enter__(self, record_metadata: JSON=None):
+        ctx = RecordingContext(app=self, record_metadata=record_metadata)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
@@ -676,7 +681,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         record call list. 
         """
 
-        def build_record(calls):
+        def build_record(calls, record_metadata):
             assert len(calls) > 0, "No information recorded in call."
 
             main_in = self.main_input(func, sig, bindings)
@@ -690,7 +695,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 cost=cost,
                 perf=perf, 
                 app_id=self.app_id, 
-                tags=self.tags
+                tags=self.tags,
+                meta=jsonify(record_metadata)
             )
         
         # Finishing record needs to be done in a thread lock, done there:
@@ -729,13 +735,13 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         res, _ = await self.awith_record(func, *args, **kwargs)
         return res
 
-    async def awith_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
+    async def awith_record(self, func, *args, record_metadata: JSON=None, **kwargs) -> Tuple[Any, Record]:
         """
         Call the given async `func` with the given `*args` and `**kwargs`,
         producing its results as well as a record of the execution.
         """
         
-        with self as ctx:
+        with self(record_metadata=record_metadata) as ctx:
             ret = await func(*args, **kwargs)
             
         assert len(ctx.records) > 0, (
@@ -757,13 +763,13 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         res, _ = self.with_record(func, *args, **kwargs)
         return res
     
-    def with_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
+    def with_record(self, func, *args, record_metadata: JSON=None, **kwargs) -> Tuple[Any, Record]:
         """
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
         """
 
-        with self as ctx:
+        with self(record_metadata=record_metadata) as ctx:
             ret = func(*args, **kwargs)
 
         assert len(ctx.records) > 0, (
