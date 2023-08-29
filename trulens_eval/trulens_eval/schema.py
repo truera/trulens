@@ -158,6 +158,7 @@ class Record(SerialModel):
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
     tags: Optional[str] = ""
+    meta: Optional[JSON] = None
 
     main_input: Optional[JSON] = None
     main_output: Optional[JSON] = None  # if no error
@@ -425,7 +426,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
 
     app_id: AppID
     tags: Tags
-    metadata: Metadata
+    metadata: Metadata # TODO: rename to meta for consistency with other metas
 
     # Feedback functions to evaluate on each record. Unlike the above, these are
     # meant to be serialized.
