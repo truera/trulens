@@ -741,7 +741,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         producing its results as well as a record of the execution.
         """
         
-        with self(record_metadata=record_metadata) as ctx:
+        with self as ctx:
+            ctx.record_metadata=record_metadata
             ret = await func(*args, **kwargs)
             
         assert len(ctx.records) > 0, (
@@ -769,7 +770,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         its results as well as a record of the execution.
         """
 
-        with self(record_metadata=record_metadata) as ctx:
+        with self as ctx:
+            ctx.record_metadata=record_metadata
             ret = func(*args, **kwargs)
 
         assert len(ctx.records) > 0, (
