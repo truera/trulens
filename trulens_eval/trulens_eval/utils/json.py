@@ -5,6 +5,7 @@ Json utilities and serialization utilities dealing with json.
 from __future__ import annotations
 
 from enum import Enum
+import dataclasses
 import json
 import logging
 from pathlib import Path
@@ -200,6 +201,9 @@ def jsonify(
                 temp[k] = redact_value(v=v, k=k)
 
         content = temp
+
+    elif dataclasses.is_dataclass(type(obj)):
+        temp = recur(dataclasses.asdict(obj))
 
     elif instrument.to_instrument_object(obj):
 
