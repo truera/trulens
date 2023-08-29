@@ -13,6 +13,7 @@ from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.database.migrations import DbRevisions
+from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.utils.pyschema import FunctionOrMethod
 
 
@@ -80,7 +81,8 @@ def _sql_alchemy_serialization_asserts(db: "DB") -> None:
                         # Check only json columns
                         if "_json" in attr_name:
                             db_json_str = getattr(db_record,attr_name)
-
+                            if db_json_str == MIGRATION_UNKNOWN_STR:
+                                continue
                             
                             # Do not check Nullables
                             if db_json_str is not None:
@@ -131,8 +133,12 @@ def data_migrate(db: "DB", from_version: str):
     """
 
     ### TODO Create backups. This is not sqlalchemy's strong suit: https://stackoverflow.com/questions/56990946/how-to-backup-up-a-sqlalchmey-database
-    
-    from_compat_version = _get_sql_alchemy_compatibility_version(from_version)
+    ## Though we can do copy_database
+    if from_version is None:
+        sql_alchemy_from_version = "1"
+    else:
+        sql_alchemy_from_version = from_version
+    from_compat_version = _get_sql_alchemy_compatibility_version(sql_alchemy_from_version)
     to_compat_version = None
     fail_advice = f"Please open a ticket on trulens github page including this error message. The migration completed so you can still proceed; but stability is not guaranteed. If needed, you can `tru.reset_database()`"
 
