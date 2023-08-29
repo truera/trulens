@@ -200,7 +200,7 @@ from typing import Any, Callable, ClassVar, Iterable, Set
 
 from pydantic import Field
 
-from trulens_eval import Select
+
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.pyschema import Class
