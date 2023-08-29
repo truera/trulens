@@ -133,8 +133,6 @@ def data_migrate(db: "DB", from_version: str):
         VersionException: Can raise a migration or validation upgrade error
     """
 
-    ### TODO Create backups. This is not sqlalchemy's strong suit: https://stackoverflow.com/questions/56990946/how-to-backup-up-a-sqlalchmey-database
-    ## Though we can do copy_database
     if from_version is None:
         sql_alchemy_from_version = "1"
     else:

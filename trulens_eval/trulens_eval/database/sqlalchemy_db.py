@@ -94,6 +94,10 @@ class SqlAlchemyDB(DB):
                 if is_legacy_sqlite(self.engine):
                     migrate_legacy_sqlite(self.engine)
                 else:
+                    ## TODO Create backups here. This is not sqlalchemy's strong suit: https://stackoverflow.com/questions/56990946/how-to-backup-up-a-sqlalchmey-database
+                    ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `tru.migrate_database(backup_db_url="...")`)
+                    ### We might try _copy_database as a backup, but it would need to automatically handle clearing the db, and also current implementation requires migrate to run first. 
+                    ### A valid backup would need to be able to copy an old version, not the newest version
                     upgrade_db(self.engine, revision="head")
 
                 self.reload_engine()  # let sqlalchemy recognize the migrated schema
