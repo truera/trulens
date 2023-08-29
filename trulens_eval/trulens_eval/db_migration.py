@@ -472,8 +472,3 @@ def migrate(db) -> None:
     print("DB Migration complete!")
     _serialization_asserts(db)
     print("DB Validation complete!")
-
-
-
-
-    

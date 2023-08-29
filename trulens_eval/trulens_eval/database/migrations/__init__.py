@@ -29,7 +29,6 @@ def alembic_config(engine: Engine) -> Config:
 
 def upgrade_db(engine: Engine, revision: str = "head"):
     with alembic_config(engine) as config:
-        # TODO: handle revert of upgrade?
         command.upgrade(config, revision)
 
 
