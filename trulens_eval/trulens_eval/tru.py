@@ -121,13 +121,13 @@ class Tru(SingletonPerName):
 
         self.db.reset_database()
 
-    def migrate_database(self):
+    def migrate_database(self, backup_database_url="warn"):
         """
         Migrates the database. This should be run whenever there are breaking
         changes in a database created with an older version of trulens_eval.
         """
 
-        self.db.migrate_database()
+        self.db.migrate_database(backup_database_url=backup_database_url)
 
     def add_record(self, record: Optional[Record] = None, **kwargs):
         """
