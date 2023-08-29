@@ -150,6 +150,8 @@ class Tru(SingletonPerName):
             record.update(**kwargs)
 
         return self.db.insert_record(record=record)
+    
+    update_record = add_record
 
     def run_feedback_functions(
         self,
