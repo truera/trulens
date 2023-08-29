@@ -571,7 +571,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         records += [ret_record]
     """
 
-    async def awith_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
+    async def awith_record(self, func, *args, record_metadata: JSON = None, **kwargs) -> Tuple[Any, Record]:
         """
         Call the given instrumented async function `func` with the given `args`,
         `kwargs`, producing its results as well as a record.
@@ -627,6 +627,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         ret_record_args = dict()
 
+        ret_record_args['meta'] = record_metadata
+
         ret_record_args['main_input'] = jsonify(main_in)
 
         if ret is not None:
@@ -637,12 +639,16 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         perf = Perf(start_time=start_time, end_time=end_time)
         ret_record = self._post_record(
-            ret_record_args, error, cost, perf, record
+            ret_record_args=ret_record_args,
+            error=error,
+            cost=cost,
+            perf=perf,
+            calls=record
         )
 
         return ret, ret_record
 
-    def with_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
+    def with_record(self, func, *args, record_metadata: JSON = None, **kwargs) -> Tuple[Any, Record]:
         """
         Call the given instrumented function `func` with the given `args`,
         `kwargs`, producing its results as well as a record.
@@ -698,6 +704,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         ret_record_args = dict()
 
+        ret_record_args['meta'] = record_metadata
         ret_record_args['main_input'] = jsonify(main_in)
 
         if ret is not None:

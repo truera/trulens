@@ -355,10 +355,16 @@ class AppsExtractor:
             values = defaultdict(list)
 
             for _res in _rec.feedback_results:
-                self.feedback_columns.add(_res.name)
                 calls[_res.name].append(json.loads(_res.calls_json)["calls"])
-                if _res.result is not None:  # avoid getting Nones into np.mean
+                if _res.multi_result is not None and (multi_result := json.loads(_res.multi_result)) is not None:
+                    for key, val in multi_result.items():
+                        if val is not None:  # avoid getting Nones into np.mean
+                            name = f"{_res.name}:::{key}"
+                            values[name] = val
+                            self.feedback_columns.add(name)
+                elif _res.result is not None:  # avoid getting Nones into np.mean
                     values[_res.name].append(_res.result)
+                    self.feedback_columns.add(_res.name)
 
             row = {
                 **{k: np.mean(v) for k, v in values.items()},
