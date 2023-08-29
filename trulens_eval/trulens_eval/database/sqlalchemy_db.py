@@ -15,7 +15,10 @@ from sqlalchemy.orm import sessionmaker
 
 from trulens_eval import schema
 from trulens_eval.database import orm
+
+from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import upgrade_db
+
 from trulens_eval.database.orm import AppDefinition
 from trulens_eval.database.orm import FeedbackDefinition
 from trulens_eval.database.orm import FeedbackResult
@@ -26,13 +29,17 @@ from trulens_eval.database.utils import is_legacy_sqlite
 from trulens_eval.database.utils import is_memory_sqlite
 from trulens_eval.database.utils import migrate_legacy_sqlite
 from trulens_eval.database.utils import run_before
+
 from trulens_eval.db import DB
+
+from trulens_eval.database.migrations.db_data_migration import data_migrate
 from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import RecordID
 from trulens_eval.database.exceptions import DatabaseVersionException
+
 from trulens_eval.utils.serial import JSON
 
 logger = logging.getLogger(__name__)
@@ -81,13 +88,22 @@ class SqlAlchemyDB(DB):
 
         except DatabaseVersionException as e:
             if e.reason == DatabaseVersionException.Reason.BEHIND:
+                revisions = DbRevisions.load(self.engine)
+                from_version = revisions.current
+                ### SCHEMA MIGRATION ###
                 if is_legacy_sqlite(self.engine):
                     migrate_legacy_sqlite(self.engine)
                 else:
+                    ## TODO Create backups here. This is not sqlalchemy's strong suit: https://stackoverflow.com/questions/56990946/how-to-backup-up-a-sqlalchmey-database
+                    ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `tru.migrate_database(backup_db_url="...")`)
+                    ### We might try _copy_database as a backup, but it would need to automatically handle clearing the db, and also current implementation requires migrate to run first. 
+                    ### A valid backup would need to be able to copy an old version, not the newest version
                     upgrade_db(self.engine, revision="head")
 
                 self.reload_engine()  # let sqlalchemy recognize the migrated schema
 
+                ### DATA MIGRATION ###
+                data_migrate(self, from_version)
                 return
 
             elif e.reason == DatabaseVersionException.Reason.AHEAD:
@@ -99,7 +115,7 @@ class SqlAlchemyDB(DB):
                 raise e
             
         # If we get here, our db revision does not need upgrade.
-        print("Your database does not migration.")
+        print("Your database does not need migration.")
 
     def reset_database(self):
         deleted = 0
