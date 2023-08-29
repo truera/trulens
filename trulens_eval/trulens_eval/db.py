@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 import sqlite3
-from typing import List, Optional, Sequence, Tuple, Union, Any
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 from merkle_json import MerkleJson
 import numpy as np
@@ -27,8 +27,8 @@ from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordID
+from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
@@ -57,7 +57,7 @@ class DB(SerialModel, abc.ABC):
     redact_keys: bool = False
 
     def _json_str_of_obj(self, obj: Any) -> str:
-        return jsonify(obj, redact_keys=self.redact_keys)
+        return json_str_of_obj(obj, redact_keys=self.redact_keys)
 
     @abc.abstractmethod
     def reset_database(self):
