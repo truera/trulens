@@ -995,7 +995,7 @@ class Instrument(object):
                             )
 
                 else:
-                    logger.debug(f"Unsure whether I should instrument {v} or how to do it.")
+                    logger.debug(f"Instrumentation of component {v} (of type {type(v)}) is not yet supported.")
 
                 # TODO: check if we want to instrument anything in langchain not
                 # accessible through __fields__ .
