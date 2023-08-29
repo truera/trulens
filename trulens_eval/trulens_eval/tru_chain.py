@@ -138,6 +138,10 @@ class TruChain(App):
             # langchain specific:
             ins = self.app.prep_inputs(bindings.arguments['inputs'])
 
+            if len(self.app.input_keys) == 0:
+                logger.warning("langchain app has no inputs. `main_input` will be `None`.")
+                return None
+
             return ins[self.app.input_keys[0]]
 
         return App.main_input(self, func, sig, bindings)
