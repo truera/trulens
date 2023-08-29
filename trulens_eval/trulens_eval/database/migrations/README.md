@@ -12,6 +12,7 @@ tru.migrate_database()
 
 
 ## Creating a new schema revision
+If upgrading DB, You must do this step!!
 
 1. `cd truera/trulens_eval/database/migrations`
 1. Make sure you have an existing database at the latest schema
@@ -24,20 +25,23 @@ tru.migrate_database()
 1. git add `truera/trulens_eval/database/migrations/versions`
 
 ## Creating a DB at the latest schema
+If upgrading DB, You must do this step!!
 
 Note: You must create a new schema revision before doing this
 
-1. In trulens/trulens_eval/tests/docs_notebooks/notebooks_to_test 
+1. Create a sacrificial OpenAI Key (this will be added to the DB and put into github; which will invalidate it upon commit)
+1. cd `trulens/trulens_eval/tests/docs_notebooks/notebooks_to_test` 
 1. remove any local dbs
-    * rm rf default.sqlite
+    * `rm -rf default.sqlite`
 1. run below notebooks (Making sure you also run with the most recent code in trulens-eval) TODO: Move these to a script
-    * all_tools.ipynb # cp ../generated_files/all_tools.ipynb ./
-    * llama_index_quickstart.ipynb # cp frameworks/llama_index/llama_index_quickstart.ipynb ./
-    * langchain-retrieval-augmentation-with-trulens.ipynb # cp vector-dbs/pinecone/langchain-retrieval-augmentation-with-trulens.ipynb ./
+    * all_tools.ipynb # `cp ../../../generated_files/all_tools.ipynb ./`
+    * llama_index_quickstart.ipynb # `cp ../../../examples/frameworks/llama_index/llama_index_quickstart.ipynb ./`
+    * langchain-retrieval-augmentation-with-trulens.ipynb # `cp ../../../examples/vector-dbs/pinecone/langchain-retrieval-augmentation-with-trulens.ipynb ./`
     * Add any other notebooks you think may have possible breaking changes
 1. replace the last compatible db with this new db file
     * Use the version you chose for --rev-id
     * mv default.sqlite trulens/trulens_eval/release_dbs/sql_alchemy_<NEW_VERSION>/default.sqlite
+1. git add `trulens/trulens_eval/release_dbs`
 
 
 
