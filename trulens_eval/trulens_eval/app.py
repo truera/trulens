@@ -637,8 +637,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         return jsonify(self, instrument=self.instrument)
 
     # For use as a context manager.
-    def __enter__(self, record_metadata: JSON=None):
-        ctx = RecordingContext(app=self, record_metadata=record_metadata)
+    def __enter__(self):
+        ctx = RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token

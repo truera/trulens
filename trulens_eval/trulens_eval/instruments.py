@@ -466,7 +466,7 @@ class Instrument(object):
             # My own stacks to be looked up by further subcalls by the logic
             # right above. We make a copy here since we need subcalls to access
             # it but we don't want them to modify it.
-            stacks = dict()
+            stacks = {k: v for k, v in ctx_stacks.items()}
 
             start_time = None
             end_time = None
@@ -483,6 +483,7 @@ class Instrument(object):
             # to use a different stack for the same reason. We index the stack
             # in `stacks` via id of the (unique) list `record`.
 
+            # First prepare the stacks for each context.
             for ctx in contexts:
                 # Get record and app that has instrumented this method.
 
@@ -514,53 +515,55 @@ class Instrument(object):
 
                 stacks[ctx] = stack  # for deeper calls to get
 
-                # Now we will call the wrapped method. We only do so once.
+            # Now we will call the wrapped method. We only do so once.
 
-                # Start of run once condition.
-                if start_time is None:
-                    start_time = datetime.now()
+            # Start of run wrapped block.
+            start_time = datetime.now()
 
-                    try:
-                        # Using sig bind here so we can produce a list of key-value
-                        # pairs even if positional arguments were provided.
-                        bindings: BoundArguments = sig.bind(*args, **kwargs)
-    
-                        rets, cost = await Endpoint.atrack_all_costs_tally( # DIFF
-                            lambda: func(*bindings.args, **bindings.kwargs)
-                        )
-                
-                    except BaseException as e:
-                        error = e
-                        error_str = str(e)
+            try:
+                # Using sig bind here so we can produce a list of key-value
+                # pairs even if positional arguments were provided.
+                bindings: BoundArguments = sig.bind(*args, **kwargs)
 
-                        logger.error(
-                            f"Error calling wrapped function {func.__name__}."
-                        )
-                        logger.error(traceback.format_exc())
+                rets, cost = await Endpoint.atrack_all_costs_tally( # DIFF
+                    lambda: func(*bindings.args, **bindings.kwargs)
+                )
+        
+            except BaseException as e:
+                error = e
+                error_str = str(e)
 
-                    end_time = datetime.now()
+                logger.error(
+                    f"Error calling wrapped function {func.__name__}."
+                )
+                logger.error(traceback.format_exc())
 
-                    # Done running the wrapped function. Lets collect the results.
-                    # Create common information across all records.
+            end_time = datetime.now()
 
-                    # Don't include self in the recorded arguments.
-                    nonself = {
-                        k: jsonify(v) for k, v in (
-                            bindings.arguments.items(
-                            ) if bindings is not None else {}
-                        ) if k != "self"
-                    }
+            # Done running the wrapped function. Lets collect the results.
+            # Create common information across all records.
 
-                    record_app_args = dict(
-                        args=nonself,
-                        perf=Perf(start_time=start_time, end_time=end_time),
-                        pid=os.getpid(),
-                        tid=th.get_native_id(),
-                        rets=rets,
-                        error=error_str if error is not None else None
-                    )
+            # Don't include self in the recorded arguments.
+            nonself = {
+                k: jsonify(v) for k, v in (
+                    bindings.arguments.items(
+                    ) if bindings is not None else {}
+                ) if k != "self"
+            }
 
-                # End of run once condition.
+            record_app_args = dict(
+                args=nonself,
+                perf=Perf(start_time=start_time, end_time=end_time),
+                pid=os.getpid(),
+                tid=th.get_native_id(),
+                rets=rets,
+                error=error_str if error is not None else None
+            )
+            # End of run wrapped block.
+
+            # Now record calls to each context.
+            for ctx in contexts:
+                stack = stacks[ctx]
 
                 # Note that only the stack differs between each of the records in this loop.
                 record_app_args['stack'] = stack
@@ -645,7 +648,7 @@ class Instrument(object):
             # My own stacks to be looked up by further subcalls by the logic
             # right above. We make a copy here since we need subcalls to access
             # it but we don't want them to modify it.
-            stacks = dict()
+            stacks = {k: v for k, v in ctx_stacks.items()}
 
             start_time = None
             end_time = None
@@ -692,53 +695,55 @@ class Instrument(object):
 
                 stacks[ctx] = stack  # for deeper calls to get
 
-                # Now we will call the wrapped method. We only do so once.
+            # Now we will call the wrapped method. We only do so once.
 
-                # Start of run once condition.
-                if start_time is None:
-                    start_time = datetime.now()
+            # Start of run wrapped block.
+            start_time = datetime.now()
 
-                    try:
-                        # Using sig bind here so we can produce a list of key-value
-                        # pairs even if positional arguments were provided.
-                        bindings: BoundArguments = sig.bind(*args, **kwargs)
-    
-                        rets, cost = Endpoint.track_all_costs_tally(
-                            lambda: func(*bindings.args, **bindings.kwargs)
-                        )
-                    
-                    except BaseException as e:
-                        error = e
-                        error_str = str(e)
+            try:
+                # Using sig bind here so we can produce a list of key-value
+                # pairs even if positional arguments were provided.
+                bindings: BoundArguments = sig.bind(*args, **kwargs)
 
-                        logger.error(
-                            f"Error calling wrapped function {func.__name__}."
-                        )
-                        logger.error(traceback.format_exc())
+                rets, cost = Endpoint.track_all_costs_tally(
+                    lambda: func(*bindings.args, **bindings.kwargs)
+                )
+            
+            except BaseException as e:
+                error = e
+                error_str = str(e)
 
-                    end_time = datetime.now()
+                logger.error(
+                    f"Error calling wrapped function {func.__name__}."
+                )
+                logger.error(traceback.format_exc())
 
-                    # Done running the wrapped function. Lets collect the results.
-                    # Create common information across all records.
+            end_time = datetime.now()
 
-                    # Don't include self in the recorded arguments.
-                    nonself = {
-                        k: jsonify(v) for k, v in (
-                            bindings.arguments.items(
-                            ) if bindings is not None else {}
-                        ) if k != "self"
-                    }
+            # Done running the wrapped function. Lets collect the results.
+            # Create common information across all records.
 
-                    record_app_args = dict(
-                        args=nonself,
-                        perf=Perf(start_time=start_time, end_time=end_time),
-                        pid=os.getpid(),
-                        tid=th.get_native_id(),
-                        rets=rets,
-                        error=error_str if error is not None else None
-                    )
+            # Don't include self in the recorded arguments.
+            nonself = {
+                k: jsonify(v) for k, v in (
+                    bindings.arguments.items(
+                    ) if bindings is not None else {}
+                ) if k != "self"
+            }
 
-                # End of run once condition.
+            record_app_args = dict(
+                args=nonself,
+                perf=Perf(start_time=start_time, end_time=end_time),
+                pid=os.getpid(),
+                tid=th.get_native_id(),
+                rets=rets,
+                error=error_str if error is not None else None
+            )
+            # End of run wrapped block.
+
+            # Now record calls to each context.
+            for ctx in contexts:
+                stack = stacks[ctx]
 
                 # Note that only the stack differs between each of the records in this loop.
                 record_app_args['stack'] = stack
