@@ -44,7 +44,10 @@ Note: You must create a new schema revision before doing this
     * `cp default.sqlite trulens/trulens_eval/release_dbs/sql_alchemy_<NEW_VERSION>/`
 1. `git add trulens/trulens_eval/release_dbs`
 
-
+## Testing the DB
+Run the below:
+1. `cd trulens/trulens_eval`
+1. `HUGGINGFACE_API_KEY="<to_fill_out>"  OPENAI_API_KEY="<to_fill_out>" PINECONE_API_KEY="" PINECONE_ENV="" HUGGINGFACEHUB_API_TOKEN="" python -m pytest tests/docs_notebooks -k backwards_compat`
 
 ## Copying a database
 Have a look at the help text for `_copy_database` and take into
