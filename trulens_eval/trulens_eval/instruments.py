@@ -1021,8 +1021,30 @@ class Instrument(object):
                 f"{query}: Do not know how to instrument object of type {cls}."
             )
 
+class AddInstruments():
+    """
+    Utilities for adding more things to default instrumentation filters.
+    """
 
-class instrument:
+    @classmethod
+    def method(self_class, cls: type, name: str) -> None:
+        # Add the class with a method named `name`, its module, and the method
+        # `name` to the Default instrumentation walk filters.
+        Instrument.Default.MODULES.add(cls.__module__)
+        Instrument.Default.CLASSES.add(cls)
+
+        check_o = Instrument.Default.METHODS.get(name, lambda o: False)
+        Instrument.Default.METHODS[
+            name] = lambda o: check_o(o) or isinstance(o, cls)
+
+    @classmethod
+    def methods(self_class, cls: type, names: Iterable[str]) -> None:
+        for name in names:
+            self_class.method(cls, name)
+
+
+
+class instrument(AddInstruments):
     """
     Decorator for marking methods to be instrumented in custom classes that are
     wrapped by App.
@@ -1043,20 +1065,6 @@ class instrument:
 
         # Note that this does not actually change the method, just adds it to
         # list of filters.
-        instrument.method(cls, name)
+        self.method(cls, name)
 
-    @classmethod
-    def method(self_class, cls: type, name: str) -> None:
-        # Add the class with a method named `name`, its module, and the method
-        # `name` to the Default instrumentation walk filters.
-        Instrument.Default.MODULES.add(cls.__module__)
-        Instrument.Default.CLASSES.add(cls)
 
-        check_o = Instrument.Default.METHODS.get(name, lambda o: False)
-        Instrument.Default.METHODS[
-            name] = lambda o: check_o(o) or isinstance(o, cls)
-
-    @classmethod
-    def methods(self_class, cls: type, names: Iterable[str]) -> None:
-        for name in names:
-            self_class.method(cls, name)

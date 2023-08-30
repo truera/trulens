@@ -350,6 +350,8 @@ class TruCustomApp(App):
 
 from trulens_eval.instruments import instrument as base_instrument
 
+
+
 class instrument(base_instrument):
     """
     Decorator for marking methods to be instrumented in custom classes that are
