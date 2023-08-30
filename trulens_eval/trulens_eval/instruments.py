@@ -1043,7 +1043,7 @@ class instrument:
 
         # Note that this does not actually change the method, just adds it to
         # list of filters.
-        self.method(cls, name)
+        instrument.method(cls, name)
 
     @classmethod
     def method(self_class, cls: type, name: str) -> None:

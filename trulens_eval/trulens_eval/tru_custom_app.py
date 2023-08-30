@@ -358,7 +358,7 @@ class instrument(base_instrument):
 
     @classmethod
     def method(self_class, cls: type, name: str) -> None:
-        base_instrument.method(self_class, cls, name)
+        base_instrument.method(cls, name)
 
         # Also make note of it for verification that it was found by the walk
         # after init.
