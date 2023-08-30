@@ -17,7 +17,7 @@ from trulens_eval import Feedback
 from trulens_eval.keys import check_keys
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.tru_basic_app import TruBasicApp
-from trulens_eval.util import jsonify
+from trulens_eval.utils.json import jsonify
 
 pp = PrettyPrinter()
 

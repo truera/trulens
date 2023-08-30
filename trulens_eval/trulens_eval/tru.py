@@ -18,8 +18,8 @@ from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import Record
-from trulens_eval.util import SingletonPerName
-from trulens_eval.util import TP
+from trulens_eval.utils.python import SingletonPerName
+from trulens_eval.utils.threading import TP
 from trulens_eval.utils.notebook_utils import is_notebook
 from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
 from trulens_eval.utils.text import UNICODE_CHECK
@@ -150,6 +150,8 @@ class Tru(SingletonPerName):
             record.update(**kwargs)
 
         return self.db.insert_record(record=record)
+    
+    update_record = add_record
 
     def run_feedback_functions(
         self,

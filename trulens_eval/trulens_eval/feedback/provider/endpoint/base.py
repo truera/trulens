@@ -15,10 +15,10 @@ import requests
 
 from trulens_eval.keys import ApiKeyError
 from trulens_eval.schema import Cost
-from trulens_eval.util import get_first_local_in_call_stack
-from trulens_eval.util import JSON
-from trulens_eval.util import SerialModel
-from trulens_eval.util import SingletonPerName
+from trulens_eval.utils.python import get_first_local_in_call_stack
+from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.python import Thunk
 
 logger = logging.getLogger(__name__)

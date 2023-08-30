@@ -31,20 +31,20 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
-from trulens_eval.util import all_objects
-from trulens_eval.util import callable_name
-from trulens_eval.util import Class
-from trulens_eval.util import CLASS_INFO
-from trulens_eval.util import GetItemOrAttribute
-from trulens_eval.util import JSON
-from trulens_eval.util import JSON_BASES
-from trulens_eval.util import JSON_BASES_T
-from trulens_eval.util import json_str_of_obj
-from trulens_eval.util import jsonify
-from trulens_eval.util import JSONPath
-from trulens_eval.util import safe_signature
-from trulens_eval.util import SerialModel
-from trulens_eval.util import TP
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.serial import all_objects
+from trulens_eval.utils.pyschema import callable_name
+from trulens_eval.utils.pyschema import CLASS_INFO
+from trulens_eval.utils.serial import GetItemOrAttribute
+from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSON_BASES
+from trulens_eval.utils.serial import JSON_BASES_T
+from trulens_eval.utils.json import json_str_of_obj
+from trulens_eval.utils.json import jsonify
+from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.pyschema import safe_signature
+from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
 
@@ -52,10 +52,6 @@ pp = PrettyPrinter()
 
 # App component.
 COMPONENT = Any
-
-# Component category.
-# TODO: Enum
-COMPONENT_CATEGORY = str
 
 
 class ComponentView(ABC):
@@ -575,7 +571,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
         records += [ret_record]
     """
 
-    async def awith_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
+    async def awith_record(self, func, *args, record_metadata: JSON = None, **kwargs) -> Tuple[Any, Record]:
         """
         Call the given instrumented async function `func` with the given `args`,
         `kwargs`, producing its results as well as a record.
@@ -631,6 +627,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         ret_record_args = dict()
 
+        ret_record_args['meta'] = record_metadata
+
         ret_record_args['main_input'] = jsonify(main_in)
 
         if ret is not None:
@@ -641,12 +639,16 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         perf = Perf(start_time=start_time, end_time=end_time)
         ret_record = self._post_record(
-            ret_record_args, error, cost, perf, record
+            ret_record_args=ret_record_args,
+            error=error,
+            cost=cost,
+            perf=perf,
+            calls=record
         )
 
         return ret, ret_record
 
-    def with_record(self, func, *args, **kwargs) -> Tuple[Any, Record]:
+    def with_record(self, func, *args, record_metadata: JSON = None, **kwargs) -> Tuple[Any, Record]:
         """
         Call the given instrumented function `func` with the given `args`,
         `kwargs`, producing its results as well as a record.
@@ -702,6 +704,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks):
 
         ret_record_args = dict()
 
+        ret_record_args['meta'] = record_metadata
         ret_record_args['main_input'] = jsonify(main_in)
 
         if ret is not None:

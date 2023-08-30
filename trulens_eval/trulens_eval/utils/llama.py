@@ -1,16 +1,23 @@
-from typing import Iterable, List, Type
+"""
+Utilities for llama_index apps. Includes component categories that organize
+various llama_index classes and example classes:
+
+- `WithFeedbackFilterNodes`, a `VectorIndexRetriever` that filters retrieved
+  nodes via a threshold on a specified feedback function.
+"""
+
+from typing import List, Type
 
 from trulens_eval import app
 from trulens_eval import Feedback
-from trulens_eval.app import COMPONENT_CATEGORY
 from trulens_eval.feedback import Feedback
-from trulens_eval.util import Class
-from trulens_eval.util import first
-from trulens_eval.util import JSON
-from trulens_eval.util import OptionalImports
-from trulens_eval.util import REQUIREMENT_LLAMA
-from trulens_eval.util import second
-from trulens_eval.util import TP
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.containers import first
+from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_LLAMA
+from trulens_eval.utils.containers import second
+from trulens_eval.utils.threading import TP
 
 with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.indices.query.schema import QueryBundle
@@ -57,51 +64,6 @@ def component_of_json(json: JSON) -> app.LlamaIndexComponent:
     view = constructor_of_class(cls)
 
     return view(json)
-
-
-class Is:
-    # TODEP
-    """
-    TODO: DEPRECATE: Replacing with component view types.
-
-    Various checks for typical llama index components based on their names (i.e.
-    without actually loading them). See util.py:WithClassInfo for more.
-    """
-
-    @staticmethod
-    def engine(cls: Class):
-        return cls.noserio_issubclass(
-            module_name="llama_index.indices.query.base",
-            class_name="BaseQueryEngine"
-        )
-
-    @staticmethod
-    def prompt(cls: Class):
-        return cls.noserio_issubclass(
-            module_name="llama_index.prompts.base", class_name="Prompt"
-        )
-
-    @staticmethod
-    def retriever(cls: Class):
-        return cls.noserio_issubclass(
-            module_name="llama_index.indices.base_retriever",
-            class_name="BaseRetriever"
-        )
-
-    @staticmethod
-    def selector(cls: Class):
-        return cls.noserio_issubclass(
-            module_name="llama_index.selectors.types",
-            class_name="BaseSelector"
-        )
-
-    @staticmethod
-    def what(cls: Class) -> Iterable[COMPONENT_CATEGORY]:
-        CHECKERS = [Is.engine, Is.prompt, Is.retriever, Is.selector]
-
-        for checker in CHECKERS:
-            if checker(cls):
-                yield checker.__name__
 
 
 class WithFeedbackFilterNodes(VectorIndexRetriever):

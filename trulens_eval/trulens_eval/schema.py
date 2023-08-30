@@ -21,7 +21,6 @@ util.py:CLASS_INFO key.
 """
 
 from abc import ABC
-from abc import abstractmethod
 from datetime import datetime
 from enum import Enum
 import logging
@@ -30,17 +29,17 @@ from typing import Any, ClassVar, Dict, Optional, Sequence, TypeVar, Union
 from munch import Munch as Bunch
 import pydantic
 
-from trulens_eval.util import Class
-from trulens_eval.util import Function
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import GetItemOrAttribute
-from trulens_eval.util import JSON
-from trulens_eval.util import jsonify
-from trulens_eval.util import JSONPath
-from trulens_eval.util import Method
-from trulens_eval.util import obj_id_of_obj
-from trulens_eval.util import SerialModel
-from trulens_eval.util import WithClassInfo
+from trulens_eval.utils.json import jsonify
+from trulens_eval.utils.json import obj_id_of_obj
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import Function
+from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.pyschema import Method
+from trulens_eval.utils.serial import GetItemOrAttribute
+from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils.pyschema import WithClassInfo
 
 T = TypeVar("T")
 
@@ -159,6 +158,7 @@ class Record(SerialModel):
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
     tags: Optional[str] = ""
+    meta: Optional[JSON] = None
 
     main_input: Optional[JSON] = None
     main_output: Optional[JSON] = None  # if no error
@@ -283,7 +283,7 @@ class FeedbackResultStatus(Enum):
 
 
 class FeedbackCall(SerialModel):
-    args: Dict[str, Optional[str]]
+    args: Dict[str, Optional[JSON]]
     ret: float
 
     # New in 0.6.0: Any additional data a feedback function returns to display
@@ -426,7 +426,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
 
     app_id: AppID
     tags: Tags
-    metadata: Metadata
+    metadata: Metadata # TODO: rename to meta for consistency with other metas
 
     # Feedback functions to evaluate on each record. Unlike the above, these are
     # meant to be serialized.

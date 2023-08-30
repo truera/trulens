@@ -1,16 +1,22 @@
-from typing import Iterable, List, Type
+"""
+Utilities for langchain apps. Includes component categories that organize
+various langchain classes and example classes:
+
+- `WithFeedbackFilterDocuments`: a `VectorStoreRetriever` that filters retrieved
+  documents via a threshold on a specified feedback function.
+"""
+
+from typing import List, Type
 
 from trulens_eval import app
-from trulens_eval.app import COMPONENT_CATEGORY
 from trulens_eval.feedback import Feedback
-from trulens_eval.util import Class
-from trulens_eval.util import first
-from trulens_eval.util import JSON
-from trulens_eval.util import OptionalImports
-from trulens_eval.util import REQUIREMENT_LANGCHAIN
-from trulens_eval.util import second
-from trulens_eval.util import ThreadPoolExecutor
-from trulens_eval.util import TP
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.containers import first
+from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
+from trulens_eval.utils.containers import second
+from trulens_eval.utils.threading import ThreadPoolExecutor
 
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     import langchain
@@ -76,71 +82,6 @@ def component_of_json(json: JSON) -> app.LangChainComponent:
     view = constructor_of_class(cls)
 
     return view(json)
-
-
-# TODEP
-class Is:
-    """
-    TODO: DEPRECATE: Replacing with component view types.
-
-    Various checks for typical langchain components based on their names (i.e.
-    without actually loading them). See util.py:WithClassInfo for more.
-    """
-
-    @staticmethod
-    def chain(cls: Class):
-        return cls.noserio_issubclass(
-            module_name="langchain.chains.base", class_name="Chain"
-        )
-
-    @staticmethod
-    def vector_store(cls: Class):
-        return cls.noserio_issubclass(
-            module_name="langchain.vectorstores",
-            class_name="VectorStoreRetriever"
-        )
-
-    @staticmethod
-    def retriever(cls: Class):
-        return cls.noserio_issubclass(
-            module_name="langchain.schema", class_name="BaseRetriever"
-        )
-
-    @staticmethod
-    def llm(cls: Class):
-        return cls.noserio_issubclass(
-            module_name="langchain.llms.base", class_name="BaseLLM"
-        )
-
-    @staticmethod
-    def prompt(cls: Class):
-        return cls.noserio_issubclass(
-            module_name="langchain.prompts.base",
-            class_name="BasePromptTemplate"
-        )
-
-    @staticmethod
-    def memory(cls: Class):
-        return cls.noserio_issubclass(
-            module_name="langchain.schema", class_name="BaseMemory"
-        )
-
-    @staticmethod
-    def chathistory(cls: Class):
-        return cls.noserio_issubclass(
-            module_name="langchain.schema", class_name="BaseChatMessageHistory"
-        )
-
-    @staticmethod
-    def what(cls: Class) -> Iterable[COMPONENT_CATEGORY]:
-        CHECKERS = [
-            Is.chain, Is.vector_store, Is.retriever, Is.llm, Is.prompt,
-            Is.memory, Is.chathistory
-        ]
-
-        for checker in CHECKERS:
-            if checker(cls):
-                yield checker.__name__
 
 
 class WithFeedbackFilterDocuments(VectorStoreRetriever):

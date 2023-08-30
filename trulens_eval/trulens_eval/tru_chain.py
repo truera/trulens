@@ -6,7 +6,7 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, List, Tuple, Union
+from typing import Any, Callable, ClassVar, Dict, List, Tuple
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
@@ -14,13 +14,11 @@ from pydantic import Field
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
-from trulens_eval.util import Class
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import jsonify
-from trulens_eval.util import noserio
-from trulens_eval.util import OptionalImports
-from trulens_eval.util import REQUIREMENT_LANGCHAIN
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import FunctionOrMethod
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +44,12 @@ class LangChainInstrument(Instrument):
             langchain.schema.BaseMemory,  # no methods instrumented
             langchain.schema.BaseChatMessageHistory,  # subclass of above
             # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
+            langchain.agents.agent.BaseSingleActionAgent, 
+            langchain.agents.agent.BaseMultiActionAgent,
+            langchain.schema.language_model.BaseLanguageModel,
+            # langchain.load.serializable.Serializable, # this seems to be work in progress over at langchain
+            # langchain.adapters.openai.ChatCompletion, # no bases
+            langchain.tools.base.BaseTool,
             WithFeedbackFilterDocuments
         }
 
@@ -57,6 +61,13 @@ class LangChainInstrument(Instrument):
             "acall": lambda o: isinstance(o, langchain.chains.base.Chain),
             "_get_relevant_documents":
                 lambda o: True,  # VectorStoreRetriever, langchain >= 0.230
+            # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
+            # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
+            # the prompt calls might be too small to be interesting
+            "plan": lambda o: isinstance(o, (langchain.agents.agent.BaseSingleActionAgent, langchain.agents.agent.BaseMultiActionAgent)),
+            "aplan": lambda o: isinstance(o, (langchain.agents.agent.BaseSingleActionAgent, langchain.agents.agent.BaseMultiActionAgent)),
+            "_arun": lambda o: isinstance(o, langchain.tools.base.BaseTool),
+            "_run": lambda o: isinstance(o, langchain.tools.base.BaseTool),
         }
 
     def __init__(self, *args, **kwargs):
@@ -139,6 +150,10 @@ class TruChain(App):
         if 'inputs' in bindings.arguments:
             # langchain specific:
             ins = self.app.prep_inputs(bindings.arguments['inputs'])
+
+            if len(self.app.input_keys) == 0:
+                logger.warning("langchain app has no inputs. `main_input` will be `None`.")
+                return None
 
             return ins[self.app.input_keys[0]]
 
