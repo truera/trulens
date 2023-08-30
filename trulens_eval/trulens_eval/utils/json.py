@@ -203,7 +203,26 @@ def jsonify(
         content = temp
 
     elif dataclasses.is_dataclass(type(obj)):
-        temp = recur(dataclasses.asdict(obj))
+        # NOTE: cannot use dataclasses.asdict as that may fail due to its use of
+        # copy.deepcopy.
+
+        temp = {}
+        new_dicted[id(obj)] = temp
+
+        temp.update(
+            {
+                f.name: recur(_safe_getattr(obj, f.name))
+                for f in dataclasses.fields(obj)
+                if recur_key(f.name)
+            }
+        )
+
+        # Redact possible secrets based on key name and value.
+        if redact_keys:
+            for k, v in temp.items():
+                temp[k] = redact_value(v=v, k=k)
+
+        content = temp
 
     elif instrument.to_instrument_object(obj):
 
