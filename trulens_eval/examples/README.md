@@ -6,6 +6,8 @@
 
   - `alpaca7b_local_llm.ipynb` -- Personal assistant with Alpaca7B running locally using HuggingFacePipeline's from_model_id.
 
+  - `azure_openai_llama_index.ipynb` -- Simple example using AzureOpenAI for the model, embeddings and feedbacks.
+
 - **`frameworks/`** -- Collection of examples using different frameworks for constructing an LLM app.
 
   - `llama_index/` -- Examples using llama-index as a framework.
