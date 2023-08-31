@@ -729,6 +729,13 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         instrumented is being used in a `with_` call.
         """
     
+        if not hasattr(func, "__name__"):
+            if hasattr(func, "__call__"):
+                func = self.app.__call__
+            else:
+                raise TypeError(f"Unexpected type of callable `{type(func).__name__}`.")
+
+
         if not hasattr(func, Instrument.INSTRUMENT):
             logger.warning(
                 f"Function `{func.__name__}` has not been instrumented. "
