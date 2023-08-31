@@ -348,45 +348,20 @@ class TruCustomApp(App):
             )
 
 
-class instrument:
+from trulens_eval.instruments import instrument as base_instrument
+
+
+
+class instrument(base_instrument):
     """
     Decorator for marking methods to be instrumented in custom classes that are
     wrapped by TruCustomApp.
     """
 
-    # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
-
-    def __init__(self, func: Callable):
-        self.func = func
-
-    def __set_name__(self, cls: type, name: str):
-        """
-        For use as method decorator.
-        """
-
-        # Important: do this first:
-        setattr(cls, name, self.func)
-
-        # Note that this does not actually change the method, just adds it to
-        # list of filters.
-        instrument.method(cls, name)
-
-    @staticmethod
-    def method(cls: type, name: str) -> None:
-        # Add the class with a method named `name`, its module, and the method
-        # `name` to the Default instrumentation walk filters.
-        Instrument.Default.MODULES.add(cls.__module__)
-        Instrument.Default.CLASSES.add(cls)
-
-        check_o = Instrument.Default.METHODS.get(name, lambda o: False)
-        Instrument.Default.METHODS[
-            name] = lambda o: check_o(o) or isinstance(o, cls)
+    @classmethod
+    def method(self_class, cls: type, name: str) -> None:
+        base_instrument.method(cls, name)
 
         # Also make note of it for verification that it was found by the walk
         # after init.
         TruCustomApp.functions_to_instrument.add(getattr(cls, name))
-
-    @staticmethod
-    def methods(cls: type, names: Iterable[str]) -> None:
-        for name in names:
-            instrument.method(cls, name)

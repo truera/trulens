@@ -494,6 +494,9 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
             metadata = {}
         self.metadata = metadata
 
+    def dict(self):
+        return jsonify(self)
+
     @classmethod
     def select_inputs(cls) -> JSONPath:
         """
