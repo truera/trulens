@@ -731,7 +731,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     
         if not hasattr(func, "__name__"):
             if hasattr(func, "__call__"):
-                func = self.app.__call__
+                func = func.__call__
             else:
                 raise TypeError(f"Unexpected type of callable `{type(func).__name__}`.")
 
