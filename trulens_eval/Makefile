@@ -46,6 +46,10 @@ test-tru-llama:
 test-tru-basic-app:
 	$(CONDA); python -m unittest tests.unit.test_tru_basic_app
 
+test-tru-custom:
+	$(CONDA); python -m unittest tests.unit.test_tru_custom
+
+
 format:
 	$(CONDA); bash format.sh
 

@@ -30,7 +30,6 @@ class TruBasicCallableInstrument(Instrument):
 
     def __init__(self, *args, **kwargs):
         super().__init__(
-            root_methods=set([TruBasicApp.with_record]),
             include_classes=TruBasicCallableInstrument.Default.CLASSES(),
             include_methods=TruBasicCallableInstrument.Default.METHODS,
             *args,
@@ -76,7 +75,7 @@ class TruBasicApp(App):
         app = TruWrapperApp(text_to_text)
         kwargs['app'] = TruWrapperApp(text_to_text)
         kwargs['root_class'] = Class.of_object(app)
-        kwargs['instrument'] = TruBasicCallableInstrument(callbacks=self)
+        kwargs['instrument'] = TruBasicCallableInstrument(app=self)
 
         super().__init__(**kwargs)
 
@@ -97,5 +96,7 @@ class TruBasicApp(App):
         Returns:
             dict: record metadata
         """
+
+        self._with_dep_message(method="_call", is_async=False, with_record=True)
 
         return self.with_record(self.app._call, input, **kwargs)

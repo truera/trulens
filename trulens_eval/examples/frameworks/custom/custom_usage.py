@@ -1,4 +1,4 @@
-from custom_module import CustomApp
+from examples.frameworks.custom.custom_app import CustomApp
 
 from trulens_eval import TruApp
 
