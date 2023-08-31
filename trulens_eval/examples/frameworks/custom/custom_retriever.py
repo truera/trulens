@@ -7,7 +7,7 @@ class CustomRetriever:
 
     # @instrument
     def retrieve_chunks(self, data):
-        sleep(0.5)
+        sleep(0.15)
 
         return [
             f"Relevant chunk: {data.upper()}", f"Relevant chunk: {data[::-1]}"

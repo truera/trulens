@@ -65,9 +65,11 @@ class JSONTestCase(TestCase):
                 if f.name in skips:
                     continue
 
+                self.assertTrue(hasattr(j2, f.name))
+
                 recur(
                     getattr(j1, f.name), getattr(j2, f.name),
-                    getattr(path, f.name)
+                    path[f.name]
                 )
 
         elif isinstance(j1, BaseModel):
@@ -75,7 +77,9 @@ class JSONTestCase(TestCase):
                 if f in skips:
                     continue
 
-                recur(getattr(j1, f), getattr(j2, f), getattr(path, f))
+                self.assertTrue(hasattr(j2, f))
+
+                recur(getattr(j1, f), getattr(j2, f), path[f])
 
         else:
             raise RuntimeError(

@@ -1,5 +1,5 @@
-from custom_llm import CustomLLM
-from custom_retriever import CustomRetriever
+from examples.frameworks.custom.custom_llm import CustomLLM
+from examples.frameworks.custom.custom_retriever import CustomRetriever
 
 from trulens_eval.tru_custom_app import instrument
 
