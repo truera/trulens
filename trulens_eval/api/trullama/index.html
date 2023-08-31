@@ -17,7 +17,7 @@
         <link rel="next" href="../trucustom/">
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.2, mkdocs-material-9.1.4">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
     
     
       
@@ -1618,8 +1618,7 @@
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">146</span>
-<span class="normal">147</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">147</span>
 <span class="normal">148</span>
 <span class="normal">149</span>
 <span class="normal">150</span>
@@ -1824,7 +1823,40 @@
 <span class="normal">349</span>
 <span class="normal">350</span>
 <span class="normal">351</span>
-<span class="normal">352</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruLlama</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruLlama</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrap a llama index engine for monitoring.</span>
 
@@ -1853,11 +1885,7 @@
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;app&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">app</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;root_class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="n">of_object</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>  <span class="c1"># TODO: make class property</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;instrument&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">LlamaInstrument</span><span class="p">(</span>
-            <span class="n">root_methods</span><span class="o">=</span><span class="nb">set</span><span class="p">([</span>
-                <span class="n">TruLlama</span><span class="o">.</span><span class="n">with_record</span><span class="p">,</span>
-                <span class="n">TruLlama</span><span class="o">.</span><span class="n">awith_record</span><span class="p">,</span>
-            <span class="p">]),</span>
-            <span class="n">callbacks</span><span class="o">=</span><span class="bp">self</span>
+            <span class="n">app</span><span class="o">=</span><span class="bp">self</span>
         <span class="p">)</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -1870,60 +1898,6 @@
 <span class="sd">        Get the path to the source nodes in the query output.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">select_outputs</span><span class="p">()</span><span class="o">.</span><span class="n">source_nodes</span><span class="p">[:]</span>
-
-    <span class="c1"># llama_index.chat_engine.types.BaseChatEngine</span>
-    <span class="k">def</span> <span class="nf">chat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AgentChatResponse</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
-        <span class="p">)</span>
-
-        <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chat_with_record</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">res</span>
-
-    <span class="c1"># llama_index.chat_engine.types.BaseChatEngine</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">achat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AgentChatResponse</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
-        <span class="p">)</span>
-
-        <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">achat_with_record</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">res</span>
-
-    <span class="c1"># llama_index.chat_engine.types.BaseChatEngine</span>
-    <span class="k">def</span> <span class="nf">stream_chat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StreamingAgentChatResponse</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
-        <span class="p">)</span>
-
-        <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_chat_with_record</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">res</span>
-
-    <span class="c1"># llama_index.chat_engine.types.BaseChatEngine</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">astream_chat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StreamingAgentChatResponse</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
-        <span class="p">)</span>
-
-        <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">astream_chat_with_record</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">res</span>
-
-    <span class="c1"># llama_index.indices.query.base.BaseQueryEngine</span>
-    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RESPONSE_TYPE</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseQueryEngine</span>
-        <span class="p">)</span>
-
-        <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_with_record</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">res</span>
-
-    <span class="c1"># llama_index.indices.query.base.BaseQueryEngine</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">aquery</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RESPONSE_TYPE</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseQueryEngine</span>
-        <span class="p">)</span>
-
-        <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">aquery_with_record</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">res</span>
 
     <span class="k">def</span> <span class="nf">main_input</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span>
@@ -1974,63 +1948,153 @@
 
             <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">main_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">sig</span><span class="p">,</span> <span class="n">bindings</span><span class="p">,</span> <span class="n">ret</span><span class="p">)</span>
 
+    <span class="c1"># TODEP</span>
+    <span class="c1"># llama_index.chat_engine.types.BaseChatEngine</span>
+    <span class="k">def</span> <span class="nf">chat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AgentChatResponse</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;chat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chat_with_record</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="c1"># TODEP</span>
+    <span class="c1"># llama_index.chat_engine.types.BaseChatEngine</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">achat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AgentChatResponse</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;achat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">achat_with_record</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="c1"># TODEP</span>
+    <span class="c1"># llama_index.chat_engine.types.BaseChatEngine</span>
+    <span class="k">def</span> <span class="nf">stream_chat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StreamingAgentChatResponse</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;stream_chat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_chat_with_record</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="c1"># TODEP</span>
+    <span class="c1"># llama_index.chat_engine.types.BaseChatEngine</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">astream_chat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StreamingAgentChatResponse</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;astream_chat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">astream_chat_with_record</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="c1"># TODEP</span>
+    <span class="c1"># llama_index.indices.query.base.BaseQueryEngine</span>
+    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RESPONSE_TYPE</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseQueryEngine</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;query&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_with_record</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="c1"># TODEP</span>
+    <span class="c1"># llama_index.indices.query.base.BaseQueryEngine</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">aquery</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RESPONSE_TYPE</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseQueryEngine</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;aquery&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">aquery_with_record</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="c1"># TODEP</span>
     <span class="c1"># Mirrors llama_index.indices.query.base.BaseQueryEngine.query .</span>
     <span class="k">def</span> <span class="nf">query_with_record</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">str_or_query_bundle</span><span class="p">:</span> <span class="n">QueryType</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">RESPONSE_TYPE</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseQueryEngine</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="n">str_or_query_bundle</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;query&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># TODEP</span>
     <span class="c1"># Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">aquery_with_record</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">str_or_query_bundle</span><span class="p">:</span> <span class="n">QueryType</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">RESPONSE_TYPE</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseQueryEngine</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">awith_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">aquery</span><span class="p">,</span> <span class="n">str_or_query_bundle</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;aquery&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">awith_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">aquery</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># TODEP</span>
     <span class="c1"># Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .</span>
-    <span class="k">def</span> <span class="nf">chat_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">chat_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
                          <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">AgentChatResponse</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">chat</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;chat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">chat</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># TODEP</span>
     <span class="c1"># Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">achat_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">achat_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
                                 <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">AgentChatResponse</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">awith_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">achat</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;achat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">awith_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">achat</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># TODEP</span>
     <span class="c1"># Compatible with llama_index.chat_engine.types.BaseChatEngine.stream_chat .</span>
     <span class="k">def</span> <span class="nf">stream_chat_with_record</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">StreamingAgentChatResponse</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">stream_chat</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;stream&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">stream_chat</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># TODEP</span>
     <span class="c1"># Compatible with llama_index.chat_engine.types.BaseChatEngine.astream_chat .</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">astream_chat_with_record</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">StreamingAgentChatResponse</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">awith_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">astream_chat</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;astream_chat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">awith_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">astream_chat</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
         </details>
 
@@ -2064,26 +2128,26 @@ signature <code>sig</code> if it is to be called with the given bindings
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
-<span class="normal">248</span>
-<span class="normal">249</span>
-<span class="normal">250</span>
-<span class="normal">251</span>
-<span class="normal">252</span>
-<span class="normal">253</span>
-<span class="normal">254</span>
-<span class="normal">255</span>
-<span class="normal">256</span>
-<span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span>
-<span class="normal">260</span>
-<span class="normal">261</span>
-<span class="normal">262</span>
-<span class="normal">263</span>
-<span class="normal">264</span>
-<span class="normal">265</span>
-<span class="normal">266</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_input</span><span class="p">(</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_input</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -2127,33 +2191,33 @@ returned <code>ret</code>.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">268</span>
-<span class="normal">269</span>
-<span class="normal">270</span>
-<span class="normal">271</span>
-<span class="normal">272</span>
-<span class="normal">273</span>
-<span class="normal">274</span>
-<span class="normal">275</span>
-<span class="normal">276</span>
-<span class="normal">277</span>
-<span class="normal">278</span>
-<span class="normal">279</span>
-<span class="normal">280</span>
-<span class="normal">281</span>
-<span class="normal">282</span>
-<span class="normal">283</span>
-<span class="normal">284</span>
-<span class="normal">285</span>
-<span class="normal">286</span>
-<span class="normal">287</span>
-<span class="normal">288</span>
-<span class="normal">289</span>
-<span class="normal">290</span>
-<span class="normal">291</span>
-<span class="normal">292</span>
-<span class="normal">293</span>
-<span class="normal">294</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_output</span><span class="p">(</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_output</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span><span class="p">,</span> <span class="n">ret</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -2206,12 +2270,12 @@ returned <code>ret</code>.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">186</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
 <span class="normal">187</span>
-<span class="normal">188</span>
-<span class="normal">189</span>
-<span class="normal">190</span>
-<span class="normal">191</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">188</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">select_source_nodes</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONPath</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get the path to the source nodes in the query output.</span>

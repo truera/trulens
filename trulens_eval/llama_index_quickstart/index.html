@@ -17,7 +17,7 @@
         <link rel="next" href="../no_framework_quickstart/">
       
       <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.2, mkdocs-material-9.1.4">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
     
     
       
@@ -2755,9 +2755,9 @@ Licensed under the Apache License, Version 2.0.
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="err">!</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">trulens</span><span class="o">-</span><span class="nb">eval</span><span class="o">==</span><span class="mf">0.10.0</span> <span class="n">llama_index</span><span class="o">==</span><span class="mf">0.8.3</span> <span class="n">html2text</span><span class="o">==</span><span class="mf">2020.1.16</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="ch">#! pip install trulens-eval==0.11.0 llama_index==0.8.5.post2 html2text==2020.1.16</span>
 </pre></div>
-<div id="cell-1" class="clipboard-copy-txt">! pip install trulens-eval==0.10.0 llama_index==0.8.3 html2text==2020.1.16</div>
+<div id="cell-1" class="clipboard-copy-txt">#! pip install trulens-eval==0.11.0 llama_index==0.8.5.post2 html2text==2020.1.16</div>
         
         </div>
     </div>
@@ -2852,8 +2852,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
 </pre></div>
 <div id="cell-3" class="clipboard-copy-txt"># Imports main tools:
 from trulens_eval import TruLlama, Feedback, Tru, feedback
-tru = Tru()
-</div>
+tru = Tru()</div>
         
         </div>
     </div>
@@ -2897,18 +2896,22 @@ tru = Tru()
             </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span><span class="p">,</span> <span class="n">SimpleWebPageReader</span>
 
-<span class="n">documents</span> <span class="o">=</span> <span class="n">SimpleWebPageReader</span><span class="p">(</span><span class="n">html_to_text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span>
-    <span class="p">[</span><span class="s2">&quot;http://paulgraham.com/worked.html&quot;</span><span class="p">]</span>
-<span class="p">)</span>
+<span class="c1"># llama_index 0.8.15 bug: need to provide metadata_fn</span>
+<span class="n">documents</span> <span class="o">=</span> <span class="n">SimpleWebPageReader</span><span class="p">(</span>
+    <span class="n">html_to_text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">metadata_fn</span><span class="o">=</span><span class="k">lambda</span> <span class="n">url</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">([</span><span class="s2">&quot;http://paulgraham.com/worked.html&quot;</span><span class="p">])</span>
 <span class="n">index</span> <span class="o">=</span> <span class="n">VectorStoreIndex</span><span class="o">.</span><span class="n">from_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
 
 <span class="n">query_engine</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">as_query_engine</span><span class="p">()</span>
 </pre></div>
 <div id="cell-4" class="clipboard-copy-txt">from llama_index import VectorStoreIndex, SimpleWebPageReader
 
-documents = SimpleWebPageReader(html_to_text=True).load_data(
-    ["http://paulgraham.com/worked.html"]
-)
+# llama_index 0.8.15 bug: need to provide metadata_fn
+documents = SimpleWebPageReader(
+    html_to_text=True,
+    metadata_fn=lambda url: dict(url=url)
+).load_data(["http://paulgraham.com/worked.html"])
 index = VectorStoreIndex.from_documents(documents)
 
 query_engine = index.as_query_engine()</div>

@@ -17,7 +17,7 @@
         <link rel="next" href="../../CONTRIBUTING/">
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.2, mkdocs-material-9.1.4">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
     
     
       
@@ -1524,7 +1524,7 @@
 <a id="trulens_eval.trulens_eval.schema.AppDefinition"></a>
   <div class="doc doc-contents first">
       <p class="doc doc-class-bases">
-        Bases: <code><span title="trulens_eval.util.SerialModel">SerialModel</span></code>, <code><span title="trulens_eval.util.WithClassInfo">WithClassInfo</span></code>, <code><span title="abc.ABC">ABC</span></code></p>
+        Bases: <code><span title="trulens_eval.utils.serial.SerialModel">SerialModel</span></code>, <code><span title="trulens_eval.utils.pyschema.WithClassInfo">WithClassInfo</span></code>, <code><span title="abc.ABC">ABC</span></code></p>
 
 
 
@@ -1627,7 +1627,10 @@
 <span class="normal">514</span>
 <span class="normal">515</span>
 <span class="normal">516</span>
-<span class="normal">517</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">AppDefinition</span><span class="p">(</span><span class="n">SerialModel</span><span class="p">,</span> <span class="n">WithClassInfo</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">AppDefinition</span><span class="p">(</span><span class="n">SerialModel</span><span class="p">,</span> <span class="n">WithClassInfo</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
     <span class="c1"># Serialized fields here whereas app.py:App contains</span>
     <span class="c1"># non-serialized fields.</span>
 
@@ -1636,7 +1639,7 @@
 
     <span class="n">app_id</span><span class="p">:</span> <span class="n">AppID</span>
     <span class="n">tags</span><span class="p">:</span> <span class="n">Tags</span>
-    <span class="n">metadata</span><span class="p">:</span> <span class="n">Metadata</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Metadata</span> <span class="c1"># TODO: rename to meta for consistency with other metas</span>
 
     <span class="c1"># Feedback functions to evaluate on each record. Unlike the above, these are</span>
     <span class="c1"># meant to be serialized.</span>
@@ -1704,6 +1707,9 @@
             <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
 
+    <span class="k">def</span> <span class="nf">dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">select_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONPath</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1760,16 +1766,16 @@
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/schema.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">497</span>
-<span class="normal">498</span>
-<span class="normal">499</span>
-<span class="normal">500</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">500</span>
 <span class="normal">501</span>
 <span class="normal">502</span>
 <span class="normal">503</span>
 <span class="normal">504</span>
 <span class="normal">505</span>
-<span class="normal">506</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">select_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONPath</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get the path to the main app&#39;s call inputs.</span>
@@ -1805,16 +1811,16 @@
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/schema.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">508</span>
-<span class="normal">509</span>
-<span class="normal">510</span>
-<span class="normal">511</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">511</span>
 <span class="normal">512</span>
 <span class="normal">513</span>
 <span class="normal">514</span>
 <span class="normal">515</span>
 <span class="normal">516</span>
-<span class="normal">517</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">select_outputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONPath</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get the path to the main app&#39;s call outputs.</span>

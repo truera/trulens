@@ -17,7 +17,7 @@
         <link rel="next" href="../appdefinition/">
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.2, mkdocs-material-9.1.4">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
     
     
       
@@ -2065,10 +2065,7 @@ through the <code>requests</code> class's <code>post</code> method to the URL
 <span class="normal">342</span>
 <span class="normal">343</span>
 <span class="normal">344</span>
-<span class="normal">345</span>
-<span class="normal">346</span>
-<span class="normal">347</span>
-<span class="normal">348</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruCustomApp</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
+<span class="normal">345</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruCustomApp</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
     <span class="n">app</span><span class="p">:</span> <span class="n">Any</span>
 
     <span class="n">root_callable</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">FunctionOrMethod</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
@@ -2093,10 +2090,7 @@ through the <code>requests</code> class's <code>post</code> method to the URL
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;root_class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="n">of_object</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
 
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;instrument&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Instrument</span><span class="p">(</span>
-            <span class="n">root_methods</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">TruCustomApp</span><span class="o">.</span><span class="n">with_record</span><span class="p">,</span> <span class="n">TruCustomApp</span><span class="o">.</span><span class="n">awith_record</span><span class="p">]</span>
-            <span class="p">),</span>
-            <span class="n">callbacks</span><span class="o">=</span><span class="bp">self</span>  <span class="c1"># App mixes in WithInstrumentCallbacks</span>
+            <span class="n">app</span><span class="o">=</span><span class="bp">self</span>  <span class="c1"># App mixes in WithInstrumentCallbacks</span>
         <span class="p">)</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -2333,10 +2327,7 @@ through the <code>requests</code> class's <code>post</code> method to the URL
 <span class="normal">328</span>
 <span class="normal">329</span>
 <span class="normal">330</span>
-<span class="normal">331</span>
-<span class="normal">332</span>
-<span class="normal">333</span>
-<span class="normal">334</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">methods_to_instrument</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">331</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">methods_to_instrument</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrap a custom class for recording.</span>
 
@@ -2351,10 +2342,7 @@ through the <code>requests</code> class's <code>post</code> method to the URL
     <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;root_class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="n">of_object</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
 
     <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;instrument&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Instrument</span><span class="p">(</span>
-        <span class="n">root_methods</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">TruCustomApp</span><span class="o">.</span><span class="n">with_record</span><span class="p">,</span> <span class="n">TruCustomApp</span><span class="o">.</span><span class="n">awith_record</span><span class="p">]</span>
-        <span class="p">),</span>
-        <span class="n">callbacks</span><span class="o">=</span><span class="bp">self</span>  <span class="c1"># App mixes in WithInstrumentCallbacks</span>
+        <span class="n">app</span><span class="o">=</span><span class="bp">self</span>  <span class="c1"># App mixes in WithInstrumentCallbacks</span>
     <span class="p">)</span>
 
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -2466,6 +2454,8 @@ through the <code>requests</code> class's <code>post</code> method to the URL
 
 
   <div class="doc doc-contents ">
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="trulens_eval.instruments.instrument">base_instrument</span></code></p>
 
   
       <p>Decorator for marking methods to be instrumented in custom classes that are
@@ -2474,8 +2464,7 @@ wrapped by TruCustomApp.</p>
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/tru_custom_app.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">351</span>
-<span class="normal">352</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">352</span>
 <span class="normal">353</span>
 <span class="normal">354</span>
 <span class="normal">355</span>
@@ -2487,76 +2476,19 @@ wrapped by TruCustomApp.</p>
 <span class="normal">361</span>
 <span class="normal">362</span>
 <span class="normal">363</span>
-<span class="normal">364</span>
-<span class="normal">365</span>
-<span class="normal">366</span>
-<span class="normal">367</span>
-<span class="normal">368</span>
-<span class="normal">369</span>
-<span class="normal">370</span>
-<span class="normal">371</span>
-<span class="normal">372</span>
-<span class="normal">373</span>
-<span class="normal">374</span>
-<span class="normal">375</span>
-<span class="normal">376</span>
-<span class="normal">377</span>
-<span class="normal">378</span>
-<span class="normal">379</span>
-<span class="normal">380</span>
-<span class="normal">381</span>
-<span class="normal">382</span>
-<span class="normal">383</span>
-<span class="normal">384</span>
-<span class="normal">385</span>
-<span class="normal">386</span>
-<span class="normal">387</span>
-<span class="normal">388</span>
-<span class="normal">389</span>
-<span class="normal">390</span>
-<span class="normal">391</span>
-<span class="normal">392</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">instrument</span><span class="p">:</span>
+<span class="normal">364</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">instrument</span><span class="p">(</span><span class="n">base_instrument</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Decorator for marking methods to be instrumented in custom classes that are</span>
 <span class="sd">    wrapped by TruCustomApp.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="c1"># https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
-
-    <span class="k">def</span> <span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        For use as method decorator.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="c1"># Important: do this first:</span>
-        <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
-
-        <span class="c1"># Note that this does not actually change the method, just adds it to</span>
-        <span class="c1"># list of filters.</span>
-        <span class="n">instrument</span><span class="o">.</span><span class="n">method</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">method</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Add the class with a method named `name`, its module, and the method</span>
-        <span class="c1"># `name` to the Default instrumentation walk filters.</span>
-        <span class="n">Instrument</span><span class="o">.</span><span class="n">Default</span><span class="o">.</span><span class="n">MODULES</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">)</span>
-        <span class="n">Instrument</span><span class="o">.</span><span class="n">Default</span><span class="o">.</span><span class="n">CLASSES</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-
-        <span class="n">check_o</span> <span class="o">=</span> <span class="n">Instrument</span><span class="o">.</span><span class="n">Default</span><span class="o">.</span><span class="n">METHODS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="kc">False</span><span class="p">)</span>
-        <span class="n">Instrument</span><span class="o">.</span><span class="n">Default</span><span class="o">.</span><span class="n">METHODS</span><span class="p">[</span>
-            <span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="n">check_o</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">method</span><span class="p">(</span><span class="n">self_class</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">base_instrument</span><span class="o">.</span><span class="n">method</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
         <span class="c1"># Also make note of it for verification that it was found by the walk</span>
         <span class="c1"># after init.</span>
         <span class="n">TruCustomApp</span><span class="o">.</span><span class="n">functions_to_instrument</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">methods</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
-            <span class="n">instrument</span><span class="o">.</span><span class="n">method</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
         </details>
 
