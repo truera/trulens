@@ -6,14 +6,6 @@
 ![Docs](https://img.shields.io/badge/docs-trulens.org-blue?logo=colab&link=https%3A%2F%2Fwww.trulens.org%2Ftrulens_eval%2Finstall%2F)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.10.0/trulens_eval/examples/colab/quickstarts/langchain_quickstart_colab.ipynb)
 
-
-
----
-hide:
-  - navigation
-  - toc
----
-
 # 🦑 **Welcome to TruLens!**
 
 TruLens provides a set of tools for developing and monitoring neural nets, including large language models. This includes both tools for evaluation of LLMs and LLM-based applications with *TruLens-Eval* and deep learning explainability with *TruLens-Explain*. *TruLens-Eval* and *TruLens-Explain* are housed in separate packages and can be used independently.
