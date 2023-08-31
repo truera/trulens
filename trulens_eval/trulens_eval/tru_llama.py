@@ -34,8 +34,9 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.response.schema import Response, StreamingResponse, RESPONSE_TYPE
     from llama_index.indices.query.schema import QueryBundle, QueryType
 
-    # Tese seemingly unused imports are needed for
-    # LlamaInstrument.Default.CLASSES to be able to find the correct classes.
+    # Need to `from ... import ...` for the below as referring to some of these
+    # later in this file by full path does not work due to lack of intermediate
+    # modules in the path.
 
     from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.indices.base_retriever import BaseRetriever
@@ -66,23 +67,23 @@ class LlamaInstrument(Instrument):
 
         # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
-            llama_index.indices.query.base.BaseQueryEngine,
-            llama_index.indices.base_retriever.BaseRetriever,
-            llama_index.indices.base.BaseIndex,
-            llama_index.chat_engine.types.BaseChatEngine,
-            llama_index.prompts.base.Prompt,
+            BaseQueryEngine,
+            BaseRetriever,
+            BaseIndex,
+            BaseChatEngine,
+            Prompt,
             # llama_index.prompts.prompt_type.PromptType, # enum
-            llama_index.question_gen.types.BaseQuestionGenerator,
-            llama_index.response_synthesizers.base.BaseSynthesizer,
-            llama_index.response_synthesizers.refine.Refine,
-            llama_index.llm_predictor.LLMPredictor,
-            llama_index.llm_predictor.base.LLMMetadata,
-            llama_index.llm_predictor.base.BaseLLMPredictor,
-            llama_index.vector_stores.types.VectorStore,
-            llama_index.indices.service_context.ServiceContext,
-            llama_index.indices.prompt_helper.PromptHelper,
-            llama_index.embeddings.base.BaseEmbedding,
-            llama_index.node_parser.interface.NodeParser,
+            BaseQuestionGenerator,
+            BaseSynthesizer,
+            Refine,
+            LLMPredictor,
+            LLMMetadata,
+            BaseLLMPredictor,
+            VectorStore,
+            ServiceContext,
+            PromptHelper,
+            BaseEmbedding,
+            NodeParser,
             WithFeedbackFilterNodes
         }.union(LangChainInstrument.Default.CLASSES())
 
@@ -92,43 +93,43 @@ class LlamaInstrument(Instrument):
             {
                 "get_response":
                     lambda o: isinstance(
-                        o, llama_index.response_synthesizers.refine.Refine
+                        o, Refine
                     ),
                 "predict":
                     lambda o: isinstance(
-                        o, llama_index.llm_predictor.base.BaseLLMPredictor
+                        o, BaseLLMPredictor
                     ),
                 "query":
                     lambda o: isinstance(
-                        o, llama_index.indices.query.base.BaseQueryEngine
+                        o, BaseQueryEngine
                     ),
                 "aquery":
                     lambda o: isinstance(
-                        o, llama_index.indices.query.base.BaseQueryEngine
+                        o, BaseQueryEngine
                     ),
                 "chat":
                     lambda o:
-                    isinstance(o, llama_index.chat_engine.types.BaseChatEngine),
+                    isinstance(o, BaseChatEngine),
                 "achat":
                     lambda o:
-                    isinstance(o, llama_index.chat_engine.types.BaseChatEngine),
+                    isinstance(o, BaseChatEngine),
                 "stream_chat":
                     lambda o:
-                    isinstance(o, llama_index.chat_engine.types.BaseChatEngine),
+                    isinstance(o, BaseChatEngine),
                 "astream_achat":
                     lambda o:
-                    isinstance(o, llama_index.chat_engine.types.BaseChatEngine),
+                    isinstance(o, BaseChatEngine),
                 "retrieve":
                     lambda o: isinstance(
                         o, (
-                            llama_index.indices.query.base.BaseQueryEngine,
-                            llama_index.indices.base_retriever.BaseRetriever,
+                            BaseQueryEngine,
+                            BaseRetriever,
                             WithFeedbackFilterNodes
                         )
                     ),
                 "synthesize":
                     lambda o: isinstance(
-                        o, llama_index.indices.query.base.BaseQueryEngine
+                        o, BaseQueryEngine
                     ),
             }, LangChainInstrument.Default.METHODS
         )

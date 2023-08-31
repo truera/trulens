@@ -827,9 +827,13 @@ class Instrument(object):
 
         cls = type(obj)
 
+        mro = list(cls.__mro__)
+        # Warning: cls.__mro__ sometimes returns an object that can be iterated through only once.
+
+        
         logger.debug(
             f"{query}: instrumenting object at {id(obj):x} of class {cls.__name__} with mro:\n\t"
-            + '\n\t'.join(map(str, cls.__mro__))
+            + '\n\t'.join(map(str, mro))
         )
 
         if id(obj) in done:
@@ -844,23 +848,30 @@ class Instrument(object):
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
 
-        for base in list(cls.__mro__):
+        for base in mro:
+            logger.debug(f"\t{query}: considering base {base.__name__}")
+
             # Some top part of mro() may need instrumentation here if some
             # subchains call superchains, and we want to capture the
             # intermediate steps. On the other hand we don't want to instrument
             # the very base classes such as object:
             if not self.to_instrument_module(base.__module__):
+                logger.debug(f"\tSkipping base; module {base.__module__} is not to be instrumented.")
                 continue
 
             try:
                 if not self.to_instrument_class(base):
+                    logger.debug(f"\t\tSkipping base; class {base.__name__} is not to be instrumented.")
                     continue
-            except Exception:
+
+            except Exception as e:
                 # subclass check may raise exception
-                continue
-
-            logger.debug(f"\t{query}: instrumenting base {base.__name__}")
-
+                logger.debug(f"\t\tWarning: checking whether {base.__name__} should be instrumented resulted in an error: {e}")
+                # NOTE: Proceeding to instrument here as we don't want to miss
+                # anything. Unsure why some llama_index subclass checks fail.
+                
+                # continue
+            
             for method_name in self.include_methods:
 
                 if hasattr(base, method_name):
