@@ -25,6 +25,8 @@ from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_SQUID
 from trulens_eval.utils.text import UNICODE_YIELD
+from trulens_eval.utils.text import UNICODE_LOCK
+from trulens_eval.utils.text import UNICODE_STOP
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +76,8 @@ class Tru(SingletonPerName):
     def __init__(
         self,
         database_url: Optional[str] = None,
-        database_file: Optional[str] = None
+        database_file: Optional[str] = None,
+        database_redact_keys: bool = False
     ):
         """
         TruLens instrumentation, logging, and feedback functions for apps.
@@ -85,6 +88,7 @@ class Tru(SingletonPerName):
                                 See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
                                 on SQLAlchemy database URLs.
            database_file: (Deprecated) Path to a local SQLite database file
+           database_redact_keys: whether to redact secret keys in data to be written to database.
         """
         if hasattr(self, "db"):
             if database_url is not None or database_file is not None:
@@ -108,11 +112,18 @@ class Tru(SingletonPerName):
         if database_url is None:
             database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
 
-        self.db: SqlAlchemyDB = SqlAlchemyDB.from_db_url(database_url)
+        self.db: SqlAlchemyDB = SqlAlchemyDB.from_db_url(database_url, redact_keys=database_redact_keys)
 
         print(
             f"{UNICODE_SQUID} Tru initialized with db url {self.db.engine.url} ."
         )
+        if database_redact_keys:
+            print(f"{UNICODE_LOCK} Secret keys will not be included in the database.")
+        else:
+            print(
+                f"{UNICODE_STOP} Secret keys may be written to the database. "
+                "See the `database_redact_keys` option of `Tru` to prevent this."
+            )
 
     def reset_database(self):
         """

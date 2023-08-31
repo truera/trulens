@@ -58,8 +58,8 @@ class SqlAlchemyDB(DB):
     class Config:
         arbitrary_types_allowed: bool = True
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, redact_keys: bool = False, **kwargs):
+        super().__init__(redact_keys=redact_keys, **kwargs)
         self.reload_engine()
         if is_memory_sqlite(self.engine):
             warnings.warn(
@@ -74,8 +74,8 @@ class SqlAlchemyDB(DB):
         self.Session = sessionmaker(self.engine, **self.session_params)
 
     @classmethod
-    def from_db_url(cls, url: str) -> "SqlAlchemyDB":
-        return cls(engine_params={"url": url})
+    def from_db_url(cls, url: str, redact_keys: bool = False) -> "SqlAlchemyDB":
+        return cls(engine_params={"url": url}, redact_keys=redact_keys)
 
     def migrate_database(self):
         """
@@ -128,13 +128,15 @@ class SqlAlchemyDB(DB):
         print(f"Deleted {deleted} rows.")
 
     def insert_record(self, record: schema.Record) -> schema.RecordID:
-        _rec = orm.Record.parse(record)
+        # TODO: thread safety
+        
+        _rec = orm.Record.parse(record, redact_keys=self.redact_keys)
         with self.Session.begin() as session:
             if session.query(orm.Record).filter_by(record_id=record.record_id
                                                   ).first():
                 session.merge(_rec)  # update existing
             else:
-                session.add(_rec)  # add new record
+                session.merge(_rec)  # add new record # .add was not thread safe
             return _rec.record_id
 
     def get_app(self, app_id: str) -> Optional[JSON]:
@@ -144,26 +146,32 @@ class SqlAlchemyDB(DB):
                 return json.loads(_app.app_json)
 
     def insert_app(self, app: schema.AppDefinition) -> schema.AppID:
+        # TODO: thread safety
+
         with self.Session.begin() as session:
             if _app := session.query(orm.AppDefinition
                                     ).filter_by(app_id=app.app_id).first():
                 _app.app_json = app.json()
             else:
-                _app = orm.AppDefinition.parse(app)
-                session.add(_app)
+                _app = orm.AppDefinition.parse(app, redact_keys=self.redact_keys)
+                session.merge(_app) # .add was not thread safe
+
             return _app.app_id
 
     def insert_feedback_definition(
         self, feedback_definition: schema.FeedbackDefinition
     ) -> schema.FeedbackDefinitionID:
+        # TODO: thread safety
+
         with self.Session.begin() as session:
             if _fb_def := session.query(orm.FeedbackDefinition) \
                     .filter_by(feedback_definition_id=feedback_definition.feedback_definition_id) \
                     .first():
                 _fb_def.app_json = feedback_definition.json()
             else:
-                _fb_def = orm.FeedbackDefinition.parse(feedback_definition)
-                session.add(_fb_def)
+                _fb_def = orm.FeedbackDefinition.parse(feedback_definition, redact_keys=self.redact_keys)
+                session.merge(_fb_def) # .add was not thread safe
+
             return _fb_def.feedback_definition_id
 
     def get_feedback_defs(
@@ -185,13 +193,15 @@ class SqlAlchemyDB(DB):
     def insert_feedback(
         self, feedback_result: schema.FeedbackResult
     ) -> schema.FeedbackResultID:
-        _feedback_result = orm.FeedbackResult.parse(feedback_result)
+        # TODO: thread safety
+
+        _feedback_result = orm.FeedbackResult.parse(feedback_result, redact_keys=self.redact_keys)
         with self.Session.begin() as session:
             if session.query(orm.FeedbackResult) \
                     .filter_by(feedback_result_id=feedback_result.feedback_result_id).first():
                 session.merge(_feedback_result)  # update existing
             else:
-                session.add(_feedback_result)  # insert new result
+                session.merge(_feedback_result)  # insert new result # .add was not thread safe
             return _feedback_result.feedback_result_id
 
     def get_feedback(

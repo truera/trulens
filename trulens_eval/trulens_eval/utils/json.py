@@ -47,16 +47,20 @@ def obj_id_of_obj(obj: dict, prefix="obj"):
     return f"{prefix}_hash_{mj.hash(obj)}"
 
 
-def json_str_of_obj(obj: Any, *args, **kwargs) -> str:
+def json_str_of_obj(obj: Any, *args, redact_keys: bool = False, **kwargs) -> str:
     """
     Encode the given json object as a string.
     """
 
-    if isinstance(obj, pydantic.BaseModel):
-        kwargs['encoder'] = json_default
-        return obj.json(*args, **kwargs)
-
-    return json.dumps(obj, default=json_default)
+    return json.dumps(
+        jsonify(
+            obj,
+            *args,
+            redact_keys=redact_keys,
+            **kwargs
+        ),
+        default=json_default
+    )
 
 
 def json_default(obj: Any) -> str:
@@ -203,7 +207,26 @@ def jsonify(
         content = temp
 
     elif dataclasses.is_dataclass(type(obj)):
-        temp = recur(dataclasses.asdict(obj))
+        # NOTE: cannot use dataclasses.asdict as that may fail due to its use of
+        # copy.deepcopy.
+
+        temp = {}
+        new_dicted[id(obj)] = temp
+
+        temp.update(
+            {
+                f.name: recur(_safe_getattr(obj, f.name))
+                for f in dataclasses.fields(obj)
+                if recur_key(f.name)
+            }
+        )
+
+        # Redact possible secrets based on key name and value.
+        if redact_keys:
+            for k, v in temp.items():
+                temp[k] = redact_value(v=v, k=k)
+
+        content = temp
 
     elif instrument.to_instrument_object(obj):
 
