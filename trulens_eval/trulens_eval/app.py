@@ -723,6 +723,28 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         return record
 
+    def _check_instrumented(self, func):
+        """
+        Issue a warning and some instructions if a function that has not been
+        instrumented is being used in a `with_` call.
+        """
+    
+        if not hasattr(func, "__name__"):
+            if hasattr(func, "__call__"):
+                func = func.__call__
+            else:
+                raise TypeError(f"Unexpected type of callable `{type(func).__name__}`.")
+
+        if not hasattr(func, Instrument.INSTRUMENT):
+            logger.warning(
+                f"Function `{func.__name__}` has not been instrumented. "
+                f"This may be ok if it will call a function that has been instrumented exactly once. " 
+                f"Otherwise unexpected results may follow. "
+                f"You can use `AddInstruments.method` of `trulens_eval.instruments` before you use the `{self.__class__.__name__}` wrapper "
+                f"to make sure `{func.__name__}` does get instrumented. "
+                f"`{self.__class__.__name__}` method `print_instrumented` may be used to see methods that have been instrumented. "
+            )
+
     async def awith_(self, func, *args, **kwargs) -> Any:
         """
         Call the given async `func` with the given `*args` and `**kwargs` while
@@ -731,6 +753,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         need a record of this execution immediately, you can use `awith_record`
         or the `App` as a context mananger instead.
         """
+
+        self._check_instrumented(func)
 
         res, _ = await self.awith_record(func, *args, **kwargs)
         return res
@@ -741,6 +765,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         producing its results as well as a record of the execution.
         """
         
+        self._check_instrumented(func)
+
         with self as ctx:
             ctx.record_metadata=record_metadata
             ret = await func(*args, **kwargs)
@@ -761,6 +787,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         or the `App` as a context mananger instead.
         """
 
+        self._check_instrumented(func)
+
         res, _ = self.with_record(func, *args, **kwargs)
         return res
     
@@ -769,6 +797,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
         """
+
+        self._check_instrumented(func)
 
         with self as ctx:
             ctx.record_metadata=record_metadata
@@ -785,6 +815,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         # Deprecation message for the various methods that pass through to
         # wrapped app while recording.
         
+        # TODO: enable dep message in 0.12.0
+        return
+
         cname = self.__class__.__name__
 
         iscall = method == "__call__"
