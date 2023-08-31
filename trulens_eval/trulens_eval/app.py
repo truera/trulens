@@ -10,8 +10,10 @@ from inspect import Signature
 import logging
 from pprint import PrettyPrinter
 from threading import Lock
-from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
-                    Sequence, Set, Tuple, Type)
+from typing import (
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
+    Tuple, Type
+)
 
 import pydantic
 from pydantic import Field
@@ -344,14 +346,18 @@ class RecordingContext():
         with self.lock:
             self.calls.append(call)
 
-    def finish_record(self, calls_to_record: Callable[[List[RecordAppCall], JSON], Record]):
+    def finish_record(
+        self, calls_to_record: Callable[[List[RecordAppCall], JSON], Record]
+    ):
         """
         Run the given function to build a record from the tracked calls and any
         pre-specified metadata.
         """
 
         with self.lock:
-            record = calls_to_record(self.calls, record_metadata=self.record_metadata)
+            record = calls_to_record(
+                self.calls, record_metadata=self.record_metadata
+            )
             self.calls = []
             self.records.append(record)
 
@@ -385,8 +391,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
     # Sequnces of records produced by the this class used as a context manager.
     # Using a context var so that context managers can be nested.
-    recording_contexts: contextvars.ContextVar[Sequence[RecordingContext]] = Field(exclude=True)
-    
+    recording_contexts: contextvars.ContextVar[Sequence[RecordingContext]
+                                              ] = Field(exclude=True)
+
     # Mapping of instrumented methods (by id(.) of owner object and the
     # function) to their path in this app:
     instrumented_methods: Dict[int, Dict[Callable, JSONPath]] = Field(
@@ -405,7 +412,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         # for us:
         kwargs['tru'] = tru
         kwargs['feedbacks'] = feedbacks
-        kwargs['recording_contexts'] = contextvars.ContextVar("recording_contexts")
+        kwargs['recording_contexts'] = contextvars.ContextVar(
+            "recording_contexts"
+        )
 
         super().__init__(**kwargs)
 
@@ -456,7 +465,6 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 # mode will do this but we want to fail earlier at app
                 # constructor here.
                 f.implementation.load()
-
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
@@ -625,7 +633,6 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
                 return funcs.get(func)
 
-
     def json(self, *args, **kwargs):
         # Need custom jsonification here because it is likely the model
         # structure contains loops.
@@ -655,7 +662,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         return
 
-   # WithInstrumentCallbacks requirement
+# WithInstrumentCallbacks requirement
+
     def _on_new_record(self, func) -> Iterable[RecordingContext]:
         ctx = self.recording_contexts.get(contextvars.Token.MISSING)
 
@@ -663,18 +671,10 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             yield ctx
             ctx = ctx.token.old_value
 
-
     # WithInstrumentCallbacks requirement
     def _on_add_record(
-        self,
-        ctx: RecordingContext,
-        func: Callable, 
-        sig: Signature, 
-        bindings: BoundArguments,
-        ret: Any, 
-        error: Any,
-        perf: Perf,
-        cost: Cost
+        self, ctx: RecordingContext, func: Callable, sig: Signature,
+        bindings: BoundArguments, ret: Any, error: Any, perf: Perf, cost: Cost
     ):
         """
         Called by instrumented methods if they use _new_record to construct a
@@ -688,17 +688,17 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             main_out = self.main_output(func, sig, bindings, ret)
 
             return Record(
-                main_input = jsonify(main_in),
-                main_output = jsonify(main_out),
-                main_error = jsonify(error),
+                main_input=jsonify(main_in),
+                main_output=jsonify(main_out),
+                main_error=jsonify(error),
                 calls=calls,
                 cost=cost,
-                perf=perf, 
-                app_id=self.app_id, 
+                perf=perf,
+                app_id=self.app_id,
                 tags=self.tags,
                 meta=jsonify(record_metadata)
             )
-        
+
         # Finishing record needs to be done in a thread lock, done there:
         record = ctx.finish_record(build_record)
 
@@ -708,9 +708,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
             elif self.feedback_mode in [FeedbackMode.DEFERRED,
                                         FeedbackMode.WITH_APP_THREAD]:
-                TP().runlater(
-                    self._handle_error, record=record, error=error
-                )
+                TP().runlater(self._handle_error, record=record, error=error)
 
             raise error
 
@@ -728,17 +726,19 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         Issue a warning and some instructions if a function that has not been
         instrumented is being used in a `with_` call.
         """
-    
+
         if not hasattr(func, "__name__"):
             if hasattr(func, "__call__"):
                 func = func.__call__
             else:
-                raise TypeError(f"Unexpected type of callable `{type(func).__name__}`.")
+                raise TypeError(
+                    f"Unexpected type of callable `{type(func).__name__}`."
+                )
 
         if not hasattr(func, Instrument.INSTRUMENT):
             logger.warning(
                 f"Function `{func.__name__}` has not been instrumented. "
-                f"This may be ok if it will call a function that has been instrumented exactly once. " 
+                f"This may be ok if it will call a function that has been instrumented exactly once. "
                 f"Otherwise unexpected results may follow. "
                 f"You can use `AddInstruments.method` of `trulens_eval.instruments` before you use the `{self.__class__.__name__}` wrapper "
                 f"to make sure `{func.__name__}` does get instrumented. "
@@ -759,18 +759,24 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         res, _ = await self.awith_record(func, *args, **kwargs)
         return res
 
-    async def awith_record(self, func, *args, record_metadata: JSON=None, **kwargs) -> Tuple[Any, Record]:
+    async def awith_record(
+        self,
+        func,
+        *args,
+        record_metadata: JSON = None,
+        **kwargs
+    ) -> Tuple[Any, Record]:
         """
         Call the given async `func` with the given `*args` and `**kwargs`,
         producing its results as well as a record of the execution.
         """
-        
+
         self._check_instrumented(func)
 
         with self as ctx:
-            ctx.record_metadata=record_metadata
+            ctx.record_metadata = record_metadata
             ret = await func(*args, **kwargs)
-            
+
         assert len(ctx.records) > 0, (
             f"Did not create any records. "
             f"This means that no instrumented methods were invoked in the process of calling {func}."
@@ -791,8 +797,12 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         res, _ = self.with_record(func, *args, **kwargs)
         return res
-    
-    def with_record(self, func, *args, record_metadata: JSON=None, **kwargs) -> Tuple[Any, Record]:
+
+    def with_record(self,
+                    func,
+                    *args,
+                    record_metadata: JSON = None,
+                    **kwargs) -> Tuple[Any, Record]:
         """
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
@@ -801,7 +811,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         self._check_instrumented(func)
 
         with self as ctx:
-            ctx.record_metadata=record_metadata
+            ctx.record_metadata = record_metadata
             ret = func(*args, **kwargs)
 
         assert len(ctx.records) > 0, (
@@ -814,7 +824,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     def _with_dep_message(self, method, is_async=False, with_record=False):
         # Deprecation message for the various methods that pass through to
         # wrapped app while recording.
-        
+
         # TODO: enable dep message in 0.12.0
         return
 
@@ -832,7 +842,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             app_callable = f"app"
 
         print(
-f"""
+            f"""
 `{old_method}` is deprecated; To record results of your app's execution, use one of these options to invoke your app:
     (1) Use the `{"a" if is_async else ""}with_{"record" if with_record else ""}` method:
         ```python
@@ -849,8 +859,7 @@ f"""
         {"record = records.get()" if with_record else ""}
         ```
 """
-    )
-
+        )
 
     def _handle_record(self, record: Record):
         """

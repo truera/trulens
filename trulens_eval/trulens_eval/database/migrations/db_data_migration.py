@@ -2,9 +2,11 @@ import json
 import traceback
 from typing import List
 
-from sqlalchemy.orm import Session
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from trulens_eval.database.migrations import DbRevisions
+from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.db_migration import VersionException
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
@@ -12,18 +14,14 @@ from trulens_eval.schema import FeedbackCall
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
-from trulens_eval.database.migrations import DbRevisions
-from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.utils.pyschema import FunctionOrMethod
-
-
 
 # Keeps track of any db versions that need data migration
 # Should be most recent is the leftmost in the list
 sql_alchemy_migration_versions: List[str] = ["1"]
 
 # A DAG of upgrade functions to get to most recent DB.
-sqlalchemy_upgrade_paths = {    
+sqlalchemy_upgrade_paths = {
     # Dict Structure:
     # "from_version":("to_version", migrate_method)
 
@@ -44,9 +42,11 @@ def _get_sql_alchemy_compatibility_version(version: str) -> str:
     compat_version = int(sql_alchemy_migration_versions[-1])
     for candidate_version in sql_alchemy_migration_versions:
         candidate_version_int = int(candidate_version)
-        if candidate_version_int <= int(version) and candidate_version_int > compat_version:
+        if candidate_version_int <= int(
+                version) and candidate_version_int > compat_version:
             compat_version = candidate_version_int
     return compat_version
+
 
 def _sql_alchemy_serialization_asserts(db: "DB") -> None:
     """Checks that data migrated JSONs can be deserialized from DB to Python objects.
@@ -58,8 +58,9 @@ def _sql_alchemy_serialization_asserts(db: "DB") -> None:
         VersionException: raises if a serialization fails
     """
     session = Session(db.engine)
-    
+
     import inspect
+
     from trulens_eval.database import orm
 
     # Dynamically check the orm classes since these could change version to version
@@ -70,7 +71,8 @@ def _sql_alchemy_serialization_asserts(db: "DB") -> None:
             mod_check = str(orm_obj).split(".")
 
             # Check only orm defined classes
-            if len(mod_check) > 2 and "orm" == mod_check[-2]: # <class mod.mod.mod.orm.SQLORM>
+            if len(mod_check) > 2 and "orm" == mod_check[
+                    -2]:  # <class mod.mod.mod.orm.SQLORM>
                 stmt = select(orm_obj)
 
                 # for each record in this orm table
@@ -81,15 +83,17 @@ def _sql_alchemy_serialization_asserts(db: "DB") -> None:
 
                         # Check only json columns
                         if "_json" in attr_name:
-                            db_json_str = getattr(db_record,attr_name)
+                            db_json_str = getattr(db_record, attr_name)
                             if db_json_str == MIGRATION_UNKNOWN_STR:
                                 continue
-                            
+
                             # Do not check Nullables
                             if db_json_str is not None:
 
                                 # Test deserialization
-                                test_json = json.loads(getattr(db_record,attr_name))
+                                test_json = json.loads(
+                                    getattr(db_record, attr_name)
+                                )
 
                                 # special implementation checks for serialized classes
                                 if 'implementation' in test_json:
@@ -109,7 +113,8 @@ def _sql_alchemy_serialization_asserts(db: "DB") -> None:
                                 elif attr_name == "perf_json":
                                     Perf(**test_json)
                                 elif attr_name == "calls_json":
-                                    for record_app_call_json in test_json['calls']:
+                                    for record_app_call_json in test_json[
+                                            'calls']:
                                         FeedbackCall(**record_app_call_json)
                                 elif attr_name == "feedback_json":
                                     FeedbackDefinition(**test_json)
@@ -137,17 +142,20 @@ def data_migrate(db: "DB", from_version: str):
         sql_alchemy_from_version = "1"
     else:
         sql_alchemy_from_version = from_version
-    from_compat_version = _get_sql_alchemy_compatibility_version(sql_alchemy_from_version)
+    from_compat_version = _get_sql_alchemy_compatibility_version(
+        sql_alchemy_from_version
+    )
     to_compat_version = None
     fail_advice = f"Please open a ticket on trulens github page including this error message. The migration completed so you can still proceed; but stability is not guaranteed. If needed, you can `tru.reset_database()`"
 
     try:
         while from_compat_version in sqlalchemy_upgrade_paths:
-            to_compat_version, migrate_fn = sqlalchemy_upgrade_paths[from_compat_version]
-            
+            to_compat_version, migrate_fn = sqlalchemy_upgrade_paths[
+                from_compat_version]
+
             migrate_fn(db=db)
             from_compat_version = to_compat_version
-        
+
         print("DB Migration complete!")
     except Exception:
         tb = traceback.format_exc()
@@ -164,4 +172,3 @@ def data_migrate(db: "DB", from_version: str):
         raise VersionException(
             f"Validation failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}"
         )
-    

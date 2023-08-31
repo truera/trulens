@@ -4,36 +4,37 @@ Json utilities and serialization utilities dealing with json.
 
 from __future__ import annotations
 
-from enum import Enum
 import dataclasses
+from enum import Enum
 import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
-                    Tuple, TypeVar, Union)
+from typing import (
+    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, TypeVar,
+    Union
+)
 
 from merkle_json import MerkleJson
 import pydantic
 
 from trulens_eval.keys import redact_value
-from trulens_eval.utils.pyschema import CLASS_INFO
-from trulens_eval.utils.serial import JSON, JSON_BASES
 from trulens_eval.utils.pyschema import _clean_attributes
 from trulens_eval.utils.pyschema import _safe_getattr
 from trulens_eval.utils.pyschema import CIRCLE
 from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import ERROR
 from trulens_eval.utils.pyschema import NOSERIO
 from trulens_eval.utils.pyschema import noserio
+from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSONPath
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
-
 T = TypeVar("T")
-
 
 mj = MerkleJson()
 
@@ -47,18 +48,15 @@ def obj_id_of_obj(obj: dict, prefix="obj"):
     return f"{prefix}_hash_{mj.hash(obj)}"
 
 
-def json_str_of_obj(obj: Any, *args, redact_keys: bool = False, **kwargs) -> str:
+def json_str_of_obj(
+    obj: Any, *args, redact_keys: bool = False, **kwargs
+) -> str:
     """
     Encode the given json object as a string.
     """
 
     return json.dumps(
-        jsonify(
-            obj,
-            *args,
-            redact_keys=redact_keys,
-            **kwargs
-        ),
+        jsonify(obj, *args, redact_keys=redact_keys, **kwargs),
         default=json_default
     )
 
@@ -75,7 +73,6 @@ def json_default(obj: Any) -> str:
     except:
         # Otherwise give up and indicate a non-serialization.
         return noserio(obj)
-
 
 
 ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])

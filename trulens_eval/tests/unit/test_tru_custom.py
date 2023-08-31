@@ -4,12 +4,11 @@ Tests for TruCustomApp.
 
 from unittest import main
 
+from examples.frameworks.custom.custom_app import CustomApp
 from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
 from trulens_eval import TruCustomApp
-
-from examples.frameworks.custom.custom_app import CustomApp
 from trulens_eval.tru_custom_app import TruCustomApp
 
 
@@ -23,7 +22,7 @@ class TestTruCustonApp(JSONTestCase):
 
         self.ca = CustomApp()
         self.ta = TruCustomApp(self.ca, app_id="custom_app")
-    
+
     def test_with_record(self):
         question = "What is the capital of Indonesia?"
 
@@ -80,7 +79,9 @@ class TestTruCustonApp(JSONTestCase):
         # Context managers produce similar but not identical records.
         # Specifically, timestamp and meta differ and therefore record_id
         # differs.
-        self.assertJSONEqual(recording1[1], recording2[0], skips=['record_id', 'ts', 'meta'])
+        self.assertJSONEqual(
+            recording1[1], recording2[0], skips=['record_id', 'ts', 'meta']
+        )
 
         self.assertEqual(recording1[0].meta, "meta1")
         self.assertEqual(recording1[1].meta, "meta1")

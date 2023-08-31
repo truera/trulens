@@ -20,11 +20,12 @@ HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm
 HUGS_NLI_API_URL = "https://api-inference.huggingface.co/models/ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
 HUGS_DOCNLI_API_URL = "https://api-inference.huggingface.co/models/MoritzLaurer/DeBERTa-v3-base-mnli-fever-docnli-ling-2c"
 
-from inspect import signature
 import functools
+from inspect import signature
+
 
 # TODO: move this to a more general place and apply it to other feedbacks that need it.
-def _tci(func): # "typecheck inputs"
+def _tci(func):  # "typecheck inputs"
     """
     Decorate a method to validate its inputs against its signature. Also make sure string inputs are non-empty.
     """
@@ -42,7 +43,9 @@ def _tci(func): # "typecheck inputs"
                 pident = f"Input `{param}` to `{func.__name__}`"
                 v = bindings.arguments[param]
                 if not isinstance(v, annot.annotation):
-                    raise TypeError(f"{pident} must be of type `{annot.annotation.__name__}` but was `{type(v).__name__}` instead.")
+                    raise TypeError(
+                        f"{pident} must be of type `{annot.annotation.__name__}` but was `{type(v).__name__}` instead."
+                    )
                 if annot.annotation is str:
                     if len(v) == 0:
                         raise ValueError(f"{pident} must be non-empty.")
@@ -73,7 +76,6 @@ class Huggingface(Provider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-                
     @_tci
     def language_match(self, text1: str, text2: str) -> float:
         """

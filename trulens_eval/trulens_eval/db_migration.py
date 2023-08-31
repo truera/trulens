@@ -57,6 +57,7 @@ class VersionException(Exception):
 MIGRATION_UNKNOWN_STR = "unknown[db_migration]"
 migration_versions: List[str] = ["0.9.0", "0.3.0", "0.2.0", "0.1.2"]
 
+
 def _update_db_json_col(
     db, table: str, old_entry: tuple, json_db_col_idx: int, new_json: dict
 ):
@@ -242,6 +243,7 @@ upgrade_paths = {
     "0.3.0": ("0.9.0", migrate_0_3_0)
 }
 
+
 def _parse_version(version_str: str) -> List[str]:
     """
     Takes a version string and returns a list of major, minor, patch.
@@ -284,6 +286,7 @@ def _get_compatibility_version(version: str) -> str:
                 # The m_version from m_version_str is larger than this version
                 # check the next m_version.
                 break
+
 
 def _migration_checker(db, warn: bool = False) -> None:
     """
@@ -436,6 +439,7 @@ def _serialization_asserts(db) -> None:
                         raise VersionException(
                             f"Migration failed on {table} {col_name} {row[col_idx]}.\n\n{tb}\n\n{validation_fail_advice}"
                         )
+
 
 def migrate(db) -> None:
     """Migrate a db to the compatible version of this pypi version
