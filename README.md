@@ -2,7 +2,7 @@
 ![Azure DevOps builds (job)](https://img.shields.io/azure-devops/build/truera/5a27f3d2-132d-40fc-9b0c-81abd1182f41/9)
 ![GitHub](https://img.shields.io/github/license/truera/trulens)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens_eval)
-![Slack](https://img.shields.io/badge/slack-join-green?logo=slack&link=https%3A%2F%2Fcommunityinviter.com%2Fapps%2Faiqualityforum%2Fjosh)
+[![Slack](https://img.shields.io/badge/slack-join-green?logo=slack)](https://communityinviter.com/apps/aiqualityforum/josh)
 ![Docs](https://img.shields.io/badge/docs-trulens.org-blue?logo=colab&link=https%3A%2F%2Fwww.trulens.org%2Ftrulens_eval%2Finstall%2F)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.10.0/trulens_eval/examples/colab/quickstarts/langchain_quickstart_colab.ipynb)
 
