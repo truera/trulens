@@ -6,6 +6,7 @@ import json
 import logging
 import traceback
 from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
+import pprint
 
 import numpy as np
 import pydantic
@@ -31,6 +32,8 @@ from trulens_eval.utils.text import UNICODE_YIELD
 from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
+
+pp = pprint.PrettyPrinter()
 
 
 class Feedback(FeedbackDefinition):
@@ -425,17 +428,29 @@ class Feedback(FeedbackDefinition):
             if self.supplied_name is not None else self.name
         )
 
+        # Separate try block for extracting inputs from records/apps in case a
+        # user specified something that does not exist. We want to fail and give
+        # a warning earlier than later.
+        try:
+            input_combinations = list(self.extract_selection(app=app_json, record=record))
+        except Exception as e:
+            print(e)
+            raise e
+
         try:
             # Total cost, will accumulate.
             cost = Cost()
             multi_result = None
 
-            for ins in self.extract_selection(app=app_json, record=record):
-
-                result_and_meta, part_cost = Endpoint.track_all_costs_tally(
-                    lambda: self.imp(**ins)
-                )
-                cost += part_cost
+            for ins in input_combinations:
+                try:
+                    result_and_meta, part_cost = Endpoint.track_all_costs_tally(
+                        lambda: self.imp(**ins)
+                    )
+                    cost += part_cost
+                except Exception as e:
+                    print(f"Evaluation of {self.name} failed on inputs: \n{pp.pformat(ins)[0:128]}\n{e}.")
+                    continue
 
                 if isinstance(result_and_meta, Tuple):
                     # If output is a tuple of two, we assume it is the float/multifloat and the metadata.
@@ -518,7 +533,7 @@ class Feedback(FeedbackDefinition):
 
         except:
             exc_tb = traceback.format_exc()
-            logger.warning(f"Feedback Function Exception Caught: {exc_tb}")
+            logger.warning(f"Feedback Function exception caught: {exc_tb}")
             feedback_result.update(
                 error=exc_tb, status=FeedbackResultStatus.FAILED
             )
@@ -613,7 +628,10 @@ class Feedback(FeedbackDefinition):
                 )
 
             q_within_o = Select.Query(path=q.path[1:])
-            arg_vals[k] = list(q_within_o(o))
+            try:
+                arg_vals[k] = list(q_within_o(o))
+            except Exception as e:
+                raise RuntimeError(f"Could not locate {q_within_o} in app/record.")
 
         keys = arg_vals.keys()
         vals = arg_vals.values()

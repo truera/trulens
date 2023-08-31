@@ -827,9 +827,12 @@ class Instrument(object):
 
         cls = type(obj)
 
+        mro = list(cls.__mro__)
+        # Warning: cls.__mro__ sometimes returns an object that can be iterated through only once.
+
         logger.debug(
             f"{query}: instrumenting object at {id(obj):x} of class {cls.__name__} with mro:\n\t"
-            + '\n\t'.join(map(str, cls.__mro__))
+            + '\n\t'.join(map(str, mro))
         )
 
         if id(obj) in done:
@@ -844,7 +847,7 @@ class Instrument(object):
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
 
-        for base in list(cls.__mro__):
+        for base in mro:
             # Some top part of mro() may need instrumentation here if some
             # subchains call superchains, and we want to capture the
             # intermediate steps. On the other hand we don't want to instrument
