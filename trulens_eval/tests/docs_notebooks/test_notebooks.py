@@ -54,7 +54,7 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
             cell["source"] = cell[
                 "source"
             ] + f"\nfrom trulens_eval import Tru\ntru=Tru()\ntru.migrate_database()\n" \
-            + f"\nfrom trulens_eval.database.migrations.db_data_migration import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(tru.db)\n" 
+            + f"\nfrom trulens_eval.database.migrations.db_data_migration import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(tru.db)\n"
         ret = super().preprocess_cell(cell, resources, index, **kwargs)
 
         return ret
@@ -109,9 +109,14 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
             ### for version in db_migration.migration_versions:
 
             # Run the oldest and latest migrations to keep testing more manageable
-            legacy_sqllite_migrations = [db_migration.migration_versions[0],
-                            db_migration.migration_versions[-1]]
-            sqlalchemy_versions  = [compat_versions for compat_versions in listdir('./release_dbs') if 'sql_alchemy_' in compat_versions]
+            legacy_sqllite_migrations = [
+                db_migration.migration_versions[0],
+                db_migration.migration_versions[-1]
+            ]
+            sqlalchemy_versions = [
+                compat_versions for compat_versions in listdir('./release_dbs')
+                if 'sql_alchemy_' in compat_versions
+            ]
             # Todo: once there are more than 2 migrations; make tests only check most 2 recent, and oldest migrations to make testing faster
             migrations_to_test = legacy_sqllite_migrations + sqlalchemy_versions
             for version in migrations_to_test:

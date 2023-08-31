@@ -361,13 +361,10 @@ class LocalSQLite(DB):
         # within sqlite.
 
         vals = (
-            record.record_id,
-            record.app_id,
+            record.record_id, record.app_id,
             self._json_str_of_obj(record.main_input),
             self._json_str_of_obj(record.main_output),
-            self._json_str_of_obj(record),
-            record.tags,
-            record.ts,
+            self._json_str_of_obj(record), record.tags, record.ts,
             self._json_str_of_obj(record.cost),
             self._json_str_of_obj(record.perf)
         )
@@ -461,8 +458,9 @@ class LocalSQLite(DB):
             feedback_result.last_ts.timestamp(),
             feedback_result.status.value,
             feedback_result.error,
-            self._json_str_of_obj(dict(calls=feedback_result.calls)
-                           ),  # extra dict is needed json's root must be a dict
+            self._json_str_of_obj(
+                dict(calls=feedback_result.calls)
+            ),  # extra dict is needed json's root must be a dict
             feedback_result.result,
             feedback_result.name,
             self._json_str_of_obj(feedback_result.cost),

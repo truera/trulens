@@ -4,9 +4,9 @@ from inspect import signature
 import itertools
 import json
 import logging
+import pprint
 import traceback
 from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
-import pprint
 
 import numpy as np
 import pydantic
@@ -23,9 +23,9 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
+from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
 from trulens_eval.utils.text import UNICODE_YIELD
@@ -432,7 +432,9 @@ class Feedback(FeedbackDefinition):
         # user specified something that does not exist. We want to fail and give
         # a warning earlier than later.
         try:
-            input_combinations = list(self.extract_selection(app=app_json, record=record))
+            input_combinations = list(
+                self.extract_selection(app=app_json, record=record)
+            )
         except Exception as e:
             print(e)
             raise e
@@ -449,7 +451,9 @@ class Feedback(FeedbackDefinition):
                     )
                     cost += part_cost
                 except Exception as e:
-                    print(f"Evaluation of {self.name} failed on inputs: \n{pp.pformat(ins)[0:128]}\n{e}.")
+                    print(
+                        f"Evaluation of {self.name} failed on inputs: \n{pp.pformat(ins)[0:128]}\n{e}."
+                    )
                     continue
 
                 if isinstance(result_and_meta, Tuple):
@@ -631,7 +635,9 @@ class Feedback(FeedbackDefinition):
             try:
                 arg_vals[k] = list(q_within_o(o))
             except Exception as e:
-                raise RuntimeError(f"Could not locate {q_within_o} in app/record.")
+                raise RuntimeError(
+                    f"Could not locate {q_within_o} in app/record."
+                )
 
         keys = arg_vals.keys()
         vals = arg_vals.values()

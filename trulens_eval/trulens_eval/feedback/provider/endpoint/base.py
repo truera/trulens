@@ -16,10 +16,10 @@ import requests
 from trulens_eval.keys import ApiKeyError
 from trulens_eval.schema import Cost
 from trulens_eval.utils.python import get_first_local_in_call_stack
-from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.python import Thunk
+from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
 
@@ -339,7 +339,7 @@ class Endpoint(SerialModel, SingletonPerName):
             costs = sum(cb.cost for cb in cbs)
 
         return result, costs
-    
+
     @staticmethod
     async def atrack_all_costs_tally(
         thunk: Thunk[Awaitable],

@@ -27,8 +27,15 @@ class AppDefinition(Base):
     app_json = Column(TYPE_JSON, nullable=False)
 
     @classmethod
-    def parse(cls, obj: schema.AppDefinition, redact_keys: bool = False) -> "AppDefinition":
-        return cls(app_id=obj.app_id, app_json=json_str_of_obj(obj, redact_keys=redact_keys))
+    def parse(
+        cls,
+        obj: schema.AppDefinition,
+        redact_keys: bool = False
+    ) -> "AppDefinition":
+        return cls(
+            app_id=obj.app_id,
+            app_json=json_str_of_obj(obj, redact_keys=redact_keys)
+        )
 
 
 class FeedbackDefinition(Base):
@@ -40,7 +47,11 @@ class FeedbackDefinition(Base):
     feedback_json = Column(TYPE_JSON, nullable=False)
 
     @classmethod
-    def parse(cls, obj: schema.FeedbackDefinition, redact_keys: bool = False) -> "FeedbackDefinition":
+    def parse(
+        cls,
+        obj: schema.FeedbackDefinition,
+        redact_keys: bool = False
+    ) -> "FeedbackDefinition":
         return cls(
             feedback_definition_id=obj.feedback_definition_id,
             feedback_json=json_str_of_obj(obj, redact_keys=redact_keys)
@@ -113,7 +124,11 @@ class FeedbackResult(Base):
     )
 
     @classmethod
-    def parse(cls, obj: schema.FeedbackResult, redact_keys: bool = False) -> "FeedbackResult":
+    def parse(
+        cls,
+        obj: schema.FeedbackResult,
+        redact_keys: bool = False
+    ) -> "FeedbackResult":
         return cls(
             feedback_result_id=obj.feedback_result_id,
             record_id=obj.record_id,
@@ -121,7 +136,9 @@ class FeedbackResult(Base):
             last_ts=obj.last_ts.timestamp(),
             status=obj.status.value,
             error=obj.error,
-            calls_json=json_str_of_obj(dict(calls=obj.calls), redact_keys=redact_keys),
+            calls_json=json_str_of_obj(
+                dict(calls=obj.calls), redact_keys=redact_keys
+            ),
             result=obj.result,
             name=obj.name,
             cost_json=json_str_of_obj(obj.cost, redact_keys=redact_keys),

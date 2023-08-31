@@ -18,15 +18,15 @@ from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import Record
-from trulens_eval.utils.python import SingletonPerName
-from trulens_eval.utils.threading import TP
 from trulens_eval.utils.notebook_utils import is_notebook
 from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
+from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.text import UNICODE_CHECK
-from trulens_eval.utils.text import UNICODE_SQUID
-from trulens_eval.utils.text import UNICODE_YIELD
 from trulens_eval.utils.text import UNICODE_LOCK
+from trulens_eval.utils.text import UNICODE_SQUID
 from trulens_eval.utils.text import UNICODE_STOP
+from trulens_eval.utils.text import UNICODE_YIELD
+from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
 
@@ -112,13 +112,17 @@ class Tru(SingletonPerName):
         if database_url is None:
             database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
 
-        self.db: SqlAlchemyDB = SqlAlchemyDB.from_db_url(database_url, redact_keys=database_redact_keys)
+        self.db: SqlAlchemyDB = SqlAlchemyDB.from_db_url(
+            database_url, redact_keys=database_redact_keys
+        )
 
         print(
             f"{UNICODE_SQUID} Tru initialized with db url {self.db.engine.url} ."
         )
         if database_redact_keys:
-            print(f"{UNICODE_LOCK} Secret keys will not be included in the database.")
+            print(
+                f"{UNICODE_LOCK} Secret keys will not be included in the database."
+            )
         else:
             print(
                 f"{UNICODE_STOP} Secret keys may be written to the database. "
@@ -161,7 +165,7 @@ class Tru(SingletonPerName):
             record.update(**kwargs)
 
         return self.db.insert_record(record=record)
-    
+
     update_record = add_record
 
     def run_feedback_functions(

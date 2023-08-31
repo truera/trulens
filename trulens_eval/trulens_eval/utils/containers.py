@@ -14,7 +14,6 @@ pp = PrettyPrinter()
 
 T = TypeVar("T")
 
-
 # Collection utilities
 
 
@@ -30,13 +29,11 @@ def third(seq: Sequence[T]) -> T:
     return seq[2]
 
 
-
 def is_empty(obj):
     try:
         return len(obj) == 0
     except Exception:
         return False
-
 
 
 def dict_set_with(dict1: Dict, dict2: Dict):
@@ -66,5 +63,3 @@ def iterable_peek(it: Iterable[T]) -> Tuple[T, Iterable[T]]:
     iterator = iter(it)
     item = next(iterator)
     return item, itertools.chain([item], iterator)
-
-
