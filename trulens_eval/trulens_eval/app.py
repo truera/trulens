@@ -735,7 +735,6 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             else:
                 raise TypeError(f"Unexpected type of callable `{type(func).__name__}`.")
 
-
         if not hasattr(func, Instrument.INSTRUMENT):
             logger.warning(
                 f"Function `{func.__name__}` has not been instrumented. "
