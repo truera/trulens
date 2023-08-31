@@ -34,8 +34,7 @@ class TestLlamaIndex(JSONTestCase):
 
         # llama_index 0.8.15 bug: need to provide metadata_fn
         self.documents = SimpleWebPageReader(
-            html_to_text=True,
-            metadata_fn=lambda url: dict(url=url)
+            html_to_text=True, metadata_fn=lambda url: dict(url=url)
         ).load_data(["http://paulgraham.com/worked.html"])
         self.index = VectorStoreIndex.from_documents(self.documents)
 

@@ -1,4 +1,3 @@
-
 """
 Multi-threading utilities.
 """
@@ -19,8 +18,8 @@ from trulens_eval.utils.python import SingletonPerName
 
 logger = logging.getLogger(__name__)
 
-
 T = TypeVar("T")
+
 
 class ThreadPoolExecutor(fThreadPoolExecutor):
 
@@ -106,4 +105,3 @@ class TP(SingletonPerName):  # "thread processing"
             rows.append([p.is_alive(), str(p)])
 
         return pd.DataFrame(rows, columns=["alive", "thread"])
-
