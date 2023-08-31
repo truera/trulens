@@ -160,50 +160,6 @@ such as `gather`.
   invocations but the drawbacks are need to cover disparate callback systems and
   possibly missing information not covered.
 
-## To Decide / To discuss
-
-### Mirroring wrapped app behaviour and disabling instrumentation
-
-Should our wrappers behave like the wrapped apps? Current design is like this:
-
-```python
-chain = ... # some langchain chain
-
-tru = Tru() truchain = tru.Chain(chain, ...)
-
-plain_result = chain(...) # will not be recorded
-
-plain_result = truchain(...) # will be recorded
-
-plain_result, record = truchain.call_with_record(...) # will be recorded, and
-you get the record too
-```
-
-The problem with the above is that "call_" part of "call_with_record" is
-langchain specific and implicitly so is __call__ whose behaviour we are
-replicating in TruChain. Other wrapped apps may not implement their core
-functionality in "_call" or "__call__".
-
-Alternative #1:
-
-```python
-
-plain_result = chain(...) # will not be recorded
-
-truchain = tru.Chain(chain, ...)
-
-with truchain.record() as recorder:
-    plain_result = chain(...) # will be recorded
-
-records = recorder.records # can get records
-
-truchain(...) # NOT SUPPORTED, use chain instead
-```
-
-Here we have the benefit of not having a special method for each app type like
-`call_with_record`. We instead use a context to indicate that we want to collect
-records and retrieve them afterwards.
-
 ### Calls: Implementation Details
 
 Our tracking of calls uses instrumentated versions of methods to manage the
@@ -212,17 +168,11 @@ themselves from invocations of apps that are being tracked from those not being
 tracked, and of those that are tracked, where in the call stack a instrumented
 method invocation is. To achieve this, we rely on inspecting the python call
 stack for specific frames:
-
-- Root frame -- A tracked invocation of an app starts with one of the
-  main/"root" methods such as call or query. These are the bottom of the
-  relevant stack we use to manage the tracking of subsequent calls. Further
-  calls to instrumented methods check for the root method in the call stack and
-  retrieve the collection where data is to be recorded.
   
-- Prior frame -- Each instrumented call also searches for the topmost
-  instrumented call (except itself) in the stack to check its immediate caller
-  (by immediate we mean only among instrumented methods) which forms the basis
-  of the stack information recorded alongside the inputs/outputs.
+- Prior frame -- Each instrumented call searches for the topmost instrumented
+  call (except itself) in the stack to check its immediate caller (by immediate
+  we mean only among instrumented methods) which forms the basis of the stack
+  information recorded alongside the inputs/outputs.
 
 #### Drawbacks
 
@@ -234,12 +184,6 @@ stack for specific frames:
   stack prior to thread creation. Right now we do this in our threading utility
   class TP but a more complete solution may be the instrumentation of
   threading.Thread class.
-
-- We require a root method to be placed on the stack to indicate the start of
-  tracking. We therefore cannot implement something like a context-manager-based
-  setup of the tracking system as suggested in the "To discuss" above.
-
-  TODO: ROOTLESS
 
 #### Alternatives
 
@@ -255,30 +199,29 @@ stack for specific frames:
 from datetime import datetime
 import inspect
 from inspect import BoundArguments
-from inspect import Signature
-from inspect import signature
 import logging
 import os
 from pprint import PrettyPrinter
 import threading as th
 import traceback
-from typing import (
-    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
-)
+from typing import Callable, Dict, Iterable, Sequence, Set, Tuple
+import weakref
 
 from pydantic import BaseModel
 
 from trulens_eval.feedback import Feedback
+from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.schema import Cost
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Query
+from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordAppCallMethod
-from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.containers import dict_merge_with
+from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import _safe_getattr
 from trulens_eval.utils.pyschema import Method
-from trulens_eval.utils.python import get_all_local_in_call_stack
+from trulens_eval.utils.pyschema import safe_signature
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.serial import JSONPath
 
@@ -338,14 +281,13 @@ class WithInstrumentCallbacks:
 
     # Called during invocation.
     def _on_add_record(
-        self, record: Sequence[RecordAppCall], func: Callable, sig: Signature,
-        bindings: BoundArguments, start_time, end_time, ret: Any, error: Any,
-        cost: Cost
+        self, record: Sequence[Record],
     ):
         """
-        Called by instrumented methods if they use _new_record to construct a
-        record call list. 
+        Called by instrumented methods if they are root calls (first instrumned
+        methods in a call stack).
         """
+
         # TODO: ROOTLESS
 
         raise NotImplementedError
@@ -357,8 +299,7 @@ class Instrument(object):
     # Attribute name to be used to flag instrumented objects/methods/others.
     INSTRUMENT = "__tru_instrumented"
 
-    # TODO: ROOTLESS
-    # APPS = "__tru_apps"
+    APPS = "__tru_apps"
 
     class Default:
         # Default instrumentation configuration. Additional components are
@@ -404,13 +345,11 @@ class Instrument(object):
 
     def __init__(
         self,
-        root_methods: Optional[Set[Callable]] = None,
         include_modules: Iterable[str] = [],
         include_classes: Iterable[type] = [],
         include_methods: Dict[str, Callable] = {},
-        callbacks: WithInstrumentCallbacks = None
+        app: WithInstrumentCallbacks = None
     ):
-        self.root_methods = root_methods or set([])
 
         self.include_modules = Instrument.Default.MODULES.union(
             set(include_modules)
@@ -426,7 +365,7 @@ class Instrument(object):
             merge=lambda f1, f2: lambda o: f1(o) or f2(o)
         )
 
-        self.callbacks = callbacks
+        self.app = app
 
     def tracked_method_wrapper(
         self, query: Query, func: Callable, method_name: str, cls: type,
@@ -435,8 +374,6 @@ class Instrument(object):
         """
         Instrument a method to capture its inputs/outputs/errors.
         """
-
-        assert self.root_methods is not None, "Cannot instrument method without `root_methods`."
 
         assert not hasattr(
             func, "__func__"
@@ -449,9 +386,15 @@ class Instrument(object):
             # we store the method being instrumented in the attribute
             # Instrument.INSTRUMENT of the wrapped variant.
             original_func = getattr(func, Instrument.INSTRUMENT)
-            self.callbacks._on_method_instrumented(
+            self.app._on_method_instrumented(
                 obj, original_func, path=query
             )
+
+            # Add self.app, the app requesting this method to be
+            # instrumented, to the list of apps expecting to be notified of
+            # calls.
+            existing_apps = getattr(func, Instrument.APPS)
+            existing_apps.add(self.app)
 
             return func
 
@@ -461,84 +404,75 @@ class Instrument(object):
         else:
             # Notify the app instrumenting this method where it is located:
 
-            self.callbacks._on_method_instrumented(obj, func, path=query)
+            self.app._on_method_instrumented(obj, func, path=query)
 
         logger.debug(f"\t\t\t{query}: instrumenting {method_name}={func}")
 
-        sig = signature(func)
+        sig = safe_signature(func)
 
         async def awrapper(*args, **kwargs):
             # TODO: figure out how to have less repetition between the async and
             # sync versions of this method.
 
-            logger.debug(f"{query}: calling async instrumented method {func}")
+            logger.debug(f"{query}: calling instrumented async method {func}") # DIFF
+
+            apps = getattr(awrapper, Instrument.APPS) # DIFF
 
             # If not within a root method, call the wrapped function without
             # any recording.
 
-            def find_root_methods(f):
-                return id(f) in set(
-                    [id(rm.__code__) for rm in self.root_methods]
-                )  # or id(f) == id(wrapper.__code__) # TODO ROOTLESS
+            def find_instrumented(f):
+                return id(f) in [id(awrapper.__code__)] # DIFF
 
-            # Look up whether the root instrumented method was called earlier in
-            # the stack and "record_and_app" variable was defined there. Will
-            # use that for recording the wrapped call.
-            records_and_apps = list(
-                get_all_local_in_call_stack(
-                    key="record_and_app", func=find_root_methods, offset=1
-                )
+            # Get any contexts already known from higher in the call stack.
+            contexts = get_first_local_in_call_stack(
+                key="contexts", func=find_instrumented, offset=1
             )
-            """
-            # TODO: ROOTLESS
+            # Note: are empty sets false?
+            if contexts is None:
+                contexts = set([])
 
-            is_root_call = False
+            # And add any new contexts from all apps wishing to record this
+            # function. This may produce some of the same contexts that were
+            # already being tracked which is ok. Importantly, this might produce
+            # contexts for apps that didn't instrument a method higher in the
+            # call stack hence this might be the first time they are seeing an
+            # instrumented method being called.
+            for app in apps:
+                for ctx in app._on_new_record(func):
+                    contexts.add(ctx)
 
-            if len(records_and_apps) == 0:
-                # If this is the first instrumented method in the stack, check
-                # that the app wants it recorded.
-                records_and_apps = self.on_new_record(func)
-
-                # If so, indicate that this is a root instrumented call.
-                is_root_call = True
-            """
-
-            if records_and_apps is None or len(records_and_apps) == 0:
-                # Otherwise return result without instrumentation.
-
-                logger.debug(f"{query}: no record found, not recording.")
+            if len(contexts) == 0:        
+                # If no app wants this call recorded, run and return without instrumentation.
+                logger.debug(f"{query}: no record found or requested, not recording.")
 
                 return await func(*args, **kwargs)
-
-            # Otherwise keep track of inputs and outputs (or exception).
-
-            error = None
-            rets = None
-
-            def find_instrumented(f):
-                return id(f) in [id(awrapper.__code__)]
 
             # If a wrapped method was called in this call stack, get the prior
             # calls from this variable. Otherwise create a new chain stack. As
             # another wrinke, the addresses of methods in the stack may vary
             # from app to app that are watching this method. Hence we index the
             # stacks by id of the call record list which is unique to each app.
-            pstacks = get_first_local_in_call_stack(
+            ctx_stacks = get_first_local_in_call_stack(
                 key="stacks", func=find_instrumented, offset=1
             )
-            # Note: Empty dict is false-ish.
-            if pstacks is None:
-                pstacks = dict()
+            # Note: Empty dicts are false.
+            if ctx_stacks is None:
+                ctx_stacks = dict()
+
+            error = None
+            rets = None
 
             # My own stacks to be looked up by further subcalls by the logic
             # right above. We make a copy here since we need subcalls to access
             # it but we don't want them to modify it.
-            stacks = dict()
+            stacks = {k: v for k, v in ctx_stacks.items()}
 
             start_time = None
             end_time = None
 
             bindings = None
+            cost = Cost()
 
             # Prepare stacks with call information of this wrapped method so
             # subsequent (inner) calls will see it. For every root_method in the
@@ -549,29 +483,29 @@ class Instrument(object):
             # to use a different stack for the same reason. We index the stack
             # in `stacks` via id of the (unique) list `record`.
 
-            for record, app in records_and_apps:
+            # First prepare the stacks for each context.
+            for ctx in contexts:
                 # Get record and app that has instrumented this method.
-
-                rid = id(record)
 
                 # The path to this method according to the app.
                 path = app._get_method_path(
                     args[0], func
-                )  # hopefully args[0] is self
+                )  # hopefully args[0] is self, owner of func
 
                 if path is None:
                     logger.warning(
-                        f"App of type {type(app)} no longer knows about Object 0x{id(args[0]):x} method {func}."
+                        f"App of type {type(app)} no longer knows about object 0x{id(args[0]):x} method {func}. "
+                        "Something might be going wrong."
                     )
                     continue
 
-                if rid not in pstacks:
+                if ctx not in ctx_stacks:
                     # If we are the first instrumented method in the chain
                     # stack, make a new stack tuple for subsequent deeper calls
                     # (if any) to look up.
                     stack = ()
                 else:
-                    stack = pstacks[rid]
+                    stack = ctx_stacks[ctx]
 
                 frame_ident = RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
@@ -579,82 +513,83 @@ class Instrument(object):
 
                 stack = stack + (frame_ident,)
 
-                stacks[rid] = stack  # for deeper calls to get
+                stacks[ctx] = stack  # for deeper calls to get
 
-                # Now we will call the wrapped method. We only do so once.
+            # Now we will call the wrapped method. We only do so once.
 
-                # Start of run once condition.
-                if start_time is None:
-                    start_time = datetime.now()
+            # Start of run wrapped block.
+            start_time = datetime.now()
 
-                    try:
-                        # Using sig bind here so we can produce a list of key-value
-                        # pairs even if positional arguments were provided.
-                        bindings: BoundArguments = sig.bind(*args, **kwargs)
-                        """
-                        # TODO: ROOTLESS
-                        # If this is a root call (first instrumented method), also track
-                        # costs:
-                        cost: Cost = None
-                        if is_root_call:
-                            rets, cost = Endpoint.track_all_costs_tally(
-                                lambda: func(*bindings.args, **bindings.kwargs)
-                            )
-                        else:
-                        """
+            try:
+                # Using sig bind here so we can produce a list of key-value
+                # pairs even if positional arguments were provided.
+                bindings: BoundArguments = sig.bind(*args, **kwargs)
 
-                        rets = await func(*bindings.args, **bindings.kwargs)
+                rets, cost = await Endpoint.atrack_all_costs_tally( # DIFF
+                    lambda: func(*bindings.args, **bindings.kwargs)
+                )
+        
+            except BaseException as e:
+                error = e
+                error_str = str(e)
 
-                        end_time = datetime.now()
+                logger.error(
+                    f"Error calling wrapped function {func.__name__}."
+                )
+                logger.error(traceback.format_exc())
 
-                    except BaseException as e:
-                        end_time = datetime.now()
-                        error = e
-                        error_str = str(e)
+            end_time = datetime.now()
 
-                        logger.error(
-                            f"Error calling wrapped function {func.__name__}."
-                        )
-                        logger.error(traceback.format_exc())
+            # Done running the wrapped function. Lets collect the results.
+            # Create common information across all records.
 
-                    # Done running the wrapped function. Lets collect the results.
-                    # Create common information across all records.
+            # Don't include self in the recorded arguments.
+            nonself = {
+                k: jsonify(v) for k, v in (
+                    bindings.arguments.items(
+                    ) if bindings is not None else {}
+                ) if k != "self"
+            }
 
-                    # Don't include self in the recorded arguments.
-                    nonself = {
-                        k: jsonify(v) for k, v in (
-                            bindings.arguments.items(
-                            ) if bindings is not None else {}
-                        ) if k != "self"
-                    }
+            record_app_args = dict(
+                args=nonself,
+                perf=Perf(start_time=start_time, end_time=end_time),
+                pid=os.getpid(),
+                tid=th.get_native_id(),
+                rets=rets,
+                error=error_str if error is not None else None
+            )
+            # End of run wrapped block.
 
-                    row_args = dict(
-                        args=nonself,
-                        perf=Perf(start_time=start_time, end_time=end_time),
-                        pid=os.getpid(),
-                        tid=th.get_native_id(),
-                        rets=rets,
-                        error=error_str if error is not None else None
-                    )
-
-                # End of run once condition.
+            # Now record calls to each context.
+            for ctx in contexts:
+                stack = stacks[ctx]
 
                 # Note that only the stack differs between each of the records in this loop.
-                row_args['stack'] = stack
-                row = RecordAppCall(**row_args)
+                record_app_args['stack'] = stack
+                call = RecordAppCall(**record_app_args)
+                ctx.add_call(call)
+                
+                # If stack has only 1 thing on it, we are looking at a "root
+                # call". Create a record of the result and notify the app:
 
-                record.append(row)
-                """
-                # TODO: ROOTLESS
-                if is_root_call:
+                if len(stack) == 1:
                     # If this is a root call, notify app to add the completed record
                     # into its containers:
-                    self.on_add_record(record, func, sig, bindings, cost)
-                """
-
+                    ctx.app._on_add_record(
+                        ctx=ctx,
+                        func=func,
+                        sig=sig,
+                        bindings=bindings,
+                        ret=rets,
+                        error=error,
+                        perf=Perf(start_time=start_time, end_time=end_time),
+                        cost=cost
+                    )
+                    
             if error is not None:
                 raise error
-
+            
             return rets
 
         def wrapper(*args, **kwargs):
@@ -663,72 +598,63 @@ class Instrument(object):
 
             logger.debug(f"{query}: calling instrumented method {func}")
 
+            apps = getattr(wrapper, Instrument.APPS)
+
             # If not within a root method, call the wrapped function without
             # any recording.
 
-            def find_root_methods(f):
-                return id(f) in set(
-                    [id(rm.__code__) for rm in self.root_methods]
-                )  # or id(f) == id(wrapper.__code__) # TODO ROOTLESS
+            def find_instrumented(f):
+                return id(f) in [id(wrapper.__code__), id(awrapper.__code__)]
 
-            # Look up whether the root instrumented method was called earlier in
-            # the stack and "record_and_app" variable was defined there. Will
-            # use that for recording the wrapped call.
-            records_and_apps = list(
-                get_all_local_in_call_stack(
-                    key="record_and_app", func=find_root_methods, offset=1
-                )
+            # Get any contexts already known from higher in the call stack.
+            contexts = get_first_local_in_call_stack(
+                key="contexts", func=find_instrumented, offset=1
             )
-            """
-            # TODO: ROOTLESS
+            # Note: are empty sets false?
+            if contexts is None:
+                contexts = set([])
 
-            is_root_call = False
+            # And add any new contexts from all apps wishing to record this
+            # function. This may produce some of the same contexts that were
+            # already being tracked which is ok. Importantly, this might produce
+            # contexts for apps that didn't instrument a method higher in the
+            # call stack hence this might be the first time they are seeing an
+            # instrumented method being called.
+            for app in apps:
+                for ctx in app._on_new_record(func):
+                    contexts.add(ctx)
 
-            if len(records_and_apps) == 0:
-                # If this is the first instrumented method in the stack, check
-                # that the app wants it recorded.
-                records_and_apps = self.on_new_record(func)
-
-                # If so, indicate that this is a root instrumented call.
-                is_root_call = True
-            """
-
-            if records_and_apps is None or len(records_and_apps) == 0:
-                # Otherwise return result without instrumentation.
-
-                logger.debug(f"{query}: no record found, not recording.")
+            if len(contexts) == 0:        
+                # If no app wants this call recorded, run and return without instrumentation.
+                logger.debug(f"{query}: no record found or requested, not recording.")
 
                 return func(*args, **kwargs)
-
-            # Otherwise keep track of inputs and outputs (or exception).
-
-            error = None
-            rets = None
-
-            def find_instrumented(f):
-                return id(f) in [id(wrapper.__code__)]
 
             # If a wrapped method was called in this call stack, get the prior
             # calls from this variable. Otherwise create a new chain stack. As
             # another wrinke, the addresses of methods in the stack may vary
             # from app to app that are watching this method. Hence we index the
             # stacks by id of the call record list which is unique to each app.
-            pstacks = get_first_local_in_call_stack(
+            ctx_stacks = get_first_local_in_call_stack(
                 key="stacks", func=find_instrumented, offset=1
             )
-            # Note: Empty dict is false-ish.
-            if pstacks is None:
-                pstacks = dict()
+            # Note: Empty dicts are false.
+            if ctx_stacks is None:
+                ctx_stacks = dict()
+
+            error = None
+            rets = None
 
             # My own stacks to be looked up by further subcalls by the logic
             # right above. We make a copy here since we need subcalls to access
             # it but we don't want them to modify it.
-            stacks = dict()
+            stacks = {k: v for k, v in ctx_stacks.items()}
 
             start_time = None
             end_time = None
 
             bindings = None
+            cost = Cost()
 
             # Prepare stacks with call information of this wrapped method so
             # subsequent (inner) calls will see it. For every root_method in the
@@ -739,15 +665,13 @@ class Instrument(object):
             # to use a different stack for the same reason. We index the stack
             # in `stacks` via id of the (unique) list `record`.
 
-            for record, app in records_and_apps:
+            for ctx in contexts:
                 # Get record and app that has instrumented this method.
-
-                rid = id(record)
 
                 # The path to this method according to the app.
                 path = app._get_method_path(
                     args[0], func
-                )  # args[0] is owner of wrapped method, hopefully
+                )  # hopefully args[0] is self, owner of func
 
                 if path is None:
                     logger.warning(
@@ -755,13 +679,13 @@ class Instrument(object):
                     )
                     continue
 
-                if rid not in pstacks:
+                if ctx not in ctx_stacks:
                     # If we are the first instrumented method in the chain
                     # stack, make a new stack tuple for subsequent deeper calls
                     # (if any) to look up.
                     stack = ()
                 else:
-                    stack = pstacks[rid]
+                    stack = ctx_stacks[ctx]
 
                 frame_ident = RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
@@ -769,82 +693,83 @@ class Instrument(object):
 
                 stack = stack + (frame_ident,)
 
-                stacks[rid] = stack  # for deeper calls to get
+                stacks[ctx] = stack  # for deeper calls to get
 
-                # Now we will call the wrapped method. We only do so once.
+            # Now we will call the wrapped method. We only do so once.
 
-                # Start of run once condition.
-                if start_time is None:
-                    start_time = datetime.now()
+            # Start of run wrapped block.
+            start_time = datetime.now()
 
-                    try:
-                        # Using sig bind here so we can produce a list of key-value
-                        # pairs even if positional arguments were provided.
-                        bindings: BoundArguments = sig.bind(*args, **kwargs)
-                        """
-                        # TODO: ROOTLESS
-                        # If this is a root call (first instrumented method), also track
-                        # costs:
-                        cost: Cost = None
-                        if is_root_call:
-                            rets, cost = Endpoint.track_all_costs_tally(
-                                lambda: func(*bindings.args, **bindings.kwargs)
-                            )
-                        else:
-                        """
+            try:
+                # Using sig bind here so we can produce a list of key-value
+                # pairs even if positional arguments were provided.
+                bindings: BoundArguments = sig.bind(*args, **kwargs)
 
-                        rets = func(*bindings.args, **bindings.kwargs)
+                rets, cost = Endpoint.track_all_costs_tally(
+                    lambda: func(*bindings.args, **bindings.kwargs)
+                )
+            
+            except BaseException as e:
+                error = e
+                error_str = str(e)
 
-                        end_time = datetime.now()
+                logger.error(
+                    f"Error calling wrapped function {func.__name__}."
+                )
+                logger.error(traceback.format_exc())
 
-                    except BaseException as e:
-                        end_time = datetime.now()
-                        error = e
-                        error_str = str(e)
+            end_time = datetime.now()
 
-                        logger.error(
-                            f"Error calling wrapped function {func.__name__}."
-                        )
-                        logger.error(traceback.format_exc())
+            # Done running the wrapped function. Lets collect the results.
+            # Create common information across all records.
 
-                    # Done running the wrapped function. Lets collect the results.
-                    # Create common information across all records.
+            # Don't include self in the recorded arguments.
+            nonself = {
+                k: jsonify(v) for k, v in (
+                    bindings.arguments.items(
+                    ) if bindings is not None else {}
+                ) if k != "self"
+            }
 
-                    # Don't include self in the recorded arguments.
-                    nonself = {
-                        k: jsonify(v) for k, v in (
-                            bindings.arguments.items(
-                            ) if bindings is not None else {}
-                        ) if k != "self"
-                    }
+            record_app_args = dict(
+                args=nonself,
+                perf=Perf(start_time=start_time, end_time=end_time),
+                pid=os.getpid(),
+                tid=th.get_native_id(),
+                rets=rets,
+                error=error_str if error is not None else None
+            )
+            # End of run wrapped block.
 
-                    row_args = dict(
-                        args=nonself,
-                        perf=Perf(start_time=start_time, end_time=end_time),
-                        pid=os.getpid(),
-                        tid=th.get_native_id(),
-                        rets=rets,
-                        error=error_str if error is not None else None
-                    )
-
-                # End of run once condition.
+            # Now record calls to each context.
+            for ctx in contexts:
+                stack = stacks[ctx]
 
                 # Note that only the stack differs between each of the records in this loop.
-                row_args['stack'] = stack
-                row = RecordAppCall(**row_args)
+                record_app_args['stack'] = stack
+                call = RecordAppCall(**record_app_args)
+                ctx.add_call(call)
+                
+                # If stack has only 1 thing on it, we are looking at a "root
+                # call". Create a record of the result and notify the app:
 
-                record.append(row)
-                """
-                # TODO: ROOTLESS
-                if is_root_call:
+                if len(stack) == 1:
                     # If this is a root call, notify app to add the completed record
                     # into its containers:
-                    self.on_add_record(record, func, sig, bindings, cost)
-                """
-
+                    ctx.app._on_add_record(
+                        ctx=ctx,
+                        func=func,
+                        sig=sig,
+                        bindings=bindings,
+                        ret=rets,
+                        error=error,
+                        perf=Perf(start_time=start_time, end_time=end_time),
+                        cost=cost
+                    )
+                    
             if error is not None:
                 raise error
-
+            
             return rets
 
         w = wrapper
@@ -855,12 +780,12 @@ class Instrument(object):
         # further instrument it in another layer accidentally.
         setattr(w, Instrument.INSTRUMENT, func)
 
-        w.__name__ = func.__name__
+        # Create a new set of apps expecting to be notified about calls to the
+        # instrumented method. Making this a weakref set so that if the
+        # instrumented app gets unloaded, it will be evicted from this set.
+        setattr(w, Instrument.APPS, weakref.WeakSet([self.app]))
 
-        # Add a list of apps that want to record calls to this method starting
-        # with self.
-        # setattr(w, Instrument.APPS, [self])
-        # TODO: ROOTLESS
+        w.__name__ = func.__name__
 
         # NOTE(piotrm): This is important; langchain checks signatures to adjust
         # behaviour and we need to match. Without this, wrapper signatures will
