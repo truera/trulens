@@ -201,7 +201,7 @@ def get_answer(app: TruChain, question: str) -> Tuple[str, str]:
     sources elaboration text.
     """
 
-    outs = app(dict(question=question))
+    outs = app.with_(app.app, dict(question=question))
 
     result = outs['answer']
     sources = outs['source_documents']

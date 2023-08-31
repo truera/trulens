@@ -128,13 +128,15 @@ class SqlAlchemyDB(DB):
         print(f"Deleted {deleted} rows.")
 
     def insert_record(self, record: schema.Record) -> schema.RecordID:
+        # TODO: thread safety
+        
         _rec = orm.Record.parse(record, redact_keys=self.redact_keys)
         with self.Session.begin() as session:
             if session.query(orm.Record).filter_by(record_id=record.record_id
                                                   ).first():
                 session.merge(_rec)  # update existing
             else:
-                session.add(_rec)  # add new record
+                session.merge(_rec)  # add new record # .add was not thread safe
             return _rec.record_id
 
     def get_app(self, app_id: str) -> Optional[JSON]:
@@ -144,18 +146,23 @@ class SqlAlchemyDB(DB):
                 return json.loads(_app.app_json)
 
     def insert_app(self, app: schema.AppDefinition) -> schema.AppID:
+        # TODO: thread safety
+
         with self.Session.begin() as session:
             if _app := session.query(orm.AppDefinition
                                     ).filter_by(app_id=app.app_id).first():
                 _app.app_json = app.json()
             else:
                 _app = orm.AppDefinition.parse(app, redact_keys=self.redact_keys)
-                session.add(_app)
+                session.merge(_app) # .add was not thread safe
+
             return _app.app_id
 
     def insert_feedback_definition(
         self, feedback_definition: schema.FeedbackDefinition
     ) -> schema.FeedbackDefinitionID:
+        # TODO: thread safety
+
         with self.Session.begin() as session:
             if _fb_def := session.query(orm.FeedbackDefinition) \
                     .filter_by(feedback_definition_id=feedback_definition.feedback_definition_id) \
@@ -163,7 +170,8 @@ class SqlAlchemyDB(DB):
                 _fb_def.app_json = feedback_definition.json()
             else:
                 _fb_def = orm.FeedbackDefinition.parse(feedback_definition, redact_keys=self.redact_keys)
-                session.add(_fb_def)
+                session.merge(_fb_def) # .add was not thread safe
+
             return _fb_def.feedback_definition_id
 
     def get_feedback_defs(
@@ -185,13 +193,15 @@ class SqlAlchemyDB(DB):
     def insert_feedback(
         self, feedback_result: schema.FeedbackResult
     ) -> schema.FeedbackResultID:
+        # TODO: thread safety
+
         _feedback_result = orm.FeedbackResult.parse(feedback_result, redact_keys=self.redact_keys)
         with self.Session.begin() as session:
             if session.query(orm.FeedbackResult) \
                     .filter_by(feedback_result_id=feedback_result.feedback_result_id).first():
                 session.merge(_feedback_result)  # update existing
             else:
-                session.add(_feedback_result)  # insert new result
+                session.merge(_feedback_result)  # insert new result # .add was not thread safe
             return _feedback_result.feedback_result_id
 
     def get_feedback(

@@ -10,6 +10,6 @@ class CustomLLM:
 
     @instrument
     def generate(self, prompt: str):
-        sleep(1.0)
+        sleep(0.1)
 
         return "herp " + prompt[::-1] + " derp"

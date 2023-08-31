@@ -200,7 +200,7 @@ from typing import Any, Callable, ClassVar, Iterable, Set
 
 from pydantic import Field
 
-from trulens_eval import Select
+
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.pyschema import Class
@@ -243,10 +243,7 @@ class TruCustomApp(App):
         kwargs['root_class'] = Class.of_object(app)
 
         kwargs['instrument'] = Instrument(
-            root_methods=set(
-                [TruCustomApp.with_record, TruCustomApp.awith_record]
-            ),
-            callbacks=self  # App mixes in WithInstrumentCallbacks
+            app=self  # App mixes in WithInstrumentCallbacks
         )
 
         super().__init__(**kwargs)
