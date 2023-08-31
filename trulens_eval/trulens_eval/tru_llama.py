@@ -92,45 +92,30 @@ class LlamaInstrument(Instrument):
         METHODS = dict_set_with(
             {
                 "get_response":
-                    lambda o: isinstance(
-                        o, Refine
-                    ),
+                    lambda o: isinstance(o, Refine),
                 "predict":
-                    lambda o: isinstance(
-                        o, BaseLLMPredictor
-                    ),
+                    lambda o: isinstance(o, BaseLLMPredictor),
                 "query":
-                    lambda o: isinstance(
-                        o, BaseQueryEngine
-                    ),
+                    lambda o: isinstance(o, BaseQueryEngine),
                 "aquery":
-                    lambda o: isinstance(
-                        o, BaseQueryEngine
-                    ),
+                    lambda o: isinstance(o, BaseQueryEngine),
                 "chat":
-                    lambda o:
-                    isinstance(o, BaseChatEngine),
+                    lambda o: isinstance(o, BaseChatEngine),
                 "achat":
-                    lambda o:
-                    isinstance(o, BaseChatEngine),
+                    lambda o: isinstance(o, BaseChatEngine),
                 "stream_chat":
-                    lambda o:
-                    isinstance(o, BaseChatEngine),
+                    lambda o: isinstance(o, BaseChatEngine),
                 "astream_achat":
-                    lambda o:
-                    isinstance(o, BaseChatEngine),
+                    lambda o: isinstance(o, BaseChatEngine),
                 "retrieve":
                     lambda o: isinstance(
                         o, (
-                            BaseQueryEngine,
-                            BaseRetriever,
+                            BaseQueryEngine, BaseRetriever,
                             WithFeedbackFilterNodes
                         )
                     ),
                 "synthesize":
-                    lambda o: isinstance(
-                        o, BaseQueryEngine
-                    ),
+                    lambda o: isinstance(o, BaseQueryEngine),
             }, LangChainInstrument.Default.METHODS
         )
 
@@ -172,9 +157,7 @@ class TruLlama(App):
         # TruLlama specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)  # TODO: make class property
-        kwargs['instrument'] = LlamaInstrument(
-            app=self
-        )
+        kwargs['instrument'] = LlamaInstrument(app=self)
 
         super().__init__(**kwargs)
 
@@ -267,7 +250,9 @@ class TruLlama(App):
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
 
-        self._with_dep_message(method="stream_chat", is_async=False, with_record=False)
+        self._with_dep_message(
+            method="stream_chat", is_async=False, with_record=False
+        )
 
         res, _ = self.stream_chat_with_record(*args, **kwargs)
         return res
@@ -279,7 +264,9 @@ class TruLlama(App):
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
 
-        self._with_dep_message(method="astream_chat", is_async=True, with_record=False)
+        self._with_dep_message(
+            method="astream_chat", is_async=True, with_record=False
+        )
 
         res, _ = await self.astream_chat_with_record(*args, **kwargs)
         return res
@@ -291,7 +278,9 @@ class TruLlama(App):
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
 
-        self._with_dep_message(method="query", is_async=False, with_record=False)
+        self._with_dep_message(
+            method="query", is_async=False, with_record=False
+        )
 
         res, _ = self.query_with_record(*args, **kwargs)
         return res
@@ -303,16 +292,17 @@ class TruLlama(App):
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
 
-        self._with_dep_message(method="aquery", is_async=True, with_record=False)
+        self._with_dep_message(
+            method="aquery", is_async=True, with_record=False
+        )
 
         res, _ = await self.aquery_with_record(*args, **kwargs)
         return res
 
     # TODEP
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.query .
-    def query_with_record(
-        self, *args, **kwargs
-    ) -> Tuple[RESPONSE_TYPE, Record]:
+    def query_with_record(self, *args,
+                          **kwargs) -> Tuple[RESPONSE_TYPE, Record]:
         assert isinstance(
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
@@ -323,9 +313,8 @@ class TruLlama(App):
 
     # TODEP
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .
-    async def aquery_with_record(
-        self, *args, **kwargs
-    ) -> Tuple[RESPONSE_TYPE, Record]:
+    async def aquery_with_record(self, *args,
+                                 **kwargs) -> Tuple[RESPONSE_TYPE, Record]:
         assert isinstance(
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
@@ -367,7 +356,9 @@ class TruLlama(App):
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
 
-        self._with_dep_message(method="stream", is_async=False, with_record=True)
+        self._with_dep_message(
+            method="stream", is_async=False, with_record=True
+        )
 
         return self.with_record(self.app.stream_chat, *args, **kwargs)
 
@@ -380,6 +371,8 @@ class TruLlama(App):
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
 
-        self._with_dep_message(method="astream_chat", is_async=True, with_record=True)
+        self._with_dep_message(
+            method="astream_chat", is_async=True, with_record=True
+        )
 
         return await self.awith_record(self.app.astream_chat, *args, **kwargs)

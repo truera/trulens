@@ -17,11 +17,11 @@ pp = PrettyPrinter()
 T = TypeVar("T")
 Thunk = Callable[[], T]
 
-
 # Python call stack utilities
 
 # Attribute name for storing a callstack in asyncio tasks.
 STACK = "__tru_stack"
+
 
 def caller_frame(offset=0) -> 'frame':
     """
@@ -183,6 +183,7 @@ def get_all_local_in_call_stack(
 
     return
 
+
 def get_first_local_in_call_stack(
     key: str,
     func: Callable[[Callable], bool],
@@ -203,7 +204,6 @@ def get_first_local_in_call_stack(
         return next(iter(get_all_local_in_call_stack(key, func, offset + 1)))
     except StopIteration:
         return None
-
 
 
 # Class utilities
@@ -233,5 +233,3 @@ class SingletonPerName():
             SingletonPerName.instances[k] = super().__new__(cls)
 
         return SingletonPerName.instances[k]
-
-

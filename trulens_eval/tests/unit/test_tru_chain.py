@@ -24,16 +24,17 @@ import pinecone
 from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
-from trulens_eval.schema import FeedbackMode
 from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.keys import check_keys
+from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Record
 from trulens_eval.tru_chain import TruChain
 import trulens_eval.utils.python  # makes sure asyncio gets instrumented
 
 
 class TestTruChain(JSONTestCase):
+
     @classmethod
     def setUpClass(cls):
         # Cannot reset on each test as they might be done in parallel.
@@ -112,7 +113,9 @@ class TestTruChain(JSONTestCase):
 
         # Note that without WITH_APP mode, there might be a delay between return
         # of a with_record and the record appearing in the db.
-        tc = tru.Chain(chain, app_id=app_id, feedback_mode=FeedbackMode.WITH_APP)
+        tc = tru.Chain(
+            chain, app_id=app_id, feedback_mode=FeedbackMode.WITH_APP
+        )
 
         return tc
 
@@ -121,7 +124,7 @@ class TestTruChain(JSONTestCase):
 
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
-        tc = self._create_basic_chain(app_id="metaplain") 
+        tc = self._create_basic_chain(app_id="metaplain")
 
         message = "What is 1+2?"
         meta = "this is plain metadata"
@@ -132,7 +135,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check the record has the metadata when retrieved back from db.
-        recs, _ =  Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.parse_raw(recs.iloc[0].record_json)
         self.assertEqual(rec.meta, meta)
@@ -141,17 +144,17 @@ class TestTruChain(JSONTestCase):
         new_meta = "this is new meta"
         rec.meta = new_meta
         Tru().update_record(rec)
-        recs, _ =  Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.parse_raw(recs.iloc[0].record_json)
         self.assertNotEqual(rec.meta, meta)
         self.assertEqual(rec.meta, new_meta)
-        
+
         # Check adding meta to a record that initially didn't have it.
         # Record with no meta:
         _, rec = tc.call_with_record(message)
         self.assertEqual(rec.meta, None)
-        recs, _ =  Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 1)
         rec = Record.parse_raw(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, None)
@@ -159,7 +162,7 @@ class TestTruChain(JSONTestCase):
         # Update it to add meta:
         rec.meta = new_meta
         Tru().update_record(rec)
-        recs, _ =  Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 1)
         rec = Record.parse_raw(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, new_meta)
@@ -180,7 +183,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check the record has the metadata when retrieved back from db.
-        recs, feedbacks =  Tru().get_records_and_feedback([tc.app_id])
+        recs, feedbacks = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.parse_raw(recs.iloc[0].record_json)
         self.assertEqual(rec.meta, meta)
@@ -190,7 +193,7 @@ class TestTruChain(JSONTestCase):
         rec.meta = new_meta
         Tru().update_record(rec)
 
-        recs, _ =  Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.parse_raw(recs.iloc[0].record_json)
         self.assertNotEqual(rec.meta, meta)

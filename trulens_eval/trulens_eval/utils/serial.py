@@ -6,8 +6,9 @@ from __future__ import annotations
 
 import logging
 from pprint import PrettyPrinter
-from typing import (Any, Dict, Iterable, Optional, Sequence, Set, Tuple,
-                    TypeVar, Union)
+from typing import (
+    Any, Dict, Iterable, Optional, Sequence, Set, Tuple, TypeVar, Union
+)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -18,14 +19,12 @@ from trulens_eval.utils.containers import iterable_peek
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
-
 T = TypeVar("T")
 
 # JSON types
 
 JSON_BASES = (str, int, float, type(None))
 JSON_BASES_T = Union[str, int, float, type(None)]
-
 
 # TODO: rename to "JSON_LIKE" as it is not stringly json.
 # JSON = Union[JSON_BASES_T, Sequence['JSON'], Dict[str, 'JSON']]
@@ -58,7 +57,7 @@ class SerialModel(pydantic.BaseModel):
                 model = cls.model_validate(obj, **kwargs)
 
                 return WithClassInfo.of_model(model=model, cls=cls)
-            
+
             else:
                 print(
                     f"Warning: May not be able to properly reconstruct object {obj}."
@@ -71,7 +70,7 @@ class SerialModel(pydantic.BaseModel):
             setattr(self, k, v)
 
         return self
-    
+
 
 # JSONPath, a container for selector/accessors/setters of data stored in a json
 # structure. Cannot make abstract since pydantic will try to initialize it.
@@ -479,7 +478,7 @@ class JSONPath(SerialModel):
 
     def __getattr__(self, attr: str) -> JSONPath:
         return self._append(GetItemOrAttribute(item_or_attribute=attr))
-    
+
 
 def leaf_queries(obj_json: JSON, query: JSONPath = None) -> Iterable[JSONPath]:
     """

@@ -35,11 +35,11 @@ from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
+from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSONPath
 from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.pyschema import WithClassInfo
 
 T = TypeVar("T")
 
@@ -426,7 +426,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
 
     app_id: AppID
     tags: Tags
-    metadata: Metadata # TODO: rename to meta for consistency with other metas
+    metadata: Metadata  # TODO: rename to meta for consistency with other metas
 
     # Feedback functions to evaluate on each record. Unlike the above, these are
     # meant to be serialized.

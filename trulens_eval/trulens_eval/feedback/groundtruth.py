@@ -6,12 +6,11 @@ import pydantic
 
 from trulens_eval.feedback.provider import Provider
 from trulens_eval.feedback.provider.openai import OpenAI
-from trulens_eval.utils.pyschema import FunctionOrMethod
-from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.generated import re_1_10_rating
-
 from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.serial import SerialModel
 
 bert_score_version = "0.3.13"
 REQUIREMENT_BERT_SCORE = (
@@ -72,7 +71,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ground_truth=ground_truth,
             ground_truth_imp=ground_truth_imp,
             provider=provider,
-            bert_scorer = bert_scorer,
+            bert_scorer=bert_scorer,
             obj=self  # for WithClassInfo
         )
 
@@ -118,10 +117,9 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ret = np.nan
 
         return ret
-    
-    def bert_score(
-        self, prompt: str, response: str
-    ) -> Union[float, Tuple[float, Dict[str, str]]]:
+
+    def bert_score(self, prompt: str,
+                   response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
         Uses BERT Score. A function that that measures
         similarity to ground truth using bert embeddings. 
@@ -139,7 +137,9 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             self.bert_scorer = BERTScorer(lang="en", rescale_with_baseline=True)
         ground_truth_response = self._find_response(prompt)
         if ground_truth_response:
-            bert_score = self.bert_scorer.score([response], [ground_truth_response])
+            bert_score = self.bert_scorer.score(
+                [response], [ground_truth_response]
+            )
             ret = bert_score[0].item(), dict(
                 ground_truth_response=ground_truth_response
             )
@@ -147,10 +147,9 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ret = np.nan
 
         return ret
-    
-    def bleu(
-        self, prompt: str, response: str
-    ) -> Union[float, Tuple[float, Dict[str, str]]]:
+
+    def bleu(self, prompt: str,
+             response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
         Uses BLEU Score. A function that that measures
         similarity to ground truth using token overlap. 
@@ -167,7 +166,9 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         bleu = evaluate.load('bleu')
         ground_truth_response = self._find_response(prompt)
         if ground_truth_response:
-            bleu_score = bleu.compute(predictions=[response], references=[ground_truth_response])
+            bleu_score = bleu.compute(
+                predictions=[response], references=[ground_truth_response]
+            )
             ret = bleu_score['bleu'], dict(
                 ground_truth_response=ground_truth_response
             )
@@ -175,10 +176,9 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ret = np.nan
 
         return ret
-    
-    def rouge(
-        self, prompt: str, response: str
-    ) -> Union[float, Tuple[float, Dict[str, str]]]:
+
+    def rouge(self, prompt: str,
+              response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
         Uses BLEU Score. A function that that measures
         similarity to ground truth using token overlap. 
@@ -195,7 +195,9 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         rouge = evaluate.load('rouge')
         ground_truth_response = self._find_response(prompt)
         if ground_truth_response:
-            rouge_score = rouge.compute(predictions=[response], references=[ground_truth_response])
+            rouge_score = rouge.compute(
+                predictions=[response], references=[ground_truth_response]
+            )
             ret = rouge_score['rouge1'], dict(
                 ground_truth_response=ground_truth_response
             )
@@ -203,4 +205,3 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ret = np.nan
 
         return ret
-        
