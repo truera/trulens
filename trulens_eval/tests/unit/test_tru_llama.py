@@ -32,9 +32,11 @@ class TestLlamaIndex(JSONTestCase):
         service_context = ServiceContext.from_defaults(llm=llm)
         set_global_service_context(service_context)
 
-        self.documents = SimpleWebPageReader(html_to_text=True).load_data(
-            ["http://paulgraham.com/worked.html"]
-        )
+        # llama_index 0.8.15 bug: need to provide metadata_fn
+        self.documents = SimpleWebPageReader(
+            html_to_text=True,
+            metadata_fn=lambda url: dict(url=url)
+        ).load_data(["http://paulgraham.com/worked.html"])
         self.index = VectorStoreIndex.from_documents(self.documents)
 
     def test_query_engine_async(self):
