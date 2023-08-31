@@ -30,6 +30,9 @@ markdown_extensions:
   - pymdownx.tilde
   - mdx_math:
       enable_dollar_delimiter: True #for use of inline $..$
+  - markdown_include.include:
+      base_path: docs
+
 
 plugins:
   - mkdocs-jupyter
