@@ -39,9 +39,11 @@ tru = Tru()
 from llama_index import SimpleWebPageReader
 from llama_index import VectorStoreIndex
 
-documents = SimpleWebPageReader(html_to_text=True).load_data(
-    ["http://paulgraham.com/worked.html"]
-)
+# llama_index 0.8.15 bug: need to provide metadata_fn
+documents = SimpleWebPageReader(
+    html_to_text=True,
+    metadata_fn=lambda url: dict(url=url)
+).load_data(["http://paulgraham.com/worked.html"])
 index = VectorStoreIndex.from_documents(documents)
 
 query_engine = index.as_query_engine()
