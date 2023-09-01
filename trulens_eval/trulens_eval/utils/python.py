@@ -219,7 +219,7 @@ class SingletonPerName():
     # Hold singleton instances here.
     instances: Dict[Hashable, 'SingletonPerName'] = dict()
 
-    def __new__(cls, name: str = None, *args, **kwargs):
+    def __new__(cls, *args, name: str = None, **kwargs):
         """
         Create the singleton instance if it doesn't already exist and return it.
         """

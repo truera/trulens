@@ -326,6 +326,12 @@ class Feedback(FeedbackDefinition):
                     f"Feedback function `{self.imp.__name__}` has `self` as argument. "
                     "Perhaps it is static method or its Provider class was not initialized?"
                 )
+            if len(par_names) == 0:
+                raise TypeError(
+                    f"Feedback implementation {self.imp} with signature {sig} has no more inputs. "
+                    "Perhaps you meant to evalute it on App output only instead of app input and output?"
+                )
+            
             return par_names[0]
         else:
             raise RuntimeError(
