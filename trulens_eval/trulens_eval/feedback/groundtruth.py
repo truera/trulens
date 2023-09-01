@@ -47,7 +47,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         self,
         ground_truth: Union[List[str], Callable, FunctionOrMethod],
         provider: Provider = None,
-        bert_scorer: Optional[BERTScorer] = None
+        bert_scorer: Optional["BERTScorer"] = None
     ):
         if provider is None:
             provider = OpenAI()
