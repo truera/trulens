@@ -829,7 +829,7 @@ class DummyEndpoint(Endpoint):
                 {'label': 'LABEL_0', 'score': 0.13167837262153625}
             ]]
 
-        # The rest os same as in Endpoint:
+        # The rest is the same as in Endpoint:
 
         # Huggingface public api sometimes tells us that a model is loading and
         # how long to wait:
