@@ -86,9 +86,9 @@ class TruBasicApp(App):
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
         if "input" in bindings.arguments:
-            return bindings.arguments['input']
+            return bindings.arguments['input'][0][0]
 
-        return super().main_input(func, sig, bindings)
+        return super().main_input(func, sig, bindings)[0]
 
     def call_with_record(self, input: str, **kwargs):
         """ Run the callable and pass any kwargs.
