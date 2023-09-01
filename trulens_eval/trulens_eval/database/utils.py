@@ -6,9 +6,9 @@ import shutil
 import sqlite3
 from tempfile import TemporaryDirectory
 from typing import Callable, List, Optional, Union
+import uuid
 
 import pandas as pd
-import uuid
 from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import inspect as sql_inspect

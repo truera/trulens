@@ -196,7 +196,7 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
 
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Iterable, Set
+from typing import Any, Callable, ClassVar, Set
 
 from pydantic import Field
 

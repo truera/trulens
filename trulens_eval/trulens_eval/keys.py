@@ -257,7 +257,9 @@ class ApiKeyError(RuntimeError):
         self.msg = msg
 
 
-def _check_key(k: str, v: str = None, silent: bool = False, warn: bool = False) -> bool:
+def _check_key(
+    k: str, v: str = None, silent: bool = False, warn: bool = False
+) -> bool:
     """
     Check that the given `k` is an env var with a value that indicates a valid
     api key or secret.  If `v` is provided, checks that instead. If value
@@ -290,7 +292,7 @@ For the last two options, the name of the argument may differ from {k} (i.e. `op
                 return False
             else:
                 raise ApiKeyError(key=k, msg=msg)
-        
+
     return True
 
 
