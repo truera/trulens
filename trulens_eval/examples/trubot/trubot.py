@@ -25,8 +25,8 @@ from trulens_eval.feedback import Feedback
 from trulens_eval.keys import check_keys
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.tru_chain import TruChain
-from trulens_eval.utils.threading import TP
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
+from trulens_eval.utils.threading import TP
 
 check_keys(
     "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
@@ -201,7 +201,7 @@ def get_answer(app: TruChain, question: str) -> Tuple[str, str]:
     sources elaboration text.
     """
 
-    outs = app(dict(question=question))
+    outs = app.with_(app.app, dict(question=question))
 
     result = outs['answer']
     sources = outs['source_documents']

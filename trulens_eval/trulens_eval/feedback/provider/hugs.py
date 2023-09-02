@@ -7,6 +7,7 @@ import numpy as np
 from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
@@ -20,12 +21,48 @@ HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm
 HUGS_NLI_API_URL = "https://api-inference.huggingface.co/models/ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
 HUGS_DOCNLI_API_URL = "https://api-inference.huggingface.co/models/MoritzLaurer/DeBERTa-v3-base-mnli-fever-docnli-ling-2c"
 
+import functools
+from inspect import signature
+
+
+# TODO: move this to a more general place and apply it to other feedbacks that need it.
+def _tci(func):  # "typecheck inputs"
+    """
+    Decorate a method to validate its inputs against its signature. Also make sure string inputs are non-empty.
+    """
+
+    sig = signature(func)
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        bindings = sig.bind(*args, **kwargs)
+
+        for param, annot in sig.parameters.items():
+            if param == "self":
+                continue
+            if annot is not None:
+                pident = f"Input `{param}` to `{func.__name__}`"
+                v = bindings.arguments[param]
+                if not isinstance(v, annot.annotation):
+                    raise TypeError(
+                        f"{pident} must be of type `{annot.annotation.__name__}` but was `{type(v).__name__}` instead."
+                    )
+                if annot.annotation is str:
+                    if len(v) == 0:
+                        raise ValueError(f"{pident} must be non-empty.")
+
+        return func(*bindings.args, **bindings.kwargs)
+    
+    wrapper.__signature__ = sig
+
+    return wrapper
+
 
 class Huggingface(Provider):
 
     endpoint: Endpoint
 
-    def __init__(self, endpoint=None, **kwargs):
+    def __init__(self, name: str = None, endpoint=None, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
@@ -35,13 +72,21 @@ class Huggingface(Provider):
         All args/kwargs passed to HuggingfaceEndpoint constructor.
         """
 
+        kwargs['name'] = name
+
         self_kwargs = dict()
-        self_kwargs['endpoint'] = HuggingfaceEndpoint(**kwargs)
+        if endpoint is None:
+            self_kwargs['endpoint'] = HuggingfaceEndpoint(**kwargs)
+        else:
+            self_kwargs['endpoint'] = endpoint
+
+        self_kwargs['name'] = name or "huggingface"
 
         super().__init__(
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    @_tci
     def language_match(self, text1: str, text2: str) -> float:
         """
         Uses Huggingface's papluca/xlm-roberta-base-language-detection model. A
@@ -61,8 +106,6 @@ class Huggingface(Provider):
             float: A value between 0 and 1. 0 being "different languages" and 1
             being "same languages".
         """
-
-        assert len(text1) > 0 and len(text2) > 0, "Inputs cannot be blank."
 
         def get_scores(text):
             payload = {"inputs": text}
@@ -91,6 +134,7 @@ class Huggingface(Provider):
 
         return l1, dict(text1_scores=scores1, text2_scores=scores2)
 
+    @_tci
     def positive_sentiment(self, text: str) -> float:
         """
         Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
@@ -104,8 +148,6 @@ class Huggingface(Provider):
             being "positive sentiment".
         """
 
-        assert len(text) > 0, "Input cannot be blank."
-
         max_length = 500
         truncated_text = text[:max_length]
         payload = {"inputs": truncated_text}
@@ -118,6 +160,7 @@ class Huggingface(Provider):
             if label['label'] == 'LABEL_2':
                 return label['score']
 
+    @_tci
     def not_toxic(self, text: str) -> float:
         """
         Uses Huggingface's martin-ha/toxic-comment-model model. A function that
@@ -144,6 +187,7 @@ class Huggingface(Provider):
             if label['label'] == 'toxic':
                 return label['score']
 
+    @_tci
     def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
         """ A groundedness measure best used for summarized premise against simple hypothesis.
         This Huggingface implementation uses NLI.
@@ -166,7 +210,8 @@ class Huggingface(Provider):
             if label['label'] == 'entailment':
                 return label['score']
 
-    def _doc_groundedness(self, premise, hypothesis):
+    @_tci
+    def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
         """ A groundedness measure for full document premise against hypothesis.
         This Huggingface implementation uses DocNLI. The Hypoethsis still only works on single small hypothesis.
 
@@ -186,3 +231,12 @@ class Huggingface(Provider):
         for label in hf_response:
             if label['label'] == 'entailment':
                 return label['score']
+
+class Dummy(Huggingface):
+    def __init__(self, name: str = None, **kwargs):
+        kwargs['name'] = name or "dummyhugs"
+        kwargs['endpoint'] = DummyEndpoint(name="dummyendhugspoint")
+
+        super().__init__(
+            **kwargs
+        ) 

@@ -44,7 +44,7 @@ class LangChainInstrument(Instrument):
             langchain.schema.BaseMemory,  # no methods instrumented
             langchain.schema.BaseChatMessageHistory,  # subclass of above
             # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
-            langchain.agents.agent.BaseSingleActionAgent, 
+            langchain.agents.agent.BaseSingleActionAgent,
             langchain.agents.agent.BaseMultiActionAgent,
             langchain.schema.language_model.BaseLanguageModel,
             # langchain.load.serializable.Serializable, # this seems to be work in progress over at langchain
@@ -55,19 +55,37 @@ class LangChainInstrument(Instrument):
 
         # Instrument only methods with these names and of these classes.
         METHODS = {
-            "_call": lambda o: isinstance(o, langchain.chains.base.Chain),
-            "__call__": lambda o: isinstance(o, langchain.chains.base.Chain),
-            "_acall": lambda o: isinstance(o, langchain.chains.base.Chain),
-            "acall": lambda o: isinstance(o, langchain.chains.base.Chain),
+            "_call":
+                lambda o: isinstance(o, langchain.chains.base.Chain),
+            "__call__":
+                lambda o: isinstance(o, langchain.chains.base.Chain),
+            "_acall":
+                lambda o: isinstance(o, langchain.chains.base.Chain),
+            "acall":
+                lambda o: isinstance(o, langchain.chains.base.Chain),
             "_get_relevant_documents":
                 lambda o: True,  # VectorStoreRetriever, langchain >= 0.230
             # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # the prompt calls might be too small to be interesting
-            "plan": lambda o: isinstance(o, (langchain.agents.agent.BaseSingleActionAgent, langchain.agents.agent.BaseMultiActionAgent)),
-            "aplan": lambda o: isinstance(o, (langchain.agents.agent.BaseSingleActionAgent, langchain.agents.agent.BaseMultiActionAgent)),
-            "_arun": lambda o: isinstance(o, langchain.tools.base.BaseTool),
-            "_run": lambda o: isinstance(o, langchain.tools.base.BaseTool),
+            "plan":
+                lambda o: isinstance(
+                    o, (
+                        langchain.agents.agent.BaseSingleActionAgent, langchain.
+                        agents.agent.BaseMultiActionAgent
+                    )
+                ),
+            "aplan":
+                lambda o: isinstance(
+                    o, (
+                        langchain.agents.agent.BaseSingleActionAgent, langchain.
+                        agents.agent.BaseMultiActionAgent
+                    )
+                ),
+            "_arun":
+                lambda o: isinstance(o, langchain.tools.base.BaseTool),
+            "_run":
+                lambda o: isinstance(o, langchain.tools.base.BaseTool),
         }
 
     def __init__(self, *args, **kwargs):
@@ -111,10 +129,7 @@ class TruChain(App):
         # TruChain specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
-        kwargs['instrument'] = LangChainInstrument(
-            root_methods=set([TruChain.with_record, TruChain.awith_record]),
-            callbacks=self
-        )
+        kwargs['instrument'] = LangChainInstrument(app=self)
 
         super().__init__(**kwargs)
 
@@ -152,7 +167,9 @@ class TruChain(App):
             ins = self.app.prep_inputs(bindings.arguments['inputs'])
 
             if len(self.app.input_keys) == 0:
-                logger.warning("langchain app has no inputs. `main_input` will be `None`.")
+                logger.warning(
+                    "langchain app has no inputs. `main_input` will be `None`."
+                )
                 return None
 
             return ins[self.app.input_keys[0]]
@@ -194,6 +211,8 @@ class TruChain(App):
         """
         Run the chain acall method and also return a record metadata object.
         """
+        self._with_dep_message(method="acall", is_async=True, with_record=True)
+
         return await self.awith_record(self.app.acall, *args, **kwargs)
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
@@ -202,6 +221,11 @@ class TruChain(App):
         """
         Run the chain call method and also return a record metadata object.
         """
+
+        self._with_dep_message(
+            method="__call__", is_async=False, with_record=True
+        )
+
         return self.with_record(self.app.__call__, *args, **kwargs)
 
     # TODEP
@@ -212,18 +236,30 @@ class TruChain(App):
         get the record, use `call_with_record` instead. 
         """
 
-        return self._call(*args, **kwargs)
+        self._with_dep_message(
+            method="__call__", is_async=False, with_record=False
+        )
+
+        return self.with_(self.app, *args, **kwargs)
 
     # TODEP
     # Chain requirement
     def _call(self, *args, **kwargs) -> Any:
-        ret, _ = self.call_with_record(*args, **kwargs)
+        self._with_dep_message(
+            method="_call", is_async=False, with_record=False
+        )
+
+        ret, _ = self.with_(self.app._call, *args, **kwargs)
 
         return ret
 
     # TODEP
     # Optional Chain requirement
     async def _acall(self, *args, **kwargs) -> Any:
-        ret, _ = await self.acall_with_record(*args, **kwargs)
+        self._with_dep_message(
+            method="_acall", is_async=True, with_record=False
+        )
+
+        ret, _ = await self.awith_(self.app.acall, *args, **kwargs)
 
         return ret

@@ -15,10 +15,10 @@ from sqlalchemy.orm import sessionmaker
 
 from trulens_eval import schema
 from trulens_eval.database import orm
-
+from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import upgrade_db
-
+from trulens_eval.database.migrations.db_data_migration import data_migrate
 from trulens_eval.database.orm import AppDefinition
 from trulens_eval.database.orm import FeedbackDefinition
 from trulens_eval.database.orm import FeedbackResult
@@ -29,17 +29,12 @@ from trulens_eval.database.utils import is_legacy_sqlite
 from trulens_eval.database.utils import is_memory_sqlite
 from trulens_eval.database.utils import migrate_legacy_sqlite
 from trulens_eval.database.utils import run_before
-
 from trulens_eval.db import DB
-
-from trulens_eval.database.migrations.db_data_migration import data_migrate
 from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import RecordID
-from trulens_eval.database.exceptions import DatabaseVersionException
-
 from trulens_eval.utils.serial import JSON
 
 logger = logging.getLogger(__name__)
@@ -58,8 +53,8 @@ class SqlAlchemyDB(DB):
     class Config:
         arbitrary_types_allowed: bool = True
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, redact_keys: bool = False, **kwargs):
+        super().__init__(redact_keys=redact_keys, **kwargs)
         self.reload_engine()
         if is_memory_sqlite(self.engine):
             warnings.warn(
@@ -74,8 +69,8 @@ class SqlAlchemyDB(DB):
         self.Session = sessionmaker(self.engine, **self.session_params)
 
     @classmethod
-    def from_db_url(cls, url: str) -> "SqlAlchemyDB":
-        return cls(engine_params={"url": url})
+    def from_db_url(cls, url: str, redact_keys: bool = False) -> "SqlAlchemyDB":
+        return cls(engine_params={"url": url}, redact_keys=redact_keys)
 
     def migrate_database(self):
         """
@@ -96,11 +91,12 @@ class SqlAlchemyDB(DB):
                 else:
                     ## TODO Create backups here. This is not sqlalchemy's strong suit: https://stackoverflow.com/questions/56990946/how-to-backup-up-a-sqlalchmey-database
                     ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `tru.migrate_database(backup_db_url="...")`)
-                    ### We might try _copy_database as a backup, but it would need to automatically handle clearing the db, and also current implementation requires migrate to run first. 
+                    ### We might try _copy_database as a backup, but it would need to automatically handle clearing the db, and also current implementation requires migrate to run first.
                     ### A valid backup would need to be able to copy an old version, not the newest version
                     upgrade_db(self.engine, revision="head")
 
-                self.reload_engine()  # let sqlalchemy recognize the migrated schema
+                self.reload_engine(
+                )  # let sqlalchemy recognize the migrated schema
 
                 ### DATA MIGRATION ###
                 data_migrate(self, from_version)
@@ -109,11 +105,11 @@ class SqlAlchemyDB(DB):
             elif e.reason == DatabaseVersionException.Reason.AHEAD:
                 # Rethrow the ahead message suggesting to upgrade trulens_eval.
                 raise e
-            
+
             else:
                 # TODO: better message here for unhandled cases?
                 raise e
-            
+
         # If we get here, our db revision does not need upgrade.
         print("Your database does not need migration.")
 
@@ -128,13 +124,15 @@ class SqlAlchemyDB(DB):
         print(f"Deleted {deleted} rows.")
 
     def insert_record(self, record: schema.Record) -> schema.RecordID:
-        _rec = orm.Record.parse(record)
+        # TODO: thread safety
+
+        _rec = orm.Record.parse(record, redact_keys=self.redact_keys)
         with self.Session.begin() as session:
             if session.query(orm.Record).filter_by(record_id=record.record_id
                                                   ).first():
                 session.merge(_rec)  # update existing
             else:
-                session.add(_rec)  # add new record
+                session.merge(_rec)  # add new record # .add was not thread safe
             return _rec.record_id
 
     def get_app(self, app_id: str) -> Optional[JSON]:
@@ -144,26 +142,36 @@ class SqlAlchemyDB(DB):
                 return json.loads(_app.app_json)
 
     def insert_app(self, app: schema.AppDefinition) -> schema.AppID:
+        # TODO: thread safety
+
         with self.Session.begin() as session:
             if _app := session.query(orm.AppDefinition
                                     ).filter_by(app_id=app.app_id).first():
                 _app.app_json = app.json()
             else:
-                _app = orm.AppDefinition.parse(app)
-                session.add(_app)
+                _app = orm.AppDefinition.parse(
+                    app, redact_keys=self.redact_keys
+                )
+                session.merge(_app)  # .add was not thread safe
+
             return _app.app_id
 
     def insert_feedback_definition(
         self, feedback_definition: schema.FeedbackDefinition
     ) -> schema.FeedbackDefinitionID:
+        # TODO: thread safety
+
         with self.Session.begin() as session:
             if _fb_def := session.query(orm.FeedbackDefinition) \
                     .filter_by(feedback_definition_id=feedback_definition.feedback_definition_id) \
                     .first():
                 _fb_def.app_json = feedback_definition.json()
             else:
-                _fb_def = orm.FeedbackDefinition.parse(feedback_definition)
-                session.add(_fb_def)
+                _fb_def = orm.FeedbackDefinition.parse(
+                    feedback_definition, redact_keys=self.redact_keys
+                )
+                session.merge(_fb_def)  # .add was not thread safe
+
             return _fb_def.feedback_definition_id
 
     def get_feedback_defs(
@@ -185,13 +193,19 @@ class SqlAlchemyDB(DB):
     def insert_feedback(
         self, feedback_result: schema.FeedbackResult
     ) -> schema.FeedbackResultID:
-        _feedback_result = orm.FeedbackResult.parse(feedback_result)
+        # TODO: thread safety
+
+        _feedback_result = orm.FeedbackResult.parse(
+            feedback_result, redact_keys=self.redact_keys
+        )
         with self.Session.begin() as session:
             if session.query(orm.FeedbackResult) \
                     .filter_by(feedback_result_id=feedback_result.feedback_result_id).first():
                 session.merge(_feedback_result)  # update existing
             else:
-                session.add(_feedback_result)  # insert new result
+                session.merge(
+                    _feedback_result
+                )  # insert new result # .add was not thread safe
             return _feedback_result.feedback_result_id
 
     def get_feedback(
@@ -372,7 +386,10 @@ class AppsExtractor:
 
             for _res in _rec.feedback_results:
                 calls[_res.name].append(json.loads(_res.calls_json)["calls"])
-                if _res.multi_result is not None and (multi_result := json.loads(_res.multi_result)) is not None:
+                if _res.multi_result is not None and (multi_result :=
+                                                      json.loads(
+                                                          _res.multi_result
+                                                      )) is not None:
                     for key, val in multi_result.items():
                         if val is not None:  # avoid getting Nones into np.mean
                             name = f"{_res.name}:::{key}"

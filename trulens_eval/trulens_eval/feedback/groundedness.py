@@ -9,16 +9,36 @@ from trulens_eval.feedback.provider import Provider
 from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.feedback.provider.openai import AzureOpenAI
 from trulens_eval.feedback.provider.openai import OpenAI
-from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.generated import re_1_10_rating
+from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
+"""
+TODO: feedback collections refactor
+
+class FeedbackCollection(SerialModel, WithClassInfo):
+    ...
+
+class Syntax():
+    ...
+
+class Truth():
+    ...
+
+class Relevance():
+    ...
+
+class Safety(RequiresCompletionProvider):
+
+    of_prompt(...) -> ...
+    ...
+"""
 
 
 class Groundedness(SerialModel, WithClassInfo):
-    summarize_provider: Provider
     groundedness_provider: Provider
+    summarize_provider: Provider
 
     def __init__(
         self,
