@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Dict, Iterable, Optional, Sequence, Set, Tuple, TypeVar, Union
+    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, TypeVar, Union
 )
 
 from merkle_json import MerkleJson
@@ -78,6 +78,14 @@ class Step(SerialModel):  #, abc.ABC):
     """
     A step in a selection path.
     """
+
+    @staticmethod
+    def of_string(s: str) -> 'Step':
+        # TODO: finish:
+        if "]" == s[-1]:
+            raise NotImplementedError
+        else:
+            return GetItemOrAttribute(item_or_attribute=s)
 
     @classmethod
     def __get_validator__(cls):
@@ -371,6 +379,15 @@ class JSONPath(SerialModel):
     def __init__(self, path: Optional[Tuple[Step, ...]] = None):
 
         super().__init__(path=path or ())
+
+    @staticmethod
+    def of_string(s: str) -> 'JSONPath':
+        # TODO: fix cases where . appears in key:
+
+        pieces = s.split(".")
+        path = map(Step.of_string, pieces)
+
+        return JSONPath(path=tuple(path))
 
     def __str__(self):
         return "*" + ("".join(map(repr, self.path)))
