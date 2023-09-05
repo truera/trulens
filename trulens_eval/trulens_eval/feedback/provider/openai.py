@@ -22,6 +22,10 @@ class OpenAI(Provider):
     def __init__(
         self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
     ):
+        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
+
         """
         Create an OpenAI Provider with out of the box feedback functions.
 
@@ -1002,6 +1006,7 @@ class AzureOpenAI(OpenAI):
         - model_engine (str, optional): The specific model version. Defaults to
           "gpt-35-turbo".
         - deployment_id (str): The specified deployment id
+        - endpoint (Endpoint): Internal Usage for DB serialization
         """
 
         super().__init__(
