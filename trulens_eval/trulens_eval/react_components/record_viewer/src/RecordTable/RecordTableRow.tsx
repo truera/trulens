@@ -70,7 +70,7 @@ export default function RecordTableRowRecursive({
                 {node.name}
                 {node.methodName ? `.${node.methodName}` : ''}
               </Typography>
-              <Typography variant="subtitle1">{selector}</Typography>
+              <Typography variant="code">{selector}</Typography>
             </Box>
           </Box>
         </TableCell>
