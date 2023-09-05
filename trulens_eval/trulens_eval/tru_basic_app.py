@@ -106,7 +106,7 @@ class TruBasicApp(App):
             # self.app._call_fn does not.
             bindings = sig.bind(*bindings.args[1:], **bindings.kwargs)
 
-        return super().main_input(func, sig, bindings)[0]
+        return super().main_input(func, sig, bindings)
 
     def call_with_record(self, *args, **kwargs):
         """
