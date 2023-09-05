@@ -14,7 +14,7 @@ TruLens-Eval has two key value propositions:
     * TruLens supports the the evaluation of inputs, outputs and internals of your LLM application using any model (including LLMs). 
     * A number of feedback functions for evaluation are implemented out-of-the-box such as groundedness, relevance and toxicity. The framework is also easily extensible for custom evaluation requirements.
 2. Tracking:
-    * TruLens contains instrumentation for any LLM application including question answering, retrieval-augmented generation, agent-based applications and more. This instrumentation allows for the tracking of a wide variety of usage metrics and metadata. Read more in the [instrumentation overview](basic_instrumentation.ipynb).
+    * TruLens contains instrumentation for any LLM application including question answering, retrieval-augmented generation, agent-based applications and more. This instrumentation allows for the tracking of a wide variety of usage metrics and metadata. Read more in the [instrumentation overview](https://www.trulens.org/trulens_eval/basic_instrumentation/).
     * TruLens' instrumentation can be applied to any LLM application without being tied down to a given framework. Additionally, deep integrations with [LangChain]() and [Llama-Index]() allow the capture of internal metadata and text.
     * Anything that is tracked by the instrumentation can be evaluated!
 
