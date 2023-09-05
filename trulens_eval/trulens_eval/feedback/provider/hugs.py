@@ -106,15 +106,12 @@ class Huggingface(Provider):
         ```
 
         Args:
-        
             text1 (str): Text to evaluate.
-
             text2 (str): Comparative text to evaluate.
 
         Returns:
 
-            float: A value between 0 and 1. 0 being "different languages" and 1
-            being "same languages".
+            float: A value between 0 and 1. 0 being "different languages" and 1 being "same languages".
         """
 
         def get_scores(text):
@@ -164,8 +161,7 @@ class Huggingface(Provider):
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "negative sentiment" and 1
-            being "positive sentiment".
+            float: A value between 0 and 1. 0 being "negative sentiment" and 1 being "positive sentiment".
         """
 
         max_length = 500
@@ -200,8 +196,7 @@ class Huggingface(Provider):
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "toxic" and 1 being "not
-            toxic".
+            float: A value between 0 and 1. 0 being "toxic" and 1 being "not toxic".
         """
 
         assert len(text) > 0, "Input cannot be blank."

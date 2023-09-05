@@ -180,8 +180,8 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         ```
 
         Args:
-            prompt (str): A text prompt to an agent. response (str): The
-            agent's response to the prompt.
+            prompt (str): A text prompt to an agent.
+            response (str): The agent's response to the prompt.
 
         Returns:
             - float: A value between 0 and 1. 0 being "not in agreement" and 1
@@ -253,8 +253,8 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         similarity to ground truth using token overlap. 
 
         Args:
-            prompt (str): A text prompt to an agent. response (str): The
-            agent's response to the prompt.
+            prompt (str): A text prompt to an agent. 
+            response (str): The agent's response to the prompt.
 
         Returns:
             - float: A value between 0 and 1. 0 being "not in agreement" and 1
