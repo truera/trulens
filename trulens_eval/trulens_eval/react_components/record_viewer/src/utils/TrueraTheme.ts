@@ -191,6 +191,7 @@ const TrueraTheme: Theme = createTheme({
       fontSize: '0.75em',
       borderRadius: '0.25rem',
       background: 'rgb(250,250,250)',
+      width: 'fit-content',
     },
   },
 });
