@@ -72,6 +72,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -79,7 +80,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): Text to evaluate.
 
         Returns:
@@ -98,6 +99,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -105,7 +107,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): Text to evaluate.
 
         Returns:
@@ -125,6 +127,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -132,7 +135,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): Text to evaluate.
 
         Returns:
@@ -152,6 +155,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -159,7 +163,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): Text to evaluate.
 
         Returns:
@@ -179,6 +183,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -186,7 +191,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): Text to evaluate.
 
         Returns:
@@ -206,6 +211,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -213,7 +219,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): Text to evaluate.
 
         Returns:
@@ -233,6 +239,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -240,7 +247,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): Text to evaluate.
 
         Returns:
@@ -353,6 +360,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -362,6 +370,7 @@ class OpenAI(Provider):
 
         Usage on RAG Contexts:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -372,7 +381,7 @@ class OpenAI(Provider):
         ```
 
 
-        Parameters:
+        Args:
             question (str): A question being asked. statement (str): A statement
             to the question.
 
@@ -408,6 +417,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -417,6 +427,7 @@ class OpenAI(Provider):
 
         Usage on RAG Contexts:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -426,7 +437,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             prompt (str): A text prompt to an agent. response (str): The agent's
             response to the prompt.
 
@@ -462,6 +473,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -469,7 +481,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
 
@@ -505,6 +517,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -512,7 +525,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             prompt (str): A text prompt to an agent. response (str): The agent's
             response to the prompt.
 
@@ -550,6 +563,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -557,7 +571,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
 
@@ -591,6 +605,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -598,7 +613,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
 
@@ -632,6 +647,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -639,7 +655,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
 
@@ -673,6 +689,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -680,7 +697,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
 
@@ -714,6 +731,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -721,7 +739,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
 
@@ -755,6 +773,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -762,7 +781,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
 
@@ -796,6 +815,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -803,7 +823,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
 
@@ -837,6 +857,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -844,7 +865,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
 
@@ -878,6 +899,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -885,7 +907,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
 
@@ -919,6 +941,7 @@ class OpenAI(Provider):
 
         Usage:
         ```
+        from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
@@ -926,7 +949,7 @@ class OpenAI(Provider):
 
         ```
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
 
