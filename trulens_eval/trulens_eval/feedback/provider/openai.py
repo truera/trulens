@@ -14,26 +14,28 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAI(Provider):
+    """Out of the box feedback functions calling OpenAI APIs.
+    """
     model_engine: str
     endpoint: Endpoint
 
     def __init__(
         self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
     ):
-        # NOTE(piotrm): pydantic adds endpoint to the signature of this
-        # constructor if we don't include it explicitly, even though we set it
-        # down below. Adding it as None here as a temporary hack.
         """
-        A set of OpenAI Feedback Functions.
+        Create an OpenAI Provider with out of the box feedback functions.
 
-        Parameters:
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
 
-        - model_engine (str, optional): The specific model version. Defaults to
-          "gpt-3.5-turbo".
+        ```
 
-        - All other args/kwargs passed to OpenAIEndpoint constructor.
+        Args:
+            model_engine (str): The OpenAI completion model. Defaults to `gpt-3.5-turbo`
+            endpoint (Endpoint): Internal Usage for DB serialization
         """
-
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
@@ -64,6 +66,15 @@ class OpenAI(Provider):
         Uses OpenAI's Moderation API. A function that checks if text is hate
         speech.
 
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.moderation_not_hate).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
+
         Parameters:
             text (str): Text to evaluate.
 
@@ -80,6 +91,15 @@ class OpenAI(Provider):
         """
         Uses OpenAI's Moderation API. A function that checks if text is
         threatening speech.
+
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.moderation_not_hatethreatening).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
 
         Parameters:
             text (str): Text to evaluate.
@@ -99,6 +119,15 @@ class OpenAI(Provider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         self harm.
 
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.moderation_not_selfharm).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
+
         Parameters:
             text (str): Text to evaluate.
 
@@ -116,6 +145,15 @@ class OpenAI(Provider):
         """
         Uses OpenAI's Moderation API. A function that checks if text is sexual
         speech.
+
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.moderation_not_sexual).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
 
         Parameters:
             text (str): Text to evaluate.
@@ -135,6 +173,15 @@ class OpenAI(Provider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         sexual minors.
 
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.moderation_not_sexualminors).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
+
         Parameters:
             text (str): Text to evaluate.
 
@@ -153,6 +200,15 @@ class OpenAI(Provider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         violence.
 
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.moderation_not_violence).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
+
         Parameters:
             text (str): Text to evaluate.
 
@@ -170,6 +226,15 @@ class OpenAI(Provider):
         """
         Uses OpenAI's Moderation API. A function that checks if text is about
         graphic violence.
+
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.moderation_not_violencegraphic).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
 
         Parameters:
             text (str): Text to evaluate.
@@ -282,6 +347,27 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion App. A function that completes a
         template to check the relevance of the statement to the question.
 
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.qs_relevance).on_input_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
+
+        Usage on RAG Contexts:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.qs_relevance).on_input().on(
+            TruLlama.select_source_nodes().node.text # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details
+        ).aggregate(np.mean) 
+
+        ```
+
+
         Parameters:
             question (str): A question being asked. statement (str): A statement
             to the question.
@@ -315,6 +401,26 @@ class OpenAI(Provider):
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the relevance of the response to a prompt.
+
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.relevance).on_input_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
+
+        Usage on RAG Contexts:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.relevance).on_input().on(
+            TruLlama.select_source_nodes().node.text # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details
+        ).aggregate(np.mean) 
+
+        ```
 
         Parameters:
             prompt (str): A text prompt to an agent. response (str): The agent's
@@ -350,6 +456,15 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the sentiment of some text.
 
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.sentiment).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
+
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
@@ -383,6 +498,15 @@ class OpenAI(Provider):
         prompt and gets a response, encouraging truthfulness. A second template
         is given to Chat GPT with a prompt that the original response is
         correct, and measures whether previous Chat GPT's response is similar.
+
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.model_agreement).on_input_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
 
         Parameters:
             prompt (str): A text prompt to an agent. response (str): The agent's
@@ -420,6 +544,15 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the conciseness of some text. Prompt credit to Langchain Eval.
 
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.conciseness).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
+
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
@@ -451,6 +584,15 @@ class OpenAI(Provider):
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the correctness of some text. Prompt credit to Langchain Eval.
+
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.correctness).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -484,6 +626,15 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the coherence of some text. Prompt credit to Langchain Eval.
 
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.coherence).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
+
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
@@ -515,6 +666,15 @@ class OpenAI(Provider):
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the harmfulness of some text. Prompt credit to Langchain Eval.
+
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.harmfulness).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -548,6 +708,15 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the maliciousness of some text. Prompt credit to Langchain Eval.
 
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.maliciousness).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
+
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
@@ -579,6 +748,15 @@ class OpenAI(Provider):
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the helpfulness of some text. Prompt credit to Langchain Eval.
+
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.helpfulness).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -612,6 +790,15 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the controversiality of some text. Prompt credit to Langchain Eval.
 
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.controversiality).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
+
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
@@ -643,6 +830,15 @@ class OpenAI(Provider):
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the misogyny of some text. Prompt credit to Langchain Eval.
+
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.misogyny).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -676,6 +872,15 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the criminality of some text. Prompt credit to Langchain Eval.
 
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.criminality).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
+
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
             response to the prompt.
@@ -707,6 +912,15 @@ class OpenAI(Provider):
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the insensitivity of some text. Prompt credit to Langchain Eval.
+
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.insensitivity).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
+
+        ```
 
         Parameters:
             text (str): A prompt to an agent. response (str): The agent's
@@ -760,6 +974,9 @@ class OpenAI(Provider):
 
 
 class AzureOpenAI(OpenAI):
+    """Out of the box feedback functions calling AzureOpenAI APIs. 
+    Has the same functionality as OpenAI out of the box feedback functions.
+    """
     deployment_id: str
 
     def __init__(self, endpoint=None, **kwargs):
@@ -773,7 +990,14 @@ class AzureOpenAI(OpenAI):
         - OPENAI_API_VERSION
         - OPENAI_API_KEY
 
-        Parameters:
+        Usage:
+        ```
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = AzureOpenAI(deployment_id="...")
+
+        ```
+
+        Args:
 
         - model_engine (str, optional): The specific model version. Defaults to
           "gpt-35-turbo".

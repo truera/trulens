@@ -13,7 +13,6 @@ from trulens_eval.utils.generated import re_1_10_rating
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
-logger = logging.getLogger(__name__)
 """
 TODO: feedback collections refactor
 
@@ -35,6 +34,7 @@ class Safety(RequiresCompletionProvider):
     ...
 """
 
+logger = logging.getLogger(__name__)
 
 class Groundedness(SerialModel, WithClassInfo):
     groundedness_provider: Provider
