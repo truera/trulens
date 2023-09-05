@@ -52,11 +52,6 @@ class OpenAI(Provider):
 
         set_openai_key()
 
-    """
-    def to_json(self) -> Dict:
-        return Provider.to_json(self, model_engine=self.model_engine)
-    """
-
     def _create_chat_completion(self, *args, **kwargs):
         return openai.ChatCompletion.create(*args, **kwargs)
 
@@ -385,12 +380,11 @@ class OpenAI(Provider):
 
 
         Args:
-            question (str): A question being asked. statement (str): A statement
-            to the question.
+            question (str): A question being asked. 
+            statement (str): A statement to the question.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not relevant" and 1 being
-            "relevant".
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
         return re_1_10_rating(
             self.endpoint.run_me(
@@ -444,12 +438,11 @@ class OpenAI(Provider):
 
 
         Args:
-            prompt (str): A text prompt to an agent. response (str): The agent's
-            response to the prompt.
+            prompt (str): A text prompt to an agent. 
+            response (str): The agent's response to the prompt.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not relevant" and 1 being
-            "relevant".
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
         return re_1_10_rating(
             self.endpoint.run_me(
@@ -488,12 +481,10 @@ class OpenAI(Provider):
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "negative sentiment" and 1
-            being "positive sentiment".
+            float: A value between 0 and 1. 0 being "negative sentiment" and 1 being "positive sentiment".
         """
 
         return re_1_10_rating(
@@ -533,12 +524,11 @@ class OpenAI(Provider):
 
         
         Args:
-            prompt (str): A text prompt to an agent. response (str): The agent's
-            response to the prompt.
+            prompt (str): A text prompt to an agent. 
+            response (str): The agent's response to the prompt.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not in agreement" and 1
-            being "in agreement".
+            float: A value between 0 and 1. 0 being "not in agreement" and 1 being "in agreement".
         """
         logger.warning(
             "model_agreement has been deprecated. Use GroundTruthAgreement(ground_truth) instead."
@@ -580,12 +570,10 @@ class OpenAI(Provider):
 
 
         Args:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not concise" and 1
-            being "concise".
+            float: A value between 0 and 1. 0 being "not concise" and 1 being "concise".
         """
 
         return re_1_10_rating(
@@ -622,12 +610,10 @@ class OpenAI(Provider):
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not correct" and 1
-            being "correct".
+            float: A value between 0 and 1. 0 being "not correct" and 1 being "correct".
         """
 
         return re_1_10_rating(
@@ -668,8 +654,7 @@ class OpenAI(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not coherent" and 1
-            being "coherent".
+            float: A value between 0 and 1. 0 being "not coherent" and 1 being "coherent".
         """
 
         return re_1_10_rating(
@@ -710,8 +695,7 @@ class OpenAI(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "harmful" and 1
-            being "not harmful".
+            float: A value between 0 and 1. 0 being "harmful" and 1 being "not harmful".
         """
 
         return re_1_10_rating(
@@ -752,8 +736,7 @@ class OpenAI(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "malicious" and 1
-            being "not malicious".
+            float: A value between 0 and 1. 0 being "malicious" and 1 being "not malicious".
         """
 
         return re_1_10_rating(
@@ -793,8 +776,7 @@ class OpenAI(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not helpful" and 1
-            being "helpful".
+            float: A value between 0 and 1. 0 being "not helpful" and 1 being "helpful".
         """
 
         return re_1_10_rating(
@@ -834,8 +816,7 @@ class OpenAI(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "controversial" and 1
-            being "not controversial".
+            float: A value between 0 and 1. 0 being "controversial" and 1 being "not controversial".
         """
 
         return re_1_10_rating(
@@ -875,8 +856,7 @@ class OpenAI(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "misogynist" and 1
-            being "not misogynist".
+            float: A value between 0 and 1. 0 being "misogynist" and 1 being "not misogynist".
         """
 
         return re_1_10_rating(
@@ -916,8 +896,7 @@ class OpenAI(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "criminal" and 1
-            being "not criminal".
+            float: A value between 0 and 1. 0 being "criminal" and 1 being "not criminal".
         """
 
         return re_1_10_rating(
@@ -957,8 +936,7 @@ class OpenAI(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "insensitive" and 1
-            being "not insensitive".
+            float: A value between 0 and 1. 0 being "insensitive" and 1 being "not insensitive".
         """
 
         return re_1_10_rating(
