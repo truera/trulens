@@ -76,9 +76,9 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.moderation_not_hate).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.moderation_not_hate).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -103,9 +103,9 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.moderation_not_hatethreatening).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.moderation_not_hatethreatening).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -131,9 +131,9 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.moderation_not_selfharm).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.moderation_not_selfharm).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -159,10 +159,11 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.moderation_not_sexual).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.moderation_not_sexual).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
+        
         Args:
             text (str): Text to evaluate.
 
@@ -187,9 +188,9 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.moderation_not_sexualminors).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.moderation_not_sexualminors).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -215,9 +216,9 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.moderation_not_violence).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.moderation_not_violence).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -243,9 +244,9 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.moderation_not_violencegraphic).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.moderation_not_violencegraphic).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -364,10 +365,10 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.qs_relevance).on_input_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.qs_relevance).on_input_output() 
         ```
-
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        
         Usage on RAG Contexts:
         ```
         from trulens_eval import Feedback
@@ -375,10 +376,12 @@ class OpenAI(Provider):
         openai_provider = OpenAI()
 
         feedback = Feedback(openai_provider.qs_relevance).on_input().on(
-            TruLlama.select_source_nodes().node.text # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details
+            TruLlama.select_source_nodes().node.text # See note below
         ).aggregate(np.mean) 
 
         ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
 
 
         Args:
@@ -421,9 +424,10 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.relevance).on_input_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.relevance).on_input_output()
         ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
 
         Usage on RAG Contexts:
         ```
@@ -432,10 +436,12 @@ class OpenAI(Provider):
         openai_provider = OpenAI()
 
         feedback = Feedback(openai_provider.relevance).on_input().on(
-            TruLlama.select_source_nodes().node.text # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details
+            TruLlama.select_source_nodes().node.text # See note below
         ).aggregate(np.mean) 
 
         ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
 
         Args:
             prompt (str): A text prompt to an agent. response (str): The agent's
@@ -477,9 +483,9 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.sentiment).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.sentiment).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): A prompt to an agent. response (str): The agent's
@@ -521,10 +527,11 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.model_agreement).on_input_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.model_agreement).on_input_output() 
         ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
+        
         Args:
             prompt (str): A text prompt to an agent. response (str): The agent's
             response to the prompt.
@@ -567,9 +574,10 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.conciseness).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.conciseness).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
 
         Args:
             text (str): A prompt to an agent. response (str): The agent's
@@ -609,9 +617,9 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.correctness).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.correctness).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): A prompt to an agent. response (str): The agent's
@@ -651,13 +659,13 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.coherence).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.coherence).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
 
         Args:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text (str): The text to evaluate.
 
         Returns:
             float: A value between 0 and 1. 0 being "not coherent" and 1
@@ -693,13 +701,13 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.harmfulness).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.harmfulness).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
+        
         Args:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text (str): The text to evaluate.
 
         Returns:
             float: A value between 0 and 1. 0 being "harmful" and 1
@@ -735,13 +743,13 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.maliciousness).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.maliciousness).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
+        
         Args:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text (str): The text to evaluate.
 
         Returns:
             float: A value between 0 and 1. 0 being "malicious" and 1
@@ -777,13 +785,12 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.helpfulness).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.helpfulness).on_output() 
         ```
-
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        
         Args:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text (str): The text to evaluate.
 
         Returns:
             float: A value between 0 and 1. 0 being "not helpful" and 1
@@ -819,13 +826,12 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.controversiality).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.controversiality).on_output() 
         ```
-
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        
         Args:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text (str): The text to evaluate.
 
         Returns:
             float: A value between 0 and 1. 0 being "controversial" and 1
@@ -861,13 +867,12 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.misogyny).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.misogyny).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text (str): The text to evaluate.
 
         Returns:
             float: A value between 0 and 1. 0 being "misogynist" and 1
@@ -903,13 +908,12 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.criminality).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.criminality).on_output()
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text (str): The text to evaluate.
 
         Returns:
             float: A value between 0 and 1. 0 being "criminal" and 1
@@ -945,13 +949,12 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.insensitivity).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(openai_provider.insensitivity).on_output()
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text (str): The text to evaluate.
 
         Returns:
             float: A value between 0 and 1. 0 being "insensitive" and 1
