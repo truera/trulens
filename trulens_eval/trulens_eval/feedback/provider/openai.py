@@ -1006,11 +1006,9 @@ class AzureOpenAI(OpenAI):
         ```
 
         Args:
-
-        - model_engine (str, optional): The specific model version. Defaults to
-          "gpt-35-turbo".
-        - deployment_id (str): The specified deployment id
-        - endpoint (Endpoint): Internal Usage for DB serialization
+            model_engine (str, optional): The specific model version. Defaults to "gpt-35-turbo".
+            deployment_id (str): The specified deployment id
+            endpoint (Endpoint): Internal Usage for DB serialization
         """
 
         super().__init__(
