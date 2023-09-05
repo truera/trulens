@@ -178,9 +178,15 @@ class Groundedness(SerialModel, WithClassInfo):
             float: for each statement, gets the max groundedness, then averages over that.
         """
         all_results = []
+        
+        statements_to_scores = {}
         for multi_output in source_statements_multi_output:
-            result_vals = list(multi_output.values())
-        all_results.append(result_vals)
-        all_results = np.asarray(all_results)
-        max_over_sources = np.max(all_results, axis=0)
-        return np.mean(max_over_sources)
+            for k in multi_output:
+                if k not in statements_to_scores:
+                    statements_to_scores[k] = []
+                statements_to_scores[k].append(multi_output[k])
+        
+        for k in statements_to_scores:
+            all_results.append(np.max(statements_to_scores[k]))
+        
+        return np.mean(all_results)
