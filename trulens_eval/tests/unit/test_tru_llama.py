@@ -6,8 +6,11 @@ import asyncio
 import unittest
 from unittest import main
 
+from llama_index import ServiceContext
+from llama_index import set_global_service_context
 from llama_index import SimpleWebPageReader
 from llama_index import VectorStoreIndex
+from llama_index.llms import OpenAI
 from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
@@ -21,9 +24,18 @@ check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
 class TestLlamaIndex(JSONTestCase):
 
     def setUp(self):
-        self.documents = SimpleWebPageReader(html_to_text=True).load_data(
-            ["http://paulgraham.com/worked.html"]
-        )
+
+        # NOTE: Need temp = 0 for consistent tests. Some tests are still
+        # non-deterministic despite this temperature, perhaps there is some
+        # other temperature setting or this one is not taken up.
+        llm = OpenAI(temperature=0.0)
+        service_context = ServiceContext.from_defaults(llm=llm)
+        set_global_service_context(service_context)
+
+        # llama_index 0.8.15 bug: need to provide metadata_fn
+        self.documents = SimpleWebPageReader(
+            html_to_text=True, metadata_fn=lambda url: dict(url=url)
+        ).load_data(["http://paulgraham.com/worked.html"])
         self.index = VectorStoreIndex.from_documents(self.documents)
 
     def test_query_engine_async(self):
@@ -33,6 +45,7 @@ class TestLlamaIndex(JSONTestCase):
         # Check that the instrumented async aquery method produces the same result as the query method.
 
         query_engine = self.index.as_query_engine()
+
         tru_query_engine = TruLlama(query_engine)
         llm_response_async, record_async = await tru_query_engine.aquery_with_record(
             "What did the author do growing up?"

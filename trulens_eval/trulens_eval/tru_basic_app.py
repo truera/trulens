@@ -2,21 +2,18 @@
 # Basic input output instrumentation and monitoring.
 """
 
-from datetime import datetime
+from inspect import BoundArguments
+from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Sequence
+from typing import Callable, ClassVar
 
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.provider_apis import Endpoint
-from trulens_eval.schema import Cost
-from trulens_eval.schema import RecordAppCall
-from trulens_eval.util import Class
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import jsonify
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import FunctionOrMethod
 
 logger = logging.getLogger(__name__)
 
@@ -31,11 +28,12 @@ class TruBasicCallableInstrument(Instrument):
         # Instrument only methods with these names and of these classes.
         METHODS = {"_call": lambda o: isinstance(o, TruWrapperApp)}
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super().__init__(
-            root_methods=set([TruBasicApp.call_with_record]),
-            classes=TruBasicCallableInstrument.Default.CLASSES(),
-            methods=TruBasicCallableInstrument.Default.METHODS
+            include_classes=TruBasicCallableInstrument.Default.CLASSES(),
+            include_methods=TruBasicCallableInstrument.Default.METHODS,
+            *args,
+            **kwargs
         )
 
 
@@ -57,7 +55,8 @@ class TruBasicApp(App):
     app: TruWrapperApp
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(TruBasicApp._call),
+        default_factory=lambda: FunctionOrMethod.
+        of_callable(TruWrapperApp._call),
         const=True
     )
 
@@ -76,8 +75,20 @@ class TruBasicApp(App):
         app = TruWrapperApp(text_to_text)
         kwargs['app'] = TruWrapperApp(text_to_text)
         kwargs['root_class'] = Class.of_object(app)
-        kwargs['instrument'] = TruBasicCallableInstrument()
+        kwargs['instrument'] = TruBasicCallableInstrument(app=self)
+
         super().__init__(**kwargs)
+
+        # Setup the DB-related things:
+        self.post_init()
+
+    def main_input(
+        self, func: Callable, sig: Signature, bindings: BoundArguments
+    ) -> str:
+        if "input" in bindings.arguments:
+            return bindings.arguments['input']
+
+        return super().main_input(func, sig, bindings)
 
     def call_with_record(self, input: str, **kwargs):
         """ Run the callable and pass any kwargs.
@@ -86,40 +97,6 @@ class TruBasicApp(App):
             dict: record metadata
         """
 
-        # Wrapped calls will look this up by traversing the call stack. This
-        # should work with threads.
-        record: Sequence[RecordAppCall] = []
+        self._with_dep_message(method="_call", is_async=False, with_record=True)
 
-        ret = None
-        error = None
-
-        cost: Cost = Cost()
-
-        start_time = None
-        end_time = None
-
-        try:
-            start_time = datetime.now()
-            ret, cost = Endpoint.track_all_costs_tally(
-                lambda: self.app._call(input, **kwargs)
-            )
-            end_time = datetime.now()
-
-        except BaseException as e:
-            end_time = datetime.now()
-            error = e
-            logger.error(f"App raised an exception: {e}")
-
-        assert len(record) > 0, "No information recorded in call."
-
-        ret_record_args = dict()
-
-        ret_record_args['main_input'] = input
-        if ret is not None:
-            ret_record_args['main_output'] = ret
-
-        ret_record = self._post_record(
-            ret_record_args, error, cost, start_time, end_time, record
-        )
-
-        return ret, ret_record
+        return self.with_record(self.app._call, input, **kwargs)

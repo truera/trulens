@@ -15,27 +15,38 @@ from langchain.chains import LLMChain
 from langchain.chains import SimpleSequentialChain
 from langchain.chat_models.openai import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.llms.openai import OpenAI
 from langchain.memory import ConversationBufferWindowMemory
+from langchain.memory import ConversationSummaryBufferMemory
 from langchain.schema.messages import HumanMessage
 from langchain.vectorstores import Pinecone
 import pinecone
 from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
+from trulens_eval.feedback.provider.endpoint import Endpoint
+from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.keys import check_keys
-from trulens_eval.provider_apis import Endpoint
-from trulens_eval.provider_apis import OpenAIEndpoint
+from trulens_eval.schema import FeedbackMode
+from trulens_eval.schema import Record
 from trulens_eval.tru_chain import TruChain
 import trulens_eval.utils.python  # makes sure asyncio gets instrumented
-
-check_keys(
-    "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
-)
 
 
 class TestTruChain(JSONTestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        # Cannot reset on each test as they might be done in parallel.
+        Tru().reset_database()
+
     def setUp(self):
+
+        check_keys(
+            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY",
+            "PINECONE_ENV"
+        )
+
         # Setup of outdated tests:
         """
         self.llm_model_id = "gpt2"
@@ -68,6 +79,125 @@ class TestTruChain(JSONTestCase):
 
         self.llm = HuggingFacePipeline(pipeline=self.pipe)
         """
+
+    def test_multiple_instruments(self):
+        # Multiple wrapped apps use the same components. Make sure paths are
+        # correctly tracked.
+
+        prompt = PromptTemplate.from_template(
+            """Honestly answer this question: {question}."""
+        )
+        llm = OpenAI(temperature=0.0, streaming=False, cache=False)
+
+        chain1 = LLMChain(llm=llm, prompt=prompt)
+
+        memory = ConversationSummaryBufferMemory(
+            memory_key="chat_history",
+            input_key="question",
+            llm=llm,  # same llm now appears in a different spot
+        )
+        chain2 = LLMChain(llm=llm, prompt=prompt, memory=memory)
+
+    def _create_basic_chain(self, app_id: str = None):
+        OpenAIEndpoint()
+
+        # Create simple QA chain.
+        tru = Tru()
+        prompt = PromptTemplate.from_template(
+            """Honestly answer this question: {question}."""
+        )
+
+        # Get sync results.
+        llm = ChatOpenAI(temperature=0.0)
+        chain = LLMChain(llm=llm, prompt=prompt)
+
+        # Note that without WITH_APP mode, there might be a delay between return
+        # of a with_record and the record appearing in the db.
+        tc = tru.Chain(
+            chain, app_id=app_id, feedback_mode=FeedbackMode.WITH_APP
+        )
+
+        return tc
+
+    def test_record_metadata_plain(self):
+        # Test inclusion of metadata in records.
+
+        # Need unique app_id per test as they may be run in parallel and have
+        # same ids.
+        tc = self._create_basic_chain(app_id="metaplain")
+
+        message = "What is 1+2?"
+        meta = "this is plain metadata"
+
+        _, rec = tc.call_with_record(message, record_metadata=meta)
+
+        # Check record has metadata.
+        self.assertEqual(rec.meta, meta)
+
+        # Check the record has the metadata when retrieved back from db.
+        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        self.assertGreater(len(recs), 0)
+        rec = Record.parse_raw(recs.iloc[0].record_json)
+        self.assertEqual(rec.meta, meta)
+
+        # Check updating the record metadata in the db.
+        new_meta = "this is new meta"
+        rec.meta = new_meta
+        Tru().update_record(rec)
+        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        self.assertGreater(len(recs), 0)
+        rec = Record.parse_raw(recs.iloc[0].record_json)
+        self.assertNotEqual(rec.meta, meta)
+        self.assertEqual(rec.meta, new_meta)
+
+        # Check adding meta to a record that initially didn't have it.
+        # Record with no meta:
+        _, rec = tc.call_with_record(message)
+        self.assertEqual(rec.meta, None)
+        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        self.assertGreater(len(recs), 1)
+        rec = Record.parse_raw(recs.iloc[1].record_json)
+        self.assertEqual(rec.meta, None)
+
+        # Update it to add meta:
+        rec.meta = new_meta
+        Tru().update_record(rec)
+        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        self.assertGreater(len(recs), 1)
+        rec = Record.parse_raw(recs.iloc[1].record_json)
+        self.assertEqual(rec.meta, new_meta)
+
+    def test_record_metadata_json(self):
+        # Test inclusion of metadata in records.
+
+        # Need unique app_id per test as they may be run in parallel and have
+        # same ids.
+        tc = self._create_basic_chain(app_id="metajson")
+
+        message = "What is 1+2?"
+        meta = dict(field1="hello", field2="there")
+
+        _, rec = tc.call_with_record(message, record_metadata=meta)
+
+        # Check record has metadata.
+        self.assertEqual(rec.meta, meta)
+
+        # Check the record has the metadata when retrieved back from db.
+        recs, feedbacks = Tru().get_records_and_feedback([tc.app_id])
+        self.assertGreater(len(recs), 0)
+        rec = Record.parse_raw(recs.iloc[0].record_json)
+        self.assertEqual(rec.meta, meta)
+
+        # Check updating the record metadata in the db.
+        new_meta = dict(hello="this is new meta")
+        rec.meta = new_meta
+        Tru().update_record(rec)
+
+        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        self.assertGreater(len(recs), 0)
+        rec = Record.parse_raw(recs.iloc[0].record_json)
+        self.assertNotEqual(rec.meta, meta)
+        self.assertEqual(rec.meta, new_meta)
 
     def test_async_with_task(self):
         asyncio.run(self._async_with_task())
@@ -152,7 +282,9 @@ class TestTruChain(JSONTestCase):
         self.assertJSONEqual(
             async_record.dict(),
             sync_record.dict(),
-            skips=set(["name", "ts", "start_time", "end_time", "record_id"])
+            skips=set(
+                ["id", "name", "ts", "start_time", "end_time", "record_id"]
+            )
         )
 
     def test_async_token_gen(self):
@@ -218,6 +350,7 @@ class TestTruChain(JSONTestCase):
             sync_record.dict(),
             skips=set(
                 [
+                    "id",
                     "cost",  # usage info in streaming mode seems to not be available for openai by default https://community.openai.com/t/usage-info-in-api-responses/18862
                     "name",
                     "ts",

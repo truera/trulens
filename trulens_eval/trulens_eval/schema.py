@@ -21,7 +21,6 @@ util.py:CLASS_INFO key.
 """
 
 from abc import ABC
-from abc import abstractmethod
 from datetime import datetime
 from enum import Enum
 import logging
@@ -30,17 +29,17 @@ from typing import Any, ClassVar, Dict, Optional, Sequence, TypeVar, Union
 from munch import Munch as Bunch
 import pydantic
 
-from trulens_eval.util import Class
-from trulens_eval.util import Function
-from trulens_eval.util import FunctionOrMethod
-from trulens_eval.util import GetItemOrAttribute
-from trulens_eval.util import JSON
-from trulens_eval.util import jsonify
-from trulens_eval.util import JSONPath
-from trulens_eval.util import Method
-from trulens_eval.util import obj_id_of_obj
-from trulens_eval.util import SerialModel
-from trulens_eval.util import WithClassInfo
+from trulens_eval.utils.json import jsonify
+from trulens_eval.utils.json import obj_id_of_obj
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import Function
+from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.pyschema import Method
+from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.serial import GetItemOrAttribute
+from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import SerialModel
 
 T = TypeVar("T")
 
@@ -159,6 +158,7 @@ class Record(SerialModel):
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
     tags: Optional[str] = ""
+    meta: Optional[JSON] = None
 
     main_input: Optional[JSON] = None
     main_output: Optional[JSON] = None  # if no error
@@ -283,7 +283,7 @@ class FeedbackResultStatus(Enum):
 
 
 class FeedbackCall(SerialModel):
-    args: Dict[str, str]
+    args: Dict[str, Optional[JSON]]
     ret: float
 
     # New in 0.6.0: Any additional data a feedback function returns to display
@@ -328,9 +328,12 @@ class FeedbackResult(SerialModel):
         self.feedback_result_id = feedback_result_id
 
 
-class FeedbackDefinition(SerialModel):
+class FeedbackDefinition(SerialModel, WithClassInfo):
     # Serialized parts of a feedback function. The non-serialized parts are in
     # the feedback.py:Feedback class.
+
+    class Config:
+        arbitrary_types_allowed = True
 
     # Implementation serialization info.
     implementation: Optional[Union[Function, Method]] = None
@@ -353,7 +356,8 @@ class FeedbackDefinition(SerialModel):
         implementation: Optional[Union[Function, Method]] = None,
         aggregator: Optional[Union[Function, Method]] = None,
         selectors: Dict[str, JSONPath] = None,
-        supplied_name: Optional[str] = None
+        supplied_name: Optional[str] = None,
+        **kwargs
     ):
         """
         - selectors: Optional[Dict[str, JSONPath]] -- mapping of implementation
@@ -370,12 +374,16 @@ class FeedbackDefinition(SerialModel):
 
         selectors = selectors or dict()
 
+        # for WithClassInfo:
+        kwargs['obj'] = self
+
         super().__init__(
             feedback_definition_id="temporary",
             selectors=selectors,
             implementation=implementation,
             aggregator=aggregator,
             supplied_name=supplied_name,
+            **kwargs
         )
 
         if feedback_definition_id is None:
@@ -418,7 +426,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
 
     app_id: AppID
     tags: Tags
-    metadata: Metadata
+    metadata: Metadata  # TODO: rename to meta for consistency with other metas
 
     # Feedback functions to evaluate on each record. Unlike the above, these are
     # meant to be serialized.
@@ -438,12 +446,26 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
     # Wrapped app in jsonized form.
     app: JSON
 
+    # Info to store about the app and to display in dashboard. This is useful if
+    # app itself cannot be serialized. `app_extra_json`, then, can stand in place for
+    # whatever the user might want to see about the app.
+    app_extra_json: JSON
+
+    def jsonify_extra(self, content):
+        # Called by jsonify for us to add any data we might want to add to the
+        # serialization of `app`.
+        if self.app_extra_json is not None:
+            content['app'].update(self.app_extra_json)
+
+        return content
+
     def __init__(
         self,
         app_id: Optional[AppID] = None,
         tags: Optional[Tags] = None,
         metadata: Optional[Metadata] = None,
         feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
+        app_extra_json: JSON = None,
         **kwargs
     ):
 
@@ -452,6 +474,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         kwargs['feedback_mode'] = feedback_mode
         kwargs['tags'] = ""
         kwargs['metadata'] = {}
+        kwargs['app_extra_json'] = app_extra_json or dict()
 
         # for WithClassInfo:
         kwargs['obj'] = self
@@ -470,6 +493,9 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         if metadata is None:
             metadata = {}
         self.metadata = metadata
+
+    def dict(self):
+        return jsonify(self)
 
     @classmethod
     def select_inputs(cls) -> JSONPath:
