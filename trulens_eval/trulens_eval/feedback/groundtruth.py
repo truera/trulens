@@ -123,7 +123,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         with a prompt that the original response is correct, and measures
         whether previous Chat GPT's response is similar.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback import GroundTruthAgreement
@@ -133,9 +133,9 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         ]
         ground_truth_collection = GroundTruthAgreement(golden_set)
 
-        feedback = Feedback(ground_truth_collection.agreement_measure).on_input_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(ground_truth_collection.agreement_measure).on_input_output() 
         ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             prompt (str): A text prompt to an agent. 
@@ -165,7 +165,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         Uses BERT Score. A function that that measures
         similarity to ground truth using bert embeddings. 
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback import GroundTruthAgreement
@@ -175,9 +175,10 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         ]
         ground_truth_collection = GroundTruthAgreement(golden_set)
 
-        feedback = Feedback(ground_truth_collection.bert_score).on_input_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(ground_truth_collection.bert_score).on_input_output() 
         ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
 
         Args:
             prompt (str): A text prompt to an agent.
@@ -209,7 +210,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         Uses BLEU Score. A function that that measures
         similarity to ground truth using token overlap. 
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback import GroundTruthAgreement
@@ -219,9 +220,9 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         ]
         ground_truth_collection = GroundTruthAgreement(golden_set)
 
-        feedback = Feedback(ground_truth_collection.bleu).on_input_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(ground_truth_collection.bleu).on_input_output() 
         ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             prompt (str): A text prompt to an agent. 

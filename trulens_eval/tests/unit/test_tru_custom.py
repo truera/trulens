@@ -26,10 +26,10 @@ class TestTruCustonApp(JSONTestCase):
     def test_with_record(self):
         question = "What is the capital of Indonesia?"
 
-        # Normal usage:
+        # Normal **Usage:**
         response_normal = self.ca.respond_to_query(question)
 
-        # Instrumented usage:
+        # Instrumented **Usage:**
         response_wrapped, record = self.ta.with_record(
             self.ca.respond_to_query, input=question, record_metadata="meta1"
         )
@@ -43,10 +43,10 @@ class TestTruCustonApp(JSONTestCase):
     def test_context_manager(self):
         question = "What is the capital of Indonesia?"
 
-        # Normal usage:
+        # Normal **Usage:**
         response_normal = self.ca.respond_to_query(question)
 
-        # Instrumented usage:
+        # Instrumented **Usage:**
         with self.ta as recording:
             response_wrapped = self.ca.respond_to_query(input=question)
 
@@ -58,11 +58,11 @@ class TestTruCustonApp(JSONTestCase):
         question1 = "What is the capital of Indonesia?"
         question2 = "What is the capital of Poland?"
 
-        # Normal usage:
+        # Normal **Usage:**
         response_normal1 = self.ca.respond_to_query(question1)
         response_normal2 = self.ca.respond_to_query(question2)
 
-        # Instrumented usage:
+        # Instrumented **Usage:**
         with self.ta as recording1:
             recording1.record_metadata = "meta1"
             response_wrapped1 = self.ca.respond_to_query(input=question1)

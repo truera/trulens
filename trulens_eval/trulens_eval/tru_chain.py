@@ -101,7 +101,7 @@ class LangChainInstrument(Instrument):
 class TruChain(App):
     """Instantiates the Langchain Wrapper.
         
-        Usage:
+        **Usage:**
 
         Langchain Code: [Langchain Quickstart](https://python.langchain.com/docs/get_started/quickstart)
         ```

@@ -50,7 +50,7 @@ class TruWrapperApp(object):
 class TruBasicApp(App):
     """Instantiates a Basic app that makes little assumptions. Assumes input text and output text.
         
-        Usage:
+        **Usage:**
 
         ```
         def custom_application(prompt: str) -> str:

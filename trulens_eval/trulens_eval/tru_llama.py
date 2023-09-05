@@ -132,7 +132,7 @@ class LlamaInstrument(Instrument):
 class TruLlama(App):
     """Instantiates the LLama Index Wrapper.
 
-        Usage:
+        **Usage:**
 
         LLama-Index code: [LLama Index Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html)
         ```

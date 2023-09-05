@@ -70,13 +70,13 @@ import TruCustomApp
 
 ca = CustomApp()
 
-# Normal app usage:
+# Normal app **Usage:**
 response = ca.respond_to_query("What is the capital of Indonesia?")
 
 # Wrapping app with `TruCustomApp`: 
 ta = TruCustomApp(ca)
 
-# Wrapped usage: must use the general `with_record` (or `awith_record`) method:
+# Wrapped **Usage:** must use the general `with_record` (or `awith_record`) method:
 response, record = ta.with_record(
     ca.respond_to_query, input="What is the capital of Indonesia?"
 )
@@ -220,7 +220,7 @@ PLACEHOLDER = "__tru_placeholder"
 class TruCustomApp(App):
     """Instantiates a Custom App that can be tracked as long as methods are decorated with @instrument.
         
-        Usage:
+        **Usage:**
 
         ```
         class CustomApp:
@@ -253,10 +253,10 @@ class TruCustomApp(App):
         
         question = "What is the capital of Indonesia?"
 
-        # Normal usage:
+        # Normal **Usage:**
         response_normal = ca.respond_to_query(question)
 
-        # Instrumented usage:
+        # Instrumented **Usage:**
         response_wrapped, record = custom_app.with_record(
             ca.respond_to_query, input=question, record_metadata="meta1"
         )

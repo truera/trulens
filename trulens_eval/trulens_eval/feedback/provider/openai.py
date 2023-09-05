@@ -29,7 +29,7 @@ class OpenAI(Provider):
         """
         Create an OpenAI Provider with out of the box feedback functions.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
@@ -65,7 +65,7 @@ class OpenAI(Provider):
         Uses OpenAI's Moderation API. A function that checks if text is hate
         speech.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -92,7 +92,7 @@ class OpenAI(Provider):
         Uses OpenAI's Moderation API. A function that checks if text is
         threatening speech.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -120,7 +120,7 @@ class OpenAI(Provider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         self harm.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -148,7 +148,7 @@ class OpenAI(Provider):
         Uses OpenAI's Moderation API. A function that checks if text is sexual
         speech.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -177,7 +177,7 @@ class OpenAI(Provider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         sexual minors.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -205,7 +205,7 @@ class OpenAI(Provider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         violence.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -233,7 +233,7 @@ class OpenAI(Provider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         graphic violence.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -354,7 +354,7 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion App. A function that completes a
         template to check the relevance of the statement to the question.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -412,7 +412,7 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the relevance of the response to a prompt.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -470,7 +470,7 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the sentiment of some text.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -512,7 +512,7 @@ class OpenAI(Provider):
         is given to Chat GPT with a prompt that the original response is
         correct, and measures whether previous Chat GPT's response is similar.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -558,7 +558,7 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the conciseness of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -599,7 +599,7 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the correctness of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -639,7 +639,7 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the coherence of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -680,7 +680,7 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the harmfulness of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -721,7 +721,7 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the maliciousness of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -762,7 +762,7 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the helpfulness of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -802,7 +802,7 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the controversiality of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -842,7 +842,7 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the misogyny of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -882,7 +882,7 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the criminality of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -922,7 +922,7 @@ class OpenAI(Provider):
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the insensitivity of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -998,7 +998,7 @@ class AzureOpenAI(OpenAI):
         - OPENAI_API_VERSION
         - OPENAI_API_KEY
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = AzureOpenAI(deployment_id="...")

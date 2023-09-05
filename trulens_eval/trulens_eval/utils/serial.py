@@ -358,7 +358,7 @@ class JSONPath(SerialModel):
     """
     Utilitiy class for building JSONPaths.
 
-    Usage:
+    **Usage:**
     
     ```python
 

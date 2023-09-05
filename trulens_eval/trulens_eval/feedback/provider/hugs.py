@@ -67,7 +67,7 @@ class Huggingface(Provider):
         """
         Create a Huggingface Provider with out of the box feedback functions.
 
-        Usage:
+        **Usage:**
         ```
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
@@ -95,15 +95,15 @@ class Huggingface(Provider):
         function is: `1.0 - (|probit_language_text1(text1) -
         probit_language_text1(text2))`
         
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
 
-        feedback = Feedback(huggingface_provider.language_match).on_input_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(huggingface_provider.language_match).on_input_output() 
         ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text1 (str): Text to evaluate.
@@ -147,15 +147,15 @@ class Huggingface(Provider):
         Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
         function that uses a sentiment classifier on `text`.
         
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
 
-        feedback = Feedback(huggingface_provider.positive_sentiment).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(huggingface_provider.positive_sentiment).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -182,16 +182,17 @@ class Huggingface(Provider):
         Uses Huggingface's martin-ha/toxic-comment-model model. A function that
         uses a toxic comment classifier on `text`.
         
-        Usage:
+        **Usage:**
         ```
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
 
-        feedback = Feedback(huggingface_provider.not_toxic).on_output() # Selector can be changed. See https://www.trulens.org/trulens_eval/feedback_function_guide/
-
+        feedback = Feedback(huggingface_provider.not_toxic).on_output() 
         ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
+        
         Args:
             text (str): Text to evaluate.
 

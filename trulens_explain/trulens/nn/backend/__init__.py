@@ -45,7 +45,7 @@ def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
     Context manager to catch device memory issues and report better suggestions
     than default exceptions.
     
-    Usage:
+    **Usage:**
 
         with memory_suggestions("batch size=1000"):
             # Something memory intensive that could be helped by reducing batch

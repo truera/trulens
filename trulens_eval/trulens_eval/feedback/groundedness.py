@@ -98,9 +98,11 @@ class Groundedness(SerialModel, WithClassInfo):
 
 
         f_groundedness = feedback.Feedback(grounded.groundedness_measure).on(
-            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details
+            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
         ).on_output().aggregate(grounded.grounded_statements_aggregator)
         ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
 
         Args:
             source (str): The source that should support the statement
@@ -160,9 +162,11 @@ class Groundedness(SerialModel, WithClassInfo):
 
 
         f_groundedness = feedback.Feedback(grounded.groundedness_measure_with_summarize_step).on(
-            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details
+            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
         ).on_output().aggregate(grounded.grounded_statements_aggregator)
         ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
 
         Args:
             source (str): The source that should support the statement
