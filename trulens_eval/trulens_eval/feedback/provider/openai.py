@@ -8,7 +8,7 @@ from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.keys import set_openai_key
-from trulens_eval.utils.generated import re_0_10_rating
+from trulens_eval.utils.generated import re_1_10_rating
 
 logger = logging.getLogger(__name__)
 
@@ -294,7 +294,7 @@ class OpenAI(Provider):
         Returns:
             float: Information Overlap
         """
-        return re_0_10_rating(
+        return re_1_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -388,10 +388,10 @@ class OpenAI(Provider):
             score = 0
             for line in response.split('\n'):
                     if "Score" in line:
-                        score = re_0_10_rating(line) / normalize
+                        score = re_1_10_rating(line) / normalize
             return score, {"reason": response}
         else:
-            return re_0_10_rating(response) / normalize
+            return re_1_10_rating(response) / normalize
     
 
     def qs_relevance(self, question: str, statement: str) -> float:
@@ -674,7 +674,7 @@ class OpenAI(Provider):
         agreement_txt = self._get_answer_agreement(
             prompt, response, oai_chat_response, self.model_engine
         )
-        return re_0_10_rating(agreement_txt) / 10
+        return re_1_10_rating(agreement_txt) / 10
 
     def conciseness(self, text: str) -> float:
         """
