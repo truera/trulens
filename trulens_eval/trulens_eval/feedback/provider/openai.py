@@ -315,7 +315,7 @@ class OpenAI(Provider):
             )
         ) / 10
 
-    def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
+    def _groundedness_doc_in_out(self, premise: str, hypothesis: str, chain_of_thought=True) -> str:
         """An LLM prompt using the entire document for premise and entire statement document for hypothesis
 
         Args:
@@ -325,6 +325,10 @@ class OpenAI(Provider):
         Returns:
             str: An LLM response using a scorecard template
         """
+        if chain_of_thought:
+            system_prompt = prompts.LLM_GROUNDEDNESS_FULL_SYSTEM
+        else:
+            system_prompt =  prompts.LLM_GROUNDEDNESS_SYSTEM_NO_COT
         return self.endpoint.run_me(
             lambda: self._create_chat_completion(
                 model=self.model_engine,
@@ -334,7 +338,7 @@ class OpenAI(Provider):
                         "role":
                             "system",
                         "content":
-                            str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,)
+                            system_prompt
                     }, {
                         "role":
                             "user",

@@ -11,6 +11,11 @@ STATEMENT 2: {hypothesis}
 
 INFORMATION OVERLAP: """
 
+LLM_GROUNDEDNESS_SYSTEM_NO_COT ="""You are a INFORMATION OVERLAP classifier providing the overlap of information between a SOURCE and STATEMENT.
+
+Output a number between 1-10 where 1 is no information overlap and 10 is all information is overlapping. Never elaborate.
+"""
+
 LLM_GROUNDEDNESS_FULL_SYSTEM = """You are a INFORMATION OVERLAP classifier providing the overlap of information between a SOURCE and STATEMENT.
 For every sentence in the statement, please answer with this template:
 
