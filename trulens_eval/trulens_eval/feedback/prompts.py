@@ -115,7 +115,7 @@ I'm looking for related information to a statement from your excerpt. If nothing
 Respond with all sentences, unchanged from the excerpt, that are directly related to this statement: {response}
 """
 
-SENTIMENT_SYSTEM_PROMPT = f"Please classify the sentiment of the following text as 1 if positive or 0 if not positive. Respond with only a '1' or '0', nothing more."
+SENTIMENT_SYSTEM_PROMPT = f"Please classify the sentiment of the following text as 10 if positive or 1 if not positive. Respond only as a number from 1 to 10, nothing more."
 
 
 COHERE_SENTIMENT_EXAMPLES = [

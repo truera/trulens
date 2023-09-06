@@ -598,7 +598,7 @@ class OpenAI(Provider):
             float: A value between 0 and 1. 0 being "negative sentiment" and 1 being "positive sentiment".
         """
         system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT
-        return self._extract_score_and_reasons_from_response(system_prompt, user_prompt=text, normalize=1)
+        return self._extract_score_and_reasons_from_response(system_prompt, user_prompt=text)
     
     
     def sentiment_with_cot_reasons(self, text: str) -> float:
@@ -626,7 +626,7 @@ class OpenAI(Provider):
 
         system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT
         system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(system_prompt, user_prompt=text, normalize=1)
+        return self._extract_score_and_reasons_from_response(system_prompt, user_prompt=text)
 
     def model_agreement(self, prompt: str, response: str) -> float:
         """
