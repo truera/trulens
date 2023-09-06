@@ -55,6 +55,10 @@ class LangChainInstrument(Instrument):
 
         # Instrument only methods with these names and of these classes.
         METHODS = {
+            "save_context":
+                lambda o: isinstance(o, langchain.schema.BaseMemory),
+            "clear":
+                lambda o: isinstance(o, langchain.schema.BaseMemory),
             "_call":
                 lambda o: isinstance(o, langchain.chains.base.Chain),
             "__call__":
