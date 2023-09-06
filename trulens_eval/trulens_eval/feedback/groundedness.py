@@ -71,6 +71,8 @@ class Groundedness(SerialModel, WithClassInfo):
             groundedness_provider (Provider, optional): groundedness provider options: OpenAI LLM or HuggingFace NLI. Defaults to OpenAI().
             summarize_provider (Provider, optional): Internal Usage for DB serialization.
         """
+        logger.warning("Feedback function `groundedness_measure` was renamed to `groundedness_measure_with_cot_reasons`. The new functionality of `groundedness_measure` function will no longer emit reasons as a lower cost option. It may have reduced accuracy due to not using Chain of Thought reasoning in the scoring.")
+        
         summarize_provider = OpenAI()
         if groundedness_provider is None:
             groundedness_provider = OpenAI()
@@ -111,21 +113,14 @@ class Groundedness(SerialModel, WithClassInfo):
         Returns:
             float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
+        
         groundedness_scores = {}
         if isinstance(self.groundedness_provider, (AzureOpenAI, OpenAI)):
-            plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
-            if len(statement) > plausible_junk_char_min:
-                reason = self.summarize_provider._groundedness_doc_in_out(
-                    source, statement
-                )
-            i = 0
-            for line in reason.split('\n'):
-                if "Score" in line:
-                    groundedness_scores[f"statement_{i}"
-                                       ] = re_1_10_rating(line) / 10
-                    i += 1
-            return groundedness_scores, {"reason": reason}
-        if isinstance(self.groundedness_provider, Huggingface):
+            groundedness_scores[f"full_doc_score"] = re_1_10_rating(self.summarize_provider._groundedness_doc_in_out(
+                source, statement, chain_of_thought=False
+            )) / 10
+            reason = "Reasons not supplied for non chain of thought function"
+        elif isinstance(self.groundedness_provider, Huggingface):
             reason = ""
             for i, hypothesis in enumerate(
                     tqdm(statement.split("."),
@@ -143,7 +138,51 @@ class Groundedness(SerialModel, WithClassInfo):
                     )
                     groundedness_scores[f"statement_{i}"] = score
 
+        return groundedness_scores, {"reason": reason}
+        
+    def groundedness_measure_with_cot_reasons(self, source: str, statement: str) -> float:
+        """A measure to track if the source material supports each sentence in the statement. 
+        This groundedness measure is faster; but less accurate than `groundedness_measure_with_summarize_step`.
+        Also uses chain of thought methodology and emits the reasons.
+
+        Usage on RAG Contexts:
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback import Groundedness
+        from trulens_eval.feedback.provider.openai import OpenAI
+        grounded = feedback.Groundedness(groundedness_provider=OpenAI())
+
+
+        f_groundedness = feedback.Feedback(grounded.groundedness_measure_with_cot_reasons).on(
+            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
+        ).on_output().aggregate(grounded.grounded_statements_aggregator)
+        ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+
+        Args:
+            source (str): The source that should support the statement
+            statement (str): The statement to check groundedness
+
+        Returns:
+            float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
+        """
+        groundedness_scores = {}
+        if isinstance(self.groundedness_provider, (AzureOpenAI, OpenAI)):
+            plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
+            if len(statement) > plausible_junk_char_min:
+                reason = self.summarize_provider._groundedness_doc_in_out(
+                    source, statement
+                )
+            i = 0
+            for line in reason.split('\n'):
+                if "Score" in line:
+                    groundedness_scores[f"statement_{i}"
+                                       ] = re_1_10_rating(line) / 10
+                    i += 1
             return groundedness_scores, {"reason": reason}
+        elif isinstance(self.groundedness_provider, Huggingface):
+            raise Exception("Chain of Thought reasoning is only applicable to OpenAI groundedness providers. Instantiate `Groundedness(groundedness_provider=OpenAI())` or use `groundedness_measure` feedback function.")
 
     def groundedness_measure_with_summarize_step(
         self, source: str, statement: str
@@ -204,8 +243,7 @@ class Groundedness(SerialModel, WithClassInfo):
 
 
         Args:
-            source_statements_multi_output (np.ndarray): a 2D array with the first dimension corresponding to a source text,
-                and the second dimension corresponding to each sentence in a statement; it's groundedness score
+            source_statements_multi_output (List[Dict]): A list of scores. Each list index is a context. The Dict is a per statement score.
 
         Returns:
             float: for each statement, gets the max groundedness, then averages over that.
