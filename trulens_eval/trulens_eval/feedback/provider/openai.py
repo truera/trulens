@@ -8,7 +8,7 @@ from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.keys import set_openai_key
-from trulens_eval.utils.generated import re_1_10_rating
+from trulens_eval.utils.generated import re_0_10_rating
 
 logger = logging.getLogger(__name__)
 
@@ -294,7 +294,7 @@ class OpenAI(Provider):
         Returns:
             float: Information Overlap
         """
-        return re_1_10_rating(
+        return re_0_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
                     model=self.model_engine,
@@ -353,7 +353,7 @@ class OpenAI(Provider):
             )["choices"][0]["message"]["content"]
         )
 
-    def _extract_score_and_reasons_from_response(self, system_prompt:str, user_prompt:str=None):
+    def _extract_score_and_reasons_from_response(self, system_prompt:str, user_prompt:str=None, normalize=10):
         """Extractor for our LLM prompts. If CoT is used; it will look for "Supporting Evidence" template.
         Otherwise, it will look for the typical 1-10 scoring.
 
@@ -388,10 +388,10 @@ class OpenAI(Provider):
             score = 0
             for line in response.split('\n'):
                     if "Score" in line:
-                        score = re_1_10_rating(line) / 10
+                        score = re_0_10_rating(line) / normalize
             return score, {"reason": response}
         else:
-            return re_1_10_rating(response) / 10
+            return re_0_10_rating(response) / normalize
     
 
     def qs_relevance(self, question: str, statement: str) -> float:
@@ -530,7 +530,7 @@ class OpenAI(Provider):
         return self._extract_score_and_reasons_from_response(system_prompt)
     
 
-    def relevance_with_cot_reasoning(self, prompt: str, response: str) -> float:
+    def relevance_with_cot_reasons(self, prompt: str, response: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the relevance of the response to a prompt.
@@ -542,7 +542,7 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.relevance_with_cot_reasoning).on_input_output()
+        feedback = Feedback(openai_provider.relevance_with_cot_reasons).on_input_output()
         ```
         The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -553,7 +553,7 @@ class OpenAI(Provider):
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
-        feedback = Feedback(openai_provider.relevance_with_cot_reasoning).on_input().on(
+        feedback = Feedback(openai_provider.relevance_with_cot_reasons).on_input().on(
             TruLlama.select_source_nodes().node.text # See note below
         ).aggregate(np.mean) 
 
@@ -598,7 +598,7 @@ class OpenAI(Provider):
             float: A value between 0 and 1. 0 being "negative sentiment" and 1 being "positive sentiment".
         """
         system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT
-        return self._extract_score_and_reasons_from_response(system_prompt, user_prompt=text)
+        return self._extract_score_and_reasons_from_response(system_prompt, user_prompt=text, normalize=1)
     
     
     def sentiment_with_cot_reasons(self, text: str) -> float:
@@ -626,7 +626,7 @@ class OpenAI(Provider):
 
         system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT
         system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(system_prompt, user_prompt=text)
+        return self._extract_score_and_reasons_from_response(system_prompt, user_prompt=text, normalize=1)
 
     def model_agreement(self, prompt: str, response: str) -> float:
         """
@@ -674,7 +674,7 @@ class OpenAI(Provider):
         agreement_txt = self._get_answer_agreement(
             prompt, response, oai_chat_response, self.model_engine
         )
-        return re_1_10_rating(agreement_txt) / 10
+        return re_0_10_rating(agreement_txt) / 10
 
     def conciseness(self, text: str) -> float:
         """
