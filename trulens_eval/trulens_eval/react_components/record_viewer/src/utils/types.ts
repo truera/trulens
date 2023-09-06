@@ -25,7 +25,7 @@ export interface ModuleJSONRaw {
 
 export interface StackJSONRaw {
   path: {
-    path: { item_or_attribute: string }[];
+    path: ({ item_or_attribute: string } | { index: number })[];
   };
   method: {
     name: string;
