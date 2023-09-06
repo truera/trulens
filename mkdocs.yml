@@ -88,7 +88,8 @@ nav:
               - No Framework Quickstart: trulens_eval/no_framework_quickstart.ipynb
       - Evaluation:
           - 🎯 Feedback Functions:
-              - Function Definitions: trulens_eval/function_definitions.md
+              - Feedback Function Definitions: trulens_eval/function_definitions.md
+              - Feedback Function Guide: trulens_eval/feedback_function_guide.md
               - Custom Feedback Functions: trulens_eval/custom_feedback_functions.ipynb
               - Smoke Tests:
                   - Prompt Response Relevance: trulens_eval/pr_relevance_smoke_tests.ipynb
