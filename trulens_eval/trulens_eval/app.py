@@ -7,6 +7,7 @@ from abc import abstractmethod
 import contextvars
 from inspect import BoundArguments
 from inspect import Signature
+import inspect
 import logging
 from pprint import PrettyPrinter
 from threading import Lock
@@ -466,6 +467,14 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 # constructor here.
                 f.implementation.load()
 
+    def main_call(self, human: str):
+        # If available, a single text to a single text invocation of this app.
+        raise NotImplementedError()
+
+    async def main_acall(self, human: str):
+        # If available, a single text to a single text invocation of this app.
+        raise NotImplementedError()
+
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
@@ -662,8 +671,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         return
 
-# WithInstrumentCallbacks requirement
-
+    # WithInstrumentCallbacks requirement
     def _on_new_record(self, func) -> Iterable[RecordingContext]:
         ctx = self.recording_contexts.get(contextvars.Token.MISSING)
 
@@ -757,6 +765,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         self._check_instrumented(func)
 
         res, _ = await self.awith_record(func, *args, **kwargs)
+
         return res
 
     async def awith_record(

@@ -192,6 +192,20 @@ class TruChain(App):
 
         return App.main_output(self, func, sig, bindings, ret)
 
+    def main_call(self, human: str):
+        # If available, a single text to a single text invocation of this app.
+
+        out_key = self.app.output_keys[0]
+
+        return self.__call__(human)[out_key]
+
+    async def main_acall(self, human: str):
+        # If available, a single text to a single text invocation of this app.
+
+        out_key = self.app.output_keys[0]
+
+        return await self._acall(human)[out_key]
+
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped
         # chain has but we do not wrap yet.

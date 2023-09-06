@@ -1,9 +1,13 @@
+from asyncio import sleep
 from examples.frameworks.custom.custom_llm import CustomLLM
 from examples.frameworks.custom.custom_retriever import CustomRetriever
+from examples.frameworks.custom.custom_memory import CustomMemory
+import asyncio
 
 from trulens_eval.tru_custom_app import instrument
 
 instrument.method(CustomRetriever, "retrieve_chunks")
+instrument.method(CustomMemory, "remember")
 
 
 class CustomTemplate:
@@ -21,6 +25,7 @@ class CustomTemplate:
 class CustomApp:
 
     def __init__(self):
+        self.memory = CustomMemory()
         self.retriever = CustomRetriever()
         self.llm = CustomLLM()
         self.template = CustomTemplate(
@@ -34,7 +39,33 @@ class CustomApp:
     @instrument
     def respond_to_query(self, input):
         chunks = self.retrieve_chunks(input)
+        self.memory.remember(input)
+
         answer = self.llm.generate(",".join(chunks))
         output = self.template.fill(question=input, answer=answer)
+        self.memory.remember(output)
 
         return output
+    
+    @instrument
+    async def arespond_to_query(self, input):
+        # fake async call, must return an async token generator and final result
+
+        res = self.respond_to_query(input)
+
+        async def async_generator():
+            for tok in res.split(" "):
+                await sleep(0.05)
+                yield tok + " "
+
+        gen_task = asyncio.Task(async_generator())
+
+        async def collect_gen():
+            ret = ""
+            async for tok in gen_task:
+                ret += tok
+            return ret
+            
+        return gen_task, collect_gen
+
+

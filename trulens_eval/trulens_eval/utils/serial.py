@@ -82,6 +82,9 @@ class Step(SerialModel):  #, abc.ABC):
     @staticmethod
     def of_string(s: str) -> 'Step':
         # TODO: finish:
+        if len(s) == 0:
+            raise RuntimeError("Cannot determine path step from a blank string.")
+        
         if "]" == s[-1]:
             raise NotImplementedError
         else:
@@ -382,6 +385,9 @@ class JSONPath(SerialModel):
 
     @staticmethod
     def of_string(s: str) -> 'JSONPath':
+        if s == "":
+            return JSONPath(path=())
+        
         # TODO: fix cases where . appears in key:
 
         pieces = s.split(".")
