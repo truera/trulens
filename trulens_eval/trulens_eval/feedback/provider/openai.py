@@ -602,6 +602,7 @@ class OpenAI(Provider):
     
     
     def sentiment_with_cot_reasons(self, text: str) -> float:
+
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the sentiment of some text.
@@ -852,6 +853,7 @@ class OpenAI(Provider):
         Args:
             text (str): The text to evaluate.
 
+
         Returns:
             float: A value between 0 and 1. 0 being "harmful" and 1 being "not harmful".
         """
@@ -887,6 +889,7 @@ class OpenAI(Provider):
         
     
     def maliciousness_with_cot_reasons(self, text: str) -> float:
+
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the maliciousness of some text. Prompt credit to Langchain Eval.
@@ -990,6 +993,7 @@ class OpenAI(Provider):
         
     
     def controversiality_with_cot_reasons(self, text: str) -> float:
+
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the controversiality of some text. Prompt credit to Langchain Eval.
@@ -1087,11 +1091,13 @@ class OpenAI(Provider):
 
         Returns:
             float: A value between 0 and 1. 0 being "criminal" and 1 being "not criminal".
+
         """
         system_prompt = prompts.LANGCHAIN_CRIMINALITY_PROMPT
         return self._extract_score_and_reasons_from_response(system_prompt, user_prompt=text)
     
     def criminality_with_cot_reasons(self, text: str) -> float:
+
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
         template to check the criminality of some text. Prompt credit to Langchain Eval.
@@ -1217,6 +1223,7 @@ class AzureOpenAI(OpenAI):
         openai_provider = AzureOpenAI(deployment_id="...")
 
         ```
+
 
         Args:
             model_engine (str, optional): The specific model version. Defaults to "gpt-35-turbo".
