@@ -116,9 +116,10 @@ class Groundedness(SerialModel, WithClassInfo):
         
         groundedness_scores = {}
         if isinstance(self.groundedness_provider, (AzureOpenAI, OpenAI)):
-            re_1_10_rating(self.summarize_provider._groundedness_doc_in_out(
-                source, statement
+            groundedness_scores[f"full_doc_score"] = re_1_10_rating(self.summarize_provider._groundedness_doc_in_out(
+                source, statement, chain_of_thought=False
             )) / 10
+            reason = "Reasons not supplied for non chain of thought function"
         elif isinstance(self.groundedness_provider, Huggingface):
             reason = ""
             for i, hypothesis in enumerate(
@@ -137,7 +138,7 @@ class Groundedness(SerialModel, WithClassInfo):
                     )
                     groundedness_scores[f"statement_{i}"] = score
 
-            return groundedness_scores, {"reason": reason}
+        return groundedness_scores, {"reason": reason}
         
     def groundedness_measure_with_cot_reasons(self, source: str, statement: str) -> float:
         """A measure to track if the source material supports each sentence in the statement. 
@@ -242,8 +243,7 @@ class Groundedness(SerialModel, WithClassInfo):
 
 
         Args:
-            source_statements_multi_output (np.ndarray): a 2D array with the first dimension corresponding to a source text,
-                and the second dimension corresponding to each sentence in a statement; it's groundedness score
+            source_statements_multi_output (List[Dict]): A list of scores. Each list index is a context. The Dict is a per statement score.
 
         Returns:
             float: for each statement, gets the max groundedness, then averages over that.
