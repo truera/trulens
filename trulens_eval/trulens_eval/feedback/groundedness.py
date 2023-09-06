@@ -13,7 +13,6 @@ from trulens_eval.utils.generated import re_1_10_rating
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
-logger = logging.getLogger(__name__)
 """
 TODO: feedback collections refactor
 
@@ -35,8 +34,11 @@ class Safety(RequiresCompletionProvider):
     ...
 """
 
+logger = logging.getLogger(__name__)
 
 class Groundedness(SerialModel, WithClassInfo):
+    """Measures Groundedness.
+    """
     groundedness_provider: Provider
     summarize_provider: Provider
 
@@ -49,11 +51,27 @@ class Groundedness(SerialModel, WithClassInfo):
         This class will use an OpenAI summarizer to find the relevant strings in a text. The groundedness_provider can 
         either be an llm with OpenAI or NLI with huggingface.
 
+        Usage 1:
+        ```
+        from trulens_eval.feedback import Groundedness
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+        groundedness_imp = Groundedness(groundedness_provider=openai_provider)
+        ```
+
+        Usage 2:
+        ```
+        from trulens_eval.feedback import Groundedness
+        from trulens_eval.feedback.provider.hugs import Huggingface
+        huggingface_provider = Huggingface()
+        groundedness_imp = Groundedness(groundedness_provider=huggingface_provider)
+        ```
+
         Args:
             groundedness_provider (Provider, optional): groundedness provider options: OpenAI LLM or HuggingFace NLI. Defaults to OpenAI().
+            summarize_provider (Provider, optional): Internal Usage for DB serialization.
         """
-        if summarize_provider is None:
-            summarize_provider = OpenAI()
+        summarize_provider = OpenAI()
         if groundedness_provider is None:
             groundedness_provider = OpenAI()
         if not isinstance(groundedness_provider,
@@ -71,14 +89,21 @@ class Groundedness(SerialModel, WithClassInfo):
         """A measure to track if the source material supports each sentence in the statement. 
         This groundedness measure is faster; but less accurate than `groundedness_measure_with_summarize_step` 
 
+        Usage on RAG Contexts:
         ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback import Groundedness
+        from trulens_eval.feedback.provider.openai import OpenAI
         grounded = feedback.Groundedness(groundedness_provider=OpenAI())
 
 
         f_groundedness = feedback.Feedback(grounded.groundedness_measure).on(
-            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content
+            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
         ).on_output().aggregate(grounded.grounded_statements_aggregator)
         ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+
         Args:
             source (str): The source that should support the statement
             statement (str): The statement to check groundedness
@@ -127,14 +152,22 @@ class Groundedness(SerialModel, WithClassInfo):
         This groundedness measure is more accurate; but slower using a two step process.
         - First find supporting evidence with an LLM
         - Then for each statement sentence, check groundendness
+        
+        Usage on RAG Contexts:
         ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback import Groundedness
+        from trulens_eval.feedback.provider.openai import OpenAI
         grounded = feedback.Groundedness(groundedness_provider=OpenAI())
 
 
         f_groundedness = feedback.Feedback(grounded.groundedness_measure_with_summarize_step).on(
-            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content
+            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
         ).on_output().aggregate(grounded.grounded_statements_aggregator)
         ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+
         Args:
             source (str): The source that should support the statement
             statement (str): The statement to check groundedness

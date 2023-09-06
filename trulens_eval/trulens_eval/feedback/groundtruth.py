@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 
 
 class GroundTruthAgreement(SerialModel, WithClassInfo):
+    """Measures Agreement against a Ground Truth.
+    """
     ground_truth: Union[List[str], FunctionOrMethod]
     provider: Provider
     # Note: the bert scorer object isn't serializable
@@ -45,12 +47,37 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
 
     def __init__(
         self,
-        ground_truth: Union[List[str], Callable, FunctionOrMethod],
+        ground_truth: Union[List,Callable, FunctionOrMethod],
         provider: Provider = None,
         bert_scorer: Optional["BERTScorer"] = None
     ):
-        if provider is None:
-            provider = OpenAI()
+        """Measures Agreement against a Ground Truth. 
+
+        Usage 1:
+        ```
+        from trulens_eval.feedback import GroundTruthAgreement
+        golden_set = [
+            {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
+            {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
+        ]
+        ground_truth_collection = GroundTruthAgreement(golden_set)
+        ```
+
+        Usage 2:
+        ```
+        from trulens_eval.feedback import GroundTruthAgreement
+        ground_truth_imp = llm_app
+        response = llm_app(prompt)
+        ground_truth_collection = GroundTruthAgreement(ground_truth_imp)
+        ```
+
+        Args:
+            ground_truth (Union[Callable, FunctionOrMethod]): A list of query/response pairs or a function or callable that returns a ground truth string given a prompt string.
+            bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
+            provider (Provider, optional): Internal Usage for DB serialization.
+
+        """
+        provider = OpenAI()
         if isinstance(ground_truth, List):
             ground_truth_imp = None
         elif isinstance(ground_truth, FunctionOrMethod):
@@ -96,9 +123,23 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         with a prompt that the original response is correct, and measures
         whether previous Chat GPT's response is similar.
 
-        Parameters:
-            prompt (str): A text prompt to an agent. response (str): The
-            agent's response to the prompt.
+        **Usage:**
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback import GroundTruthAgreement
+        golden_set = [
+            {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
+            {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
+        ]
+        ground_truth_collection = GroundTruthAgreement(golden_set)
+
+        feedback = Feedback(ground_truth_collection.agreement_measure).on_input_output() 
+        ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        Args:
+            prompt (str): A text prompt to an agent. 
+            response (str): The agent's response to the prompt.
 
         Returns:
             - float: A value between 0 and 1. 0 being "not in agreement" and 1
@@ -124,9 +165,24 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         Uses BERT Score. A function that that measures
         similarity to ground truth using bert embeddings. 
 
-        Parameters:
-            prompt (str): A text prompt to an agent. response (str): The
-            agent's response to the prompt.
+        **Usage:**
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback import GroundTruthAgreement
+        golden_set = [
+            {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
+            {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
+        ]
+        ground_truth_collection = GroundTruthAgreement(golden_set)
+
+        feedback = Feedback(ground_truth_collection.bert_score).on_input_output() 
+        ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+
+        Args:
+            prompt (str): A text prompt to an agent.
+            response (str): The agent's response to the prompt.
 
         Returns:
             - float: A value between 0 and 1. 0 being "not in agreement" and 1
@@ -154,9 +210,23 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         Uses BLEU Score. A function that that measures
         similarity to ground truth using token overlap. 
 
-        Parameters:
-            prompt (str): A text prompt to an agent. response (str): The
-            agent's response to the prompt.
+        **Usage:**
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback import GroundTruthAgreement
+        golden_set = [
+            {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
+            {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
+        ]
+        ground_truth_collection = GroundTruthAgreement(golden_set)
+
+        feedback = Feedback(ground_truth_collection.bleu).on_input_output() 
+        ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        Args:
+            prompt (str): A text prompt to an agent. 
+            response (str): The agent's response to the prompt.
 
         Returns:
             - float: A value between 0 and 1. 0 being "not in agreement" and 1
@@ -183,9 +253,9 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         Uses BLEU Score. A function that that measures
         similarity to ground truth using token overlap. 
 
-        Parameters:
-            prompt (str): A text prompt to an agent. response (str): The
-            agent's response to the prompt.
+        Args:
+            prompt (str): A text prompt to an agent. 
+            response (str): The agent's response to the prompt.
 
         Returns:
             - float: A value between 0 and 1. 0 being "not in agreement" and 1
