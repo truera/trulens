@@ -37,9 +37,10 @@ class Selector(HasTraits):
             try:
                 jpath = JSONPath.of_string(ev.new)
                 self.jpath = jpath
+                self.w_edit.layout.border = "0px solid black"
             except Exception:
-                pass
-            
+                self.w_edit.layout.border = "1px solid red"
+
         self.observe(on_update_select, ["select"])
 
         self.w = widgets.HBox([self.w_delete, self.w_edit], layout=debug_style)
@@ -76,38 +77,43 @@ class SelectorValue(HasTraits):
             ret_html = "no listing yet"
         else:
             try:
-                inner_obj = next(iter(jpath(obj)))
-                inner_class = type(inner_obj)
+                ret_html = ""
 
-                inner_obj = jsonify(inner_obj)
+                for inner_obj in jpath(obj):
+                    inner_class = type(inner_obj)
+                    inner_obj = jsonify(inner_obj)
 
-                # if isinstance(inner_obj, pydantic.BaseModel):
-                #    inner_obj = inner_obj.dict()
+                    ret_html += f"<div>({inner_class.__name__} as {type(inner_obj).__name__}): "
 
-                if isinstance(inner_obj, JSON_BASES):
-                    ret_html = str(inner_obj)[0:128]
+                    # if isinstance(inner_obj, pydantic.BaseModel):
+                    #    inner_obj = inner_obj.dict()
 
-                elif isinstance(inner_obj, Mapping):
-                    ret_html = "<ul>"
-                    for key, val in inner_obj.items():
-                        ret_html += f"<li>{key} = {str(val)[0:128]}</li>"
-                    ret_html += "</ul>"
+                    if isinstance(inner_obj, JSON_BASES):
+                        ret_html += str(inner_obj)[0:256]
 
-                elif isinstance(inner_obj, Sequence):
-                    ret_html = "<ul>"
-                    for i, val in enumerate(inner_obj):
-                        ret_html += f"<li>[{i}] = {str(val)[0:128]}</li>"
-                    ret_html += "</ul>"                    
+                    elif isinstance(inner_obj, Mapping):
+                        ret_html += "<ul>"
+                        for key, val in inner_obj.items():
+                            ret_html += f"<li>{key} = {str(val)[0:256]}</li>"
+                        ret_html += "</ul>"
 
-                else:
-                    ret_html = str(inner_obj)[0:128]
+                    elif isinstance(inner_obj, Sequence):
+                        ret_html += "<ul>"
+                        for i, val in enumerate(inner_obj):
+                            ret_html += f"<li>[{i}] = {str(val)[0:256]}</li>"
+                        ret_html += "</ul>"                    
+
+                    else:
+                        ret_html += str(inner_obj)[0:256]
+                    
+                    ret_html += "</div>"
 
             except Exception as e:
                 self.w_listing.layout.border = "1px solid red"
                 return
 
         self.w_listing.layout.border = "0px solid black"
-        self.w_listing.value = f"<div>({inner_class.__name__} as {type(inner_obj).__name__}): {ret_html}</div>"
+        self.w_listing.value = f"<div>{ret_html}</div>"
 
 
 class RecordWiget():
