@@ -52,10 +52,26 @@ class TruWrapperApp(object):
 
 
 class TruBasicApp(App):
-    """
-    A Basic app that makes little assumptions. Assumes input text and output text 
-    """
+    """Instantiates a Basic app that makes little assumptions. Assumes input text and output text.
+        
+        **Usage:**
 
+        ```
+        def custom_application(prompt: str) -> str:
+            return "a response"
+        
+        from trulens_eval import TruBasicApp
+        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
+        basic_app = TruBasicApp(custom_application, 
+            app_id="Custom Application v1",
+            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
+        basic_app("Give me a response")
+        ```
+        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+
+        Args:
+            text_to_text (Callable): A text to text callable.
+    """
     app: TruWrapperApp
 
     root_callable: ClassVar[FunctionOrMethod] = Field(

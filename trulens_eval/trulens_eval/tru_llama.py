@@ -130,15 +130,40 @@ class LlamaInstrument(Instrument):
 
 
 class TruLlama(App):
-    """
-    Wrap a llama index engine for monitoring.
+    """Instantiates the LLama Index Wrapper.
 
-    Arguments:
-    - app: BaseQueryEngine | BaseChatEngine -- the engine to wrap.
-    - More args in App
-    - More args in AppDefinition
-    - More args in WithClassInfo
+        **Usage:**
+
+        LLama-Index code: [LLama Index Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html)
+        ```
+         # Code snippet taken from llama_index 0.8.15 (API subject to change with new versions)
+        from llama_index import VectorStoreIndex, SimpleWebPageReader
+
+        documents = SimpleWebPageReader(
+            html_to_text=True,
+            metadata_fn=lambda url: dict(url=url)
+        ).load_data(["http://paulgraham.com/worked.html"])
+        index = VectorStoreIndex.from_documents(documents)
+
+        query_engine = index.as_query_engine()
+
+        ```
+
+        Trulens Eval Code:
+        ```
+        from trulens_eval import TruLlama
+        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
+        tru_query_engine = TruLlama(query_engine,
+            app_id='LlamaIndex_App1',
+            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
+        tru_query_engine("What is llama index?")
+        ```
+        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+
+        Args:
+            app (BaseQueryEngine): A llama index application.
     """
+    
 
     class Config:
         arbitrary_types_allowed = True
@@ -151,7 +176,6 @@ class TruLlama(App):
     )
 
     def __init__(self, app: BaseQueryEngine, **kwargs):
-
         super().update_forward_refs()
 
         # TruLlama specific:
