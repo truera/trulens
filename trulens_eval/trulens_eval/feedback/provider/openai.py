@@ -349,6 +349,31 @@ class OpenAI(Provider):
             )["choices"][0]["message"]["content"]
         )
 
+    def _extract_response(self, system_prompt):
+        response = self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    model=self.model_engine,
+                    temperature=0.0,
+                    messages=[
+                        {
+                            "role":
+                                "system",
+                            "content":
+                                system_prompt
+                        }
+                    ]
+                )["choices"][0]["message"]["content"]
+            )
+        if "Supporting Evidence" in response:
+            score = 0
+            for line in response.split('\n'):
+                    if "Score" in line:
+                        score = re_1_10_rating(line) / 10
+            return score, {"reason": response}
+        else:
+            return re_1_10_rating(response) / 10
+    
+
     def qs_relevance(self, question: str, statement: str) -> float:
         """
         Uses OpenAI's Chat Completion App. A function that completes a
@@ -386,26 +411,59 @@ class OpenAI(Provider):
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
-        return re_1_10_rating(
-            self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    model=self.model_engine,
-                    temperature=0.0,
-                    messages=[
-                        {
-                            "role":
-                                "system",
-                            "content":
-                                str.format(
+        system_prompt = str.format(
                                     prompts.QS_RELEVANCE,
                                     question=question,
                                     statement=statement
                                 )
-                        }
-                    ]
-                )["choices"][0]["message"]["content"]
-            )
-        ) / 10
+        return self._extract_response(system_prompt)
+
+    def qs_relevance_with_cot_reasons(self, question: str, statement: str) -> float:
+        """
+        Uses OpenAI's Chat Completion App. A function that completes a
+        template to check the relevance of the statement to the question.
+        Also uses chain of thought methodology and emits the reasons.
+
+        **Usage:**
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.qs_relevance_with_cot_reasons).on_input_output() 
+        ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        
+        Usage on RAG Contexts:
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.qs_relevance_with_cot_reasons).on_input().on(
+            TruLlama.select_source_nodes().node.text # See note below
+        ).aggregate(np.mean) 
+
+        ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+
+
+        Args:
+            question (str): A question being asked. 
+            statement (str): A statement to the question.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
+        """
+        system_prompt = str.format(
+                                    prompts.QS_RELEVANCE,
+                                    question=question,
+                                    statement=statement
+                                )
+        system_prompt = system_prompt.replace("RELEVANCE:",prompts.COT_REASONS_TEMPLATE)
+        return self._extract_response(system_prompt)
+
 
     def relevance(self, prompt: str, response: str) -> float:
         """
