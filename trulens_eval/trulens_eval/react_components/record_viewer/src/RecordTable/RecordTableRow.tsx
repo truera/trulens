@@ -30,8 +30,6 @@ function TooltipDescription({ startTime, endTime }: { startTime: number; endTime
   );
 }
 
-// We can't recursively create the rows because streamlit's frame height update logic
-// is still a little wonky :(
 export default function RecordTableRowRecursive({
   node,
   depth,
@@ -47,7 +45,7 @@ export default function RecordTableRowRecursive({
   const { startTime, timeTaken, endTime } = getStartAndEndTimesForNode(node);
 
   let selector = 'Select.App';
-  if (node.path) selector += `.${node.path}`;
+  if (node.path) selector += `${node.path}`;
 
   const isNodeSelected = selectedNode === node.raw?.perf.start_time;
 
@@ -72,7 +70,9 @@ export default function RecordTableRowRecursive({
                 {node.name}
                 {node.methodName ? `.${node.methodName}` : ''}
               </Typography>
-              <Typography variant="subtitle1">{selector}</Typography>
+              <Typography variant="code" sx={{ px: 0.5 }}>
+                {selector}
+              </Typography>
             </Box>
           </Box>
         </TableCell>
