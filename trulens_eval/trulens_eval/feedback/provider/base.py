@@ -12,8 +12,8 @@ class Provider(SerialModel, WithClassInfo):
 
     endpoint: Optional[Endpoint]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, name: str = None, **kwargs):
         # for WithClassInfo:
         kwargs['obj'] = self
 
-        super().__init__(*args, **kwargs)
+        super().__init__(name=name, **kwargs)

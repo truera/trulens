@@ -7,6 +7,7 @@ import numpy as np
 from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,8 @@ def _tci(func):  # "typecheck inputs"
                         raise ValueError(f"{pident} must be non-empty.")
 
         return func(*bindings.args, **bindings.kwargs)
+    
+    wrapper.__signature__ = sig
 
     return wrapper
 
@@ -60,7 +63,7 @@ class Huggingface(Provider):
     """
     endpoint: Endpoint
 
-    def __init__(self, endpoint=None, **kwargs):
+    def __init__(self, name: str = None, endpoint=None, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
@@ -79,8 +82,15 @@ class Huggingface(Provider):
             endpoint (Endpoint): Internal Usage for DB serialization
         """
 
+        kwargs['name'] = name
+
         self_kwargs = dict()
-        self_kwargs['endpoint'] = HuggingfaceEndpoint(**kwargs)
+        if endpoint is None:
+            self_kwargs['endpoint'] = HuggingfaceEndpoint(**kwargs)
+        else:
+            self_kwargs['endpoint'] = endpoint
+
+        self_kwargs['name'] = name or "huggingface"
 
         super().__init__(
             **self_kwargs
@@ -257,3 +267,12 @@ class Huggingface(Provider):
         for label in hf_response:
             if label['label'] == 'entailment':
                 return label['score']
+
+class Dummy(Huggingface):
+    def __init__(self, name: str = None, **kwargs):
+        kwargs['name'] = name or "dummyhugs"
+        kwargs['endpoint'] = DummyEndpoint(name="dummyendhugspoint")
+
+        super().__init__(
+            **kwargs
+        ) 
