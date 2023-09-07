@@ -47,7 +47,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
 
     def __init__(
         self,
-        ground_truth: Union[List,Callable, FunctionOrMethod],
+        ground_truth: Union[List, Callable, FunctionOrMethod],
         provider: Provider = None,
         bert_scorer: Optional["BERTScorer"] = None
     ):

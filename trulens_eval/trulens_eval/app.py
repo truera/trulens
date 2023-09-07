@@ -662,6 +662,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         return
 
+
 # WithInstrumentCallbacks requirement
 
     def _on_new_record(self, func) -> Iterable[RecordingContext]:

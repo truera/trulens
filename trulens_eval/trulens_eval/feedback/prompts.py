@@ -11,7 +11,7 @@ STATEMENT 2: {hypothesis}
 
 INFORMATION OVERLAP: """
 
-LLM_GROUNDEDNESS_SYSTEM_NO_COT ="""You are a INFORMATION OVERLAP classifier providing the overlap of information between a SOURCE and STATEMENT.
+LLM_GROUNDEDNESS_SYSTEM_NO_COT = """You are a INFORMATION OVERLAP classifier providing the overlap of information between a SOURCE and STATEMENT.
 
 Output a number between 1-10 where 1 is no information overlap and 10 is all information is overlapping. Never elaborate.
 """
@@ -116,7 +116,6 @@ Respond with all sentences, unchanged from the excerpt, that are directly relate
 """
 
 SENTIMENT_SYSTEM_PROMPT = f"Please classify the sentiment of the following text as 10 if positive or 1 if not positive. Respond only as a number from 1 to 10, nothing more."
-
 
 COHERE_SENTIMENT_EXAMPLES = [
     Example("The order came 5 days early", "1"),
