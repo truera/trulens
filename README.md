@@ -1,10 +1,8 @@
-![PyPI - Version](https://img.shields.io/pypi/v/trulens_eval?label=trulens_eval&link=https%3A%2F%2Fpypi.org%2Fproject%2Ftrulens-eval%2F)
-![Azure DevOps builds (job)](https://img.shields.io/azure-devops/build/truera/5a27f3d2-132d-40fc-9b0c-81abd1182f41/9)
-![GitHub](https://img.shields.io/github/license/truera/trulens)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens_eval)
-[![Slack](https://img.shields.io/badge/slack-join-green?logo=slack)](https://communityinviter.com/apps/aiqualityforum/josh)
-[![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/welcome/)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.10.0/trulens_eval/examples/colab/quickstarts/langchain_quickstart_colab.ipynb)
+---
+hide:
+  - navigation
+  - toc
+---
 
 # 🦑 **Welcome to TruLens!**
 
