@@ -566,6 +566,8 @@
         
           
         
+          
+        
       
       
         <label class="md-nav__link" for="__nav_3_2_1" id="__nav_3_2_1_label" tabindex="0">
@@ -587,7 +589,21 @@
   
     <li class="md-nav__item">
       <a href="../../function_definitions/" class="md-nav__link">
-        Function Definitions
+        Feedback Function Definitions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feedback_function_guide/" class="md-nav__link">
+        Feedback Function Guide
       </a>
     </li>
   
@@ -619,7 +635,7 @@
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_1_3" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_1_4" >
       
       
         
@@ -629,13 +645,13 @@
         
       
       
-        <label class="md-nav__link" for="__nav_3_2_1_3" id="__nav_3_2_1_3_label" tabindex="0">
+        <label class="md-nav__link" for="__nav_3_2_1_4" id="__nav_3_2_1_4_label" tabindex="0">
           Smoke Tests
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_1_3_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_3_2_1_3">
+      <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_1_4_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_2_1_4">
           <span class="md-nav__icon md-icon"></span>
           Smoke Tests
         </label>
@@ -1593,16 +1609,52 @@
         Bases: <code><span title="trulens_eval.app.App">App</span></code></p>
 
   
-      <p>A Basic app that makes little assumptions. Assumes input text and output text</p>
+      <p>Instantiates a Basic app that makes little assumptions. Assumes input text and output text.</p>
+<p><strong>Usage:</strong></p>
+<p><div class="highlight"><pre><span></span><code>def custom_application(prompt: str) -&gt; str:
+    return &quot;a response&quot;
+
+from trulens_eval import TruBasicApp
+# f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
+basic_app = TruBasicApp(custom_application, 
+    app_id=&quot;Custom Application v1&quot;,
+    feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
+basic_app(&quot;Give me a response&quot;)
+</code></pre></div>
+See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functions</a> for instantiating feedback functions.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>text_to_text</code></td>
+          <td>
+                <code><span title="typing.Callable">Callable</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A text to text callable.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 50</span>
-<span class="normal"> 51</span>
-<span class="normal"> 52</span>
-<span class="normal"> 53</span>
-<span class="normal"> 54</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 54</span>
 <span class="normal"> 55</span>
 <span class="normal"> 56</span>
 <span class="normal"> 57</span>
@@ -1650,11 +1702,64 @@
 <span class="normal"> 99</span>
 <span class="normal">100</span>
 <span class="normal">101</span>
-<span class="normal">102</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruBasicApp</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A Basic app that makes little assumptions. Assumes input text and output text </span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruBasicApp</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Instantiates a Basic app that makes little assumptions. Assumes input text and output text.</span>
 
+<span class="sd">        **Usage:**</span>
+
+<span class="sd">        ```</span>
+<span class="sd">        def custom_application(prompt: str) -&gt; str:</span>
+<span class="sd">            return &quot;a response&quot;</span>
+
+<span class="sd">        from trulens_eval import TruBasicApp</span>
+<span class="sd">        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions</span>
+<span class="sd">        basic_app = TruBasicApp(custom_application, </span>
+<span class="sd">            app_id=&quot;Custom Application v1&quot;,</span>
+<span class="sd">            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])</span>
+<span class="sd">        basic_app(&quot;Give me a response&quot;)</span>
+<span class="sd">        ```</span>
+<span class="sd">        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            text_to_text (Callable): A text to text callable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">app</span><span class="p">:</span> <span class="n">TruWrapperApp</span>
 
     <span class="n">root_callable</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">FunctionOrMethod</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
@@ -1668,12 +1773,12 @@
 <span class="sd">        Wrap a callable for monitoring.</span>
 
 <span class="sd">        Arguments:</span>
-<span class="sd">        - text_to_text: A callable string to string</span>
+<span class="sd">        - text_to_text: A function with signature string to string.</span>
 <span class="sd">        - More args in App</span>
 <span class="sd">        - More args in AppDefinition</span>
 <span class="sd">        - More args in WithClassInfo</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">text_to_text</span><span class="p">(</span><span class="s2">&quot;This should return a string&quot;</span><span class="p">),</span> <span class="nb">str</span><span class="p">)</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_forward_refs</span><span class="p">()</span>
         <span class="n">app</span> <span class="o">=</span> <span class="n">TruWrapperApp</span><span class="p">(</span><span class="n">text_to_text</span><span class="p">)</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;app&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TruWrapperApp</span><span class="p">(</span><span class="n">text_to_text</span><span class="p">)</span>
@@ -1688,21 +1793,38 @@
     <span class="k">def</span> <span class="nf">main_input</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">if</span> <span class="s2">&quot;input&quot;</span> <span class="ow">in</span> <span class="n">bindings</span><span class="o">.</span><span class="n">arguments</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">bindings</span><span class="o">.</span><span class="n">arguments</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">func</span> <span class="o">==</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">TruWrapperApp</span><span class="o">.</span><span class="n">_call</span><span class="p">,</span> <span class="n">Instrument</span><span class="o">.</span><span class="n">INSTRUMENT</span><span class="p">):</span>
+            <span class="c1"># If func is the wrapper app _call, replace the signature and</span>
+            <span class="c1"># bindings based on the actual containing callable instead of</span>
+            <span class="c1"># self.app._call . This needs to be done since the a TruWrapperApp</span>
+            <span class="c1"># may be wrapping apps with different signatures on their callables</span>
+            <span class="c1"># so TruWrapperApp._call cannot have a consistent signature</span>
+            <span class="c1"># statically. Note also we are looking up the Instrument.INSTRUMENT</span>
+            <span class="c1"># attribute here since the method is instrumented and overridden by</span>
+            <span class="c1"># another wrapper in the process with the original accessible at</span>
+            <span class="c1"># this attribute.</span>
+
+            <span class="n">sig</span> <span class="o">=</span> <span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">_call_fn</span><span class="p">)</span>
+            <span class="c1"># Skipping self as TruWrapperApp._call takes in self, but</span>
+            <span class="c1"># self.app._call_fn does not.</span>
+            <span class="n">bindings</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="o">*</span><span class="n">bindings</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="o">**</span><span class="n">bindings</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">main_input</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">sig</span><span class="p">,</span> <span class="n">bindings</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Run the callable and pass any kwargs.</span>
+    <span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the callable with the given arguments. Note that the wrapped</span>
+<span class="sd">        callable is expected to take in a single string.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            dict: record metadata</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># NOTE: Actually text_to_text can take in more args.</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;_call&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">_call</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">_call</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
         </details>
 
@@ -1732,7 +1854,7 @@
   
       <p>Wrap a callable for monitoring.</p>
       <ul>
-<li>text_to_text: A callable string to string</li>
+<li>text_to_text: A function with signature string to string.</li>
 <li>More args in App</li>
 <li>More args in AppDefinition</li>
 <li>More args in WithClassInfo</li>
@@ -1740,37 +1862,37 @@
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span>
-<span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
-<span class="normal">73</span>
-<span class="normal">74</span>
-<span class="normal">75</span>
-<span class="normal">76</span>
-<span class="normal">77</span>
-<span class="normal">78</span>
-<span class="normal">79</span>
-<span class="normal">80</span>
-<span class="normal">81</span>
-<span class="normal">82</span>
-<span class="normal">83</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_to_text</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_to_text</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrap a callable for monitoring.</span>
 
 <span class="sd">    Arguments:</span>
-<span class="sd">    - text_to_text: A callable string to string</span>
+<span class="sd">    - text_to_text: A function with signature string to string.</span>
 <span class="sd">    - More args in App</span>
 <span class="sd">    - More args in AppDefinition</span>
 <span class="sd">    - More args in WithClassInfo</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">text_to_text</span><span class="p">(</span><span class="s2">&quot;This should return a string&quot;</span><span class="p">),</span> <span class="nb">str</span><span class="p">)</span>
+
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_forward_refs</span><span class="p">()</span>
     <span class="n">app</span> <span class="o">=</span> <span class="n">TruWrapperApp</span><span class="p">(</span><span class="n">text_to_text</span><span class="p">)</span>
     <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;app&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TruWrapperApp</span><span class="p">(</span><span class="n">text_to_text</span><span class="p">)</span>
@@ -1792,14 +1914,15 @@
 
 
 <h3 id="trulens_eval.trulens_eval.tru_basic_app.TruBasicApp.call_with_record" class="doc doc-heading">
-<code class="codehilite language-python"><span class="n">call_with_record</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="codehilite language-python"><span class="n">call_with_record</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 <a href="#trulens_eval.trulens_eval.tru_basic_app.TruBasicApp.call_with_record" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
   <div class="doc doc-contents ">
   
-      <p>Run the callable and pass any kwargs.</p>
+      <p>Run the callable with the given arguments. Note that the wrapped
+callable is expected to take in a single string.</p>
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -1824,25 +1947,31 @@
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 93</span>
-<span class="normal"> 94</span>
-<span class="normal"> 95</span>
-<span class="normal"> 96</span>
-<span class="normal"> 97</span>
-<span class="normal"> 98</span>
-<span class="normal"> 99</span>
-<span class="normal">100</span>
-<span class="normal">101</span>
-<span class="normal">102</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Run the callable and pass any kwargs.</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run the callable with the given arguments. Note that the wrapped</span>
+<span class="sd">    callable is expected to take in a single string.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        dict: record metadata</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># NOTE: Actually text_to_text can take in more args.</span>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;_call&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">_call</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">_call</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
       </details>
   </div>
