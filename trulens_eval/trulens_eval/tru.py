@@ -420,12 +420,6 @@ class Tru(SingletonPerName):
         if force:
             self.stop_dashboard(force=force)
 
-        if Tru.dashboard_proc is not None:
-            raise ValueError(
-                "Dashboard already running. "
-                "Run tru.stop_dashboard() to stop existing dashboard."
-            )
-
         print("Starting dashboard ...")
 
         # Create .streamlit directory if it doesn't exist
@@ -462,6 +456,10 @@ class Tru(SingletonPerName):
         leaderboard_path = pkg_resources.resource_filename(
             'trulens_eval', 'Leaderboard.py'
         )
+
+        if Tru.dashboard_proc is not None:
+            print("Dashboard already running at path:", Tru.dashboard_urls)
+            return Tru.dashboard_proc
 
         env_opts = {}
         if _dev is not None:
@@ -544,12 +542,14 @@ class Tru(SingletonPerName):
                             out.append_stdout(line)
                         else:
                             print(line)
+                        Tru.dashboard_urls = line # store the url when dashboard is started
                 else:
                     if "Network URL: " in line:
                         url = line.split(": ")[1]
                         url = url.rstrip()
                         print(f"Dashboard started at {url} .")
                         started.set()
+                        Tru.dashboard_urls = line # store the url when dashboard is started
                     if out is not None:
                         out.append_stdout(line)
                     else:
