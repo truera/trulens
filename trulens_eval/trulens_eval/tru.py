@@ -420,37 +420,46 @@ class Tru(SingletonPerName):
         if force:
             self.stop_dashboard(force=force)
 
-        if Tru.dashboard_proc is not None:
-            raise ValueError(
-                "Dashboard already running. "
-                "Run tru.stop_dashboard() to stop existing dashboard."
-            )
-
         print("Starting dashboard ...")
 
         # Create .streamlit directory if it doesn't exist
         streamlit_dir = os.path.join(os.getcwd(), '.streamlit')
         os.makedirs(streamlit_dir, exist_ok=True)
 
-        # Create config.toml file
+        # Create config.toml file path
         config_path = os.path.join(streamlit_dir, 'config.toml')
-        with open(config_path, 'w') as f:
-            f.write('[theme]\n')
-            f.write('primaryColor="#0A2C37"\n')
-            f.write('backgroundColor="#FFFFFF"\n')
-            f.write('secondaryBackgroundColor="F5F5F5"\n')
-            f.write('textColor="#0A2C37"\n')
-            f.write('font="sans serif"\n')
 
+        # Check if the file already exists
+        if not os.path.exists(config_path):
+            with open(config_path, 'w') as f:
+                f.write('[theme]\n')
+                f.write('primaryColor="#0A2C37"\n')
+                f.write('backgroundColor="#FFFFFF"\n')
+                f.write('secondaryBackgroundColor="F5F5F5"\n')
+                f.write('textColor="#0A2C37"\n')
+                f.write('font="sans serif"\n')
+        else:
+            print("Config file already exists. Skipping writing process.")
+
+        # Create credentials.toml file path
         cred_path = os.path.join(streamlit_dir, 'credentials.toml')
-        with open(cred_path, 'w') as f:
-            f.write('[general]\n')
-            f.write('email=""\n')
+
+        # Check if the file already exists
+        if not os.path.exists(cred_path):
+            with open(cred_path, 'w') as f:
+                f.write('[general]\n')
+                f.write('email=""\n')
+        else:
+            print("Credentials file already exists. Skipping writing process.")
 
         #run leaderboard with subprocess
         leaderboard_path = pkg_resources.resource_filename(
             'trulens_eval', 'Leaderboard.py'
         )
+
+        if Tru.dashboard_proc is not None:
+            print("Dashboard already running at path:", Tru.dashboard_urls)
+            return Tru.dashboard_proc
 
         env_opts = {}
         if _dev is not None:
@@ -533,12 +542,14 @@ class Tru(SingletonPerName):
                             out.append_stdout(line)
                         else:
                             print(line)
+                        Tru.dashboard_urls = line # store the url when dashboard is started
                 else:
                     if "Network URL: " in line:
                         url = line.split(": ")[1]
                         url = url.rstrip()
                         print(f"Dashboard started at {url} .")
                         started.set()
+                        Tru.dashboard_urls = line # store the url when dashboard is started
                     if out is not None:
                         out.append_stdout(line)
                     else:
