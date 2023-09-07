@@ -83,8 +83,11 @@ tru_query_engine = TruLlama(
 
 # Instrumented query engine can operate like the original:
 llm_response = tru_query_engine.query("What did the author do growing up?")
-
 print(llm_response)
+
+# or as context manager
+with tru_query_engine as recording:
+    query_engine.query("What did the author do growing up?")
 
 # ## Explore in a Dashboard
 
