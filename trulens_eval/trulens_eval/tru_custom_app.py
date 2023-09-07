@@ -196,12 +196,13 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
 
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Iterable, Set
+from typing import Any, Callable, ClassVar, Set
 
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
+from trulens_eval.instruments import instrument as base_instrument
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.serial import JSONPath
@@ -390,9 +391,6 @@ class TruCustomApp(App):
             raise RuntimeError(
                 f"TruCustomApp nor wrapped app have attribute named {__name}."
             )
-
-
-from trulens_eval.instruments import instrument as base_instrument
 
 
 class instrument(base_instrument):

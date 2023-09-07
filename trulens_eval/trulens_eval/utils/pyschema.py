@@ -583,6 +583,7 @@ class WithClassInfo(pydantic.BaseModel):
 
     def __init__(
         self,
+        *args,
         class_info: Optional[Class] = None,
         obj: Optional[object] = None,
         cls: Optional[type] = None,
@@ -596,8 +597,8 @@ class WithClassInfo(pydantic.BaseModel):
             class_info = Class.of_class(cls, with_bases=True)
 
         kwargs['__tru_class_info'] = class_info
-
-        super().__init__(**kwargs)
+        
+        super().__init__(*args, **kwargs)
 
     @staticmethod
     def of_object(obj: object):
