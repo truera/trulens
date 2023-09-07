@@ -12,7 +12,6 @@ from trulens_eval.feedback.provider.openai import OpenAI
 from trulens_eval.utils.generated import re_1_10_rating
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
-
 """
 TODO: feedback collections refactor
 
@@ -35,6 +34,7 @@ class Safety(RequiresCompletionProvider):
 """
 
 logger = logging.getLogger(__name__)
+
 
 class Groundedness(SerialModel, WithClassInfo):
     """Measures Groundedness.
@@ -71,8 +71,10 @@ class Groundedness(SerialModel, WithClassInfo):
             groundedness_provider (Provider, optional): groundedness provider options: OpenAI LLM or HuggingFace NLI. Defaults to OpenAI().
             summarize_provider (Provider, optional): Internal Usage for DB serialization.
         """
-        logger.warning("Feedback function `groundedness_measure` was renamed to `groundedness_measure_with_cot_reasons`. The new functionality of `groundedness_measure` function will no longer emit reasons as a lower cost option. It may have reduced accuracy due to not using Chain of Thought reasoning in the scoring.")
-        
+        logger.warning(
+            "Feedback function `groundedness_measure` was renamed to `groundedness_measure_with_cot_reasons`. The new functionality of `groundedness_measure` function will no longer emit reasons as a lower cost option. It may have reduced accuracy due to not using Chain of Thought reasoning in the scoring."
+        )
+
         summarize_provider = OpenAI()
         if groundedness_provider is None:
             groundedness_provider = OpenAI()
@@ -113,12 +115,14 @@ class Groundedness(SerialModel, WithClassInfo):
         Returns:
             float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
-        
+
         groundedness_scores = {}
         if isinstance(self.groundedness_provider, (AzureOpenAI, OpenAI)):
-            groundedness_scores[f"full_doc_score"] = re_1_10_rating(self.summarize_provider._groundedness_doc_in_out(
-                source, statement, chain_of_thought=False
-            )) / 10
+            groundedness_scores[f"full_doc_score"] = re_1_10_rating(
+                self.summarize_provider._groundedness_doc_in_out(
+                    source, statement, chain_of_thought=False
+                )
+            ) / 10
             reason = "Reasons not supplied for non chain of thought function"
         elif isinstance(self.groundedness_provider, Huggingface):
             reason = ""
@@ -139,8 +143,10 @@ class Groundedness(SerialModel, WithClassInfo):
                     groundedness_scores[f"statement_{i}"] = score
 
         return groundedness_scores, {"reason": reason}
-        
-    def groundedness_measure_with_cot_reasons(self, source: str, statement: str) -> float:
+
+    def groundedness_measure_with_cot_reasons(
+        self, source: str, statement: str
+    ) -> float:
         """A measure to track if the source material supports each sentence in the statement. 
         This groundedness measure is faster; but less accurate than `groundedness_measure_with_summarize_step`.
         Also uses chain of thought methodology and emits the reasons.
@@ -182,7 +188,9 @@ class Groundedness(SerialModel, WithClassInfo):
                     i += 1
             return groundedness_scores, {"reason": reason}
         elif isinstance(self.groundedness_provider, Huggingface):
-            raise Exception("Chain of Thought reasoning is only applicable to OpenAI groundedness providers. Instantiate `Groundedness(groundedness_provider=OpenAI())` or use `groundedness_measure` feedback function.")
+            raise Exception(
+                "Chain of Thought reasoning is only applicable to OpenAI groundedness providers. Instantiate `Groundedness(groundedness_provider=OpenAI())` or use `groundedness_measure` feedback function."
+            )
 
     def groundedness_measure_with_summarize_step(
         self, source: str, statement: str
@@ -249,15 +257,15 @@ class Groundedness(SerialModel, WithClassInfo):
             float: for each statement, gets the max groundedness, then averages over that.
         """
         all_results = []
-        
+
         statements_to_scores = {}
         for multi_output in source_statements_multi_output:
             for k in multi_output:
                 if k not in statements_to_scores:
                     statements_to_scores[k] = []
                 statements_to_scores[k].append(multi_output[k])
-        
+
         for k in statements_to_scores:
             all_results.append(np.max(statements_to_scores[k]))
-        
+
         return np.mean(all_results)

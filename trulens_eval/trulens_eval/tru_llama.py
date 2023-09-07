@@ -163,7 +163,6 @@ class TruLlama(App):
         Args:
             app (BaseQueryEngine): A llama index application.
     """
-    
 
     class Config:
         arbitrary_types_allowed = True
