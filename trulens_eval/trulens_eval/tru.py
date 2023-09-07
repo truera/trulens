@@ -432,20 +432,30 @@ class Tru(SingletonPerName):
         streamlit_dir = os.path.join(os.getcwd(), '.streamlit')
         os.makedirs(streamlit_dir, exist_ok=True)
 
-        # Create config.toml file
+        # Create config.toml file path
         config_path = os.path.join(streamlit_dir, 'config.toml')
-        with open(config_path, 'w') as f:
-            f.write('[theme]\n')
-            f.write('primaryColor="#0A2C37"\n')
-            f.write('backgroundColor="#FFFFFF"\n')
-            f.write('secondaryBackgroundColor="F5F5F5"\n')
-            f.write('textColor="#0A2C37"\n')
-            f.write('font="sans serif"\n')
+
+        # Check if the file already exists
+        if not os.path.exists(config_path):
+            with open(config_path, 'w') as f:
+                f.write('[theme]\n')
+                f.write('primaryColor="#0A2C37"\n')
+                f.write('backgroundColor="#FFFFFF"\n')
+                f.write('secondaryBackgroundColor="F5F5F5"\n')
+                f.write('textColor="#0A2C37"\n')
+                f.write('font="sans serif"\n')
+        else:
+            print("Config file already exists. Skipping writing process.")
 
         cred_path = os.path.join(streamlit_dir, 'credentials.toml')
-        with open(cred_path, 'w') as f:
-            f.write('[general]\n')
-            f.write('email=""\n')
+
+        # Check if the file already exists
+        if not os.path.exists(cred_path):
+            with open(cred_path, 'w') as f:
+                f.write('[general]\n')
+                f.write('email=""\n')
+        else:
+            print("Credentials file already exists. Skipping writing process.")
 
         #run leaderboard with subprocess
         leaderboard_path = pkg_resources.resource_filename(
