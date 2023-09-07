@@ -206,7 +206,7 @@ attributes (see **Selectors** section below).
 
 Apps and Records will be converted to JSON-like structures representing their callstack.
 
-Selectors are of type `JSONPath` defined in `util.py` help specify paths into JSON-like
+Selectors are of type `JSONPath` defined in `utils/serial.py` help specify paths into JSON-like
 structures (enumerating `Record` or `App` contents). 
 
 In most cases, the Select object produces only a single item but can also
