@@ -2,6 +2,7 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from queue import Queue
+import random
 from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
@@ -97,9 +98,9 @@ class Endpoint(SerialModel, SingletonPerName):
     # Thread that fills the queue at the appropriate rate.
     pace_thread: Thread = pydantic.Field(exclude=True)
 
-    def __new__(cls, name: str, *args, **kwargs):
+    def __new__(cls, *args, name: str=None, **kwargs):
         return super(SingletonPerName, cls).__new__(
-            SerialModel, name=name, *args, **kwargs
+            SerialModel, *args, name=name, **kwargs
         )
 
     def __init__(self, *args, name: str, callback_class: Any, **kwargs):
@@ -772,3 +773,84 @@ class Endpoint(SerialModel, SingletonPerName):
         logger.debug(f"Instrumenting {func.__name__} for {self.name} .")
 
         return w
+
+
+class DummyEndpoint(Endpoint):
+    """
+    Endpoint for testing purposes. Should not make any network calls.
+    """
+
+    # Pretend the model we are querying is loading as is in huggingface.
+    is_loading: bool = True
+
+    def __new__(cls, *args, **kwargs):
+        return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
+
+    def __init__(self, name: str = "dummyendpoint", **kwargs):
+        if hasattr(self, "callback_class"):
+            # Already created with SingletonPerName mechanism
+            return
+
+        kwargs['name'] = name
+        kwargs['callback_class'] = EndpointCallback
+        kwargs['rpm'] = DEFAULT_RPM * 10
+
+        super().__init__(**kwargs)
+
+    def post( 
+        self, url: str, payload: JSON, timeout: Optional[int] = None
+    ) -> Any:
+        # classification results only, like from huggingface 
+
+        self.pace_me()
+
+        # pretend to do this:
+        """
+        ret = requests.post(
+            url, json=payload, timeout=timeout, headers=self.post_headers
+        )
+        """
+
+        if self.is_loading:
+            # "model loading message"
+            j = dict(estimated_time=1.2345)
+            self.is_loading = False
+    
+        elif random.randint(a=0, b=50) == 0:
+            # randomly overloaded
+            j = dict(error="overloaded")
+
+        else:
+            # otherwise a constant success
+
+            j = [[
+                {'label': 'LABEL_1', 'score': 0.6034979224205017},
+                {'label': 'LABEL_2', 'score': 0.2648237645626068},
+                {'label': 'LABEL_0', 'score': 0.13167837262153625}
+            ]]
+
+        # The rest is the same as in Endpoint:
+
+        # Huggingface public api sometimes tells us that a model is loading and
+        # how long to wait:
+        if "estimated_time" in j:
+            wait_time = j['estimated_time']
+            logger.error(f"Waiting for {j} ({wait_time}) second(s).")
+            sleep(wait_time + 2)
+            return self.post(url, payload)
+
+        if isinstance(j, Dict) and "error" in j:
+            error = j['error']
+            logger.error(f"API error: {j}.")
+            if error == "overloaded":
+                logger.error("Waiting for overloaded API before trying again.")
+                sleep(10)
+                return self.post(url, payload)
+            else:
+                raise RuntimeError(error)
+
+        assert isinstance(
+            j, Sequence
+        ) and len(j) > 0, f"Post did not return a sequence: {j}"
+
+        return j[0]
