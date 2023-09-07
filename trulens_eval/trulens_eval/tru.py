@@ -447,6 +447,7 @@ class Tru(SingletonPerName):
         else:
             print("Config file already exists. Skipping writing process.")
 
+        # Create credentials.toml file path
         cred_path = os.path.join(streamlit_dir, 'credentials.toml')
 
         # Check if the file already exists
