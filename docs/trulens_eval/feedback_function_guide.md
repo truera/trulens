@@ -79,7 +79,7 @@ f_qs_relevance = Feedback(openai.qs_relevance)
 # def qs_relevance(self, question: str, statement: str) -> float:
 ```
 
-- **Argument Selection specification ** -- Where we previously set,
+- **Argument Selection specification** -- Where we previously set,
   `on_input_output` , the `on(Select...)` line enables specification of where
   the statement argument to the implementation comes from. The form of the
   specification will be discussed in further details in the Specifying Arguments
