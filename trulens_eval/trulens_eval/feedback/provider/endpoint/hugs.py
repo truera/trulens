@@ -33,7 +33,7 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
     """
     Huggingface. Instruments the requests.post method for requests to
     "https://api-inference.huggingface.co".
-    """ 
+    """
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="huggingface")
@@ -79,4 +79,3 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
         super().__init__(*args, **kwargs)
 
         self._instrument_class(requests, "post")
-

@@ -98,7 +98,7 @@ class Endpoint(SerialModel, SingletonPerName):
     # Thread that fills the queue at the appropriate rate.
     pace_thread: Thread = pydantic.Field(exclude=True)
 
-    def __new__(cls, *args, name: str=None, **kwargs):
+    def __new__(cls, *args, name: str = None, **kwargs):
         return super(SingletonPerName, cls).__new__(
             SerialModel, *args, name=name, **kwargs
         )
@@ -797,10 +797,10 @@ class DummyEndpoint(Endpoint):
 
         super().__init__(**kwargs)
 
-    def post( 
+    def post(
         self, url: str, payload: JSON, timeout: Optional[int] = None
     ) -> Any:
-        # classification results only, like from huggingface 
+        # classification results only, like from huggingface
 
         self.pace_me()
 
@@ -815,7 +815,7 @@ class DummyEndpoint(Endpoint):
             # "model loading message"
             j = dict(estimated_time=1.2345)
             self.is_loading = False
-    
+
         elif random.randint(a=0, b=50) == 0:
             # randomly overloaded
             j = dict(error="overloaded")
@@ -823,11 +823,20 @@ class DummyEndpoint(Endpoint):
         else:
             # otherwise a constant success
 
-            j = [[
-                {'label': 'LABEL_1', 'score': 0.6034979224205017},
-                {'label': 'LABEL_2', 'score': 0.2648237645626068},
-                {'label': 'LABEL_0', 'score': 0.13167837262153625}
-            ]]
+            j = [
+                [
+                    {
+                        'label': 'LABEL_1',
+                        'score': 0.6034979224205017
+                    }, {
+                        'label': 'LABEL_2',
+                        'score': 0.2648237645626068
+                    }, {
+                        'label': 'LABEL_0',
+                        'score': 0.13167837262153625
+                    }
+                ]
+            ]
 
         # The rest is the same as in Endpoint:
 
