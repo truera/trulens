@@ -331,7 +331,7 @@ class Feedback(FeedbackDefinition):
                     f"Feedback implementation {self.imp} with signature {sig} has no more inputs. "
                     "Perhaps you meant to evalute it on App output only instead of app input and output?"
                 )
-            
+
             return par_names[0]
         else:
             raise RuntimeError(
