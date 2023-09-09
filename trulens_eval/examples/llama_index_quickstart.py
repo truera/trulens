@@ -12,7 +12,7 @@
 # ### Install dependencies
 # Let's install some of the dependencies for this notebook if we don't have them already
 
-get_ipython().system(' pip install trulens-eval==0.10.0 llama_index==0.8.3 html2text==2020.1.16')
+#! pip install trulens-eval==0.12.0 llama_index==0.8.5.post2 html2text==2020.1.16
 
 # ### Add API keys
 # For this quickstart, you will need Open AI and Huggingface keys
@@ -39,9 +39,10 @@ tru = Tru()
 from llama_index import SimpleWebPageReader
 from llama_index import VectorStoreIndex
 
-documents = SimpleWebPageReader(html_to_text=True).load_data(
-    ["http://paulgraham.com/worked.html"]
-)
+# llama_index 0.8.15 bug: need to provide metadata_fn
+documents = SimpleWebPageReader(
+    html_to_text=True, metadata_fn=lambda url: dict(url=url)
+).load_data(["http://paulgraham.com/worked.html"])
 index = VectorStoreIndex.from_documents(documents)
 
 query_engine = index.as_query_engine()
@@ -82,8 +83,11 @@ tru_query_engine = TruLlama(
 
 # Instrumented query engine can operate like the original:
 llm_response = tru_query_engine.query("What did the author do growing up?")
-
 print(llm_response)
+
+# or as context manager
+with tru_query_engine as recording:
+    query_engine.query("What did the author do growing up?")
 
 # ## Explore in a Dashboard
 

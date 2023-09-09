@@ -70,13 +70,13 @@ import TruCustomApp
 
 ca = CustomApp()
 
-# Normal app usage:
+# Normal app **Usage:**
 response = ca.respond_to_query("What is the capital of Indonesia?")
 
 # Wrapping app with `TruCustomApp`: 
 ta = TruCustomApp(ca)
 
-# Wrapped usage: must use the general `with_record` (or `awith_record`) method:
+# Wrapped **Usage:** must use the general `with_record` (or `awith_record`) method:
 response, record = ta.with_record(
     ca.respond_to_query, input="What is the capital of Indonesia?"
 )
@@ -196,13 +196,13 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
 
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Iterable, Set
+from typing import Any, Callable, ClassVar, Set
 
 from pydantic import Field
 
-
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
+from trulens_eval.instruments import instrument as base_instrument
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.serial import JSONPath
@@ -219,6 +219,54 @@ PLACEHOLDER = "__tru_placeholder"
 
 
 class TruCustomApp(App):
+    """Instantiates a Custom App that can be tracked as long as methods are decorated with @instrument.
+        
+        **Usage:**
+
+        ```
+        class CustomApp:
+
+            def __init__(self):
+                self.retriever = CustomRetriever()
+                self.llm = CustomLLM()
+                self.template = CustomTemplate(
+                    "The answer to {question} is probably {answer} or something ..."
+                )
+
+            @instrument
+            def retrieve_chunks(self, data):
+                return self.retriever.retrieve_chunks(data)
+
+            @instrument
+            def respond_to_query(self, input):
+                chunks = self.retrieve_chunks(input)
+                answer = self.llm.generate(",".join(chunks))
+                output = self.template.fill(question=input, answer=answer)
+
+                return output
+        
+        ca = CustomApp()
+        from trulens_eval import TruCustomApp
+        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
+        custom_app = TruCustomApp(ca, 
+            app_id="Custom Application v1",
+            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
+        
+        question = "What is the capital of Indonesia?"
+
+        # Normal **Usage:**
+        response_normal = ca.respond_to_query(question)
+
+        # Instrumented **Usage:**
+        response_wrapped, record = custom_app.with_record(
+            ca.respond_to_query, input=question, record_metadata="meta1"
+        )
+        ```
+        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+
+        Args:
+            app (Any): Any class
+    """
     app: Any
 
     root_callable: ClassVar[FunctionOrMethod] = Field(None)
@@ -343,10 +391,6 @@ class TruCustomApp(App):
             raise RuntimeError(
                 f"TruCustomApp nor wrapped app have attribute named {__name}."
             )
-
-
-from trulens_eval.instruments import instrument as base_instrument
-
 
 
 class instrument(base_instrument):

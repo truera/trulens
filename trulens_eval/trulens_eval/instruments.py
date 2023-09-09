@@ -281,7 +281,8 @@ class WithInstrumentCallbacks:
 
     # Called during invocation.
     def _on_add_record(
-        self, record: Sequence[Record],
+        self,
+        record: Sequence[Record],
     ):
         """
         Called by instrumented methods if they are root calls (first instrumned
@@ -386,9 +387,7 @@ class Instrument(object):
             # we store the method being instrumented in the attribute
             # Instrument.INSTRUMENT of the wrapped variant.
             original_func = getattr(func, Instrument.INSTRUMENT)
-            self.app._on_method_instrumented(
-                obj, original_func, path=query
-            )
+            self.app._on_method_instrumented(obj, original_func, path=query)
 
             # Add self.app, the app requesting this method to be
             # instrumented, to the list of apps expecting to be notified of
@@ -414,15 +413,17 @@ class Instrument(object):
             # TODO: figure out how to have less repetition between the async and
             # sync versions of this method.
 
-            logger.debug(f"{query}: calling instrumented async method {func}") # DIFF
+            logger.debug(
+                f"{query}: calling instrumented async method {func}"
+            )  # DIFF
 
-            apps = getattr(awrapper, Instrument.APPS) # DIFF
+            apps = getattr(awrapper, Instrument.APPS)  # DIFF
 
             # If not within a root method, call the wrapped function without
             # any recording.
 
             def find_instrumented(f):
-                return id(f) in [id(awrapper.__code__)] # DIFF
+                return id(f) in [id(awrapper.__code__)]  # DIFF
 
             # Get any contexts already known from higher in the call stack.
             contexts = get_first_local_in_call_stack(
@@ -442,9 +443,11 @@ class Instrument(object):
                 for ctx in app._on_new_record(func):
                     contexts.add(ctx)
 
-            if len(contexts) == 0:        
+            if len(contexts) == 0:
                 # If no app wants this call recorded, run and return without instrumentation.
-                logger.debug(f"{query}: no record found or requested, not recording.")
+                logger.debug(
+                    f"{query}: no record found or requested, not recording."
+                )
 
                 return await func(*args, **kwargs)
 
@@ -528,14 +531,12 @@ class Instrument(object):
                 rets, cost = await Endpoint.atrack_all_costs_tally( # DIFF
                     lambda: func(*bindings.args, **bindings.kwargs)
                 )
-        
+
             except BaseException as e:
                 error = e
                 error_str = str(e)
 
-                logger.error(
-                    f"Error calling wrapped function {func.__name__}."
-                )
+                logger.error(f"Error calling wrapped function {func.__name__}.")
                 logger.error(traceback.format_exc())
 
             end_time = datetime.now()
@@ -545,10 +546,10 @@ class Instrument(object):
 
             # Don't include self in the recorded arguments.
             nonself = {
-                k: jsonify(v) for k, v in (
-                    bindings.arguments.items(
-                    ) if bindings is not None else {}
-                ) if k != "self"
+                k: jsonify(v)
+                for k, v in
+                (bindings.arguments.items() if bindings is not None else {})
+                if k != "self"
             }
 
             record_app_args = dict(
@@ -569,7 +570,7 @@ class Instrument(object):
                 record_app_args['stack'] = stack
                 call = RecordAppCall(**record_app_args)
                 ctx.add_call(call)
-                
+
                 # If stack has only 1 thing on it, we are looking at a "root
                 # call". Create a record of the result and notify the app:
 
@@ -586,10 +587,10 @@ class Instrument(object):
                         perf=Perf(start_time=start_time, end_time=end_time),
                         cost=cost
                     )
-                    
+
             if error is not None:
                 raise error
-            
+
             return rets
 
         def wrapper(*args, **kwargs):
@@ -624,9 +625,11 @@ class Instrument(object):
                 for ctx in app._on_new_record(func):
                     contexts.add(ctx)
 
-            if len(contexts) == 0:        
+            if len(contexts) == 0:
                 # If no app wants this call recorded, run and return without instrumentation.
-                logger.debug(f"{query}: no record found or requested, not recording.")
+                logger.debug(
+                    f"{query}: no record found or requested, not recording."
+                )
 
                 return func(*args, **kwargs)
 
@@ -708,14 +711,12 @@ class Instrument(object):
                 rets, cost = Endpoint.track_all_costs_tally(
                     lambda: func(*bindings.args, **bindings.kwargs)
                 )
-            
+
             except BaseException as e:
                 error = e
                 error_str = str(e)
 
-                logger.error(
-                    f"Error calling wrapped function {func.__name__}."
-                )
+                logger.error(f"Error calling wrapped function {func.__name__}.")
                 logger.error(traceback.format_exc())
 
             end_time = datetime.now()
@@ -725,10 +726,10 @@ class Instrument(object):
 
             # Don't include self in the recorded arguments.
             nonself = {
-                k: jsonify(v) for k, v in (
-                    bindings.arguments.items(
-                    ) if bindings is not None else {}
-                ) if k != "self"
+                k: jsonify(v)
+                for k, v in
+                (bindings.arguments.items() if bindings is not None else {})
+                if k != "self"
             }
 
             record_app_args = dict(
@@ -749,7 +750,7 @@ class Instrument(object):
                 record_app_args['stack'] = stack
                 call = RecordAppCall(**record_app_args)
                 ctx.add_call(call)
-                
+
                 # If stack has only 1 thing on it, we are looking at a "root
                 # call". Create a record of the result and notify the app:
 
@@ -766,10 +767,10 @@ class Instrument(object):
                         perf=Perf(start_time=start_time, end_time=end_time),
                         cost=cost
                     )
-                    
+
             if error is not None:
                 raise error
-            
+
             return rets
 
         w = wrapper
@@ -827,9 +828,12 @@ class Instrument(object):
 
         cls = type(obj)
 
+        mro = list(cls.__mro__)
+        # Warning: cls.__mro__ sometimes returns an object that can be iterated through only once.
+
         logger.debug(
             f"{query}: instrumenting object at {id(obj):x} of class {cls.__name__} with mro:\n\t"
-            + '\n\t'.join(map(str, cls.__mro__))
+            + '\n\t'.join(map(str, mro))
         )
 
         if id(obj) in done:
@@ -844,22 +848,35 @@ class Instrument(object):
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
 
-        for base in list(cls.__mro__):
+        for base in mro:
+            logger.debug(f"\t{query}: considering base {base.__name__}")
+
             # Some top part of mro() may need instrumentation here if some
             # subchains call superchains, and we want to capture the
             # intermediate steps. On the other hand we don't want to instrument
             # the very base classes such as object:
             if not self.to_instrument_module(base.__module__):
+                logger.debug(
+                    f"\tSkipping base; module {base.__module__} is not to be instrumented."
+                )
                 continue
 
             try:
                 if not self.to_instrument_class(base):
+                    logger.debug(
+                        f"\t\tSkipping base; class {base.__name__} is not to be instrumented."
+                    )
                     continue
-            except Exception:
-                # subclass check may raise exception
-                continue
 
-            logger.debug(f"\t{query}: instrumenting base {base.__name__}")
+            except Exception as e:
+                # subclass check may raise exception
+                logger.debug(
+                    f"\t\tWarning: checking whether {base.__name__} should be instrumented resulted in an error: {e}"
+                )
+                # NOTE: Proceeding to instrument here as we don't want to miss
+                # anything. Unsure why some llama_index subclass checks fail.
+
+                # continue
 
             for method_name in self.include_methods:
 
@@ -920,7 +937,9 @@ class Instrument(object):
                             )
 
                 else:
-                    logger.debug(f"Instrumentation of component {v} (of type {type(v)}) is not yet supported.")
+                    logger.debug(
+                        f"Instrumentation of component {v} (of type {type(v)}) is not yet supported."
+                    )
 
                 # TODO: check if we want to instrument anything in langchain not
                 # accessible through __fields__ .
@@ -946,6 +965,7 @@ class Instrument(object):
                 f"{query}: Do not know how to instrument object of type {cls}."
             )
 
+
 class AddInstruments():
     """
     Utilities for adding more things to default instrumentation filters.
@@ -966,7 +986,6 @@ class AddInstruments():
     def methods(self_class, cls: type, names: Iterable[str]) -> None:
         for name in names:
             self_class.method(cls, name)
-
 
 
 class instrument(AddInstruments):
@@ -991,5 +1010,3 @@ class instrument(AddInstruments):
         # Note that this does not actually change the method, just adds it to
         # list of filters.
         self.method(cls, name)
-
-

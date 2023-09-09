@@ -67,10 +67,7 @@ class JSONTestCase(TestCase):
 
                 self.assertTrue(hasattr(j2, f.name))
 
-                recur(
-                    getattr(j1, f.name), getattr(j2, f.name),
-                    path[f.name]
-                )
+                recur(getattr(j1, f.name), getattr(j2, f.name), path[f.name])
 
         elif isinstance(j1, BaseModel):
             for f in j1.__fields__:

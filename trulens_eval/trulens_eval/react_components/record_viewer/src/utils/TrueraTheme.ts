@@ -6,12 +6,14 @@ declare module '@mui/material/styles' {
   interface TypographyVariants {
     menu: React.CSSProperties;
     bodyStrong: React.CSSProperties;
+    code: React.CSSProperties;
   }
 
   // allow configuration using `createTheme`
   interface TypographyVariantsOptions {
     menu?: React.CSSProperties;
     bodyStrong?: React.CSSProperties;
+    code?: React.CSSProperties;
   }
 
   interface Palette {
@@ -37,6 +39,15 @@ declare module '@mui/material/Typography' {
   interface TypographyPropsVariantOverrides {
     menu: true;
     bodyStrong: true;
+    code: true;
+  }
+}
+// Update the Typography's variant prop options
+declare module '@mui/material/Typography' {
+  interface TypographyPropsVariantOverrides {
+    poster: true;
+    code: true;
+    h3: false;
   }
 }
 
@@ -172,6 +183,15 @@ const TrueraTheme: Theme = createTheme({
       fontSize: '0.875rem',
       lineHeight: 1.15,
       letterSpacing: '0.03em',
+    },
+    code: {
+      color: 'rgb(9,171,59)',
+      fontFamily: '"Source Code Pro", monospace',
+      margin: 0,
+      fontSize: '0.75em',
+      borderRadius: '0.25rem',
+      background: 'rgb(250,250,250)',
+      width: 'fit-content',
     },
   },
 });
