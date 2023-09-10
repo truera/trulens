@@ -1,4 +1,6 @@
-from typing import Optional
+from abc import abstractmethod
+import enum
+from typing import Iterable, Optional, Tuple
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.pyschema import WithClassInfo
@@ -6,6 +8,13 @@ from trulens_eval.utils.serial import SerialModel
 
 
 """
+FewShotClassification
+
+Classification
+
+Completion
+
+
 TODO: feedback collections refactor
 
 class FeedbackCollection(SerialModel, WithClassInfo):
@@ -27,7 +36,6 @@ class Safety(RequiresCompletionProvider):
 """
 
 
-
 class Provider(SerialModel, WithClassInfo):
 
     class Config:
@@ -42,10 +50,16 @@ class Provider(SerialModel, WithClassInfo):
         super().__init__(*args, **kwargs)
 
 
-
 class CompletionProvider(Provider):
     # OpenAI completion models
     # Cohere completion models
+
+    @staticmethod
+    def of_langchain(llm) -> `CompletionProvider`:
+        """
+        Create a completion provider from a langchain llm.
+        """
+        ...
 
     ...
 
@@ -57,21 +71,36 @@ class FewShotClassificationProvider(Provider):
     # Cohere.not_disinformation
     ...
 
+    @staticmethod
+    def of_langchain(llm) -> `FewShotClassificationProvider`:
+        """
+        Create a provider from a langchain llm.
+        """
+        ...
 
-class ClassificationModel():
+
+class ClassificationTask():
     pass
 
-class Moderation(ClassificationModel):
-    hate: str = "hate"
-    hate_threatening: str = "hate_threatening"
-    ...
-
-class OpenAIProvider(CompletionProvider, FewShotClassificationProvider, ClassificationProvider):
-    def __init__(self):
-        self.classification_models = set(Moderation.hate, Moderation.hate_threatening)
-
+class WithFewShots():
+    @abstractmethod
+    def get_examples(self) -> Iterable[Tuple[str, int]]:
+        pass
 
 class ClassificationProvider(Provider):
+    @abstractmethod
+    @staticmethod
+    def of_hugs(self) -> 'ClassificationProvider':
+        pass
+
+    @abstractmethod
+    def classify(self, task: ClassificationTask) -> int:
+        pass
+
+    @abstractmethod
+    def supported_tasks(self) -> Iterable[ClassificationTask]:
+        pass
+
     # Hugs.*
 
     # OpenAI.moderation_not_hate
@@ -100,6 +129,31 @@ class ClassificationProvider(Provider):
     # OpenAI.misogony
     # OpenAI.criminality
     # OpenAI.insensitivity
+
+
+
+class ModerationHate(ClassificationTask):
+    """
+    TODO: docstring regarding hate, examples
+    """
+
+class ModerationHateThreatening(ClassificationTask):
+    """
+    TODO: docstring regarding hate threatening, examples
+    """
+
+
+
+
+class OpenAIProvider(CompletionProvider, FewShotClassificationProvider, ClassificationProvider):
+    def __init__(self):
+        self.completion_model = None
+        self.classification_model = None
+
+        self.classification_tasks = set(ModerationHate, ModerationHateThreatening)
+
+    def classify(self, task: ClassificationTask) -> int:
+        pass
 
 
 class ClassificationWithExplanationProvider(Provider):
