@@ -30,7 +30,7 @@ with OptionalImports(message=REQUIREMENT_EVALUATE):
 
 logger = logging.getLogger(__name__)
 
-
+# TODEP
 class GroundTruthAgreement(SerialModel, WithClassInfo):
     """Measures Agreement against a Ground Truth.
     """
@@ -114,6 +114,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         else:
             return None
 
+    # TODEP
     def agreement_measure(
         self, prompt: str, response: str
     ) -> Union[float, Tuple[float, Dict[str, str]]]:
@@ -159,6 +160,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
 
         return ret
 
+    # TODEP
     def bert_score(self, prompt: str,
                    response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
@@ -204,6 +206,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
 
         return ret
 
+    # TODEP
     def bleu(self, prompt: str,
              response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
@@ -247,6 +250,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
 
         return ret
 
+    # TODEP
     def rouge(self, prompt: str,
               response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
         """

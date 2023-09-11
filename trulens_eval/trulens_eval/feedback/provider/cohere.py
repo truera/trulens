@@ -19,6 +19,7 @@ class Cohere(Provider):
             **kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    # TODEP
     def sentiment(
         self,
         text,
@@ -33,6 +34,7 @@ class Cohere(Provider):
             )
         )
 
+    # TODEP
     def not_disinformation(self, text):
         return int(
             Cohere().endpoint.run_me(

@@ -96,6 +96,7 @@ class Huggingface(Provider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    # TODEP
     @_tci
     def language_match(self, text1: str, text2: str) -> float:
         """
@@ -151,6 +152,7 @@ class Huggingface(Provider):
 
         return l1, dict(text1_scores=scores1, text2_scores=scores2)
 
+    # TODEP
     @_tci
     def positive_sentiment(self, text: str) -> float:
         """
@@ -186,6 +188,7 @@ class Huggingface(Provider):
             if label['label'] == 'LABEL_2':
                 return label['score']
 
+    # TODEP
     @_tci
     def not_toxic(self, text: str) -> float:
         """
@@ -223,6 +226,7 @@ class Huggingface(Provider):
             if label['label'] == 'toxic':
                 return label['score']
 
+    # TODEP
     @_tci
     def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
         """ A groundedness measure best used for summarized premise against simple hypothesis.
@@ -246,6 +250,7 @@ class Huggingface(Provider):
             if label['label'] == 'entailment':
                 return label['score']
 
+    # TODEP
     @_tci
     def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
         """ A groundedness measure for full document premise against hypothesis.
