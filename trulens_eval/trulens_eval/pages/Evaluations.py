@@ -114,6 +114,8 @@ else:
     else:
         app = apps
 
+    st.experimental_set_query_params(app=app)
+
     options = st.multiselect('Filter Applications', apps, default=app)
 
     if (len(options) == 0):
