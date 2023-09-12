@@ -15,7 +15,7 @@ from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
 from trulens_eval.keys import check_keys
-from trulens_eval.tru_llama import TruLlama
+from trulens_eval.tru_chain_recorder import TruLlama
 import trulens_eval.utils.python  # makes sure asyncio gets instrumented
 
 check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
@@ -46,14 +46,14 @@ class TestLlamaIndex(JSONTestCase):
 
         query_engine = self.index.as_query_engine()
 
-        tru_query_engine = TruLlama(query_engine)
-        llm_response_async, record_async = await tru_query_engine.aquery_with_record(
+        tru_query_engine_recorder = TruLlama(query_engine)
+        llm_response_async, record_async = await tru_query_engine_recorder.aquery_with_record(
             "What did the author do growing up?"
         )
 
         query_engine = self.index.as_query_engine()
-        tru_query_engine = TruLlama(query_engine)
-        llm_response_sync, record_sync = tru_query_engine.query_with_record(
+        tru_query_engine_recorder = TruLlama(query_engine)
+        llm_response_sync, record_sync = tru_query_engine_recorder.query_with_record(
             "What did the author do growing up?"
         )
 
@@ -85,14 +85,14 @@ class TestLlamaIndex(JSONTestCase):
         # regardless of streaming option.
 
         query_engine = self.index.as_query_engine()
-        tru_query_engine = TruLlama(query_engine)
-        llm_response, record = tru_query_engine.query_with_record(
+        tru_query_engine_recorder = TruLlama(query_engine)
+        llm_response, record = tru_query_engine_recorder.query_with_record(
             "What did the author do growing up?"
         )
 
         query_engine = self.index.as_query_engine(streaming=True)
-        tru_query_engine = TruLlama(query_engine)
-        llm_response_stream, record_stream = tru_query_engine.query_with_record(
+        tru_query_engine_recorder = TruLlama(query_engine)
+        llm_response_stream, record_stream = tru_query_engine_recorder.query_with_record(
             "What did the author do growing up?"
         )
 

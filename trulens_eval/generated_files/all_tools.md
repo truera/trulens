@@ -131,7 +131,7 @@ The evaluations tab provides record-level metadata and feedback on the quality o
 
 ### Deep dive into full chain metadata
 
-Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain.
+Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain_recorder.
 
 ![Explore a Chain](https://www.trulens.org/Assets/image/Chain_Explore.png)
 

@@ -75,18 +75,18 @@ f_qs_relevance = Feedback(openai.qs_relevance).on_input().on(
 
 # ## Instrument chain for logging with TruLens
 
-tru_query_engine = TruLlama(
+tru_query_engine_recorder = TruLlama(
     query_engine,
     app_id='LlamaIndex_App1',
     feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance]
 )
 
 # Instrumented query engine can operate like the original:
-llm_response = tru_query_engine.query("What did the author do growing up?")
+llm_response = tru_query_engine_recorder.query("What did the author do growing up?")
 print(llm_response)
 
 # or as context manager
-with tru_query_engine as recording:
+with tru_query_engine_recorder as recording:
     query_engine.query("What did the author do growing up?")
 
 # ## Explore in a Dashboard
@@ -117,7 +117,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 #
 # ### Deep dive into full chain metadata
 #
-# Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain.
+# Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain_recorder.
 #
 # ![Explore a Chain](https://www.trulens.org/Assets/image/Chain_Explore.png)
 #

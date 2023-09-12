@@ -55,7 +55,7 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.embeddings.base import BaseEmbedding
     from llama_index.node_parser.interface import NodeParser
 
-from trulens_eval.tru_chain import LangChainInstrument
+from trulens_eval.tru_chain_recorder import LangChainInstrument
 
 
 class LlamaInstrument(Instrument):
@@ -153,10 +153,10 @@ class TruLlama(App):
         ```
         from trulens_eval import TruLlama
         # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-        tru_query_engine = TruLlama(query_engine,
+        tru_query_engine_recorder = TruLlama(query_engine,
             app_id='LlamaIndex_App1',
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
-        tru_query_engine("What is llama index?")
+        tru_query_engine_recorder("What is llama index?")
         ```
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 

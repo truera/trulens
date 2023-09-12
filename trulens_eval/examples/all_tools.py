@@ -73,7 +73,7 @@ f_lang_match = Feedback(hugs.language_match).on_input_output()
 
 # ## Instrument chain for logging with TruLens
 
-tru_chain = TruChain(
+tru_chain_recorder = TruChain(
     chain,
     app_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match],
@@ -81,12 +81,12 @@ tru_chain = TruChain(
 )
 
 # Instrumented chain can operate like the original:
-llm_response = tru_chain(prompt_input)
+llm_response = tru_chain_recorder(prompt_input)
 
 print(llm_response)
 
 # or as a context manager
-with tru_chain as recording:
+with tru_chain_recorder as recording:
     chain(prompt_input)
 
 # ## Explore in a Dashboard
@@ -117,7 +117,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 #
 # ### Deep dive into full chain metadata
 #
-# Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain.
+# Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain_recorder.
 #
 # ![Explore a Chain](https://www.trulens.org/Assets/image/Chain_Explore.png)
 #

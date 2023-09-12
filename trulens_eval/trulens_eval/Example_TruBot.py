@@ -15,7 +15,7 @@ import streamlit as st
 from trulens_eval import feedback
 from trulens_eval import Query
 from trulens_eval import tru
-from trulens_eval import tru_chain
+from trulens_eval import tru_chain_recorder
 from trulens_eval.db import Record
 from trulens_eval.feedback import Feedback
 from trulens_eval.keys import check_keys
@@ -118,7 +118,7 @@ def generate_response(prompt):
         chain.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
 
     # Trulens instrumentation.
-    tc = tru_chain.TruChain(chain, app_id=app_id)
+    tc = tru_chain_recorder.TruChain(chain, app_id=app_id)
 
     return tc, tc.call_with_record(dict(question=prompt))
 

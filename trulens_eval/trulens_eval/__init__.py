@@ -12,9 +12,9 @@ otherwise you might get circular import errors.
 
 - all UI/dashboard components
 
-- `tru_chain.py` `tru_custom_app.py`
+- `tru_chain_recorder.py` `tru_custom_app.py`
 
-- `tru_llama.py` (note: llama_index uses langchain internally for some things)
+- `tru_chain_recorder.py` (note: llama_index uses langchain internally for some things)
 
 - `tru.py`
 
@@ -89,9 +89,9 @@ from trulens_eval.schema import Query
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
 from trulens_eval.tru_basic_app import TruBasicApp
-from trulens_eval.tru_chain import TruChain
+from trulens_eval.tru_chain_recorder import TruChain
 from trulens_eval.tru_custom_app import TruCustomApp
-from trulens_eval.tru_llama import TruLlama
+from trulens_eval.tru_chain_recorder import TruLlama
 from trulens_eval.utils.threading import TP
 
 __all__ = [
