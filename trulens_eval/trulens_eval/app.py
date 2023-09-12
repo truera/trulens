@@ -194,11 +194,31 @@ class Prompt(ComponentView):
 
 class LLM(ComponentView):
     # langchain.llms.base.BaseLLM
-    # llama_index ???
+    # llama_index.llms.base.LLM
 
     @property
     @abstractmethod
     def model_name(self) -> str:
+        pass
+
+
+class Tool(ComponentView):
+    # langchain ???
+    # llama_index.tools.types.BaseTool
+
+    @property
+    @abstractmethod
+    def tool_name(self) -> str:
+        pass
+
+
+class Agent(ComponentView):
+    # langchain ???
+    # llama_index.agent.types.BaseAgent
+
+    @property
+    @abstractmethod
+    def agent_name(self) -> str:
         pass
 
 
@@ -210,7 +230,6 @@ class Memory(ComponentView):
 
 class Other(ComponentView):
     # Any component that does not fit into the other named categories.
-
     pass
 
 

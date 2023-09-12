@@ -38,6 +38,12 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     # later in this file by full path does not work due to lack of intermediate
     # modules in the path.
 
+    from llama_index.schema import BaseComponent
+
+    # LLMs
+    from llama_index.llms.base import LLM # subtype of BaseComponent
+
+    # misc
     from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.indices.base_retriever import BaseRetriever
     from llama_index.indices.base import BaseIndex
@@ -55,18 +61,25 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.embeddings.base import BaseEmbedding
     from llama_index.node_parser.interface import NodeParser
 
+    # agents
+    from llama_index.tools.types import ToolMetadata # all of the readable info regarding tools is in this class
+    from llama_index.tools.types import BaseTool
+    from llama_index.tools.types import AsyncBaseTool # subtype of BaseTool
+
 from trulens_eval.tru_chain import LangChainInstrument
 
 
 class LlamaInstrument(Instrument):
 
     class Default:
-        MODULES = {"llama_index."}.union(
+        MODULES = {"llama_index.", "llama_hub."}.union(
             LangChainInstrument.Default.MODULES
         )  # NOTE: llama_index uses langchain internally for some things
 
         # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
+            BaseComponent,
+            LLM,
             BaseQueryEngine,
             BaseRetriever,
             BaseIndex,
@@ -84,6 +97,8 @@ class LlamaInstrument(Instrument):
             PromptHelper,
             BaseEmbedding,
             NodeParser,
+            ToolMetadata,
+            BaseTool,
             WithFeedbackFilterNodes
         }.union(LangChainInstrument.Default.CLASSES())
 
@@ -91,22 +106,40 @@ class LlamaInstrument(Instrument):
         # include llama_index inside methods.
         METHODS = dict_set_with(
             {
+                # LLM:
+                "complete": lambda o: isinstance(o, LLM),
+                "stream_complete": lambda o: isinstance(o, LLM),
+                "acomplete": lambda o: isinstance(o, LLM),
+                "astream_complete": lambda o: isinstance(o, LLM),
+                
+                # BaseTool/AsyncBaseTool:
+                "__call__": lambda o: isinstance(o, BaseTool),
+                "call": lambda o: isinstance(o, BaseTool),
+                "acall": lambda o: isinstance(o, AsyncBaseTool),
+
+                # Misc.:
                 "get_response":
                     lambda o: isinstance(o, Refine),
                 "predict":
                     lambda o: isinstance(o, BaseLLMPredictor),
+
+                # BaseQueryEngine:
                 "query":
                     lambda o: isinstance(o, BaseQueryEngine),
                 "aquery":
                     lambda o: isinstance(o, BaseQueryEngine),
+
+                # BaseChatEngine/LLM:
                 "chat":
-                    lambda o: isinstance(o, BaseChatEngine),
+                    lambda o: isinstance(o, (LLM, BaseChatEngine)),
                 "achat":
-                    lambda o: isinstance(o, BaseChatEngine),
+                    lambda o: isinstance(o, (LLM, BaseChatEngine)),
                 "stream_chat":
-                    lambda o: isinstance(o, BaseChatEngine),
+                    lambda o: isinstance(o, (LLM, BaseChatEngine)),
                 "astream_achat":
-                    lambda o: isinstance(o, BaseChatEngine),
+                    lambda o: isinstance(o, (LLM, BaseChatEngine)),
+
+                # BaseRetriever/BaseQueryEngine:
                 "retrieve":
                     lambda o: isinstance(
                         o, (
@@ -114,6 +147,8 @@ class LlamaInstrument(Instrument):
                             WithFeedbackFilterNodes
                         )
                     ),
+                
+                # BaseQueryEngine:
                 "synthesize":
                     lambda o: isinstance(o, BaseQueryEngine),
             }, LangChainInstrument.Default.METHODS

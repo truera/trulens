@@ -332,7 +332,13 @@ class Instrument(object):
         Determine whether the given class should be instrumented.
         """
 
-        return any(issubclass(cls, parent) for parent in self.include_classes)
+        # Sometimes issubclass is not supported so we return True just to be
+        # sure we instrument that thing.
+
+        try:
+            return any(issubclass(cls, parent) for parent in self.include_classes)
+        except Exception:
+            return True
 
     def to_instrument_module(self, module_name: str) -> bool:
         """
@@ -910,11 +916,22 @@ class Instrument(object):
                         )
                     )
 
-        if isinstance(obj, BaseModel):
+        if isinstance(obj, BaseModel) or self.to_instrument_object(obj):
+            if isinstance(obj, BaseModel):
+                attrs = obj.__fields__
+            else:
+                # If an object is not a recognized container type, we check that it
+                # is meant to be instrumented and if so, we  walk over it manually.
+                # NOTE: some llama_index objects are using dataclasses_json but most do
+                # not so this section applies.
+                attrs = dir(obj)
+                for k in list(attrs):
+                    if k.startswith("_") and k[1:] in dir(obj):
+                        attrs.remove(k)
+                        # Skip those starting with _ that also have non-_ versions.
 
-            for k in obj.__fields__:
-                # NOTE(piotrm): may be better to use inspect.getmembers_static .
-                v = getattr(obj, k)
+            for k in attrs:
+                v = _safe_getattr(obj, k)
 
                 if isinstance(v, (str, bool, int, float)):
                     pass
@@ -943,22 +960,6 @@ class Instrument(object):
 
                 # TODO: check if we want to instrument anything in langchain not
                 # accessible through __fields__ .
-
-        elif self.to_instrument_object(obj):
-            # If an object is not a recognized container type, we check that it
-            # is meant to be instrumented and if so, we  walk over it manually.
-            # NOTE: llama_index objects are using dataclasses_json but most do
-            # not so this section applies.
-
-            for k in dir(obj):
-                if k.startswith("_") and k[1:] in dir(obj):
-                    # Skip those starting with _ that also have non-_ versions.
-                    continue
-
-                sv = _safe_getattr(obj, k)
-
-                if self.to_instrument_object(sv):
-                    self.instrument_object(obj=sv, query=query[k], done=done)
 
         else:
             logger.debug(
