@@ -1,3 +1,3 @@
 # Tru Llama
 
-::: trulens_eval.trulens_eval.tru_chain_recorder
+::: trulens_eval.trulens_eval.tru_llama

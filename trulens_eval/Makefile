@@ -38,10 +38,10 @@ test-feedback:
 	$(CONDA); python -m unittest tests.unit.test_feedback
 
 test-tru-chain:
-	$(CONDA); python -m unittest tests.unit.test_tru_chain_recorder
+	$(CONDA); python -m unittest tests.unit.test_tru_chain
 
 test-tru-llama:
-	$(CONDA); python -m unittest tests.unit.test_tru_chain_recorder
+	$(CONDA); python -m unittest tests.unit.test_tru_llama
 
 test-tru-basic-app:
 	$(CONDA); python -m unittest tests.unit.test_tru_basic_app
