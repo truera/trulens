@@ -60,7 +60,7 @@ class Tru(SingletonPerName):
         Create a TruChain with database managed by self.
         """
 
-        from trulens_eval.tru_chain_recorder import TruChain
+        from trulens_eval.tru_chain import TruChain
 
         return TruChain(tru=self, app=chain, **kwargs)
 
@@ -69,7 +69,7 @@ class Tru(SingletonPerName):
         Create a llama_index engine with database managed by self.
         """
 
-        from trulens_eval.tru_chain_recorder import TruLlama
+        from trulens_eval.tru_llama import TruLlama
 
         return TruLlama(tru=self, app=engine, **kwargs)
 
