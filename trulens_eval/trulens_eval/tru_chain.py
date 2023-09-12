@@ -133,12 +133,16 @@ class TruChain(App):
         
         from trulens_eval import TruChain
         # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-        truchain = TruChain(
+        tru_recorder = TruChain(
             chain,
             app_id='Chain1_ChatApplication',
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
         )
-        truchain("What is langchain?")
+        with tru_recorder as recording:
+            chain(""What is langchain?")
+
+        tru_record = recording.records[0]
+
         ```
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
@@ -254,6 +258,8 @@ class TruChain(App):
         """
         Run the chain acall method and also return a record metadata object.
         """
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/truchain")
+
         self._with_dep_message(method="acall", is_async=True, with_record=True)
 
         return await self.awith_record(self.app.acall, *args, **kwargs)
@@ -264,6 +270,8 @@ class TruChain(App):
         """
         Run the chain call method and also return a record metadata object.
         """
+
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/truchain")
 
         self._with_dep_message(
             method="__call__", is_async=False, with_record=True
@@ -288,17 +296,21 @@ class TruChain(App):
     # TODEP
     # Chain requirement
     def _call(self, *args, **kwargs) -> Any:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/truchain")
+
         self._with_dep_message(
             method="_call", is_async=False, with_record=False
         )
 
         ret, _ = self.with_(self.app._call, *args, **kwargs)
-
+        
         return ret
 
     # TODEP
     # Optional Chain requirement
     async def _acall(self, *args, **kwargs) -> Any:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/truchain")
+
         self._with_dep_message(
             method="_acall", is_async=True, with_record=False
         )

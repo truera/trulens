@@ -70,13 +70,13 @@ import TruCustomApp
 
 ca = CustomApp()
 
-# Normal app **Usage:**
+# Normal app Usage:
 response = ca.respond_to_query("What is the capital of Indonesia?")
 
 # Wrapping app with `TruCustomApp`: 
 ta = TruCustomApp(ca)
 
-# Wrapped **Usage:** must use the general `with_record` (or `awith_record`) method:
+# Wrapped Usage: must use the general `with_record` (or `awith_record`) method:
 response, record = ta.with_record(
     ca.respond_to_query, input="What is the capital of Indonesia?"
 )
@@ -248,19 +248,21 @@ class TruCustomApp(App):
         ca = CustomApp()
         from trulens_eval import TruCustomApp
         # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-        custom_app = TruCustomApp(ca, 
+        tru_recorder = TruCustomApp(ca, 
             app_id="Custom Application v1",
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
         
         question = "What is the capital of Indonesia?"
 
-        # Normal **Usage:**
+        # Normal Usage:
         response_normal = ca.respond_to_query(question)
 
-        # Instrumented **Usage:**
-        response_wrapped, record = custom_app.with_record(
-            ca.respond_to_query, input=question, record_metadata="meta1"
-        )
+        # Instrumented Usage:
+        with tru_recorder as recording:
+            ca.respond_to_query(question)
+
+        tru_record = recording.records[0]
+        
         ```
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 

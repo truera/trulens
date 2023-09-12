@@ -55,7 +55,7 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.embeddings.base import BaseEmbedding
     from llama_index.node_parser.interface import NodeParser
 
-from trulens_eval.tru_chain_recorder import LangChainInstrument
+from trulens_eval.tru_recorder import LangChainInstrument
 
 
 class LlamaInstrument(Instrument):
@@ -153,10 +153,15 @@ class TruLlama(App):
         ```
         from trulens_eval import TruLlama
         # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-        tru_query_engine_recorder = TruLlama(query_engine,
+        tru_recorder = TruLlama(query_engine,
             app_id='LlamaIndex_App1',
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
-        tru_query_engine_recorder("What is llama index?")
+
+        with tru_recorder as recording:
+            query_engine(""What is llama index?")
+
+        tru_record = recording.records[0]
+
         ```
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
@@ -245,6 +250,8 @@ class TruLlama(App):
     # TODEP
     # llama_index.chat_engine.types.BaseChatEngine
     def chat(self, *args, **kwargs) -> AgentChatResponse:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/trullama")
+
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -257,6 +264,8 @@ class TruLlama(App):
     # TODEP
     # llama_index.chat_engine.types.BaseChatEngine
     async def achat(self, *args, **kwargs) -> AgentChatResponse:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/trullama")
+        
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -269,6 +278,8 @@ class TruLlama(App):
     # TODEP
     # llama_index.chat_engine.types.BaseChatEngine
     def stream_chat(self, *args, **kwargs) -> StreamingAgentChatResponse:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/trullama")
+
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -283,6 +294,8 @@ class TruLlama(App):
     # TODEP
     # llama_index.chat_engine.types.BaseChatEngine
     async def astream_chat(self, *args, **kwargs) -> StreamingAgentChatResponse:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/trullama")
+
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -297,6 +310,8 @@ class TruLlama(App):
     # TODEP
     # llama_index.indices.query.base.BaseQueryEngine
     def query(self, *args, **kwargs) -> RESPONSE_TYPE:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/trullama")
+
         assert isinstance(
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
@@ -311,6 +326,8 @@ class TruLlama(App):
     # TODEP
     # llama_index.indices.query.base.BaseQueryEngine
     async def aquery(self, *args, **kwargs) -> RESPONSE_TYPE:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/trullama")
+
         assert isinstance(
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
@@ -326,6 +343,8 @@ class TruLlama(App):
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.query .
     def query_with_record(self, *args,
                           **kwargs) -> Tuple[RESPONSE_TYPE, Record]:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/trullama")
+
         assert isinstance(
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
@@ -338,6 +357,8 @@ class TruLlama(App):
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .
     async def aquery_with_record(self, *args,
                                  **kwargs) -> Tuple[RESPONSE_TYPE, Record]:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/trullama")
+
         assert isinstance(
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
@@ -350,6 +371,8 @@ class TruLlama(App):
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
     def chat_with_record(self, *args,
                          **kwargs) -> Tuple[AgentChatResponse, Record]:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/trullama")
+
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -362,6 +385,8 @@ class TruLlama(App):
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
     async def achat_with_record(self, *args,
                                 **kwargs) -> Tuple[AgentChatResponse, Record]:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/trullama")
+
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -375,6 +400,8 @@ class TruLlama(App):
     def stream_chat_with_record(
         self, *args, **kwargs
     ) -> Tuple[StreamingAgentChatResponse, Record]:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/trullama")
+
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -390,6 +417,8 @@ class TruLlama(App):
     async def astream_chat_with_record(
         self, *args, **kwargs
     ) -> Tuple[StreamingAgentChatResponse, Record]:
+        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/trullama")
+        
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
