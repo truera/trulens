@@ -335,7 +335,7 @@ class TruLlama(App):
         ```
 
         Returns:
-            StreamingAgentChatResponse: _description_
+            StreamingAgentChatResponse: The chat agent response 
         """
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
@@ -357,7 +357,7 @@ class TruLlama(App):
         **Usage:**
         ```
         tru_llama = TruLlama(my_query_engine_app,...)
-        tru_llama.query("Who can help me with my request?")
+        tru_llama.query("What are all the dog breeds?")
         ```
 
         Returns:
@@ -410,7 +410,7 @@ class TruLlama(App):
         **Usage:**
         ```
         tru_llama = TruLlama(my_query_engine_app,...)
-        tru_llama.query_with_record("Who can help me with my request?")
+        tru_llama.query_with_record("What are all the dog breeds?")
         ```
 
         Returns:
@@ -435,7 +435,7 @@ class TruLlama(App):
         **Usage:**
         ```
         tru_llama = TruLlama(my_query_engine_app,...)
-        tru_llama.aquery_with_record("Who can help me with my request?")
+        tru_llama.aquery_with_record("What are all the dog breeds?")
         ```
 
         Returns:
