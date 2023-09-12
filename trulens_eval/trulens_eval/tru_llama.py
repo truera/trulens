@@ -153,10 +153,16 @@ class TruLlama(App):
         ```
         from trulens_eval import TruLlama
         # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-        tru_query_engine = TruLlama(query_engine,
+        tru_llama = TruLlama(query_engine,
             app_id='LlamaIndex_App1',
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
-        tru_query_engine("What is llama index?")
+    
+        # Use any of the below
+        tru_llama("What is llama index?")
+        tru_llama.query_with_record("What is llama index?")
+        with tru_llama as recording:
+            query_engine("What is llama index?")
+
         ```
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
@@ -245,6 +251,18 @@ class TruLlama(App):
     # TODEP
     # llama_index.chat_engine.types.BaseChatEngine
     def chat(self, *args, **kwargs) -> AgentChatResponse:
+        """ Returns the response of the wrapped chat_engine of type `llama_index.chat_engine.types.BaseChatEngine`. 
+        All instrumented methods and feedback functions will run with the application run.
+
+        **Usage:**
+        ```
+        tru_llama = TruLlama(my_chat_app,...)
+        tru_llama.chat("Who can help me with my request?")
+        ```
+
+        Returns:
+            AgentChatResponse: The chat agent response
+        """
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -257,6 +275,18 @@ class TruLlama(App):
     # TODEP
     # llama_index.chat_engine.types.BaseChatEngine
     async def achat(self, *args, **kwargs) -> AgentChatResponse:
+        """Runs an async response of the wrapped chat_engine of type `llama_index.chat_engine.types.BaseChatEngine`. 
+        All instrumented methods and feedback functions will run with the application run.
+
+        **Usage:**
+        ```
+        tru_llama = TruLlama(my_chat_app,...)
+        tru_llama.achat("Who can help me with my request?")
+        ```
+
+        Returns:
+            AgentChatResponse: The chat agent response
+        """
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -269,6 +299,18 @@ class TruLlama(App):
     # TODEP
     # llama_index.chat_engine.types.BaseChatEngine
     def stream_chat(self, *args, **kwargs) -> StreamingAgentChatResponse:
+        """Runs a streaming response of the wrapped chat_engine of type `llama_index.chat_engine.types.BaseChatEngine`. 
+        All instrumented methods and feedback functions will run with the application run.
+
+        **Usage:**
+        ```
+        tru_llama = TruLlama(my_chat_app,...)
+        tru_llama.stream_chat("Who can help me with my request?")
+        ```
+
+        Returns:
+            StreamingAgentChatResponse: The chat agent response
+        """
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -283,6 +325,18 @@ class TruLlama(App):
     # TODEP
     # llama_index.chat_engine.types.BaseChatEngine
     async def astream_chat(self, *args, **kwargs) -> StreamingAgentChatResponse:
+        """Runs an async streaming response of the wrapped chat_engine of type `llama_index.chat_engine.types.BaseChatEngine`. 
+        All instrumented methods and feedback functions will run with the application run.
+
+        **Usage:**
+        ```
+        tru_llama = TruLlama(my_chat_app,...)
+        tru_llama.astream_chat("Who can help me with my request?")
+        ```
+
+        Returns:
+            StreamingAgentChatResponse: _description_
+        """
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -297,6 +351,18 @@ class TruLlama(App):
     # TODEP
     # llama_index.indices.query.base.BaseQueryEngine
     def query(self, *args, **kwargs) -> RESPONSE_TYPE:
+        """Returns the response of the wrapped query_engine of type `llama_index.indices.query.base.BaseQueryEngine`. 
+        All instrumented methods and feedback functions will run with the application run.
+
+        **Usage:**
+        ```
+        tru_llama = TruLlama(my_query_engine_app,...)
+        tru_llama.query("Who can help me with my request?")
+        ```
+
+        Returns:
+            QueryResponse: The response to the query
+        """
         assert isinstance(
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
@@ -311,6 +377,18 @@ class TruLlama(App):
     # TODEP
     # llama_index.indices.query.base.BaseQueryEngine
     async def aquery(self, *args, **kwargs) -> RESPONSE_TYPE:
+        """Runs an async response of the wrapped query_engine of type `llama_index.indices.query.base.BaseQueryEngine`. 
+        All instrumented methods and feedback functions will run with the application run.
+
+        **Usage:**
+        ```
+        tru_llama = TruLlama(my_query_engine_app,...)
+        tru_llama.aquery("Who can help me with my request?")
+        ```
+
+        Returns:
+            QueryResponse: The response to the query
+        """
         assert isinstance(
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
@@ -326,6 +404,19 @@ class TruLlama(App):
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.query .
     def query_with_record(self, *args,
                           **kwargs) -> Tuple[RESPONSE_TYPE, Record]:
+        """Returns the response and trulens record of the wrapped query_engine of type `llama_index.indices.query.base.BaseQueryEngine`. 
+        All instrumented methods and feedback functions will run with the application run.
+
+        **Usage:**
+        ```
+        tru_llama = TruLlama(my_query_engine_app,...)
+        tru_llama.query_with_record("Who can help me with my request?")
+        ```
+
+        Returns:
+            Record: The trulens-eval record with populated instrumented information.
+            QueryResponse: The response to the query
+        """
         assert isinstance(
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
@@ -338,6 +429,19 @@ class TruLlama(App):
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .
     async def aquery_with_record(self, *args,
                                  **kwargs) -> Tuple[RESPONSE_TYPE, Record]:
+        """Runs an async response and trulens record of the wrapped query_engine of type `llama_index.indices.query.base.BaseQueryEngine`. 
+        All instrumented methods and feedback functions will run with the application run.
+
+        **Usage:**
+        ```
+        tru_llama = TruLlama(my_query_engine_app,...)
+        tru_llama.aquery_with_record("Who can help me with my request?")
+        ```
+
+        Returns:
+            Record: The trulens-eval record with populated instrumented information.
+            QueryResponse: The response to the query
+        """
         assert isinstance(
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
@@ -350,6 +454,19 @@ class TruLlama(App):
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
     def chat_with_record(self, *args,
                          **kwargs) -> Tuple[AgentChatResponse, Record]:
+        """Returns the response and trulens record of the wrapped chat_engine of type `llama_index.chat_engine.types.BaseChatEngine`. 
+        All instrumented methods and feedback functions will run with the application run.
+
+        **Usage:**
+        ```
+        tru_llama = TruLlama(my_chat_app,...)
+        tru_llama.chat_with_record("Who can help me with my request?")
+        ```
+
+        Returns:
+            Record: The trulens-eval record with populated instrumented information.
+            AgentChatResponse: The chat agent response
+        """
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -362,6 +479,19 @@ class TruLlama(App):
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
     async def achat_with_record(self, *args,
                                 **kwargs) -> Tuple[AgentChatResponse, Record]:
+        """Runs an async response and trulens record of the wrapped chat_engine of type `llama_index.chat_engine.types.BaseChatEngine`. 
+        All instrumented methods and feedback functions will run with the application run.
+
+        **Usage:**
+        ```
+        tru_llama = TruLlama(my_chat_app,...)
+        tru_llama.achat_with_record("Who can help me with my request?")
+        ```
+
+        Returns:
+            Record: The trulens-eval record with populated instrumented information.
+            AgentChatResponse: The chat agent response
+        """
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -375,6 +505,19 @@ class TruLlama(App):
     def stream_chat_with_record(
         self, *args, **kwargs
     ) -> Tuple[StreamingAgentChatResponse, Record]:
+        """Returns the streaming response and trulens record of the wrapped chat_engine of type `llama_index.chat_engine.types.BaseChatEngine`. 
+        All instrumented methods and feedback functions will run with the application run.
+
+        **Usage:**
+        ```
+        tru_llama = TruLlama(my_chat_app,...)
+        tru_llama.stream_chat_with_record("Who can help me with my request?")
+        ```
+
+        Returns:
+            Record: The trulens-eval record with populated instrumented information.
+            StreamingAgentChatResponse: The chat agent response
+        """
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -390,6 +533,19 @@ class TruLlama(App):
     async def astream_chat_with_record(
         self, *args, **kwargs
     ) -> Tuple[StreamingAgentChatResponse, Record]:
+        """Runs an async streaming response and trulens record of the wrapped chat_engine of type `llama_index.chat_engine.types.BaseChatEngine`. 
+        All instrumented methods and feedback functions will run with the application run.
+
+        **Usage:**
+        ```
+        tru_llama = TruLlama(my_chat_app,...)
+        tru_llama.astream_chat_with_record("Who can help me with my request?")
+        ```
+
+        Returns:
+            Record: The trulens-eval record with populated instrumented information.
+            StreamingAgentChatResponse: The chat agent response
+        """
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )

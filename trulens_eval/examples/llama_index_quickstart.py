@@ -75,18 +75,18 @@ f_qs_relevance = Feedback(openai.qs_relevance).on_input().on(
 
 # ## Instrument chain for logging with TruLens
 
-tru_query_engine = TruLlama(
+tru_llama = TruLlama(
     query_engine,
     app_id='LlamaIndex_App1',
     feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance]
 )
 
 # Instrumented query engine can operate like the original:
-llm_response = tru_query_engine.query("What did the author do growing up?")
+llm_response = tru_llama.query("What did the author do growing up?")
 print(llm_response)
 
 # or as context manager
-with tru_query_engine as recording:
+with tru_llama as recording:
     query_engine.query("What did the author do growing up?")
 
 # ## Explore in a Dashboard

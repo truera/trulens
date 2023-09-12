@@ -770,6 +770,12 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         """
         Call the given async `func` with the given `*args` and `**kwargs`,
         producing its results as well as a record of the execution.
+
+        **Usage:**
+        ```
+        tru_app = ... # one of TruChain/TruLLama/TruBasicApp/TruCustomApp
+        tru_app.awith_record("Who can help me with my request?")
+        ```
         """
 
         self._check_instrumented(func)
@@ -807,6 +813,12 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         """
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
+
+        **Usage:**
+        ```
+        tru_app = ... # one of TruChain/TruLLama/TruBasicApp/TruCustomApp
+        tru_app.with_record("Who can help me with my request?")
+        ```
         """
 
         self._check_instrumented(func)

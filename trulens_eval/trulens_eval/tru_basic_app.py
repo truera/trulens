@@ -65,7 +65,12 @@ class TruBasicApp(App):
         basic_app = TruBasicApp(custom_application, 
             app_id="Custom Application v1",
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
+        
+        # Use any of the below
         basic_app("Give me a response")
+        basic_app.call_with_record("Give me a response")
+        with basic_app as recording:
+            custom_application("Give me a response")
         ```
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
@@ -128,6 +133,12 @@ class TruBasicApp(App):
         """
         Run the callable with the given arguments. Note that the wrapped
         callable is expected to take in a single string.
+
+        **Usage:**
+        ```
+        basic_app = TruBasicApp(my_app,...)
+        basic_app.call_with_record("Who can help me with my request?")
+        ```
 
         Returns:
             dict: record metadata

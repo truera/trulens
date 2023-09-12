@@ -123,7 +123,6 @@ class Huggingface(Provider):
 
             float: A value between 0 and 1. 0 being "different languages" and 1 being "same languages".
         """
-
         def get_scores(text):
             payload = {"inputs": text}
             hf_response = self.endpoint.post(

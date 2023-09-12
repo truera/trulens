@@ -138,7 +138,13 @@ class TruChain(App):
             app_id='Chain1_ChatApplication',
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
         )
+
+        # Use any of the below
         truchain("What is langchain?")
+        truchain.call_with_record("What is langchain?")
+        with truchain as recording:
+            chain("What is langchain?")
+        
         ```
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
@@ -261,8 +267,18 @@ class TruChain(App):
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
     # TODEP
     def call_with_record(self, *args, **kwargs) -> Tuple[Any, Record]:
-        """
-        Run the chain call method and also return a record metadata object.
+        """Returns the response and trulens record of the wrapped chain. 
+        All instrumented methods and feedback functions will run with the application run.
+
+        **Usage:**
+        ```
+        truchain = TruChain(my_chain,...)
+        truchain.call_with_record("Who can help me with my request?")
+        ```
+
+        Returns:
+            Record: The trulens-eval record with populated instrumented information.
+            Response: The response to the query
         """
 
         self._with_dep_message(
@@ -277,6 +293,13 @@ class TruChain(App):
         """
         Wrapped call to self.app._call with instrumentation. If you need to
         get the record, use `call_with_record` instead. 
+
+        **Usage:**
+        ```
+        truchain = TruChain(my_chain,...)
+        truchain("Who can help me with my request?")
+        ```
+
         """
 
         self._with_dep_message(
@@ -288,6 +311,17 @@ class TruChain(App):
     # TODEP
     # Chain requirement
     def _call(self, *args, **kwargs) -> Any:
+        """
+        Returns the application response. All instrumented methods and feedback functions will run with the application run.
+        If you need to get the record, use `call_with_record` instead. 
+
+        **Usage:**
+        ```
+        truchain = TruChain(my_chain,...)
+        truchain._call("Who can help me with my request?")
+        ```
+
+        """
         self._with_dep_message(
             method="_call", is_async=False, with_record=False
         )
@@ -299,6 +333,17 @@ class TruChain(App):
     # TODEP
     # Optional Chain requirement
     async def _acall(self, *args, **kwargs) -> Any:
+        """
+        Runs an async call of the application. All instrumented methods and feedback functions will run with the application run.
+        If you need to get the record, use `call_with_record` instead. 
+
+        **Usage:**
+        ```
+        truchain = TruChain(my_chain,...)
+        truchain._acall("Who can help me with my request?")
+        ```
+
+        """
         self._with_dep_message(
             method="_acall", is_async=True, with_record=False
         )
