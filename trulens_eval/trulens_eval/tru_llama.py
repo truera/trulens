@@ -158,9 +158,17 @@ class TruLlama(App):
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
 
         with tru_recorder as recording:
-            query_engine(""What is llama index?")
+            query_engine.query("What is llama index?")
 
         tru_record = recording.records[0]
+
+        # To add record metadata 
+        with tru_recorder as recording:
+            recording.record_metadata="this is metadata for all records in this context that follow this line"
+            query_engine.query("What is llama index?")
+            recording.record_metadata="this is different metadata for all records in this context that follow this line"
+            query_engine.query("Where do I download llama index?")
+        
 
         ```
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.

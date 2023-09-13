@@ -262,6 +262,13 @@ class TruCustomApp(App):
             ca.respond_to_query(question)
 
         tru_record = recording.records[0]
+
+        # To add record metadata 
+        with tru_recorder as recording:
+            recording.record_metadata="this is metadata for all records in this context that follow this line"
+            ca.respond_to_query("What is llama 2?")
+            recording.record_metadata="this is different metadata for all records in this context that follow this line"
+            ca.respond_to_query("Where do I download llama 2?")
         
         ```
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
