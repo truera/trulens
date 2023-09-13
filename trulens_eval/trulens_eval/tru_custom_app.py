@@ -224,6 +224,8 @@ class TruCustomApp(App):
         **Usage:**
 
         ```
+        from trulens_eval import instrument
+        
         class CustomApp:
 
             def __init__(self):
