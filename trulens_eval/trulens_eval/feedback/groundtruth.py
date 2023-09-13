@@ -190,7 +190,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         ]
         ground_truth_collection = GroundTruthAgreement(golden_set)
 
-        feedback = Feedback(ground_truth_collection.numeric_difference).on_input_output()
+        f_groundtruth = Feedback(ground_truth.numeric_difference).on_input().on(Select.Record.calls[0].args.args[1]).on_output()
         ```
 
         """
