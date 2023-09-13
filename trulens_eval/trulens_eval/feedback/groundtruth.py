@@ -114,6 +114,20 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         else:
             return None
 
+    def _find_score(self, prompt: str, response: str) -> Optional[float]:
+        if self.ground_truth_imp is not None:
+            return self.ground_truth_imp(prompt)
+
+        responses = [
+            qr["expected_score"]
+            for qr in self.ground_truth
+            if qr["query"] == prompt and qr["response"] == response
+        ]
+        if responses:
+            return responses[0]
+        else:
+            return None
+
     def agreement_measure(
         self, prompt: str, response: str
     ) -> Union[float, Tuple[float, Dict[str, str]]]:
@@ -157,6 +171,35 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         else:
             ret = np.nan
 
+        return ret
+
+    def numeric_difference(
+        self, prompt: str, response: str, score: float
+    ) -> float:
+        """
+        Simple function to take the absolute difference from ground truth.
+
+        **Usage**
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback import GroundTruthAgreement
+
+        golden_set =
+        {"query": "How many stomachs does a cow have?", "response": "Cows' diet relies primarily on grazing.", "expected_score": 0.4},
+        {"query": "Name some top dental floss brands", "response": "I don't know", "expected_score": 0.8}
+        ]
+        ground_truth_collection = GroundTruthAgreement(golden_set)
+
+        feedback = Feedback(ground_truth_collection.numeric_difference).on_input_output()
+        ```
+
+        """
+
+        expected_score = self._find_score(prompt, response)
+        if expected_score:
+            ret = 1 - abs(float(score) - expected_score)
+        else:
+            ret = np.nan
         return ret
 
     def bert_score(self, prompt: str,
