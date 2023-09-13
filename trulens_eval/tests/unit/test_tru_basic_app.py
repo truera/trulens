@@ -51,7 +51,7 @@ class TestTruBasicApp(JSONTestCase):
         self.assertJSONEqual(res1, res2)
         self.assertIsNotNone(rec2)
 
-        # Check the database has a record of the `call_with_record` above.
+        # Check the database has a record of the `with_record` above.
         records = self.tru.get_records_and_feedback(app_ids=[])[0]
 
         self.assertEqual(len(records), 1)
