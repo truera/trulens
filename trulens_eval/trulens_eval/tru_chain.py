@@ -258,8 +258,7 @@ class TruChain(App):
         """
         Run the chain acall method and also return a record metadata object.
         """
-        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/truchain")
-
+        
         self._with_dep_message(method="acall", is_async=True, with_record=True)
 
         return await self.awith_record(self.app.acall, *args, **kwargs)
@@ -271,8 +270,7 @@ class TruChain(App):
         Run the chain call method and also return a record metadata object.
         """
 
-        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/truchain")
-
+        
         self._with_dep_message(
             method="__call__", is_async=False, with_record=True
         )
@@ -296,8 +294,7 @@ class TruChain(App):
     # TODEP
     # Chain requirement
     def _call(self, *args, **kwargs) -> Any:
-        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/truchain")
-
+        
         self._with_dep_message(
             method="_call", is_async=False, with_record=False
         )
@@ -309,8 +306,7 @@ class TruChain(App):
     # TODEP
     # Optional Chain requirement
     async def _acall(self, *args, **kwargs) -> Any:
-        logger.warn("This method will be deprecated soon. Please see the new usage at: https://www.trulens.org/trulens_eval/api/truchain")
-
+        
         self._with_dep_message(
             method="_acall", is_async=True, with_record=False
         )
