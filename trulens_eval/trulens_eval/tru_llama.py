@@ -55,7 +55,7 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.embeddings.base import BaseEmbedding
     from llama_index.node_parser.interface import NodeParser
 
-from trulens_eval.tru_recorder import LangChainInstrument
+from trulens_eval.tru_chain import LangChainInstrument
 
 
 class LlamaInstrument(Instrument):
