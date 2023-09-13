@@ -61,6 +61,9 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.embeddings.base import BaseEmbedding
     from llama_index.node_parser.interface import NodeParser
 
+    # memory
+    from llama_index.memory import BaseMemory
+
     # agents
     from llama_index.tools.types import ToolMetadata # all of the readable info regarding tools is in this class
     from llama_index.tools.types import BaseTool
@@ -99,6 +102,7 @@ class LlamaInstrument(Instrument):
             NodeParser,
             ToolMetadata,
             BaseTool,
+            BaseMemory,
             WithFeedbackFilterNodes
         }.union(LangChainInstrument.Default.CLASSES())
 
@@ -116,6 +120,9 @@ class LlamaInstrument(Instrument):
                 "__call__": lambda o: isinstance(o, BaseTool),
                 "call": lambda o: isinstance(o, BaseTool),
                 "acall": lambda o: isinstance(o, AsyncBaseTool),
+
+                # Memory:
+                "put": lambda o: isinstance(o, BaseMemory),
 
                 # Misc.:
                 "get_response":

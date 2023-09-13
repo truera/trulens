@@ -828,6 +828,36 @@ class Instrument(object):
                         )
                     )
 
+    def instrument_class(self, cls):
+        """
+        Instrument the given class `cls`'s __new__ method so we can be aware
+        when new instances are created. This is needed for wrapped methods that
+        dynamically create instances of classes we wish to instrument. As they
+        will not be visible at the time we wrap the app, we need to pay
+        attention to __new__ to make a note of them when they are created and
+        the creator's path. This path will be used to place these new instances
+        in the app json structure.
+        """
+
+        func = cls.__new__
+
+        if hasattr(func, Instrument.INSTRUMENT):
+            logger.debug(f"Class {cls.__name__} __new__ is already instrumented.")
+            return
+        
+        # @functools.wraps(func)
+        def wrapped_new(cls, *args, **kwargs):
+            logger.debug(f"Creating a new instance of instrumented class {cls.__name__}.")
+            # get deepest wrapped method here
+            # get its self
+            # get its path
+            obj = func(cls)
+            # for every tracked method, and every app, do this:
+            # self.app._on_method_instrumented(obj, original_func, path=query)
+            return obj
+
+        cls.__new__ = wrapped_new
+
     def instrument_object(self, obj, query: Query, done: Set[int] = None):
 
         done = done or set([])

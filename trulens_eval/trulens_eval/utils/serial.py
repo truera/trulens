@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Dict, Iterable, Optional, Sequence, Set, Tuple, TypeVar, Union
+    Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, TypeVar, Union
 )
 
 from merkle_json import MerkleJson
@@ -405,7 +405,32 @@ class JSONPath(SerialModel):
 
         return True
 
+    def set_or_append(self, obj: Any, val: Any) -> Any:
+        """
+        If `obj` at path `self` is None or does not exist, sets it to the given
+        `val`. If it already exists and is not a list, it is made into a list
+        with existing item at index 0, with given `val` at index 1. Otherwise if
+        it is already a list, appends `val` to that list.
+        """
+        try:
+            existing = self.get_sole_item(obj)
+            if isinstance(existing, List):
+                return self.set(obj, existing + [val])
+            elif existing is None:
+                return self.set(obj, val)
+            else:
+                return self.set(obj, [existing, val])
+            
+        except Exception:
+            return self.set(obj, val)
+
+
     def set(self, obj: Any, val: Any) -> Any:
+        """
+        In `obj` at path `self` exists, change it to `val`. Otherwise create a
+        spot for it with Munch objects and then set it.
+        """
+
         if len(self.path) == 0:
             return val
 
