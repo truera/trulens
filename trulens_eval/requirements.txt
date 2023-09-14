@@ -31,6 +31,7 @@ munch>=3.0.0
 streamlit
 streamlit-aggrid
 streamlit-extras
+cohere
 watchdog
 millify
 # local vector store requirements
