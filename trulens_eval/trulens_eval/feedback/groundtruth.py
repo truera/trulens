@@ -177,7 +177,9 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         self, prompt: str, response: str, score: float
     ) -> float:
         """
-        Simple function to take the absolute difference from ground truth.
+        Method to look up the numeric expected score from a golden set and take the differnce.
+
+        Primarily used for feedback evaluation.
 
         **Usage**
         ```
@@ -190,7 +192,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         ]
         ground_truth_collection = GroundTruthAgreement(golden_set)
 
-        f_groundtruth = Feedback(ground_truth.numeric_difference).on_input().on(Select.Record.calls[0].args.args[1]).on_output()
+        f_groundtruth = Feedback(ground_truth.numeric_difference).on(Select.Record.calls[0].args.args[0]).on(Select.Record.calls[0].args.args[1]).on_output()
         ```
 
         """
