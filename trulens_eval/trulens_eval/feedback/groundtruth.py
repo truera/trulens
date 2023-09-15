@@ -200,7 +200,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ret = 1 - abs(float(score) - expected_score)
         else:
             ret = np.nan
-        return ret
+        return ret, {"expected score":expected_score}
 
     def bert_score(self, prompt: str,
                    response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
