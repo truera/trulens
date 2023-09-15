@@ -198,9 +198,10 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         expected_score = self._find_score(prompt, response)
         if expected_score:
             ret = 1 - abs(float(score) - expected_score)
+            expected_score = "{:.2f}".format(expected_score).rstrip('0').rstrip('.')
         else:
             ret = np.nan
-        return ret, {"expected score":expected_score}
+        return ret, {"expected score": expected_score}
 
     def bert_score(self, prompt: str,
                    response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
