@@ -523,10 +523,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         if isinstance(ret, str):
             return ret
-
-        logger.warning(
-            f"Unsure what the main output string is for the call to {callable_name(func)}."
-        )
+        
+        if isinstance(ret, float):
+            return str(ret)
 
         if isinstance(ret, Dict):
             return next(iter(ret.values()))
@@ -536,8 +535,11 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 return ret[0]
             else:
                 return None
-
+            
         else:
+            logger.warning(
+            f"Unsure what the main output string is for the call to {callable_name(func)}."
+        )
             return str(ret)
 
     # WithInstrumentCallbacks requirement
