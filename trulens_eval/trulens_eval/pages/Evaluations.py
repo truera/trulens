@@ -12,7 +12,6 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
-from streamlit_javascript import st_javascript
 from ux.add_logo import add_logo
 from ux.styles import CATEGORY
 
@@ -51,24 +50,6 @@ df_results, feedback_cols = lms.get_records_and_feedback([])
 
 state = st.session_state
 
-if "clipboard" not in state:
-    state.clipboard = "nothing"
-
-if state.clipboard:
-    ret = st_javascript(
-        f"""navigator.clipboard.writeText("{state.clipboard}")
-    .then(
-        function() {{
-            console.log('success?')
-        }},
-        function(err) {{
-            console.error("Async: Could not copy text: ", err)
-        }}
-    )
-"""
-    )
-
-
 def jsonify_for_ui(*args, **kwargs):
     return jsonify(*args, **kwargs, redact_keys=True, skip_specials=True)
 
@@ -76,8 +57,8 @@ def jsonify_for_ui(*args, **kwargs):
 def render_component(query, component, header=True):
     # Draw the accessor/path within the wrapped app of the component.
     if header:
-        st.subheader(
-            f"Component {render_selector_markdown(Select.for_app(query))}"
+        st.markdown(
+            f"##### Component {render_selector_markdown(Select.for_app(query))}"
         )
 
     # Draw the python class information of this component.
@@ -189,12 +170,35 @@ else:
         selected_rows = data['selected_rows']
         selected_rows = pd.DataFrame(selected_rows)
 
+
         if len(selected_rows) == 0:
             st.write("Hint: select a row to display details of a record")
 
         else:
-            st.header(f"Selected LLM Application: {selected_rows['app_id'][0]}")
-            st.text(f"Selected Record ID: {selected_rows['record_id'][0]}")
+            st.divider()
+            # Breadcrumbs
+            st.caption(f"{selected_rows['app_id'][0]} / {selected_rows['record_id'][0]}")
+            st.header(f"{selected_rows['record_id'][0]}")
+
+            app_specific_df = app_df[app_df['app_id'] == selected_rows['app_id'][0]]
+
+            token_col, cost_col, latency_col = st.columns(3)
+            num_tokens=selected_rows['total_tokens'][0]
+            token_col.metric(label="Total tokens (#)", value=num_tokens)
+
+            cost=selected_rows['total_cost'][0]
+            average_cost = app_specific_df['total_cost'].mean()
+            delta_cost = "{:.3g}".format(cost - average_cost)
+            cost_col.metric(label="Total cost (USD)", value=selected_rows['total_cost'][0], delta=delta_cost, delta_color="inverse")
+            
+            latency=selected_rows['latency'][0]
+            average_latency = app_specific_df['latency'].mean()
+            delta_latency = "{:.3g}s".format(latency - average_latency)
+            latency_col.metric(label="Latency (s)", value=selected_rows['latency'][0], delta=delta_latency, delta_color="inverse")
+
+            st.markdown('')
+
+            col1, col2 = st.columns(2)
 
             prompt = selected_rows['input'][0]
             response = selected_rows['output'][0]
@@ -203,65 +207,79 @@ else:
             app_json = json.loads(
                 details
             )  # apps may not be deserializable, don't try to, keep it json.
-            with st.expander(
-                    f"Input {render_selector_markdown(Select.RecordInput)}",
-                    expanded=True):
-                write_or_json(st, obj=prompt)
-
-            with st.expander(
-                    f"Response {render_selector_markdown(Select.RecordOutput)}",
-                    expanded=True):
-                write_or_json(st, obj=response)
-
-            metadata = app_json.get('metadata')
-            if metadata:
-                with st.expander("Metadata"):
-                    st.markdown(draw_metadata(metadata))
 
             row = selected_rows.head().iloc[0]
 
-            st.header("Feedback")
-            for fcol in feedback_cols:
-                feedback_name = fcol
-                feedback_result = row[fcol]
-                if MULTI_CALL_NAME_DELIMITER in fcol:
-                    fcol = fcol.split(MULTI_CALL_NAME_DELIMITER)[0]
-                feedback_calls = row[f"{fcol}_calls"]
+            input_response_tab, = col1.tabs(['Input / Response'])
 
-                def display_feedback_call(call):
+            with input_response_tab: 
+                with st.expander(
+                        f"Input {render_selector_markdown(Select.RecordInput)}",
+                        expanded=True):
+                    write_or_json(st, obj=prompt)
 
-                    def highlight(s):
-                        cat = CATEGORY.of_score(s.result)
-                        return [f'background-color: {cat.color}'] * len(s)
+                with st.expander(
+                        f"Response {render_selector_markdown(Select.RecordOutput)}",
+                        expanded=True):
+                    write_or_json(st, obj=response)
 
-                    if call is not None and len(call) > 0:
 
-                        df = pd.DataFrame.from_records(
-                            [call[i]["args"] for i in range(len(call))]
-                        )
-                        df["result"] = pd.DataFrame(
-                            [
-                                float(call[i]["ret"] or -1)
-                                for i in range(len(call))
-                            ]
-                        )
-                        df["meta"] = pd.Series(
-                            [call[i]["meta"] for i in range(len(call))]
-                        )
-                        df = df.join(df.meta.apply(lambda m: pd.Series(m))
-                                    ).drop(columns="meta")
+            feedback_tab, metadata_tab  = col2.tabs(['Feedback', 'Metadata'])
 
-                        st.dataframe(
-                            df.style.apply(highlight, axis=1
-                                          ).format("{:.2}", subset=["result"])
-                        )
+            with metadata_tab: 
+                metadata = app_json.get('metadata')
+                if metadata:
+                    with st.expander("Metadata"):
+                        st.markdown(draw_metadata(metadata))
+                else:
+                    st.write('No metadata found')
 
-                    else:
-                        st.text("No feedback details.")
+                
+            with feedback_tab:
+                if len(feedback_cols) == 0:
+                    st.write("No feedback details")
 
-                with st.expander(f"{feedback_name} = {feedback_result}",
-                                 expanded=True):
-                    display_feedback_call(feedback_calls)
+                for fcol in feedback_cols:
+                    feedback_name = fcol
+                    feedback_result = row[fcol]
+                    if MULTI_CALL_NAME_DELIMITER in fcol:
+                        fcol = fcol.split(MULTI_CALL_NAME_DELIMITER)[0]
+                    feedback_calls = row[f"{fcol}_calls"]
+
+                    def display_feedback_call(call):
+
+                        def highlight(s):
+                            cat = CATEGORY.of_score(s.result)
+                            return [f'background-color: {cat.color}'] * len(s)
+
+                        if call is not None and len(call) > 0:
+
+                            df = pd.DataFrame.from_records(
+                                [call[i]["args"] for i in range(len(call))]
+                            )
+                            df["result"] = pd.DataFrame(
+                                [
+                                    float(call[i]["ret"] or -1)
+                                    for i in range(len(call))
+                                ]
+                            )
+                            df["meta"] = pd.Series(
+                                [call[i]["meta"] for i in range(len(call))]
+                            )
+                            df = df.join(df.meta.apply(lambda m: pd.Series(m))
+                                        ).drop(columns="meta")
+
+                            st.dataframe(
+                                df.style.apply(highlight, axis=1
+                                            ).format("{:.2}", subset=["result"])
+                            )
+
+                        else:
+                            st.text("No feedback details.")
+
+                    with st.expander(f"{feedback_name} = {feedback_result}",
+                                    expanded=True):
+                        display_feedback_call(feedback_calls)
 
             record_str = selected_rows['record_json'][0]
             record_json = json.loads(record_str)
@@ -271,8 +289,10 @@ else:
                              ] = list(instrumented_component_views(app_json))
             classes_map = {path: view for path, view in classes}
 
-            st.header('Timeline')
+            st.markdown('')
+            st.subheader('Timeline')
             val = record_viewer(record_json, app_json)
+            st.markdown('')
 
             match_query = None
 
@@ -320,8 +340,9 @@ else:
                     st.json(jsonify_for_ui(app_json))
 
             if match_query is not None:
-                st.header("Subcomponents:")
+                container = st.empty()
 
+                has_subcomponents = False
                 for query, component in classes:
                     if not match_query.is_immediate_prefix_of(query):
                         continue
@@ -330,7 +351,11 @@ else:
                         # Skip App, will still list App.app under "app".
                         continue
 
+                    has_subcomponents = True
                     render_component(query, component)
+
+                if has_subcomponents:
+                    container.markdown("#### Subcomponents:")
 
             st.header("More options:")
 
