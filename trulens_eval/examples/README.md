@@ -1,7 +1,9 @@
 # Examples
 
-This library of TruLens examples is organized by the component of interest. Components include `/models`, `/frameworks` and `/vector-dbs`.
+The top-level organization of this examples repository is divided into quickstarts and expositions. Quickstarts are actively maintained to work with every release. Expositions are verified to work with a set of verified dependencies tagged at the top of the notebook.
 
-In addition to the component-based organization, you can also find a number of `/python_native` examples for critical workflows like human feedback capture, summarization and I/O-based evaluation.
+Quickstarts contain the simple examples for critical workflows to build, evaluate and track your LLM app.
+
+This expositional library of TruLens examples is organized by the component of interest. Components include `/models`, `/frameworks` and `/vector-dbs`.
 
 For end to end application examples, checkout `/end2end_apps`.
