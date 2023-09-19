@@ -1,9 +1,9 @@
 from abc import abstractmethod
 import enum
-from typing import Iterable, List, Optional, Tuple
+from typing import ClassVar, Iterable, List, Optional, Tuple
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.trulens_eval.utils.generated import re_1_10_rating
+from trulens_eval.utils.generated import re_1_10_rating
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 from cohere.responses.classify import Example
@@ -174,7 +174,7 @@ class Groundedness(Semantics, WithPrompt):
     # hugs._summarized_groundedness
     # hugs._doc_groundedness
 
-    prompt: PromptTemplate = PromptTemplate.from_template(
+    prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         """You are a INFORMATION OVERLAP classifier; providing the overlap of information between two statements.
 Respond only as a number from 1 to 10 where 1 is no information overlap and 10 is all information is overlapping.
 Never elaborate.
@@ -185,8 +185,6 @@ STATEMENT 2: {hypothesis}
 
 INFORMATION OVERLAP: """
     )
-
-    pass
 
 class QuestionStatementRelevance(Relevance, WithPrompt):
     # openai.qs_relevance
@@ -373,25 +371,27 @@ class HateThreatening(Hate):
 
 ## Feedback output types:
 
-class FeedbackOutput(pydantic.BaseModel):
-    """
-    Feedback functions produce at least a floating score.
-    """
-    feedback: float
-
+class FeedbackOutputType(pydantic.BaseModel):
     min_feedback: float
     max_feedback: float
 
     min_interpretation: Optional[str] = None
     max_interpretation: Optional[str] = None
 
-class Digital(FeedbackOutput):
+class DigitalOutputType(FeedbackOutputType):
     min_feedback = 1.0
     max_feedback = 10.0
     
-class Binary(FeedbackOutput):
+class BinaryOutputType(FeedbackOutputType):
     min_feedback = 0.0
     max_feedback = 1.0
+
+class FeedbackOutput(pydantic.BaseModel):
+    """
+    Feedback functions produce at least a floating score.
+    """
+    feedback: float
+    typ: FeedbackOutputType
 
 class OutputWithExplanation(FeedbackOutput):
     reason: str
@@ -478,7 +478,6 @@ class ClassificationModel(Model):
         pass
 
 class BinarySentimentModel(ClassificationModel):
-    output_type = Binary(min_interpretation="negative", max_interpretation="positive")
-
+    output_type = BinaryOutputType(min_interpretation="negative", max_interpretation="positive")
 
     # def classify()
