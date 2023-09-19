@@ -140,8 +140,7 @@ class TruLlama(App):
         from llama_index import VectorStoreIndex, SimpleWebPageReader
 
         documents = SimpleWebPageReader(
-            html_to_text=True,
-            metadata_fn=lambda url: dict(url=url)
+            html_to_text=True
         ).load_data(["http://paulgraham.com/worked.html"])
         index = VectorStoreIndex.from_documents(documents)
 
@@ -153,10 +152,23 @@ class TruLlama(App):
         ```
         from trulens_eval import TruLlama
         # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-        tru_query_engine = TruLlama(query_engine,
+        tru_recorder = TruLlama(query_engine,
             app_id='LlamaIndex_App1',
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
-        tru_query_engine("What is llama index?")
+
+        with tru_recorder as recording:
+            query_engine.query("What is llama index?")
+
+        tru_record = recording.records[0]
+
+        # To add record metadata 
+        with tru_recorder as recording:
+            recording.record_metadata="this is metadata for all records in this context that follow this line"
+            query_engine.query("What is llama index?")
+            recording.record_metadata="this is different metadata for all records in this context that follow this line"
+            query_engine.query("Where do I download llama index?")
+        
+
         ```
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
@@ -297,6 +309,7 @@ class TruLlama(App):
     # TODEP
     # llama_index.indices.query.base.BaseQueryEngine
     def query(self, *args, **kwargs) -> RESPONSE_TYPE:
+        
         assert isinstance(
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
@@ -311,6 +324,7 @@ class TruLlama(App):
     # TODEP
     # llama_index.indices.query.base.BaseQueryEngine
     async def aquery(self, *args, **kwargs) -> RESPONSE_TYPE:
+        
         assert isinstance(
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
@@ -326,6 +340,7 @@ class TruLlama(App):
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.query .
     def query_with_record(self, *args,
                           **kwargs) -> Tuple[RESPONSE_TYPE, Record]:
+        
         assert isinstance(
             self.app, llama_index.indices.query.base.BaseQueryEngine
         )
@@ -350,6 +365,7 @@ class TruLlama(App):
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
     def chat_with_record(self, *args,
                          **kwargs) -> Tuple[AgentChatResponse, Record]:
+        
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -375,6 +391,7 @@ class TruLlama(App):
     def stream_chat_with_record(
         self, *args, **kwargs
     ) -> Tuple[StreamingAgentChatResponse, Record]:
+        
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
@@ -390,6 +407,7 @@ class TruLlama(App):
     async def astream_chat_with_record(
         self, *args, **kwargs
     ) -> Tuple[StreamingAgentChatResponse, Record]:
+        
         assert isinstance(
             self.app, llama_index.chat_engine.types.BaseChatEngine
         )
