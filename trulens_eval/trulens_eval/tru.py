@@ -271,6 +271,23 @@ class Tru(SingletonPerName):
         df, feedback_columns = self.db.get_records_and_feedback(app_ids)
 
         return df, feedback_columns
+    
+    def get_leaderboard(self, app_ids: List[str]):
+        """
+        Get a leaderboard by app id from the
+        database. Pass an empty list of app_ids to return all.
+
+        ```python
+        tru.get_leaderboard(app_ids=[])
+        ```
+        """
+        df, feedback_cols = self.db.get_records_and_feedback(app_ids)
+
+        col_agg_list = feedback_cols + ['latency', 'total_cost']
+
+        leaderboard = df.groupby('app_id')[col_agg_list].mean().sort_values(by=feedback_cols, ascending = False)
+
+        return leaderboard
 
     def start_evaluator(self,
                         restart=False,
