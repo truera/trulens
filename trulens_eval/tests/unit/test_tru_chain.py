@@ -2,7 +2,6 @@
 Tests for TruChain. Some of the tests are outdated.
 """
 
-import asyncio
 import os
 import unittest
 from unittest import main
@@ -30,7 +29,6 @@ from trulens_eval.keys import check_keys
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Record
 from trulens_eval.tru_chain import TruChain
-import trulens_eval.utils.python  # makes sure asyncio gets instrumented
 
 
 class TestTruChain(JSONTestCase):
@@ -287,61 +285,36 @@ class TestTruChain(JSONTestCase):
             )
         )
 
-    #def test_async_token_gen(self):
-    #    asyncio.run(self._test_async_token_gen())
+    def test_async_token_gen(self):
+        self._test_async_token_gen()
 
     async def _test_async_token_gen(self):
         # Test of chain acall methods as requested in https://github.com/truera/trulens/issues/309 .
 
-        class AsyncAgent:
+        tru = Tru()
+        # hugs = feedback.Huggingface()
+        # f_lang_match = Feedback(hugs.language_match).on_input_output()
 
-            def __init__(self):
-                tru = Tru()
-                # hugs = feedback.Huggingface()
-                # f_lang_match = Feedback(hugs.language_match).on_input_output()
-
-                self.async_callback = AsyncIteratorCallbackHandler()
-                prompt = PromptTemplate.from_template(
-                    """Honestly answer this question: {question}."""
-                )
-                llm = ChatOpenAI(
-                    temperature=0.0,
-                    streaming=True,
-                    callbacks=[self.async_callback]
-                )
-                self.agent = LLMChain(llm=llm, prompt=prompt)
-                self.agent = tru.Chain(self.agent)  #, feedbacks=[f_lang_match])
-
-            async def respond_each_token(self, message):
-                f_res_record = asyncio.create_task(
-                    self.agent.awith_record(self.agent.app,
-                        inputs=dict(question=message),
-                    )
-                )
-
-                async for token in self.async_callback.aiter():
-                    yield token
-
-                # Storing these in self as we are an async generator that is
-                # already done.
-                self.res, self.record = await f_res_record
-
-        st = AsyncAgent()
-        message = "What is 1+2? Explain your answer."
-
-        # Get the token stream.
-        async for tok in st.respond_each_token(message):
-            print(tok)
-
-        # Get the results of the async awith_record.
-        async_res = st.res
-        async_record = st.record
-
-        # Also get the same using the sync version. Need to disable streaming first.
-        st.agent.app.llm.streaming = False
-        sync_res, sync_record = st.agent.with_record(st.agent.app,
-            inputs=dict(question=message),
+        async_callback = AsyncIteratorCallbackHandler()
+        prompt = PromptTemplate.from_template(
+            """Honestly answer this question: {question}."""
         )
+        llm = ChatOpenAI(
+            temperature=0.0,
+            streaming=True,
+            callbacks=[async_callback]
+        )
+        agent = LLMChain(llm=llm, prompt=prompt)
+        agent_recorder = tru.Chain(agent)  #, feedbacks=[f_lang_match])
+
+        message = "What is 1+2? Explain your answer."
+        with agent_recorder as recording:
+            async_res = await agent.acall(inputs=dict(question=message))
+        async_record = recording.records[0]
+
+        with agent_recorder as recording:
+            sync_res = agent(inputs=dict(question=message))
+        sync_record = recording.records[0]
 
         self.assertJSONEqual(async_res, sync_res)
 
