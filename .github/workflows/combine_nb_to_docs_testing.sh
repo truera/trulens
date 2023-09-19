@@ -7,7 +7,7 @@ nbmerge langchain_quickstart.ipynb logging.ipynb custom_feedback_functions.ipynb
 # Colab quickstarts
 nbmerge colab_dependencies.ipynb langchain_quickstart.ipynb >> langchain_quickstart_colab.ipynb
 nbmerge colab_dependencies.ipynb llama_index_quickstart.ipynb >> llama_index_quickstart_colab.ipynb
-nbmerge colab_dependencies.ipynb no_framework_quickstart.ipynb >> no_framework_quickstart_colab.ipynb
+nbmerge colab_dependencies.ipynb text2text_quickstart.ipynb >> text2text_quickstart_colab.ipynb
 
 # Create pypi page documentation
 
@@ -27,18 +27,18 @@ jupyter nbconvert --to script all_tools.ipynb
 SED=`which -a gsed sed | head -n1`
 
 # Fix nbmerge ids field invalid for ipynb
-$SED -i "/id\"\:/d" all_tools.ipynb langchain_quickstart_colab.ipynb llama_index_quickstart_colab.ipynb no_framework_quickstart_colab.ipynb
+$SED -i "/id\"\:/d" all_tools.ipynb langchain_quickstart_colab.ipynb llama_index_quickstart_colab.ipynb text2text_quickstart_colab.ipynb
 
 ## Remove ipynb JSON calls
-$SED -i "/JSON/d" langchain_quickstart.py llama_index_quickstart.py no_framework_quickstart.py all_tools.py 
+$SED -i "/JSON/d" langchain_quickstart.py llama_index_quickstart.py text2text_quickstart.py all_tools.py 
 ## Replace jupyter display with python print
-$SED -i "s/display/print/g" langchain_quickstart.py llama_index_quickstart.py no_framework_quickstart.py all_tools.py
+$SED -i "s/display/print/g" langchain_quickstart.py llama_index_quickstart.py text2text_quickstart.py all_tools.py
 ## Remove cell metadata
-$SED -i "/\# In\[/d" langchain_quickstart.py llama_index_quickstart.py no_framework_quickstart.py all_tools.py
+$SED -i "/\# In\[/d" langchain_quickstart.py llama_index_quickstart.py text2text_quickstart.py all_tools.py
 ## Remove single # lines
-$SED -i "/\#$/d" langchain_quickstart.py llama_index_quickstart.py no_framework_quickstart.py all_tools.py
+$SED -i "/\#$/d" langchain_quickstart.py llama_index_quickstart.py text2text_quickstart.py all_tools.py
 ## Collapse multiple empty line from sed replacements with a single line
-$SED -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" langchain_quickstart.py llama_index_quickstart.py no_framework_quickstart.py all_tools.py
+$SED -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" langchain_quickstart.py llama_index_quickstart.py text2text_quickstart.py all_tools.py
 
 # Move all generated files to the generated_files folder
 mv README.md ../../trulens_eval/README.md
