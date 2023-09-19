@@ -271,7 +271,7 @@ class Tru(SingletonPerName):
         df, feedback_columns = self.db.get_records_and_feedback(app_ids)
 
         return df, feedback_columns
-    
+
     def get_leaderboard(self, app_ids: List[str]):
         """
         Get a leaderboard by app id from the
@@ -285,7 +285,9 @@ class Tru(SingletonPerName):
 
         col_agg_list = feedback_cols + ['latency', 'total_cost']
 
-        leaderboard = df.groupby('app_id')[col_agg_list].mean().sort_values(by=feedback_cols, ascending = False)
+        leaderboard = df.groupby('app_id')[col_agg_list].mean().sort_values(
+            by=feedback_cols, ascending=False
+        )
 
         return leaderboard
 

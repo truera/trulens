@@ -49,7 +49,7 @@ class TestLlamaIndex(JSONTestCase):
                 "What did the author do growing up?"
             )
         record_async = recording.records[0]
-        
+
         query_engine = self.index.as_query_engine()
         tru_query_engine_recorder = TruLlama(query_engine)
         with tru_query_engine_recorder as recording:
@@ -57,7 +57,6 @@ class TestLlamaIndex(JSONTestCase):
                 "What did the author do growing up?"
             )
         record_sync = recording.records[0]
-        
 
         self.assertJSONEqual(
             llm_response_sync,
@@ -89,16 +88,18 @@ class TestLlamaIndex(JSONTestCase):
         query_engine = self.index.as_query_engine()
         tru_query_engine_recorder = TruLlama(query_engine)
         with tru_query_engine_recorder as recording:
-            llm_response = query_engine.query("What did the author do growing up?")
+            llm_response = query_engine.query(
+                "What did the author do growing up?"
+            )
         record = recording.records[0]
-       
 
         query_engine = self.index.as_query_engine(streaming=True)
         tru_query_engine_recorder = TruLlama(query_engine)
         with tru_query_engine_recorder as stream_recording:
-            llm_response_stream = query_engine.query("What did the author do growing up?")
+            llm_response_stream = query_engine.query(
+                "What did the author do growing up?"
+            )
         record_stream = stream_recording.records[0]
-       
 
         self.assertJSONEqual(
             llm_response_stream.get_response(),
