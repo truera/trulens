@@ -44,6 +44,6 @@ $SED -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" langchain_quickstart.py llama_index
 mv README.md ../../trulens_eval/README.md
 mv TOP_README.md ../../README.md
 
-mv *.py ../../trulens_eval/examples/
+mv *.py ../../trulens_eval/examples/py_script_quickstarts/
 mv *quickstart_colab.ipynb ../../trulens_eval/examples/colab/quickstarts/
 mv all_tools* ../../trulens_eval/generated_files/
