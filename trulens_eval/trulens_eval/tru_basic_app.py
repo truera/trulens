@@ -46,7 +46,7 @@ class TruWrapperApp(object):
     # adjust the main_input lookup to get the correct signature. See note there.
     def _call(self, *args, **kwargs):
         return self._call_fn(*args, **kwargs)
-    
+
     def __call__(self, *args, **kwargs):
         return self._call(*args, **kwargs)
 
@@ -143,7 +143,7 @@ class TruBasicApp(App):
             dict: record metadata
         """
         # NOTE: Actually text_to_text can take in more args.
-        
+
         self._with_dep_message(method="_call", is_async=False, with_record=True)
 
         return self.with_record(self.app._call, *args, **kwargs)

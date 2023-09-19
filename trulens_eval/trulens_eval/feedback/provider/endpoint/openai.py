@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
+
 class OpenAICallback(EndpointCallback):
 
     class Config:

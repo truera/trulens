@@ -95,7 +95,6 @@ from trulens_eval.tru_custom_app import TruCustomApp
 from trulens_eval.tru_llama import TruLlama
 from trulens_eval.utils.threading import TP
 
-
 __all__ = [
     'Tru',
     'TruBasicApp',
