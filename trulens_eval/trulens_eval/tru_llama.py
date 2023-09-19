@@ -140,8 +140,7 @@ class TruLlama(App):
         from llama_index import VectorStoreIndex, SimpleWebPageReader
 
         documents = SimpleWebPageReader(
-            html_to_text=True,
-            metadata_fn=lambda url: dict(url=url)
+            html_to_text=True
         ).load_data(["http://paulgraham.com/worked.html"])
         index = VectorStoreIndex.from_documents(documents)
 
