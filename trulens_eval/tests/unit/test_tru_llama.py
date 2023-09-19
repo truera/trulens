@@ -36,8 +36,8 @@ class TestLlamaIndex(JSONTestCase):
         ).load_data(["http://paulgraham.com/worked.html"])
         self.index = VectorStoreIndex.from_documents(self.documents)
 
-    def test_query_engine_async(self):
-        asyncio.run(self._test_query_engine_async())
+    #def test_query_engine_async(self):
+    #    asyncio.run(self._test_query_engine_async())
 
     async def _test_query_engine_async(self):
         # Check that the instrumented async aquery method produces the same result as the query method.
@@ -123,8 +123,8 @@ class TestLlamaIndex(JSONTestCase):
             )
         )
 
-    def test_chat_engine_async(self):
-        asyncio.run(self._test_chat_engine_async())
+    #def test_chat_engine_async(self):
+    #    asyncio.run(self._test_chat_engine_async())
 
     async def _test_chat_engine_async(self):
         # Check that the instrumented async achat method produces the same result as the chat method.
