@@ -224,7 +224,7 @@ tru_recorder = TruChain(
     my_llm_app,
     app_id='Chain1_ChatApplication')
 
-response, tru_record = tru_recorder.with_record(query)
+response, tru_record = tru_recorder.with_record(my_llm_app, query)
 json_like = tru_record.layout_calls_as_app()
 ```
 
