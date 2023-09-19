@@ -159,11 +159,7 @@ truchain_recorder = TruChain(chain, app_id='Chain1_ChatApplication')
 # 
 
 prompt_input = 'que hora es?'
-gpt3_response, record = truchain_recorder.with_record(prompt_input)
-
-# Then we can log the record:
-
-tru.add_record(record)
+gpt3_response, record = truchain_recorder.with_record(chain, prompt_input)
 
 # ### Log App Feedback
 # Capturing app feedback such as user feedback of the responses can be added with one call.
