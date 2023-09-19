@@ -72,14 +72,11 @@ tru_chain_recorder = TruChain(chain,
     feedbacks=[f_lang_match],
     tags = "prototype")
 
-# Instrumented chain can operate like the original:
-llm_response = tru_chain_recorder(prompt_input)
-
-print(llm_response)
-
 # or as a context manager
 with tru_chain_recorder as recording:
     chain(prompt_input)
+
+print(llm_response)
 
 # ## Explore in a Dashboard
 

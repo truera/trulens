@@ -72,14 +72,11 @@ tru_chain_recorder = TruChain(chain,
     feedbacks=[f_lang_match],
     tags = "prototype")
 
-# Instrumented chain can operate like the original:
-llm_response = tru_chain_recorder(prompt_input)
-
-print(llm_response)
-
 # or as a context manager
 with tru_chain_recorder as recording:
     chain(prompt_input)
+
+print(llm_response)
 
 # ## Explore in a Dashboard
 
@@ -129,28 +126,32 @@ tru.get_records_and_feedback(app_ids=[])[0] # pass an empty list of app_ids to g
 # 
 # This is done like so:
 
-truchain = TruChain(
+truchain_recorder = TruChain(
     chain,
     app_id='Chain1_ChatApplication',
     tru=tru
 )
-truchain("This will be automatically logged.")
+
+with truchain_recorder as recording:
+    chain("This will be automatically logged.")
 
 # Feedback functions can also be logged automatically by providing them in a list to the feedbacks arg.
 
-truchain = TruChain(
+truchain_recorder = TruChain(
     chain,
     app_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match], # feedback functions
     tru=tru
 )
-truchain("This will be automatically logged.")
+
+with truchain_recorder as recording:
+    chain("This will be automatically logged.")
 
 # ## Manual Logging
 # 
 # ### Wrap with TruChain to instrument your chain
 
-tc = TruChain(chain, app_id='Chain1_ChatApplication')
+truchain_recorder = TruChain(chain, app_id='Chain1_ChatApplication')
 
 # ### Set up logging and instrumentation
 # 
@@ -158,11 +159,7 @@ tc = TruChain(chain, app_id='Chain1_ChatApplication')
 # 
 
 prompt_input = 'que hora es?'
-gpt3_response, record = tc.call_with_record(prompt_input)
-
-# We can log the records but first we need to log the chain itself.
-
-tru.add_app(app=truchain)
+gpt3_response, record = truchain_recorder.with_record(prompt_input)
 
 # Then we can log the record:
 
@@ -201,7 +198,7 @@ tru.add_feedbacks(feedback_results)
 # 
 # For demonstration purposes, we start the evaluator here but it can be started in another process.
 
-truchain: TruChain = TruChain(
+truchain_recorder: TruChain = TruChain(
     chain,
     app_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match],
@@ -210,7 +207,8 @@ truchain: TruChain = TruChain(
 )
 
 tru.start_evaluator()
-truchain("This will be logged by deferred evaluator.")
+with truchain_recorder as recording:
+    chain("This will be logged by deferred evaluator.")
 tru.stop_evaluator()
 
 # # Custom Functions
