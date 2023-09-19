@@ -31,12 +31,17 @@ class Feedback(pydantic.BaseModel):
     Base class for feedback functions.
     """
 
-    def __str__(self):
-        typ = type(self)
+    @classmethod
+    def help(cls):
+        print(cls.str_help())
+
+    @classmethod
+    def str_help(cls):
+        typ = cls
 
         ret = typ.__name__ + "\n"
 
-        fields = list(f for f in self.__fields__ if f not in ["examples", "prompt"])
+        fields = list(f for f in cls.__fields__ if f not in ["examples", "prompt"])
 
         onetab = make_retab("   ")
         twotab = make_retab("      ")
@@ -53,28 +58,31 @@ class Feedback(pydantic.BaseModel):
 
             for f in list(fields):
                 if f in parent.__fields__:
-                    ret += twotab(f"{f} = {getattr(self, f)}") + "\n"
                     fields.remove(f)
+                    if hasattr(cls, f):
+                        ret += twotab(f"{f} = {getattr(cls, f)}") + "\n"
+                    else:
+                        ret += twotab(f"{f} = instance specific") + "\n"
         
         if hasattr(typ, "__doc__") and typ.__doc__ is not None:
-            ret += "\nDoc\n"
+            ret += "\nDocstring\n"
             ret += onetab(typ.__doc__) + "\n"
 
-        if isinstance(self, WithExamples):
+        if issubclass(cls, WithExamples):
             ret += "\nExamples:\n"
-            for e in self.examples:
+            for e in cls.examples:
                 ret += onetab(str(e)) + "\n"
 
-        if isinstance(self, WithPrompt):
-            ret += f"\nPrompt: of {self.prompt.input_variables}\n"
-            ret += onetab(self.prompt.template) + "\n"
+        if issubclass(cls, WithPrompt):
+            ret += f"\nPrompt: of {cls.prompt.input_variables}\n"
+            ret += onetab(cls.prompt.template) + "\n"
         
         return ret
     
     pass
 
 class NaturalLanguage(Feedback):
-    languages: Optional[List[str]]
+    languages: Optional[List[str]] = None
     
 
 class Syntax(NaturalLanguage):
