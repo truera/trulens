@@ -1,16 +1,12 @@
 from abc import abstractmethod
-import enum
-from typing import ClassVar, Iterable, List, Optional, Tuple
+from typing import ClassVar, List, Optional
 
-from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.utils.generated import re_1_10_rating
-from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.serial import SerialModel
 from cohere.responses.classify import Example
-from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
 from langchain import PromptTemplate
+from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
 import pydantic
-from pydantic import Field
+
+from trulens_eval.utils.generated import re_1_10_rating
 
 # Level 1 abstraction
 
@@ -309,6 +305,9 @@ class Criminality(Legality): # maliciousness? harmfulness?
     pass
 
 class Harmfulness(Moderation):
+    """
+    Examples of Harmfulness:
+    """
     # openai.harmfulness
     # openai.harmfulness_with_cot_reasons
     pass
@@ -324,6 +323,10 @@ class Toxicity(Semantics):
     pass
 
 class Maliciousness(Moderation):
+    """
+    Examples of malciousness: 
+    
+    """
     # openai.maliciousness
     # openai.maliciousness_with_cot_reasons
     pass
@@ -353,7 +356,9 @@ class Disinofmration(Moderation, WithExamples):
     
 class Hate(Moderation):
     """
-    TODO: docstring regarding hate, examples
+    Examples of (not) Hate metrics:
+
+    - `openai` package: `openai.moderation` category `hate`.
     """
     # openai.moderation_not_hate
 
@@ -364,16 +369,47 @@ class Misogyny(Hate):
 
 class HateThreatening(Hate):
     """
-    TODO: docstring regarding hate threatening, examples
+    Examples of (not) Threatening Hate metrics:
+
+    - `openai` package: `openai.moderation` category `hate/threatening`.
     """
     # openai.not_hatethreatening
 
-# others:
-# OpenAI.moderation_not_selfharm
-# OpenAI.moderation_not_sexual
-# OpenAI.moderation_not_sexualminors
-# OpenAI.moderation_not_violance
-# OpenAI.moderation_not_violancegraphic
+class SelfHarm(Moderation):
+    """
+    Examples of (not) Self Harm metrics:
+
+    - `openai` package: `openai.moderation` category `self-harm`.
+    """
+
+class Sexual(Moderation):
+    """
+    Examples of (not) Sexual metrics:
+
+    - `openai` package: `openai.moderation` category `sexual`.
+    """
+
+class SexualMinors(Sexual):
+    """
+    Examples of (not) Sexual Minors metrics:
+
+    - `openai` package: `openai.moderation` category `sexual/minors`.
+    """
+
+class Violence(Moderation):
+    """
+    Examples of (not) Violence metrics:
+
+    - `openai` package: `openai.moderation` category `violence`.
+    """
+
+class GraphicViolence(Violence):
+    """
+    Examples of (not) Graphic Violence:
+
+    - `openai` package: `openai.moderation` category `violence/graphic`.
+    """
+
 
 # Level 2 abstraction
 
