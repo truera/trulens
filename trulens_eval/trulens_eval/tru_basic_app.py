@@ -46,6 +46,9 @@ class TruWrapperApp(object):
     # adjust the main_input lookup to get the correct signature. See note there.
     def _call(self, *args, **kwargs):
         return self._call_fn(*args, **kwargs)
+    
+    def __call__(self, *args, **kwargs):
+        return self._call(*args, **kwargs)
 
     def __init__(self, call_fn: Callable):
         self._call_fn = call_fn
@@ -66,6 +69,8 @@ class TruBasicApp(App):
             app_id="Custom Application v1",
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
 
+        # Basic app works by turning your callable into an app
+        # This app is accessbile with the `app` attribute in the recorder
         with tru_recorder as recording:
             tru_recorder.app(question)
 
