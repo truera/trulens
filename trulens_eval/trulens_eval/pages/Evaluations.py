@@ -48,7 +48,6 @@ lms = tru.db
 
 df_results, feedback_cols = lms.get_records_and_feedback([])
 
-state = st.session_state
 
 def jsonify_for_ui(*args, **kwargs):
     return jsonify(*args, **kwargs, redact_keys=True, skip_specials=True)
@@ -83,6 +82,35 @@ def render_component(query, component, header=True):
     else:
         with st.expander("Unhandled Component Details:"):
             st.json(jsonify_for_ui(component.json))
+
+
+# Renders record level metrics (e.g. total tokens, cost, latency) compared to the average when appropriate
+def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
+    app_specific_df = app_df[app_df['app_id'] == selected_rows['app_id'][0]]
+
+    token_col, cost_col, latency_col = st.columns(3)
+    num_tokens = selected_rows['total_tokens'][0]
+    token_col.metric(label="Total tokens (#)", value=num_tokens)
+
+    cost = selected_rows['total_cost'][0]
+    average_cost = app_specific_df['total_cost'].mean()
+    delta_cost = "{:.3g}".format(cost - average_cost)
+    cost_col.metric(
+        label="Total cost (USD)",
+        value=selected_rows['total_cost'][0],
+        delta=delta_cost,
+        delta_color="inverse"
+    )
+
+    latency = selected_rows['latency'][0]
+    average_latency = app_specific_df['latency'].mean()
+    delta_latency = "{:.3g}s".format(latency - average_latency)
+    latency_col.metric(
+        label="Latency (s)",
+        value=selected_rows['latency'][0],
+        delta=delta_latency,
+        delta_color="inverse"
+    )
 
 
 if df_results.empty:
@@ -170,31 +198,20 @@ else:
         selected_rows = data['selected_rows']
         selected_rows = pd.DataFrame(selected_rows)
 
-
         if len(selected_rows) == 0:
             st.write("Hint: select a row to display details of a record")
 
         else:
+            # Start the record specific section
             st.divider()
+
             # Breadcrumbs
-            st.caption(f"{selected_rows['app_id'][0]} / {selected_rows['record_id'][0]}")
+            st.caption(
+                f"{selected_rows['app_id'][0]} / {selected_rows['record_id'][0]}"
+            )
             st.header(f"{selected_rows['record_id'][0]}")
 
-            app_specific_df = app_df[app_df['app_id'] == selected_rows['app_id'][0]]
-
-            token_col, cost_col, latency_col = st.columns(3)
-            num_tokens=selected_rows['total_tokens'][0]
-            token_col.metric(label="Total tokens (#)", value=num_tokens)
-
-            cost=selected_rows['total_cost'][0]
-            average_cost = app_specific_df['total_cost'].mean()
-            delta_cost = "{:.3g}".format(cost - average_cost)
-            cost_col.metric(label="Total cost (USD)", value=selected_rows['total_cost'][0], delta=delta_cost, delta_color="inverse")
-            
-            latency=selected_rows['latency'][0]
-            average_latency = app_specific_df['latency'].mean()
-            delta_latency = "{:.3g}s".format(latency - average_latency)
-            latency_col.metric(label="Latency (s)", value=selected_rows['latency'][0], delta=delta_latency, delta_color="inverse")
+            render_record_metrics(app_df, selected_rows)
 
             st.markdown('')
 
@@ -212,7 +229,7 @@ else:
 
             input_response_tab, = col1.tabs(['Input / Response'])
 
-            with input_response_tab: 
+            with input_response_tab:
                 with st.expander(
                         f"Input {render_selector_markdown(Select.RecordInput)}",
                         expanded=True):
@@ -223,10 +240,9 @@ else:
                         expanded=True):
                     write_or_json(st, obj=response)
 
+            feedback_tab, metadata_tab = col2.tabs(['Feedback', 'Metadata'])
 
-            feedback_tab, metadata_tab  = col2.tabs(['Feedback', 'Metadata'])
-
-            with metadata_tab: 
+            with metadata_tab:
                 metadata = app_json.get('metadata')
                 if metadata:
                     with st.expander("Metadata"):
@@ -234,7 +250,6 @@ else:
                 else:
                     st.write('No metadata found')
 
-                
             with feedback_tab:
                 if len(feedback_cols) == 0:
                     st.write("No feedback details")
@@ -270,15 +285,16 @@ else:
                                         ).drop(columns="meta")
 
                             st.dataframe(
-                                df.style.apply(highlight, axis=1
-                                            ).format("{:.2}", subset=["result"])
+                                df.style.apply(highlight, axis=1).format(
+                                    "{:.2}", subset=["result"]
+                                )
                             )
 
                         else:
                             st.text("No feedback details.")
 
                     with st.expander(f"{feedback_name} = {feedback_result}",
-                                    expanded=True):
+                                     expanded=True):
                         display_feedback_call(feedback_calls)
 
             record_str = selected_rows['record_json'][0]
