@@ -127,7 +127,7 @@ class TestTruChain(JSONTestCase):
         message = "What is 1+2?"
         meta = "this is plain metadata"
 
-        _, rec = tc.with_record(tc.app,message, record_metadata=meta)
+        _, rec = tc.with_record(tc.app, message, record_metadata=meta)
 
         # Check record has metadata.
         self.assertEqual(rec.meta, meta)
@@ -150,7 +150,7 @@ class TestTruChain(JSONTestCase):
 
         # Check adding meta to a record that initially didn't have it.
         # Record with no meta:
-        _, rec = tc.with_record(tc.app,message)
+        _, rec = tc.with_record(tc.app, message)
         self.assertEqual(rec.meta, None)
         recs, _ = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 1)
@@ -175,7 +175,7 @@ class TestTruChain(JSONTestCase):
         message = "What is 1+2?"
         meta = dict(field1="hello", field2="there")
 
-        _, rec = tc.with_record(tc.app,message, record_metadata=meta)
+        _, rec = tc.with_record(tc.app, message, record_metadata=meta)
 
         # Check record has metadata.
         self.assertEqual(rec.meta, meta)
@@ -263,15 +263,16 @@ class TestTruChain(JSONTestCase):
         llm = ChatOpenAI(temperature=0.0)
         chain = LLMChain(llm=llm, prompt=prompt)
         tc = tru.Chain(chain)
-        sync_res, sync_record = tc.with_record(tc.app,
-            inputs=dict(question=message)
+        sync_res, sync_record = tc.with_record(
+            tc.app, inputs=dict(question=message)
         )
 
         # Get async results.
         llm = ChatOpenAI(temperature=0.0)
         chain = LLMChain(llm=llm, prompt=prompt)
         tc = tru.Chain(chain)
-        async_res, async_record = await tc.awith_record(tc.app,
+        async_res, async_record = await tc.awith_record(
+            tc.app,
             inputs=dict(question=message),
         )
 
@@ -300,9 +301,7 @@ class TestTruChain(JSONTestCase):
             """Honestly answer this question: {question}."""
         )
         llm = ChatOpenAI(
-            temperature=0.0,
-            streaming=True,
-            callbacks=[async_callback]
+            temperature=0.0, streaming=True, callbacks=[async_callback]
         )
         agent = LLMChain(llm=llm, prompt=prompt)
         agent_recorder = tru.Chain(agent)  #, feedbacks=[f_lang_match])
