@@ -74,7 +74,7 @@ tru_chain_recorder = TruChain(chain,
 
 # or as a context manager
 with tru_chain_recorder as recording:
-    chain(prompt_input)
+    llm_response = chain(prompt_input)
 
 print(llm_response)
 
