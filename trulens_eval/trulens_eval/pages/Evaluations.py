@@ -89,6 +89,7 @@ def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
     app_specific_df = app_df[app_df['app_id'] == selected_rows['app_id'][0]]
 
     token_col, cost_col, latency_col = st.columns(3)
+
     num_tokens = selected_rows['total_tokens'][0]
     token_col.metric(label="Total tokens (#)", value=num_tokens)
 
