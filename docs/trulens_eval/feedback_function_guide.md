@@ -220,11 +220,11 @@ for example
 response = my_llm_app(query)
 
 from trulens_eval import TruChain
-truchain = TruChain(
+tru_recorder = TruChain(
     my_llm_app,
     app_id='Chain1_ChatApplication')
 
-response, tru_record = truchain.with_record(query)
+response, tru_record = tru_recorder.with_record(query)
 json_like = tru_record.layout_calls_as_app()
 ```
 
