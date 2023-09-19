@@ -829,7 +829,6 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         # wrapped app while recording.
 
         # TODO: enable dep message in 0.12.0
-        return
 
         cname = self.__class__.__name__
 
@@ -846,18 +845,18 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         print(
             f"""
-`{old_method}` is deprecated; To record results of your app's execution, use one of these options to invoke your app:
+`{old_method}` will be deprecated soon; To record results of your app's execution, use one of these options to invoke your app:
     (1) Use the `{"a" if is_async else ""}with_{"record" if with_record else ""}` method:
         ```python
         app # your app
-        tru_app: {cname} = {cname}(app, ...)
-        result{", record" if with_record else ""} = {"await " if is_async else ""}tru_app.{new_method}({app_callable}, ...args/kwargs-to-{app_callable}...)
+        tru_app_recorder: {cname} = {cname}(app, ...)
+        result{", record" if with_record else ""} = {"await " if is_async else ""}tru_app_recorder.{new_method}({app_callable}, ...args/kwargs-to-{app_callable}...)
         ```
     (2) Use {cname} as a context manager: 
         ```python
         app # your app
-        tru_app: {cname} = {cname}(app, ...)
-        with tru_app{" as records" if with_record else ""}:
+        tru_app_recorder: {cname} = {cname}(app, ...)
+        with tru_app_recorder{" as records" if with_record else ""}:
             result = {"await " if is_async else ""}{app_callable}(...args/kwargs-to-{app_callable}...)
         {"record = records.get()" if with_record else ""}
         ```
