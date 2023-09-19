@@ -10,6 +10,7 @@ from cohere.responses.classify import Example
 from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
 from langchain import PromptTemplate
 import pydantic
+from pydantic import Field
 
 # Level 1 abstraction
 
@@ -20,10 +21,10 @@ def make_retab(tab):
     return retab
 
 class WithExamples(pydantic.BaseModel):
-    examples: List[Example]
+    examples: ClassVar[List[Example]]
 
 class WithPrompt(pydantic.BaseModel):
-    prompt: str
+    prompt: ClassVar[PromptTemplate]
 
 class Feedback(pydantic.BaseModel):
     """
@@ -106,7 +107,7 @@ class Conciseness(Semantics, WithPrompt): # or syntax?
     # openai.conciseness
 
     # langchain Criteria.CONCISENESS
-    prompt: PromptTemplate = PromptTemplate.from_template(
+    prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         f"""{supported_criteria['conciseness']} Respond only as a number from 1 to 10 where 1 is the least concise and 10 is the most concise."""
     )
 
@@ -116,7 +117,7 @@ class Correctness(Semantics, WithPrompt):
     # openai.correctness_with_cot_reasons
 
     # langchain Criteria.CORRECTNESS
-    completion_prompt: PromptTemplate = PromptTemplate.from_template(
+    prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         f"""{supported_criteria['correctness']} Respond only as a number from 1 to 10 where 1 is the least correct and 10 is the most correct."""
     )
 
@@ -124,7 +125,7 @@ class Coherence(Semantics):
     # openai.coherence
     # openai.coherence_with_cot_reasons
 
-    completion_prompt: PromptTemplate = PromptTemplate.from_template(
+    prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         f"""{supported_criteria['coherence']} Respond only as a number from 1 to 10 where 1 is the least coherent and 10 is the most coherent."""
     )
     
@@ -183,14 +184,13 @@ STATEMENT 1: {premise}
 
 STATEMENT 2: {hypothesis}
 
-INFORMATION OVERLAP: """
-    )
+INFORMATION OVERLAP: """)
 
 class QuestionStatementRelevance(Relevance, WithPrompt):
     # openai.qs_relevance
     # openai.qs_relevance_with_cot_reasons
 
-    prompt: PromptTemplate = PromptTemplate.from_template(
+    prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         """You are a RELEVANCE grader; providing the relevance of the given STATEMENT to the given QUESTION.
 Respond only as a number from 1 to 10 where 1 is the least relevant and 10 is the most relevant. 
 
@@ -249,7 +249,7 @@ class BinarySentiment(Sentiment, WithExamples):
     # cohere.sentiment
 
     # TODO: abstract examples type, make and move to BinarySentiment class
-    examples: List[Example] = [
+    examples: ClassVar[List[Example]] = [
         Example("The order came 5 days early", "1"),
         Example("I just got a promotion at work and I\'m so excited!", "1"),
         Example(
@@ -324,7 +324,7 @@ class Disinofmration(Moderation, WithExamples):
     # cohere.not_disinformation
 
     # TODO: abstract examples type and reverse class
-    examples: List[Example] = [
+    examples: ClassVar[List[Example]] = [
         Example(
             "Bud Light Official SALES REPORT Just Released ′ 50% DROP In Sales ′ Total COLLAPSE ′ Bankruptcy?",
             "0"
