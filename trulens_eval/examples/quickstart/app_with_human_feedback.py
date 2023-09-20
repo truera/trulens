@@ -57,7 +57,7 @@ def setup_chain():
 
 
 def generate_response(prompt, tc):
-    return tc.call_with_record(prompt)
+    return tc.with_record(tc.app, prompt)
 
 
 tc = setup_chain()
