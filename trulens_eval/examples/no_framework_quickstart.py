@@ -79,17 +79,17 @@ f_sentiment = Feedback(hugs.positive_sentiment).on_output()
 
 from trulens_eval import TruBasicApp
 
-tru_llm_standalone = TruBasicApp(
+tru_llm_standalone_recorder = TruBasicApp(
     llm_standalone, app_id="Happy Bot", feedbacks=[f_sentiment]
 )
-tru_simple_hash_callable = TruBasicApp(
+tru_simple_hash_callable_recorder = TruBasicApp(
     simple_hash_callable, app_id="Hasher", feedbacks=[f_sentiment]
 )
 
-with tru_llm_standalone as recording:
+with tru_llm_standalone_recorder as recording:
     llm_standalone(prompt_input)
 
-with tru_simple_hash_callable as recording:
+with tru_simple_hash_callable_recorder as recording:
     simple_hash_callable(prompt_input)
 
 # ## Explore in a Dashboard
