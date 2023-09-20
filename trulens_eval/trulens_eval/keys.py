@@ -106,6 +106,7 @@ from pathlib import Path
 import re
 from typing import Any, Dict, Optional, Set, Tuple, Union
 
+import cohere
 import dotenv
 
 from trulens_eval.utils.python import caller_frame
@@ -225,15 +226,13 @@ def set_openai_key() -> None:
         openai.api_key = os.environ["OPENAI_API_KEY"]
 
 
-def get_cohere_agent() -> 'cohere.Client':
+def get_cohere_agent() -> cohere.Client:
     """
     Gete a singleton cohere agent. Sets its api key from env var COHERE_API_KEY.
     """
 
     global cohere_agent
-    
     if cohere_agent is None:
-        import cohere
         cohere.api_key = os.environ['CO_API_KEY']
         cohere_agent = cohere.Client(cohere.api_key)
     return cohere_agent

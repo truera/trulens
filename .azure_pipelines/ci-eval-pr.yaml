@@ -39,8 +39,17 @@ jobs:
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
+          cd ./trulens_eval
+          pip install -e .
+          pip install -r $(requirementsFile)
           pip install yapf==0.32.0
           pip install isort==5.10.1
+          pip install ipykernel
+          python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
+        displayName: Install pip package
+      - bash: |
+          set -e
+          source activate $(condaEnvFileSuffix)
           echo Using $(yapf --version) isort $(isort --vn)
           ./format.sh --eval
         displayName: Format Code
