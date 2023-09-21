@@ -177,7 +177,7 @@ class LiteLLM(Provider):
             for line in response.split('\n'):
                 if "Score" in line:
                     score = re_1_10_rating(line) / normalize
-            return score, {"reason": response}
+            return float(score), {"reason": response}
         else:
             return re_1_10_rating(response) / normalize
 
