@@ -33,6 +33,7 @@ class TestFeedbackConstructors(TestCase):
         self.app = TruBasicApp(text_to_text=lambda t: f"returning {t}")
         _, self.record = self.app.with_record(self.app.app, t="hello")
 
+
     def test_global_feedback_functions(self):
         # NOTE: currently static methods and class methods are not supported
 
@@ -127,7 +128,7 @@ class TestFeedbackConstructors(TestCase):
                     feedbacks=[f],
                     feedback_mode=FeedbackMode.WITH_APP
                 )
-
+                
                 # OK to use with App as long as not deferred mode:
                 TruBasicApp(
                     text_to_text=lambda t: f"returning {t}",
