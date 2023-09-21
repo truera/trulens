@@ -57,6 +57,7 @@ mv TOP_README.md ../../README.md
 mv *.py ../../trulens_eval/examples/py_script_quickstarts/
 
 # Links are referenced in intro.md and gh_intro.md
+# There are symlinks in ../../trulens_eval/tests/docs_notebooks/notebooks_to_test
 mv *quickstart_colab.ipynb ../../trulens_eval/examples/colab/quickstarts/
 
 # Trulens tests run off of these files
