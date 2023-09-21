@@ -53,7 +53,7 @@ mv README.md ../../trulens_eval/README.md
 mv TOP_README.md ../../README.md
 
 # Links are referenced in intro.md and gh_intro.md
-mkdir ../../trulens_eval/examples/py_script_quickstarts/
+# There are symlinks from ../../trulens_eval/generated_files/ to these scripts for testing
 mv *.py ../../trulens_eval/examples/py_script_quickstarts/
 
 # Links are referenced in intro.md and gh_intro.md
