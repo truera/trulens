@@ -341,6 +341,7 @@ class Tru(SingletonPerName):
             proc = Process(target=runloop)
         else:
             proc = Thread(target=runloop)
+            proc.daemon = True
 
         # Start a persistent thread or process that evaluates feedback functions.
 
@@ -541,6 +542,8 @@ class Tru(SingletonPerName):
                     tunnel_proc, tunnel_proc.stderr, out_stderr, tunnel_started
                 )
             )
+            Tru.tunnel_listener_stdout.daemon=True
+            Tru.tunnel_listener_stderr.daemon=True
             Tru.tunnel_listener_stdout.start()
             Tru.tunnel_listener_stderr.start()
             if not tunnel_started.wait(timeout=DASHBOARD_START_TIMEOUT
@@ -586,6 +589,11 @@ class Tru(SingletonPerName):
             target=listen_to_dashboard,
             args=(proc, proc.stderr, out_stderr, started)
         )
+
+        # Purposely block main process from ending and wait for dashboard. 
+        Tru.dashboard_listener_stdout.daemon=False
+        Tru.dashboard_listener_stderr.daemon=False
+        
         Tru.dashboard_listener_stdout.start()
         Tru.dashboard_listener_stderr.start()
 
