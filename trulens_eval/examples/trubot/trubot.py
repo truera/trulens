@@ -1,32 +1,26 @@
 import logging
 import os
 from pprint import PrettyPrinter
-from typing import Callable, Dict, List, Set, Tuple
+from typing import Dict, Set, Tuple
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
 from langchain.memory import ConversationSummaryBufferMemory
-from langchain.schema import Document
 from langchain.vectorstores import Pinecone
-from langchain.vectorstores.base import VectorStoreRetriever
 import numpy as np
 import pinecone
-from pydantic import Field
 from slack_bolt import App
 from slack_sdk import WebClient
 
 from trulens_eval import feedback
 from trulens_eval import Select
 from trulens_eval import Tru
-from trulens_eval.db import LocalSQLite
-from trulens_eval.db import Record
 from trulens_eval.feedback import Feedback
 from trulens_eval.keys import check_keys
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
-from trulens_eval.utils.threading import TP
 
 check_keys(
     "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"

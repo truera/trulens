@@ -12,10 +12,10 @@
 # ### Install dependencies
 # Let's install some of the dependencies for this notebook if we don't have them already
 
-#! pip install trulens-eval==0.12.0 llama_index==0.8.5.post2 html2text==2020.1.16
+#! pip install trulens-eval==0.12.0 llama_index==0.8.29post1 html2text==2020.1.16
 
 # ### Add API keys
-# For this quickstart, you will need Open AI and Huggingface keys
+# For this quickstart, you will need Open AI and Huggingface keys. The OpenAI key is used for embeddings and GPT, and the Huggingface key is used for evaluation.
 
 import os
 
@@ -39,10 +39,9 @@ tru = Tru()
 from llama_index import SimpleWebPageReader
 from llama_index import VectorStoreIndex
 
-# llama_index 0.8.15 bug: need to provide metadata_fn
-documents = SimpleWebPageReader(
-    html_to_text=True, metadata_fn=lambda url: dict(url=url)
-).load_data(["http://paulgraham.com/worked.html"])
+documents = SimpleWebPageReader(html_to_text=True).load_data(
+    ["http://paulgraham.com/worked.html"]
+)
 index = VectorStoreIndex.from_documents(documents)
 
 query_engine = index.as_query_engine()
@@ -73,20 +72,16 @@ f_qs_relevance = Feedback(openai.qs_relevance).on_input().on(
     TruLlama.select_source_nodes().node.text
 ).aggregate(np.mean)
 
-# ## Instrument chain for logging with TruLens
+# ## Instrument app for logging with TruLens
 
-tru_query_engine = TruLlama(
+tru_query_engine_recorder = TruLlama(
     query_engine,
     app_id='LlamaIndex_App1',
     feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance]
 )
 
-# Instrumented query engine can operate like the original:
-llm_response = tru_query_engine.query("What did the author do growing up?")
-print(llm_response)
-
 # or as context manager
-with tru_query_engine as recording:
+with tru_query_engine_recorder as recording:
     query_engine.query("What did the author do growing up?")
 
 # ## Explore in a Dashboard
@@ -99,29 +94,29 @@ tru.run_dashboard()  # open a local streamlit app to explore
 
 # ### Leaderboard
 #
-# Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics including cost and average feedback value across all of your LLM apps using the chain leaderboard. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up.
+# Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics including cost and average feedback value across all of your LLM apps using the app leaderboard. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up.
 #
 # Note: Average feedback values are returned and printed in a range from 0 (worst) to 1 (best).
 #
-# ![Chain Leaderboard](https://www.trulens.org/Assets/image/Leaderboard.png)
+# ![App Leaderboard](https://www.trulens.org/Assets/image/Leaderboard.png)
 #
-# To dive deeper on a particular chain, click "Select Chain".
+# To dive deeper on a particular app, click "Select App".
 #
-# ### Understand chain performance with Evaluations
+# ### Understand app performance with Evaluations
 #
-# To learn more about the performance of a particular chain or LLM model, we can select it to view its evaluations at the record level. LLM quality is assessed through the use of feedback functions. Feedback functions are extensible methods for determining the quality of LLM responses and can be applied to any downstream LLM task. Out of the box we provide a number of feedback functions for assessing model agreement, sentiment, relevance and more.
+# To learn more about the performance of a particular app or LLM model, we can select it to view its evaluations at the record level. LLM quality is assessed through the use of feedback functions. Feedback functions are extensible methods for determining the quality of LLM responses and can be applied to any downstream LLM task. Out of the box we provide a number of feedback functions for assessing model agreement, sentiment, relevance and more.
 #
 # The evaluations tab provides record-level metadata and feedback on the quality of your LLM application.
 #
 # ![Evaluations](https://www.trulens.org/Assets/image/Leaderboard.png)
 #
-# ### Deep dive into full chain metadata
+# ### Deep dive into full app metadata
 #
-# Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain.
+# Click on a record to dive deep into all of the details of your app stack and underlying LLM, captured by tru_query_engine_recorder.
 #
-# ![Explore a Chain](https://www.trulens.org/Assets/image/Chain_Explore.png)
+# ![Explore an App](https://www.trulens.org/Assets/image/Chain_Explore.png)
 #
-# If you prefer the raw format, you can quickly get it using the "Display full chain json" or "Display full record json" buttons at the bottom of the page.
+# If you prefer the raw format, you can quickly get it using the "Display full app json" or "Display full record json" buttons at the bottom of the page.
 
 # Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
 
