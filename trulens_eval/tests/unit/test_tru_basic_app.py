@@ -40,12 +40,13 @@ class TestTruBasicApp(JSONTestCase):
 
     def test_no_fail(self):
         # Most naive test to make sure the basic app runs at all.
-
+        
         msg = "What is the phone number for HR?"
 
         res1 = self.basic_app(msg)
         with self.tru_basic_app_recorder as recording:
             res2 = self.tru_basic_app_recorder.app(msg)
+            
         rec2 = recording.records[0]
 
         self.assertJSONEqual(res1, res2)
