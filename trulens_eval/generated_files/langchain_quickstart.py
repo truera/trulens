@@ -1,1 +1,1 @@
-../examples/langchain_quickstart.py
+../examples/py_script_quickstarts/langchain_quickstart.py
