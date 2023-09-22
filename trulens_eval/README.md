@@ -44,15 +44,27 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 
 TruLens supports the evaluation of tracking for any LLM app framework. Choose a framework below to get started:
 
-### **Langchain**
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
+**Langchain**
 
-### **Llama-Index**
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb)
+[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/langchain_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/colab/quickstarts/langchain_quickstart_colab.ipynb)
 
-### **Text to Text**
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/text2text_quickstart.ipynb)
+[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/py_script_quickstarts/langchain_quickstart.py).
 
-## 💡 Contributing
+**Llama-Index**
+
+[llama_index_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/colab/quickstarts/llama_index_quickstart_colab.ipynb)
+
+[llama_index_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/py_script_quickstarts/llama_index_quickstart.py)
+
+**No Framework**
+
+[text2text_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/text2text_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/colab/quickstarts/text2text_quickstart_colab.ipynb)
+
+[text2text_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/py_script_quickstarts/text2text_quickstart.py)
+
+### 💡 Contributing
 
 Interested in contributing? See our [contribution guide](https://github.com/truera/trulens/tree/main/trulens_eval/CONTRIBUTING.md) for more details.
