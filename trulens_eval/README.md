@@ -53,6 +53,6 @@ TruLens supports the evaluation of tracking for any LLM app framework. Choose a 
 ### **Text to Text**
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/text2text_quickstart.ipynb)
 
-### 💡 Contributing
+## 💡 Contributing
 
 Interested in contributing? See our [contribution guide](https://github.com/truera/trulens/tree/main/trulens_eval/CONTRIBUTING.md) for more details.
