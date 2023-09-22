@@ -44,11 +44,14 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 
 TruLens supports the evaluation of tracking for any LLM app framework. Choose a framework below to get started:
 
-### **Langchain** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
+### **Langchain**
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
 
-### **Llama-Index** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb)
+### **Llama-Index**
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb)
 
-### **Text to Text** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/text2text_quickstart.ipynb)
+### **Text to Text**
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/text2text_quickstart.ipynb)
 
 ### 💡 Contributing
 
