@@ -133,12 +133,22 @@ class TruChain(App):
         
         from trulens_eval import TruChain
         # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-        truchain = TruChain(
+        tru_recorder = TruChain(
             chain,
             app_id='Chain1_ChatApplication',
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
         )
-        truchain("What is langchain?")
+        with tru_recorder as recording:
+            chain(""What is langchain?")
+
+        tru_record = recording.records[0]
+
+        # To add record metadata 
+        with tru_recorder as recording:
+            recording.record_metadata="this is metadata for all records in this context that follow this line"
+            chain("What is langchain?")
+            recording.record_metadata="this is different metadata for all records in this context that follow this line"
+            chain("Where do I download langchain?")
         ```
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
@@ -254,6 +264,7 @@ class TruChain(App):
         """
         Run the chain acall method and also return a record metadata object.
         """
+
         self._with_dep_message(method="acall", is_async=True, with_record=True)
 
         return await self.awith_record(self.app.acall, *args, **kwargs)
@@ -288,6 +299,7 @@ class TruChain(App):
     # TODEP
     # Chain requirement
     def _call(self, *args, **kwargs) -> Any:
+
         self._with_dep_message(
             method="_call", is_async=False, with_record=False
         )
@@ -299,6 +311,7 @@ class TruChain(App):
     # TODEP
     # Optional Chain requirement
     async def _acall(self, *args, **kwargs) -> Any:
+
         self._with_dep_message(
             method="_acall", is_async=True, with_record=False
         )
