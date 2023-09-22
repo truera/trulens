@@ -5,11 +5,13 @@
 #
 # In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.
 #
-# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/frameworks/langchain/langchain_quickstart.ipynb)
+# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
 
 # ## Setup
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
+
+# In[ ]:
 
 import os
 
@@ -17,6 +19,10 @@ os.environ["OPENAI_API_KEY"] = "..."
 os.environ["HUGGINGFACE_API_KEY"] = "..."
 
 # ### Import from LangChain and TruLens
+
+# In[ ]:
+
+from IPython.display import JSON
 
 # Imports main tools:
 from trulens_eval import Feedback
@@ -39,6 +45,8 @@ from langchain.prompts.chat import PromptTemplate
 #
 # This example uses a LangChain framework and OpenAI LLM
 
+# In[ ]:
+
 full_prompt = HumanMessagePromptTemplate(
     prompt=PromptTemplate(
         template=
@@ -55,13 +63,19 @@ chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
 
 # ### Send your first request
 
+# In[ ]:
+
 prompt_input = '¿que hora es?'
+
+# In[ ]:
 
 llm_response = chain(prompt_input)
 
-print(llm_response)
+display(llm_response)
 
 # ## Initialize Feedback Function(s)
+
+# In[ ]:
 
 # Initialize Huggingface-based feedback function collection class:
 hugs = Huggingface()
@@ -73,16 +87,22 @@ f_lang_match = Feedback(hugs.language_match).on_input_output()
 
 # ## Instrument chain for logging with TruLens
 
+# In[ ]:
+
 tru_recorder = TruChain(
     chain, app_id='Chain1_ChatApplication', feedbacks=[f_lang_match]
 )
 
+# In[ ]:
+
 with tru_recorder as recording:
     llm_response = chain(prompt_input)
 
-print(llm_response)
+display(llm_response)
 
 # ## Explore in a Dashboard
+
+# In[ ]:
 
 tru.run_dashboard()  # open a local streamlit app to explore
 
@@ -94,7 +114,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 #
 # Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics including cost and average feedback value across all of your LLM apps using the chain leaderboard. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up.
 #
-# Note: Average feedback values are returned and printed in a range from 0 (worst) to 1 (best).
+# Note: Average feedback values are returned and displayed in a range from 0 (worst) to 1 (best).
 #
 # ![Chain Leaderboard](https://www.trulens.org/Assets/image/Leaderboard.png)
 #
@@ -119,6 +139,8 @@ tru.run_dashboard()  # open a local streamlit app to explore
 # Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
 
 # ## Or view results directly in your notebook
+
+# In[ ]:
 
 tru.get_records_and_feedback(app_ids=[]
                             )[0]  # pass an empty list of app_ids to get all

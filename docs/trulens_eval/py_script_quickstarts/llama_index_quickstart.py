@@ -5,17 +5,21 @@
 #
 # In this quickstart you will create a simple Llama Index App and learn how to log it and get feedback on an LLM response.
 #
-# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/frameworks/llama_index/llama_index_quickstart.ipynb)
+# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb)
 
 # ## Setup
 #
 # ### Install dependencies
 # Let's install some of the dependencies for this notebook if we don't have them already
 
+# In[ ]:
+
 #! pip install trulens-eval==0.13.0 llama_index>=0.8.29post1 html2text>=2020.1.16
 
 # ### Add API keys
 # For this quickstart, you will need Open AI and Huggingface keys. The OpenAI key is used for embeddings and GPT, and the Huggingface key is used for evaluation.
+
+# In[ ]:
 
 import os
 
@@ -23,6 +27,8 @@ os.environ["OPENAI_API_KEY"] = "..."
 os.environ["HUGGINGFACE_API_KEY"] = "..."
 
 # ### Import from LlamaIndex and TruLens
+
+# In[ ]:
 
 # Imports main tools:
 from trulens_eval import Feedback
@@ -36,6 +42,8 @@ tru = Tru()
 #
 # This example uses LlamaIndex which internally uses an OpenAI LLM.
 
+# In[ ]:
+
 from llama_index import SimpleWebPageReader
 from llama_index import VectorStoreIndex
 
@@ -48,10 +56,14 @@ query_engine = index.as_query_engine()
 
 # ### Send your first request
 
+# In[ ]:
+
 response = query_engine.query("What did the author do growing up?")
 print(response)
 
 # ## Initialize Feedback Function(s)
+
+# In[ ]:
 
 import numpy as np
 
@@ -74,17 +86,23 @@ f_qs_relevance = Feedback(openai.qs_relevance).on_input().on(
 
 # ## Instrument app for logging with TruLens
 
+# In[ ]:
+
 tru_query_engine_recorder = TruLlama(
     query_engine,
     app_id='LlamaIndex_App1',
     feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance]
 )
 
+# In[ ]:
+
 # or as context manager
 with tru_query_engine_recorder as recording:
     query_engine.query("What did the author do growing up?")
 
 # ## Explore in a Dashboard
+
+# In[ ]:
 
 tru.run_dashboard()  # open a local streamlit app to explore
 
@@ -96,7 +114,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 #
 # Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics including cost and average feedback value across all of your LLM apps using the app leaderboard. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up.
 #
-# Note: Average feedback values are returned and printed in a range from 0 (worst) to 1 (best).
+# Note: Average feedback values are returned and displayed in a range from 0 (worst) to 1 (best).
 #
 # ![App Leaderboard](https://www.trulens.org/Assets/image/Leaderboard.png)
 #
@@ -121,6 +139,8 @@ tru.run_dashboard()  # open a local streamlit app to explore
 # Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
 
 # ## Or view results directly in your notebook
+
+# In[ ]:
 
 tru.get_records_and_feedback(app_ids=[]
                             )[0]  # pass an empty list of app_ids to get all
