@@ -1,0 +1,1 @@
+../examples/quickstart/py_script_quickstart/text2text_quickstart.py
