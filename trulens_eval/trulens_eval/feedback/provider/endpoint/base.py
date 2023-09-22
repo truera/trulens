@@ -117,7 +117,7 @@ class Endpoint(SerialModel, SingletonPerName):
         kwargs['global_callback'] = callback_class()
         kwargs['callback_name'] = f"callback_{name}"
         kwargs['pace_thread'] = Thread()  # temporary
-        kwargs['pace_thread'].daemon=True
+        kwargs['pace_thread'].daemon = True
         super(SerialModel, self).__init__(*args, **kwargs)
 
         def keep_pace():
@@ -126,7 +126,7 @@ class Endpoint(SerialModel, SingletonPerName):
                 self.pace.put(True)
 
         self.pace_thread = Thread(target=keep_pace)
-        self.pace_thread.daemon=True
+        self.pace_thread.daemon = True
         self.pace_thread.start()
 
         logger.debug(f"*** Creating {self.name} endpoint ***")

@@ -104,7 +104,7 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
             DocsNotebookTests, 'test_' + filename.split('.ipynb')[0],
             get_unit_test_for_filename(filename)
         )
-        
+
         if 'all_tools' in filename or 'llama_index_quickstart' in filename:
             # If you want to test all versions uncomment and replace the below for loop
             ### for version in db_migration.migration_versions:
@@ -129,7 +129,6 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
                         filename, db_compat_version=version
                     )
                 )
-            
 
 if __name__ == '__main__':
     main()
