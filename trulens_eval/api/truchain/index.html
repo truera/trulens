@@ -488,7 +488,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../no_framework_quickstart/" class="md-nav__link">
+      <a href="../../text2text_quickstart/" class="md-nav__link">
         No Framework Quickstart
       </a>
     </li>
@@ -663,8 +663,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../../pr_relevance_smoke_tests/" class="md-nav__link">
-        Prompt Response Relevance
+      <a href="../../answer_relevance_smoke_tests/" class="md-nav__link">
+        Answer Relevance
       </a>
     </li>
   
@@ -677,8 +677,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../../qs_relevance_smoke_tests/" class="md-nav__link">
-        Question Statement Relevance
+      <a href="../../context_relevance_smoke_tests/" class="md-nav__link">
+        Context Relevance
       </a>
     </li>
   
@@ -1692,12 +1692,22 @@ chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
 <p>Trulens Eval Code:
 <div class="highlight"><pre><span></span><code>from trulens_eval import TruChain
 # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-truchain = TruChain(
+tru_recorder = TruChain(
     chain,
     app_id=&#39;Chain1_ChatApplication&#39;,
     feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
 )
-truchain(&quot;What is langchain?&quot;)
+with tru_recorder as recording:
+    chain(&quot;&quot;What is langchain?&quot;)
+
+tru_record = recording.records[0]
+
+# To add record metadata 
+with tru_recorder as recording:
+    recording.record_metadata=&quot;this is metadata for all records in this context that follow this line&quot;
+    chain(&quot;What is langchain?&quot;)
+    recording.record_metadata=&quot;this is different metadata for all records in this context that follow this line&quot;
+    chain(&quot;Where do I download langchain?&quot;)
 </code></pre></div>
 See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functions</a> for instantiating feedback functions.</p>
 
@@ -1939,7 +1949,20 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="normal">305</span>
 <span class="normal">306</span>
 <span class="normal">307</span>
-<span class="normal">308</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruChain</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruChain</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Instantiates the Langchain Wrapper.</span>
 
 <span class="sd">        **Usage:**</span>
@@ -1974,12 +1997,22 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 
 <span class="sd">        from trulens_eval import TruChain</span>
 <span class="sd">        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions</span>
-<span class="sd">        truchain = TruChain(</span>
+<span class="sd">        tru_recorder = TruChain(</span>
 <span class="sd">            chain,</span>
 <span class="sd">            app_id=&#39;Chain1_ChatApplication&#39;,</span>
 <span class="sd">            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])</span>
 <span class="sd">        )</span>
-<span class="sd">        truchain(&quot;What is langchain?&quot;)</span>
+<span class="sd">        with tru_recorder as recording:</span>
+<span class="sd">            chain(&quot;&quot;What is langchain?&quot;)</span>
+
+<span class="sd">        tru_record = recording.records[0]</span>
+
+<span class="sd">        # To add record metadata </span>
+<span class="sd">        with tru_recorder as recording:</span>
+<span class="sd">            recording.record_metadata=&quot;this is metadata for all records in this context that follow this line&quot;</span>
+<span class="sd">            chain(&quot;What is langchain?&quot;)</span>
+<span class="sd">            recording.record_metadata=&quot;this is different metadata for all records in this context that follow this line&quot;</span>
+<span class="sd">            chain(&quot;Where do I download langchain?&quot;)</span>
 <span class="sd">        ```</span>
 <span class="sd">        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.</span>
 
@@ -2095,6 +2128,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Run the chain acall method and also return a record metadata object.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;acall&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">awith_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">acall</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -2129,6 +2163,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># TODEP</span>
     <span class="c1"># Chain requirement</span>
     <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span>
             <span class="n">method</span><span class="o">=</span><span class="s2">&quot;_call&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
@@ -2140,6 +2175,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># TODEP</span>
     <span class="c1"># Optional Chain requirement</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">_acall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span>
             <span class="n">method</span><span class="o">=</span><span class="s2">&quot;_acall&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
@@ -2179,17 +2215,17 @@ get the record, use <code>call_with_record</code> instead.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">276</span>
-<span class="normal">277</span>
-<span class="normal">278</span>
-<span class="normal">279</span>
-<span class="normal">280</span>
-<span class="normal">281</span>
-<span class="normal">282</span>
-<span class="normal">283</span>
-<span class="normal">284</span>
-<span class="normal">285</span>
-<span class="normal">286</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrapped call to self.app._call with instrumentation. If you need to</span>
 <span class="sd">    get the record, use `call_with_record` instead. </span>
@@ -2228,17 +2264,7 @@ get the record, use <code>call_with_record</code> instead.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">159</span>
-<span class="normal">160</span>
-<span class="normal">161</span>
-<span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">169</span>
 <span class="normal">170</span>
 <span class="normal">171</span>
 <span class="normal">172</span>
@@ -2248,7 +2274,17 @@ get the record, use <code>call_with_record</code> instead.</p>
 <span class="normal">176</span>
 <span class="normal">177</span>
 <span class="normal">178</span>
-<span class="normal">179</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Chain</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Chain</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrap a langchain chain for monitoring.</span>
 
@@ -2295,16 +2331,18 @@ get the record, use <code>call_with_record</code> instead.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">253</span>
-<span class="normal">254</span>
-<span class="normal">255</span>
-<span class="normal">256</span>
-<span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span> <span class="nf">acall_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span> <span class="nf">acall_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run the chain acall method and also return a record metadata object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;acall&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">awith_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">acall</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -2330,16 +2368,16 @@ get the record, use <code>call_with_record</code> instead.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">263</span>
-<span class="normal">264</span>
-<span class="normal">265</span>
-<span class="normal">266</span>
-<span class="normal">267</span>
-<span class="normal">268</span>
-<span class="normal">269</span>
-<span class="normal">270</span>
-<span class="normal">271</span>
-<span class="normal">272</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run the chain call method and also return a record metadata object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -2373,17 +2411,7 @@ signature <code>sig</code> if it is to be called with the given bindings
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
-<span class="normal">209</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">209</span>
 <span class="normal">210</span>
 <span class="normal">211</span>
 <span class="normal">212</span>
@@ -2394,7 +2422,17 @@ signature <code>sig</code> if it is to be called with the given bindings
 <span class="normal">217</span>
 <span class="normal">218</span>
 <span class="normal">219</span>
-<span class="normal">220</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_input</span><span class="p">(</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_input</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -2440,21 +2478,21 @@ returned <code>ret</code>.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">222</span>
-<span class="normal">223</span>
-<span class="normal">224</span>
-<span class="normal">225</span>
-<span class="normal">226</span>
-<span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span>
-<span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">232</span>
 <span class="normal">233</span>
 <span class="normal">234</span>
 <span class="normal">235</span>
-<span class="normal">236</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_output</span><span class="p">(</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_output</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span><span class="p">,</span> <span class="n">ret</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>

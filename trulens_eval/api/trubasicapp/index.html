@@ -488,7 +488,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../no_framework_quickstart/" class="md-nav__link">
+      <a href="../../text2text_quickstart/" class="md-nav__link">
         No Framework Quickstart
       </a>
     </li>
@@ -663,8 +663,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../../pr_relevance_smoke_tests/" class="md-nav__link">
-        Prompt Response Relevance
+      <a href="../../answer_relevance_smoke_tests/" class="md-nav__link">
+        Answer Relevance
       </a>
     </li>
   
@@ -677,8 +677,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../../qs_relevance_smoke_tests/" class="md-nav__link">
-        Question Statement Relevance
+      <a href="../../context_relevance_smoke_tests/" class="md-nav__link">
+        Context Relevance
       </a>
     </li>
   
@@ -1616,10 +1616,16 @@
 
 from trulens_eval import TruBasicApp
 # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-basic_app = TruBasicApp(custom_application, 
+tru_recorder = TruBasicApp(custom_application, 
     app_id=&quot;Custom Application v1&quot;,
     feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
-basic_app(&quot;Give me a response&quot;)
+
+# Basic app works by turning your callable into an app
+# This app is accessbile with the `app` attribute in the recorder
+with tru_recorder as recording:
+    tru_recorder.app(question)
+
+tru_record = recording.records[0]
 </code></pre></div>
 See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functions</a> for instantiating feedback functions.</p>
 
@@ -1654,10 +1660,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 54</span>
-<span class="normal"> 55</span>
-<span class="normal"> 56</span>
-<span class="normal"> 57</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 57</span>
 <span class="normal"> 58</span>
 <span class="normal"> 59</span>
 <span class="normal"> 60</span>
@@ -1739,7 +1742,17 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="normal">136</span>
 <span class="normal">137</span>
 <span class="normal">138</span>
-<span class="normal">139</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruBasicApp</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruBasicApp</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Instantiates a Basic app that makes little assumptions. Assumes input text and output text.</span>
 
 <span class="sd">        **Usage:**</span>
@@ -1750,10 +1763,17 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 
 <span class="sd">        from trulens_eval import TruBasicApp</span>
 <span class="sd">        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions</span>
-<span class="sd">        basic_app = TruBasicApp(custom_application, </span>
+<span class="sd">        tru_recorder = TruBasicApp(custom_application, </span>
 <span class="sd">            app_id=&quot;Custom Application v1&quot;,</span>
 <span class="sd">            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])</span>
-<span class="sd">        basic_app(&quot;Give me a response&quot;)</span>
+
+<span class="sd">        # Basic app works by turning your callable into an app</span>
+<span class="sd">        # This app is accessbile with the `app` attribute in the recorder</span>
+<span class="sd">        with tru_recorder as recording:</span>
+<span class="sd">            tru_recorder.app(question)</span>
+
+<span class="sd">        tru_record = recording.records[0]</span>
+
 <span class="sd">        ```</span>
 <span class="sd">        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.</span>
 
@@ -1862,17 +1882,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 83</span>
-<span class="normal"> 84</span>
-<span class="normal"> 85</span>
-<span class="normal"> 86</span>
-<span class="normal"> 87</span>
-<span class="normal"> 88</span>
-<span class="normal"> 89</span>
-<span class="normal"> 90</span>
-<span class="normal"> 91</span>
-<span class="normal"> 92</span>
-<span class="normal"> 93</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 93</span>
 <span class="normal"> 94</span>
 <span class="normal"> 95</span>
 <span class="normal"> 96</span>
@@ -1882,7 +1892,17 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="normal">100</span>
 <span class="normal">101</span>
 <span class="normal">102</span>
-<span class="normal">103</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_to_text</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_to_text</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrap a callable for monitoring.</span>
 
@@ -1947,19 +1967,19 @@ callable is expected to take in a single string.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">127</span>
-<span class="normal">128</span>
-<span class="normal">129</span>
-<span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
-<span class="normal">136</span>
-<span class="normal">137</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">137</span>
 <span class="normal">138</span>
-<span class="normal">139</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run the callable with the given arguments. Note that the wrapped</span>
 <span class="sd">    callable is expected to take in a single string.</span>

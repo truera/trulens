@@ -488,7 +488,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../no_framework_quickstart/" class="md-nav__link">
+      <a href="../text2text_quickstart/" class="md-nav__link">
         No Framework Quickstart
       </a>
     </li>
@@ -782,8 +782,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../pr_relevance_smoke_tests/" class="md-nav__link">
-        Prompt Response Relevance
+      <a href="../answer_relevance_smoke_tests/" class="md-nav__link">
+        Answer Relevance
       </a>
     </li>
   
@@ -796,8 +796,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../qs_relevance_smoke_tests/" class="md-nav__link">
-        Question Statement Relevance
+      <a href="../context_relevance_smoke_tests/" class="md-nav__link">
+        Context Relevance
       </a>
     </li>
   
@@ -1830,16 +1830,16 @@ attributes (see <strong>Selectors</strong> section below).</p>
 structures (enumerating <code>Record</code> or <code>App</code> contents). </p>
 <p>In most cases, the Select object produces only a single item but can also
 address multiple items.</p>
-<p>You can access the JSON structure with <code>*_with_record</code> methods and then calling <code>layout_calls_as_app</code>.</p>
+<p>You can access the JSON structure with <code>with_record</code> methods and then calling <code>layout_calls_as_app</code>.</p>
 <p>for example</p>
 <div class="highlight"><pre><span></span><code>response = my_llm_app(query)
 
 from trulens_eval import TruChain
-truchain = TruChain(
+tru_recorder = TruChain(
     my_llm_app,
     app_id=&#39;Chain1_ChatApplication&#39;)
 
-response, tru_record = truchain.call_with_record(query)
+response, tru_record = tru_recorder.with_record(my_llm_app, query)
 json_like = tru_record.layout_calls_as_app()
 </code></pre></div>
 <p>If a selector looks like the below</p>

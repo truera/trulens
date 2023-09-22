@@ -488,7 +488,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../no_framework_quickstart/" class="md-nav__link">
+      <a href="../../text2text_quickstart/" class="md-nav__link">
         No Framework Quickstart
       </a>
     </li>
@@ -663,8 +663,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../../pr_relevance_smoke_tests/" class="md-nav__link">
-        Prompt Response Relevance
+      <a href="../../answer_relevance_smoke_tests/" class="md-nav__link">
+        Answer Relevance
       </a>
     </li>
   
@@ -677,8 +677,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../../qs_relevance_smoke_tests/" class="md-nav__link">
-        Question Statement Relevance
+      <a href="../../context_relevance_smoke_tests/" class="md-nav__link">
+        Context Relevance
       </a>
     </li>
   
@@ -1813,13 +1813,13 @@ method is viewed as an app component. In this case <code>CustomApp</code> and
 
 <span class="n">ca</span> <span class="o">=</span> <span class="n">CustomApp</span><span class="p">()</span>
 
-<span class="c1"># Normal app **Usage:**</span>
+<span class="c1"># Normal app Usage:</span>
 <span class="n">response</span> <span class="o">=</span> <span class="n">ca</span><span class="o">.</span><span class="n">respond_to_query</span><span class="p">(</span><span class="s2">&quot;What is the capital of Indonesia?&quot;</span><span class="p">)</span>
 
 <span class="c1"># Wrapping app with `TruCustomApp`: </span>
 <span class="n">ta</span> <span class="o">=</span> <span class="n">TruCustomApp</span><span class="p">(</span><span class="n">ca</span><span class="p">)</span>
 
-<span class="c1"># Wrapped **Usage:** must use the general `with_record` (or `awith_record`) method:</span>
+<span class="c1"># Wrapped Usage: must use the general `with_record` (or `awith_record`) method:</span>
 <span class="n">response</span><span class="p">,</span> <span class="n">record</span> <span class="o">=</span> <span class="n">ta</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span>
     <span class="n">ca</span><span class="o">.</span><span class="n">respond_to_query</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="s2">&quot;What is the capital of Indonesia?&quot;</span>
 <span class="p">)</span>
@@ -1956,7 +1956,9 @@ through the <code>requests</code> class's <code>post</code> method to the URL
   
       <p>Instantiates a Custom App that can be tracked as long as methods are decorated with @instrument.</p>
 <p><strong>Usage:</strong></p>
-<p><div class="highlight"><pre><span></span><code>class CustomApp:
+<p><div class="highlight"><pre><span></span><code>from trulens_eval import instrument
+
+class CustomApp:
 
     def __init__(self):
         self.retriever = CustomRetriever()
@@ -1980,19 +1982,27 @@ through the <code>requests</code> class's <code>post</code> method to the URL
 ca = CustomApp()
 from trulens_eval import TruCustomApp
 # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-custom_app = TruCustomApp(ca, 
+tru_recorder = TruCustomApp(ca, 
     app_id=&quot;Custom Application v1&quot;,
     feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
 
 question = &quot;What is the capital of Indonesia?&quot;
 
-# Normal **Usage:**
+# Normal Usage:
 response_normal = ca.respond_to_query(question)
 
-# Instrumented **Usage:**
-response_wrapped, record = custom_app.with_record(
-    ca.respond_to_query, input=question, record_metadata=&quot;meta1&quot;
-)
+# Instrumented Usage:
+with tru_recorder as recording:
+    ca.respond_to_query(question)
+
+tru_record = recording.records[0]
+
+# To add record metadata 
+with tru_recorder as recording:
+    recording.record_metadata=&quot;this is metadata for all records in this context that follow this line&quot;
+    ca.respond_to_query(&quot;What is llama 2?&quot;)
+    recording.record_metadata=&quot;this is different metadata for all records in this context that follow this line&quot;
+    ca.respond_to_query(&quot;Where do I download llama 2?&quot;)
 </code></pre></div>
 See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functions</a> for instantiating feedback functions.</p>
 
@@ -2199,12 +2209,25 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="normal">390</span>
 <span class="normal">391</span>
 <span class="normal">392</span>
-<span class="normal">393</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruCustomApp</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruCustomApp</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Instantiates a Custom App that can be tracked as long as methods are decorated with @instrument.</span>
 
 <span class="sd">        **Usage:**</span>
 
 <span class="sd">        ```</span>
+<span class="sd">        from trulens_eval import instrument</span>
+
 <span class="sd">        class CustomApp:</span>
 
 <span class="sd">            def __init__(self):</span>
@@ -2229,19 +2252,28 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="sd">        ca = CustomApp()</span>
 <span class="sd">        from trulens_eval import TruCustomApp</span>
 <span class="sd">        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions</span>
-<span class="sd">        custom_app = TruCustomApp(ca, </span>
+<span class="sd">        tru_recorder = TruCustomApp(ca, </span>
 <span class="sd">            app_id=&quot;Custom Application v1&quot;,</span>
 <span class="sd">            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])</span>
 
 <span class="sd">        question = &quot;What is the capital of Indonesia?&quot;</span>
 
-<span class="sd">        # Normal **Usage:**</span>
+<span class="sd">        # Normal Usage:</span>
 <span class="sd">        response_normal = ca.respond_to_query(question)</span>
 
-<span class="sd">        # Instrumented **Usage:**</span>
-<span class="sd">        response_wrapped, record = custom_app.with_record(</span>
-<span class="sd">            ca.respond_to_query, input=question, record_metadata=&quot;meta1&quot;</span>
-<span class="sd">        )</span>
+<span class="sd">        # Instrumented Usage:</span>
+<span class="sd">        with tru_recorder as recording:</span>
+<span class="sd">            ca.respond_to_query(question)</span>
+
+<span class="sd">        tru_record = recording.records[0]</span>
+
+<span class="sd">        # To add record metadata </span>
+<span class="sd">        with tru_recorder as recording:</span>
+<span class="sd">            recording.record_metadata=&quot;this is metadata for all records in this context that follow this line&quot;</span>
+<span class="sd">            ca.respond_to_query(&quot;What is llama 2?&quot;)</span>
+<span class="sd">            recording.record_metadata=&quot;this is different metadata for all records in this context that follow this line&quot;</span>
+<span class="sd">            ca.respond_to_query(&quot;Where do I download llama 2?&quot;)</span>
+
 <span class="sd">        ```</span>
 <span class="sd">        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.</span>
 
@@ -2409,18 +2441,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_custom_app.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">279</span>
-<span class="normal">280</span>
-<span class="normal">281</span>
-<span class="normal">282</span>
-<span class="normal">283</span>
-<span class="normal">284</span>
-<span class="normal">285</span>
-<span class="normal">286</span>
-<span class="normal">287</span>
-<span class="normal">288</span>
-<span class="normal">289</span>
-<span class="normal">290</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">290</span>
 <span class="normal">291</span>
 <span class="normal">292</span>
 <span class="normal">293</span>
@@ -2509,7 +2530,18 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="normal">376</span>
 <span class="normal">377</span>
 <span class="normal">378</span>
-<span class="normal">379</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">methods_to_instrument</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">methods_to_instrument</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrap a custom class for recording.</span>
 
@@ -2646,19 +2678,19 @@ wrapped by TruCustomApp.</p>
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/tru_custom_app.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">396</span>
-<span class="normal">397</span>
-<span class="normal">398</span>
-<span class="normal">399</span>
-<span class="normal">400</span>
-<span class="normal">401</span>
-<span class="normal">402</span>
-<span class="normal">403</span>
-<span class="normal">404</span>
-<span class="normal">405</span>
-<span class="normal">406</span>
-<span class="normal">407</span>
-<span class="normal">408</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">instrument</span><span class="p">(</span><span class="n">base_instrument</span><span class="p">):</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">instrument</span><span class="p">(</span><span class="n">base_instrument</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Decorator for marking methods to be instrumented in custom classes that are</span>
 <span class="sd">    wrapped by TruCustomApp.</span>

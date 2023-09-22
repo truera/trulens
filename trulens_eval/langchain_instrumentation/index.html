@@ -488,7 +488,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../no_framework_quickstart/" class="md-nav__link">
+      <a href="../text2text_quickstart/" class="md-nav__link">
         No Framework Quickstart
       </a>
     </li>
@@ -663,8 +663,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../pr_relevance_smoke_tests/" class="md-nav__link">
-        Prompt Response Relevance
+      <a href="../answer_relevance_smoke_tests/" class="md-nav__link">
+        Answer Relevance
       </a>
     </li>
   
@@ -677,8 +677,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../qs_relevance_smoke_tests/" class="md-nav__link">
-        Question Statement Relevance
+      <a href="../context_relevance_smoke_tests/" class="md-nav__link">
+        Context Relevance
       </a>
     </li>
   
@@ -2668,7 +2668,7 @@ chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>To instrument an LLM chain, all that's required is to wrap it using TruChain. Then the instrumented chain can be used like the original.</p>
+<p>To instrument an LLM chain, all that's required is to wrap it using TruChain.</p>
 
 </div>
 </div>
@@ -2695,16 +2695,10 @@ chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)</div>
                 </clipboard-copy>
             </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># instrument with TruChain</span>
-<span class="n">truchain</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span>
-
-<span class="c1"># call the instrumented application just like the original</span>
-<span class="n">llm_response</span> <span class="o">=</span> <span class="n">truchain</span><span class="p">(</span><span class="s2">&quot;What would be a good company name for a company that makes colorful socks?&quot;</span><span class="p">)</span>
+<span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span>
 </pre></div>
 <div id="cell-2" class="clipboard-copy-txt"># instrument with TruChain
-truchain = TruChain(chain)
-
-# call the instrumented application just like the original
-llm_response = truchain("What would be a good company name for a company that makes colorful socks?")</div>
+tru_recorder = TruChain(chain)</div>
         
         </div>
     </div>
@@ -2759,16 +2753,13 @@ llm_response = truchain("What would be a good company name for a company that ma
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
-
-<span class="kn">from</span> <span class="nn">langchain</span> <span class="kn">import</span> <span class="n">LLMChain</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">langchain</span> <span class="kn">import</span> <span class="n">LLMChain</span>
 <span class="kn">from</span> <span class="nn">langchain</span> <span class="kn">import</span> <span class="n">PromptTemplate</span>
 <span class="kn">from</span> <span class="nn">langchain.callbacks</span> <span class="kn">import</span> <span class="n">AsyncIteratorCallbackHandler</span>
 <span class="kn">from</span> <span class="nn">langchain.chains</span> <span class="kn">import</span> <span class="n">LLMChain</span>
 <span class="kn">from</span> <span class="nn">langchain.chat_models.openai</span> <span class="kn">import</span> <span class="n">ChatOpenAI</span>
 
 <span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruChain</span>
-<span class="kn">import</span> <span class="nn">trulens_eval.utils.python</span>  <span class="c1"># makes sure asyncio gets instrumented</span>
 
 <span class="c1"># Set up an async callback.</span>
 <span class="n">callback</span> <span class="o">=</span> <span class="n">AsyncIteratorCallbackHandler</span><span class="p">()</span>
@@ -2782,16 +2773,13 @@ llm_response = truchain("What would be a good company name for a company that ma
 <span class="p">)</span>
 <span class="n">async_chain</span> <span class="o">=</span> <span class="n">LLMChain</span><span class="p">(</span><span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">)</span>
 </pre></div>
-<div id="cell-3" class="clipboard-copy-txt">import asyncio
-
-from langchain import LLMChain
+<div id="cell-3" class="clipboard-copy-txt">from langchain import LLMChain
 from langchain import PromptTemplate
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.chains import LLMChain
 from langchain.chat_models.openai import ChatOpenAI
 
 from trulens_eval import TruChain
-import trulens_eval.utils.python  # makes sure asyncio gets instrumented
 
 # Set up an async callback.
 callback = AsyncIteratorCallbackHandler()
@@ -2845,31 +2833,15 @@ async_chain = LLMChain(llm=llm, prompt=prompt)</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">async_tc</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span><span class="n">async_chain</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">async_tc_recorder</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span><span class="n">async_chain</span><span class="p">)</span>
 
-<span class="c1"># Create a task with the call to the chain, but don&#39;t wait for it yet.</span>
-<span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span>
-    <span class="n">async_tc</span><span class="o">.</span><span class="n">acall_with_record</span><span class="p">(</span>
-        <span class="n">inputs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">question</span><span class="o">=</span><span class="s2">&quot;What is 1+2? Explain your answer.&quot;</span><span class="p">)</span>
-    <span class="p">)</span>
-<span class="p">)</span>
-
-<span class="c1"># Instead wait for the callback&#39;s async generator, getting us each token as it comes in.</span>
-<span class="k">async</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">callback</span><span class="o">.</span><span class="n">aiter</span><span class="p">():</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">async_tc_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
+    <span class="k">await</span> <span class="n">async_chain</span><span class="o">.</span><span class="n">acall</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">question</span><span class="o">=</span><span class="s2">&quot;What is 1+2? Explain your answer.&quot;</span><span class="p">))</span>
 </pre></div>
-<div id="cell-4" class="clipboard-copy-txt">async_tc = TruChain(async_chain)
+<div id="cell-4" class="clipboard-copy-txt">async_tc_recorder = TruChain(async_chain)
 
-# Create a task with the call to the chain, but don't wait for it yet.
-asyncio.create_task(
-    async_tc.acall_with_record(
-        inputs=dict(question="What is 1+2? Explain your answer.")
-    )
-)
-
-# Instead wait for the callback's async generator, getting us each token as it comes in.
-async for token in callback.aiter():
-    print(token)</div>
+with async_tc_recorder as recording:
+    await async_chain.acall(inputs=dict(question="What is 1+2? Explain your answer."))</div>
         
         </div>
     </div>

@@ -622,7 +622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../no_framework_quickstart/" class="md-nav__link">
+      <a href="../text2text_quickstart/" class="md-nav__link">
         No Framework Quickstart
       </a>
     </li>
@@ -797,8 +797,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../pr_relevance_smoke_tests/" class="md-nav__link">
-        Prompt Response Relevance
+      <a href="../answer_relevance_smoke_tests/" class="md-nav__link">
+        Answer Relevance
       </a>
     </li>
   
@@ -811,8 +811,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../qs_relevance_smoke_tests/" class="md-nav__link">
-        Question Statement Relevance
+      <a href="../context_relevance_smoke_tests/" class="md-nav__link">
+        Context Relevance
       </a>
     </li>
   
@@ -2719,7 +2719,7 @@ Licensed under the Apache License, Version 2.0.
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h1 id="langchain-quickstart">Langchain Quickstart<a class="anchor-link" href="#langchain-quickstart">&#182;</a></h1><p>In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.</p>
-<p><a href="https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/langchain_quickstart.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
+<p><a href="https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/frameworks/langchain/langchain_quickstart.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
 
 </div>
 </div>
@@ -3073,15 +3073,13 @@ f_lang_match = Feedback(hugs.language_match).on_input_output()
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru_chain</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span>
     <span class="n">app_id</span><span class="o">=</span><span class="s1">&#39;Chain1_ChatApplication&#39;</span><span class="p">,</span>
-    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_lang_match</span><span class="p">],</span>
-    <span class="n">tags</span> <span class="o">=</span> <span class="s2">&quot;prototype&quot;</span><span class="p">)</span>
+    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_lang_match</span><span class="p">])</span>
 </pre></div>
-<div id="cell-7" class="clipboard-copy-txt">tru_chain = TruChain(chain,
+<div id="cell-7" class="clipboard-copy-txt">tru_recorder = TruChain(chain,
     app_id='Chain1_ChatApplication',
-    feedbacks=[f_lang_match],
-    tags = "prototype")</div>
+    feedbacks=[f_lang_match])</div>
         
         </div>
     </div>
@@ -3111,23 +3109,15 @@ f_lang_match = Feedback(hugs.language_match).on_input_output()
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># Instrumented chain can operate like the original:</span>
-<span class="n">llm_response</span> <span class="o">=</span> <span class="n">tru_chain</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">with</span> <span class="n">tru_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
+    <span class="n">llm_response</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span>
 
 <span class="n">display</span><span class="p">(</span><span class="n">llm_response</span><span class="p">)</span>
-
-<span class="c1"># or as a context manager</span>
-<span class="k">with</span> <span class="n">tru_chain</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
-    <span class="n">chain</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span>
 </pre></div>
-<div id="cell-8" class="clipboard-copy-txt"># Instrumented chain can operate like the original:
-llm_response = tru_chain(prompt_input)
+<div id="cell-8" class="clipboard-copy-txt">with tru_recorder as recording:
+    llm_response = chain(prompt_input)
 
-display(llm_response)
-
-# or as a context manager
-with tru_chain as recording:
-    chain(prompt_input)</div>
+display(llm_response)</div>
         
         </div>
     </div>
@@ -3209,7 +3199,7 @@ with tru_chain as recording:
 <h3 id="understand-chain-performance-with-evaluations">Understand chain performance with Evaluations<a class="anchor-link" href="#understand-chain-performance-with-evaluations">&#182;</a></h3><p>To learn more about the performance of a particular chain or LLM model, we can select it to view its evaluations at the record level. LLM quality is assessed through the use of feedback functions. Feedback functions are extensible methods for determining the quality of LLM responses and can be applied to any downstream LLM task. Out of the box we provide a number of feedback functions for assessing model agreement, sentiment, relevance and more.</p>
 <p>The evaluations tab provides record-level metadata and feedback on the quality of your LLM application.</p>
 <p><img src="https://www.trulens.org/Assets/image/Leaderboard.png" alt="Evaluations" /></p>
-<h3 id="deep-dive-into-full-chain-metadata">Deep dive into full chain metadata<a class="anchor-link" href="#deep-dive-into-full-chain-metadata">&#182;</a></h3><p>Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain.</p>
+<h3 id="deep-dive-into-full-chain-metadata">Deep dive into full chain metadata<a class="anchor-link" href="#deep-dive-into-full-chain-metadata">&#182;</a></h3><p>Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain_recorder.</p>
 <p><img src="https://www.trulens.org/Assets/image/Chain_Explore.png" alt="Explore a Chain" /></p>
 <p>If you prefer the raw format, you can quickly get it using the &quot;Display full chain json&quot; or &quot;Display full record json&quot; buttons at the bottom of the page.</p>
 

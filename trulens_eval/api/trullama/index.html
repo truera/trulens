@@ -488,7 +488,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../no_framework_quickstart/" class="md-nav__link">
+      <a href="../../text2text_quickstart/" class="md-nav__link">
         No Framework Quickstart
       </a>
     </li>
@@ -663,8 +663,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../../pr_relevance_smoke_tests/" class="md-nav__link">
-        Prompt Response Relevance
+      <a href="../../answer_relevance_smoke_tests/" class="md-nav__link">
+        Answer Relevance
       </a>
     </li>
   
@@ -677,8 +677,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../../qs_relevance_smoke_tests/" class="md-nav__link">
-        Question Statement Relevance
+      <a href="../../context_relevance_smoke_tests/" class="md-nav__link">
+        Context Relevance
       </a>
     </li>
   
@@ -1630,8 +1630,7 @@
 from llama_index import VectorStoreIndex, SimpleWebPageReader
 
 documents = SimpleWebPageReader(
-    html_to_text=True,
-    metadata_fn=lambda url: dict(url=url)
+    html_to_text=True
 ).load_data([&quot;http://paulgraham.com/worked.html&quot;])
 index = VectorStoreIndex.from_documents(documents)
 
@@ -1640,10 +1639,21 @@ query_engine = index.as_query_engine()
 <p>Trulens Eval Code:
 <div class="highlight"><pre><span></span><code>from trulens_eval import TruLlama
 # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-tru_query_engine = TruLlama(query_engine,
+tru_recorder = TruLlama(query_engine,
     app_id=&#39;LlamaIndex_App1&#39;,
     feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
-tru_query_engine(&quot;What is llama index?&quot;)
+
+with tru_recorder as recording:
+    query_engine.query(&quot;What is llama index?&quot;)
+
+tru_record = recording.records[0]
+
+# To add record metadata 
+with tru_recorder as recording:
+    recording.record_metadata=&quot;this is metadata for all records in this context that follow this line&quot;
+    query_engine.query(&quot;What is llama index?&quot;)
+    recording.record_metadata=&quot;this is different metadata for all records in this context that follow this line&quot;
+    query_engine.query(&quot;Where do I download llama index?&quot;)
 </code></pre></div>
 See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functions</a> for instantiating feedback functions.</p>
 
@@ -1947,7 +1957,25 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="normal">398</span>
 <span class="normal">399</span>
 <span class="normal">400</span>
-<span class="normal">401</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruLlama</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruLlama</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Instantiates the LLama Index Wrapper.</span>
 
 <span class="sd">        **Usage:**</span>
@@ -1958,8 +1986,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="sd">        from llama_index import VectorStoreIndex, SimpleWebPageReader</span>
 
 <span class="sd">        documents = SimpleWebPageReader(</span>
-<span class="sd">            html_to_text=True,</span>
-<span class="sd">            metadata_fn=lambda url: dict(url=url)</span>
+<span class="sd">            html_to_text=True</span>
 <span class="sd">        ).load_data([&quot;http://paulgraham.com/worked.html&quot;])</span>
 <span class="sd">        index = VectorStoreIndex.from_documents(documents)</span>
 
@@ -1971,10 +1998,23 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="sd">        ```</span>
 <span class="sd">        from trulens_eval import TruLlama</span>
 <span class="sd">        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions</span>
-<span class="sd">        tru_query_engine = TruLlama(query_engine,</span>
+<span class="sd">        tru_recorder = TruLlama(query_engine,</span>
 <span class="sd">            app_id=&#39;LlamaIndex_App1&#39;,</span>
 <span class="sd">            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])</span>
-<span class="sd">        tru_query_engine(&quot;What is llama index?&quot;)</span>
+
+<span class="sd">        with tru_recorder as recording:</span>
+<span class="sd">            query_engine.query(&quot;What is llama index?&quot;)</span>
+
+<span class="sd">        tru_record = recording.records[0]</span>
+
+<span class="sd">        # To add record metadata </span>
+<span class="sd">        with tru_recorder as recording:</span>
+<span class="sd">            recording.record_metadata=&quot;this is metadata for all records in this context that follow this line&quot;</span>
+<span class="sd">            query_engine.query(&quot;What is llama index?&quot;)</span>
+<span class="sd">            recording.record_metadata=&quot;this is different metadata for all records in this context that follow this line&quot;</span>
+<span class="sd">            query_engine.query(&quot;Where do I download llama index?&quot;)</span>
+
+
 <span class="sd">        ```</span>
 <span class="sd">        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.</span>
 
@@ -2115,6 +2155,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># TODEP</span>
     <span class="c1"># llama_index.indices.query.base.BaseQueryEngine</span>
     <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RESPONSE_TYPE</span><span class="p">:</span>
+
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseQueryEngine</span>
         <span class="p">)</span>
@@ -2129,6 +2170,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># TODEP</span>
     <span class="c1"># llama_index.indices.query.base.BaseQueryEngine</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">aquery</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RESPONSE_TYPE</span><span class="p">:</span>
+
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseQueryEngine</span>
         <span class="p">)</span>
@@ -2144,6 +2186,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># Mirrors llama_index.indices.query.base.BaseQueryEngine.query .</span>
     <span class="k">def</span> <span class="nf">query_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
                           <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">RESPONSE_TYPE</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
+
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseQueryEngine</span>
         <span class="p">)</span>
@@ -2168,6 +2211,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .</span>
     <span class="k">def</span> <span class="nf">chat_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
                          <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">AgentChatResponse</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
+
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
         <span class="p">)</span>
@@ -2193,6 +2237,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="k">def</span> <span class="nf">stream_chat_with_record</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">StreamingAgentChatResponse</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
+
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
         <span class="p">)</span>
@@ -2208,6 +2253,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="k">async</span> <span class="k">def</span> <span class="nf">astream_chat_with_record</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">StreamingAgentChatResponse</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
+
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">llama_index</span><span class="o">.</span><span class="n">chat_engine</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">BaseChatEngine</span>
         <span class="p">)</span>
@@ -2250,26 +2296,26 @@ signature <code>sig</code> if it is to be called with the given bindings
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">196</span>
-<span class="normal">197</span>
-<span class="normal">198</span>
-<span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">208</span>
 <span class="normal">209</span>
 <span class="normal">210</span>
 <span class="normal">211</span>
 <span class="normal">212</span>
 <span class="normal">213</span>
 <span class="normal">214</span>
-<span class="normal">215</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_input</span><span class="p">(</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_input</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -2313,19 +2359,7 @@ returned <code>ret</code>.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">217</span>
-<span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span>
-<span class="normal">221</span>
-<span class="normal">222</span>
-<span class="normal">223</span>
-<span class="normal">224</span>
-<span class="normal">225</span>
-<span class="normal">226</span>
-<span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">229</span>
 <span class="normal">230</span>
 <span class="normal">231</span>
 <span class="normal">232</span>
@@ -2339,7 +2373,19 @@ returned <code>ret</code>.</p>
 <span class="normal">240</span>
 <span class="normal">241</span>
 <span class="normal">242</span>
-<span class="normal">243</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_output</span><span class="p">(</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_output</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span><span class="p">,</span> <span class="n">ret</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -2392,12 +2438,12 @@ returned <code>ret</code>.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">189</span>
-<span class="normal">190</span>
-<span class="normal">191</span>
-<span class="normal">192</span>
-<span class="normal">193</span>
-<span class="normal">194</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">select_source_nodes</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONPath</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get the path to the source nodes in the query output.</span>

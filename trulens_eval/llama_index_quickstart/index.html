@@ -14,7 +14,7 @@
         <link rel="prev" href="../langchain_quickstart/">
       
       
-        <link rel="next" href="../no_framework_quickstart/">
+        <link rel="next" href="../text2text_quickstart/">
       
       <link rel="icon" href="../../img/favicon.ico">
       <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
@@ -567,8 +567,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#instrument-chain-for-logging-with-trulens" class="md-nav__link">
-    Instrument chain for logging with TruLens
+  <a href="#instrument-app-for-logging-with-trulens" class="md-nav__link">
+    Instrument app for logging with TruLens
   </a>
   
 </li>
@@ -589,15 +589,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#understand-chain-performance-with-evaluations" class="md-nav__link">
-    Understand chain performance with Evaluations
+  <a href="#understand-app-performance-with-evaluations" class="md-nav__link">
+    Understand app performance with Evaluations
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#deep-dive-into-full-chain-metadata" class="md-nav__link">
-    Deep dive into full chain metadata
+  <a href="#deep-dive-into-full-app-metadata" class="md-nav__link">
+    Deep dive into full app metadata
   </a>
   
 </li>
@@ -629,7 +629,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../no_framework_quickstart/" class="md-nav__link">
+      <a href="../text2text_quickstart/" class="md-nav__link">
         No Framework Quickstart
       </a>
     </li>
@@ -804,8 +804,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../pr_relevance_smoke_tests/" class="md-nav__link">
-        Prompt Response Relevance
+      <a href="../answer_relevance_smoke_tests/" class="md-nav__link">
+        Answer Relevance
       </a>
     </li>
   
@@ -818,8 +818,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../qs_relevance_smoke_tests/" class="md-nav__link">
-        Question Statement Relevance
+      <a href="../context_relevance_smoke_tests/" class="md-nav__link">
+        Context Relevance
       </a>
     </li>
   
@@ -1630,8 +1630,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#instrument-chain-for-logging-with-trulens" class="md-nav__link">
-    Instrument chain for logging with TruLens
+  <a href="#instrument-app-for-logging-with-trulens" class="md-nav__link">
+    Instrument app for logging with TruLens
   </a>
   
 </li>
@@ -1652,15 +1652,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#understand-chain-performance-with-evaluations" class="md-nav__link">
-    Understand chain performance with Evaluations
+  <a href="#understand-app-performance-with-evaluations" class="md-nav__link">
+    Understand app performance with Evaluations
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#deep-dive-into-full-chain-metadata" class="md-nav__link">
-    Deep dive into full chain metadata
+  <a href="#deep-dive-into-full-app-metadata" class="md-nav__link">
+    Deep dive into full app metadata
   </a>
   
 </li>
@@ -2771,9 +2771,9 @@ Licensed under the Apache License, Version 2.0.
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="ch">#! pip install trulens-eval==0.12.0 llama_index==0.8.5.post2 html2text==2020.1.16</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="ch">#! pip install trulens-eval==0.13.0 llama_index&gt;=0.8.29post1 html2text&gt;=2020.1.16</span>
 </pre></div>
-<div id="cell-1" class="clipboard-copy-txt">#! pip install trulens-eval==0.12.0 llama_index==0.8.5.post2 html2text==2020.1.16</div>
+<div id="cell-1" class="clipboard-copy-txt">#! pip install trulens-eval==0.13.0 llama_index>=0.8.29post1 html2text>=2020.1.16</div>
         
         </div>
     </div>
@@ -2789,7 +2789,7 @@ Licensed under the Apache License, Version 2.0.
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="add-api-keys">Add API keys<a class="anchor-link" href="#add-api-keys">&#182;</a></h3><p>For this quickstart, you will need Open AI and Huggingface keys</p>
+<h3 id="add-api-keys">Add API keys<a class="anchor-link" href="#add-api-keys">&#182;</a></h3><p>For this quickstart, you will need Open AI and Huggingface keys. The OpenAI key is used for embeddings and GPT, and the Huggingface key is used for evaluation.</p>
 
 </div>
 </div>
@@ -2912,10 +2912,8 @@ tru = Tru()</div>
             </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span><span class="p">,</span> <span class="n">SimpleWebPageReader</span>
 
-<span class="c1"># llama_index 0.8.15 bug: need to provide metadata_fn</span>
 <span class="n">documents</span> <span class="o">=</span> <span class="n">SimpleWebPageReader</span><span class="p">(</span>
-    <span class="n">html_to_text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">metadata_fn</span><span class="o">=</span><span class="k">lambda</span> <span class="n">url</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">)</span>
+    <span class="n">html_to_text</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">([</span><span class="s2">&quot;http://paulgraham.com/worked.html&quot;</span><span class="p">])</span>
 <span class="n">index</span> <span class="o">=</span> <span class="n">VectorStoreIndex</span><span class="o">.</span><span class="n">from_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
 
@@ -2923,10 +2921,8 @@ tru = Tru()</div>
 </pre></div>
 <div id="cell-4" class="clipboard-copy-txt">from llama_index import VectorStoreIndex, SimpleWebPageReader
 
-# llama_index 0.8.15 bug: need to provide metadata_fn
 documents = SimpleWebPageReader(
-    html_to_text=True,
-    metadata_fn=lambda url: dict(url=url)
+    html_to_text=True
 ).load_data(["http://paulgraham.com/worked.html"])
 index = VectorStoreIndex.from_documents(documents)
 
@@ -3068,7 +3064,7 @@ f_qs_relevance = Feedback(openai.qs_relevance).on_input().on(
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="instrument-chain-for-logging-with-trulens">Instrument chain for logging with TruLens<a class="anchor-link" href="#instrument-chain-for-logging-with-trulens">&#182;</a></h2>
+<h2 id="instrument-app-for-logging-with-trulens">Instrument app for logging with TruLens<a class="anchor-link" href="#instrument-app-for-logging-with-trulens">&#182;</a></h2>
 </div>
 </div>
 </div>
@@ -3093,11 +3089,11 @@ f_qs_relevance = Feedback(openai.qs_relevance).on_input().on(
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru_query_engine</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">query_engine</span><span class="p">,</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru_query_engine_recorder</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">query_engine</span><span class="p">,</span>
     <span class="n">app_id</span><span class="o">=</span><span class="s1">&#39;LlamaIndex_App1&#39;</span><span class="p">,</span>
     <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_lang_match</span><span class="p">,</span> <span class="n">f_qa_relevance</span><span class="p">,</span> <span class="n">f_qs_relevance</span><span class="p">])</span>
 </pre></div>
-<div id="cell-7" class="clipboard-copy-txt">tru_query_engine = TruLlama(query_engine,
+<div id="cell-7" class="clipboard-copy-txt">tru_query_engine_recorder = TruLlama(query_engine,
     app_id='LlamaIndex_App1',
     feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])</div>
         
@@ -3129,20 +3125,12 @@ f_qs_relevance = Feedback(openai.qs_relevance).on_input().on(
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># Instrumented query engine can operate like the original:</span>
-<span class="n">llm_response</span> <span class="o">=</span> <span class="n">tru_query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;What did the author do growing up?&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">llm_response</span><span class="p">)</span>
-
-<span class="c1"># or as context manager</span>
-<span class="k">with</span> <span class="n">tru_query_engine</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># or as context manager</span>
+<span class="k">with</span> <span class="n">tru_query_engine_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
     <span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;What did the author do growing up?&quot;</span><span class="p">)</span>
 </pre></div>
-<div id="cell-8" class="clipboard-copy-txt"># Instrumented query engine can operate like the original:
-llm_response = tru_query_engine.query("What did the author do growing up?")
-print(llm_response)
-
-# or as context manager
-with tru_query_engine as recording:
+<div id="cell-8" class="clipboard-copy-txt"># or as context manager
+with tru_query_engine_recorder as recording:
     query_engine.query("What did the author do growing up?")</div>
         
         </div>
@@ -3218,16 +3206,16 @@ with tru_query_engine as recording:
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="leaderboard">Leaderboard<a class="anchor-link" href="#leaderboard">&#182;</a></h3><p>Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics including cost and average feedback value across all of your LLM apps using the chain leaderboard. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up.</p>
+<h3 id="leaderboard">Leaderboard<a class="anchor-link" href="#leaderboard">&#182;</a></h3><p>Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics including cost and average feedback value across all of your LLM apps using the app leaderboard. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up.</p>
 <p>Note: Average feedback values are returned and displayed in a range from 0 (worst) to 1 (best).</p>
-<p><img src="https://www.trulens.org/Assets/image/Leaderboard.png" alt="Chain Leaderboard" /></p>
-<p>To dive deeper on a particular chain, click &quot;Select Chain&quot;.</p>
-<h3 id="understand-chain-performance-with-evaluations">Understand chain performance with Evaluations<a class="anchor-link" href="#understand-chain-performance-with-evaluations">&#182;</a></h3><p>To learn more about the performance of a particular chain or LLM model, we can select it to view its evaluations at the record level. LLM quality is assessed through the use of feedback functions. Feedback functions are extensible methods for determining the quality of LLM responses and can be applied to any downstream LLM task. Out of the box we provide a number of feedback functions for assessing model agreement, sentiment, relevance and more.</p>
+<p><img src="https://www.trulens.org/Assets/image/Leaderboard.png" alt="App Leaderboard" /></p>
+<p>To dive deeper on a particular app, click &quot;Select App&quot;.</p>
+<h3 id="understand-app-performance-with-evaluations">Understand app performance with Evaluations<a class="anchor-link" href="#understand-app-performance-with-evaluations">&#182;</a></h3><p>To learn more about the performance of a particular app or LLM model, we can select it to view its evaluations at the record level. LLM quality is assessed through the use of feedback functions. Feedback functions are extensible methods for determining the quality of LLM responses and can be applied to any downstream LLM task. Out of the box we provide a number of feedback functions for assessing model agreement, sentiment, relevance and more.</p>
 <p>The evaluations tab provides record-level metadata and feedback on the quality of your LLM application.</p>
 <p><img src="https://www.trulens.org/Assets/image/Leaderboard.png" alt="Evaluations" /></p>
-<h3 id="deep-dive-into-full-chain-metadata">Deep dive into full chain metadata<a class="anchor-link" href="#deep-dive-into-full-chain-metadata">&#182;</a></h3><p>Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain.</p>
-<p><img src="https://www.trulens.org/Assets/image/Chain_Explore.png" alt="Explore a Chain" /></p>
-<p>If you prefer the raw format, you can quickly get it using the &quot;Display full chain json&quot; or &quot;Display full record json&quot; buttons at the bottom of the page.</p>
+<h3 id="deep-dive-into-full-app-metadata">Deep dive into full app metadata<a class="anchor-link" href="#deep-dive-into-full-app-metadata">&#182;</a></h3><p>Click on a record to dive deep into all of the details of your app stack and underlying LLM, captured by tru_query_engine_recorder.</p>
+<p><img src="https://www.trulens.org/Assets/image/Chain_Explore.png" alt="Explore an App" /></p>
+<p>If you prefer the raw format, you can quickly get it using the &quot;Display full app json&quot; or &quot;Display full record json&quot; buttons at the bottom of the page.</p>
 
 </div>
 </div>

@@ -488,7 +488,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../no_framework_quickstart/" class="md-nav__link">
+      <a href="../text2text_quickstart/" class="md-nav__link">
         No Framework Quickstart
       </a>
     </li>
@@ -663,8 +663,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../pr_relevance_smoke_tests/" class="md-nav__link">
-        Prompt Response Relevance
+      <a href="../answer_relevance_smoke_tests/" class="md-nav__link">
+        Answer Relevance
       </a>
     </li>
   
@@ -677,8 +677,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../qs_relevance_smoke_tests/" class="md-nav__link">
-        Question Statement Relevance
+      <a href="../context_relevance_smoke_tests/" class="md-nav__link">
+        Context Relevance
       </a>
     </li>
   
@@ -2664,7 +2664,7 @@ query_engine = index.as_query_engine()</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>To instrument an Llama-Index query engine, all that's required is to wrap it using TruLlama. Then the instrumented query engine can be used like the original.</p>
+<p>To instrument an Llama-Index query engine, all that's required is to wrap it using TruLlama.</p>
 
 </div>
 </div>
@@ -2690,13 +2690,15 @@ query_engine = index.as_query_engine()</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru_query_engine</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">query_engine</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru_query_engine_recorder</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">query_engine</span><span class="p">)</span>
 
-<span class="n">llm_response</span> <span class="o">=</span> <span class="n">tru_query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;What did the author do growing up?&quot;</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">tru_query_engine_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
+    <span class="n">llm_response</span> <span class="o">=</span> <span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;What did the author do growing up?&quot;</span><span class="p">)</span>
 </pre></div>
-<div id="cell-2" class="clipboard-copy-txt">tru_query_engine = TruLlama(query_engine)
+<div id="cell-2" class="clipboard-copy-txt">tru_query_engine_recorder = TruLlama(query_engine)
 
-llm_response = tru_query_engine.query("What did the author do growing up?")</div>
+with tru_query_engine_recorder as recording:
+    llm_response = query_engine.query("What did the author do growing up?")</div>
         
         </div>
     </div>
@@ -2791,7 +2793,7 @@ chat_engine = index.as_chat_engine(streaming=True)</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>To instrument an Llama-Index <code>achat</code> engine, all that's required is to wrap it using TruLlama - just like with the query engine. Then the instrumented <code>achat</code> engine can be used like the original.</p>
+<p>To instrument an Llama-Index <code>achat</code> engine, all that's required is to wrap it using TruLlama - just like with the query engine.</p>
 
 </div>
 </div>
@@ -2817,17 +2819,17 @@ chat_engine = index.as_chat_engine(streaming=True)</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru_achat_engine</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">chat_engine</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru_chat_recorder</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">chat_engine</span><span class="p">)</span>
 
-<span class="c1"># Instrumented query engine can operate like the original:</span>
-<span class="n">llm_response_async</span> <span class="o">=</span> <span class="k">await</span> <span class="n">tru_achat_engine</span><span class="o">.</span><span class="n">aquery</span><span class="p">(</span><span class="s2">&quot;What did the author do growing up?&quot;</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">tru_chat_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
+    <span class="n">llm_response_async</span> <span class="o">=</span> <span class="k">await</span> <span class="n">chat_engine</span><span class="o">.</span><span class="n">aquery</span><span class="p">(</span><span class="s2">&quot;What did the author do growing up?&quot;</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">llm_response_async</span><span class="p">)</span>
 </pre></div>
-<div id="cell-4" class="clipboard-copy-txt">tru_achat_engine = TruLlama(chat_engine)
+<div id="cell-4" class="clipboard-copy-txt">tru_chat_recorder = TruLlama(chat_engine)
 
-# Instrumented query engine can operate like the original:
-llm_response_async = await tru_achat_engine.aquery("What did the author do growing up?")
+with tru_chat_recorder as recording:
+    llm_response_async = await chat_engine.aquery("What did the author do growing up?")
 
 print(llm_response_async)</div>
         
@@ -2933,16 +2935,18 @@ query_engine = index.as_query_engine(streaming=True)</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru_query_engine</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">query_engine</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru_query_engine_recorder</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">query_engine</span><span class="p">)</span>
 
-<span class="n">response</span> <span class="o">=</span> <span class="n">tru_query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;What did the author do growing up?&quot;</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">tru_query_engine_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;What did the author do growing up?&quot;</span><span class="p">)</span>
 
 <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">response_gen</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
 </pre></div>
-<div id="cell-6" class="clipboard-copy-txt">tru_query_engine = TruLlama(query_engine)
+<div id="cell-6" class="clipboard-copy-txt">tru_query_engine_recorder = TruLlama(query_engine)
 
-response = tru_query_engine.query("What did the author do growing up?")
+with tru_query_engine_recorder as recording:
+    response = query_engine.query("What did the author do growing up?")
 
 for c in response.response_gen:
     print(c)</div>

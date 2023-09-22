@@ -11,17 +11,17 @@
       
       
       
-        <link rel="prev" href="../llama_index_quickstart/">
+        <link rel="prev" href="../custom_feedback_functions/">
       
       
-        <link rel="next" href="../function_definitions/">
+        <link rel="next" href="../context_relevance_smoke_tests/">
       
       <link rel="icon" href="../../img/favicon.ico">
       <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
     
     
       
-        <title>No Framework Quickstart - TruLens</title>
+        <title>Answer Relevance - TruLens</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#no-framework-quickstart" class="md-skip">
+        <a href="#answer-relevance-feedback-requirements" class="md-skip">
           Skip to content
         </a>
       
@@ -109,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              No Framework Quickstart
+              Answer Relevance
             
           </span>
         </div>
@@ -374,18 +374,16 @@
               
   
   
-    
-  
   
     
       
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" checked>
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
       
       
         
@@ -400,7 +398,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="true">
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
         <label class="md-nav__title" for="__nav_3_1">
           <span class="md-nav__icon md-icon"></span>
           Getting Started
@@ -425,16 +423,14 @@
               
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1_2" checked>
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1_2" >
       
       
         
@@ -451,7 +447,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_1_2_label" aria-expanded="true">
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_1_2_label" aria-expanded="false">
         <label class="md-nav__title" for="__nav_3_1_2">
           <span class="md-nav__icon md-icon"></span>
           ⚡ Quickstarts
@@ -490,114 +486,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          No Framework Quickstart
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../text2text_quickstart/" class="md-nav__link">
         No Framework Quickstart
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#setup" class="md-nav__link">
-    Setup
-  </a>
-  
-    <nav class="md-nav" aria-label="Setup">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#add-api-keys" class="md-nav__link">
-    Add API keys
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#import-from-trulens" class="md-nav__link">
-    Import from TruLens
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#create-simple-text-to-text-application" class="md-nav__link">
-    Create Simple Text to Text Application
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#send-your-first-request" class="md-nav__link">
-    Send your first request
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#initialize-feedback-functions" class="md-nav__link">
-    Initialize Feedback Function(s)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#instrument-the-callable-for-logging-with-trulens" class="md-nav__link">
-    Instrument the callable for logging with TruLens
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#explore-in-a-dashboard" class="md-nav__link">
-    Explore in a Dashboard
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#or-view-results-directly-in-your-notebook" class="md-nav__link">
-    Or view results directly in your notebook
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -621,16 +514,18 @@
               
   
   
+    
+  
   
     
       
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
       
       
         
@@ -645,7 +540,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_3_2">
           <span class="md-nav__icon md-icon"></span>
           Evaluation
@@ -656,14 +551,16 @@
               
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_1" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_1" checked>
       
       
         
@@ -682,7 +579,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_1_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_1_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_3_2_1">
           <span class="md-nav__icon md-icon"></span>
           🎯 Feedback Functions
@@ -735,14 +632,16 @@
               
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_1_4" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_1_4" checked>
       
       
         
@@ -757,7 +656,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_1_4_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_1_4_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_3_2_1_4">
           <span class="md-nav__icon md-icon"></span>
           Smoke Tests
@@ -768,11 +667,48 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../pr_relevance_smoke_tests/" class="md-nav__link">
-        Prompt Response Relevance
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Answer Relevance
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Answer Relevance
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#answer-relevance-feedback-requirements" class="md-nav__link">
+    Answer Relevance Feedback Requirements
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -784,8 +720,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../qs_relevance_smoke_tests/" class="md-nav__link">
-        Question Statement Relevance
+      <a href="../context_relevance_smoke_tests/" class="md-nav__link">
+        Context Relevance
       </a>
     </li>
   
@@ -1531,8 +1467,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1541,70 +1475,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#setup" class="md-nav__link">
-    Setup
-  </a>
-  
-    <nav class="md-nav" aria-label="Setup">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#add-api-keys" class="md-nav__link">
-    Add API keys
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#import-from-trulens" class="md-nav__link">
-    Import from TruLens
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#create-simple-text-to-text-application" class="md-nav__link">
-    Create Simple Text to Text Application
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#send-your-first-request" class="md-nav__link">
-    Send your first request
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#initialize-feedback-functions" class="md-nav__link">
-    Initialize Feedback Function(s)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#instrument-the-callable-for-logging-with-trulens" class="md-nav__link">
-    Instrument the callable for logging with TruLens
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#explore-in-a-dashboard" class="md-nav__link">
-    Explore in a Dashboard
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#or-view-results-directly-in-your-notebook" class="md-nav__link">
-    Or view results directly in your notebook
+  <a href="#answer-relevance-feedback-requirements" class="md-nav__link">
+    Answer Relevance Feedback Requirements
   </a>
   
 </li>
@@ -1626,6 +1498,8 @@
   
   
 
+
+  <h1>Answer Relevance</h1>
 
 <script>
 (function (global, factory) {
@@ -2664,20 +2538,8 @@ Licensed under the Apache License, Version 2.0.
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="no-framework-quickstart">No Framework Quickstart<a class="anchor-link" href="#no-framework-quickstart">&#182;</a></h1><p>In this quickstart you will create a simple text to text application and learn how to log it and get feedback.</p>
-<p><a href="https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/no_framework_quickstart.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a></p>
-
-</div>
-</div>
-</div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="setup">Setup<a class="anchor-link" href="#setup">&#182;</a></h2><h3 id="add-api-keys">Add API keys<a class="anchor-link" href="#add-api-keys">&#182;</a></h3><p>For this quickstart you will need Open AI and Huggingface keys</p>
+<h2 id="answer-relevance-feedback-requirements">Answer Relevance Feedback Requirements<a class="anchor-link" href="#answer-relevance-feedback-requirements">&#182;</a></h2><p>In many ways, feedbacks can be thought of as LLM apps themselves. Given text, they return some result. Thinking in this way, we can use TruLens to evaluate and track our feedback quality. We can even do this for different models (e.g. gpt-3.5 and gpt-4) or prompting schemes (such as chain-of-thought reasoning).</p>
+<p>This notebook follows an evaluation of a set of test cases. You are encouraged to run this on your own and even expand the test cases to evaluate performance on test cases applicable to your scenario or domain.</p>
 
 </div>
 </div>
@@ -2703,13 +2565,15 @@ Licensed under the Apache License, Version 2.0.
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HUGGINGFACE_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># Import relevance feedback function</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">GroundTruthAgreement</span><span class="p">,</span> <span class="n">OpenAI</span>
+<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruBasicApp</span><span class="p">,</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Tru</span><span class="p">,</span> <span class="n">Select</span>
+<span class="kn">from</span> <span class="nn">test_cases</span> <span class="kn">import</span> <span class="n">answer_relevance_golden_set</span>
 </pre></div>
-<div id="cell-1" class="clipboard-copy-txt">import os
-os.environ["OPENAI_API_KEY"] = "..."
-os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
+<div id="cell-1" class="clipboard-copy-txt"># Import relevance feedback function
+from trulens_eval.feedback import GroundTruthAgreement, OpenAI
+from trulens_eval import TruBasicApp, Feedback, Tru, Select
+from test_cases import answer_relevance_golden_set</div>
         
         </div>
     </div>
@@ -2724,7 +2588,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2739,11 +2603,11 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">import</span> <span class="nn">openai</span>
-<span class="n">openai</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">]</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
 </pre></div>
-<div id="cell-2" class="clipboard-copy-txt">import openai
-openai.api_key = os.environ["OPENAI_API_KEY"]</div>
+<div id="cell-2" class="clipboard-copy-txt">import os
+os.environ["OPENAI_API_KEY"] = "..."</div>
         
         </div>
     </div>
@@ -2752,24 +2616,13 @@ openai.api_key = os.environ["OPENAI_API_KEY"]</div>
 </div>
 
 </div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="import-from-trulens">Import from TruLens<a class="anchor-link" href="#import-from-trulens">&#182;</a></h3>
-</div>
-</div>
-</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2784,17 +2637,41 @@ openai.api_key = os.environ["OPENAI_API_KEY"]</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">JSON</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">turbo</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">&quot;gpt-3.5-turbo&quot;</span><span class="p">)</span>
+<span class="c1"># Define your feedback functions</span>
+<span class="k">def</span> <span class="nf">wrapped_relevance_turbo</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">turbo</span><span class="o">.</span><span class="n">relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 
-<span class="c1"># Imports main tools:</span>
-<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Huggingface</span><span class="p">,</span> <span class="n">Tru</span>
-<span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
+<span class="c1"># Define your feedback functions</span>
+<span class="k">def</span> <span class="nf">wrapped_relevance_with_cot_turbo</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">turbo</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+<span class="n">gpt4</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">&quot;gpt-4&quot;</span><span class="p">)</span>
+<span class="c1"># Define your feedback functions</span>
+<span class="k">def</span> <span class="nf">wrapped_relevance_gpt4</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">gpt4</span><span class="o">.</span><span class="n">relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+<span class="c1"># Define your feedback functions</span>
+<span class="k">def</span> <span class="nf">wrapped_relevance_with_cot_gpt4</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">gpt4</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 </pre></div>
-<div id="cell-3" class="clipboard-copy-txt">from IPython.display import JSON
+<div id="cell-3" class="clipboard-copy-txt">turbo = OpenAI(model_engine="gpt-3.5-turbo")
+# Define your feedback functions
+def wrapped_relevance_turbo(input, output):
+    return turbo.relevance(input, output)
 
-# Imports main tools:
-from trulens_eval import Feedback, Huggingface, Tru
-tru = Tru()</div>
+# Define your feedback functions
+def wrapped_relevance_with_cot_turbo(input, output):
+    return turbo.relevance_with_cot_reasons(input, output)
+
+gpt4 = OpenAI(model_engine="gpt-4")
+# Define your feedback functions
+def wrapped_relevance_gpt4(input, output):
+    return gpt4.relevance(input, output)
+
+# Define your feedback functions
+def wrapped_relevance_with_cot_gpt4(input, output):
+    return gpt4.relevance_with_cot_reasons(input, output)</div>
         
         </div>
     </div>
@@ -2810,18 +2687,18 @@ tru = Tru()</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="create-simple-text-to-text-application">Create Simple Text to Text Application<a class="anchor-link" href="#create-simple-text-to-text-application">&#182;</a></h3><p>This example uses a bare bones OpenAI LLM, and a non-LLM just for demonstration purposes.</p>
+<p>Here we'll set up our golden set as a set of prompts, responses and expected scores stored in <code>test_cases.py</code>. Then, our numeric_difference method will look up the expected score for each prompt/response pair by <strong>exact match</strong>. After looking up the expected score, we will then take the L1 difference between the actual score and expected score.</p>
 
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2836,28 +2713,43 @@ tru = Tru()</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">def</span> <span class="nf">llm_standalone</span><span class="p">(</span><span class="n">prompt</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">openai</span><span class="o">.</span><span class="n">ChatCompletion</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-3.5-turbo&quot;</span><span class="p">,</span>
-    <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
-            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;You are a question and answer bot, and you answer super upbeat.&quot;</span><span class="p">},</span>
-            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}</span>
-        <span class="p">]</span>
-    <span class="p">)[</span><span class="s2">&quot;choices&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;message&quot;</span><span class="p">][</span><span class="s2">&quot;content&quot;</span><span class="p">]</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># Create a Feedback object using the numeric_difference method of the ground_truth object</span>
+<span class="n">ground_truth</span> <span class="o">=</span> <span class="n">GroundTruthAgreement</span><span class="p">(</span><span class="n">answer_relevance_golden_set</span><span class="p">)</span>
+<span class="c1"># Call the numeric_difference method with app and record</span>
+<span class="n">f_groundtruth</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">numeric_difference</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Relevance Smoke Test&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">Record</span><span class="o">.</span><span class="n">calls</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">Record</span><span class="o">.</span><span class="n">calls</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
 </pre></div>
-<div id="cell-4" class="clipboard-copy-txt">def llm_standalone(prompt):
-    return openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    messages=[
-            {"role": "system", "content": "You are a question and answer bot, and you answer super upbeat."},
-            {"role": "user", "content": prompt}
-        ]
-    )["choices"][0]["message"]["content"]</div>
+<div id="cell-4" class="clipboard-copy-txt"># Create a Feedback object using the numeric_difference method of the ground_truth object
+ground_truth = GroundTruthAgreement(answer_relevance_golden_set)
+# Call the numeric_difference method with app and record
+f_groundtruth = Feedback(ground_truth.numeric_difference, name = "Relevance Smoke Test").on(Select.Record.calls[0].args.args[0]).on(Select.Record.calls[0].args.args[1]).on_output()</div>
         
         </div>
     </div>
 
 </div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>✅ In Relevance Smoke Test, input prompt will be set to *.__record__.calls[0].args.args[0] .
+✅ In Relevance Smoke Test, input response will be set to *.__record__.calls[0].args.args[1] .
+✅ In Relevance Smoke Test, input score will be set to *.__record__.main_output or `Select.RecordOutput` .
+</pre>
+</div>
+</div>
+
+</div>
+
 </div>
 
 </div>
@@ -2867,7 +2759,7 @@ tru = Tru()</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2882,15 +2774,15 @@ tru = Tru()</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">import</span> <span class="nn">hashlib</span>
-<span class="k">def</span> <span class="nf">simple_hash_callable</span><span class="p">(</span><span class="n">prompt</span><span class="p">):</span>
-    <span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">shake_256</span><span class="p">(</span><span class="n">prompt</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(</span><span class="mi">20</span><span class="p">))</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru_wrapped_relevance_turbo</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">wrapped_relevance_turbo</span><span class="p">,</span> <span class="n">app_id</span> <span class="o">=</span> <span class="s2">&quot;answer relevance gpt-3.5-turbo&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundtruth</span><span class="p">])</span>
+<span class="n">tru_wrapped_relevance_with_cot_turbo</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">wrapped_relevance_with_cot_turbo</span><span class="p">,</span> <span class="n">app_id</span> <span class="o">=</span> <span class="s2">&quot;answer relevance with cot reasoning gpt-3.5-turbo&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundtruth</span><span class="p">])</span>
+<span class="n">tru_wrapped_relevance_gpt4</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">wrapped_relevance_gpt4</span><span class="p">,</span> <span class="n">app_id</span> <span class="o">=</span> <span class="s2">&quot;answer relevance gpt-4&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundtruth</span><span class="p">])</span>
+<span class="n">tru_wrapped_relevance_with_cot_gpt4</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">wrapped_relevance_with_cot_gpt4</span><span class="p">,</span> <span class="n">app_id</span> <span class="o">=</span> <span class="s2">&quot;answer relevance with cot reasoning gpt-4&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundtruth</span><span class="p">])</span>
 </pre></div>
-<div id="cell-5" class="clipboard-copy-txt">import hashlib
-def simple_hash_callable(prompt):
-    h = hashlib.shake_256(prompt.encode('utf-8'))
-    return str(h.hexdigest(20))</div>
+<div id="cell-5" class="clipboard-copy-txt">tru_wrapped_relevance_turbo = TruBasicApp(wrapped_relevance_turbo, app_id = "answer relevance gpt-3.5-turbo", feedbacks=[f_groundtruth])
+tru_wrapped_relevance_with_cot_turbo = TruBasicApp(wrapped_relevance_with_cot_turbo, app_id = "answer relevance with cot reasoning gpt-3.5-turbo", feedbacks=[f_groundtruth])
+tru_wrapped_relevance_gpt4 = TruBasicApp(wrapped_relevance_gpt4, app_id = "answer relevance gpt-4", feedbacks=[f_groundtruth])
+tru_wrapped_relevance_with_cot_gpt4 = TruBasicApp(wrapped_relevance_with_cot_gpt4, app_id = "answer relevance with cot reasoning gpt-4", feedbacks=[f_groundtruth])</div>
         
         </div>
     </div>
@@ -2899,24 +2791,13 @@ def simple_hash_callable(prompt):
 </div>
 
 </div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="send-your-first-request">Send your first request<a class="anchor-link" href="#send-your-first-request">&#182;</a></h3>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2931,13 +2812,21 @@ def simple_hash_callable(prompt):
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">prompt_input</span><span class="o">=</span><span class="s2">&quot;How good is language AI?&quot;</span>
-<span class="n">prompt_output</span> <span class="o">=</span> <span class="n">llm_standalone</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span>
-<span class="n">prompt_output</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">answer_relevance_golden_set</span><span class="p">)):</span>
+    <span class="n">prompt</span> <span class="o">=</span> <span class="n">answer_relevance_golden_set</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;query&quot;</span><span class="p">]</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">answer_relevance_golden_set</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;response&quot;</span><span class="p">]</span>
+    <span class="n">tru_wrapped_relevance_turbo</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+    <span class="n">tru_wrapped_relevance_with_cot_turbo</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+    <span class="n">tru_wrapped_relevance_gpt4</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+    <span class="n">tru_wrapped_relevance_with_cot_gpt4</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
 </pre></div>
-<div id="cell-6" class="clipboard-copy-txt">prompt_input="How good is language AI?"
-prompt_output = llm_standalone(prompt_input)
-prompt_output</div>
+<div id="cell-6" class="clipboard-copy-txt">for i in range(len(answer_relevance_golden_set)):
+    prompt = answer_relevance_golden_set[i]["query"]
+    response = answer_relevance_golden_set[i]["response"]
+    tru_wrapped_relevance_turbo.call_with_record(prompt, response)
+    tru_wrapped_relevance_with_cot_turbo.call_with_record(prompt, response)
+    tru_wrapped_relevance_gpt4.call_with_record(prompt, response)
+    tru_wrapped_relevance_with_cot_gpt4.call_with_record(prompt, response)</div>
         
         </div>
     </div>
@@ -2945,14 +2834,36 @@ prompt_output</div>
 </div>
 </div>
 
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>Task queue full. Finishing existing tasks.
+Task queue full. Finishing existing tasks.
+</pre>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2967,9 +2878,9 @@ prompt_output</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">simple_hash_callable</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">Tru</span><span class="p">()</span><span class="o">.</span><span class="n">get_leaderboard</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[])</span>
 </pre></div>
-<div id="cell-7" class="clipboard-copy-txt">simple_hash_callable(prompt_input)</div>
+<div id="cell-7" class="clipboard-copy-txt">Tru().get_leaderboard(app_ids=[])</div>
         
         </div>
     </div>
@@ -2977,272 +2888,82 @@ prompt_output</div>
 </div>
 </div>
 
-</div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="initialize-feedback-functions">Initialize Feedback Function(s)<a class="anchor-link" href="#initialize-feedback-functions">&#182;</a></h2>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-            <div class="zeroclipboard-container">
-                <clipboard-copy for="cell-8">
-                <div>
-                    <span class="notice" hidden>Copied!</span>
-                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                    </svg>
-                    </div>
-                </clipboard-copy>
-            </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># Initialize Huggingface-based feedback function collection class:</span>
-<span class="n">hugs</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
-
-<span class="c1"># Define a sentiment feedback function using HuggingFace.</span>
-<span class="n">f_sentiment</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">hugs</span><span class="o">.</span><span class="n">positive_sentiment</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
-</pre></div>
-<div id="cell-8" class="clipboard-copy-txt"># Initialize Huggingface-based feedback function collection class:
-hugs = Huggingface()
-
-# Define a sentiment feedback function using HuggingFace.
-f_sentiment = Feedback(hugs.positive_sentiment).on_output()</div>
-        
-        </div>
-    </div>
-
-</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 
-</div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="instrument-the-callable-for-logging-with-trulens">Instrument the callable for logging with TruLens<a class="anchor-link" href="#instrument-the-callable-for-logging-with-trulens">&#182;</a></h2>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-            <div class="zeroclipboard-container">
-                <clipboard-copy for="cell-9">
-                <div>
-                    <span class="notice" hidden>Copied!</span>
-                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                    </svg>
-                    </div>
-                </clipboard-copy>
-            </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruBasicApp</span>
-<span class="n">tru_llm_standalone</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">llm_standalone</span><span class="p">,</span> <span class="n">app_id</span><span class="o">=</span><span class="s2">&quot;Happy Bot&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_sentiment</span><span class="p">])</span>
-<span class="n">tru_simple_hash_callable</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">simple_hash_callable</span><span class="p">,</span> <span class="n">app_id</span><span class="o">=</span><span class="s2">&quot;Hasher&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_sentiment</span><span class="p">])</span>
-</pre></div>
-<div id="cell-9" class="clipboard-copy-txt">from trulens_eval import TruBasicApp
-tru_llm_standalone = TruBasicApp(llm_standalone, app_id="Happy Bot", feedbacks=[f_sentiment])
-tru_simple_hash_callable = TruBasicApp(simple_hash_callable, app_id="Hasher", feedbacks=[f_sentiment])</div>
-        
-        </div>
-    </div>
 
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Relevance Smoke Test</th>
+      <th>latency</th>
+      <th>total_cost</th>
+    </tr>
+    <tr>
+      <th>app_id</th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>answer relevance gpt-3.5-turbo</th>
+      <td>0.794118</td>
+      <td>0.058824</td>
+      <td>0.000763</td>
+    </tr>
+    <tr>
+      <th>answer relevance gpt-4</th>
+      <td>0.770588</td>
+      <td>0.058824</td>
+      <td>0.015277</td>
+    </tr>
+    <tr>
+      <th>answer relevance with cot reasoning gpt-3.5-turbo</th>
+      <td>0.770588</td>
+      <td>0.058824</td>
+      <td>0.000908</td>
+    </tr>
+    <tr>
+      <th>answer relevance with cot reasoning gpt-4</th>
+      <td>0.758824</td>
+      <td>0.058824</td>
+      <td>0.019336</td>
+    </tr>
+  </tbody>
+</table>
 </div>
 </div>
 
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-            <div class="zeroclipboard-container">
-                <clipboard-copy for="cell-10">
-                <div>
-                    <span class="notice" hidden>Copied!</span>
-                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                    </svg>
-                    </div>
-                </clipboard-copy>
-            </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">with</span> <span class="n">tru_llm_standalone</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
-    <span class="n">llm_standalone</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span>
-</pre></div>
-<div id="cell-10" class="clipboard-copy-txt">with tru_llm_standalone as recording:
-    llm_standalone(prompt_input)</div>
-        
-        </div>
-    </div>
 
 </div>
-</div>
 
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-            <div class="zeroclipboard-container">
-                <clipboard-copy for="cell-11">
-                <div>
-                    <span class="notice" hidden>Copied!</span>
-                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                    </svg>
-                    </div>
-                </clipboard-copy>
-            </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">with</span> <span class="n">tru_simple_hash_callable</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
-    <span class="n">simple_hash_callable</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span>
-</pre></div>
-<div id="cell-11" class="clipboard-copy-txt">with tru_simple_hash_callable as recording:
-    simple_hash_callable(prompt_input)</div>
-        
-        </div>
-    </div>
-
-</div>
-</div>
-
-</div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="explore-in-a-dashboard">Explore in a Dashboard<a class="anchor-link" href="#explore-in-a-dashboard">&#182;</a></h2>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-            <div class="zeroclipboard-container">
-                <clipboard-copy for="cell-12">
-                <div>
-                    <span class="notice" hidden>Copied!</span>
-                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                    </svg>
-                    </div>
-                </clipboard-copy>
-            </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">run_dashboard</span><span class="p">()</span> <span class="c1"># open a local streamlit app to explore</span>
-
-<span class="c1"># tru.stop_dashboard() # stop if needed</span>
-</pre></div>
-<div id="cell-12" class="clipboard-copy-txt">tru.run_dashboard() # open a local streamlit app to explore
-
-# tru.stop_dashboard() # stop if needed</div>
-        
-        </div>
-    </div>
-
-</div>
-</div>
-
-</div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Alternatively, you can run <code>trulens-eval</code> from a command line in the same folder to start the dashboard.</p>
-
-</div>
-</div>
-</div>
-</div>
-<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="or-view-results-directly-in-your-notebook">Or view results directly in your notebook<a class="anchor-link" href="#or-view-results-directly-in-your-notebook">&#182;</a></h2>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-            <div class="zeroclipboard-container">
-                <clipboard-copy for="cell-13">
-                <div>
-                    <span class="notice" hidden>Copied!</span>
-                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                    </svg>
-                    </div>
-                </clipboard-copy>
-            </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">get_records_and_feedback</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[])[</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># pass an empty list of app_ids to get all</span>
-</pre></div>
-<div id="cell-13" class="clipboard-copy-txt">tru.get_records_and_feedback(app_ids=[])[0] # pass an empty list of app_ids to get all</div>
-        
-        </div>
-    </div>
-
-</div>
 </div>
 
 </div>

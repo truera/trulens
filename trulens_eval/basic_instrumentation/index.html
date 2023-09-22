@@ -488,7 +488,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../no_framework_quickstart/" class="md-nav__link">
+      <a href="../text2text_quickstart/" class="md-nav__link">
         No Framework Quickstart
       </a>
     </li>
@@ -663,8 +663,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../pr_relevance_smoke_tests/" class="md-nav__link">
-        Prompt Response Relevance
+      <a href="../answer_relevance_smoke_tests/" class="md-nav__link">
+        Answer Relevance
       </a>
     </li>
   
@@ -677,8 +677,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../qs_relevance_smoke_tests/" class="md-nav__link">
-        Question Statement Relevance
+      <a href="../context_relevance_smoke_tests/" class="md-nav__link">
+        Context Relevance
       </a>
     </li>
   
@@ -2715,10 +2715,10 @@ Licensed under the Apache License, Version 2.0.
                 </clipboard-copy>
             </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruBasicApp</span>
-<span class="n">basic_app</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">custom_application</span><span class="p">,</span> <span class="n">app_id</span><span class="o">=</span><span class="s2">&quot;Custom Application v1&quot;</span><span class="p">)</span>
+<span class="n">basic_app_recorder</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">custom_application</span><span class="p">,</span> <span class="n">app_id</span><span class="o">=</span><span class="s2">&quot;Custom Application v1&quot;</span><span class="p">)</span>
 </pre></div>
 <div id="cell-2" class="clipboard-copy-txt">from trulens_eval import TruBasicApp
-basic_app = TruBasicApp(custom_application, app_id="Custom Application v1")</div>
+basic_app_recorder = TruBasicApp(custom_application, app_id="Custom Application v1")</div>
         
         </div>
     </div>
@@ -2760,9 +2760,11 @@ basic_app = TruBasicApp(custom_application, app_id="Custom Application v1")</div
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">basic_app</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="s2">&quot;What is the phone number for HR?&quot;</span><span class="p">)</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="k">with</span> <span class="n">basic_app_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
+    <span class="n">basic_app_recorder</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="s2">&quot;What is the phone number for HR?&quot;</span><span class="p">)</span>
 </pre></div>
-<div id="cell-3" class="clipboard-copy-txt">basic_app.call_with_record("What is the phone number for HR?")</div>
+<div id="cell-3" class="clipboard-copy-txt">with basic_app_recorder as recording:
+    basic_app_recorder.app("What is the phone number for HR?")</div>
         
         </div>
     </div>
