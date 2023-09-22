@@ -1,1 +1,1 @@
-../examples/py_script_quickstarts/text2text_quickstart.py
+../examples/quickstart/py_script_quickstarts/text2text_quickstart.py
