@@ -3,6 +3,7 @@ Tests for TruCustomApp.
 """
 
 from unittest import main
+
 from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
 from tests.unit.test import JSONTestCase
 
