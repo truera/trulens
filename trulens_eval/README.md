@@ -49,7 +49,7 @@ TruLens supports the evaluation of tracking for any LLM app framework. Choose a 
 [langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/langchain_quickstart.ipynb).
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/colab/quickstarts/langchain_quickstart_colab.ipynb)
 
-[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/py_script_quickstarts/quickstart.py).
+[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/py_script_quickstarts/langchain_quickstart.py).
 
 **Llama-Index**
 
