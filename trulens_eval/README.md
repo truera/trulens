@@ -46,24 +46,15 @@ TruLens supports the evaluation of tracking for any LLM app framework. Choose a 
 
 **Langchain**
 
-[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
-
-[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/py_script_quickstarts/langchain_quickstart.py)
 
 **Llama-Index**
 
-[llama_index_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb)
 
-[llama_index_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/py_script_quickstarts/llama_index_quickstart.py)
+**Text to Text**
 
-**No Framework**
-
-[text2text_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/text2text_quickstart.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/text2text_quickstart.ipynb)
-
-[text2text_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/py_script_quickstarts/text2text_quickstart.py)
 
 ### 💡 Contributing
 
