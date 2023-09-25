@@ -219,22 +219,6 @@ RESPONSE:
 {response}
 """
 
-"""
-A score of 1 is a bad summary. A score of 10 is a good summary.
-Start at 10 and start reducing the score.
-If the STATEMENT has new information not in the SOURCE, reduce the score.
-If the STATEMENT is missing important information, reduce the score.
-The more missing important information, the lower the score.
-If unimportant information is missing; do not reduce the score.
-If the STATEMENT is too long, reduce the score.
-
-Irrelevant Information: <Only use RESPONSE sentences in this section. Reiterate a few sentences in the RESPONSE that do not directly summarize the key points of the SOURCE.>
-Missing Information: <Reiterate a few sentences in the SOURCE that can have been talked about but were not>
-Length Assessment: <Say how short the STATEMENT summary is in comparison to the SOURCE by percentage.>
-Importance Scoring: <Give your reasons for scoring based on the above supporting evidence on irrelevant information, missing information, and summarization lenth using the scoring criteria>
-Score: <The score 1-10 based on the given criteria>
-"""
-
 SUMMARIZATION_PROMPT = """
 You are a helper for summarization tasks. You will do two steps. You must both steps, and most importantly, you must add a score.
 
