@@ -222,6 +222,7 @@ from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import _safe_getattr
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import safe_signature
+from trulens_eval.utils.python import caller_frame
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.serial import JSONPath
 
@@ -427,7 +428,8 @@ class Instrument(object):
 
             # Get any contexts already known from higher in the call stack.
             contexts = get_first_local_in_call_stack(
-                key="contexts", func=find_instrumented, offset=1
+                key="contexts", func=find_instrumented, offset=1, # DIFF
+                skip=caller_frame()
             )
             # Note: are empty sets false?
             if contexts is None:
@@ -444,7 +446,8 @@ class Instrument(object):
                     contexts.add(ctx)
 
             if len(contexts) == 0:
-                # If no app wants this call recorded, run and return without instrumentation.
+                # If no app wants this call recorded, run and return without
+                # instrumentation.
                 logger.debug(
                     f"{query}: no record found or requested, not recording."
                 )
@@ -457,7 +460,8 @@ class Instrument(object):
             # from app to app that are watching this method. Hence we index the
             # stacks by id of the call record list which is unique to each app.
             ctx_stacks = get_first_local_in_call_stack(
-                key="stacks", func=find_instrumented, offset=1
+                key="stacks", func=find_instrumented, offset=1,
+                skip=caller_frame()
             )
             # Note: Empty dicts are false.
             if ctx_stacks is None:
@@ -626,7 +630,8 @@ class Instrument(object):
                     contexts.add(ctx)
 
             if len(contexts) == 0:
-                # If no app wants this call recorded, run and return without instrumentation.
+                # If no app wants this call recorded, run and return without
+                # instrumentation.
                 logger.debug(
                     f"{query}: no record found or requested, not recording."
                 )
