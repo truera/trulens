@@ -1217,6 +1217,7 @@ class OpenAI(Provider):
     def summary_with_cot_reasons(self, source: str, summary: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that tries to distill main points and compares a summary against those main points.
+        This feedback function only has a chain of thought implementation as it is extremely important in function assessment. 
 
         **Usage:**
         ```
