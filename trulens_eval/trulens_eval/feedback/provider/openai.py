@@ -1235,7 +1235,7 @@ class OpenAI(Provider):
             summary (str): Text corresponding to a summary.
 
         Returns:
-            float: A value between 0 and 1. 0 being "main points missed" and 1 being "nno main points missed".
+            float: A value between 0 and 1. 0 being "main points missed" and 1 being "no main points missed".
         """
         system_prompt = str.format(
             prompts.SUMMARIZATION_PROMPT, source=source, summary=summary
