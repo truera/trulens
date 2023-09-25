@@ -219,6 +219,56 @@ RESPONSE:
 {response}
 """
 
+"""
+A score of 1 is a bad summary. A score of 10 is a good summary.
+Start at 10 and start reducing the score.
+If the STATEMENT has new information not in the SOURCE, reduce the score.
+If the STATEMENT is missing important information, reduce the score.
+The more missing important information, the lower the score.
+If unimportant information is missing; do not reduce the score.
+If the STATEMENT is too long, reduce the score.
+
+Irrelevant Information: <Only use RESPONSE sentences in this section. Reiterate a few sentences in the RESPONSE that do not directly summarize the key points of the SOURCE.>
+Missing Information: <Reiterate a few sentences in the SOURCE that can have been talked about but were not>
+Length Assessment: <Say how short the STATEMENT summary is in comparison to the SOURCE by percentage.>
+Importance Scoring: <Give your reasons for scoring based on the above supporting evidence on irrelevant information, missing information, and summarization lenth using the scoring criteria>
+Score: <The score 1-10 based on the given criteria>
+"""
+
+SUMMARIZATION_PROMPT = """
+You are a helper for summarization tasks. You will do two steps. You must both steps, and most importantly, you must add a score.
+
+STEP 1 - Most Important Points:
+(DO NOT SKIP THIS STEP!)
+
+For the given SOURCE What are the most important points?
+
+please answer with this template:
+
+(Step 1)
+Important Points: <Outline the important points>
+Supporting Evidence: <Explain why these are sufficient to capture the whole SOURCE>
+
+Step 2 - Compare:
+(DO NOT SKIP THIS STEP!)
+
+For a SUMMARY How well does this summary address the above main points?
+
+please answer with this template:
+
+(Step 2)
+Supporting Evidence: <For each of the Important Points, explain if the SUMMARY does or does not mention it.>
+Score: <Give a score from 1 to 10 on if the SUMMARY addresses every single one of the main points. A score of 1 is no points were mentioned. A score of 5 is half the points were mentioned. a score of 10 is all points were mentioned.>
+
+
+/START SUMMARY/ 
+{summary}
+/END SUMMARY/ 
+
+/START SOURCE/ 
+{source}
+/END SOURCE/ 
+"""
 
 COT_REASONS_TEMPLATE = \
 """
