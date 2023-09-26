@@ -212,7 +212,7 @@ structures (enumerating `Record` or `App` contents).
 In most cases, the Select object produces only a single item but can also
 address multiple items.
 
-You can access the JSON structure with `*_with_record` methods and then calling `layout_calls_as_app`.
+You can access the JSON structure with `with_record` methods and then calling `layout_calls_as_app`.
 
 for example
 
@@ -220,11 +220,11 @@ for example
 response = my_llm_app(query)
 
 from trulens_eval import TruChain
-truchain = TruChain(
+tru_recorder = TruChain(
     my_llm_app,
     app_id='Chain1_ChatApplication')
 
-response, tru_record = truchain.call_with_record(query)
+response, tru_record = tru_recorder.with_record(my_llm_app, query)
 json_like = tru_record.layout_calls_as_app()
 ```
 

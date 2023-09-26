@@ -19,7 +19,7 @@ class javascript_build(build):
 
 
 langchain_version = "0.0.230"  # duplicated in trulens_eval.util, don't know how to dedup
-llama_version = "0.8.3"  # duplicated in trulens_eval.util, don't know how to dedup
+llama_version = "0.8.29post1"  # duplicated in trulens_eval.util, don't know how to dedup
 
 setup(
     name="trulens_eval",
@@ -46,6 +46,7 @@ setup(
         'merkle-json>=1.0.0',
         'millify>=0.1.1',
         'openai>=0.27.6',
+        'litellm>=0.1.729',
         'pinecone-client>=2.2.1',
         'pydantic>=1.10.7',
         'requests>=2.30.0',

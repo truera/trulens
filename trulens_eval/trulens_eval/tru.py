@@ -272,6 +272,25 @@ class Tru(SingletonPerName):
 
         return df, feedback_columns
 
+    def get_leaderboard(self, app_ids: List[str]):
+        """
+        Get a leaderboard by app id from the
+        database. Pass an empty list of app_ids to return all.
+
+        ```python
+        tru.get_leaderboard(app_ids=[])
+        ```
+        """
+        df, feedback_cols = self.db.get_records_and_feedback(app_ids)
+
+        col_agg_list = feedback_cols + ['latency', 'total_cost']
+
+        leaderboard = df.groupby('app_id')[col_agg_list].mean().sort_values(
+            by=feedback_cols, ascending=False
+        )
+
+        return leaderboard
+
     def start_evaluator(self,
                         restart=False,
                         fork=False) -> Union[Process, Thread]:
@@ -322,6 +341,7 @@ class Tru(SingletonPerName):
             proc = Process(target=runloop)
         else:
             proc = Thread(target=runloop)
+            proc.daemon = True
 
         # Start a persistent thread or process that evaluates feedback functions.
 
@@ -522,6 +542,8 @@ class Tru(SingletonPerName):
                     tunnel_proc, tunnel_proc.stderr, out_stderr, tunnel_started
                 )
             )
+            Tru.tunnel_listener_stdout.daemon = True
+            Tru.tunnel_listener_stderr.daemon = True
             Tru.tunnel_listener_stdout.start()
             Tru.tunnel_listener_stderr.start()
             if not tunnel_started.wait(timeout=DASHBOARD_START_TIMEOUT
@@ -567,6 +589,11 @@ class Tru(SingletonPerName):
             target=listen_to_dashboard,
             args=(proc, proc.stderr, out_stderr, started)
         )
+
+        # Purposely block main process from ending and wait for dashboard.
+        Tru.dashboard_listener_stdout.daemon = False
+        Tru.dashboard_listener_stderr.daemon = False
+
         Tru.dashboard_listener_stdout.start()
         Tru.dashboard_listener_stderr.start()
 
