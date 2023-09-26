@@ -70,13 +70,13 @@ import TruCustomApp
 
 ca = CustomApp()
 
-# Normal app usage:
+# Normal app Usage:
 response = ca.respond_to_query("What is the capital of Indonesia?")
 
 # Wrapping app with `TruCustomApp`: 
 ta = TruCustomApp(ca)
 
-# Wrapped usage: must use the general `with_record` (or `awith_record`) method:
+# Wrapped Usage: must use the general `with_record` (or `awith_record`) method:
 response, record = ta.with_record(
     ca.respond_to_query, input="What is the capital of Indonesia?"
 )
@@ -222,6 +222,65 @@ PLACEHOLDER = "__tru_placeholder"
 
 
 class TruCustomApp(App):
+    """Instantiates a Custom App that can be tracked as long as methods are decorated with @instrument.
+        
+        **Usage:**
+
+        ```
+        from trulens_eval import instrument
+        
+        class CustomApp:
+
+            def __init__(self):
+                self.retriever = CustomRetriever()
+                self.llm = CustomLLM()
+                self.template = CustomTemplate(
+                    "The answer to {question} is probably {answer} or something ..."
+                )
+
+            @instrument
+            def retrieve_chunks(self, data):
+                return self.retriever.retrieve_chunks(data)
+
+            @instrument
+            def respond_to_query(self, input):
+                chunks = self.retrieve_chunks(input)
+                answer = self.llm.generate(",".join(chunks))
+                output = self.template.fill(question=input, answer=answer)
+
+                return output
+        
+        ca = CustomApp()
+        from trulens_eval import TruCustomApp
+        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
+        tru_recorder = TruCustomApp(ca, 
+            app_id="Custom Application v1",
+            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
+        
+        question = "What is the capital of Indonesia?"
+
+        # Normal Usage:
+        response_normal = ca.respond_to_query(question)
+
+        # Instrumented Usage:
+        with tru_recorder as recording:
+            ca.respond_to_query(question)
+
+        tru_record = recording.records[0]
+
+        # To add record metadata 
+        with tru_recorder as recording:
+            recording.record_metadata="this is metadata for all records in this context that follow this line"
+            ca.respond_to_query("What is llama 2?")
+            recording.record_metadata="this is different metadata for all records in this context that follow this line"
+            ca.respond_to_query("Where do I download llama 2?")
+        
+        ```
+        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+
+        Args:
+            app (Any): Any class
+    """
     app: Any
 
     root_callable: ClassVar[FunctionOrMethod] = Field(None)
@@ -360,6 +419,8 @@ class TruCustomApp(App):
         return self.with_(self.main_method, *bindings.args, **bindings.kwargs)
 
     async def main_acall(self, human: str):
+        # TODO: work in progress
+        
         # must return an async generator of tokens/pieces that can be appended to create the full response
 
         if self.main_async_method is None:

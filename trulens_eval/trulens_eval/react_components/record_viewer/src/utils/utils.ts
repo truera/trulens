@@ -28,9 +28,21 @@ export const getMethodNameFromCell = (stackCell: StackJSONRaw) => {
  */
 export const getPathName = (stackCell: StackJSONRaw) => {
   return stackCell.path.path
-    .map((p) => p?.item_or_attribute)
+    .map((p) => {
+      if (!p) return undefined;
+
+      if ('item_or_attribute' in p) {
+        return `.${p.item_or_attribute}`;
+      }
+
+      if ('index' in p) {
+        return `[${p.index}]`;
+      }
+
+      return undefined;
+    })
     .filter(Boolean)
-    .join('.');
+    .join('');
 };
 
 /**

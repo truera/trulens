@@ -103,8 +103,61 @@ class LangChainInstrument(Instrument):
 
 
 class TruChain(App):
-    """
-    Wrap a langchain Chain to capture its configuration and evaluation steps. 
+    """Instantiates the Langchain Wrapper.
+        
+        **Usage:**
+
+        Langchain Code: [Langchain Quickstart](https://python.langchain.com/docs/get_started/quickstart)
+        ```
+         # Code snippet taken from langchain 0.0.281 (API subject to change with new versions)
+        from langchain.chains import LLMChain
+        from langchain.llms import OpenAI
+        from langchain.prompts.chat import ChatPromptTemplate
+        from langchain.prompts.chat import HumanMessagePromptTemplate
+        from langchain.prompts.chat import PromptTemplate
+
+        full_prompt = HumanMessagePromptTemplate(
+            prompt=PromptTemplate(
+                template=
+                "Provide a helpful response with relevant background information for the following: {prompt}",
+                input_variables=["prompt"],
+            )
+        )
+
+        chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
+
+        llm = OpenAI(temperature=0.9, max_tokens=128)
+
+        chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
+
+        ```
+
+        Trulens Eval Code:
+        ```
+        
+        from trulens_eval import TruChain
+        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
+        tru_recorder = TruChain(
+            chain,
+            app_id='Chain1_ChatApplication',
+            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
+        )
+        with tru_recorder as recording:
+            chain(""What is langchain?")
+
+        tru_record = recording.records[0]
+
+        # To add record metadata 
+        with tru_recorder as recording:
+            recording.record_metadata="this is metadata for all records in this context that follow this line"
+            chain("What is langchain?")
+            recording.record_metadata="this is different metadata for all records in this context that follow this line"
+            chain("Where do I download langchain?")
+        ```
+        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+
+        Args:
+            app (Chain): A langchain application.
     """
 
     app: Chain
@@ -229,6 +282,7 @@ class TruChain(App):
         """
         Run the chain acall method and also return a record metadata object.
         """
+
         self._with_dep_message(method="acall", is_async=True, with_record=True)
 
         return await self.awith_record(self.app.acall, *args, **kwargs)
@@ -263,6 +317,7 @@ class TruChain(App):
     # TODEP
     # Chain requirement
     def _call(self, *args, **kwargs) -> Any:
+
         self._with_dep_message(
             method="_call", is_async=False, with_record=False
         )
@@ -274,6 +329,7 @@ class TruChain(App):
     # TODEP
     # Optional Chain requirement
     async def _acall(self, *args, **kwargs) -> Any:
+
         self._with_dep_message(
             method="_acall", is_async=True, with_record=False
         )

@@ -6,6 +6,7 @@ import numpy as np
 
 from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
+from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.utils.threading import TP
@@ -55,11 +56,14 @@ def _tci(func):  # "typecheck inputs"
     
     wrapper.__signature__ = sig
 
+    wrapper.__signature__ = sig
+
     return wrapper
 
 
 class Huggingface(Provider):
-
+    """Out of the box feedback functions calling Huggingface APIs.
+    """
     endpoint: Endpoint
 
     def __init__(self, name: str = None, endpoint=None, **kwargs):
@@ -67,9 +71,18 @@ class Huggingface(Provider):
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
         """
-        A set of Huggingface Feedback Functions.
+        Create a Huggingface Provider with out of the box feedback functions.
 
-        All args/kwargs passed to HuggingfaceEndpoint constructor.
+        **Usage:**
+        ```
+        from trulens_eval.feedback.provider.hugs import Huggingface
+        huggingface_provider = Huggingface()
+
+        ```
+
+        
+        Args:
+            endpoint (Endpoint): Internal Usage for DB serialization
         """
 
         kwargs['name'] = name
@@ -95,16 +108,23 @@ class Huggingface(Provider):
         function is: `1.0 - (|probit_language_text1(text1) -
         probit_language_text1(text2))`
         
-        Parameters:
-        
-            text1 (str): Text to evaluate.
+        **Usage:**
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback.provider.hugs import Huggingface
+        huggingface_provider = Huggingface()
 
+        feedback = Feedback(huggingface_provider.language_match).on_input_output() 
+        ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        Args:
+            text1 (str): Text to evaluate.
             text2 (str): Comparative text to evaluate.
 
         Returns:
 
-            float: A value between 0 and 1. 0 being "different languages" and 1
-            being "same languages".
+            float: A value between 0 and 1. 0 being "different languages" and 1 being "same languages".
         """
 
         def get_scores(text):
@@ -140,12 +160,21 @@ class Huggingface(Provider):
         Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
         function that uses a sentiment classifier on `text`.
         
-        Parameters:
+        **Usage:**
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback.provider.hugs import Huggingface
+        huggingface_provider = Huggingface()
+
+        feedback = Feedback(huggingface_provider.positive_sentiment).on_output() 
+        ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "negative sentiment" and 1
-            being "positive sentiment".
+            float: A value between 0 and 1. 0 being "negative sentiment" and 1 being "positive sentiment".
         """
 
         max_length = 500
@@ -166,12 +195,22 @@ class Huggingface(Provider):
         Uses Huggingface's martin-ha/toxic-comment-model model. A function that
         uses a toxic comment classifier on `text`.
         
-        Parameters:
+        **Usage:**
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback.provider.hugs import Huggingface
+        huggingface_provider = Huggingface()
+
+        feedback = Feedback(huggingface_provider.not_toxic).on_output() 
+        ```
+        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        
+        Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "toxic" and 1 being "not
-            toxic".
+            float: A value between 0 and 1. 0 being "toxic" and 1 being "not toxic".
         """
 
         assert len(text) > 0, "Input cannot be blank."
@@ -237,6 +276,4 @@ class Dummy(Huggingface):
         kwargs['name'] = name or "dummyhugs"
         kwargs['endpoint'] = DummyEndpoint(name="dummyendhugspoint")
 
-        super().__init__(
-            **kwargs
-        ) 
+        super().__init__(**kwargs)

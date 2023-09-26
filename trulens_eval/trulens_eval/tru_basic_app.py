@@ -3,6 +3,7 @@
 """
 
 from inspect import BoundArguments
+from inspect import signature
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
@@ -38,20 +39,49 @@ class TruBasicCallableInstrument(Instrument):
 
 
 class TruWrapperApp(object):
-    # the class level call (Should be immutable from the __init__)
-    _call: Callable = lambda self, *args, **kwargs: self._call_fn(
-        *args, **kwargs
-    )
+    # This will be wrapped by instrumentation. Because TruWrapperApp may wrap
+    # different types of callables, we cannot patch the signature to anything
+    # consistent. Because of this, the dashboard/record for this call will have
+    # *args, **kwargs instead of what the app actually uses. We also need to
+    # adjust the main_input lookup to get the correct signature. See note there.
+    def _call(self, *args, **kwargs):
+        return self._call_fn(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        return self._call(*args, **kwargs)
 
     def __init__(self, call_fn: Callable):
         self._call_fn = call_fn
 
 
 class TruBasicApp(App):
-    """
-    A Basic app that makes little assumptions. Assumes input text and output text 
-    """
+    """Instantiates a Basic app that makes little assumptions. Assumes input text and output text.
+        
+        **Usage:**
 
+        ```
+        def custom_application(prompt: str) -> str:
+            return "a response"
+        
+        from trulens_eval import TruBasicApp
+        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
+        tru_recorder = TruBasicApp(custom_application, 
+            app_id="Custom Application v1",
+            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
+
+        # Basic app works by turning your callable into an app
+        # This app is accessbile with the `app` attribute in the recorder
+        with tru_recorder as recording:
+            tru_recorder.app(question)
+
+        tru_record = recording.records[0]
+        
+        ```
+        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+
+        Args:
+            text_to_text (Callable): A text to text callable.
+    """
     app: TruWrapperApp
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
@@ -65,12 +95,12 @@ class TruBasicApp(App):
         Wrap a callable for monitoring.
 
         Arguments:
-        - text_to_text: A callable string to string
+        - text_to_text: A function with signature string to string.
         - More args in App
         - More args in AppDefinition
         - More args in WithClassInfo
         """
-        assert isinstance(text_to_text("This should return a string"), str)
+
         super().update_forward_refs()
         app = TruWrapperApp(text_to_text)
         kwargs['app'] = TruWrapperApp(text_to_text)
@@ -85,18 +115,35 @@ class TruBasicApp(App):
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
-        if "input" in bindings.arguments:
-            return bindings.arguments['input']
+
+        if func == getattr(TruWrapperApp._call, Instrument.INSTRUMENT):
+            # If func is the wrapper app _call, replace the signature and
+            # bindings based on the actual containing callable instead of
+            # self.app._call . This needs to be done since the a TruWrapperApp
+            # may be wrapping apps with different signatures on their callables
+            # so TruWrapperApp._call cannot have a consistent signature
+            # statically. Note also we are looking up the Instrument.INSTRUMENT
+            # attribute here since the method is instrumented and overridden by
+            # another wrapper in the process with the original accessible at
+            # this attribute.
+
+            sig = signature(self.app._call_fn)
+            # Skipping self as TruWrapperApp._call takes in self, but
+            # self.app._call_fn does not.
+            bindings = sig.bind(*bindings.args[1:], **bindings.kwargs)
 
         return super().main_input(func, sig, bindings)
 
-    def call_with_record(self, input: str, **kwargs):
-        """ Run the callable and pass any kwargs.
+    def call_with_record(self, *args, **kwargs):
+        """
+        Run the callable with the given arguments. Note that the wrapped
+        callable is expected to take in a single string.
 
         Returns:
             dict: record metadata
         """
+        # NOTE: Actually text_to_text can take in more args.
 
         self._with_dep_message(method="_call", is_async=False, with_record=True)
 
-        return self.with_record(self.app._call, input, **kwargs)
+        return self.with_record(self.app._call, *args, **kwargs)
