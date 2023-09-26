@@ -236,7 +236,8 @@ class Endpoint(SerialModel, SingletonPerName):
     def track_all_costs(
         thunk: Thunk[T],
         with_openai: bool = True,
-        with_hugs: bool = True
+        with_hugs: bool = True,
+        with_litellm: bool = True
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
         Track costs of all of the apis we can currently track, over the
@@ -272,6 +273,21 @@ class Endpoint(SerialModel, SingletonPerName):
                     "Huggingface API keys are not set. "
                     "Will not track usage."
                 )
+
+        if with_litellm:
+            # TODO: DEPS
+            from trulens_eval.feedback.provider.endpoint.litellm import \
+                LiteLLMEndpoint
+
+            try:
+                e = LiteLLMEndpoint()
+                endpoints.append(e)
+            except ApiKeyError:
+                logger.debug(
+                    "Some API key(s) used by LiteLLM are not set. "
+                    "Will not track usage."
+                )
+
 
         return Endpoint._track_costs(thunk, with_endpoints=endpoints)
 
@@ -280,7 +296,8 @@ class Endpoint(SerialModel, SingletonPerName):
     async def atrack_all_costs(
         thunk: Thunk[Awaitable],
         with_openai: bool = True,
-        with_hugs: bool = True
+        with_hugs: bool = True,
+        with_litellm: bool = True,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
         Track costs of all of the apis we can currently track, over the
@@ -314,6 +331,20 @@ class Endpoint(SerialModel, SingletonPerName):
             except ApiKeyError:
                 logger.debug(
                     "Huggingface API keys are not set. "
+                    "Will not track usage."
+                )
+
+        if with_litellm:
+            # TODO: DEPS
+            from trulens_eval.feedback.provider.endpoint.litellm import \
+                LiteLLMEndpoint
+
+            try:
+                e = LiteLLMEndpoint()
+                endpoints.append(e)
+            except ApiKeyError:
+                logger.debug(
+                    "Some API key(s) used by LiteLLM are not set. "
                     "Will not track usage."
                 )
 
@@ -323,7 +354,8 @@ class Endpoint(SerialModel, SingletonPerName):
     def track_all_costs_tally(
         thunk: Thunk[T],
         with_openai: bool = True,
-        with_hugs: bool = True
+        with_hugs: bool = True,
+        with_litellm: bool = True,
     ) -> Tuple[T, Cost]:
         """
         Track costs of all of the apis we can currently track, over the
@@ -331,7 +363,7 @@ class Endpoint(SerialModel, SingletonPerName):
         """
 
         result, cbs = Endpoint.track_all_costs(
-            thunk, with_openai=with_openai, with_hugs=with_hugs
+            thunk, with_openai=with_openai, with_hugs=with_hugs, with_litellm=with_litellm
         )
 
         if len(cbs) == 0:
@@ -346,7 +378,8 @@ class Endpoint(SerialModel, SingletonPerName):
     async def atrack_all_costs_tally(
         thunk: Thunk[Awaitable],
         with_openai: bool = True,
-        with_hugs: bool = True
+        with_hugs: bool = True,
+        with_litellm: bool = True,
     ) -> Tuple[T, Cost]:
         """
         Track costs of all of the apis we can currently track, over the
@@ -354,7 +387,7 @@ class Endpoint(SerialModel, SingletonPerName):
         """
 
         result, cbs = await Endpoint.atrack_all_costs(
-            thunk, with_openai=with_openai, with_hugs=with_hugs
+            thunk, with_openai=with_openai, with_hugs=with_hugs, with_litellm=with_litellm
         )
 
         if len(cbs) == 0:
@@ -568,6 +601,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
         # If INSTRUMENT is not set, create a wrapper method and return it.
 
+        # TODO: DEDUP
         async def _agenwrapper_completion(
             responses: AsyncGeneratorType, *args, **kwargs
         ):
@@ -633,7 +667,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
             return _agenwrapper_completion(responses, *args, **kwargs)
 
-        # TODO: async/sync code duplication
+        # TODO: DEDUP async/sync code duplication
         async def awrapper(*args, **kwargs):
             logger.debug(
                 f"Calling async wrapped {func.__name__} for {self.name}."
@@ -697,6 +731,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
             return response
 
+        # TODO: DEDUP
         def wrapper(*args, **kwargs):
             logger.debug(f"Calling wrapped {func.__name__} for {self.name}.")
 
@@ -727,6 +762,7 @@ class Endpoint(SerialModel, SingletonPerName):
                 return response
 
             for callback_class in registered_callback_classes:
+                logger.debug(f"Handling callback_class: {callback_class}.")
                 if callback_class not in endpoints:
                     logger.warning(
                         f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
@@ -763,6 +799,7 @@ class Endpoint(SerialModel, SingletonPerName):
             w2 = None
 
         setattr(w, INSTRUMENT, [self.callback_class])
+        w.__doc__ = func.__doc__
         w.__name__ = func.__name__
         w.__signature__ = inspect.signature(func)
 

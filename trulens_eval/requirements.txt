@@ -13,6 +13,7 @@ tokenizers
 protobuf
 accelerate
 openai
+litellm
 pinecone-client
 tiktoken
 slack_bolt
