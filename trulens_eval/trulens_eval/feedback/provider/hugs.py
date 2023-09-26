@@ -8,7 +8,6 @@ from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
@@ -54,8 +53,6 @@ def _tci(func):  # "typecheck inputs"
                         raise ValueError(f"{pident} must be non-empty.")
 
         return func(*bindings.args, **bindings.kwargs)
-    
-    wrapper.__signature__ = sig
 
     wrapper.__signature__ = sig
 
