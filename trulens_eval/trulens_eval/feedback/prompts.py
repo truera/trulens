@@ -220,7 +220,7 @@ RESPONSE:
 """
 
 SUMMARIZATION_PROMPT = """
-You are a helper for summarization tasks. You will do two steps. You must both steps, and most importantly, you must add a score.
+You are a helper for summarization tasks. You will do two steps. You must do both steps, and most importantly, you must add a score.
 
 STEP 1 - Most Important Points:
 (DO NOT SKIP THIS STEP!)
