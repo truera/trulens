@@ -83,6 +83,7 @@ __version__ = "0.13.0a"
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Huggingface
 from trulens_eval.feedback import OpenAI
+from trulens_eval.feedback import LiteLLM
 from trulens_eval.feedback.provider import Provider
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Query
@@ -103,6 +104,7 @@ __all__ = [
     'TruLlama',
     'Feedback',
     'OpenAI',
+    'LiteLLM',
     'Huggingface',
     'FeedbackMode',
     'Provider',
