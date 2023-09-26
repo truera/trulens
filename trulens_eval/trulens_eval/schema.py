@@ -460,6 +460,11 @@ class AppDefinition(SerialModel, WithClassInfo):
     app_extra_json: JSON
 
     def new_session(self) -> 'AppDefinition':
+        """
+        Create a copy of self with the wrapped app being initialized to its
+        initial state before any records are produced (i.e. blank memory).
+        """
+
         assert self.initial_app_loader_dump is not None, "Cannot create new session without `initial_app_loader`."
         app = dill.loads(self.initial_app_loader_dump)()
         kwargs = {f: getattr(self, f) for f in self.__fields__}
