@@ -1,11 +1,11 @@
 import logging
 import os
 
-import openai
+import litellm
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import Provider
-from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
+from trulens_eval.feedback.provider.endpoint import LiteLLMEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.keys import set_openai_key
 from trulens_eval.utils.generated import re_1_10_rating
@@ -13,7 +13,7 @@ from trulens_eval.utils.generated import re_1_10_rating
 logger = logging.getLogger(__name__)
 
 
-class OpenAI(Provider):
+class LiteLLM(Provider):
     """Out of the box feedback functions calling OpenAI APIs.
     """
     model_engine: str
@@ -26,234 +26,31 @@ class OpenAI(Provider):
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
         """
-        Create an OpenAI Provider with out of the box feedback functions.
+        Create an LiteLLM Provider with out of the box feedback functions.
 
         **Usage:**
         ```
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
         ```
 
         Args:
-            model_engine (str): The OpenAI completion model. Defaults to `gpt-3.5-turbo`
+            model_engine (str): The LiteLLM completion model.Defaults to `gpt-3.5-turbo`
             endpoint (Endpoint): Internal Usage for DB serialization
         """
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
         self_kwargs['model_engine'] = model_engine
-        self_kwargs['endpoint'] = OpenAIEndpoint(*args, **kwargs)
+        self_kwargs['endpoint'] = LiteLLMEndpoint(*args, **kwargs)
 
         super().__init__(
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-        set_openai_key()
-
     def _create_chat_completion(self, *args, **kwargs):
-        return openai.ChatCompletion.create(*args, **kwargs)
-
-    def _moderation(self, text: str):
-        return self.endpoint.run_me(
-            lambda: openai.Moderation.create(input=text)
-        )
-
-    def moderation_not_hate(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is hate
-        speech.
-
-        **Usage:**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
-
-        feedback = Feedback(openai_provider.moderation_not_hate).on_output() 
-        ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Args:
-            text (str): Text to evaluate.
-
-        Returns:
-            float: A value between 0 and 1. 0 being "hate" and 1 being "not
-            hate".
-        """
-        openai_response = self._moderation(text)
-        return 1 - float(
-            openai_response["results"][0]["category_scores"]["hate"]
-        )
-
-    def moderation_not_hatethreatening(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is
-        threatening speech.
-
-        **Usage:**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
-
-        feedback = Feedback(openai_provider.moderation_not_hatethreatening).on_output() 
-        ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Args:
-            text (str): Text to evaluate.
-
-        Returns:
-            float: A value between 0 and 1. 0 being "threatening" and 1 being
-            "not threatening".
-        """
-        openai_response = self._moderation(text)
-
-        return 1 - int(
-            openai_response["results"][0]["category_scores"]["hate/threatening"]
-        )
-
-    def moderation_not_selfharm(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is about
-        self harm.
-
-        **Usage:**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
-
-        feedback = Feedback(openai_provider.moderation_not_selfharm).on_output() 
-        ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Args:
-            text (str): Text to evaluate.
-
-        Returns:
-            float: A value between 0 and 1. 0 being "self harm" and 1 being "not
-            self harm".
-        """
-        openai_response = self._moderation(text)
-
-        return 1 - int(
-            openai_response["results"][0]["category_scores"]["self-harm"]
-        )
-
-    def moderation_not_sexual(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is sexual
-        speech.
-
-        **Usage:**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
-
-        feedback = Feedback(openai_provider.moderation_not_sexual).on_output() 
-        ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        
-        Args:
-            text (str): Text to evaluate.
-
-        Returns:
-            float: A value between 0 and 1. 0 being "sexual" and 1 being "not
-            sexual".
-        """
-        openai_response = self._moderation(text)
-
-        return 1 - int(
-            openai_response["results"][0]["category_scores"]["sexual"]
-        )
-
-    def moderation_not_sexualminors(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is about
-        sexual minors.
-
-        **Usage:**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
-
-        feedback = Feedback(openai_provider.moderation_not_sexualminors).on_output() 
-        ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Args:
-            text (str): Text to evaluate.
-
-        Returns:
-            float: A value between 0 and 1. 0 being "sexual minors" and 1 being
-            "not sexual minors".
-        """
-        openai_response = self._moderation(text)
-
-        return 1 - int(
-            openai_response["results"][0]["category_scores"]["sexual/minors"]
-        )
-
-    def moderation_not_violence(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is about
-        violence.
-
-        **Usage:**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
-
-        feedback = Feedback(openai_provider.moderation_not_violence).on_output() 
-        ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Args:
-            text (str): Text to evaluate.
-
-        Returns:
-            float: A value between 0 and 1. 0 being "violence" and 1 being "not
-            violence".
-        """
-        openai_response = self._moderation(text)
-
-        return 1 - int(
-            openai_response["results"][0]["category_scores"]["violence"]
-        )
-
-    def moderation_not_violencegraphic(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is about
-        graphic violence.
-
-        **Usage:**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
-
-        feedback = Feedback(openai_provider.moderation_not_violencegraphic).on_output() 
-        ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Args:
-            text (str): Text to evaluate.
-
-        Returns:
-            float: A value between 0 and 1. 0 being "graphic violence" and 1
-            being "not graphic violence".
-        """
-        openai_response = self._moderation(text)
-
-        return 1 - int(
-            openai_response["results"][0]["category_scores"]["violence/graphic"]
-        )
+        return litellm.completion(*args, **kwargs)
 
     def _find_relevant_string(self, full_source, hypothesis):
         return self.endpoint.run_me(
@@ -284,7 +81,7 @@ class OpenAI(Provider):
 
     def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
         """ A groundedness measure best used for summarized premise against simple hypothesis.
-        This OpenAI implementation uses information overlap prompts.
+        This LLM implementation uses information overlap prompts.
 
         Args:
             premise (str): Summarized source sentences.
@@ -378,32 +175,32 @@ class OpenAI(Provider):
             for line in response.split('\n'):
                 if "Score" in line:
                     score = re_1_10_rating(line) / normalize
-            return score, {"reason": response}
+            return float(score), {"reason": response}
         else:
             return re_1_10_rating(response) / normalize
 
     def qs_relevance(self, question: str, statement: str) -> float:
         """
-        Uses OpenAI's Chat Completion App. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the relevance of the statement to the question.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.qs_relevance).on_input_output() 
+        feedback = Feedback(litellm_provider.qs_relevance).on_input_output() 
         ```
         The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
         
         Usage on RAG Contexts:
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.qs_relevance).on_input().on(
+        feedback = Feedback(litellm_provider.qs_relevance).on_input().on(
             TruLlama.select_source_nodes().node.text # See note below
         ).aggregate(np.mean) 
 
@@ -428,27 +225,27 @@ class OpenAI(Provider):
         self, question: str, statement: str
     ) -> float:
         """
-        Uses OpenAI's Chat Completion App. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the relevance of the statement to the question.
         Also uses chain of thought methodology and emits the reasons.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.qs_relevance_with_cot_reasons).on_input_output() 
+        feedback = Feedback(litellm_provider.qs_relevance_with_cot_reasons).on_input_output() 
         ```
         The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
         
         Usage on RAG Contexts:
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.qs_relevance_with_cot_reasons).on_input().on(
+        feedback = Feedback(litellm_provider.qs_relevance_with_cot_reasons).on_input().on(
             TruLlama.select_source_nodes().node.text # See note below
         ).aggregate(np.mean) 
 
@@ -474,16 +271,16 @@ class OpenAI(Provider):
 
     def relevance(self, prompt: str, response: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the relevance of the response to a prompt.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.relevance).on_input_output()
+        feedback = Feedback(litellm_provider.relevance).on_input_output()
         ```
         The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -491,10 +288,10 @@ class OpenAI(Provider):
         Usage on RAG Contexts:
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.relevance).on_input().on(
+        feedback = Feedback(litellm_provider.relevance).on_input().on(
             TruLlama.select_source_nodes().node.text # See note below
         ).aggregate(np.mean) 
 
@@ -516,17 +313,17 @@ class OpenAI(Provider):
 
     def relevance_with_cot_reasons(self, prompt: str, response: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the relevance of the response to a prompt.
         Also uses chain of thought methodology and emits the reasons.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.relevance_with_cot_reasons).on_input_output()
+        feedback = Feedback(litellm_provider.relevance_with_cot_reasons).on_input_output()
         ```
         The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -534,10 +331,10 @@ class OpenAI(Provider):
         Usage on RAG Contexts:
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.relevance_with_cot_reasons).on_input().on(
+        feedback = Feedback(litellm_provider.relevance_with_cot_reasons).on_input().on(
             TruLlama.select_source_nodes().node.text # See note below
         ).aggregate(np.mean) 
 
@@ -562,16 +359,16 @@ class OpenAI(Provider):
 
     def sentiment(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the sentiment of some text.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.sentiment).on_output() 
+        feedback = Feedback(litellm_provider.sentiment).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -588,17 +385,17 @@ class OpenAI(Provider):
 
     def sentiment_with_cot_reasons(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the sentiment of some text.
         Also uses chain of thought methodology and emits the reasons.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.sentiment_with_cot_reasons).on_output() 
+        feedback = Feedback(litellm_provider.sentiment_with_cot_reasons).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -617,7 +414,7 @@ class OpenAI(Provider):
 
     def model_agreement(self, prompt: str, response: str) -> float:
         """
-        Uses OpenAI's Chat GPT Model. A function that gives Chat GPT the same
+        Uses a chat completion model accessed through LiteLLM's interface. A function that gives Chat GPT the same
         prompt and gets a response, encouraging truthfulness. A second template
         is given to Chat GPT with a prompt that the original response is
         correct, and measures whether previous Chat GPT's response is similar.
@@ -625,10 +422,10 @@ class OpenAI(Provider):
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.model_agreement).on_input_output() 
+        feedback = Feedback(litellm_provider.model_agreement).on_input_output() 
         ```
         The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -665,16 +462,16 @@ class OpenAI(Provider):
 
     def conciseness(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the conciseness of some text. Prompt credit to Langchain Eval.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.conciseness).on_output() 
+        feedback = Feedback(litellm_provider.conciseness).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -690,19 +487,19 @@ class OpenAI(Provider):
         return self._extract_score_and_reasons_from_response(
             system_prompt, user_prompt=text
         )
-    
+
     def correctness(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+       Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the correctness of some text. Prompt credit to Langchain Eval.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.correctness).on_output() 
+        feedback = Feedback(litellm_provider.correctness).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -720,17 +517,17 @@ class OpenAI(Provider):
 
     def correctness_with_cot_reasons(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the correctness of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.correctness_with_cot_reasons).on_output() 
+        feedback = Feedback(litellm_provider.correctness_with_cot_reasons).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -749,16 +546,16 @@ class OpenAI(Provider):
 
     def coherence(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the coherence of some text. Prompt credit to Langchain Eval.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.coherence).on_output() 
+        feedback = Feedback(litellm_provider.coherence).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -776,17 +573,17 @@ class OpenAI(Provider):
 
     def coherence_with_cot_reasons(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the coherence of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.coherence_with_cot_reasons).on_output() 
+        feedback = Feedback(litellm_provider.coherence_with_cot_reasons).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -805,16 +602,16 @@ class OpenAI(Provider):
 
     def harmfulness(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the harmfulness of some text. Prompt credit to Langchain Eval.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.harmfulness).on_output() 
+        feedback = Feedback(litellm_provider.harmfulness).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -832,17 +629,17 @@ class OpenAI(Provider):
 
     def harmfulness_with_cot_reasons(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the harmfulness of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.harmfulness_with_cot_reasons).on_output() 
+        feedback = Feedback(litellm_provider.harmfulness_with_cot_reasons).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -863,16 +660,16 @@ class OpenAI(Provider):
 
     def maliciousness(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the maliciousness of some text. Prompt credit to Langchain Eval.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.maliciousness).on_output() 
+        feedback = Feedback(litellm_provider.maliciousness).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -890,17 +687,17 @@ class OpenAI(Provider):
 
     def maliciousness_with_cot_reasons(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the maliciousness of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.maliciousness_with_cot_reasons).on_output() 
+        feedback = Feedback(litellm_provider.maliciousness_with_cot_reasons).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -919,16 +716,16 @@ class OpenAI(Provider):
 
     def helpfulness(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the helpfulness of some text. Prompt credit to Langchain Eval.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.helpfulness).on_output() 
+        feedback = Feedback(litellm_provider.helpfulness).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
         
@@ -945,17 +742,17 @@ class OpenAI(Provider):
 
     def helpfulness_with_cot_reasons(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the helpfulness of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.helpfulness_with_cot_reasons).on_output() 
+        feedback = Feedback(litellm_provider.helpfulness_with_cot_reasons).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
         
@@ -974,16 +771,16 @@ class OpenAI(Provider):
 
     def controversiality(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the controversiality of some text. Prompt credit to Langchain Eval.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.controversiality).on_output() 
+        feedback = Feedback(litellm_provider.controversiality).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
         
@@ -1000,17 +797,17 @@ class OpenAI(Provider):
 
     def controversiality_with_cot_reasons(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the controversiality of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.controversiality_with_cot_reasons).on_output() 
+        feedback = Feedback(litellm_provider.controversiality_with_cot_reasons).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
         
@@ -1028,16 +825,16 @@ class OpenAI(Provider):
 
     def misogyny(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the misogyny of some text. Prompt credit to Langchain Eval.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.misogyny).on_output() 
+        feedback = Feedback(litellm_provider.misogyny).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -1054,17 +851,17 @@ class OpenAI(Provider):
 
     def misogyny_with_cot_reasons(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the misogyny of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.misogyny_with_cot_reasons).on_output() 
+        feedback = Feedback(litellm_provider.misogyny_with_cot_reasons).on_output() 
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -1082,16 +879,16 @@ class OpenAI(Provider):
 
     def criminality(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the criminality of some text. Prompt credit to Langchain Eval.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.criminality).on_output()
+        feedback = Feedback(litellm_provider.criminality).on_output()
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -1109,17 +906,17 @@ class OpenAI(Provider):
 
     def criminality_with_cot_reasons(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the criminality of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.criminality_with_cot_reasons).on_output()
+        feedback = Feedback(litellm_provider.criminality_with_cot_reasons).on_output()
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -1138,16 +935,16 @@ class OpenAI(Provider):
 
     def insensitivity(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the insensitivity of some text. Prompt credit to Langchain Eval.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.insensitivity).on_output()
+        feedback = Feedback(litellm_provider.insensitivity).on_output()
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -1164,17 +961,17 @@ class OpenAI(Provider):
 
     def insensitivity_with_cot_reasons(self, text: str) -> float:
         """
-        Uses OpenAI's Chat Completion Model. A function that completes a
+        Uses a chat completion model accessed through LiteLLM's interface. A function that completes a
         template to check the insensitivity of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         **Usage:**
         ```
         from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
 
-        feedback = Feedback(openai_provider.insensitivity_with_cot_reasons).on_output()
+        feedback = Feedback(litellm_provider.insensitivity_with_cot_reasons).on_output()
         ```
         The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -1194,7 +991,7 @@ class OpenAI(Provider):
     def _get_answer_agreement(
         self, prompt, response, check_response, model_engine="gpt-3.5-turbo"
     ):
-        oai_chat_response = self.endpoint.run_me(
+        llm_chat_response = self.endpoint.run_me(
             lambda: self._create_chat_completion(
                 model=model_engine,
                 temperature=0.0,
@@ -1212,137 +1009,4 @@ class OpenAI(Provider):
                 ]
             )["choices"][0]["message"]["content"]
         )
-        return oai_chat_response
-
-    def summary_with_cot_reasons(self, source: str, summary: str) -> float:
-        """
-        Uses OpenAI's Chat Completion Model. A function that tries to distill main points and compares a summary against those main points.
-        This feedback function only has a chain of thought implementation as it is extremely important in function assessment. 
-
-        **Usage:**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
-
-        feedback = Feedback(openai_provider.summary_with_cot_reasons).on_input_output()
-        ```
-        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-
-        Args:
-            source (str): Text corresponding to source material. 
-            summary (str): Text corresponding to a summary.
-
-        Returns:
-            float: A value between 0 and 1. 0 being "main points missed" and 1 being "no main points missed".
-        """
-        system_prompt = str.format(
-            prompts.SUMMARIZATION_PROMPT, source=source, summary=summary
-        )
-        return self._extract_score_and_reasons_from_response(system_prompt)
-    
-    def stereotypes(self, prompt: str, response: str) -> float:
-        """
-        Uses OpenAI's Chat Completion Model. A function that completes a
-        template to check adding assumed stereotypes in the response when not present in the prompt.
-
-        **Usage:**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
-
-        feedback = Feedback(openai_provider.stereotypes).on_input_output()
-        ```
-        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-
-        Args:
-            prompt (str): A text prompt to an agent. 
-            response (str): The agent's response to the prompt.
-
-        Returns:
-            float: A value between 0 and 1. 0 being "assumed stereotypes" and 1 being "no assumed stereotypes".
-        """
-        system_prompt = str.format(
-            prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
-        )
-        return self._extract_score_and_reasons_from_response(system_prompt)
-
-    def stereotypes_with_cot_reasons(self, prompt: str, response: str) -> float:
-        """
-        Uses OpenAI's Chat Completion Model. A function that completes a
-        template to check adding assumed stereotypes in the response when not present in the prompt.
-
-        **Usage:**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
-
-        feedback = Feedback(openai_provider.stereotypes_with_cot_reasons).on_input_output()
-        ```
-        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-
-        Args:
-            prompt (str): A text prompt to an agent. 
-            response (str): The agent's response to the prompt.
-
-        Returns:
-            float: A value between 0 and 1. 0 being "assumed stereotypes" and 1 being "no assumed stereotypes".
-        """
-        system_prompt = str.format(
-            prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
-        )
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(system_prompt)
-
-class AzureOpenAI(OpenAI):
-    """Out of the box feedback functions calling AzureOpenAI APIs. 
-    Has the same functionality as OpenAI out of the box feedback functions.
-    """
-    deployment_id: str
-
-    def __init__(self, endpoint=None, **kwargs):
-        # NOTE(piotrm): pydantic adds endpoint to the signature of this
-        # constructor if we don't include it explicitly, even though we set it
-        # down below. Adding it as None here as a temporary hack.
-        """
-        Wrapper to use Azure OpenAI. Please export the following env variables
-
-        - OPENAI_API_BASE
-        - OPENAI_API_VERSION
-        - OPENAI_API_KEY
-
-        **Usage:**
-        ```
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = AzureOpenAI(deployment_id="...")
-
-        ```
-
-
-        Args:
-            model_engine (str, optional): The specific model version. Defaults to "gpt-35-turbo".
-            deployment_id (str): The specified deployment id
-            endpoint (Endpoint): Internal Usage for DB serialization
-        """
-
-        super().__init__(
-            **kwargs
-        )  # need to include pydantic.BaseModel.__init__
-
-        set_openai_key()
-        openai.api_type = "azure"
-        openai.api_base = os.getenv("OPENAI_API_BASE")
-        openai.api_version = os.getenv("OPENAI_API_VERSION")
-
-    def _create_chat_completion(self, *args, **kwargs):
-        """
-        We need to pass `engine`
-        """
-        return super()._create_chat_completion(
-            *args, deployment_id=self.deployment_id, **kwargs
-        )
+        return llm_chat_response
