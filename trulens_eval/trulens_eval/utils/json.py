@@ -19,7 +19,7 @@ from merkle_json import MerkleJson
 import pydantic
 
 from trulens_eval.keys import redact_value
-from trulens_eval.utils.pyschema import _clean_attributes
+from trulens_eval.utils.pyschema import WithClassInfo, _clean_attributes
 from trulens_eval.utils.pyschema import _safe_getattr
 from trulens_eval.utils.pyschema import CIRCLE
 from trulens_eval.utils.pyschema import Class
@@ -253,7 +253,7 @@ def jsonify(
 
     # Add class information for objects that are to be instrumented, known as
     # "components".
-    if instrument.to_instrument_object(obj):
+    if instrument.to_instrument_object(obj) or isinstance(obj, WithClassInfo):
         content[CLASS_INFO] = Class.of_class(
             cls=obj.__class__, with_bases=True
         ).dict()

@@ -24,6 +24,7 @@ from abc import ABC
 from datetime import datetime
 from enum import Enum
 import logging
+from pathlib import Path
 from pprint import PrettyPrinter
 from typing import Any, ClassVar, Dict, Optional, Sequence, TypeVar, Union
 
@@ -32,7 +33,7 @@ from munch import Munch as Bunch
 import pydantic
 from pydantic import Field
 
-from trulens_eval.utils.json import jsonify
+from trulens_eval.utils.json import json_str_of_obj, jsonify
 from trulens_eval.utils.json import obj_id_of_obj
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import Function
@@ -459,21 +460,24 @@ class AppDefinition(SerialModel, WithClassInfo):
     # whatever the user might want to see about the app.
     app_extra_json: JSON
 
-    def new_session(self) -> 'AppDefinition':
+    @staticmethod
+    def new_session(app_definition_json: JSON) -> 'AppDefinition':
         """
-        Create a copy of self with the wrapped app being initialized to its
-        initial state before any records are produced (i.e. blank memory).
+        Create a copy of the json serialized app with the enclosed app being
+        initialized to its initial state before any records are produced (i.e.
+        blank memory).
         """
 
-        assert self.initial_app_loader_dump is not None, "Cannot create new session without `initial_app_loader`."
-        app = dill.loads(self.initial_app_loader_dump)()
-        kwargs = {f: getattr(self, f) for f in self.__fields__}
-        kwargs['app'] = app
+        defn = app_definition_json['initial_app_loader_dump']
 
-        # from WithClassInfo:
-        cls = self.load_class()
+        assert defn is not None, "Cannot create new session without `initial_app_loader`."
+        app = dill.loads(defn)()
+        
+        app_definition_json['app'] = app
 
-        return cls(**kwargs)
+        cls = WithClassInfo.get_class(app_definition_json)
+
+        return cls(**app_definition_json)
 
     def jsonify_extra(self, content):
         # Called by jsonify for us to add any data we might want to add to the
@@ -528,11 +532,31 @@ class AppDefinition(SerialModel, WithClassInfo):
                     )
                 else:
                     self.initial_app_loader_dump = dump
+
+                    path_json = Path.cwd() / f"{app_id}.json"
+                    path_dill = Path.cwd() / f"{app_id}.dill"
+
+                    with path_json.open("w") as fh:
+                        fh.write(json_str_of_obj(self))
+
+                    with path_dill.open("wb") as fh:
+                        fh.write(dump)
+
+                    print(f"Wrote loadable app to {path_json} and {path_dill}.")
+
+
             except Exception as e:
                 logger.warning(
                     f"Could not serialize app loader. "
                     f"Some trulens features may not be available: {e}"
                 )
+
+    @staticmethod
+    def get_loadable_apps():
+        """
+        Gets a list of all of the loadable apps in the current path. This is
+        temporary while we work on streamlit-deployed apps.
+        """
 
     def dict(self):
         return jsonify(self)

@@ -579,9 +579,6 @@ class Function(FunctionOrMethod):
 # Key of structure where class information is stored.
 CLASS_INFO = "__tru_class_info"
 
-# Pydantic stores attributes that start with _ as private with this form:
-CLASS_INFO_PRIVATE = f"_WithClassInfo{CLASS_INFO}"
-
 class WithClassInfo(pydantic.BaseModel):
     """
     Mixin to track class information to aid in querying serialized components
@@ -612,9 +609,9 @@ class WithClassInfo(pydantic.BaseModel):
         kwargs[CLASS_INFO] = class_info
         super().__init__(*args, **kwargs)
 
-    def load_class(self):
-        # pp.pprint(self)
-        return getattr(self, CLASS_INFO_PRIVATE).load()
+    @staticmethod
+    def get_class(obj_json: JSON):
+        return Class(**obj_json[CLASS_INFO]).load()
 
     @staticmethod
     def of_object(obj: object):
