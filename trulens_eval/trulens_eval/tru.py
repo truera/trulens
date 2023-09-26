@@ -417,16 +417,13 @@ class Tru(SingletonPerName):
     def run_dashboard_in_jupyter(self):
         # TODO: check for jupyter
 
-        import streamlit as st
-        from streamlit_jupyter import StreamlitPatcher, tqdm
-        StreamlitPatcher().jupyter()
+        logger.warning("Running dashboard inside a notebook is an experimental feature and may not work well.")
 
+        from streamlit_jupyter import StreamlitPatcher
+        StreamlitPatcher().jupyter()
         from trulens_eval import Leaderboard
 
-        # st.code("hello")
-
         Leaderboard.main()
-
 
     def run_dashboard(
         self, force: bool = False, _dev: Optional[Path] = None
