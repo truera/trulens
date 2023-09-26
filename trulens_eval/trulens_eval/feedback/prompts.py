@@ -219,6 +219,40 @@ RESPONSE:
 {response}
 """
 
+SUMMARIZATION_PROMPT = """
+You are a helper for summarization tasks. You will do two steps. You must do both steps, and most importantly, you must add a score.
+
+STEP 1 - Most Important Points:
+(DO NOT SKIP THIS STEP!)
+
+For the given SOURCE What are the most important points?
+
+please answer with this template:
+
+(Step 1)
+Important Points: <Outline the important points>
+Supporting Evidence: <Explain why these are sufficient to capture the whole SOURCE>
+
+Step 2 - Compare:
+(DO NOT SKIP THIS STEP!)
+
+For a SUMMARY How well does this summary address the above main points?
+
+please answer with this template:
+
+(Step 2)
+Supporting Evidence: <For each of the Important Points, explain if the SUMMARY does or does not mention it.>
+Score: <Give a score from 1 to 10 on if the SUMMARY addresses every single one of the main points. A score of 1 is no points were mentioned. A score of 5 is half the points were mentioned. a score of 10 is all points were mentioned.>
+
+
+/START SUMMARY/ 
+{summary}
+/END SUMMARY/ 
+
+/START SOURCE/ 
+{source}
+/END SOURCE/ 
+"""
 
 COT_REASONS_TEMPLATE = \
 """
