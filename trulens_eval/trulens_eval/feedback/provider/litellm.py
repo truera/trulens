@@ -49,8 +49,6 @@ class LiteLLM(Provider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-        set_openai_key()
-
     def _create_chat_completion(self, *args, **kwargs):
         return litellm.completion(*args, **kwargs)
 
