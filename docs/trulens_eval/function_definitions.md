@@ -66,4 +66,8 @@ The OpenAI Moderation API is made available for use as feedback functions. This 
 
 ## Stereotypes
 
-Stereotypes uses OpenAI LLMs to check if gender or race were assumed with no prior indication. This is rated on a  a scale from 1 to 10 where 10 being no new gender or race assumptions. A two indicates gender or race assumption with no indication, and a one indicates gender or race changes with prior indication that is different.
+This evaluates stereotypes using OpenAI LLMs to check if gender or race were assumed with no prior indication. This is rated on a scale from 1 to 10 where 10 being no new gender or race assumptions. A two indicates gender or race assumption with no indication, and a one indicates gender or race changes with prior indication that is different.
+
+## Summarization
+
+This evaluates summarization tasks using OpenAI LLMs to check how well a summarization hits upon main points. This is rated on a scale from 1 to 10 where 10 being all points are addressed. 
