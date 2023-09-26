@@ -4,11 +4,13 @@ Serialization utilities.
 
 from __future__ import annotations
 
+import ast
+from ast import dump
+from ast import parse
 import logging
 from pprint import PrettyPrinter
-from typing import (
-    Any, Dict, Iterable, Optional, Sequence, Set, Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
+                    Tuple, TypeVar, Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -354,6 +356,16 @@ class GetItems(Step):
         return f"[{','.join(self.items)}]"
 
 
+
+class ParseException(Exception):
+    def __init__(self, exp_string: str, exp_ast: ast.AST):
+        self.exp_string = exp_string
+        self.exp_ast = exp_ast
+
+    def __str__(self):
+        return f"Failed to parse expression `{self.exp_string}` as a `JSONPath`.\n{dump(self.exp_ast)}"
+
+
 class JSONPath(SerialModel):
     """
     Utilitiy class for building JSONPaths.
@@ -371,6 +383,91 @@ class JSONPath(SerialModel):
     def __init__(self, path: Optional[Tuple[Step, ...]] = None):
 
         super().__init__(path=path or ())
+
+    @staticmethod
+    def of_string(s: str) -> 'JSONPath':
+        if len(s) == 0:
+            return JSONPath()
+
+        try:
+            exp = parse(f"PLACEHOLDER.{s}", mode="eval")
+        except SyntaxError as e:
+            raise ParseException(s, None)
+
+        if not isinstance(exp, ast.Expression):
+            raise ParseException(s, exp)
+        
+        exp = exp.body
+
+        path = []
+
+        def of_index(idx):
+            if isinstance(idx, ast.Tuple):
+                elts = tuple(of_index(elt.value) for elt in idx.elts)
+                if all(isinstance(e, GetItem) for e in elts):
+                    return GetItems(items=tuple(e.item for e in elts))
+                elif all(isinstance(e, int) for e in elts):
+                    return GetIndices(indices=tuple(e.index for e in elts))
+                else:
+                    raise ParseException(s, idx)
+                
+            elif isinstance(idx, ast.Constant):
+                if isinstance(idx.value, str):
+                    return GetItem(item=idx.value)
+                elif isinstance(idx.value, int):
+                    return GetIndex(index=idx.value)
+                else:
+                    raise ParseException(s, idx)
+
+            elif isinstance(idx, ast.UnaryOp):
+                if isinstance(idx.op, ast.USub):
+                    oper = of_index(idx.operand)
+                    if not isinstance(oper, GetIndex):
+                        raise ParseException(s, idx)
+                    return GetIndex(index=-oper.index)
+
+            elif idx is None:
+                return None
+
+            else:
+                raise ParseException(s, exp)
+
+        while exp is not None:
+            if isinstance(exp, ast.Attribute):
+                attr_name = exp.attr
+                path.append(GetItemOrAttribute(item_or_attribute=attr_name))
+                exp = exp.value
+
+            elif isinstance(exp, ast.Subscript):
+                sub = exp.slice
+                
+                if isinstance(sub, ast.Index):
+                    idx = sub.value
+                    step = of_index(idx)
+                    path.append(step)
+
+                elif isinstance(sub, ast.Slice):
+                    vals = tuple(of_index(v) for v in (sub.lower, sub.upper, sub.step))
+                    
+                    if not all(e is None or isinstance(e, GetIndex) for e in vals):
+                        raise ParseException(s, exp)
+
+                    vals = tuple(None if e is None else e.index for e in vals)
+                    path.append(GetSlice(start=vals[0], stop=vals[1], step=vals[2]))
+
+                else:
+                    raise ParseException(s, exp)
+
+                exp = exp.value
+            elif isinstance(exp, ast.Name):
+                if exp.id != "PLACEHOLDER":
+                    raise ParseException(s, exp)
+
+                exp = None
+            else:
+                raise ParseException(s, exp)
+
+        return JSONPath(path=path[::-1])
 
     def __str__(self):
         return "*" + ("".join(map(repr, self.path)))

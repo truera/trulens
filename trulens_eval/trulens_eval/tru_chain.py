@@ -55,6 +55,10 @@ class LangChainInstrument(Instrument):
 
         # Instrument only methods with these names and of these classes.
         METHODS = {
+            "save_context":
+                lambda o: isinstance(o, langchain.schema.BaseMemory),
+            "clear":
+                lambda o: isinstance(o, langchain.schema.BaseMemory),
             "_call":
                 lambda o: isinstance(o, langchain.chains.base.Chain),
             "__call__":
@@ -244,6 +248,20 @@ class TruChain(App):
                 return ret[self.app.output_keys[0]]
 
         return App.main_output(self, func, sig, bindings, ret)
+
+    def main_call(self, human: str):
+        # If available, a single text to a single text invocation of this app.
+
+        out_key = self.app.output_keys[0]
+
+        return self.with_(self.app, human)[out_key]
+
+    async def main_acall(self, human: str):
+        # If available, a single text to a single text invocation of this app.
+
+        out_key = self.app.output_keys[0]
+
+        return await self._acall(human)[out_key]
 
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped
