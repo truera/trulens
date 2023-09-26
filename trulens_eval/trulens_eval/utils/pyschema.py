@@ -26,9 +26,10 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from types import ModuleType
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union, ClassVar
 
 import pydantic
+from pydantic import Field
 
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
@@ -391,8 +392,12 @@ class ObjSerial(Obj):
 
         # Constructor arguments for some common types.
         if isinstance(obj, pydantic.BaseModel):
+            # NOTE: avoids circular import:
+            from trulens_eval.utils.json import jsonify
+
             init_args = ()
             init_kwargs = obj.dict()
+            # init_kwargs = jsonify(obj)
         elif isinstance(obj, Exception):
             init_args = obj.args
             init_kwargs = {}
@@ -413,10 +418,14 @@ class ObjSerial(Obj):
 
         # TODO: dataclasses
         # TODO: dataclasses_json
-
-        sig = _safe_init_sig(cls.__call__)
+        
         # NOTE: Something related to pydantic models incorrectly sets signature
         # of cls so we need to check cls.__call__ instead.
+        # TODO: app serialization
+        #if isinstance(cls, type):
+        #    sig = _safe_init_sig(cls)
+        #else:
+        sig = _safe_init_sig(cls.__call__)
 
         b = sig.bind(*init_args, **init_kwargs)
         bindings = Bindings.of_bound_arguments(b)
@@ -570,6 +579,8 @@ class Function(FunctionOrMethod):
 # Key of structure where class information is stored.
 CLASS_INFO = "__tru_class_info"
 
+# Pydantic stores attributes that start with _ as private with this form:
+CLASS_INFO_PRIVATE = f"_WithClassInfo{CLASS_INFO}"
 
 class WithClassInfo(pydantic.BaseModel):
     """
@@ -579,7 +590,9 @@ class WithClassInfo(pydantic.BaseModel):
 
     # Using this odd key to not pollute attribute names in whatever class we mix
     # this into. Should be the same as CLASS_INFO.
-    __tru_class_info: Class
+    __tru_class_info: Class = Field(exclude=False)
+
+    # class_info: Class
 
     def __init__(
         self,
@@ -596,9 +609,12 @@ class WithClassInfo(pydantic.BaseModel):
             assert cls is not None, "Either `class_info`, `obj` or `cls` need to be specified."
             class_info = Class.of_class(cls, with_bases=True)
 
-        kwargs['__tru_class_info'] = class_info
-
+        kwargs[CLASS_INFO] = class_info
         super().__init__(*args, **kwargs)
+
+    def load_class(self):
+        # pp.pprint(self)
+        return getattr(self, CLASS_INFO_PRIVATE).load()
 
     @staticmethod
     def of_object(obj: object):

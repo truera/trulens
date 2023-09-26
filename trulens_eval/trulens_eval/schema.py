@@ -24,10 +24,13 @@ from abc import ABC
 from datetime import datetime
 from enum import Enum
 import logging
+from pprint import PrettyPrinter
 from typing import Any, ClassVar, Dict, Optional, Sequence, TypeVar, Union
 
+import dill
 from munch import Munch as Bunch
 import pydantic
+from pydantic import Field
 
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
@@ -44,6 +47,7 @@ from trulens_eval.utils.serial import SerialModel
 T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
+pp = PrettyPrinter()
 
 # Identifier types.
 
@@ -417,7 +421,7 @@ class FeedbackMode(str, Enum):
     DEFERRED = "deferred"
 
 
-class AppDefinition(SerialModel, WithClassInfo, ABC):
+class AppDefinition(SerialModel, WithClassInfo):
     # Serialized fields here whereas app.py:App contains
     # non-serialized fields.
 
@@ -446,10 +450,25 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
     # Wrapped app in jsonized form.
     app: JSON
 
+    # NOTE: temporary unsafe serialization of function that loads the app:
+    # Dump of the initial app before any invocations. Can be used to create a new session.
+    initial_app_loader_dump: Optional[bytes] = None
+
     # Info to store about the app and to display in dashboard. This is useful if
     # app itself cannot be serialized. `app_extra_json`, then, can stand in place for
     # whatever the user might want to see about the app.
     app_extra_json: JSON
+
+    def new_session(self) -> 'AppDefinition':
+        assert self.initial_app_loader_dump is not None, "Cannot create new session without `initial_app_loader`."
+        app = dill.loads(self.initial_app_loader_dump)()
+        kwargs = {f: getattr(self, f) for f in self.__fields__}
+        kwargs['app'] = app
+
+        # from WithClassInfo:
+        cls = self.load_class()
+
+        return cls(**kwargs)
 
     def jsonify_extra(self, content):
         # Called by jsonify for us to add any data we might want to add to the
@@ -493,6 +512,22 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         if metadata is None:
             metadata = {}
         self.metadata = metadata
+
+        if 'initial_app_loader' in kwargs:
+            try:
+                dump = dill.dumps(kwargs['initial_app_loader'])
+                if len(dump) > 4096:
+                    logger.warning(
+                        "`initial_app_loader` dump is too big. "
+                        "If you are loading large objects, include the loading logic inside `initial_app_loader`."
+                    )
+                else:
+                    self.initial_app_loader_dump = dump
+            except Exception as e:
+                logger.warning(
+                    f"Could not serialize app loader. "
+                    f"Some trulens features may not be available: {e}"
+                )
 
     def dict(self):
         return jsonify(self)

@@ -14,6 +14,7 @@ from typing import (
     Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
     Tuple, Type
 )
+import dill
 
 import pydantic
 from pydantic import Field
@@ -35,7 +36,7 @@ from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import callable_name
 from trulens_eval.utils.pyschema import Class
-from trulens_eval.utils.pyschema import CLASS_INFO
+from trulens_eval.utils.pyschema import CLASS_INFO, ObjSerial
 from trulens_eval.utils.serial import all_objects
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
@@ -417,10 +418,11 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         )
 
         super().__init__(**kwargs)
-
+        
         self.instrument.instrument_object(
             obj=self.app, query=Select.Query().app
         )
+
 
     def __hash__(self):
         return hash(id(self))
