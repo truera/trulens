@@ -23,6 +23,8 @@ Exposed in this layer:
 
 Some initial thoughts on root organization:
 
+QUESTION: should positive/negative desirability to be part of this initial abstraction.
+
 Feedback
 - NaturalLanguage
   - Syntax
@@ -34,11 +36,13 @@ Feedback
     - Coherence
     - Relevance
       - QuestionStatementRelevance
+      - PromptResponseRelevance
     - Groundedness
     - Sentiment
     - Helpfulness
     - Controversiality
     - Moderation
+      - Stereotypes 
       - Legality
         - Criminality
       - Harmfulness
