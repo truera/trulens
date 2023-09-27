@@ -203,7 +203,7 @@ class Record(SerialModel):
                 GetItemOrAttribute(item_or_attribute=frame_info.method.name)
             )  # adds another attribute to path, from method name
             # TODO: append if already there
-            ret = path.set(obj=ret, val=call)
+            ret = path.set_or_append(obj=ret, val=call)
 
         return ret
 

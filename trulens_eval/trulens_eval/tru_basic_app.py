@@ -144,6 +144,6 @@ class TruBasicApp(App):
         """
         # NOTE: Actually text_to_text can take in more args.
 
-        self._with_dep_message(method="_call", is_async=False, with_record=True)
+        self._with_dep_message(method="call", is_async=False, with_record=True)
 
         return self.with_record(self.app._call, *args, **kwargs)
