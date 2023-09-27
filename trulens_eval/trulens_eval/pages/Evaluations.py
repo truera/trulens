@@ -17,21 +17,25 @@ from ux.add_logo import add_logo
 from ux.styles import CATEGORY
 
 from trulens_eval import Tru
+from trulens_eval.app import Agent
 from trulens_eval.app import ComponentView
 from trulens_eval.app import instrumented_component_views
 from trulens_eval.app import LLM
 from trulens_eval.app import Other
 from trulens_eval.app import Prompt
+from trulens_eval.app import Tool
 from trulens_eval.db import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.serial import JSONPath
+from trulens_eval.ux.components import draw_agent_info
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
 from trulens_eval.ux.components import draw_metadata
 from trulens_eval.ux.components import draw_prompt_info
+from trulens_eval.ux.components import draw_tool_info
 from trulens_eval.ux.components import render_selector_markdown
 from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
@@ -94,6 +98,13 @@ def render_component(query, component, header=True):
 
     elif isinstance(component, Prompt):
         draw_prompt_info(component=component, query=query)
+
+    elif isinstance(component, Agent):
+        draw_agent_info(component=component, query=query)
+
+    elif isinstance(component, Tool):
+        draw_tool_info(component=component, query=query)
+
 
     elif isinstance(component, Other):
         with st.expander("Uncategorized Component Details:"):
