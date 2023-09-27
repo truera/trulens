@@ -37,7 +37,6 @@ class LangChainInstrument(Instrument):
         # Thunk because langchain is optional.
         CLASSES = lambda: {
             langchain.chains.base.Chain,
-            langchain.vectorstores.base.BaseRetriever,
             langchain.schema.BaseRetriever,
             langchain.llms.base.BaseLLM,
             langchain.prompts.base.BasePromptTemplate,
