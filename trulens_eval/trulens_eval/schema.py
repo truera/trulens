@@ -23,10 +23,11 @@ util.py:CLASS_INFO key.
 from abc import ABC
 from datetime import datetime
 from enum import Enum
+import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Any, ClassVar, Dict, Optional, Sequence, TypeVar, Union
+from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, TypeVar, Union
 
 import dill
 from munch import Munch as Bunch
@@ -451,6 +452,7 @@ class AppDefinition(SerialModel, WithClassInfo):
     # Wrapped app in jsonized form.
     app: JSON
 
+    # EXPERIMENTAL
     # NOTE: temporary unsafe serialization of function that loads the app:
     # Dump of the initial app before any invocations. Can be used to create a new session.
     initial_app_loader_dump: Optional[bytes] = None
@@ -461,7 +463,7 @@ class AppDefinition(SerialModel, WithClassInfo):
     app_extra_json: JSON
 
     @staticmethod
-    def new_session(app_definition_json: JSON) -> 'AppDefinition':
+    def new_session(app_definition_json: JSON, initial_app_loader: Optional[Callable]) -> 'AppDefinition':
         """
         Create a copy of the json serialized app with the enclosed app being
         initialized to its initial state before any records are produced (i.e.
@@ -470,10 +472,15 @@ class AppDefinition(SerialModel, WithClassInfo):
 
         defn = app_definition_json['initial_app_loader_dump']
 
-        assert defn is not None, "Cannot create new session without `initial_app_loader`."
-        app = dill.loads(defn)()
+        if initial_app_loader is None:
+            assert defn is not None, "Cannot create new session without `initial_app_loader`."
+            app = dill.loads(defn)()
+        else:
+            app = initial_app_loader()
+            defn = dill.dumps(initial_app_loader)
         
         app_definition_json['app'] = app
+        app_definition_json['initial_app_loader_dump'] = defn
 
         cls = WithClassInfo.get_class(app_definition_json)
 
@@ -522,9 +529,11 @@ class AppDefinition(SerialModel, WithClassInfo):
             metadata = {}
         self.metadata = metadata
 
+        # EXPERIMENTAL
         if 'initial_app_loader' in kwargs:
             try:
                 dump = dill.dumps(kwargs['initial_app_loader'])
+
                 if len(dump) > 4096:
                     logger.warning(
                         "`initial_app_loader` dump is too big. "
@@ -553,10 +562,36 @@ class AppDefinition(SerialModel, WithClassInfo):
 
     @staticmethod
     def get_loadable_apps():
+        # EXPERIMENTAL
         """
         Gets a list of all of the loadable apps in the current path. This is
         temporary while we work on streamlit-deployed apps.
         """
+
+        rets = []
+
+        for path_json in Path().iterdir():
+            if path_json.suffix != ".json":
+                continue
+
+            path_dill = path_json.parent / f"{path_json.stem}.dill"
+
+            if not path_dill.exists():
+                continue
+
+            with path_json.open("r") as fh:
+                app_json = json.load(fh)
+
+            with path_dill.open("rb") as fh:
+                app_loader = dill.load(fh)
+
+            rets.append(dict(
+                app_definition_json=app_json,
+                initial_app_loader=app_loader
+            ))
+        
+        return rets
+
 
     def dict(self):
         return jsonify(self)
