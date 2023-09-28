@@ -1,7 +1,6 @@
 import inspect
 import logging
 import pprint
-
 from typing import Any, Callable, Dict, List, Optional
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
@@ -14,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
+
 class LiteLLMCallback(EndpointCallback):
 
     class Config:
@@ -24,6 +24,7 @@ class LiteLLMCallback(EndpointCallback):
 
     def handle_generation(self, response: Any) -> None:
         super().handle_generation(response)
+
 
 class LiteLLMEndpoint(Endpoint, WithClassInfo):
     """
@@ -65,6 +66,7 @@ class LiteLLMEndpoint(Endpoint, WithClassInfo):
 
     def __init__(self, *args, **kwargs):
         import os
+
         import litellm
 
         kwargs['name'] = "litellm"

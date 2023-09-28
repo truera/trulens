@@ -120,7 +120,7 @@ def stack_with_tasks() -> Sequence['frame']:
         for s in task_stack:
             logger.debug(f"\t{s}")
 
-        temp =  merge_stacks(ret, task_stack)
+        temp = merge_stacks(ret, task_stack)
         logger.debug(f"Complete stack:")
         for f in temp:
             logger.debug(f"\t{f}")
@@ -149,7 +149,7 @@ def get_all_local_in_call_stack(
     key: str,
     func: Callable[[Callable], bool],
     offset: Optional[int] = 1,
-    skip: Optional[Any] = None # really frame
+    skip: Optional[Any] = None  # really frame
 ) -> Iterator[Any]:
     """
     Get the value of the local variable named `key` in the stack at all of the
@@ -220,7 +220,7 @@ def get_first_local_in_call_stack(
     key: str,
     func: Callable[[Callable], bool],
     offset: Optional[int] = 1,
-    skip: Optional[Any] = None # actually frame
+    skip: Optional[Any] = None  # actually frame
 ) -> Optional[Any]:
     """
     Get the value of the local variable named `key` in the stack at the nearest
@@ -238,7 +238,13 @@ def get_first_local_in_call_stack(
     """
 
     try:
-        return next(iter(get_all_local_in_call_stack(key, func, offset=offset + 1, skip=skip)))
+        return next(
+            iter(
+                get_all_local_in_call_stack(
+                    key, func, offset=offset + 1, skip=skip
+                )
+            )
+        )
     except StopIteration:
         return None
 

@@ -41,7 +41,7 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.schema import BaseComponent
 
     # LLMs
-    from llama_index.llms.base import LLM # subtype of BaseComponent
+    from llama_index.llms.base import LLM  # subtype of BaseComponent
 
     # misc
     from llama_index.indices.query.base import BaseQueryEngine
@@ -65,9 +65,9 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.memory import BaseMemory
 
     # agents
-    from llama_index.tools.types import ToolMetadata # all of the readable info regarding tools is in this class
+    from llama_index.tools.types import ToolMetadata  # all of the readable info regarding tools is in this class
     from llama_index.tools.types import BaseTool
-    from llama_index.tools.types import AsyncBaseTool # subtype of BaseTool
+    from llama_index.tools.types import AsyncBaseTool  # subtype of BaseTool
 
 from trulens_eval.tru_chain import LangChainInstrument
 
@@ -111,18 +111,26 @@ class LlamaInstrument(Instrument):
         METHODS = dict_set_with(
             {
                 # LLM:
-                "complete": lambda o: isinstance(o, LLM),
-                "stream_complete": lambda o: isinstance(o, LLM),
-                "acomplete": lambda o: isinstance(o, LLM),
-                "astream_complete": lambda o: isinstance(o, LLM),
-                
+                "complete":
+                    lambda o: isinstance(o, LLM),
+                "stream_complete":
+                    lambda o: isinstance(o, LLM),
+                "acomplete":
+                    lambda o: isinstance(o, LLM),
+                "astream_complete":
+                    lambda o: isinstance(o, LLM),
+
                 # BaseTool/AsyncBaseTool:
-                "__call__": lambda o: isinstance(o, BaseTool),
-                "call": lambda o: isinstance(o, BaseTool),
-                "acall": lambda o: isinstance(o, AsyncBaseTool),
+                "__call__":
+                    lambda o: isinstance(o, BaseTool),
+                "call":
+                    lambda o: isinstance(o, BaseTool),
+                "acall":
+                    lambda o: isinstance(o, AsyncBaseTool),
 
                 # Memory:
-                "put": lambda o: isinstance(o, BaseMemory),
+                "put":
+                    lambda o: isinstance(o, BaseMemory),
 
                 # Misc.:
                 "get_response":
@@ -154,11 +162,12 @@ class LlamaInstrument(Instrument):
                             WithFeedbackFilterNodes
                         )
                     ),
-                
+
                 # BaseQueryEngine:
                 "synthesize":
                     lambda o: isinstance(o, BaseQueryEngine),
-            }, LangChainInstrument.Default.METHODS
+            },
+            LangChainInstrument.Default.METHODS
         )
 
     def __init__(self, *args, **kwargs):

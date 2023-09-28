@@ -29,10 +29,10 @@ add_logo()
 
 database_url = None
 
+
 def streamlit_app():
     tru = Tru(database_url=database_url)
     lms = tru.db
-
 
     # Set the title and subtitle of the app
     st.title('App Leaderboard')
