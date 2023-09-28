@@ -196,11 +196,31 @@ class Prompt(ComponentView):
 
 class LLM(ComponentView):
     # langchain.llms.base.BaseLLM
-    # llama_index ???
+    # llama_index.llms.base.LLM
 
     @property
     @abstractmethod
     def model_name(self) -> str:
+        pass
+
+
+class Tool(ComponentView):
+    # langchain ???
+    # llama_index.tools.types.BaseTool
+
+    @property
+    @abstractmethod
+    def tool_name(self) -> str:
+        pass
+
+
+class Agent(ComponentView):
+    # langchain ???
+    # llama_index.agent.types.BaseAgent
+
+    @property
+    @abstractmethod
+    def agent_name(self) -> str:
         pass
 
 
@@ -212,7 +232,6 @@ class Memory(ComponentView):
 
 class Other(ComponentView):
     # Any component that does not fit into the other named categories.
-
     pass
 
 
@@ -418,8 +437,13 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             "recording_contexts"
         )
 
+        # Cannot use this to set app. AppDefinition has app as JSON type.
+        # TODO: Figure out a better design to avoid this.
         super().__init__(**kwargs)
-        
+
+        app = kwargs['app']
+        self.app = app
+
         self.instrument.instrument_object(
             obj=self.app, query=Select.Query().app
         )
@@ -440,7 +464,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         else:
             if self.feedback_mode == FeedbackMode.NONE:
-                logger.warn(
+                logger.warning(
                     "`tru` is specified but `feedback_mode` is FeedbackMode.NONE. "
                     "No feedback evaluation and logging will occur."
                 )
@@ -599,19 +623,19 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         funcs = self.instrumented_methods.get(id(obj))
 
         if funcs is None:
-            logger.debug(
+            logger.warning(
                 f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. "
                 "The path of this call may be incorrect."
             )
             try:
                 _id, f, path = next(iter(self._get_methods_for_func(func)))
             except Exception:
-                logger.debug(
+                logger.warning(
                     "No other objects use this function so cannot guess path."
                 )
                 return None
 
-            logger.debug(
+            logger.warning(
                 f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function."
             )
 
@@ -623,7 +647,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         else:
             if func not in funcs:
-                logger.debug(
+                logger.warning(
                     f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. "
                     "The path of this call may be incorrect."
                 )
@@ -631,12 +655,12 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 try:
                     _id, f, path = next(iter(self._get_methods_for_func(func)))
                 except Exception:
-                    logger.debug(
+                    logger.warning(
                         "No other objects use this function so cannot guess path."
                     )
                     return None
 
-                logger.debug(
+                logger.warning(
                     f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function."
                 )
 
@@ -950,11 +974,17 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         Print instrumented components and their categories.
         """
 
-        print(
-            "\n".join(
-                f"{t[1].__class__.__name__} of {t[1].__class__.__module__} component: "
-                f"{str(t[0])}" for t in self.instrumented()
+        object_strings = []
+
+        for t in self.instrumented():
+            path = JSONPath(t[0].path[1:])
+            obj = next(iter(path(self)))
+            object_strings.append(
+                f"\t{type(obj).__name__} ({t[1].__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"
             )
+
+        print(
+            "\n".join(object_strings)
         )
 
 

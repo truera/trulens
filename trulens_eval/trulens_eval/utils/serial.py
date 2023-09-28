@@ -9,8 +9,8 @@ from ast import dump
 from ast import parse
 import logging
 from pprint import PrettyPrinter
-from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
-                    Tuple, TypeVar, Union)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
+                    Set, Tuple, TypeVar, Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -216,13 +216,34 @@ class GetItem(Step):
 class GetItemOrAttribute(Step):
     # For item/attribute agnostic addressing.
 
+    # NOTE: We also allow to lookup elements within sequences if the subelements
+    # have the item or attribute. We issue warning if this is ambiguous (looking
+    # up in a sequence of more than 1 element).
+
     item_or_attribute: str  # distinct from "item" for deserialization
 
     def __hash__(self):
         return hash(self.item_or_attribute)
 
     def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
-        if isinstance(obj, Dict):
+        # Special handling of sequences. See NOTE above.
+        if isinstance(obj, Sequence):
+            if len(obj) == 1:
+                for r in self.__call__(obj=obj[0]):
+                    yield r
+            elif len(obj) == 0:
+                raise ValueError(f"Object not a dictionary or sequence of dictionaries: {obj}.")
+            else: # len(obj) > 1
+                logger.warning(
+                    f"Object (of type {type(obj).__name__}) is a sequence containing more than one dictionary. "
+                    f"Lookup by item or attribute `{self.item_or_attribute}` is ambiguous. "
+                    f"Use a lookup by index(es) or slice first to disambiguate."
+                )
+                for r in self.__call__(obj=obj[0]):
+                    yield r
+
+        # Otherwise handle a dict or object with the named attribute.
+        elif isinstance(obj, Dict):
             if self.item_or_attribute in obj:
                 yield obj[self.item_or_attribute]
             else:
@@ -502,7 +523,36 @@ class JSONPath(SerialModel):
 
         return True
 
+    def set_or_append(self, obj: Any, val: Any) -> Any:
+        """
+        If `obj` at path `self` is None or does not exist, sets it to a list
+        containing only the given `val`. If it already exists as a sequence,
+        appends `val` to that sequence as a list. If it is set but not a sequence,
+        error is thrown.
+        
+        """
+        try:
+            existing = self.get_sole_item(obj)
+            if isinstance(existing, Sequence):
+                return self.set(obj, list(existing) + [val])
+            elif existing is None:
+                return self.set(obj, [val])
+            else:
+                raise ValueError(
+                    f"Trying to append to object which is not a list; "
+                    f"is of type {type(existing).__name__} instead."
+                )
+            
+        except Exception:
+            return self.set(obj, [val])
+
+
     def set(self, obj: Any, val: Any) -> Any:
+        """
+        In `obj` at path `self` exists, change it to `val`. Otherwise create a
+        spot for it with Munch objects and then set it.
+        """
+
         if len(self.path) == 0:
             return val
 
