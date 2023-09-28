@@ -197,6 +197,8 @@ class AppUI(traitlets.HasTraits):
         self.display_top = widgets.VBox([], layout=debug_style)
         self.display_side = widgets.VBox([], layout={'width':"50%", **debug_style})
 
+        self.display_stdout = widgets.Output()
+
         self.display_records = []
 
         self.app_selections = {}
@@ -215,22 +217,25 @@ class AppUI(traitlets.HasTraits):
         self.app_selector_button.on_click(self.add_app_selection)
         self.record_selector_button.on_click(self.add_record_selection)
 
+        outputs_widget = widgets.Accordion(children=[self.display_stdout])
+        outputs_widget.set_title(0, 'stdpipes')
+
         self.display_bottom = widgets.VBox([
             widgets.HBox([self.main_input_button, self.main_input], layout=debug_style),
             widgets.HBox([self.app_selector_button, self.app_selector], layout=debug_style),
-            widgets.HBox([self.record_selector_button, self.record_selector], layout=debug_style)],
-            layout=debug_style
+            widgets.HBox([self.record_selector_button, self.record_selector], layout=debug_style),
+            ], layout=debug_style
         )
 
         self.display_top.children += (self.current_record.d, )
 
-        self.d = widgets.HBox([
+        self.d = widgets.VBox([widgets.HBox([
                 widgets.VBox([
                     self.display_top,
                     self.display_bottom
                 ], layout={**debug_style, 'width': '50%'}),
                 self.display_side], layout=debug_style
-            )
+            ), outputs_widget])
         
         if app_selectors is not None:
             for selector in app_selectors:
@@ -321,9 +326,10 @@ class AppUI(traitlets.HasTraits):
                 t.join()
 
             else:
-                self.current_record.set_comp("...")
-                comp = self.app.main_call(human)
-                self.current_record.set_comp(comp)
+                with self.display_stdout:
+                    self.current_record.set_comp("...")
+                    comp = self.app.main_call(human)
+                    self.current_record.set_comp(comp)
 
         self.current_record_record = recording.get()
         self.current_record.record = self.current_record_record
