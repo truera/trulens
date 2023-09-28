@@ -690,7 +690,7 @@ class OpenAI(Provider):
         return self._extract_score_and_reasons_from_response(
             system_prompt, user_prompt=text
         )
-    
+
     def correctness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -1241,7 +1241,7 @@ class OpenAI(Provider):
             prompts.SUMMARIZATION_PROMPT, source=source, summary=summary
         )
         return self._extract_score_and_reasons_from_response(system_prompt)
-    
+
     def stereotypes(self, prompt: str, response: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -1298,6 +1298,7 @@ class OpenAI(Provider):
         )
         system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
         return self._extract_score_and_reasons_from_response(system_prompt)
+
 
 class AzureOpenAI(OpenAI):
     """Out of the box feedback functions calling AzureOpenAI APIs. 
