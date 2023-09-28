@@ -7,7 +7,7 @@ import unittest
 from unittest import main
 
 from langchain import LLMChain
-from langchain import PromptTemplate
+from langchain.prompts import PromptTemplate
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chains import LLMChain

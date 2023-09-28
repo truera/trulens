@@ -1,7 +1,7 @@
 import asyncio
 from pprint import PrettyPrinter
 from threading import Thread
-from typing import Callable, Mapping, Sequence
+from typing import Callable, List, Mapping, Optional, Sequence, Union
 
 from ipywidgets import widgets
 import traitlets
@@ -17,13 +17,19 @@ pp = PrettyPrinter()
 
 debug_style = dict(border="0px solid gray", padding="0px")
 
+VALUE_MAX_CHARS = 1024
+
 class Selector(HasTraits):
     select = Unicode()
     jpath = traitlets.Any()
 
-    def __init__(self, select: str, make_on_delete: Callable):
-        self.select = select
-        self.jpath = JSONPath.of_string(select)
+    def __init__(self, select: Union[JSONPath, str], make_on_delete: Callable):
+        if isinstance(select, JSONPath):
+            self.select = str(select)
+            self.jpath = select
+        else:
+            self.select = select
+            self.jpath = JSONPath.of_string(select)
 
         self.w_edit = widgets.Text(value=select, layout=debug_style)
         self.w_delete = widgets.Button(description="x", layout=dict(width="30px", **debug_style))
@@ -81,30 +87,31 @@ class SelectorValue(HasTraits):
 
                 for inner_obj in jpath(obj):
                     inner_class = type(inner_obj)
+                    inner_obj_id = id(inner_obj)
                     inner_obj = jsonify(inner_obj)
 
-                    ret_html += f"<div>({inner_class.__name__} as {type(inner_obj).__name__}): "
+                    ret_html += f"<div>({inner_class.__name__} at 0x{inner_obj_id:x}): "# as {type(inner_obj).__name__}): "
 
                     # if isinstance(inner_obj, pydantic.BaseModel):
                     #    inner_obj = inner_obj.dict()
 
                     if isinstance(inner_obj, JSON_BASES):
-                        ret_html += str(inner_obj)[0:256]
+                        ret_html += str(inner_obj)[0:VALUE_MAX_CHARS]
 
                     elif isinstance(inner_obj, Mapping):
                         ret_html += "<ul>"
                         for key, val in inner_obj.items():
-                            ret_html += f"<li>{key} = {str(val)[0:256]}</li>"
+                            ret_html += f"<li>{key} = {str(val)[0:VALUE_MAX_CHARS]}</li>"
                         ret_html += "</ul>"
 
                     elif isinstance(inner_obj, Sequence):
                         ret_html += "<ul>"
                         for i, val in enumerate(inner_obj):
-                            ret_html += f"<li>[{i}] = {str(val)[0:256]}</li>"
+                            ret_html += f"<li>[{i}] = {str(val)[0:VALUE_MAX_CHARS]}</li>"
                         ret_html += "</ul>"                    
 
                     else:
-                        ret_html += str(inner_obj)[0:256]
+                        ret_html += str(inner_obj)[0:VALUE_MAX_CHARS]
                     
                     ret_html += "</div>"
 
@@ -168,7 +175,13 @@ class RecordWiget():
 class AppUI(traitlets.HasTraits):
     # very prototype
 
-    def __init__(self, app: App, use_async: bool = False):
+    def __init__(
+        self,
+        app: App,
+        use_async: bool = False,
+        app_selectors: Optional[List[JSONPath]] = None,
+        record_selectors: Optional[List[JSONPath]] = None
+    ):
         self.use_async = use_async
 
         self.app = app
@@ -182,7 +195,7 @@ class AppUI(traitlets.HasTraits):
         self.record_selector_button = widgets.Button(description="+ Select.Record", layout=debug_style)
 
         self.display_top = widgets.VBox([], layout=debug_style)
-        self.display_side = widgets.VBox([], layout={'min_width':"500px", **debug_style})
+        self.display_side = widgets.VBox([], layout={'width':"50%", **debug_style})
 
         self.display_records = []
 
@@ -215,9 +228,18 @@ class AppUI(traitlets.HasTraits):
                 widgets.VBox([
                     self.display_top,
                     self.display_bottom
-                ], layout=debug_style),
+                ], layout={**debug_style, 'width': '50%'}),
                 self.display_side], layout=debug_style
             )
+        
+        if app_selectors is not None:
+            for selector in app_selectors:
+                self._add_app_selector(selector)
+
+        if record_selectors is not None:
+            for selector in record_selectors:
+                self._add_record_selector(selector)
+
 
     def make_on_delete_record_selector(self, selector):
         def on_delete(ev):
@@ -244,10 +266,8 @@ class AppUI(traitlets.HasTraits):
         for _, sw in self.app_selections.items():
             sw.update()
 
-    def add_app_selection(self, w):
-        s = self.app_selector.value
-
-        sel = Selector(select=s, make_on_delete=self.make_on_delete_app_selector)
+    def _add_app_selector(self, selector: Union[JSONPath, str]):
+        sel = Selector(select=selector, make_on_delete=self.make_on_delete_app_selector)
 
         sw = SelectorValue(selector=sel)
         self.app_selections[sel] = sw
@@ -255,14 +275,20 @@ class AppUI(traitlets.HasTraits):
 
         self.display_side.children += (sw.w, )
 
-    def add_record_selection(self, w):
-        s = self.record_selector.value
+    def add_app_selection(self, w):
+        self._add_app_selector(self.app_selector.value)
 
-        sel = Selector(select=s, make_on_delete=self.make_on_delete_record_selector)
+    def _add_record_selector(self, selector: Union[JSONPath, str]):
+        sel = Selector(select=selector, make_on_delete=self.make_on_delete_record_selector)
         self.record_selections.append(sel)
 
         for r in self.records:
             r.update_selections()
+
+    def add_record_selection(self, w):
+        s = self.record_selector.value
+
+        self._add_record_selector(s)
 
     def add_record(self, w):
         human = self.main_input.value

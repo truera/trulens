@@ -436,7 +436,12 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             "recording_contexts"
         )
 
+        # Cannot use this to set app. AppDefinition has app as JSON type.
+        # TODO: Figure out a better design to avoid this.
         super().__init__(**kwargs)
+
+        app = kwargs['app']
+        self.app = app
 
         self.instrument.instrument_object(
             obj=self.app, query=Select.Query().app
@@ -967,11 +972,17 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         Print instrumented components and their categories.
         """
 
-        print(
-            "\n".join(
-                f"{t[1].__class__.__name__} of {t[1].__class__.__module__} component: "
-                f"{str(t[0])}" for t in self.instrumented()
+        object_strings = []
+
+        for t in self.instrumented():
+            path = JSONPath(t[0].path[1:])
+            obj = next(iter(path(self)))
+            object_strings.append(
+                f"\t{type(obj).__name__} ({t[1].__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"
             )
+
+        print(
+            "\n".join(object_strings)
         )
 
 

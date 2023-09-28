@@ -230,19 +230,21 @@ class GetItemOrAttribute(Step):
         # Special handling of sequences. See NOTE above.
         if isinstance(obj, Sequence):
             if len(obj) == 1:
-                return self(obj[0])
+                for r in self.__call__(obj=obj[0]):
+                    yield r
             elif len(obj) == 0:
                 raise ValueError(f"Object not a dictionary or sequence of dictionaries: {obj}.")
-            elif len(obj) > 1:
+            else: # len(obj) > 1
                 logger.warning(
                     f"Object (of type {type(obj).__name__}) is a sequence containing more than one dictionary. "
                     f"Lookup by item or attribute `{self.item_or_attribute}` is ambiguous. "
                     f"Use a lookup by index(es) or slice first to disambiguate."
                 )
-                return self(obj[0])
+                for r in self.__call__(obj=obj[0]):
+                    yield r
 
         # Otherwise handle a dict or object with the named attribute.
-        if isinstance(obj, Dict):
+        elif isinstance(obj, Dict):
             if self.item_or_attribute in obj:
                 yield obj[self.item_or_attribute]
             else:
