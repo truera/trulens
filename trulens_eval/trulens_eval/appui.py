@@ -56,9 +56,11 @@ class SelectorValue(HasTraits):
     selector = traitlets.Any()
     obj = traitlets.Any()
 
-    def __init__(self, selector: Selector):
+    def __init__(self, selector: Selector, stdout_display: widgets.Output):
         self.selector = selector
         self.obj = None
+
+        self.stdout_display = stdout_display
 
         self.w_listing = widgets.HTML(layout=debug_style)
         self.w = widgets.VBox([self.selector.w, self.w_listing], layout=debug_style)
@@ -82,49 +84,50 @@ class SelectorValue(HasTraits):
         if obj is None:
             ret_html = "no listing yet"
         else:
-            try:
-                ret_html = ""
+            with self.stdout_display:
+                try:
+                    ret_html = ""
 
-                for inner_obj in jpath(obj):
-                    inner_class = type(inner_obj)
-                    inner_obj_id = id(inner_obj)
-                    inner_obj = jsonify(inner_obj)
+                    for inner_obj in jpath(obj):
+                        inner_class = type(inner_obj)
+                        inner_obj_id = id(inner_obj)
+                        inner_obj = jsonify(inner_obj)
 
-                    ret_html += f"<div>({inner_class.__name__} at 0x{inner_obj_id:x}): "# as {type(inner_obj).__name__}): "
+                        ret_html += f"<div>({inner_class.__name__} at 0x{inner_obj_id:x}): "# as {type(inner_obj).__name__}): "
 
-                    # if isinstance(inner_obj, pydantic.BaseModel):
-                    #    inner_obj = inner_obj.dict()
+                        # if isinstance(inner_obj, pydantic.BaseModel):
+                        #    inner_obj = inner_obj.dict()
 
-                    if isinstance(inner_obj, JSON_BASES):
-                        ret_html += str(inner_obj)[0:VALUE_MAX_CHARS]
+                        if isinstance(inner_obj, JSON_BASES):
+                            ret_html += str(inner_obj)[0:VALUE_MAX_CHARS]
 
-                    elif isinstance(inner_obj, Mapping):
-                        ret_html += "<ul>"
-                        for key, val in inner_obj.items():
-                            ret_html += f"<li>{key} = {str(val)[0:VALUE_MAX_CHARS]}</li>"
-                        ret_html += "</ul>"
+                        elif isinstance(inner_obj, Mapping):
+                            ret_html += "<ul>"
+                            for key, val in inner_obj.items():
+                                ret_html += f"<li>{key} = {str(val)[0:VALUE_MAX_CHARS]}</li>"
+                            ret_html += "</ul>"
 
-                    elif isinstance(inner_obj, Sequence):
-                        ret_html += "<ul>"
-                        for i, val in enumerate(inner_obj):
-                            ret_html += f"<li>[{i}] = {str(val)[0:VALUE_MAX_CHARS]}</li>"
-                        ret_html += "</ul>"                    
+                        elif isinstance(inner_obj, Sequence):
+                            ret_html += "<ul>"
+                            for i, val in enumerate(inner_obj):
+                                ret_html += f"<li>[{i}] = {str(val)[0:VALUE_MAX_CHARS]}</li>"
+                            ret_html += "</ul>"                    
 
-                    else:
-                        ret_html += str(inner_obj)[0:VALUE_MAX_CHARS]
-                    
-                    ret_html += "</div>"
+                        else:
+                            ret_html += str(inner_obj)[0:VALUE_MAX_CHARS]
+                        
+                        ret_html += "</div>"
 
-            except Exception as e:
-                self.w_listing.layout.border = "1px solid red"
-                return
+                except Exception as e:
+                    self.w_listing.layout.border = "1px solid red"
+                    return
 
         self.w_listing.layout.border = "0px solid black"
         self.w_listing.value = f"<div>{ret_html}</div>"
 
 
 class RecordWiget():
-    def __init__(self, record_selections, record=None, human_or_input=None):
+    def __init__(self, record_selections, record=None, human_or_input=None, stdout_display: widgets.Output = None):
         self.record = record
         self.record_selections = record_selections
         self.record_values = dict()
@@ -133,6 +136,8 @@ class RecordWiget():
         self.w_human = widgets.HBox([widgets.HTML("<b>human:</b>"), self.human_or_input], layout=debug_style)
         self.d_comp = widgets.HTML(layout=debug_style)
         self.d_extras = widgets.VBox(layout=debug_style)
+
+        self.stdout_display = stdout_display
 
         self.human = ""
         self.comp = ""
@@ -143,7 +148,7 @@ class RecordWiget():
         # change to trait observe
         for s in self.record_selections:
             if s not in self.record_values:
-                sv = SelectorValue(selector=s)
+                sv = SelectorValue(selector=s, stdout_display=self.stdout_display)
                 self.record_values[s] = sv
                 self.d_extras.children += (sv.w, )
 
@@ -204,7 +209,7 @@ class AppUI(traitlets.HasTraits):
         self.app_selections = {}
         self.record_selections = []
 
-        self.current_record = RecordWiget(record_selections=self.record_selections, human_or_input=self.main_input)
+        self.current_record = RecordWiget(record_selections=self.record_selections, human_or_input=self.main_input, stdout_display=self.display_stdout)
         self.current_record_record = None
 
         self.records = [self.current_record]
@@ -272,9 +277,10 @@ class AppUI(traitlets.HasTraits):
             sw.update()
 
     def _add_app_selector(self, selector: Union[JSONPath, str]):
-        sel = Selector(select=selector, make_on_delete=self.make_on_delete_app_selector)
+        with self.display_stdout:
+            sel = Selector(select=selector, make_on_delete=self.make_on_delete_app_selector)
 
-        sw = SelectorValue(selector=sel)
+        sw = SelectorValue(selector=sel, stdout_display=self.display_stdout)
         self.app_selections[sel] = sw
         sw.obj = self.app
 
@@ -284,7 +290,9 @@ class AppUI(traitlets.HasTraits):
         self._add_app_selector(self.app_selector.value)
 
     def _add_record_selector(self, selector: Union[JSONPath, str]):
-        sel = Selector(select=selector, make_on_delete=self.make_on_delete_record_selector)
+        with self.display_stdout:
+            sel = Selector(select=selector, make_on_delete=self.make_on_delete_record_selector)
+
         self.record_selections.append(sel)
 
         for r in self.records:
@@ -337,6 +345,6 @@ class AppUI(traitlets.HasTraits):
 
         self.update_app_selections()
 
-        self.current_record = RecordWiget(record_selections=self.record_selections, human_or_input=self.main_input)
+        self.current_record = RecordWiget(record_selections=self.record_selections, human_or_input=self.main_input, stdout_display=self.display_stdout)
         self.records.append(self.current_record)
         self.display_top.children += (self.current_record.d, )
