@@ -105,7 +105,6 @@ def render_component(query, component, header=True):
     elif isinstance(component, Tool):
         draw_tool_info(component=component, query=query)
 
-
     elif isinstance(component, Other):
         with st.expander("Uncategorized Component Details:"):
             st.json(jsonify_for_ui(component.json))

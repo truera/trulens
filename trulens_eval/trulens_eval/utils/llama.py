@@ -40,7 +40,8 @@ class Prompt(app.Prompt, app.LlamaIndexComponent):
         return cls.noserio_issubclass(
             module_name="llama_index.prompts.base", class_name="Prompt"
         )
-    
+
+
 class Agent(app.Agent, app.LlamaIndexComponent):
 
     @property
@@ -55,6 +56,7 @@ class Agent(app.Agent, app.LlamaIndexComponent):
         return cls.noserio_issubclass(
             module_name="llama_index.agent.types", class_name="BaseAgent"
         )
+
 
 class Tool(app.Tool, app.LlamaIndexComponent):
 
@@ -89,6 +91,7 @@ class LLM(app.LLM, app.LlamaIndexComponent):
         return cls.noserio_issubclass(
             module_name="llama_index.llms.base", class_name="LLM"
         )
+
 
 class Other(app.Other, app.LlamaIndexComponent):
     pass
