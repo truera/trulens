@@ -205,7 +205,7 @@ class Tru(SingletonPerName):
             assert app_id == app.app_id, "Record was produced by a different app."
 
             if self.db.get_app(app_id=app.app_id) is None:
-                logger.warn(
+                logger.warning(
                     "App {app_id} was not present in database. Adding it."
                 )
                 self.add_app(app=app)

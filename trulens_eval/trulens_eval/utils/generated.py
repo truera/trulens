@@ -16,7 +16,7 @@ def re_1_10_rating(str_val):
         # Try soft match
         matches = re.search('[1-9][0-9]*', str_val)
         if not matches:
-            logger.warn(f"1-10 rating regex failed to match on: '{str_val}'")
+            logger.warning(f"1-10 rating regex failed to match on: '{str_val}'")
             return -10  # so this will be reported as -1 after division by 10
 
     return int(matches.group())

@@ -284,7 +284,7 @@ class TruLlama(App):
             return ret.response
 
         elif isinstance(ret, (StreamingResponse, StreamingAgentChatResponse)):
-            logger.warn(
+            logger.warning(
                 "App produced a streaming response. "
                 "Tracking content of streams in llama_index is not yet supported. "
                 "App main_output will be None."
