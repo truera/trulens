@@ -597,7 +597,6 @@ class WithClassInfo(pydantic.BaseModel):
             class_info = Class.of_class(cls, with_bases=True)
 
         kwargs['__tru_class_info'] = class_info
-
         super().__init__(*args, **kwargs)
 
     @staticmethod
