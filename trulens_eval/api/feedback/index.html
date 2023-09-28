@@ -489,7 +489,7 @@
   
     <li class="md-nav__item">
       <a href="../../text2text_quickstart/" class="md-nav__link">
-        No Framework Quickstart
+        Text to Text Quickstart
       </a>
     </li>
   
@@ -1042,6 +1042,27 @@
           <li class="md-nav__item">
   <a href="#trulens_eval.trulens_eval.feedback.provider.openai.OpenAI.sentiment_with_cot_reasons" class="md-nav__link">
     sentiment_with_cot_reasons()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.openai.OpenAI.stereotypes" class="md-nav__link">
+    stereotypes()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.openai.OpenAI.stereotypes_with_cot_reasons" class="md-nav__link">
+    stereotypes_with_cot_reasons()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.openai.OpenAI.summary_with_cot_reasons" class="md-nav__link">
+    summary_with_cot_reasons()
   </a>
   
 </li>
@@ -2187,6 +2208,27 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.openai.OpenAI.stereotypes" class="md-nav__link">
+    stereotypes()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.openai.OpenAI.stereotypes_with_cot_reasons" class="md-nav__link">
+    stereotypes_with_cot_reasons()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.openai.OpenAI.summary_with_cot_reasons" class="md-nav__link">
+    summary_with_cot_reasons()
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2422,53 +2464,53 @@ Has the same functionality as OpenAI out of the box feedback functions.</p>
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1218</span>
-<span class="normal">1219</span>
-<span class="normal">1220</span>
-<span class="normal">1221</span>
-<span class="normal">1222</span>
-<span class="normal">1223</span>
-<span class="normal">1224</span>
-<span class="normal">1225</span>
-<span class="normal">1226</span>
-<span class="normal">1227</span>
-<span class="normal">1228</span>
-<span class="normal">1229</span>
-<span class="normal">1230</span>
-<span class="normal">1231</span>
-<span class="normal">1232</span>
-<span class="normal">1233</span>
-<span class="normal">1234</span>
-<span class="normal">1235</span>
-<span class="normal">1236</span>
-<span class="normal">1237</span>
-<span class="normal">1238</span>
-<span class="normal">1239</span>
-<span class="normal">1240</span>
-<span class="normal">1241</span>
-<span class="normal">1242</span>
-<span class="normal">1243</span>
-<span class="normal">1244</span>
-<span class="normal">1245</span>
-<span class="normal">1246</span>
-<span class="normal">1247</span>
-<span class="normal">1248</span>
-<span class="normal">1249</span>
-<span class="normal">1250</span>
-<span class="normal">1251</span>
-<span class="normal">1252</span>
-<span class="normal">1253</span>
-<span class="normal">1254</span>
-<span class="normal">1255</span>
-<span class="normal">1256</span>
-<span class="normal">1257</span>
-<span class="normal">1258</span>
-<span class="normal">1259</span>
-<span class="normal">1260</span>
-<span class="normal">1261</span>
-<span class="normal">1262</span>
-<span class="normal">1263</span>
-<span class="normal">1264</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">AzureOpenAI</span><span class="p">(</span><span class="n">OpenAI</span><span class="p">):</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1302</span>
+<span class="normal">1303</span>
+<span class="normal">1304</span>
+<span class="normal">1305</span>
+<span class="normal">1306</span>
+<span class="normal">1307</span>
+<span class="normal">1308</span>
+<span class="normal">1309</span>
+<span class="normal">1310</span>
+<span class="normal">1311</span>
+<span class="normal">1312</span>
+<span class="normal">1313</span>
+<span class="normal">1314</span>
+<span class="normal">1315</span>
+<span class="normal">1316</span>
+<span class="normal">1317</span>
+<span class="normal">1318</span>
+<span class="normal">1319</span>
+<span class="normal">1320</span>
+<span class="normal">1321</span>
+<span class="normal">1322</span>
+<span class="normal">1323</span>
+<span class="normal">1324</span>
+<span class="normal">1325</span>
+<span class="normal">1326</span>
+<span class="normal">1327</span>
+<span class="normal">1328</span>
+<span class="normal">1329</span>
+<span class="normal">1330</span>
+<span class="normal">1331</span>
+<span class="normal">1332</span>
+<span class="normal">1333</span>
+<span class="normal">1334</span>
+<span class="normal">1335</span>
+<span class="normal">1336</span>
+<span class="normal">1337</span>
+<span class="normal">1338</span>
+<span class="normal">1339</span>
+<span class="normal">1340</span>
+<span class="normal">1341</span>
+<span class="normal">1342</span>
+<span class="normal">1343</span>
+<span class="normal">1344</span>
+<span class="normal">1345</span>
+<span class="normal">1346</span>
+<span class="normal">1347</span>
+<span class="normal">1348</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">AzureOpenAI</span><span class="p">(</span><span class="n">OpenAI</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Out of the box feedback functions calling AzureOpenAI APIs. </span>
 <span class="sd">    Has the same functionality as OpenAI out of the box feedback functions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -2611,39 +2653,39 @@ openai_provider = AzureOpenAI(deployment_id=&quot;...&quot;)
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1224</span>
-<span class="normal">1225</span>
-<span class="normal">1226</span>
-<span class="normal">1227</span>
-<span class="normal">1228</span>
-<span class="normal">1229</span>
-<span class="normal">1230</span>
-<span class="normal">1231</span>
-<span class="normal">1232</span>
-<span class="normal">1233</span>
-<span class="normal">1234</span>
-<span class="normal">1235</span>
-<span class="normal">1236</span>
-<span class="normal">1237</span>
-<span class="normal">1238</span>
-<span class="normal">1239</span>
-<span class="normal">1240</span>
-<span class="normal">1241</span>
-<span class="normal">1242</span>
-<span class="normal">1243</span>
-<span class="normal">1244</span>
-<span class="normal">1245</span>
-<span class="normal">1246</span>
-<span class="normal">1247</span>
-<span class="normal">1248</span>
-<span class="normal">1249</span>
-<span class="normal">1250</span>
-<span class="normal">1251</span>
-<span class="normal">1252</span>
-<span class="normal">1253</span>
-<span class="normal">1254</span>
-<span class="normal">1255</span>
-<span class="normal">1256</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1308</span>
+<span class="normal">1309</span>
+<span class="normal">1310</span>
+<span class="normal">1311</span>
+<span class="normal">1312</span>
+<span class="normal">1313</span>
+<span class="normal">1314</span>
+<span class="normal">1315</span>
+<span class="normal">1316</span>
+<span class="normal">1317</span>
+<span class="normal">1318</span>
+<span class="normal">1319</span>
+<span class="normal">1320</span>
+<span class="normal">1321</span>
+<span class="normal">1322</span>
+<span class="normal">1323</span>
+<span class="normal">1324</span>
+<span class="normal">1325</span>
+<span class="normal">1326</span>
+<span class="normal">1327</span>
+<span class="normal">1328</span>
+<span class="normal">1329</span>
+<span class="normal">1330</span>
+<span class="normal">1331</span>
+<span class="normal">1332</span>
+<span class="normal">1333</span>
+<span class="normal">1334</span>
+<span class="normal">1335</span>
+<span class="normal">1336</span>
+<span class="normal">1337</span>
+<span class="normal">1338</span>
+<span class="normal">1339</span>
+<span class="normal">1340</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
     <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
     <span class="c1"># down below. Adding it as None here as a temporary hack.</span>
@@ -3910,7 +3952,92 @@ openai_provider = AzureOpenAI(deployment_id=&quot;...&quot;)
 <span class="normal">1212</span>
 <span class="normal">1213</span>
 <span class="normal">1214</span>
-<span class="normal">1215</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">OpenAI</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
+<span class="normal">1215</span>
+<span class="normal">1216</span>
+<span class="normal">1217</span>
+<span class="normal">1218</span>
+<span class="normal">1219</span>
+<span class="normal">1220</span>
+<span class="normal">1221</span>
+<span class="normal">1222</span>
+<span class="normal">1223</span>
+<span class="normal">1224</span>
+<span class="normal">1225</span>
+<span class="normal">1226</span>
+<span class="normal">1227</span>
+<span class="normal">1228</span>
+<span class="normal">1229</span>
+<span class="normal">1230</span>
+<span class="normal">1231</span>
+<span class="normal">1232</span>
+<span class="normal">1233</span>
+<span class="normal">1234</span>
+<span class="normal">1235</span>
+<span class="normal">1236</span>
+<span class="normal">1237</span>
+<span class="normal">1238</span>
+<span class="normal">1239</span>
+<span class="normal">1240</span>
+<span class="normal">1241</span>
+<span class="normal">1242</span>
+<span class="normal">1243</span>
+<span class="normal">1244</span>
+<span class="normal">1245</span>
+<span class="normal">1246</span>
+<span class="normal">1247</span>
+<span class="normal">1248</span>
+<span class="normal">1249</span>
+<span class="normal">1250</span>
+<span class="normal">1251</span>
+<span class="normal">1252</span>
+<span class="normal">1253</span>
+<span class="normal">1254</span>
+<span class="normal">1255</span>
+<span class="normal">1256</span>
+<span class="normal">1257</span>
+<span class="normal">1258</span>
+<span class="normal">1259</span>
+<span class="normal">1260</span>
+<span class="normal">1261</span>
+<span class="normal">1262</span>
+<span class="normal">1263</span>
+<span class="normal">1264</span>
+<span class="normal">1265</span>
+<span class="normal">1266</span>
+<span class="normal">1267</span>
+<span class="normal">1268</span>
+<span class="normal">1269</span>
+<span class="normal">1270</span>
+<span class="normal">1271</span>
+<span class="normal">1272</span>
+<span class="normal">1273</span>
+<span class="normal">1274</span>
+<span class="normal">1275</span>
+<span class="normal">1276</span>
+<span class="normal">1277</span>
+<span class="normal">1278</span>
+<span class="normal">1279</span>
+<span class="normal">1280</span>
+<span class="normal">1281</span>
+<span class="normal">1282</span>
+<span class="normal">1283</span>
+<span class="normal">1284</span>
+<span class="normal">1285</span>
+<span class="normal">1286</span>
+<span class="normal">1287</span>
+<span class="normal">1288</span>
+<span class="normal">1289</span>
+<span class="normal">1290</span>
+<span class="normal">1291</span>
+<span class="normal">1292</span>
+<span class="normal">1293</span>
+<span class="normal">1294</span>
+<span class="normal">1295</span>
+<span class="normal">1296</span>
+<span class="normal">1297</span>
+<span class="normal">1298</span>
+<span class="normal">1299</span>
+<span class="normal">1300</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">OpenAI</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Out of the box feedback functions calling OpenAI APIs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">model_engine</span><span class="p">:</span> <span class="nb">str</span>
@@ -5110,6 +5237,91 @@ openai_provider = AzureOpenAI(deployment_id=&quot;...&quot;)
             <span class="p">)[</span><span class="s2">&quot;choices&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;message&quot;</span><span class="p">][</span><span class="s2">&quot;content&quot;</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">oai_chat_response</span>
+
+    <span class="k">def</span> <span class="nf">summary_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Uses OpenAI&#39;s Chat Completion Model. A function that tries to distill main points and compares a summary against those main points.</span>
+<span class="sd">        This feedback function only has a chain of thought implementation as it is extremely important in function assessment. </span>
+
+<span class="sd">        **Usage:**</span>
+<span class="sd">        ```</span>
+<span class="sd">        from trulens_eval import Feedback</span>
+<span class="sd">        from trulens_eval.feedback.provider.openai import OpenAI</span>
+<span class="sd">        openai_provider = OpenAI()</span>
+
+<span class="sd">        feedback = Feedback(openai_provider.summary_with_cot_reasons).on_input_output()</span>
+<span class="sd">        ```</span>
+<span class="sd">        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+
+
+<span class="sd">        Args:</span>
+<span class="sd">            source (str): Text corresponding to source material. </span>
+<span class="sd">            summary (str): Text corresponding to a summary.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: A value between 0 and 1. 0 being &quot;main points missed&quot; and 1 being &quot;no main points missed&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">system_prompt</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">prompts</span><span class="o">.</span><span class="n">SUMMARIZATION_PROMPT</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="n">summary</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_score_and_reasons_from_response</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">stereotypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Uses OpenAI&#39;s Chat Completion Model. A function that completes a</span>
+<span class="sd">        template to check adding assumed stereotypes in the response when not present in the prompt.</span>
+
+<span class="sd">        **Usage:**</span>
+<span class="sd">        ```</span>
+<span class="sd">        from trulens_eval import Feedback</span>
+<span class="sd">        from trulens_eval.feedback.provider.openai import OpenAI</span>
+<span class="sd">        openai_provider = OpenAI()</span>
+
+<span class="sd">        feedback = Feedback(openai_provider.stereotypes).on_input_output()</span>
+<span class="sd">        ```</span>
+<span class="sd">        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+
+
+<span class="sd">        Args:</span>
+<span class="sd">            prompt (str): A text prompt to an agent. </span>
+<span class="sd">            response (str): The agent&#39;s response to the prompt.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: A value between 0 and 1. 0 being &quot;assumed stereotypes&quot; and 1 being &quot;no assumed stereotypes&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">system_prompt</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">prompts</span><span class="o">.</span><span class="n">STEREOTYPES_PROMPT</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="o">=</span><span class="n">response</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_score_and_reasons_from_response</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">stereotypes_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Uses OpenAI&#39;s Chat Completion Model. A function that completes a</span>
+<span class="sd">        template to check adding assumed stereotypes in the response when not present in the prompt.</span>
+
+<span class="sd">        **Usage:**</span>
+<span class="sd">        ```</span>
+<span class="sd">        from trulens_eval import Feedback</span>
+<span class="sd">        from trulens_eval.feedback.provider.openai import OpenAI</span>
+<span class="sd">        openai_provider = OpenAI()</span>
+
+<span class="sd">        feedback = Feedback(openai_provider.stereotypes_with_cot_reasons).on_input_output()</span>
+<span class="sd">        ```</span>
+<span class="sd">        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+
+
+<span class="sd">        Args:</span>
+<span class="sd">            prompt (str): A text prompt to an agent. </span>
+<span class="sd">            response (str): The agent&#39;s response to the prompt.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: A value between 0 and 1. 0 being &quot;assumed stereotypes&quot; and 1 being &quot;no assumed stereotypes&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">system_prompt</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">prompts</span><span class="o">.</span><span class="n">STEREOTYPES_PROMPT</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="o">=</span><span class="n">response</span>
+        <span class="p">)</span>
+        <span class="n">system_prompt</span> <span class="o">=</span> <span class="n">system_prompt</span> <span class="o">+</span> <span class="n">prompts</span><span class="o">.</span><span class="n">COT_REASONS_TEMPLATE</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_score_and_reasons_from_response</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
         </details>
 
@@ -10032,6 +10244,452 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
 
 </div>
 
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="trulens_eval.trulens_eval.feedback.provider.openai.OpenAI.stereotypes" class="doc doc-heading">
+<code class="codehilite language-python"><span class="n">stereotypes</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span></code>
+
+<a href="#trulens_eval.trulens_eval.feedback.provider.openai.OpenAI.stereotypes" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Uses OpenAI's Chat Completion Model. A function that completes a
+template to check adding assumed stereotypes in the response when not present in the prompt.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code>from trulens_eval import Feedback
+from trulens_eval.feedback.provider.openai import OpenAI
+openai_provider = OpenAI()
+
+feedback = Feedback(openai_provider.stereotypes).on_input_output()
+</code></pre></div>
+The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function Guide</a></p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>prompt</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A text prompt to an agent. </p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>response</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The agent's response to the prompt.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>float</code></td>          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "assumed stereotypes" and 1 being "no assumed stereotypes".</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1245</span>
+<span class="normal">1246</span>
+<span class="normal">1247</span>
+<span class="normal">1248</span>
+<span class="normal">1249</span>
+<span class="normal">1250</span>
+<span class="normal">1251</span>
+<span class="normal">1252</span>
+<span class="normal">1253</span>
+<span class="normal">1254</span>
+<span class="normal">1255</span>
+<span class="normal">1256</span>
+<span class="normal">1257</span>
+<span class="normal">1258</span>
+<span class="normal">1259</span>
+<span class="normal">1260</span>
+<span class="normal">1261</span>
+<span class="normal">1262</span>
+<span class="normal">1263</span>
+<span class="normal">1264</span>
+<span class="normal">1265</span>
+<span class="normal">1266</span>
+<span class="normal">1267</span>
+<span class="normal">1268</span>
+<span class="normal">1269</span>
+<span class="normal">1270</span>
+<span class="normal">1271</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">stereotypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uses OpenAI&#39;s Chat Completion Model. A function that completes a</span>
+<span class="sd">    template to check adding assumed stereotypes in the response when not present in the prompt.</span>
+
+<span class="sd">    **Usage:**</span>
+<span class="sd">    ```</span>
+<span class="sd">    from trulens_eval import Feedback</span>
+<span class="sd">    from trulens_eval.feedback.provider.openai import OpenAI</span>
+<span class="sd">    openai_provider = OpenAI()</span>
+
+<span class="sd">    feedback = Feedback(openai_provider.stereotypes).on_input_output()</span>
+<span class="sd">    ```</span>
+<span class="sd">    The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+
+
+<span class="sd">    Args:</span>
+<span class="sd">        prompt (str): A text prompt to an agent. </span>
+<span class="sd">        response (str): The agent&#39;s response to the prompt.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: A value between 0 and 1. 0 being &quot;assumed stereotypes&quot; and 1 being &quot;no assumed stereotypes&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">system_prompt</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">prompts</span><span class="o">.</span><span class="n">STEREOTYPES_PROMPT</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="o">=</span><span class="n">response</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_score_and_reasons_from_response</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="trulens_eval.trulens_eval.feedback.provider.openai.OpenAI.stereotypes_with_cot_reasons" class="doc doc-heading">
+<code class="codehilite language-python"><span class="n">stereotypes_with_cot_reasons</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span></code>
+
+<a href="#trulens_eval.trulens_eval.feedback.provider.openai.OpenAI.stereotypes_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Uses OpenAI's Chat Completion Model. A function that completes a
+template to check adding assumed stereotypes in the response when not present in the prompt.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code>from trulens_eval import Feedback
+from trulens_eval.feedback.provider.openai import OpenAI
+openai_provider = OpenAI()
+
+feedback = Feedback(openai_provider.stereotypes_with_cot_reasons).on_input_output()
+</code></pre></div>
+The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function Guide</a></p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>prompt</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A text prompt to an agent. </p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>response</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The agent's response to the prompt.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>float</code></td>          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "assumed stereotypes" and 1 being "no assumed stereotypes".</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1273</span>
+<span class="normal">1274</span>
+<span class="normal">1275</span>
+<span class="normal">1276</span>
+<span class="normal">1277</span>
+<span class="normal">1278</span>
+<span class="normal">1279</span>
+<span class="normal">1280</span>
+<span class="normal">1281</span>
+<span class="normal">1282</span>
+<span class="normal">1283</span>
+<span class="normal">1284</span>
+<span class="normal">1285</span>
+<span class="normal">1286</span>
+<span class="normal">1287</span>
+<span class="normal">1288</span>
+<span class="normal">1289</span>
+<span class="normal">1290</span>
+<span class="normal">1291</span>
+<span class="normal">1292</span>
+<span class="normal">1293</span>
+<span class="normal">1294</span>
+<span class="normal">1295</span>
+<span class="normal">1296</span>
+<span class="normal">1297</span>
+<span class="normal">1298</span>
+<span class="normal">1299</span>
+<span class="normal">1300</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">stereotypes_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uses OpenAI&#39;s Chat Completion Model. A function that completes a</span>
+<span class="sd">    template to check adding assumed stereotypes in the response when not present in the prompt.</span>
+
+<span class="sd">    **Usage:**</span>
+<span class="sd">    ```</span>
+<span class="sd">    from trulens_eval import Feedback</span>
+<span class="sd">    from trulens_eval.feedback.provider.openai import OpenAI</span>
+<span class="sd">    openai_provider = OpenAI()</span>
+
+<span class="sd">    feedback = Feedback(openai_provider.stereotypes_with_cot_reasons).on_input_output()</span>
+<span class="sd">    ```</span>
+<span class="sd">    The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+
+
+<span class="sd">    Args:</span>
+<span class="sd">        prompt (str): A text prompt to an agent. </span>
+<span class="sd">        response (str): The agent&#39;s response to the prompt.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: A value between 0 and 1. 0 being &quot;assumed stereotypes&quot; and 1 being &quot;no assumed stereotypes&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">system_prompt</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">prompts</span><span class="o">.</span><span class="n">STEREOTYPES_PROMPT</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="o">=</span><span class="n">response</span>
+    <span class="p">)</span>
+    <span class="n">system_prompt</span> <span class="o">=</span> <span class="n">system_prompt</span> <span class="o">+</span> <span class="n">prompts</span><span class="o">.</span><span class="n">COT_REASONS_TEMPLATE</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_score_and_reasons_from_response</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="trulens_eval.trulens_eval.feedback.provider.openai.OpenAI.summary_with_cot_reasons" class="doc doc-heading">
+<code class="codehilite language-python"><span class="n">summary_with_cot_reasons</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">summary</span><span class="p">)</span></code>
+
+<a href="#trulens_eval.trulens_eval.feedback.provider.openai.OpenAI.summary_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Uses OpenAI's Chat Completion Model. A function that tries to distill main points and compares a summary against those main points.
+This feedback function only has a chain of thought implementation as it is extremely important in function assessment. </p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code>from trulens_eval import Feedback
+from trulens_eval.feedback.provider.openai import OpenAI
+openai_provider = OpenAI()
+
+feedback = Feedback(openai_provider.summary_with_cot_reasons).on_input_output()
+</code></pre></div>
+The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function Guide</a></p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>source</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text corresponding to source material. </p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>summary</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text corresponding to a summary.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>float</code></td>          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "main points missed" and 1 being "no main points missed".</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1217</span>
+<span class="normal">1218</span>
+<span class="normal">1219</span>
+<span class="normal">1220</span>
+<span class="normal">1221</span>
+<span class="normal">1222</span>
+<span class="normal">1223</span>
+<span class="normal">1224</span>
+<span class="normal">1225</span>
+<span class="normal">1226</span>
+<span class="normal">1227</span>
+<span class="normal">1228</span>
+<span class="normal">1229</span>
+<span class="normal">1230</span>
+<span class="normal">1231</span>
+<span class="normal">1232</span>
+<span class="normal">1233</span>
+<span class="normal">1234</span>
+<span class="normal">1235</span>
+<span class="normal">1236</span>
+<span class="normal">1237</span>
+<span class="normal">1238</span>
+<span class="normal">1239</span>
+<span class="normal">1240</span>
+<span class="normal">1241</span>
+<span class="normal">1242</span>
+<span class="normal">1243</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">summary_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uses OpenAI&#39;s Chat Completion Model. A function that tries to distill main points and compares a summary against those main points.</span>
+<span class="sd">    This feedback function only has a chain of thought implementation as it is extremely important in function assessment. </span>
+
+<span class="sd">    **Usage:**</span>
+<span class="sd">    ```</span>
+<span class="sd">    from trulens_eval import Feedback</span>
+<span class="sd">    from trulens_eval.feedback.provider.openai import OpenAI</span>
+<span class="sd">    openai_provider = OpenAI()</span>
+
+<span class="sd">    feedback = Feedback(openai_provider.summary_with_cot_reasons).on_input_output()</span>
+<span class="sd">    ```</span>
+<span class="sd">    The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+
+
+<span class="sd">    Args:</span>
+<span class="sd">        source (str): Text corresponding to source material. </span>
+<span class="sd">        summary (str): Text corresponding to a summary.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: A value between 0 and 1. 0 being &quot;main points missed&quot; and 1 being &quot;no main points missed&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">system_prompt</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">prompts</span><span class="o">.</span><span class="n">SUMMARIZATION_PROMPT</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="n">summary</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_score_and_reasons_from_response</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
 
 
   </div>
@@ -10087,8 +10745,7 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
 
         <details class="quote">
           <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 61</span>
-<span class="normal"> 62</span>
+          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 62</span>
 <span class="normal"> 63</span>
 <span class="normal"> 64</span>
 <span class="normal"> 65</span>
@@ -10295,9 +10952,20 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
 <span class="normal">266</span>
 <span class="normal">267</span>
 <span class="normal">268</span>
-<span class="normal">269</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Huggingface</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Out of the box feedback functions calling Huggingface APIs.</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Huggingface</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Out of the box feedback functions calling Huggingface APIs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">endpoint</span><span class="p">:</span> <span class="n">Endpoint</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -10308,12 +10976,10 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
 <span class="sd">        Create a Huggingface Provider with out of the box feedback functions.</span>
 
 <span class="sd">        **Usage:**</span>
-<span class="sd">        ```</span>
+<span class="sd">        ```python</span>
 <span class="sd">        from trulens_eval.feedback.provider.hugs import Huggingface</span>
 <span class="sd">        huggingface_provider = Huggingface()</span>
-
 <span class="sd">        ```</span>
-
 
 <span class="sd">        Args:</span>
 <span class="sd">            endpoint (Endpoint): Internal Usage for DB serialization</span>
@@ -10343,14 +11009,15 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
 <span class="sd">        probit_language_text1(text2))`</span>
 
 <span class="sd">        **Usage:**</span>
-<span class="sd">        ```</span>
+<span class="sd">        ```python</span>
 <span class="sd">        from trulens_eval import Feedback</span>
 <span class="sd">        from trulens_eval.feedback.provider.hugs import Huggingface</span>
 <span class="sd">        huggingface_provider = Huggingface()</span>
 
 <span class="sd">        feedback = Feedback(huggingface_provider.language_match).on_input_output() </span>
 <span class="sd">        ```</span>
-<span class="sd">        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+<span class="sd">        The `on_input_output()` selector can be changed. See [Feedback Function</span>
+<span class="sd">        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            text1 (str): Text to evaluate.</span>
@@ -10358,7 +11025,8 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
 
 <span class="sd">        Returns:</span>
 
-<span class="sd">            float: A value between 0 and 1. 0 being &quot;different languages&quot; and 1 being &quot;same languages&quot;.</span>
+<span class="sd">            float: A value between 0 and 1. 0 being &quot;different languages&quot; and 1</span>
+<span class="sd">            being &quot;same languages&quot;.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">def</span> <span class="nf">get_scores</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
@@ -10395,20 +11063,22 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
 <span class="sd">        function that uses a sentiment classifier on `text`.</span>
 
 <span class="sd">        **Usage:**</span>
-<span class="sd">        ```</span>
+<span class="sd">        ```python</span>
 <span class="sd">        from trulens_eval import Feedback</span>
 <span class="sd">        from trulens_eval.feedback.provider.hugs import Huggingface</span>
 <span class="sd">        huggingface_provider = Huggingface()</span>
 
 <span class="sd">        feedback = Feedback(huggingface_provider.positive_sentiment).on_output() </span>
 <span class="sd">        ```</span>
-<span class="sd">        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+<span class="sd">        The `on_output()` selector can be changed. See [Feedback Function</span>
+<span class="sd">        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            text (str): Text to evaluate.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            float: A value between 0 and 1. 0 being &quot;negative sentiment&quot; and 1 being &quot;positive sentiment&quot;.</span>
+<span class="sd">            float: A value between 0 and 1. 0 being &quot;negative sentiment&quot; and 1</span>
+<span class="sd">            being &quot;positive sentiment&quot;.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">max_length</span> <span class="o">=</span> <span class="mi">500</span>
@@ -10430,21 +11100,23 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
 <span class="sd">        uses a toxic comment classifier on `text`.</span>
 
 <span class="sd">        **Usage:**</span>
-<span class="sd">        ```</span>
+<span class="sd">        ```python</span>
 <span class="sd">        from trulens_eval import Feedback</span>
 <span class="sd">        from trulens_eval.feedback.provider.hugs import Huggingface</span>
 <span class="sd">        huggingface_provider = Huggingface()</span>
 
 <span class="sd">        feedback = Feedback(huggingface_provider.not_toxic).on_output() </span>
 <span class="sd">        ```</span>
-<span class="sd">        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+<span class="sd">        The `on_output()` selector can be changed. See [Feedback Function</span>
+<span class="sd">        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
 
 
 <span class="sd">        Args:</span>
 <span class="sd">            text (str): Text to evaluate.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            float: A value between 0 and 1. 0 being &quot;toxic&quot; and 1 being &quot;not toxic&quot;.</span>
+<span class="sd">            float: A value between 0 and 1. 0 being &quot;toxic&quot; and 1 being &quot;not</span>
+<span class="sd">            toxic&quot;.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Input cannot be blank.&quot;</span>
@@ -10485,8 +11157,10 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
 
     <span class="nd">@_tci</span>
     <span class="k">def</span> <span class="nf">_doc_groundedness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">premise</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; A groundedness measure for full document premise against hypothesis.</span>
-<span class="sd">        This Huggingface implementation uses DocNLI. The Hypoethsis still only works on single small hypothesis.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A groundedness measure for full document premise against hypothesis.</span>
+<span class="sd">        This Huggingface implementation uses DocNLI. The Hypoethsis still only</span>
+<span class="sd">        works on single small hypothesis.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            premise (str): NLI Premise</span>
@@ -10533,8 +11207,8 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
   
       <p>Create a Huggingface Provider with out of the box feedback functions.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code>from trulens_eval.feedback.provider.hugs import Huggingface
-huggingface_provider = Huggingface()
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
+<span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
 </code></pre></div></p>
 
   <p><strong>Parameters:</strong></p>
@@ -10567,10 +11241,7 @@ huggingface_provider = Huggingface()
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">69</span>
 <span class="normal">70</span>
 <span class="normal">71</span>
 <span class="normal">72</span>
@@ -10598,7 +11269,8 @@ huggingface_provider = Huggingface()
 <span class="normal">94</span>
 <span class="normal">95</span>
 <span class="normal">96</span>
-<span class="normal">97</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">97</span>
+<span class="normal">98</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
     <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
     <span class="c1"># down below. Adding it as None here as a temporary hack.</span>
@@ -10606,12 +11278,10 @@ huggingface_provider = Huggingface()
 <span class="sd">    Create a Huggingface Provider with out of the box feedback functions.</span>
 
 <span class="sd">    **Usage:**</span>
-<span class="sd">    ```</span>
+<span class="sd">    ```python</span>
 <span class="sd">    from trulens_eval.feedback.provider.hugs import Huggingface</span>
 <span class="sd">    huggingface_provider = Huggingface()</span>
-
 <span class="sd">    ```</span>
-
 
 <span class="sd">    Args:</span>
 <span class="sd">        endpoint (Endpoint): Internal Usage for DB serialization</span>
@@ -10654,13 +11324,14 @@ calculates the probit difference on the language detected on text1. The
 function is: <code>1.0 - (|probit_language_text1(text1) -
 probit_language_text1(text2))</code></p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code>from trulens_eval import Feedback
-from trulens_eval.feedback.provider.hugs import Huggingface
-huggingface_provider = Huggingface()
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
+<span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
 
-feedback = Feedback(huggingface_provider.language_match).on_input_output() 
+<span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">huggingface_provider</span><span class="o">.</span><span class="n">language_match</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span> 
 </code></pre></div>
-The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function Guide</a></p>
+The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
+Guide</a></p>
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -10719,7 +11390,17 @@ The <code>on_input_output()</code> selector can be changed. See <a href="https:/
           </td>
           <td>
             <div class="doc-md-description">
-              <p>A value between 0 and 1. 0 being "different languages" and 1 being "same languages".</p>
+              <p>A value between 0 and 1. 0 being "different languages" and 1</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td></td>          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>being "same languages".</p>
             </div>
           </td>
         </tr>
@@ -10728,8 +11409,7 @@ The <code>on_input_output()</code> selector can be changed. See <a href="https:/
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 99</span>
-<span class="normal">100</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">100</span>
 <span class="normal">101</span>
 <span class="normal">102</span>
 <span class="normal">103</span>
@@ -10781,7 +11461,10 @@ The <code>on_input_output()</code> selector can be changed. See <a href="https:/
 <span class="normal">149</span>
 <span class="normal">150</span>
 <span class="normal">151</span>
-<span class="normal">152</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
 <span class="k">def</span> <span class="nf">language_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses Huggingface&#39;s papluca/xlm-roberta-base-language-detection model. A</span>
@@ -10791,14 +11474,15 @@ The <code>on_input_output()</code> selector can be changed. See <a href="https:/
 <span class="sd">    probit_language_text1(text2))`</span>
 
 <span class="sd">    **Usage:**</span>
-<span class="sd">    ```</span>
+<span class="sd">    ```python</span>
 <span class="sd">    from trulens_eval import Feedback</span>
 <span class="sd">    from trulens_eval.feedback.provider.hugs import Huggingface</span>
 <span class="sd">    huggingface_provider = Huggingface()</span>
 
 <span class="sd">    feedback = Feedback(huggingface_provider.language_match).on_input_output() </span>
 <span class="sd">    ```</span>
-<span class="sd">    The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+<span class="sd">    The `on_input_output()` selector can be changed. See [Feedback Function</span>
+<span class="sd">    Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        text1 (str): Text to evaluate.</span>
@@ -10806,7 +11490,8 @@ The <code>on_input_output()</code> selector can be changed. See <a href="https:/
 
 <span class="sd">    Returns:</span>
 
-<span class="sd">        float: A value between 0 and 1. 0 being &quot;different languages&quot; and 1 being &quot;same languages&quot;.</span>
+<span class="sd">        float: A value between 0 and 1. 0 being &quot;different languages&quot; and 1</span>
+<span class="sd">        being &quot;same languages&quot;.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">get_scores</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
@@ -10856,13 +11541,14 @@ The <code>on_input_output()</code> selector can be changed. See <a href="https:/
       <p>Uses Huggingface's martin-ha/toxic-comment-model model. A function that
 uses a toxic comment classifier on <code>text</code>.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code>from trulens_eval import Feedback
-from trulens_eval.feedback.provider.hugs import Huggingface
-huggingface_provider = Huggingface()
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
+<span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
 
-feedback = Feedback(huggingface_provider.not_toxic).on_output() 
+<span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">huggingface_provider</span><span class="o">.</span><span class="n">not_toxic</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
 </code></pre></div>
-The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function Guide</a></p>
+The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
+Guide</a></p>
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -10907,7 +11593,17 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
           </td>
           <td>
             <div class="doc-md-description">
-              <p>A value between 0 and 1. 0 being "toxic" and 1 being "not toxic".</p>
+              <p>A value between 0 and 1. 0 being "toxic" and 1 being "not</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td></td>          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>toxic".</p>
             </div>
           </td>
         </tr>
@@ -10916,12 +11612,7 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">189</span>
-<span class="normal">190</span>
-<span class="normal">191</span>
-<span class="normal">192</span>
-<span class="normal">193</span>
-<span class="normal">194</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">194</span>
 <span class="normal">195</span>
 <span class="normal">196</span>
 <span class="normal">197</span>
@@ -10951,28 +11642,37 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
 <span class="normal">221</span>
 <span class="normal">222</span>
 <span class="normal">223</span>
-<span class="normal">224</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
 <span class="k">def</span> <span class="nf">not_toxic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses Huggingface&#39;s martin-ha/toxic-comment-model model. A function that</span>
 <span class="sd">    uses a toxic comment classifier on `text`.</span>
 
 <span class="sd">    **Usage:**</span>
-<span class="sd">    ```</span>
+<span class="sd">    ```python</span>
 <span class="sd">    from trulens_eval import Feedback</span>
 <span class="sd">    from trulens_eval.feedback.provider.hugs import Huggingface</span>
 <span class="sd">    huggingface_provider = Huggingface()</span>
 
 <span class="sd">    feedback = Feedback(huggingface_provider.not_toxic).on_output() </span>
 <span class="sd">    ```</span>
-<span class="sd">    The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+<span class="sd">    The `on_output()` selector can be changed. See [Feedback Function</span>
+<span class="sd">    Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
 
 
 <span class="sd">    Args:</span>
 <span class="sd">        text (str): Text to evaluate.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        float: A value between 0 and 1. 0 being &quot;toxic&quot; and 1 being &quot;not toxic&quot;.</span>
+<span class="sd">        float: A value between 0 and 1. 0 being &quot;toxic&quot; and 1 being &quot;not</span>
+<span class="sd">        toxic&quot;.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Input cannot be blank.&quot;</span>
@@ -11008,13 +11708,14 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
       <p>Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
 function that uses a sentiment classifier on <code>text</code>.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code>from trulens_eval import Feedback
-from trulens_eval.feedback.provider.hugs import Huggingface
-huggingface_provider = Huggingface()
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
+<span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
 
-feedback = Feedback(huggingface_provider.positive_sentiment).on_output() 
+<span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">huggingface_provider</span><span class="o">.</span><span class="n">positive_sentiment</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
 </code></pre></div>
-The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function Guide</a></p>
+The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
+Guide</a></p>
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -11059,7 +11760,17 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
           </td>
           <td>
             <div class="doc-md-description">
-              <p>A value between 0 and 1. 0 being "negative sentiment" and 1 being "positive sentiment".</p>
+              <p>A value between 0 and 1. 0 being "negative sentiment" and 1</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td></td>          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>being "positive sentiment".</p>
             </div>
           </td>
         </tr>
@@ -11068,10 +11779,7 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span>
-<span class="normal">157</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">157</span>
 <span class="normal">158</span>
 <span class="normal">159</span>
 <span class="normal">160</span>
@@ -11101,27 +11809,34 @@ The <code>on_output()</code> selector can be changed. See <a href="https://www.t
 <span class="normal">184</span>
 <span class="normal">185</span>
 <span class="normal">186</span>
-<span class="normal">187</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
 <span class="k">def</span> <span class="nf">positive_sentiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses Huggingface&#39;s cardiffnlp/twitter-roberta-base-sentiment model. A</span>
 <span class="sd">    function that uses a sentiment classifier on `text`.</span>
 
 <span class="sd">    **Usage:**</span>
-<span class="sd">    ```</span>
+<span class="sd">    ```python</span>
 <span class="sd">    from trulens_eval import Feedback</span>
 <span class="sd">    from trulens_eval.feedback.provider.hugs import Huggingface</span>
 <span class="sd">    huggingface_provider = Huggingface()</span>
 
 <span class="sd">    feedback = Feedback(huggingface_provider.positive_sentiment).on_output() </span>
 <span class="sd">    ```</span>
-<span class="sd">    The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+<span class="sd">    The `on_output()` selector can be changed. See [Feedback Function</span>
+<span class="sd">    Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        text (str): Text to evaluate.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        float: A value between 0 and 1. 0 being &quot;negative sentiment&quot; and 1 being &quot;positive sentiment&quot;.</span>
+<span class="sd">        float: A value between 0 and 1. 0 being &quot;negative sentiment&quot; and 1</span>
+<span class="sd">        being &quot;positive sentiment&quot;.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">max_length</span> <span class="o">=</span> <span class="mi">500</span>

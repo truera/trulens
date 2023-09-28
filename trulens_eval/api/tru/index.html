@@ -489,7 +489,7 @@
   
     <li class="md-nav__item">
       <a href="../../text2text_quickstart/" class="md-nav__link">
-        No Framework Quickstart
+        Text to Text Quickstart
       </a>
     </li>
   
@@ -2343,7 +2343,18 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
 <span class="normal">612</span>
 <span class="normal">613</span>
 <span class="normal">614</span>
-<span class="normal">615</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Tru</span><span class="p">(</span><span class="n">SingletonPerName</span><span class="p">):</span>
+<span class="normal">615</span>
+<span class="normal">616</span>
+<span class="normal">617</span>
+<span class="normal">618</span>
+<span class="normal">619</span>
+<span class="normal">620</span>
+<span class="normal">621</span>
+<span class="normal">622</span>
+<span class="normal">623</span>
+<span class="normal">624</span>
+<span class="normal">625</span>
+<span class="normal">626</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Tru</span><span class="p">(</span><span class="n">SingletonPerName</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Tru is the main class that provides an entry points to trulens-eval. Tru lets you:</span>
 
@@ -2513,7 +2524,7 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
             <span class="k">assert</span> <span class="n">app_id</span> <span class="o">==</span> <span class="n">app</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span> <span class="s2">&quot;Record was produced by a different app.&quot;</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_id</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">app_id</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                     <span class="s2">&quot;App </span><span class="si">{app_id}</span><span class="s2"> was not present in database. Adding it.&quot;</span>
                 <span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_app</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">)</span>
@@ -2722,6 +2733,17 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
             <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_proc</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
             <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_proc</span> <span class="o">=</span> <span class="kc">None</span>
 
+    <span class="k">def</span> <span class="nf">run_dashboard_in_jupyter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># TODO: check for jupyter</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Running dashboard inside a notebook is an experimental feature and may not work well.&quot;</span><span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">streamlit_jupyter</span> <span class="kn">import</span> <span class="n">StreamlitPatcher</span>
+        <span class="n">StreamlitPatcher</span><span class="p">()</span><span class="o">.</span><span class="n">jupyter</span><span class="p">()</span>
+        <span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Leaderboard</span>
+
+        <span class="n">Leaderboard</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+
     <span class="k">def</span> <span class="nf">run_dashboard</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">_dev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Process</span><span class="p">:</span>
@@ -2850,8 +2872,8 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
                     <span class="n">tunnel_proc</span><span class="p">,</span> <span class="n">tunnel_proc</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span> <span class="n">out_stderr</span><span class="p">,</span> <span class="n">tunnel_started</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-            <span class="n">Tru</span><span class="o">.</span><span class="n">tunnel_listener_stdout</span><span class="o">.</span><span class="n">daemon</span><span class="o">=</span><span class="kc">True</span>
-            <span class="n">Tru</span><span class="o">.</span><span class="n">tunnel_listener_stderr</span><span class="o">.</span><span class="n">daemon</span><span class="o">=</span><span class="kc">True</span>
+            <span class="n">Tru</span><span class="o">.</span><span class="n">tunnel_listener_stdout</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">Tru</span><span class="o">.</span><span class="n">tunnel_listener_stderr</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="n">Tru</span><span class="o">.</span><span class="n">tunnel_listener_stdout</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
             <span class="n">Tru</span><span class="o">.</span><span class="n">tunnel_listener_stderr</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">tunnel_started</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">DASHBOARD_START_TIMEOUT</span>
@@ -2898,9 +2920,9 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
             <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">proc</span><span class="p">,</span> <span class="n">proc</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span> <span class="n">out_stderr</span><span class="p">,</span> <span class="n">started</span><span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="c1"># Purposely block main process from ending and wait for dashboard. </span>
-        <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_listener_stdout</span><span class="o">.</span><span class="n">daemon</span><span class="o">=</span><span class="kc">False</span>
-        <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_listener_stderr</span><span class="o">.</span><span class="n">daemon</span><span class="o">=</span><span class="kc">False</span>
+        <span class="c1"># Purposely block main process from ending and wait for dashboard.</span>
+        <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_listener_stdout</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_listener_stderr</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_listener_stdout</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
         <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_listener_stderr</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
@@ -3760,18 +3782,7 @@ its pip package installation folder.</p>
 
       <details class="quote">
         <summary>Source code in <code>trulens_eval/trulens_eval/tru.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">417</span>
-<span class="normal">418</span>
-<span class="normal">419</span>
-<span class="normal">420</span>
-<span class="normal">421</span>
-<span class="normal">422</span>
-<span class="normal">423</span>
-<span class="normal">424</span>
-<span class="normal">425</span>
-<span class="normal">426</span>
-<span class="normal">427</span>
-<span class="normal">428</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">428</span>
 <span class="normal">429</span>
 <span class="normal">430</span>
 <span class="normal">431</span>
@@ -3956,7 +3967,18 @@ its pip package installation folder.</p>
 <span class="normal">610</span>
 <span class="normal">611</span>
 <span class="normal">612</span>
-<span class="normal">613</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_dashboard</span><span class="p">(</span>
+<span class="normal">613</span>
+<span class="normal">614</span>
+<span class="normal">615</span>
+<span class="normal">616</span>
+<span class="normal">617</span>
+<span class="normal">618</span>
+<span class="normal">619</span>
+<span class="normal">620</span>
+<span class="normal">621</span>
+<span class="normal">622</span>
+<span class="normal">623</span>
+<span class="normal">624</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_dashboard</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">_dev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Process</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -4084,8 +4106,8 @@ its pip package installation folder.</p>
                 <span class="n">tunnel_proc</span><span class="p">,</span> <span class="n">tunnel_proc</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span> <span class="n">out_stderr</span><span class="p">,</span> <span class="n">tunnel_started</span>
             <span class="p">)</span>
         <span class="p">)</span>
-        <span class="n">Tru</span><span class="o">.</span><span class="n">tunnel_listener_stdout</span><span class="o">.</span><span class="n">daemon</span><span class="o">=</span><span class="kc">True</span>
-        <span class="n">Tru</span><span class="o">.</span><span class="n">tunnel_listener_stderr</span><span class="o">.</span><span class="n">daemon</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">Tru</span><span class="o">.</span><span class="n">tunnel_listener_stdout</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">Tru</span><span class="o">.</span><span class="n">tunnel_listener_stderr</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">Tru</span><span class="o">.</span><span class="n">tunnel_listener_stdout</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
         <span class="n">Tru</span><span class="o">.</span><span class="n">tunnel_listener_stderr</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">tunnel_started</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">DASHBOARD_START_TIMEOUT</span>
@@ -4132,9 +4154,9 @@ its pip package installation folder.</p>
         <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">proc</span><span class="p">,</span> <span class="n">proc</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span> <span class="n">out_stderr</span><span class="p">,</span> <span class="n">started</span><span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="c1"># Purposely block main process from ending and wait for dashboard. </span>
-    <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_listener_stdout</span><span class="o">.</span><span class="n">daemon</span><span class="o">=</span><span class="kc">False</span>
-    <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_listener_stderr</span><span class="o">.</span><span class="n">daemon</span><span class="o">=</span><span class="kc">False</span>
+    <span class="c1"># Purposely block main process from ending and wait for dashboard.</span>
+    <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_listener_stdout</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_listener_stderr</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_listener_stdout</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
     <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_listener_stderr</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
@@ -4320,7 +4342,7 @@ its pip package installation folder.</p>
         <span class="k">assert</span> <span class="n">app_id</span> <span class="o">==</span> <span class="n">app</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span> <span class="s2">&quot;Record was produced by a different app.&quot;</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_id</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">app_id</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                 <span class="s2">&quot;App </span><span class="si">{app_id}</span><span class="s2"> was not present in database. Adding it.&quot;</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">add_app</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">)</span>

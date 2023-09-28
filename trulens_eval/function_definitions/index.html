@@ -489,7 +489,7 @@
   
     <li class="md-nav__item">
       <a href="../text2text_quickstart/" class="md-nav__link">
-        No Framework Quickstart
+        Text to Text Quickstart
       </a>
     </li>
   
@@ -670,6 +670,20 @@
         <li class="md-nav__item">
   <a href="#moderation" class="md-nav__link">
     Moderation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stereotypes" class="md-nav__link">
+    Stereotypes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summarization" class="md-nav__link">
+    Summarization
   </a>
   
 </li>
@@ -1569,6 +1583,20 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#stereotypes" class="md-nav__link">
+    Stereotypes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summarization" class="md-nav__link">
+    Summarization
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1637,6 +1665,10 @@ You can read more information about the performance of prompt response relevance
 <p>Toxicity is currently only available to be used with HuggingFace, and uses a classification endpoint to return a score from 0 to 1. The feedback function is negated as not_toxicity, and returns a 1 if not toxic and a 0 if toxic.</p>
 <h2 id="moderation">Moderation<a class="headerlink" href="#moderation" title="Permanent link">&para;</a></h2>
 <p>The OpenAI Moderation API is made available for use as feedback functions. This includes hate, hate/threatening, self-harm, sexual, sexual/minors, violence, and violence/graphic. Each is negated (ex: not_hate) so that a 0 would indicate that the moderation rule is violated. These feedback functions return a score in the range 0 to 1.</p>
+<h2 id="stereotypes">Stereotypes<a class="headerlink" href="#stereotypes" title="Permanent link">&para;</a></h2>
+<p>This evaluates stereotypes using OpenAI LLMs to check if gender or race were assumed with no prior indication. This is rated on a scale from 1 to 10 where 10 being no new gender or race assumptions. A two indicates gender or race assumption with no indication, and a one indicates gender or race changes with prior indication that is different.</p>
+<h2 id="summarization">Summarization<a class="headerlink" href="#summarization" title="Permanent link">&para;</a></h2>
+<p>This evaluates summarization tasks using OpenAI LLMs to check how well a summarization hits upon main points. This is rated on a scale from 1 to 10 where 10 being all points are addressed. </p>
 
 
 

@@ -489,7 +489,7 @@
   
     <li class="md-nav__item">
       <a href="../text2text_quickstart/" class="md-nav__link">
-        No Framework Quickstart
+        Text to Text Quickstart
       </a>
     </li>
   
@@ -2550,7 +2550,7 @@ Licensed under the Apache License, Version 2.0.
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[1]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2566,18 +2566,22 @@ Licensed under the Apache License, Version 2.0.
                 </clipboard-copy>
             </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># Import relevance feedback function</span>
-<span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">GroundTruthAgreement</span><span class="p">,</span> <span class="n">OpenAI</span> <span class="k">as</span> <span class="n">fOpenAI</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">GroundTruthAgreement</span><span class="p">,</span> <span class="n">OpenAI</span><span class="p">,</span> <span class="n">LiteLLM</span>
 <span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruBasicApp</span><span class="p">,</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Tru</span><span class="p">,</span> <span class="n">Select</span>
 <span class="kn">from</span> <span class="nn">test_cases</span> <span class="kn">import</span> <span class="n">context_relevance_golden_set</span>
 
 <span class="kn">import</span> <span class="nn">openai</span>
+
+<span class="n">Tru</span><span class="p">()</span><span class="o">.</span><span class="n">reset_database</span><span class="p">()</span>
 </pre></div>
 <div id="cell-1" class="clipboard-copy-txt"># Import relevance feedback function
-from trulens_eval.feedback import GroundTruthAgreement, OpenAI as fOpenAI
+from trulens_eval.feedback import GroundTruthAgreement, OpenAI, LiteLLM
 from trulens_eval import TruBasicApp, Feedback, Tru, Select
 from test_cases import context_relevance_golden_set
 
-import openai</div>
+import openai
+
+Tru().reset_database()</div>
         
         </div>
     </div>
@@ -2609,9 +2613,17 @@ import openai</div>
             </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;COHERE_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HUGGINGFACE_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ANTHROPIC_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;TOGETHERAI_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
 </pre></div>
 <div id="cell-2" class="clipboard-copy-txt">import os
-os.environ["OPENAI_API_KEY"] = "..."</div>
+os.environ["OPENAI_API_KEY"] = "..."
+os.environ["COHERE_API_KEY"] = "..."
+os.environ["HUGGINGFACE_API_KEY"] = "..."
+os.environ["ANTHROPIC_API_KEY"] = "..."
+os.environ["TOGETHERAI_API_KEY"] = "..."</div>
         
         </div>
     </div>
@@ -2641,41 +2653,75 @@ os.environ["OPENAI_API_KEY"] = "..."</div>
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">turbo</span> <span class="o">=</span> <span class="n">fOpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">&quot;gpt-3.5-turbo&quot;</span><span class="p">)</span>
-<span class="c1"># Define your feedback functions</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># GPT 3.5</span>
+<span class="n">turbo</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">&quot;gpt-3.5-turbo&quot;</span><span class="p">)</span>
+
 <span class="k">def</span> <span class="nf">wrapped_relevance_turbo</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">turbo</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
-
-<span class="c1"># Define your feedback functions</span>
 <span class="k">def</span> <span class="nf">wrapped_relevance_with_cot_turbo</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">turbo</span><span class="o">.</span><span class="n">qs_relevance_with_cot_reasons</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 
-<span class="n">gpt4</span> <span class="o">=</span> <span class="n">fOpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">&quot;gpt-4&quot;</span><span class="p">)</span>
-<span class="c1"># Define your feedback functions</span>
+<span class="c1"># GPT 4</span>
+<span class="n">gpt4</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">&quot;gpt-4&quot;</span><span class="p">)</span>
+
 <span class="k">def</span> <span class="nf">wrapped_relevance_gpt4</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">gpt4</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
-
-<span class="c1"># Define your feedback functions</span>
 <span class="k">def</span> <span class="nf">wrapped_relevance_with_cot_gpt4</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">gpt4</span><span class="o">.</span><span class="n">qs_relevance_with_cot_reasons</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+<span class="c1"># Cohere</span>
+<span class="n">command_nightly</span> <span class="o">=</span> <span class="n">LiteLLM</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">&quot;command-nightly&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">wrapped_relevance_command_nightly</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">command_nightly</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+<span class="c1"># Anthropic</span>
+<span class="n">claude_1</span> <span class="o">=</span> <span class="n">LiteLLM</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">&quot;claude-instant-1&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">wrapped_relevance_claude1</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">claude_1</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+<span class="n">claude_2</span> <span class="o">=</span> <span class="n">LiteLLM</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">&quot;claude-2&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">wrapped_relevance_claude2</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">claude_2</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+<span class="c1"># Meta</span>
+<span class="n">llama_2_13b</span> <span class="o">=</span> <span class="n">LiteLLM</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">&quot;togethercomputer/llama-2-7b&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">wrapped_relevance_llama2</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">llama_2_13b</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 </pre></div>
-<div id="cell-3" class="clipboard-copy-txt">turbo = fOpenAI(model_engine="gpt-3.5-turbo")
-# Define your feedback functions
+<div id="cell-3" class="clipboard-copy-txt"># GPT 3.5
+turbo = OpenAI(model_engine="gpt-3.5-turbo")
+
 def wrapped_relevance_turbo(input, output):
     return turbo.qs_relevance(input, output)
-
-# Define your feedback functions
 def wrapped_relevance_with_cot_turbo(input, output):
     return turbo.qs_relevance_with_cot_reasons(input, output)
 
-gpt4 = fOpenAI(model_engine="gpt-4")
-# Define your feedback functions
+# GPT 4
+gpt4 = OpenAI(model_engine="gpt-4")
+
 def wrapped_relevance_gpt4(input, output):
     return gpt4.qs_relevance(input, output)
-
-# Define your feedback functions
 def wrapped_relevance_with_cot_gpt4(input, output):
-    return gpt4.qs_relevance_with_cot_reasons(input, output)</div>
+    return gpt4.qs_relevance_with_cot_reasons(input, output)
+
+# Cohere
+command_nightly = LiteLLM(model_engine="command-nightly")
+def wrapped_relevance_command_nightly(input, output):
+    return command_nightly.qs_relevance(input, output)
+
+# Anthropic
+claude_1 = LiteLLM(model_engine="claude-instant-1")
+def wrapped_relevance_claude1(input, output):
+    return claude_1.qs_relevance(input, output)
+
+claude_2 = LiteLLM(model_engine="claude-2")
+def wrapped_relevance_claude2(input, output):
+    return claude_2.qs_relevance(input, output)
+
+# Meta
+llama_2_13b = LiteLLM(model_engine="togethercomputer/llama-2-7b")
+def wrapped_relevance_llama2(input, output):
+    return llama_2_13b.qs_relevance(input, output)</div>
         
         </div>
     </div>
@@ -2757,8 +2803,8 @@ f_groundtruth = Feedback(ground_truth.numeric_difference, name = "Context Releva
 </div>
 
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div  class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2780,13 +2826,31 @@ f_groundtruth = Feedback(ground_truth.numeric_difference, name = "Context Releva
             </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru_wrapped_relevance_turbo</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">wrapped_relevance_turbo</span><span class="p">,</span> <span class="n">app_id</span> <span class="o">=</span> <span class="s2">&quot;context relevance gpt-3.5-turbo&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundtruth</span><span class="p">])</span>
 <span class="n">tru_wrapped_relevance_with_cot_turbo</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">wrapped_relevance_with_cot_turbo</span><span class="p">,</span> <span class="n">app_id</span> <span class="o">=</span> <span class="s2">&quot;context relevance with cot reasoning gpt-3.5-turbo&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundtruth</span><span class="p">])</span>
+
 <span class="n">tru_wrapped_relevance_gpt4</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">wrapped_relevance_gpt4</span><span class="p">,</span> <span class="n">app_id</span> <span class="o">=</span> <span class="s2">&quot;context relevance gpt-4&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundtruth</span><span class="p">])</span>
 <span class="n">tru_wrapped_relevance_with_cot_gpt4</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">wrapped_relevance_with_cot_gpt4</span><span class="p">,</span> <span class="n">app_id</span> <span class="o">=</span> <span class="s2">&quot;context relevance with cot reasoning gpt-4&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundtruth</span><span class="p">])</span>
+
+<span class="n">tru_wrapped_relevance_commandnightly</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">wrapped_relevance_command_nightly</span><span class="p">,</span> <span class="n">app_id</span> <span class="o">=</span> <span class="s2">&quot;context relevance Command-Nightly&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundtruth</span><span class="p">])</span>
+
+<span class="n">tru_wrapped_relevance_claude1</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">wrapped_relevance_claude1</span><span class="p">,</span> <span class="n">app_id</span> <span class="o">=</span> <span class="s2">&quot;context relevance Claude 1&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundtruth</span><span class="p">])</span>
+
+<span class="n">tru_wrapped_relevance_claude2</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">wrapped_relevance_claude2</span><span class="p">,</span> <span class="n">app_id</span> <span class="o">=</span> <span class="s2">&quot;context relevance Claude 2&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundtruth</span><span class="p">])</span>
+
+<span class="n">tru_wrapped_relevance_llama2</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">wrapped_relevance_llama2</span><span class="p">,</span> <span class="n">app_id</span> <span class="o">=</span> <span class="s2">&quot;context relevance Llama-2-13b&quot;</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundtruth</span><span class="p">])</span>
 </pre></div>
 <div id="cell-5" class="clipboard-copy-txt">tru_wrapped_relevance_turbo = TruBasicApp(wrapped_relevance_turbo, app_id = "context relevance gpt-3.5-turbo", feedbacks=[f_groundtruth])
 tru_wrapped_relevance_with_cot_turbo = TruBasicApp(wrapped_relevance_with_cot_turbo, app_id = "context relevance with cot reasoning gpt-3.5-turbo", feedbacks=[f_groundtruth])
+
 tru_wrapped_relevance_gpt4 = TruBasicApp(wrapped_relevance_gpt4, app_id = "context relevance gpt-4", feedbacks=[f_groundtruth])
-tru_wrapped_relevance_with_cot_gpt4 = TruBasicApp(wrapped_relevance_with_cot_gpt4, app_id = "context relevance with cot reasoning gpt-4", feedbacks=[f_groundtruth])</div>
+tru_wrapped_relevance_with_cot_gpt4 = TruBasicApp(wrapped_relevance_with_cot_gpt4, app_id = "context relevance with cot reasoning gpt-4", feedbacks=[f_groundtruth])
+
+tru_wrapped_relevance_commandnightly = TruBasicApp(wrapped_relevance_command_nightly, app_id = "context relevance Command-Nightly", feedbacks=[f_groundtruth])
+
+tru_wrapped_relevance_claude1 = TruBasicApp(wrapped_relevance_claude1, app_id = "context relevance Claude 1", feedbacks=[f_groundtruth])
+
+tru_wrapped_relevance_claude2 = TruBasicApp(wrapped_relevance_claude2, app_id = "context relevance Claude 2", feedbacks=[f_groundtruth])
+
+tru_wrapped_relevance_llama2 = TruBasicApp(wrapped_relevance_llama2, app_id = "context relevance Llama-2-13b", feedbacks=[f_groundtruth])</div>
         
         </div>
     </div>
@@ -2794,36 +2858,14 @@ tru_wrapped_relevance_with_cot_gpt4 = TruBasicApp(wrapped_relevance_with_cot_gpt
 </div>
 </div>
 
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>🦑 Tru initialized with db url sqlite:///default.sqlite .
-🛑 Secret keys may be written to the database. See the `database_redact_keys` option of `Tru` to prevent this.
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div  class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2845,6 +2887,10 @@ tru_wrapped_relevance_with_cot_gpt4 = TruBasicApp(wrapped_relevance_with_cot_gpt
     <span class="n">tru_wrapped_relevance_with_cot_turbo</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
     <span class="n">tru_wrapped_relevance_gpt4</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
     <span class="n">tru_wrapped_relevance_with_cot_gpt4</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+    <span class="n">tru_wrapped_relevance_commandnightly</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+    <span class="n">tru_wrapped_relevance_claude1</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+    <span class="n">tru_wrapped_relevance_claude2</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+    <span class="n">tru_wrapped_relevance_llama2</span><span class="o">.</span><span class="n">call_with_record</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
 </pre></div>
 <div id="cell-6" class="clipboard-copy-txt">for i in range(len(context_relevance_golden_set)):
     prompt = context_relevance_golden_set[i]["query"]
@@ -2852,33 +2898,16 @@ tru_wrapped_relevance_with_cot_gpt4 = TruBasicApp(wrapped_relevance_with_cot_gpt
     tru_wrapped_relevance_turbo.call_with_record(prompt, response)
     tru_wrapped_relevance_with_cot_turbo.call_with_record(prompt, response)
     tru_wrapped_relevance_gpt4.call_with_record(prompt, response)
-    tru_wrapped_relevance_with_cot_gpt4.call_with_record(prompt, response)</div>
+    tru_wrapped_relevance_with_cot_gpt4.call_with_record(prompt, response)
+    tru_wrapped_relevance_commandnightly.call_with_record(prompt, response)
+    tru_wrapped_relevance_claude1.call_with_record(prompt, response)
+    tru_wrapped_relevance_claude2.call_with_record(prompt, response)
+    tru_wrapped_relevance_llama2.call_with_record(prompt, response)</div>
         
         </div>
     </div>
 
 </div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Task queue full. Finishing existing tasks.
-</pre>
-</div>
-</div>
-
-</div>
-
 </div>
 
 </div>
@@ -2888,7 +2917,7 @@ tru_wrapped_relevance_with_cot_gpt4 = TruBasicApp(wrapped_relevance_with_cot_gpt
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[9]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -2921,7 +2950,7 @@ tru_wrapped_relevance_with_cot_gpt4 = TruBasicApp(wrapped_relevance_with_cot_gpt
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[9]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
 
 
 
@@ -2964,21 +2993,45 @@ tru_wrapped_relevance_with_cot_gpt4 = TruBasicApp(wrapped_relevance_with_cot_gpt
     </tr>
     <tr>
       <th>context relevance gpt-4</th>
-      <td>0.780000</td>
+      <td>0.786667</td>
       <td>0.066667</td>
       <td>0.015268</td>
     </tr>
     <tr>
       <th>context relevance with cot reasoning gpt-4</th>
-      <td>0.733333</td>
+      <td>0.786667</td>
       <td>0.066667</td>
-      <td>0.019560</td>
+      <td>0.019420</td>
+    </tr>
+    <tr>
+      <th>context relevance Claude 1</th>
+      <td>0.773333</td>
+      <td>0.066667</td>
+      <td>0.000000</td>
     </tr>
     <tr>
       <th>context relevance with cot reasoning gpt-3.5-turbo</th>
-      <td>0.706667</td>
+      <td>0.726667</td>
       <td>0.066667</td>
-      <td>0.000918</td>
+      <td>0.000914</td>
+    </tr>
+    <tr>
+      <th>context relevance Command-Nightly</th>
+      <td>0.673333</td>
+      <td>0.066667</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>context relevance Claude 2</th>
+      <td>0.566667</td>
+      <td>0.066667</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>context relevance Llama-2-13b</th>
+      <td>0.506667</td>
+      <td>0.066667</td>
+      <td>0.000000</td>
     </tr>
   </tbody>
 </table>
