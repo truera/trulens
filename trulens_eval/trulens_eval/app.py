@@ -195,11 +195,31 @@ class Prompt(ComponentView):
 
 class LLM(ComponentView):
     # langchain.llms.base.BaseLLM
-    # llama_index ???
+    # llama_index.llms.base.LLM
 
     @property
     @abstractmethod
     def model_name(self) -> str:
+        pass
+
+
+class Tool(ComponentView):
+    # langchain ???
+    # llama_index.tools.types.BaseTool
+
+    @property
+    @abstractmethod
+    def tool_name(self) -> str:
+        pass
+
+
+class Agent(ComponentView):
+    # langchain ???
+    # llama_index.agent.types.BaseAgent
+
+    @property
+    @abstractmethod
+    def agent_name(self) -> str:
         pass
 
 
@@ -211,7 +231,6 @@ class Memory(ComponentView):
 
 class Other(ComponentView):
     # Any component that does not fit into the other named categories.
-
     pass
 
 
@@ -597,19 +616,19 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         funcs = self.instrumented_methods.get(id(obj))
 
         if funcs is None:
-            logger.debug(
+            logger.warn(
                 f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. "
                 "The path of this call may be incorrect."
             )
             try:
                 _id, f, path = next(iter(self._get_methods_for_func(func)))
             except Exception:
-                logger.debug(
+                logger.warn(
                     "No other objects use this function so cannot guess path."
                 )
                 return None
 
-            logger.debug(
+            logger.warn(
                 f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function."
             )
 
@@ -621,7 +640,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         else:
             if func not in funcs:
-                logger.debug(
+                logger.warn(
                     f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. "
                     "The path of this call may be incorrect."
                 )
@@ -629,12 +648,12 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 try:
                     _id, f, path = next(iter(self._get_methods_for_func(func)))
                 except Exception:
-                    logger.debug(
+                    logger.warn(
                         "No other objects use this function so cannot guess path."
                     )
                     return None
 
-                logger.debug(
+                logger.warn(
                     f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function."
                 )
 
