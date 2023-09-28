@@ -853,7 +853,6 @@ class DummyEndpoint(Endpoint):
             # "model loading message"
             j = dict(estimated_time=1.2345)
             self.is_loading = False
-
         elif random.randint(a=0, b=50) == 0:
             # randomly overloaded
             j = dict(error="overloaded")
