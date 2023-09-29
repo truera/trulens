@@ -74,6 +74,26 @@ class SerialModel(pydantic.BaseModel):
         return self
 
 
+class SerialBytes(pydantic.BaseModel):
+    # Raw data that we want to nonetheless serialize .
+    data: bytes
+
+    def dict(self):
+        import base64
+        encoded = base64.b64encode(self.data)
+        return dict(data=encoded)
+
+    @classmethod
+    def parse_obj(cls, d: Any):
+        import base64
+
+        if isinstance(d, Dict):
+            encoded = d['data']
+            return SerialBytes(data=base64.b64decode(encoded))
+        else:
+            raise ValueError(d)
+
+
 # JSONPath, a container for selector/accessors/setters of data stored in a json
 # structure. Cannot make abstract since pydantic will try to initialize it.
 class Step(SerialModel):  #, abc.ABC):

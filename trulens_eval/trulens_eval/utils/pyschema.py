@@ -65,6 +65,9 @@ def noserio(obj, **extra: Dict) -> dict:
     inner = Obj.of_object(obj).dict()
     inner.update(extra)
 
+    if isinstance(obj, Sequence):
+        inner['len'] = len(obj)
+
     return {NOSERIO: inner}
 
 

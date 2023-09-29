@@ -1,4 +1,10 @@
 import asyncio
+from typing import Optional
+
+import pydantic
+
+from trulens_eval.utils.serial import JSON
+from trulens_eval.ux.apps import ChatRecord
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -15,74 +21,75 @@ from trulens_eval.schema import AppDefinition
 
 # state = st.session_state
 if "records" not in st.session_state:
-    print("resetting state")
-    st.session_state.records = []
-
-if "i" not in st.session_state:
-    st.session_state['i'] = 0
-
-if 'app_args' not in st.session_state:
-
     st.title("App Runner")
 
-    for app_args in AppDefinition.get_loadable_apps():
-
-        app_json = app_args['app_definition_json']
+    for app_json in AppDefinition.get_loadable_apps():
         st.write(app_json['app_id'])
         select_app = st.button("New Session")
+
         if select_app:
-            st.write("selected")
-            st.session_state['app_args'] = app_args
-            st.session_state.records = []
+            st.write("Loading ...")
+            st.session_state.records = [ChatRecord(app_json=app_json)]
             st.rerun()
-
-
+    
 else:
-    app_args = st.session_state['app_args']
-    tru_app = AppDefinition.new_session(**app_args)
+    first_record = st.session_state.records[0]
+    app_json = first_record.app_json
 
-    st.title(f"App Runner: {tru_app.app_id}")
+    st.title(f"App Runner: {app_json['app_id']}")
+    st.write(f"TODO: link to {app_json['app_id']} on other pages.")
 
-    human_key = f"human_input"
-    human_input = st.text_input(key=human_key, label=f"human")#, disabled=st.session_state[human_key + "_disabled"])
+    for rec in st.session_state.records:
+        col1, col2 = st.columns(2)
 
-    for record in st.session_state.records:
-        h, c = record
-        if h is not None:
-            st.text(f"Human: {h}")
-        if c is not None:
-            st.text(f"Computer: {c}")
+        if isinstance(rec, dict):
+            rec = ChatRecord(**rec)
         
+        record_json = rec.record_json
 
-    st.session_state.records.append([None, None])
+        # assert isinstance(rec, ChatRecord), f"rec={type(rec).__name__}"
+        with col1:
+            if rec.human is not None:
+                with st.chat_message("Human", avatar="🧑‍💻"):
+                    st.write(rec.human)
+                    # st.write(f"TODO link to {rec.record_json['record_id']} focusing on `main_input`.")
+            if rec.computer is not None:
+                with st.chat_message("Computer", avatar="🤖"):
+                    st.write(rec.computer)
+                    # st.write(f"TODO link to {rec.record_json['record_id']} focusing on `main_output`.")
+        with col2:
+            if record_json is not None:
+                st.write(f"TODO link to {record_json['record_id']}.")
 
-    #def new_record():
-    # i = st.session_state["i"]
-    # print(len(st.session_state.records))
-    #st.session_state[human_key + "_disabled"] = False
-    #    human_input = st.text_input(key=human_key, label=f"human {i}", disabled=st.session_state[human_key + "_disabled"])
+    human_input = st.chat_input()
 
     if human_input:
-        st.session_state.records[-1][0] = human_input
-        st.text(f"Human: {human_input}")
-        # st.session_state[human_key + "_disabled"] = True
-        # st.session_state.records[i][0] = True
-        # st.session_state.records[i][1] = human_input
+        col1, col2 = st.columns(2)
 
-        with tru_app as rec:
-            comp_response = tru_app.main_call(human_input)
-            # st.session_state.records[i][2] = comp_response
-            #st.text_input(key=f"computer_input_{i}", label=f"computer {i}", value=comp_response, disabled=True)
-            # st.text(f"computer: {comp_response}")
+        with col1:
+            with st.chat_message("Human", avatar="🧑‍💻"):
+                st.write(human_input)
 
-        # st.session_state['i'] += 1
-        st.text(f"Computer: {comp_response}")
-        st.session_state.records[-1][1] = comp_response
-        st.session_state.records.append([None, None])
-        # print("pre", len(st.session_state.records))
-        # st.session_state.records.append([False, None, None])
-        # print("post", len(st.session_state.records))
+            current_record = st.session_state.records[-1]
 
-        #new_record()
+            tru_app = AppDefinition.continue_session(
+                app_definition_json=current_record.app_json
+            )
 
-    #new_record()
+            with tru_app as rec:
+                comp_response = tru_app.main_call(human_input)
+            record = rec.get()
+
+            with st.chat_message("Computer", avatar="🤖"):
+                st.write(comp_response)
+
+        with col2:
+            st.write(f"TODO link to {record.record_id}.")
+
+        # Update current ChatRecord with the results.
+        current_record.human = human_input
+        current_record.record_json = record.dict()
+        current_record.computer = comp_response
+
+        # Add the next ChatRecord that contains the updated app state:
+        st.session_state.records.append(ChatRecord(app_json=tru_app.dict()))

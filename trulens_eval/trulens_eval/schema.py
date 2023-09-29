@@ -20,7 +20,6 @@ feature information about the encoded object types in the dictionary under the
 util.py:CLASS_INFO key.
 """
 
-from abc import ABC
 from datetime import datetime
 from enum import Enum
 import json
@@ -32,7 +31,6 @@ from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, TypeVar, U
 import dill
 from munch import Munch as Bunch
 import pydantic
-from pydantic import Field
 
 from trulens_eval.utils.json import json_str_of_obj, jsonify
 from trulens_eval.utils.json import obj_id_of_obj
@@ -41,7 +39,7 @@ from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.serial import GetItemOrAttribute
+from trulens_eval.utils.serial import GetItemOrAttribute, SerialBytes
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSONPath
 from trulens_eval.utils.serial import SerialModel
@@ -455,7 +453,7 @@ class AppDefinition(SerialModel, WithClassInfo):
     # EXPERIMENTAL
     # NOTE: temporary unsafe serialization of function that loads the app:
     # Dump of the initial app before any invocations. Can be used to create a new session.
-    initial_app_loader_dump: Optional[bytes] = None
+    initial_app_loader_dump: Optional[SerialBytes] = None
 
     # Info to store about the app and to display in dashboard. This is useful if
     # app itself cannot be serialized. `app_extra_json`, then, can stand in place for
@@ -463,7 +461,37 @@ class AppDefinition(SerialModel, WithClassInfo):
     app_extra_json: JSON
 
     @staticmethod
-    def new_session(app_definition_json: JSON, initial_app_loader: Optional[Callable]) -> 'AppDefinition':
+    def continue_session(app_definition_json: JSON, initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
+        """
+        Create a copy of the json serialized app with the enclosed app being
+        initialized to its initial state before any records are produced (i.e.
+        blank memory).
+        """
+
+        defn = app_definition_json['initial_app_loader_dump']
+
+        if initial_app_loader is None:
+            assert defn is not None, "Cannot continue new session without `initial_app_loader`."
+            serial_bytes = SerialBytes.parse_obj(defn)
+            app = dill.loads(serial_bytes.data)()
+        else:
+            app = initial_app_loader()
+            defn = dill.dumps(initial_app_loader)
+            serial_bytes = SerialBytes(data=defn)
+        
+        # Need to be able to load the app from json somehow:
+        # app_definition_json['app'] = app
+        app_definition_json['initial_app_loader_dump'] = serial_bytes
+
+        cls = WithClassInfo.get_class(app_definition_json)
+
+        return cls(**app_definition_json)
+
+    @staticmethod
+    def new_session(
+        app_definition_json: JSON,
+        initial_app_loader: Optional[Callable] = None
+    ) -> 'AppDefinition':
         """
         Create a copy of the json serialized app with the enclosed app being
         initialized to its initial state before any records are produced (i.e.
@@ -474,13 +502,16 @@ class AppDefinition(SerialModel, WithClassInfo):
 
         if initial_app_loader is None:
             assert defn is not None, "Cannot create new session without `initial_app_loader`."
-            app = dill.loads(defn)()
+            serial_bytes = SerialBytes.parse_obj(defn)
+            print(f"loading {serial_bytes}")
+            app = dill.loads(serial_bytes.data)()
         else:
             app = initial_app_loader()
             defn = dill.dumps(initial_app_loader)
+            serial_bytes = SerialBytes(data=defn)
         
         app_definition_json['app'] = app
-        app_definition_json['initial_app_loader_dump'] = defn
+        app_definition_json['initial_app_loader_dump'] = serial_bytes
 
         cls = WithClassInfo.get_class(app_definition_json)
 
@@ -540,8 +571,9 @@ class AppDefinition(SerialModel, WithClassInfo):
                         "If you are loading large objects, include the loading logic inside `initial_app_loader`."
                     )
                 else:
-                    self.initial_app_loader_dump = dump
+                    self.initial_app_loader_dump = SerialBytes(data=dump)
 
+                    """
                     path_json = Path.cwd() / f"{app_id}.json"
                     path_dill = Path.cwd() / f"{app_id}.dill"
 
@@ -552,7 +584,7 @@ class AppDefinition(SerialModel, WithClassInfo):
                         fh.write(dump)
 
                     print(f"Wrote loadable app to {path_json} and {path_dill}.")
-
+                    """
 
             except Exception as e:
                 logger.warning(
@@ -564,34 +596,23 @@ class AppDefinition(SerialModel, WithClassInfo):
     def get_loadable_apps():
         # EXPERIMENTAL
         """
-        Gets a list of all of the loadable apps in the current path. This is
-        temporary while we work on streamlit-deployed apps.
+        Gets a list of all of the loadable apps. This is those that have
+        `initial_app_loader_dump` set.
         """
 
         rets = []
 
-        for path_json in Path().iterdir():
-            if path_json.suffix != ".json":
-                continue
+        from trulens_eval import Tru
 
-            path_dill = path_json.parent / f"{path_json.stem}.dill"
+        tru = Tru()
 
-            if not path_dill.exists():
-                continue
+        apps = tru.get_apps()
+        for app in apps:
+            dump = app['initial_app_loader_dump']
+            if dump is not None:
+                rets.append(app)
 
-            with path_json.open("r") as fh:
-                app_json = json.load(fh)
-
-            with path_dill.open("rb") as fh:
-                app_loader = dill.load(fh)
-
-            rets.append(dict(
-                app_definition_json=app_json,
-                initial_app_loader=app_loader
-            ))
-        
         return rets
-
 
     def dict(self):
         return jsonify(self)

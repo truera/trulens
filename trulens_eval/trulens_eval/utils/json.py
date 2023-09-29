@@ -27,7 +27,7 @@ from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import ERROR
 from trulens_eval.utils.pyschema import NOSERIO
 from trulens_eval.utils.pyschema import noserio
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSON, SerialBytes
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSONPath
 
@@ -132,6 +132,10 @@ def jsonify(
             return redact_value(obj)
         else:
             return obj
+
+    # TODO: remove eventually
+    if isinstance(obj, SerialBytes):
+        return obj.dict()
 
     if isinstance(obj, Path):
         return str(obj)
