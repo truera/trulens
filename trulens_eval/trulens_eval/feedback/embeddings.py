@@ -1,11 +1,10 @@
 import numpy as np
 from pydantic import PrivateAttr
-import sklearn
 from typing import Dict, Tuple, Union
 
 
 from llama_index import ServiceContext
-from trulens_eval.feedback.provider.base import Provider
+from trulens_eval.utils.imports import OptionalImports, REQUIREMENT_SKLEARN
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
@@ -48,6 +47,9 @@ class Embeddings(SerialModel,WithClassInfo):
         Args:
             embed_model ('Embedder'): Supported embedders taken from llama-index: https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
         """
+        with OptionalImports(message=REQUIREMENT_SKLEARN):
+            import sklearn
+        
         service_context = ServiceContext.from_defaults(embed_model = embed_model)
         self._embed_model = service_context.embed_model
         super().__init__(obj=self)
@@ -65,7 +67,7 @@ class Embeddings(SerialModel,WithClassInfo):
 
         model_name = 'text-embedding-ada-002'
 
-        embed = OpenAIEmbeddings(
+        embed_model = OpenAIEmbeddings(
             model=model_name,
             openai_api_key=OPENAI_API_KEY
         )
@@ -83,6 +85,7 @@ class Embeddings(SerialModel,WithClassInfo):
         Returns:
             - float: the embedding vector distance
         """
+        import sklearn
         query_embed = np.asarray(self._embed_model.get_query_embedding(query)).reshape(1, -1) # sklearn expects 2d array (first dimension number of samples)
         document_embed = np.asarray(self._embed_model.get_text_embedding(document)).reshape(1, -1) # sklearn expects 2d array (first dimension number of samples)
 
@@ -101,7 +104,7 @@ class Embeddings(SerialModel,WithClassInfo):
 
         model_name = 'text-embedding-ada-002'
 
-        embed = OpenAIEmbeddings(
+        embed_model = OpenAIEmbeddings(
             model=model_name,
             openai_api_key=OPENAI_API_KEY
         )
@@ -119,6 +122,7 @@ class Embeddings(SerialModel,WithClassInfo):
         Returns:
             - float: the embedding vector distance
         """
+        import sklearn
         query_embed = np.asarray(self._embed_model.get_query_embedding(query)).reshape(1, -1) # sklearn expects 2d array (first dimension number of samples)
         document_embed = np.asarray(self._embed_model.get_text_embedding(document)).reshape(1, -1) # sklearn expects 2d array (first dimension number of samples)
 
@@ -137,7 +141,7 @@ class Embeddings(SerialModel,WithClassInfo):
 
         model_name = 'text-embedding-ada-002'
 
-        embed = OpenAIEmbeddings(
+        embed_model = OpenAIEmbeddings(
             model=model_name,
             openai_api_key=OPENAI_API_KEY
         )
@@ -155,6 +159,7 @@ class Embeddings(SerialModel,WithClassInfo):
         Returns:
             - float: the embedding vector distance
         """
+        import sklearn
         query_embed = np.asarray(self._embed_model.get_query_embedding(query)).reshape(1, -1) # sklearn expects 2d array (first dimension number of samples)
         document_embed = np.asarray(self._embed_model.get_text_embedding(document)).reshape(1, -1) # sklearn expects 2d array (first dimension number of samples)
 
