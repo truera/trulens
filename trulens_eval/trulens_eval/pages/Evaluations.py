@@ -271,7 +271,7 @@ else:
 
                         st.dataframe(
                             df.style.apply(highlight, axis=1
-                                          ).format("{:.2}", subset=["result"])
+                                          ).format("{:.2f}", subset=["result"])
                         )
 
                     else:
