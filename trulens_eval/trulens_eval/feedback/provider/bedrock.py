@@ -2,16 +2,12 @@ import logging
 import os
 
 import boto3
-from langchain import LLMChain
-from langchain.llms.bedrock import Bedrock
-from langchain.prompts.chat import AIMessagePromptTemplate
-from langchain.prompts.chat import ChatPromptTemplate
-from langchain.prompts.chat import HumanMessagePromptTemplate
-from langchain.prompts.chat import SystemMessagePromptTemplate
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.utils.generated import re_1_10_rating
+
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -49,34 +45,32 @@ class Bedrock(Provider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-    def _create_chat_completion(self, system_prompt, human_prompt, *args, **kwargs):
+    def _create_chat_completion(self, prompt, *args, **kwargs):
 
         # NOTE(joshr): only tested with sso auth
-        client = boto3.client(service_name="bedrock", region_name=self.region_name, *args, **kwargs)
-        bedrock_llm = Bedrock(
-                model_id=self.model_id,
-                client=client
-            )
+        import boto3
+        import json
+        bedrock = boto3.client(service_name='bedrock-runtime')
 
-        system_message_prompt = SystemMessagePromptTemplate.from_template(system_prompt)
-        ai_dialogue_prompt = AIMessagePromptTemplate.from_template("")
-        human_message_prompt = HumanMessagePromptTemplate.from_template(human_prompt)
+        body = json.dumps({
+            "inputText": prompt})
 
-        chat_prompt = ChatPromptTemplate.from_messages(
-            [system_message_prompt, human_message_prompt, ai_dialogue_prompt]
-        )
-        chain = LLMChain(llm=bedrock_llm, prompt=chat_prompt, verbose=True)
-        return chain.run(*args, **kwargs)
+        modelId = self.model_id
+
+        response = bedrock.invoke_model(body=body, modelId=modelId)
+
+        response_body = json.loads(response.get('body').read()).get('results')[0]["outputText"]
+        # text
+        return response_body
 
 
     def _find_relevant_string(self, full_source, hypothesis):
         return self._create_chat_completion(
-                system_prompt=
+                prompt = 
                             str.format(
                                 prompts.SYSTEM_FIND_SUPPORTING,
                                 prompt=full_source,
-                            ),
-                human_prompt=
+                            ) + "\n" +
                             str.format(
                                 prompts.USER_FIND_SUPPORTING,
                                 response=hypothesis
@@ -96,13 +90,12 @@ class Bedrock(Provider):
         """
         return re_1_10_rating(
             self._create_chat_completion(
-                    system_prompt=
+                    prompt=
                                 str.format(
                                     prompts.LLM_GROUNDEDNESS,
                                     premise=premise,
                                     hypothesis=hypothesis,
-                                ),
-                    human_prompt = ""
+                                )
                 )
             ) / 10
 
@@ -117,9 +110,8 @@ class Bedrock(Provider):
             str: An LLM response using a scorecard template
         """
         return self._create_chat_completion(
-                system_prompt=
-                            str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,),
-                human_prompt=
+                prompt=
+                            str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) + 
                             str.format(
                                 prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
                                 premise=premise,
@@ -142,13 +134,12 @@ class Bedrock(Provider):
         """
         return re_1_10_rating(
             self._create_chat_completion(
-                    system_prompt=
+                    prompt=
                                 str.format(
                                     prompts.QS_RELEVANCE,
                                     question=question,
                                     statement=statement
-                                ),
-                human_prompt=""
+                                )
                 )
             ) / 10
 
@@ -166,15 +157,13 @@ class Bedrock(Provider):
             "relevant".
         """
         return re_1_10_rating(
-            self._create_chat_completion(
-                    system_prompt=
+            self._create_chat_completion(prompt = 
                                 str.format(
                                     prompts.PR_RELEVANCE,
                                     prompt=prompt,
                                     response=response
-                                ),
-                human_prompt=""
-                )["choices"][0]["message"]["content"]
+                                )
+                )
         ) / 10
 
     def sentiment(self, text: str) -> float:
