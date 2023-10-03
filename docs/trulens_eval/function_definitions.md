@@ -71,3 +71,7 @@ This evaluates stereotypes using OpenAI LLMs to check if gender or race were ass
 ## Summarization
 
 This evaluates summarization tasks using OpenAI LLMs to check how well a summarization hits upon main points. This is rated on a scale from 1 to 10 where 10 being all points are addressed. 
+
+## Embeddings Distance
+
+Given an embedder, as is typical in vector DBs, this evaluates the distance of the query and document embeddings. Currently supporting cosine distance, L1/Manhattan distance, and L2/Euclidean distance.
