@@ -81,10 +81,7 @@ def dict_to_md(dictionary: dict) -> str:
 
 
 def draw_metadata(metadata: Metadata) -> str:
-    if isinstance(metadata, Dict):
-        return dict_to_md(metadata)
-    else:
-        return str(metadata)
+    return dict_to_md(metadata)
 
 
 def draw_call(call: RecordAppCall) -> None:

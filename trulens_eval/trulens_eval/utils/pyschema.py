@@ -26,10 +26,9 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from types import ModuleType
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union, ClassVar
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 import pydantic
-from pydantic import Field
 
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
@@ -64,9 +63,6 @@ def noserio(obj, **extra: Dict) -> dict:
 
     inner = Obj.of_object(obj).dict()
     inner.update(extra)
-
-    if isinstance(obj, Sequence):
-        inner['len'] = len(obj)
 
     return {NOSERIO: inner}
 
@@ -395,12 +391,8 @@ class ObjSerial(Obj):
 
         # Constructor arguments for some common types.
         if isinstance(obj, pydantic.BaseModel):
-            # NOTE: avoids circular import:
-            from trulens_eval.utils.json import jsonify
-
             init_args = ()
             init_kwargs = obj.dict()
-            # init_kwargs = jsonify(obj)
         elif isinstance(obj, Exception):
             init_args = obj.args
             init_kwargs = {}
@@ -421,14 +413,10 @@ class ObjSerial(Obj):
 
         # TODO: dataclasses
         # TODO: dataclasses_json
-        
+
+        sig = _safe_init_sig(cls.__call__)
         # NOTE: Something related to pydantic models incorrectly sets signature
         # of cls so we need to check cls.__call__ instead.
-        # TODO: app serialization
-        #if isinstance(cls, type):
-        #    sig = _safe_init_sig(cls)
-        #else:
-        sig = _safe_init_sig(cls.__call__)
 
         b = sig.bind(*init_args, **init_kwargs)
         bindings = Bindings.of_bound_arguments(b)
@@ -582,6 +570,7 @@ class Function(FunctionOrMethod):
 # Key of structure where class information is stored.
 CLASS_INFO = "__tru_class_info"
 
+
 class WithClassInfo(pydantic.BaseModel):
     """
     Mixin to track class information to aid in querying serialized components
@@ -590,9 +579,7 @@ class WithClassInfo(pydantic.BaseModel):
 
     # Using this odd key to not pollute attribute names in whatever class we mix
     # this into. Should be the same as CLASS_INFO.
-    __tru_class_info: Class = Field(exclude=False)
-
-    # class_info: Class
+    __tru_class_info: Class
 
     def __init__(
         self,
@@ -609,12 +596,8 @@ class WithClassInfo(pydantic.BaseModel):
             assert cls is not None, "Either `class_info`, `obj` or `cls` need to be specified."
             class_info = Class.of_class(cls, with_bases=True)
 
-        kwargs[CLASS_INFO] = class_info
+        kwargs['__tru_class_info'] = class_info
         super().__init__(*args, **kwargs)
-
-    @staticmethod
-    def get_class(obj_json: JSON):
-        return Class(**obj_json[CLASS_INFO]).load()
 
     @staticmethod
     def of_object(obj: object):
