@@ -176,7 +176,12 @@ def migrate_legacy_sqlite(engine: Engine):
         # 2. Create empty staging database at first Alembic revision
         stg_file = Path(tmp).joinpath("migration-staging.sqlite")
         logger.debug("Creating staging DB at %s", stg_file)
-        stg_engine = create_engine(f"sqlite:///{stg_file}")
+        stg_engine = create_engine(f"sqlite:///{stg_file}",
+                                            pool_size=10,
+                                            max_overflow=2,
+                                            pool_recycle=300,
+                                            pool_pre_ping=True,
+                                            pool_use_lifo=True)
         upgrade_db(stg_engine, revision="1")
 
         # 3. Copy records from original database to staging

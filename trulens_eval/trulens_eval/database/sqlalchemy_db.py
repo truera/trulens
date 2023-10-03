@@ -70,7 +70,14 @@ class SqlAlchemyDB(DB):
 
     @classmethod
     def from_db_url(cls, url: str, redact_keys: bool = False) -> "SqlAlchemyDB":
-        return cls(engine_params={"url": url}, redact_keys=redact_keys)
+        # Params needed for https://github.com/truera/trulens/issues/470
+        # Params are from https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn
+        return cls(engine_params={"url": url,
+                                "pool_size":10,
+                                "max_overflow":2,
+                                "pool_recycle":300,
+                                "pool_pre_ping":True,
+                                "pool_use_lifo":True}, redact_keys=redact_keys)
 
     def migrate_database(self):
         """
