@@ -3,8 +3,14 @@ Utilities for user-facing text generation.
 """
 
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
+
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
+
 
 UNICODE_STOP = "🛑"
 UNICODE_CHECK = "✅"
