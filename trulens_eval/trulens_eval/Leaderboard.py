@@ -101,7 +101,12 @@ def streamlit_app():
 
             if math.isnan(mean):
                 pass
-
+            elif("distance" in col_name):
+                feedback_cols[i].metric(
+                    label=col_name,
+                    value=f'{round(mean, 2)}',
+                    delta_color="normal"
+                )
             else:
                 cat = CATEGORY.of_score(mean)
                 feedback_cols[i].metric(
