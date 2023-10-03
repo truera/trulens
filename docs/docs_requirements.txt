@@ -6,3 +6,4 @@ mkdocstrings==0.20.0
 mkdocs-jupyter
 jupyter_contrib_nbextensions
 notebook<7
+markdown-include

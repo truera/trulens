@@ -13,11 +13,12 @@ from trulens_eval.schema import Metadata
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
-from trulens_eval.utils.pyschema import CLASS_INFO
-from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.containers import is_empty
-from trulens_eval.utils.pyschema import is_noserio
 from trulens_eval.utils.json import jsonify
+from trulens_eval.utils.pyschema import CLASS_INFO
+from trulens_eval.utils.pyschema import is_noserio
+from trulens_eval.utils.serial import GetItemOrAttribute
+from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSONPath
 
 
@@ -218,3 +219,59 @@ def draw_llm_info(query: JSONPath, component: ComponentView) -> None:
 
     st.markdown(hide_table_row_index, unsafe_allow_html=True)
     st.table(df)
+
+
+def draw_agent_info(query: JSONPath, component: ComponentView) -> None:
+    # copy of draw_prompt_info
+    # TODO: dedup
+    prompt_details_json = jsonify(component.json, skip_specials=True)
+
+    st.subheader(f"*Agent Details*")
+
+    path = Select.for_app(query)
+
+    prompt_types = {
+        k: v for k, v in prompt_details_json.items() if (v is not None) and
+        not is_empty(v) and not is_noserio(v) and k != CLASS_INFO
+    }
+
+    for key, value in prompt_types.items():
+        with st.expander(key.capitalize() + " " +
+                         render_selector_markdown(getattr(path, key)),
+                         expanded=True):
+
+            if isinstance(value, (Dict, List)):
+                st.write(value)
+            else:
+                if isinstance(value, str) and len(value) > 32:
+                    st.text(value)
+                else:
+                    st.write(value)
+
+
+def draw_tool_info(query: JSONPath, component: ComponentView) -> None:
+    # copy of draw_prompt_info
+    # TODO: dedup
+    prompt_details_json = jsonify(component.json, skip_specials=True)
+
+    st.subheader(f"*Tool Details*")
+
+    path = Select.for_app(query)
+
+    prompt_types = {
+        k: v for k, v in prompt_details_json.items() if (v is not None) and
+        not is_empty(v) and not is_noserio(v) and k != CLASS_INFO
+    }
+
+    for key, value in prompt_types.items():
+        with st.expander(key.capitalize() + " " +
+                         render_selector_markdown(getattr(path, key)),
+                         expanded=True):
+
+            if isinstance(value, (Dict, List)):
+                st.write(value)
+            else:
+                if isinstance(value, str) and len(value) > 32:
+                    st.text(value)
+                else:
+                    st.write(value)

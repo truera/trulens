@@ -2,6 +2,7 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from queue import Queue
+import random
 from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
@@ -16,10 +17,10 @@ import requests
 from trulens_eval.keys import ApiKeyError
 from trulens_eval.schema import Cost
 from trulens_eval.utils.python import get_first_local_in_call_stack
-from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.python import Thunk
+from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
 
@@ -97,9 +98,9 @@ class Endpoint(SerialModel, SingletonPerName):
     # Thread that fills the queue at the appropriate rate.
     pace_thread: Thread = pydantic.Field(exclude=True)
 
-    def __new__(cls, name: str, *args, **kwargs):
+    def __new__(cls, *args, name: str = None, **kwargs):
         return super(SingletonPerName, cls).__new__(
-            SerialModel, name=name, *args, **kwargs
+            SerialModel, *args, name=name, **kwargs
         )
 
     def __init__(self, *args, name: str, callback_class: Any, **kwargs):
@@ -116,7 +117,7 @@ class Endpoint(SerialModel, SingletonPerName):
         kwargs['global_callback'] = callback_class()
         kwargs['callback_name'] = f"callback_{name}"
         kwargs['pace_thread'] = Thread()  # temporary
-
+        kwargs['pace_thread'].daemon = True
         super(SerialModel, self).__init__(*args, **kwargs)
 
         def keep_pace():
@@ -125,6 +126,7 @@ class Endpoint(SerialModel, SingletonPerName):
                 self.pace.put(True)
 
         self.pace_thread = Thread(target=keep_pace)
+        self.pace_thread.daemon = True
         self.pace_thread.start()
 
         logger.debug(f"*** Creating {self.name} endpoint ***")
@@ -234,7 +236,8 @@ class Endpoint(SerialModel, SingletonPerName):
     def track_all_costs(
         thunk: Thunk[T],
         with_openai: bool = True,
-        with_hugs: bool = True
+        with_hugs: bool = True,
+        with_litellm: bool = True
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
         Track costs of all of the apis we can currently track, over the
@@ -268,6 +271,20 @@ class Endpoint(SerialModel, SingletonPerName):
             except ApiKeyError:
                 logger.debug(
                     "Huggingface API keys are not set. "
+                    "Will not track usage."
+                )
+
+        if with_litellm:
+            # TODO: DEPS
+            from trulens_eval.feedback.provider.endpoint.litellm import \
+                LiteLLMEndpoint
+
+            try:
+                e = LiteLLMEndpoint()
+                endpoints.append(e)
+            except ApiKeyError:
+                logger.debug(
+                    "Some API key(s) used by LiteLLM are not set. "
                     "Will not track usage."
                 )
 
@@ -278,7 +295,8 @@ class Endpoint(SerialModel, SingletonPerName):
     async def atrack_all_costs(
         thunk: Thunk[Awaitable],
         with_openai: bool = True,
-        with_hugs: bool = True
+        with_hugs: bool = True,
+        with_litellm: bool = True,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
         Track costs of all of the apis we can currently track, over the
@@ -315,13 +333,28 @@ class Endpoint(SerialModel, SingletonPerName):
                     "Will not track usage."
                 )
 
+        if with_litellm:
+            # TODO: DEPS
+            from trulens_eval.feedback.provider.endpoint.litellm import \
+                LiteLLMEndpoint
+
+            try:
+                e = LiteLLMEndpoint()
+                endpoints.append(e)
+            except ApiKeyError:
+                logger.debug(
+                    "Some API key(s) used by LiteLLM are not set. "
+                    "Will not track usage."
+                )
+
         return await Endpoint._atrack_costs(thunk, with_endpoints=endpoints)
 
     @staticmethod
     def track_all_costs_tally(
         thunk: Thunk[T],
         with_openai: bool = True,
-        with_hugs: bool = True
+        with_hugs: bool = True,
+        with_litellm: bool = True,
     ) -> Tuple[T, Cost]:
         """
         Track costs of all of the apis we can currently track, over the
@@ -329,7 +362,10 @@ class Endpoint(SerialModel, SingletonPerName):
         """
 
         result, cbs = Endpoint.track_all_costs(
-            thunk, with_openai=with_openai, with_hugs=with_hugs
+            thunk,
+            with_openai=with_openai,
+            with_hugs=with_hugs,
+            with_litellm=with_litellm
         )
 
         if len(cbs) == 0:
@@ -339,12 +375,13 @@ class Endpoint(SerialModel, SingletonPerName):
             costs = sum(cb.cost for cb in cbs)
 
         return result, costs
-    
+
     @staticmethod
     async def atrack_all_costs_tally(
         thunk: Thunk[Awaitable],
         with_openai: bool = True,
-        with_hugs: bool = True
+        with_hugs: bool = True,
+        with_litellm: bool = True,
     ) -> Tuple[T, Cost]:
         """
         Track costs of all of the apis we can currently track, over the
@@ -352,7 +389,10 @@ class Endpoint(SerialModel, SingletonPerName):
         """
 
         result, cbs = await Endpoint.atrack_all_costs(
-            thunk, with_openai=with_openai, with_hugs=with_hugs
+            thunk,
+            with_openai=with_openai,
+            with_hugs=with_hugs,
+            with_litellm=with_litellm
         )
 
         if len(cbs) == 0:
@@ -566,6 +606,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
         # If INSTRUMENT is not set, create a wrapper method and return it.
 
+        # TODO: DEDUP
         async def _agenwrapper_completion(
             responses: AsyncGeneratorType, *args, **kwargs
         ):
@@ -631,7 +672,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
             return _agenwrapper_completion(responses, *args, **kwargs)
 
-        # TODO: async/sync code duplication
+        # TODO: DEDUP async/sync code duplication
         async def awrapper(*args, **kwargs):
             logger.debug(
                 f"Calling async wrapped {func.__name__} for {self.name}."
@@ -695,6 +736,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
             return response
 
+        # TODO: DEDUP
         def wrapper(*args, **kwargs):
             logger.debug(f"Calling wrapped {func.__name__} for {self.name}.")
 
@@ -725,6 +767,7 @@ class Endpoint(SerialModel, SingletonPerName):
                 return response
 
             for callback_class in registered_callback_classes:
+                logger.debug(f"Handling callback_class: {callback_class}.")
                 if callback_class not in endpoints:
                     logger.warning(
                         f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
@@ -761,6 +804,7 @@ class Endpoint(SerialModel, SingletonPerName):
             w2 = None
 
         setattr(w, INSTRUMENT, [self.callback_class])
+        w.__doc__ = func.__doc__
         w.__name__ = func.__name__
         w.__signature__ = inspect.signature(func)
 
@@ -772,3 +816,92 @@ class Endpoint(SerialModel, SingletonPerName):
         logger.debug(f"Instrumenting {func.__name__} for {self.name} .")
 
         return w
+
+
+class DummyEndpoint(Endpoint):
+    """
+    Endpoint for testing purposes. Should not make any network calls.
+    """
+
+    # Pretend the model we are querying is loading as is in huggingface.
+    is_loading: bool = True
+
+    def __new__(cls, *args, **kwargs):
+        return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
+
+    def __init__(self, name: str = "dummyendpoint", **kwargs):
+        if hasattr(self, "callback_class"):
+            # Already created with SingletonPerName mechanism
+            return
+
+        kwargs['name'] = name
+        kwargs['callback_class'] = EndpointCallback
+        kwargs['rpm'] = DEFAULT_RPM * 10
+
+        super().__init__(**kwargs)
+
+    def post(
+        self, url: str, payload: JSON, timeout: Optional[int] = None
+    ) -> Any:
+        # classification results only, like from huggingface
+
+        self.pace_me()
+
+        # pretend to do this:
+        """
+        ret = requests.post(
+            url, json=payload, timeout=timeout, headers=self.post_headers
+        )
+        """
+
+        if self.is_loading:
+            # "model loading message"
+            j = dict(estimated_time=1.2345)
+            self.is_loading = False
+        elif random.randint(a=0, b=50) == 0:
+            # randomly overloaded
+            j = dict(error="overloaded")
+
+        else:
+            # otherwise a constant success
+
+            j = [
+                [
+                    {
+                        'label': 'LABEL_1',
+                        'score': 0.6034979224205017
+                    }, {
+                        'label': 'LABEL_2',
+                        'score': 0.2648237645626068
+                    }, {
+                        'label': 'LABEL_0',
+                        'score': 0.13167837262153625
+                    }
+                ]
+            ]
+
+        # The rest is the same as in Endpoint:
+
+        # Huggingface public api sometimes tells us that a model is loading and
+        # how long to wait:
+        if "estimated_time" in j:
+            wait_time = j['estimated_time']
+            logger.error(f"Waiting for {j} ({wait_time}) second(s).")
+            sleep(wait_time + 2)
+            return self.post(url, payload)
+
+        if isinstance(j, Dict) and "error" in j:
+            error = j['error']
+            logger.error(f"API error: {j}.")
+            if error == "overloaded":
+                logger.error("Waiting for overloaded API before trying again.")
+                sleep(10)
+                return self.post(url, payload)
+            else:
+                raise RuntimeError(error)
+
+        assert isinstance(
+            j, Sequence
+        ) and len(j) > 0, f"Post did not return a sequence: {j}"
+
+        return j[0]

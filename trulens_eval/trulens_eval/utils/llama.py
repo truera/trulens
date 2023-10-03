@@ -11,12 +11,12 @@ from typing import List, Type
 from trulens_eval import app
 from trulens_eval import Feedback
 from trulens_eval.feedback import Feedback
-from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.containers import first
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.containers import second
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
-from trulens_eval.utils.containers import second
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.threading import TP
 
 with OptionalImports(message=REQUIREMENT_LLAMA):
@@ -26,7 +26,7 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.schema import NodeWithScore
 
 
-class Prompt(app.Prompt, app.LangChainComponent):
+class Prompt(app.Prompt, app.LlamaIndexComponent):
 
     @property
     def template(self) -> str:
@@ -42,12 +42,63 @@ class Prompt(app.Prompt, app.LangChainComponent):
         )
 
 
+class Agent(app.Agent, app.LlamaIndexComponent):
+
+    @property
+    def agent_name(self) -> str:
+        return "agent name not supported in llama_index"
+
+    def unsorted_parameters(self):
+        return super().unsorted_parameters(skip=set())
+
+    @staticmethod
+    def class_is(cls: Class) -> bool:
+        return cls.noserio_issubclass(
+            module_name="llama_index.agent.types", class_name="BaseAgent"
+        )
+
+
+class Tool(app.Tool, app.LlamaIndexComponent):
+
+    @property
+    def tool_name(self) -> str:
+        if 'metadata' in self.json:
+            return self.json['metadata']['name']
+        else:
+            return "no name given"
+
+    def unsorted_parameters(self):
+        return super().unsorted_parameters(skip=set(['model']))
+
+    @staticmethod
+    def class_is(cls: Class) -> bool:
+        return cls.noserio_issubclass(
+            module_name="llama_index.tools.types", class_name="BaseTool"
+        )
+
+
+class LLM(app.LLM, app.LlamaIndexComponent):
+
+    @property
+    def model_name(self) -> str:
+        return self.json['model']
+
+    def unsorted_parameters(self):
+        return super().unsorted_parameters(skip=set(['model']))
+
+    @staticmethod
+    def class_is(cls: Class) -> bool:
+        return cls.noserio_issubclass(
+            module_name="llama_index.llms.base", class_name="LLM"
+        )
+
+
 class Other(app.Other, app.LlamaIndexComponent):
     pass
 
 
 # All component types, keep Other as the last one since it always matches.
-COMPONENT_VIEWS = [Prompt, Other]
+COMPONENT_VIEWS = [Agent, Tool, Prompt, LLM, Other]
 
 
 def constructor_of_class(cls: Class) -> Type[app.LlamaIndexComponent]:

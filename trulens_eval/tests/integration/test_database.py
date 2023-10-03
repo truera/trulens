@@ -17,6 +17,7 @@ from trulens_eval import Select
 from trulens_eval import Tru
 from trulens_eval import TruBasicApp
 from trulens_eval.database import orm
+from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import downgrade_db
 from trulens_eval.database.migrations import get_revision_history
@@ -26,7 +27,6 @@ from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
 from trulens_eval.database.utils import is_legacy_sqlite
 from trulens_eval.db import DB
 from trulens_eval.db import LocalSQLite
-from trulens_eval.database.exceptions import DatabaseVersionException
 
 
 class TestDbV2Migration(TestCase):
@@ -55,7 +55,6 @@ class TestDbV2Migration(TestCase):
         with clean_db("mysql") as db:
             _test_db_consistency(db)
 
-
     def test_future_db(self):
         # Check handling of database that is newer than the current
         # trulens_eval's db version. We expect a warning and exception.
@@ -75,7 +74,6 @@ class TestDbV2Migration(TestCase):
 
                     self._test_future_db(dbfile=dbfile)
 
-
     def _test_future_db(self, dbfile: Path = None):
         db = SqlAlchemyDB.from_db_url(f"sqlite:///{dbfile}")
         self.assertFalse(is_legacy_sqlite(db.engine))
@@ -85,14 +83,17 @@ class TestDbV2Migration(TestCase):
         with self.assertRaises(DatabaseVersionException) as e:
             db.migrate_database()
 
-        self.assertEqual(e.exception.reason, DatabaseVersionException.Reason.AHEAD)
+        self.assertEqual(
+            e.exception.reason, DatabaseVersionException.Reason.AHEAD
+        )
 
         # Trying to use it anyway should also produce the exception.
         with self.assertRaises(DatabaseVersionException) as e:
             db.get_records_and_feedback()
-        
-        self.assertEqual(e.exception.reason, DatabaseVersionException.Reason.AHEAD)
 
+        self.assertEqual(
+            e.exception.reason, DatabaseVersionException.Reason.AHEAD
+        )
 
     def test_migrate_legacy_legacy_sqlite_file(self):
         # Migration from non-latest lagecy db files all the way to v2 database.

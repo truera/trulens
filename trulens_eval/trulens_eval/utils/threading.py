@@ -1,4 +1,3 @@
-
 """
 Multi-threading utilities.
 """
@@ -19,8 +18,8 @@ from trulens_eval.utils.python import SingletonPerName
 
 logger = logging.getLogger(__name__)
 
-
 T = TypeVar("T")
+
 
 class ThreadPoolExecutor(fThreadPoolExecutor):
 
@@ -33,8 +32,9 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
 
 class TP(SingletonPerName):  # "thread processing"
 
-    # Store here stacks of calls to various thread starting methods so that we can retrieve
-    # the trace of calls that caused a thread to start.
+    # Store here stacks of calls to various thread starting methods so that we
+    # can retrieve the trace of calls that caused a thread to start.
+
     # pre_run_stacks = dict()
 
     def __init__(self):
@@ -44,9 +44,9 @@ class TP(SingletonPerName):  # "thread processing"
 
         # TODO(piotrm): if more tasks than `processes` get added, future ones
         # will block and earlier ones may never start executing.
-        self.thread_pool = ThreadPool(processes=1024)
+        self.thread_pool = ThreadPool(processes=64)
         self.running = 0
-        self.promises = Queue(maxsize=1024)
+        self.promises = Queue(maxsize=64)
 
     def runrepeatedly(self, func: Callable, rpm: float = 6, *args, **kwargs):
 
@@ -65,14 +65,26 @@ class TP(SingletonPerName):  # "thread processing"
             args=(present_stack, func) + args,
             kwds=kwargs
         )
+
         return prom
 
+    def finish_if_full(self):
+        if self.promises.full():
+            print("Task queue full. Finishing existing tasks.")
+            self.finish()
+
     def runlater(self, func: Callable, *args, **kwargs) -> None:
+        self.finish_if_full()
+
         prom = self._thread_starter(func, args, kwargs)
+
         self.promises.put(prom)
 
     def promise(self, func: Callable[..., T], *args, **kwargs) -> AsyncResult:
+        self.finish_if_full()
+
         prom = self._thread_starter(func, args, kwargs)
+
         self.promises.put(prom)
 
         return prom
@@ -106,4 +118,3 @@ class TP(SingletonPerName):  # "thread processing"
             rows.append([p.is_alive(), str(p)])
 
         return pd.DataFrame(rows, columns=["alive", "thread"])
-

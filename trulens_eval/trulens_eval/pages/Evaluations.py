@@ -17,21 +17,25 @@ from ux.add_logo import add_logo
 from ux.styles import CATEGORY
 
 from trulens_eval import Tru
+from trulens_eval.app import Agent
 from trulens_eval.app import ComponentView
 from trulens_eval.app import instrumented_component_views
 from trulens_eval.app import LLM
 from trulens_eval.app import Other
 from trulens_eval.app import Prompt
+from trulens_eval.app import Tool
 from trulens_eval.db import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.serial import JSONPath
+from trulens_eval.ux.components import draw_agent_info
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
 from trulens_eval.ux.components import draw_metadata
 from trulens_eval.ux.components import draw_prompt_info
+from trulens_eval.ux.components import draw_tool_info
 from trulens_eval.ux.components import render_selector_markdown
 from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
@@ -95,6 +99,12 @@ def render_component(query, component, header=True):
     elif isinstance(component, Prompt):
         draw_prompt_info(component=component, query=query)
 
+    elif isinstance(component, Agent):
+        draw_agent_info(component=component, query=query)
+
+    elif isinstance(component, Tool):
+        draw_tool_info(component=component, query=query)
+
     elif isinstance(component, Other):
         with st.expander("Uncategorized Component Details:"):
             st.json(jsonify_for_ui(component.json))
@@ -113,6 +123,8 @@ else:
         app = st.session_state.app
     else:
         app = apps
+
+    st.experimental_set_query_params(app=app)
 
     options = st.multiselect('Filter Applications', apps, default=app)
 
@@ -167,11 +179,17 @@ else:
         ]
 
         for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
-            gb.configure_column(
-                feedback_col,
-                cellStyle=cellstyle_jscode,
-                hide=feedback_col.endswith("_calls")
-            )
+            if "distance" in feedback_col:
+                gb.configure_column(
+                    feedback_col,
+                    hide=feedback_col.endswith("_calls")
+                )
+            else:
+                gb.configure_column(
+                    feedback_col,
+                    cellStyle=cellstyle_jscode,
+                    hide=feedback_col.endswith("_calls")
+                )
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
@@ -229,6 +247,8 @@ else:
                 def display_feedback_call(call):
 
                     def highlight(s):
+                        if "distance" in feedback_name:
+                            return [f'background-color: {CATEGORY.UNKNOWN.color}'] * len(s)
                         cat = CATEGORY.of_score(s.result)
                         return [f'background-color: {cat.color}'] * len(s)
 
@@ -251,7 +271,7 @@ else:
 
                         st.dataframe(
                             df.style.apply(highlight, axis=1
-                                          ).format("{:.2}", subset=["result"])
+                                          ).format("{:.2f}", subset=["result"])
                         )
 
                     else:

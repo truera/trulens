@@ -53,7 +53,8 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
         if 'Tru()' in cell["source"]:
             cell["source"] = cell[
                 "source"
-            ] + f"\nfrom trulens_eval import Tru\nTru().migrate_database()\n"
+            ] + f"\nfrom trulens_eval import Tru\ntru=Tru()\ntru.migrate_database()\n" \
+            + f"\nfrom trulens_eval.database.migrations.db_data_migration import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(tru.db)\n"
         ret = super().preprocess_cell(cell, resources, index, **kwargs)
 
         return ret
@@ -99,18 +100,27 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
 for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
     if filename.endswith('.ipynb'):
 
+        setattr(
+            DocsNotebookTests, 'test_' + filename.split('.ipynb')[0],
+            get_unit_test_for_filename(filename)
+        )
+
         if 'all_tools' in filename or 'llama_index_quickstart' in filename:
-            setattr(
-                DocsNotebookTests, 'test_' + filename.split('.ipynb')[0],
-                get_unit_test_for_filename(filename)
-            )
             # If you want to test all versions uncomment and replace the below for loop
             ### for version in db_migration.migration_versions:
 
             # Run the oldest and latest migrations to keep testing more manageable
-            for version in [db_migration.migration_versions[0],
-                            db_migration.migration_versions[1],
-                            db_migration.migration_versions[-1]]:
+            legacy_sqllite_migrations = [
+                db_migration.migration_versions[0],
+                db_migration.migration_versions[-1]
+            ]
+            sqlalchemy_versions = [
+                compat_versions for compat_versions in listdir('./release_dbs')
+                if 'sql_alchemy_' in compat_versions
+            ]
+            # Todo: once there are more than 2 migrations; make tests only check most 2 recent, and oldest migrations to make testing faster
+            migrations_to_test = legacy_sqllite_migrations + sqlalchemy_versions
+            for version in migrations_to_test:
                 test_version_str = version.replace('.', '_')
                 setattr(
                     DocsNotebookTests,

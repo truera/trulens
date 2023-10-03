@@ -118,9 +118,11 @@ def generate_response(prompt):
         chain.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
 
     # Trulens instrumentation.
-    tc = tru_chain.TruChain(chain, app_id=app_id)
-
-    return tc, tc.call_with_record(dict(question=prompt))
+    tc_recorder = tru_chain.TruChain(chain, app_id=app_id)
+    with tc_recorder as recording:
+        resp = chain(dict(question=prompt))
+    tru_record = recording.records[0]
+    return tc_recorder, (resp, tru_record)
 
 
 # Set up Streamlit app

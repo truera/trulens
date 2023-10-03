@@ -6,6 +6,7 @@ import shutil
 import sqlite3
 from tempfile import TemporaryDirectory
 from typing import Callable, List, Optional, Union
+import uuid
 
 import pandas as pd
 from sqlalchemy import create_engine
@@ -161,6 +162,11 @@ def migrate_legacy_sqlite(engine: Engine):
     assert is_legacy_sqlite(engine)
 
     original_file = Path(engine.url.database)
+    saved_db_file = original_file.parent / f"{original_file.name}_saved_{uuid.uuid1()}"
+    shutil.copy(original_file, saved_db_file)
+    logger.info(
+        f"Saved original db file: `{original_file}` to new file: `{saved_db_file}`"
+    )
     logger.info("Handling legacy SQLite file: %s", original_file)
     logger.debug("Applying legacy migration scripts")
     LocalSQLite(filename=original_file).migrate_database()
@@ -170,7 +176,15 @@ def migrate_legacy_sqlite(engine: Engine):
         # 2. Create empty staging database at first Alembic revision
         stg_file = Path(tmp).joinpath("migration-staging.sqlite")
         logger.debug("Creating staging DB at %s", stg_file)
-        stg_engine = create_engine(f"sqlite:///{stg_file}")
+        
+        # Params needed for https://github.com/truera/trulens/issues/470
+        # Params are from https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn
+        stg_engine = create_engine(f"sqlite:///{stg_file}",
+                                            pool_size=10,
+                                            max_overflow=2,
+                                            pool_recycle=300,
+                                            pool_pre_ping=True,
+                                            pool_use_lifo=True)
         upgrade_db(stg_engine, revision="1")
 
         # 3. Copy records from original database to staging

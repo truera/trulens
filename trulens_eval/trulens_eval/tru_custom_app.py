@@ -70,13 +70,13 @@ import TruCustomApp
 
 ca = CustomApp()
 
-# Normal app usage:
+# Normal app Usage:
 response = ca.respond_to_query("What is the capital of Indonesia?")
 
 # Wrapping app with `TruCustomApp`: 
 ta = TruCustomApp(ca)
 
-# Wrapped usage: must use the general `with_record` (or `awith_record`) method:
+# Wrapped Usage: must use the general `with_record` (or `awith_record`) method:
 response, record = ta.with_record(
     ca.respond_to_query, input="What is the capital of Indonesia?"
 )
@@ -194,15 +194,18 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
   solution as needed.
 """
 
+from asyncio import sleep
+import inspect
+from inspect import signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Iterable, Set
+from typing import Any, Callable, ClassVar, Optional, Set
 
 from pydantic import Field
 
-from trulens_eval import Select
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
+from trulens_eval.instruments import instrument as base_instrument
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.serial import JSONPath
@@ -219,6 +222,65 @@ PLACEHOLDER = "__tru_placeholder"
 
 
 class TruCustomApp(App):
+    """Instantiates a Custom App that can be tracked as long as methods are decorated with @instrument.
+        
+        **Usage:**
+
+        ```
+        from trulens_eval import instrument
+        
+        class CustomApp:
+
+            def __init__(self):
+                self.retriever = CustomRetriever()
+                self.llm = CustomLLM()
+                self.template = CustomTemplate(
+                    "The answer to {question} is probably {answer} or something ..."
+                )
+
+            @instrument
+            def retrieve_chunks(self, data):
+                return self.retriever.retrieve_chunks(data)
+
+            @instrument
+            def respond_to_query(self, input):
+                chunks = self.retrieve_chunks(input)
+                answer = self.llm.generate(",".join(chunks))
+                output = self.template.fill(question=input, answer=answer)
+
+                return output
+        
+        ca = CustomApp()
+        from trulens_eval import TruCustomApp
+        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
+        tru_recorder = TruCustomApp(ca, 
+            app_id="Custom Application v1",
+            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
+        
+        question = "What is the capital of Indonesia?"
+
+        # Normal Usage:
+        response_normal = ca.respond_to_query(question)
+
+        # Instrumented Usage:
+        with tru_recorder as recording:
+            ca.respond_to_query(question)
+
+        tru_record = recording.records[0]
+
+        # To add record metadata 
+        with tru_recorder as recording:
+            recording.record_metadata="this is metadata for all records in this context that follow this line"
+            ca.respond_to_query("What is llama 2?")
+            recording.record_metadata="this is different metadata for all records in this context that follow this line"
+            ca.respond_to_query("Where do I download llama 2?")
+        
+        ```
+        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+
+        Args:
+            app (Any): Any class
+    """
     app: Any
 
     root_callable: ClassVar[FunctionOrMethod] = Field(None)
@@ -227,6 +289,9 @@ class TruCustomApp(App):
     # the object walk finds them. If not, a message is shown to let user know
     # how to let the TruCustomApp constructor know where these methods are.
     functions_to_instrument: ClassVar[Set[Callable]] = set([])
+
+    main_method: Optional[Callable] = Field(exclude=True)
+    main_async_method: Optional[Callable] = Field(exclude=True)
 
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs):
         """
@@ -243,10 +308,7 @@ class TruCustomApp(App):
         kwargs['root_class'] = Class.of_object(app)
 
         kwargs['instrument'] = Instrument(
-            root_methods=set(
-                [TruCustomApp.with_record, TruCustomApp.awith_record]
-            ),
-            callbacks=self  # App mixes in WithInstrumentCallbacks
+            app=self  # App mixes in WithInstrumentCallbacks
         )
 
         super().__init__(**kwargs)
@@ -347,46 +409,47 @@ class TruCustomApp(App):
                 f"TruCustomApp nor wrapped app have attribute named {__name}."
             )
 
+    def main_call(self, human: str):
+        if self.main_method is None:
+            raise RuntimeError(
+                "`main_method` was not specified so we do not know how to run this app."
+            )
 
-class instrument:
+        sig = signature(self.main_method)
+        bindings = sig.bind(self.app, human)  # self.app is app's "self"
+
+        return self.with_(self.main_method, *bindings.args, **bindings.kwargs)
+
+    async def main_acall(self, human: str):
+        # TODO: work in progress
+
+        # must return an async generator of tokens/pieces that can be appended to create the full response
+
+        if self.main_async_method is None:
+            raise RuntimeError(
+                "`main_async_method` was not specified so we do not know how to run this app."
+            )
+
+        sig = signature(self.main_async_method)
+        bindings = sig.bind(self.app, human)  # self.app is app's "self"
+
+        generator = await self.awith_(
+            self.main_async_method, *bindings.args, **bindings.kwargs
+        )
+
+        return generator
+
+
+class instrument(base_instrument):
     """
     Decorator for marking methods to be instrumented in custom classes that are
     wrapped by TruCustomApp.
     """
 
-    # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
-
-    def __init__(self, func: Callable):
-        self.func = func
-
-    def __set_name__(self, cls: type, name: str):
-        """
-        For use as method decorator.
-        """
-
-        # Important: do this first:
-        setattr(cls, name, self.func)
-
-        # Note that this does not actually change the method, just adds it to
-        # list of filters.
-        instrument.method(cls, name)
-
-    @staticmethod
-    def method(cls: type, name: str) -> None:
-        # Add the class with a method named `name`, its module, and the method
-        # `name` to the Default instrumentation walk filters.
-        Instrument.Default.MODULES.add(cls.__module__)
-        Instrument.Default.CLASSES.add(cls)
-
-        check_o = Instrument.Default.METHODS.get(name, lambda o: False)
-        Instrument.Default.METHODS[
-            name] = lambda o: check_o(o) or isinstance(o, cls)
+    @classmethod
+    def method(self_class, cls: type, name: str) -> None:
+        base_instrument.method(cls, name)
 
         # Also make note of it for verification that it was found by the walk
         # after init.
         TruCustomApp.functions_to_instrument.add(getattr(cls, name))
-
-    @staticmethod
-    def methods(cls: type, names: Iterable[str]) -> None:
-        for name in names:
-            instrument.method(cls, name)

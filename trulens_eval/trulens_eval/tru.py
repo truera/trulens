@@ -18,13 +18,15 @@ from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import Record
-from trulens_eval.utils.python import SingletonPerName
-from trulens_eval.utils.threading import TP
 from trulens_eval.utils.notebook_utils import is_notebook
 from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
+from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.text import UNICODE_CHECK
+from trulens_eval.utils.text import UNICODE_LOCK
 from trulens_eval.utils.text import UNICODE_SQUID
+from trulens_eval.utils.text import UNICODE_STOP
 from trulens_eval.utils.text import UNICODE_YIELD
+from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +76,8 @@ class Tru(SingletonPerName):
     def __init__(
         self,
         database_url: Optional[str] = None,
-        database_file: Optional[str] = None
+        database_file: Optional[str] = None,
+        database_redact_keys: bool = False
     ):
         """
         TruLens instrumentation, logging, and feedback functions for apps.
@@ -85,6 +88,7 @@ class Tru(SingletonPerName):
                                 See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
                                 on SQLAlchemy database URLs.
            database_file: (Deprecated) Path to a local SQLite database file
+           database_redact_keys: whether to redact secret keys in data to be written to database.
         """
         if hasattr(self, "db"):
             if database_url is not None or database_file is not None:
@@ -108,11 +112,22 @@ class Tru(SingletonPerName):
         if database_url is None:
             database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
 
-        self.db: SqlAlchemyDB = SqlAlchemyDB.from_db_url(database_url)
+        self.db: SqlAlchemyDB = SqlAlchemyDB.from_db_url(
+            database_url, redact_keys=database_redact_keys
+        )
 
         print(
             f"{UNICODE_SQUID} Tru initialized with db url {self.db.engine.url} ."
         )
+        if database_redact_keys:
+            print(
+                f"{UNICODE_LOCK} Secret keys will not be included in the database."
+            )
+        else:
+            print(
+                f"{UNICODE_STOP} Secret keys may be written to the database. "
+                "See the `database_redact_keys` option of `Tru` to prevent this."
+            )
 
     def reset_database(self):
         """
@@ -151,6 +166,8 @@ class Tru(SingletonPerName):
 
         return self.db.insert_record(record=record)
 
+    update_record = add_record
+
     def run_feedback_functions(
         self,
         record: Record,
@@ -188,7 +205,7 @@ class Tru(SingletonPerName):
             assert app_id == app.app_id, "Record was produced by a different app."
 
             if self.db.get_app(app_id=app.app_id) is None:
-                logger.warn(
+                logger.warning(
                     "App {app_id} was not present in database. Adding it."
                 )
                 self.add_app(app=app)
@@ -255,6 +272,25 @@ class Tru(SingletonPerName):
 
         return df, feedback_columns
 
+    def get_leaderboard(self, app_ids: List[str]):
+        """
+        Get a leaderboard by app id from the
+        database. Pass an empty list of app_ids to return all.
+
+        ```python
+        tru.get_leaderboard(app_ids=[])
+        ```
+        """
+        df, feedback_cols = self.db.get_records_and_feedback(app_ids)
+
+        col_agg_list = feedback_cols + ['latency', 'total_cost']
+
+        leaderboard = df.groupby('app_id')[col_agg_list].mean().sort_values(
+            by=feedback_cols, ascending=False
+        )
+
+        return leaderboard
+
     def start_evaluator(self,
                         restart=False,
                         fork=False) -> Union[Process, Thread]:
@@ -305,6 +341,7 @@ class Tru(SingletonPerName):
             proc = Process(target=runloop)
         else:
             proc = Thread(target=runloop)
+            proc.daemon = True
 
         # Start a persistent thread or process that evaluates feedback functions.
 
@@ -377,6 +414,19 @@ class Tru(SingletonPerName):
             Tru.dashboard_proc.kill()
             Tru.dashboard_proc = None
 
+    def run_dashboard_in_jupyter(self):
+        # TODO: check for jupyter
+
+        logger.warning(
+            "Running dashboard inside a notebook is an experimental feature and may not work well."
+        )
+
+        from streamlit_jupyter import StreamlitPatcher
+        StreamlitPatcher().jupyter()
+        from trulens_eval import Leaderboard
+
+        Leaderboard.main()
+
     def run_dashboard(
         self, force: bool = False, _dev: Optional[Path] = None
     ) -> Process:
@@ -403,37 +453,46 @@ class Tru(SingletonPerName):
         if force:
             self.stop_dashboard(force=force)
 
-        if Tru.dashboard_proc is not None:
-            raise ValueError(
-                "Dashboard already running. "
-                "Run tru.stop_dashboard() to stop existing dashboard."
-            )
-
         print("Starting dashboard ...")
 
         # Create .streamlit directory if it doesn't exist
         streamlit_dir = os.path.join(os.getcwd(), '.streamlit')
         os.makedirs(streamlit_dir, exist_ok=True)
 
-        # Create config.toml file
+        # Create config.toml file path
         config_path = os.path.join(streamlit_dir, 'config.toml')
-        with open(config_path, 'w') as f:
-            f.write('[theme]\n')
-            f.write('primaryColor="#0A2C37"\n')
-            f.write('backgroundColor="#FFFFFF"\n')
-            f.write('secondaryBackgroundColor="F5F5F5"\n')
-            f.write('textColor="#0A2C37"\n')
-            f.write('font="sans serif"\n')
 
+        # Check if the file already exists
+        if not os.path.exists(config_path):
+            with open(config_path, 'w') as f:
+                f.write('[theme]\n')
+                f.write('primaryColor="#0A2C37"\n')
+                f.write('backgroundColor="#FFFFFF"\n')
+                f.write('secondaryBackgroundColor="F5F5F5"\n')
+                f.write('textColor="#0A2C37"\n')
+                f.write('font="sans serif"\n')
+        else:
+            print("Config file already exists. Skipping writing process.")
+
+        # Create credentials.toml file path
         cred_path = os.path.join(streamlit_dir, 'credentials.toml')
-        with open(cred_path, 'w') as f:
-            f.write('[general]\n')
-            f.write('email=""\n')
+
+        # Check if the file already exists
+        if not os.path.exists(cred_path):
+            with open(cred_path, 'w') as f:
+                f.write('[general]\n')
+                f.write('email=""\n')
+        else:
+            print("Credentials file already exists. Skipping writing process.")
 
         #run leaderboard with subprocess
         leaderboard_path = pkg_resources.resource_filename(
             'trulens_eval', 'Leaderboard.py'
         )
+
+        if Tru.dashboard_proc is not None:
+            print("Dashboard already running at path:", Tru.dashboard_urls)
+            return Tru.dashboard_proc
 
         env_opts = {}
         if _dev is not None:
@@ -496,6 +555,8 @@ class Tru(SingletonPerName):
                     tunnel_proc, tunnel_proc.stderr, out_stderr, tunnel_started
                 )
             )
+            Tru.tunnel_listener_stdout.daemon = True
+            Tru.tunnel_listener_stderr.daemon = True
             Tru.tunnel_listener_stdout.start()
             Tru.tunnel_listener_stderr.start()
             if not tunnel_started.wait(timeout=DASHBOARD_START_TIMEOUT
@@ -516,12 +577,14 @@ class Tru(SingletonPerName):
                             out.append_stdout(line)
                         else:
                             print(line)
+                        Tru.dashboard_urls = line  # store the url when dashboard is started
                 else:
                     if "Network URL: " in line:
                         url = line.split(": ")[1]
                         url = url.rstrip()
                         print(f"Dashboard started at {url} .")
                         started.set()
+                        Tru.dashboard_urls = line  # store the url when dashboard is started
                     if out is not None:
                         out.append_stdout(line)
                     else:
@@ -539,6 +602,11 @@ class Tru(SingletonPerName):
             target=listen_to_dashboard,
             args=(proc, proc.stderr, out_stderr, started)
         )
+
+        # Purposely block main process from ending and wait for dashboard.
+        Tru.dashboard_listener_stdout.daemon = False
+        Tru.dashboard_listener_stderr.daemon = False
+
         Tru.dashboard_listener_stdout.start()
         Tru.dashboard_listener_stderr.start()
 

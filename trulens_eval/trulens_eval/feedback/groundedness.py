@@ -9,16 +9,38 @@ from trulens_eval.feedback.provider import Provider
 from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.feedback.provider.openai import AzureOpenAI
 from trulens_eval.feedback.provider.openai import OpenAI
-from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.generated import re_1_10_rating
+from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.serial import SerialModel
+"""
+TODO: feedback collections refactor
+
+class FeedbackCollection(SerialModel, WithClassInfo):
+    ...
+
+class Syntax():
+    ...
+
+class Truth():
+    ...
+
+class Relevance():
+    ...
+
+class Safety(RequiresCompletionProvider):
+
+    of_prompt(...) -> ...
+    ...
+"""
 
 logger = logging.getLogger(__name__)
 
 
 class Groundedness(SerialModel, WithClassInfo):
-    summarize_provider: Provider
+    """Measures Groundedness.
+    """
     groundedness_provider: Provider
+    summarize_provider: Provider
 
     def __init__(
         self,
@@ -29,11 +51,31 @@ class Groundedness(SerialModel, WithClassInfo):
         This class will use an OpenAI summarizer to find the relevant strings in a text. The groundedness_provider can 
         either be an llm with OpenAI or NLI with huggingface.
 
+        Usage 1:
+        ```
+        from trulens_eval.feedback import Groundedness
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+        groundedness_imp = Groundedness(groundedness_provider=openai_provider)
+        ```
+
+        Usage 2:
+        ```
+        from trulens_eval.feedback import Groundedness
+        from trulens_eval.feedback.provider.hugs import Huggingface
+        huggingface_provider = Huggingface()
+        groundedness_imp = Groundedness(groundedness_provider=huggingface_provider)
+        ```
+
         Args:
             groundedness_provider (Provider, optional): groundedness provider options: OpenAI LLM or HuggingFace NLI. Defaults to OpenAI().
+            summarize_provider (Provider, optional): Internal Usage for DB serialization.
         """
-        if summarize_provider is None:
-            summarize_provider = OpenAI()
+        logger.warning(
+            "Feedback function `groundedness_measure` was renamed to `groundedness_measure_with_cot_reasons`. The new functionality of `groundedness_measure` function will no longer emit reasons as a lower cost option. It may have reduced accuracy due to not using Chain of Thought reasoning in the scoring."
+        )
+
+        summarize_provider = OpenAI()
         if groundedness_provider is None:
             groundedness_provider = OpenAI()
         if not isinstance(groundedness_provider,
@@ -51,14 +93,79 @@ class Groundedness(SerialModel, WithClassInfo):
         """A measure to track if the source material supports each sentence in the statement. 
         This groundedness measure is faster; but less accurate than `groundedness_measure_with_summarize_step` 
 
+        Usage on RAG Contexts:
         ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback import Groundedness
+        from trulens_eval.feedback.provider.openai import OpenAI
         grounded = feedback.Groundedness(groundedness_provider=OpenAI())
 
 
         f_groundedness = feedback.Feedback(grounded.groundedness_measure).on(
-            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content
+            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
         ).on_output().aggregate(grounded.grounded_statements_aggregator)
         ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+
+        Args:
+            source (str): The source that should support the statement
+            statement (str): The statement to check groundedness
+
+        Returns:
+            float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
+        """
+
+        groundedness_scores = {}
+        if isinstance(self.groundedness_provider, (AzureOpenAI, OpenAI)):
+            groundedness_scores[f"full_doc_score"] = re_1_10_rating(
+                self.summarize_provider._groundedness_doc_in_out(
+                    source, statement, chain_of_thought=False
+                )
+            ) / 10
+            reason = "Reasons not supplied for non chain of thought function"
+        elif isinstance(self.groundedness_provider, Huggingface):
+            reason = ""
+            for i, hypothesis in enumerate(
+                    tqdm(statement.split("."),
+                         desc="Groundendess per statement in source")):
+                plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
+                if len(hypothesis) > plausible_junk_char_min:
+                    score = self.groundedness_provider._doc_groundedness(
+                        premise=source, hypothesis=hypothesis
+                    )
+                    reason = reason + str.format(
+                        prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                        statement_sentence=hypothesis,
+                        supporting_evidence="[Doc NLI Used full source]",
+                        score=score * 10,
+                    )
+                    groundedness_scores[f"statement_{i}"] = score
+
+        return groundedness_scores, {"reason": reason}
+
+    def groundedness_measure_with_cot_reasons(
+        self, source: str, statement: str
+    ) -> float:
+        """A measure to track if the source material supports each sentence in the statement. 
+        This groundedness measure is faster; but less accurate than `groundedness_measure_with_summarize_step`.
+        Also uses chain of thought methodology and emits the reasons.
+
+        Usage on RAG Contexts:
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback import Groundedness
+        from trulens_eval.feedback.provider.openai import OpenAI
+        grounded = feedback.Groundedness(groundedness_provider=OpenAI())
+
+
+        f_groundedness = feedback.Feedback(grounded.groundedness_measure_with_cot_reasons).on(
+            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
+        ).on_output().aggregate(grounded.grounded_statements_aggregator)
+        ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+
         Args:
             source (str): The source that should support the statement
             statement (str): The statement to check groundedness
@@ -80,25 +187,10 @@ class Groundedness(SerialModel, WithClassInfo):
                                        ] = re_1_10_rating(line) / 10
                     i += 1
             return groundedness_scores, {"reason": reason}
-        if isinstance(self.groundedness_provider, Huggingface):
-            reason = ""
-            for i, hypothesis in enumerate(
-                    tqdm(statement.split("."),
-                         desc="Groundendess per statement in source")):
-                plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
-                if len(hypothesis) > plausible_junk_char_min:
-                    score = self.groundedness_provider._doc_groundedness(
-                        premise=source, hypothesis=hypothesis
-                    )
-                    reason = reason + str.format(
-                        prompts.GROUNDEDNESS_REASON_TEMPLATE,
-                        statement_sentence=hypothesis,
-                        supporting_evidence="[Doc NLI Used full source]",
-                        score=score * 10,
-                    )
-                    groundedness_scores[f"statement_{i}"] = score
-
-            return groundedness_scores, {"reason": reason}
+        elif isinstance(self.groundedness_provider, Huggingface):
+            raise Exception(
+                "Chain of Thought reasoning is only applicable to OpenAI groundedness providers. Instantiate `Groundedness(groundedness_provider=OpenAI())` or use `groundedness_measure` feedback function."
+            )
 
     def groundedness_measure_with_summarize_step(
         self, source: str, statement: str
@@ -107,14 +199,22 @@ class Groundedness(SerialModel, WithClassInfo):
         This groundedness measure is more accurate; but slower using a two step process.
         - First find supporting evidence with an LLM
         - Then for each statement sentence, check groundendness
+        
+        Usage on RAG Contexts:
         ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback import Groundedness
+        from trulens_eval.feedback.provider.openai import OpenAI
         grounded = feedback.Groundedness(groundedness_provider=OpenAI())
 
 
         f_groundedness = feedback.Feedback(grounded.groundedness_measure_with_summarize_step).on(
-            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content
+            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
         ).on_output().aggregate(grounded.grounded_statements_aggregator)
         ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+
         Args:
             source (str): The source that should support the statement
             statement (str): The statement to check groundedness
@@ -151,16 +251,21 @@ class Groundedness(SerialModel, WithClassInfo):
 
 
         Args:
-            source_statements_multi_output (np.ndarray): a 2D array with the first dimension corresponding to a source text,
-                and the second dimension corresponding to each sentence in a statement; it's groundedness score
+            source_statements_multi_output (List[Dict]): A list of scores. Each list index is a context. The Dict is a per statement score.
 
         Returns:
             float: for each statement, gets the max groundedness, then averages over that.
         """
         all_results = []
+
+        statements_to_scores = {}
         for multi_output in source_statements_multi_output:
-            result_vals = list(multi_output.values())
-        all_results.append(result_vals)
-        all_results = np.asarray(all_results)
-        max_over_sources = np.max(all_results, axis=0)
-        return np.mean(max_over_sources)
+            for k in multi_output:
+                if k not in statements_to_scores:
+                    statements_to_scores[k] = []
+                statements_to_scores[k].append(multi_output[k])
+
+        for k in statements_to_scores:
+            all_results.append(np.max(statements_to_scores[k]))
+
+        return np.mean(all_results)

@@ -27,8 +27,15 @@ class AppDefinition(Base):
     app_json = Column(TYPE_JSON, nullable=False)
 
     @classmethod
-    def parse(cls, obj: schema.AppDefinition) -> "AppDefinition":
-        return cls(app_id=obj.app_id, app_json=obj.json())
+    def parse(
+        cls,
+        obj: schema.AppDefinition,
+        redact_keys: bool = False
+    ) -> "AppDefinition":
+        return cls(
+            app_id=obj.app_id,
+            app_json=json_str_of_obj(obj, redact_keys=redact_keys)
+        )
 
 
 class FeedbackDefinition(Base):
@@ -40,10 +47,14 @@ class FeedbackDefinition(Base):
     feedback_json = Column(TYPE_JSON, nullable=False)
 
     @classmethod
-    def parse(cls, obj: schema.FeedbackDefinition) -> "FeedbackDefinition":
+    def parse(
+        cls,
+        obj: schema.FeedbackDefinition,
+        redact_keys: bool = False
+    ) -> "FeedbackDefinition":
         return cls(
             feedback_definition_id=obj.feedback_definition_id,
-            feedback_json=obj.json()
+            feedback_json=json_str_of_obj(obj, redact_keys=redact_keys)
         )
 
 
@@ -68,17 +79,17 @@ class Record(Base):
     )
 
     @classmethod
-    def parse(cls, obj: schema.Record) -> "Record":
+    def parse(cls, obj: schema.Record, redact_keys: bool = False) -> "Record":
         return cls(
             record_id=obj.record_id,
             app_id=obj.app_id,
-            input=json_str_of_obj(obj.main_input),
-            output=json_str_of_obj(obj.main_output),
-            record_json=json_str_of_obj(obj),
+            input=json_str_of_obj(obj.main_input, redact_keys=redact_keys),
+            output=json_str_of_obj(obj.main_output, redact_keys=redact_keys),
+            record_json=json_str_of_obj(obj, redact_keys=redact_keys),
             tags=obj.tags,
             ts=obj.ts.timestamp(),
-            cost_json=json_str_of_obj(obj.cost),
-            perf_json=json_str_of_obj(obj.perf),
+            cost_json=json_str_of_obj(obj.cost, redact_keys=redact_keys),
+            perf_json=json_str_of_obj(obj.perf, redact_keys=redact_keys),
         )
 
 
@@ -113,7 +124,11 @@ class FeedbackResult(Base):
     )
 
     @classmethod
-    def parse(cls, obj: schema.FeedbackResult) -> "FeedbackResult":
+    def parse(
+        cls,
+        obj: schema.FeedbackResult,
+        redact_keys: bool = False
+    ) -> "FeedbackResult":
         return cls(
             feedback_result_id=obj.feedback_result_id,
             record_id=obj.record_id,
@@ -121,10 +136,12 @@ class FeedbackResult(Base):
             last_ts=obj.last_ts.timestamp(),
             status=obj.status.value,
             error=obj.error,
-            calls_json=json_str_of_obj(dict(calls=obj.calls)),
+            calls_json=json_str_of_obj(
+                dict(calls=obj.calls), redact_keys=redact_keys
+            ),
             result=obj.result,
             name=obj.name,
-            cost_json=json_str_of_obj(obj.cost),
+            cost_json=json_str_of_obj(obj.cost, redact_keys=redact_keys),
             multi_result=obj.multi_result
         )
 

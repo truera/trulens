@@ -29,12 +29,12 @@ from types import ModuleType
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 import pydantic
+
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
-
 
 # Field/key name used to indicate a circular reference in dictified objects.
 CIRCLE = "__tru_circular_reference"
@@ -42,8 +42,6 @@ CIRCLE = "__tru_circular_reference"
 # Field/key name used to indicate an exception in property retrieval (properties
 # execute code in property.fget).
 ERROR = "__tru_property_error"
-
-
 
 # Key for indicating non-serialized objects in json dumps.
 NOSERIO = "__tru_non_serialized_object"
@@ -76,6 +74,7 @@ def callable_name(c: Callable):
         return callable_name(c.__call__)
     else:
         return str(c)
+
 
 def safe_signature(func_or_obj: Any):
     try:
@@ -149,7 +148,6 @@ def _clean_attributes(obj) -> Dict[str, Any]:
         ret[k] = v
 
     return ret
-
 
 
 class Module(SerialModel):
@@ -579,13 +577,13 @@ class WithClassInfo(pydantic.BaseModel):
     without having to load them.
     """
 
-    
     # Using this odd key to not pollute attribute names in whatever class we mix
     # this into. Should be the same as CLASS_INFO.
     __tru_class_info: Class
 
     def __init__(
         self,
+        *args,
         class_info: Optional[Class] = None,
         obj: Optional[object] = None,
         cls: Optional[type] = None,
@@ -599,8 +597,7 @@ class WithClassInfo(pydantic.BaseModel):
             class_info = Class.of_class(cls, with_bases=True)
 
         kwargs['__tru_class_info'] = class_info
-
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
 
     @staticmethod
     def of_object(obj: object):

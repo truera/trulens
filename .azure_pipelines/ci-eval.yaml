@@ -37,7 +37,7 @@ jobs:
         displayName: Add conda to PATH
       - bash: |
           set -e
-          conda create  -y --quiet -n $(condaEnvFileSuffix) python=3
+          conda create  -y --quiet -n $(condaEnvFileSuffix) python=3.11
           conda init bash
         displayName: Create Anaconda environment
       - bash: |
@@ -81,17 +81,18 @@ jobs:
       - bash: |
           source activate $(condaEnvFileSuffix)
 
-          pip install pytest==7.0.1 pytest-azurepipelines langchain>=0.0.230 llama_index>=0.8.3
+          pip install pytest==7.0.1 pytest-azurepipelines 'langchain>=0.0.230' 'llama_index>=0.8.3'
           pip install html2text==2020.1.16 # requirement for llama_index VectorStoreIndex local Vector DB
           pip install docarray hnswlib # requirements for HNSW local Vector DB
           pip install faiss-cpu unstructured # requirements for FAISS local Vector DB
+          pip install 'bert_score>=0.3.13' 'evaluate>=0.4.0' # groundtruth.py
           
           echo '::group::piplist'
           echo "$(pip list)"
           echo '::endgroup::'
           cd ./trulens_eval
           python -m pytest $(testSubdirectory)
-        displayName: Run unit tests
+        displayName: Run notebook tests
         env:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
           HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)

@@ -35,11 +35,11 @@ from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
+from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSONPath
 from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.pyschema import WithClassInfo
 
 T = TypeVar("T")
 
@@ -158,6 +158,7 @@ class Record(SerialModel):
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
     tags: Optional[str] = ""
+    meta: Optional[JSON] = None
 
     main_input: Optional[JSON] = None
     main_output: Optional[JSON] = None  # if no error
@@ -202,7 +203,7 @@ class Record(SerialModel):
                 GetItemOrAttribute(item_or_attribute=frame_info.method.name)
             )  # adds another attribute to path, from method name
             # TODO: append if already there
-            ret = path.set(obj=ret, val=call)
+            ret = path.set_or_append(obj=ret, val=call)
 
         return ret
 
@@ -282,7 +283,7 @@ class FeedbackResultStatus(Enum):
 
 
 class FeedbackCall(SerialModel):
-    args: Dict[str, Optional[str]]
+    args: Dict[str, Optional[JSON]]
     ret: float
 
     # New in 0.6.0: Any additional data a feedback function returns to display
@@ -425,7 +426,7 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
 
     app_id: AppID
     tags: Tags
-    metadata: Metadata
+    metadata: Metadata  # TODO: rename to meta for consistency with other metas
 
     # Feedback functions to evaluate on each record. Unlike the above, these are
     # meant to be serialized.
@@ -492,6 +493,9 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         if metadata is None:
             metadata = {}
         self.metadata = metadata
+
+    def dict(self):
+        return jsonify(self)
 
     @classmethod
     def select_inputs(cls) -> JSONPath:

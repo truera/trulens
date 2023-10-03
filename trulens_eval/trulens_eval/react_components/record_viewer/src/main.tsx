@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyledEngineProvider, ThemeProvider } from '@mui/material';
 import ReactDOM from 'react-dom/client';
+import './assets/fonts.css';
 import TrueraTheme from './utils/TrueraTheme';
 import RecordViewer from './RecordViewer';
 

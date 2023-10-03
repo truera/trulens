@@ -18,8 +18,8 @@ class javascript_build(build):
         build.run(self)
 
 
-langchain_version = "0.0.230"  # duplicated in trulens_eval.util, don't know how to dedup
-llama_version = "0.8.3"  # duplicated in trulens_eval.util, don't know how to dedup
+langchain_version = "0.0.302"  # duplicated in trulens_eval.utils.imports, don't know how to dedup
+llama_version = "0.8.29post1"  # duplicated in trulens_eval.utils.imports, don't know how to dedup
 
 setup(
     name="trulens_eval",
@@ -30,7 +30,7 @@ setup(
     packages=find_namespace_packages(
         include=["trulens_eval", "trulens_eval.*"]
     ),
-    python_requires='>=3.8',
+    python_requires='>=3.8,<3.12', # Broken on python 3.12 release date for pyarrow. May be able to unpin if future deps are handled. make sure to also unpin conda python in ci-pr*.yaml
     entry_points={
         'console_scripts': [
             'trulens-eval=trulens_eval.utils.command_line:main'
@@ -46,12 +46,13 @@ setup(
         'merkle-json>=1.0.0',
         'millify>=0.1.1',
         'openai>=0.27.6',
+        'litellm>=0.1.729',
         'pinecone-client>=2.2.1',
         'pydantic>=1.10.7',
         'requests>=2.30.0',
         'slack-bolt>=1.18.0',
         'slack-sdk>=3.21.3',
-        'streamlit>=1.13.0',  # 1.13.0 needed for colab only. https://stackoverflow.com/questions/74500526/streamlit-via-google-colab-through-localtunnel-does-not-work-anymore
+        'streamlit>=1.26.0',
         'streamlit-aggrid>=0.3.4.post3',
         'streamlit-extras>=0.2.7',
         'streamlit-javascript>=0.1.5',  # for copy to clipboard functionality (in progress)

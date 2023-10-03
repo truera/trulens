@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 import sqlite3
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 from merkle_json import MerkleJson
 import numpy as np
@@ -27,8 +27,8 @@ from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordID
-from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.json import json_str_of_obj
+from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
@@ -53,6 +53,11 @@ class DBMeta(pydantic.BaseModel):
 
 
 class DB(SerialModel, abc.ABC):
+    # Whether db will redact secrets before writing out data.
+    redact_keys: bool = False
+
+    def _json_str_of_obj(self, obj: Any) -> str:
+        return json_str_of_obj(obj, redact_keys=self.redact_keys)
 
     @abc.abstractmethod
     def reset_database(self):
@@ -180,6 +185,7 @@ def for_all_methods(decorator):
 @for_all_methods(versioning_decorator)
 class LocalSQLite(DB):
     filename: Path
+
     TABLE_META = "meta"
     TABLE_RECORDS = "records"
     TABLE_FEEDBACKS = "feedbacks"
@@ -192,17 +198,20 @@ class LocalSQLite(DB):
 
     TABLES = [TABLE_RECORDS, TABLE_FEEDBACKS, TABLE_FEEDBACK_DEFS, TABLE_APPS]
 
-    def __init__(self, filename: Path):
+    def __init__(self, filename: Path, redact_keys: bool = False):
         """
         Database locally hosted using SQLite.
 
         Args
 
-        - filename: Optional[Path] -- location of sqlite database dump
-          file. It will be created if it does not exist.
+        - filename: Optional[Path] -- location of sqlite database dump file. It
+          will be created if it does not exist.
+        - redact_keys: bool -- redact secret keys before writing anything to the
+          db. What is and is not a secret key is determined by
+          `keys.py:should_redact_{key, value}`.
 
         """
-        super().__init__(filename=filename)
+        super().__init__(filename=filename, redact_keys=redact_keys)
 
         self._build_tables()
         db_migration._migration_checker(db=self, warn=True)
@@ -352,10 +361,12 @@ class LocalSQLite(DB):
         # within sqlite.
 
         vals = (
-            record.record_id, record.app_id, json_str_of_obj(record.main_input),
-            json_str_of_obj(record.main_output), json_str_of_obj(record),
-            record.tags, record.ts, json_str_of_obj(record.cost),
-            json_str_of_obj(record.perf)
+            record.record_id, record.app_id,
+            self._json_str_of_obj(record.main_input),
+            self._json_str_of_obj(record.main_output),
+            self._json_str_of_obj(record), record.tags, record.ts,
+            self._json_str_of_obj(record.cost),
+            self._json_str_of_obj(record.perf)
         )
 
         self._insert_or_replace_vals(table=self.TABLE_RECORDS, vals=vals)
@@ -447,11 +458,12 @@ class LocalSQLite(DB):
             feedback_result.last_ts.timestamp(),
             feedback_result.status.value,
             feedback_result.error,
-            json_str_of_obj(dict(calls=feedback_result.calls)
-                           ),  # extra dict is needed json's root must be a dict
+            self._json_str_of_obj(
+                dict(calls=feedback_result.calls)
+            ),  # extra dict is needed json's root must be a dict
             feedback_result.result,
             feedback_result.name,
-            json_str_of_obj(feedback_result.cost),
+            self._json_str_of_obj(feedback_result.cost),
             feedback_result.multi_result
         )
 
