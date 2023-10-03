@@ -404,8 +404,6 @@ class Instrument(object):
             existing_apps = getattr(func, Instrument.APPS)
             existing_apps.add(self.app)
 
-            # print(f"already instrumented for apps {list(existing_apps)}: {query}, path type is {type(query).__name__}, id={id(type(query))}")
-
             return func
 
             # TODO: How to consistently address calls to chains that appear more
@@ -413,8 +411,6 @@ class Instrument(object):
 
         else:
             # Notify the app instrumenting this method where it is located:
-
-            # print(f"instrumenting {query}, path type is {type(query).__name__}, id={id(type(query))}")
 
             self.app._on_method_instrumented(obj, func, path=query)
 
@@ -710,8 +706,6 @@ class Instrument(object):
                     stack = ()
                 else:
                     stack = ctx_stacks[ctx]
-
-                # print(f"creating frame info for path {path}, path type is {type(path).__name__}, id={id(type(path))}")
 
                 frame_ident = RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
