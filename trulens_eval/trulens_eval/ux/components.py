@@ -13,12 +13,12 @@ from trulens_eval.schema import Metadata
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
-from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.containers import is_empty
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import is_noserio
 from trulens_eval.utils.serial import GetItemOrAttribute
+from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSONPath
 
 
@@ -253,7 +253,7 @@ def draw_agent_info(query: JSONPath, component: ComponentView) -> None:
 
 
 def draw_tool_info(query: JSONPath, component: ComponentView) -> None:
-        # copy of draw_prompt_info
+    # copy of draw_prompt_info
     # TODO: dedup
     prompt_details_json = jsonify(component.json, skip_specials=True)
 

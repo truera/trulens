@@ -4,7 +4,7 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens_eval)
 [![Slack](https://img.shields.io/badge/slack-join-green?logo=slack)](https://communityinviter.com/apps/aiqualityforum/josh)
 [![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/welcome/)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.10.0/trulens_eval/examples/colab/quickstarts/langchain_quickstart_colab.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.10.0/trulens_eval/examples/quickstart/colab/langchain_quickstart_colab.ipynb)
 
 # 🦑 **Welcome to TruLens!**
 
@@ -43,24 +43,24 @@ TruLens supports the evaluation of tracking for any LLM app framework. Choose a 
 
 **Langchain**
 
-[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/langchain_quickstart.ipynb).
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/colab/quickstarts/langchain_quickstart_colab.ipynb)
+[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.14.0/trulens_eval/examples/quickstart/langchain_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.14.0/trulens_eval/examples/quickstart/colab/langchain_quickstart_colab.ipynb)
 
-[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/py_script_quickstarts/langchain_quickstart.py).
+[langchain_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.14.0/trulens_eval/examples/quickstart/py_script_quickstarts/langchain_quickstart.py).
 
 **Llama-Index**
 
-[llama_index_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb).
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/colab/quickstarts/llama_index_quickstart_colab.ipynb)
+[llama_index_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.14.0/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.14.0/trulens_eval/examples/quickstart/colab/llama_index_quickstart_colab.ipynb)
 
-[llama_index_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/py_script_quickstarts/llama_index_quickstart.py)
+[llama_index_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.14.0/trulens_eval/examples/quickstart/py_script_quickstarts/llama_index_quickstart.py)
 
 **No Framework**
 
-[text2text_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/text2text_quickstart.ipynb).
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/colab/quickstarts/text2text_quickstart_colab.ipynb)
+[text2text_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.14.0/trulens_eval/examples/quickstart/text2text_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.14.0/trulens_eval/examples/quickstart/colab/text2text_quickstart_colab.ipynb)
 
-[text2text_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.13.0/trulens_eval/examples/quickstart/py_script_quickstarts/text2text_quickstart.py)
+[text2text_quickstart.py](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.14.0/trulens_eval/examples/quickstart/py_script_quickstarts/text2text_quickstart.py)
 
 
 ## TruLens-Explain

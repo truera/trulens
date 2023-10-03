@@ -19,6 +19,7 @@ debug_style = dict(border="0px solid gray", padding="0px")
 
 VALUE_MAX_CHARS = 1024
 
+
 class Selector(HasTraits):
     select = Unicode()
     jpath = traitlets.Any()
@@ -32,7 +33,9 @@ class Selector(HasTraits):
             self.jpath = JSONPath.of_string(select)
 
         self.w_edit = widgets.Text(value=select, layout=debug_style)
-        self.w_delete = widgets.Button(description="x", layout=dict(width="30px", **debug_style))
+        self.w_delete = widgets.Button(
+            description="x", layout=dict(width="30px", **debug_style)
+        )
 
         self.on_delete = make_on_delete(self)
         self.w_delete.on_click(self.on_delete)
@@ -51,7 +54,7 @@ class Selector(HasTraits):
 
         self.w = widgets.HBox([self.w_delete, self.w_edit], layout=debug_style)
 
-    
+
 class SelectorValue(HasTraits):
     selector = traitlets.Any()
     obj = traitlets.Any()
@@ -63,7 +66,9 @@ class SelectorValue(HasTraits):
         self.stdout_display = stdout_display
 
         self.w_listing = widgets.HTML(layout=debug_style)
-        self.w = widgets.VBox([self.selector.w, self.w_listing], layout=debug_style)
+        self.w = widgets.VBox(
+            [self.selector.w, self.w_listing], layout=debug_style
+        )
 
         self.selector.observe(self.update_selector, "jpath")
         self.observe(self.update_obj, "obj")
@@ -93,7 +98,7 @@ class SelectorValue(HasTraits):
                         inner_obj_id = id(inner_obj)
                         inner_obj = jsonify(inner_obj)
 
-                        ret_html += f"<div>({inner_class.__name__} at 0x{inner_obj_id:x}): "# as {type(inner_obj).__name__}): "
+                        ret_html += f"<div>({inner_class.__name__} at 0x{inner_obj_id:x}): "  # as {type(inner_obj).__name__}): "
 
                         # if isinstance(inner_obj, pydantic.BaseModel):
                         #    inner_obj = inner_obj.dict()
@@ -111,11 +116,11 @@ class SelectorValue(HasTraits):
                             ret_html += "<ul>"
                             for i, val in enumerate(inner_obj):
                                 ret_html += f"<li>[{i}] = {str(val)[0:VALUE_MAX_CHARS]}</li>"
-                            ret_html += "</ul>"                    
+                            ret_html += "</ul>"
 
                         else:
                             ret_html += str(inner_obj)[0:VALUE_MAX_CHARS]
-                        
+
                         ret_html += "</div>"
 
                 except Exception as e:
@@ -127,13 +132,23 @@ class SelectorValue(HasTraits):
 
 
 class RecordWiget():
-    def __init__(self, record_selections, record=None, human_or_input=None, stdout_display: widgets.Output = None):
+
+    def __init__(
+        self,
+        record_selections,
+        record=None,
+        human_or_input=None,
+        stdout_display: widgets.Output = None
+    ):
         self.record = record
         self.record_selections = record_selections
         self.record_values = dict()
 
         self.human_or_input = widgets.HBox([human_or_input], layout=debug_style)
-        self.w_human = widgets.HBox([widgets.HTML("<b>human:</b>"), self.human_or_input], layout=debug_style)
+        self.w_human = widgets.HBox(
+            [widgets.HTML("<b>human:</b>"), self.human_or_input],
+            layout=debug_style
+        )
         self.d_comp = widgets.HTML(layout=debug_style)
         self.d_extras = widgets.VBox(layout=debug_style)
 
@@ -142,27 +157,34 @@ class RecordWiget():
         self.human = ""
         self.comp = ""
 
-        self.d = widgets.VBox([self.w_human, self.d_comp, self.d_extras], layout={**debug_style, "border": "5px solid #aaaaaa"})
+        self.d = widgets.VBox(
+            [self.w_human, self.d_comp, self.d_extras],
+            layout={
+                **debug_style, "border": "5px solid #aaaaaa"
+            }
+        )
 
     def update_selections(self):
         # change to trait observe
         for s in self.record_selections:
             if s not in self.record_values:
-                sv = SelectorValue(selector=s, stdout_display=self.stdout_display)
+                sv = SelectorValue(
+                    selector=s, stdout_display=self.stdout_display
+                )
                 self.record_values[s] = sv
-                self.d_extras.children += (sv.w, )
+                self.d_extras.children += (sv.w,)
 
             if self.record is not None:
                 record_filled = self.record.layout_calls_as_app()
             else:
                 record_filled = None
 
-            self.record_values[s].obj =  record_filled
+            self.record_values[s].obj = record_filled
 
     def remove_selector(self, selector: Selector):
         if selector not in self.record_values:
             return
-            
+
         item = self.record_values[selector]
         del self.record_values[selector]
         new_children = list(self.d_extras.children)
@@ -171,11 +193,14 @@ class RecordWiget():
 
     def set_human(self, human: str):
         self.human = human
-        self.human_or_input.children = (widgets.HTML(f"<div>{human}</div>", layout=debug_style), )
+        self.human_or_input.children = (
+            widgets.HTML(f"<div>{human}</div>", layout=debug_style),
+        )
 
     def set_comp(self, comp: str):
         self.comp = comp
         self.d_comp.value = f"<div><b>computer:</b> {comp}</div>"
+
 
 class AppUI(traitlets.HasTraits):
     # very prototype
@@ -195,12 +220,23 @@ class AppUI(traitlets.HasTraits):
         self.app_selector = widgets.Text(layout=debug_style)
         self.record_selector = widgets.Text(layout=debug_style)
 
-        self.main_input_button = widgets.Button(description="+ Record", layout=debug_style)
-        self.app_selector_button = widgets.Button(description="+ Select.App", layout=debug_style)
-        self.record_selector_button = widgets.Button(description="+ Select.Record", layout=debug_style)
+        self.main_input_button = widgets.Button(
+            description="+ Record", layout=debug_style
+        )
+        self.app_selector_button = widgets.Button(
+            description="+ Select.App", layout=debug_style
+        )
+        self.record_selector_button = widgets.Button(
+            description="+ Select.Record", layout=debug_style
+        )
 
         self.display_top = widgets.VBox([], layout=debug_style)
-        self.display_side = widgets.VBox([], layout={'width':"50%", **debug_style})
+        self.display_side = widgets.VBox(
+            [], layout={
+                'width': "50%",
+                **debug_style
+            }
+        )
 
         self.display_stdout = widgets.Output()
 
@@ -209,7 +245,11 @@ class AppUI(traitlets.HasTraits):
         self.app_selections = {}
         self.record_selections = []
 
-        self.current_record = RecordWiget(record_selections=self.record_selections, human_or_input=self.main_input, stdout_display=self.display_stdout)
+        self.current_record = RecordWiget(
+            record_selections=self.record_selections,
+            human_or_input=self.main_input,
+            stdout_display=self.display_stdout
+        )
         self.current_record_record = None
 
         self.records = [self.current_record]
@@ -225,23 +265,42 @@ class AppUI(traitlets.HasTraits):
         outputs_widget = widgets.Accordion(children=[self.display_stdout])
         outputs_widget.set_title(0, 'stdpipes')
 
-        self.display_bottom = widgets.VBox([
-            widgets.HBox([self.main_input_button, self.main_input], layout=debug_style),
-            widgets.HBox([self.app_selector_button, self.app_selector], layout=debug_style),
-            widgets.HBox([self.record_selector_button, self.record_selector], layout=debug_style),
-            ], layout=debug_style
+        self.display_bottom = widgets.VBox(
+            [
+                widgets.HBox(
+                    [self.main_input_button, self.main_input],
+                    layout=debug_style
+                ),
+                widgets.HBox(
+                    [self.app_selector_button, self.app_selector],
+                    layout=debug_style
+                ),
+                widgets.HBox(
+                    [self.record_selector_button, self.record_selector],
+                    layout=debug_style
+                ),
+            ],
+            layout=debug_style
         )
 
-        self.display_top.children += (self.current_record.d, )
+        self.display_top.children += (self.current_record.d,)
 
-        self.d = widgets.VBox([widgets.HBox([
-                widgets.VBox([
-                    self.display_top,
-                    self.display_bottom
-                ], layout={**debug_style, 'width': '50%'}),
-                self.display_side], layout=debug_style
-            ), outputs_widget])
-        
+        self.d = widgets.VBox(
+            [
+                widgets.HBox(
+                    [
+                        widgets.VBox(
+                            [self.display_top, self.display_bottom],
+                            layout={
+                                **debug_style, 'width': '50%'
+                            }
+                        ), self.display_side
+                    ],
+                    layout=debug_style
+                ), outputs_widget
+            ]
+        )
+
         if app_selectors is not None:
             for selector in app_selectors:
                 self._add_app_selector(selector)
@@ -250,8 +309,8 @@ class AppUI(traitlets.HasTraits):
             for selector in record_selectors:
                 self._add_record_selector(selector)
 
-
     def make_on_delete_record_selector(self, selector):
+
         def on_delete(ev):
             self.record_selections.remove(selector)
 
@@ -261,6 +320,7 @@ class AppUI(traitlets.HasTraits):
         return on_delete
 
     def make_on_delete_app_selector(self, selector):
+
         def on_delete(ev):
             sw = self.app_selections[selector]
             del self.app_selections[selector]
@@ -278,20 +338,26 @@ class AppUI(traitlets.HasTraits):
 
     def _add_app_selector(self, selector: Union[JSONPath, str]):
         with self.display_stdout:
-            sel = Selector(select=selector, make_on_delete=self.make_on_delete_app_selector)
+            sel = Selector(
+                select=selector,
+                make_on_delete=self.make_on_delete_app_selector
+            )
 
         sw = SelectorValue(selector=sel, stdout_display=self.display_stdout)
         self.app_selections[sel] = sw
         sw.obj = self.app
 
-        self.display_side.children += (sw.w, )
+        self.display_side.children += (sw.w,)
 
     def add_app_selection(self, w):
         self._add_app_selector(self.app_selector.value)
 
     def _add_record_selector(self, selector: Union[JSONPath, str]):
         with self.display_stdout:
-            sel = Selector(select=selector, make_on_delete=self.make_on_delete_record_selector)
+            sel = Selector(
+                select=selector,
+                make_on_delete=self.make_on_delete_record_selector
+            )
 
         self.record_selections.append(sel)
 
@@ -319,6 +385,7 @@ class AppUI(traitlets.HasTraits):
                 comp = ""
 
                 def run_in_thread(comp):
+
                     async def run_in_main_loop(comp):
                         comp_generator = await self.app.main_acall(human)
                         async for tok in comp_generator:
@@ -327,9 +394,11 @@ class AppUI(traitlets.HasTraits):
 
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
-                    loop.run_until_complete(asyncio.Task(run_in_main_loop(comp)))
+                    loop.run_until_complete(
+                        asyncio.Task(run_in_main_loop(comp))
+                    )
 
-                t = Thread(target=run_in_thread, args=(comp, ))
+                t = Thread(target=run_in_thread, args=(comp,))
                 t.start()
                 t.join()
 
@@ -345,6 +414,10 @@ class AppUI(traitlets.HasTraits):
 
         self.update_app_selections()
 
-        self.current_record = RecordWiget(record_selections=self.record_selections, human_or_input=self.main_input, stdout_display=self.display_stdout)
+        self.current_record = RecordWiget(
+            record_selections=self.record_selections,
+            human_or_input=self.main_input,
+            stdout_display=self.display_stdout
+        )
         self.records.append(self.current_record)
-        self.display_top.children += (self.current_record.d, )
+        self.display_top.children += (self.current_record.d,)

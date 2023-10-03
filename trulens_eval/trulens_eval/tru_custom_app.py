@@ -195,8 +195,8 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
 """
 
 from asyncio import sleep
-from inspect import signature
 import inspect
+from inspect import signature
 import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
@@ -411,27 +411,34 @@ class TruCustomApp(App):
 
     def main_call(self, human: str):
         if self.main_method is None:
-            raise RuntimeError("`main_method` was not specified so we do not know how to run this app.")
-        
+            raise RuntimeError(
+                "`main_method` was not specified so we do not know how to run this app."
+            )
+
         sig = signature(self.main_method)
-        bindings = sig.bind(self.app, human) # self.app is app's "self"
+        bindings = sig.bind(self.app, human)  # self.app is app's "self"
 
         return self.with_(self.main_method, *bindings.args, **bindings.kwargs)
 
     async def main_acall(self, human: str):
         # TODO: work in progress
-        
+
         # must return an async generator of tokens/pieces that can be appended to create the full response
 
         if self.main_async_method is None:
-            raise RuntimeError("`main_async_method` was not specified so we do not know how to run this app.")
+            raise RuntimeError(
+                "`main_async_method` was not specified so we do not know how to run this app."
+            )
 
         sig = signature(self.main_async_method)
-        bindings = sig.bind(self.app, human) # self.app is app's "self"
+        bindings = sig.bind(self.app, human)  # self.app is app's "self"
 
-        generator = await self.awith_(self.main_async_method, *bindings.args, **bindings.kwargs)
+        generator = await self.awith_(
+            self.main_async_method, *bindings.args, **bindings.kwargs
+        )
 
         return generator
+
 
 class instrument(base_instrument):
     """

@@ -5,9 +5,9 @@ Generalized root type for various libraries like llama_index and langchain .
 from abc import ABC
 from abc import abstractmethod
 import contextvars
+import inspect
 from inspect import BoundArguments
 from inspect import Signature
-import inspect
 import logging
 from pprint import PrettyPrinter
 from threading import Lock
@@ -983,9 +983,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 f"\t{type(obj).__name__} ({t[1].__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"
             )
 
-        print(
-            "\n".join(object_strings)
-        )
+        print("\n".join(object_strings))
 
 
 class TruApp(App):

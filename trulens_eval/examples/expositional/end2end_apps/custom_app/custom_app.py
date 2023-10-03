@@ -1,7 +1,9 @@
-from asyncio import sleep
 import asyncio
-from examples.expositional.end2end_apps.custom_app.custom_memory import CustomMemory
+from asyncio import sleep
+
 from examples.expositional.end2end_apps.custom_app.custom_llm import CustomLLM
+from examples.expositional.end2end_apps.custom_app.custom_memory import \
+    CustomMemory
 from examples.expositional.end2end_apps.custom_app.custom_retriever import \
     CustomRetriever
 
@@ -47,7 +49,7 @@ class CustomApp:
         self.memory.remember(output)
 
         return output
-    
+
     @instrument
     async def arespond_to_query(self, input):
         # fake async call, must return an async token generator and final result
@@ -66,7 +68,5 @@ class CustomApp:
             async for tok in gen_task:
                 ret += tok
             return ret
-            
+
         return gen_task, collect_gen
-
-

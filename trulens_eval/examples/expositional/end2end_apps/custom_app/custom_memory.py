@@ -10,4 +10,3 @@ class CustomMemory:
 
     def remember(self, data):
         self.messages.append(data)
-        

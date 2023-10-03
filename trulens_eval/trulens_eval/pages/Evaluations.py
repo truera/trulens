@@ -105,7 +105,6 @@ def render_component(query, component, header=True):
     elif isinstance(component, Tool):
         draw_tool_info(component=component, query=query)
 
-
     elif isinstance(component, Other):
         with st.expander("Uncategorized Component Details:"):
             st.json(jsonify_for_ui(component.json))
@@ -180,11 +179,17 @@ else:
         ]
 
         for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
-            gb.configure_column(
-                feedback_col,
-                cellStyle=cellstyle_jscode,
-                hide=feedback_col.endswith("_calls")
-            )
+            if "distance" in feedback_col:
+                gb.configure_column(
+                    feedback_col,
+                    hide=feedback_col.endswith("_calls")
+                )
+            else:
+                gb.configure_column(
+                    feedback_col,
+                    cellStyle=cellstyle_jscode,
+                    hide=feedback_col.endswith("_calls")
+                )
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
@@ -242,6 +247,8 @@ else:
                 def display_feedback_call(call):
 
                     def highlight(s):
+                        if "distance" in feedback_name:
+                            return [f'background-color: {CATEGORY.UNKNOWN.color}'] * len(s)
                         cat = CATEGORY.of_score(s.result)
                         return [f'background-color: {cat.color}'] * len(s)
 
@@ -264,7 +271,7 @@ else:
 
                         st.dataframe(
                             df.style.apply(highlight, axis=1
-                                          ).format("{:.2}", subset=["result"])
+                                          ).format("{:.2f}", subset=["result"])
                         )
 
                     else:
