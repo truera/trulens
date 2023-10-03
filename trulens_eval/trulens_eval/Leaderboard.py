@@ -27,22 +27,13 @@ from trulens_eval.ux.add_logo import add_logo
 
 add_logo()
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--database-url', default=None)
-
-try:
-    args = parser.parse_args()
-except SystemExit as e:
-    # This exception will be raised if --help or invalid command line arguments
-    # are used. Currently, streamlit prevents the program from exiting normally,
-    # so we have to do a hard exit.
-    sys.exit(e.code)
-
-tru = Tru(database_url=args.database_url)
-lms = tru.db
+database_url = None
 
 
 def streamlit_app():
+    tru = Tru(database_url=database_url)
+    lms = tru.db
+
     # Set the title and subtitle of the app
     st.title('App Leaderboard')
     st.write(
@@ -110,7 +101,12 @@ def streamlit_app():
 
             if math.isnan(mean):
                 pass
-
+            elif("distance" in col_name):
+                feedback_cols[i].metric(
+                    label=col_name,
+                    value=f'{round(mean, 2)}',
+                    delta_color="normal"
+                )
             else:
                 cat = CATEGORY.of_score(mean)
                 feedback_cols[i].metric(
@@ -138,4 +134,18 @@ def main():
 
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--database-url', default=None)
+
+    try:
+        args = parser.parse_args()
+    except SystemExit as e:
+        # This exception will be raised if --help or invalid command line arguments
+        # are used. Currently, streamlit prevents the program from exiting normally,
+        # so we have to do a hard exit.
+        sys.exit(e.code)
+
+    database_url = args.database_url
+
     main()

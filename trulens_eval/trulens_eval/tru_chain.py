@@ -25,8 +25,20 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
-    import langchain
+    # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
+    from langchain.agents.agent import BaseMultiActionAgent
+    from langchain.agents.agent import BaseSingleActionAgent
     from langchain.chains.base import Chain
+    from langchain.llms.base import BaseLLM
+    from langchain.memory.chat_memory import BaseChatMemory
+    from langchain.prompts.base import BasePromptTemplate
+    from langchain.schema import BaseChatMessageHistory  # subclass of above
+    from langchain.schema import BaseMemory  # no methods instrumented
+    from langchain.schema import BaseRetriever
+    from langchain.schema.language_model import BaseLanguageModel
+    # langchain.load.serializable.Serializable, # this seems to be work in progress over at langchain
+    # langchain.adapters.openai.ChatCompletion, # no bases
+    from langchain.tools.base import BaseTool
 
 
 class LangChainInstrument(Instrument):
@@ -36,56 +48,52 @@ class LangChainInstrument(Instrument):
 
         # Thunk because langchain is optional.
         CLASSES = lambda: {
-            langchain.chains.base.Chain,
-            langchain.vectorstores.base.BaseRetriever,
-            langchain.schema.BaseRetriever,
-            langchain.llms.base.BaseLLM,
-            langchain.prompts.base.BasePromptTemplate,
-            langchain.schema.BaseMemory,  # no methods instrumented
-            langchain.schema.BaseChatMessageHistory,  # subclass of above
+            Chain,
+            BaseRetriever,
+            BaseLLM,
+            BasePromptTemplate,
+            BaseMemory,  # no methods instrumented
+            BaseChatMemory,  # no methods instrumented
+            BaseChatMessageHistory,  # subclass of above
             # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
-            langchain.agents.agent.BaseSingleActionAgent,
-            langchain.agents.agent.BaseMultiActionAgent,
-            langchain.schema.language_model.BaseLanguageModel,
+            BaseSingleActionAgent,
+            BaseMultiActionAgent,
+            BaseLanguageModel,
             # langchain.load.serializable.Serializable, # this seems to be work in progress over at langchain
             # langchain.adapters.openai.ChatCompletion, # no bases
-            langchain.tools.base.BaseTool,
+            BaseTool,
             WithFeedbackFilterDocuments
         }
 
         # Instrument only methods with these names and of these classes.
         METHODS = {
+            "save_context":
+                lambda o: isinstance(o, BaseMemory),
+            "clear":
+                lambda o: isinstance(o, BaseMemory),
             "_call":
-                lambda o: isinstance(o, langchain.chains.base.Chain),
+                lambda o: isinstance(o, Chain),
             "__call__":
-                lambda o: isinstance(o, langchain.chains.base.Chain),
+                lambda o: isinstance(o, Chain),
             "_acall":
-                lambda o: isinstance(o, langchain.chains.base.Chain),
+                lambda o: isinstance(o, Chain),
             "acall":
-                lambda o: isinstance(o, langchain.chains.base.Chain),
+                lambda o: isinstance(o, Chain),
             "_get_relevant_documents":
                 lambda o: True,  # VectorStoreRetriever, langchain >= 0.230
             # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # the prompt calls might be too small to be interesting
             "plan":
-                lambda o: isinstance(
-                    o, (
-                        langchain.agents.agent.BaseSingleActionAgent, langchain.
-                        agents.agent.BaseMultiActionAgent
-                    )
-                ),
+                lambda o:
+                isinstance(o, (BaseSingleActionAgent, BaseMultiActionAgent)),
             "aplan":
-                lambda o: isinstance(
-                    o, (
-                        langchain.agents.agent.BaseSingleActionAgent, langchain.
-                        agents.agent.BaseMultiActionAgent
-                    )
-                ),
+                lambda o:
+                isinstance(o, (BaseSingleActionAgent, BaseMultiActionAgent)),
             "_arun":
-                lambda o: isinstance(o, langchain.tools.base.BaseTool),
+                lambda o: isinstance(o, BaseTool),
             "_run":
-                lambda o: isinstance(o, langchain.tools.base.BaseTool),
+                lambda o: isinstance(o, BaseTool),
         }
 
     def __init__(self, *args, **kwargs):
@@ -244,6 +252,20 @@ class TruChain(App):
                 return ret[self.app.output_keys[0]]
 
         return App.main_output(self, func, sig, bindings, ret)
+
+    def main_call(self, human: str):
+        # If available, a single text to a single text invocation of this app.
+
+        out_key = self.app.output_keys[0]
+
+        return self.with_(self.app, human)[out_key]
+
+    async def main_acall(self, human: str):
+        # If available, a single text to a single text invocation of this app.
+
+        out_key = self.app.output_keys[0]
+
+        return await self._acall(human)[out_key]
 
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped

@@ -288,7 +288,6 @@ class Endpoint(SerialModel, SingletonPerName):
                     "Will not track usage."
                 )
 
-
         return Endpoint._track_costs(thunk, with_endpoints=endpoints)
 
     # TODO: CODEDUP
@@ -363,7 +362,10 @@ class Endpoint(SerialModel, SingletonPerName):
         """
 
         result, cbs = Endpoint.track_all_costs(
-            thunk, with_openai=with_openai, with_hugs=with_hugs, with_litellm=with_litellm
+            thunk,
+            with_openai=with_openai,
+            with_hugs=with_hugs,
+            with_litellm=with_litellm
         )
 
         if len(cbs) == 0:
@@ -387,7 +389,10 @@ class Endpoint(SerialModel, SingletonPerName):
         """
 
         result, cbs = await Endpoint.atrack_all_costs(
-            thunk, with_openai=with_openai, with_hugs=with_hugs, with_litellm=with_litellm
+            thunk,
+            with_openai=with_openai,
+            with_hugs=with_hugs,
+            with_litellm=with_litellm
         )
 
         if len(cbs) == 0:
@@ -853,7 +858,6 @@ class DummyEndpoint(Endpoint):
             # "model loading message"
             j = dict(estimated_time=1.2345)
             self.is_loading = False
-
         elif random.randint(a=0, b=50) == 0:
             # randomly overloaded
             j = dict(error="overloaded")

@@ -13,16 +13,17 @@ AggCallable = Callable[[Iterable[float]], float]
 # Main class holding and running feedback functions:
 from trulens_eval.feedback.feedback import Feedback
 # Specific feedback functions:
+from trulens_eval.feedback.embeddings import Embeddings
 from trulens_eval.feedback.groundedness import Groundedness
 from trulens_eval.feedback.groundtruth import GroundTruthAgreement
 from trulens_eval.feedback.provider.cohere import Cohere
 # Providers of feedback functions evaluation:
 from trulens_eval.feedback.provider.hugs import Huggingface
+from trulens_eval.feedback.provider.litellm import LiteLLM
 from trulens_eval.feedback.provider.openai import AzureOpenAI
 from trulens_eval.feedback.provider.openai import OpenAI
-from trulens_eval.feedback.provider.litellm import LiteLLM
 
 __all__ = [
-    'Feedback', 'Groundedness', 'GroundTruthAgreement', 'OpenAI', 'AzureOpenAI',
+    'Feedback', 'Embeddings', 'Groundedness', 'GroundTruthAgreement', 'OpenAI', 'AzureOpenAI',
     'Huggingface', 'Cohere', 'LiteLLM'
 ]

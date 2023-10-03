@@ -6,8 +6,6 @@ import os
 import unittest
 from unittest import main
 
-from langchain import LLMChain
-from langchain import PromptTemplate
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chains import LLMChain
@@ -17,6 +15,7 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms.openai import OpenAI
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.memory import ConversationSummaryBufferMemory
+from langchain.prompts import PromptTemplate
 from langchain.schema.messages import HumanMessage
 from langchain.vectorstores import Pinecone
 import pinecone

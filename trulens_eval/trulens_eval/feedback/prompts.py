@@ -102,7 +102,6 @@ please answer with this template:
 
 (Step 1)
 Important Points: <Outline the important points>
-Supporting Evidence: <Explain why these are sufficient to capture the whole SOURCE>
 
 Step 2 - Compare:
 (DO NOT SKIP THIS STEP!)

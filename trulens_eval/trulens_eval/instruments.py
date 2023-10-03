@@ -333,7 +333,15 @@ class Instrument(object):
         Determine whether the given class should be instrumented.
         """
 
-        return any(issubclass(cls, parent) for parent in self.include_classes)
+        # Sometimes issubclass is not supported so we return True just to be
+        # sure we instrument that thing.
+
+        try:
+            return any(
+                issubclass(cls, parent) for parent in self.include_classes
+            )
+        except Exception:
+            return True
 
     def to_instrument_module(self, module_name: str) -> bool:
         """
@@ -428,7 +436,9 @@ class Instrument(object):
 
             # Get any contexts already known from higher in the call stack.
             contexts = get_first_local_in_call_stack(
-                key="contexts", func=find_instrumented, offset=1, # DIFF
+                key="contexts",
+                func=find_instrumented,
+                offset=1,  # DIFF
                 skip=caller_frame()
             )
             # Note: are empty sets false?
@@ -460,7 +470,9 @@ class Instrument(object):
             # from app to app that are watching this method. Hence we index the
             # stacks by id of the call record list which is unique to each app.
             ctx_stacks = get_first_local_in_call_stack(
-                key="stacks", func=find_instrumented, offset=1,
+                key="stacks",
+                func=find_instrumented,
+                offset=1,
                 skip=caller_frame()
             )
             # Note: Empty dicts are false.
@@ -827,6 +839,40 @@ class Instrument(object):
                         )
                     )
 
+    def instrument_class(self, cls):
+        """
+        Instrument the given class `cls`'s __new__ method so we can be aware
+        when new instances are created. This is needed for wrapped methods that
+        dynamically create instances of classes we wish to instrument. As they
+        will not be visible at the time we wrap the app, we need to pay
+        attention to __new__ to make a note of them when they are created and
+        the creator's path. This path will be used to place these new instances
+        in the app json structure.
+        """
+
+        func = cls.__new__
+
+        if hasattr(func, Instrument.INSTRUMENT):
+            logger.debug(
+                f"Class {cls.__name__} __new__ is already instrumented."
+            )
+            return
+
+        # @functools.wraps(func)
+        def wrapped_new(cls, *args, **kwargs):
+            logger.debug(
+                f"Creating a new instance of instrumented class {cls.__name__}."
+            )
+            # get deepest wrapped method here
+            # get its self
+            # get its path
+            obj = func(cls)
+            # for every tracked method, and every app, do this:
+            # self.app._on_method_instrumented(obj, original_func, path=query)
+            return obj
+
+        cls.__new__ = wrapped_new
+
     def instrument_object(self, obj, query: Query, done: Set[int] = None):
 
         done = done or set([])
@@ -915,11 +961,22 @@ class Instrument(object):
                         )
                     )
 
-        if isinstance(obj, BaseModel):
+        if isinstance(obj, BaseModel) or self.to_instrument_object(obj):
+            if isinstance(obj, BaseModel):
+                attrs = obj.__fields__
+            else:
+                # If an object is not a recognized container type, we check that it
+                # is meant to be instrumented and if so, we  walk over it manually.
+                # NOTE: some llama_index objects are using dataclasses_json but most do
+                # not so this section applies.
+                attrs = dir(obj)
+                for k in list(attrs):
+                    if k.startswith("_") and k[1:] in dir(obj):
+                        attrs.remove(k)
+                        # Skip those starting with _ that also have non-_ versions.
 
-            for k in obj.__fields__:
-                # NOTE(piotrm): may be better to use inspect.getmembers_static .
-                v = getattr(obj, k)
+            for k in attrs:
+                v = _safe_getattr(obj, k)
 
                 if isinstance(v, (str, bool, int, float)):
                     pass
@@ -948,22 +1005,6 @@ class Instrument(object):
 
                 # TODO: check if we want to instrument anything in langchain not
                 # accessible through __fields__ .
-
-        elif self.to_instrument_object(obj):
-            # If an object is not a recognized container type, we check that it
-            # is meant to be instrumented and if so, we  walk over it manually.
-            # NOTE: llama_index objects are using dataclasses_json but most do
-            # not so this section applies.
-
-            for k in dir(obj):
-                if k.startswith("_") and k[1:] in dir(obj):
-                    # Skip those starting with _ that also have non-_ versions.
-                    continue
-
-                sv = _safe_getattr(obj, k)
-
-                if self.to_instrument_object(sv):
-                    self.instrument_object(obj=sv, query=query[k], done=done)
 
         else:
             logger.debug(

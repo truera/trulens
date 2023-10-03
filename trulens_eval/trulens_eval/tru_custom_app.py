@@ -194,9 +194,12 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
   solution as needed.
 """
 
+from asyncio import sleep
+import inspect
+from inspect import signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Set
+from typing import Any, Callable, ClassVar, Optional, Set
 
 from pydantic import Field
 
@@ -286,6 +289,9 @@ class TruCustomApp(App):
     # the object walk finds them. If not, a message is shown to let user know
     # how to let the TruCustomApp constructor know where these methods are.
     functions_to_instrument: ClassVar[Set[Callable]] = set([])
+
+    main_method: Optional[Callable] = Field(exclude=True)
+    main_async_method: Optional[Callable] = Field(exclude=True)
 
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs):
         """
@@ -402,6 +408,36 @@ class TruCustomApp(App):
             raise RuntimeError(
                 f"TruCustomApp nor wrapped app have attribute named {__name}."
             )
+
+    def main_call(self, human: str):
+        if self.main_method is None:
+            raise RuntimeError(
+                "`main_method` was not specified so we do not know how to run this app."
+            )
+
+        sig = signature(self.main_method)
+        bindings = sig.bind(self.app, human)  # self.app is app's "self"
+
+        return self.with_(self.main_method, *bindings.args, **bindings.kwargs)
+
+    async def main_acall(self, human: str):
+        # TODO: work in progress
+
+        # must return an async generator of tokens/pieces that can be appended to create the full response
+
+        if self.main_async_method is None:
+            raise RuntimeError(
+                "`main_async_method` was not specified so we do not know how to run this app."
+            )
+
+        sig = signature(self.main_async_method)
+        bindings = sig.bind(self.app, human)  # self.app is app's "self"
+
+        generator = await self.awith_(
+            self.main_async_method, *bindings.args, **bindings.kwargs
+        )
+
+        return generator
 
 
 class instrument(base_instrument):

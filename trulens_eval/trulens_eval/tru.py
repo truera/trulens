@@ -205,7 +205,7 @@ class Tru(SingletonPerName):
             assert app_id == app.app_id, "Record was produced by a different app."
 
             if self.db.get_app(app_id=app.app_id) is None:
-                logger.warn(
+                logger.warning(
                     "App {app_id} was not present in database. Adding it."
                 )
                 self.add_app(app=app)
@@ -413,6 +413,19 @@ class Tru(SingletonPerName):
         else:
             Tru.dashboard_proc.kill()
             Tru.dashboard_proc = None
+
+    def run_dashboard_in_jupyter(self):
+        # TODO: check for jupyter
+
+        logger.warning(
+            "Running dashboard inside a notebook is an experimental feature and may not work well."
+        )
+
+        from streamlit_jupyter import StreamlitPatcher
+        StreamlitPatcher().jupyter()
+        from trulens_eval import Leaderboard
+
+        Leaderboard.main()
 
     def run_dashboard(
         self, force: bool = False, _dev: Optional[Path] = None

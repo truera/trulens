@@ -5,14 +5,14 @@
 #
 # In this quickstart you will create a simple Llama Index App and learn how to log it and get feedback on an LLM response.
 #
-# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/frameworks/llama_index/llama_index_quickstart.ipynb)
+# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb)
 
 # ## Setup
 #
 # ### Install dependencies
 # Let's install some of the dependencies for this notebook if we don't have them already
 
-#! pip install trulens-eval==0.12.0 llama_index==0.8.29post1 html2text==2020.1.16
+#! pip install trulens-eval==0.14.0 llama_index>=0.8.29post1 html2text>=2020.1.16
 
 # ### Add API keys
 # For this quickstart, you will need Open AI and Huggingface keys. The OpenAI key is used for embeddings and GPT, and the Huggingface key is used for evaluation.
