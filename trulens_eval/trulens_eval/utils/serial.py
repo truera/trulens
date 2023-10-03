@@ -404,7 +404,7 @@ class ParseException(Exception):
         self.exp_ast = exp_ast
 
     def __str__(self):
-        return f"Failed to parse expression `{self.exp_string}` as a `JSONPath`.\n{dump(self.exp_ast)}"
+        return f"Failed to parse expression `{self.exp_string}` as a `JSONPath`.\n{dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
 
 
 class JSONPath(SerialModel):

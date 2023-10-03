@@ -461,27 +461,18 @@ class AppDefinition(SerialModel, WithClassInfo):
     app_extra_json: JSON
 
     @staticmethod
-    def continue_session(app_definition_json: JSON, initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
+    def continue_session(
+        app_definition_json: JSON,
+        app: Any
+    ) -> 'AppDefinition':
+        # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
         """
         Create a copy of the json serialized app with the enclosed app being
         initialized to its initial state before any records are produced (i.e.
         blank memory).
         """
 
-        defn = app_definition_json['initial_app_loader_dump']
-
-        if initial_app_loader is None:
-            assert defn is not None, "Cannot continue new session without `initial_app_loader`."
-            serial_bytes = SerialBytes.parse_obj(defn)
-            app = dill.loads(serial_bytes.data)()
-        else:
-            app = initial_app_loader()
-            defn = dill.dumps(initial_app_loader)
-            serial_bytes = SerialBytes(data=defn)
-        
-        # Need to be able to load the app from json somehow:
-        # app_definition_json['app'] = app
-        app_definition_json['initial_app_loader_dump'] = serial_bytes
+        app_definition_json['app'] = app
 
         cls = WithClassInfo.get_class(app_definition_json)
 
