@@ -25,20 +25,21 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
-    from langchain.chains.base import Chain
-    from langchain.schema import BaseRetriever
-    from langchain.llms.base import BaseLLM
-    from langchain.prompts.base import BasePromptTemplate
-    from langchain.schema import BaseMemory  # no methods instrumented
-    from langchain.memory.chat_memory import BaseChatMemory
-    from langchain.schema import BaseChatMessageHistory  # subclass of above
     # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
-    from langchain.agents.agent import BaseSingleActionAgent
     from langchain.agents.agent import BaseMultiActionAgent
+    from langchain.agents.agent import BaseSingleActionAgent
+    from langchain.chains.base import Chain
+    from langchain.llms.base import BaseLLM
+    from langchain.memory.chat_memory import BaseChatMemory
+    from langchain.prompts.base import BasePromptTemplate
+    from langchain.schema import BaseChatMessageHistory  # subclass of above
+    from langchain.schema import BaseMemory  # no methods instrumented
+    from langchain.schema import BaseRetriever
     from langchain.schema.language_model import BaseLanguageModel
     # langchain.load.serializable.Serializable, # this seems to be work in progress over at langchain
     # langchain.adapters.openai.ChatCompletion, # no bases
     from langchain.tools.base import BaseTool
+
 
 class LangChainInstrument(Instrument):
 
@@ -84,17 +85,11 @@ class LangChainInstrument(Instrument):
             # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # the prompt calls might be too small to be interesting
             "plan":
-                lambda o: isinstance(
-                    o, (
-                        BaseSingleActionAgent, BaseMultiActionAgent
-                    )
-                ),
+                lambda o:
+                isinstance(o, (BaseSingleActionAgent, BaseMultiActionAgent)),
             "aplan":
-                lambda o: isinstance(
-                    o, (
-                        BaseSingleActionAgent, BaseMultiActionAgent
-                    )
-                ),
+                lambda o:
+                isinstance(o, (BaseSingleActionAgent, BaseMultiActionAgent)),
             "_arun":
                 lambda o: isinstance(o, BaseTool),
             "_run":

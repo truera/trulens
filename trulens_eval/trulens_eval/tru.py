@@ -424,7 +424,9 @@ class Tru(SingletonPerName):
     def run_dashboard_in_jupyter(self):
         # TODO: check for jupyter
 
-        logger.warning("Running dashboard inside a notebook is an experimental feature and may not work well.")
+        logger.warning(
+            "Running dashboard inside a notebook is an experimental feature and may not work well."
+        )
 
         from streamlit_jupyter import StreamlitPatcher
         StreamlitPatcher().jupyter()

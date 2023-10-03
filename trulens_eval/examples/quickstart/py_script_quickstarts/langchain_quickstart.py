@@ -5,7 +5,9 @@
 #
 # In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.
 #
-# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/langchain_quickstart.ipynb)
+# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
+
+# ! pip install trulens_eval==0.14.0 langchain>=0.0.263
 
 # ## Setup
 # ### Add API keys
@@ -73,15 +75,11 @@ f_lang_match = Feedback(hugs.language_match).on_input_output()
 
 # ## Instrument chain for logging with TruLens
 
-tru_chain_recorder = TruChain(
-    chain,
-    app_id='Chain1_ChatApplication',
-    feedbacks=[f_lang_match],
-    tags="prototype"
+tru_recorder = TruChain(
+    chain, app_id='Chain1_ChatApplication', feedbacks=[f_lang_match]
 )
 
-# or as a context manager
-with tru_chain_recorder as recording:
+with tru_recorder as recording:
     llm_response = chain(prompt_input)
 
 print(llm_response)

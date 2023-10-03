@@ -5,7 +5,9 @@
 #
 # In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.
 #
-# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/langchain_quickstart.ipynb)
+# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
+
+# ! pip install trulens_eval==0.14.0 langchain>=0.0.263
 
 # ## Setup
 # ### Add API keys
@@ -73,15 +75,11 @@ f_lang_match = Feedback(hugs.language_match).on_input_output()
 
 # ## Instrument chain for logging with TruLens
 
-tru_chain_recorder = TruChain(
-    chain,
-    app_id='Chain1_ChatApplication',
-    feedbacks=[f_lang_match],
-    tags="prototype"
+tru_recorder = TruChain(
+    chain, app_id='Chain1_ChatApplication', feedbacks=[f_lang_match]
 )
 
-# or as a context manager
-with tru_chain_recorder as recording:
+with tru_recorder as recording:
     llm_response = chain(prompt_input)
 
 print(llm_response)
@@ -135,28 +133,24 @@ tru.get_records_and_feedback(app_ids=[]
 #
 # This is done like so:
 
-truchain_recorder = TruChain(chain, app_id='Chain1_ChatApplication', tru=tru)
-
-with truchain_recorder as recording:
-    chain("This will be automatically logged.")
+truchain = TruChain(chain, app_id='Chain1_ChatApplication', tru=tru)
+truchain("This will be automatically logged.")
 
 # Feedback functions can also be logged automatically by providing them in a list to the feedbacks arg.
 
-truchain_recorder = TruChain(
+truchain = TruChain(
     chain,
     app_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match],  # feedback functions
     tru=tru
 )
-
-with truchain_recorder as recording:
-    chain("This will be automatically logged.")
+truchain("This will be automatically logged.")
 
 # ## Manual Logging
 #
 # ### Wrap with TruChain to instrument your chain
 
-truchain_recorder = TruChain(chain, app_id='Chain1_ChatApplication')
+tc = TruChain(chain, app_id='Chain1_ChatApplication')
 
 # ### Set up logging and instrumentation
 #
@@ -164,7 +158,15 @@ truchain_recorder = TruChain(chain, app_id='Chain1_ChatApplication')
 #
 
 prompt_input = 'que hora es?'
-gpt3_response, record = truchain_recorder.with_record(chain, prompt_input)
+gpt3_response, record = tc.call_with_record(prompt_input)
+
+# We can log the records but first we need to log the chain itself.
+
+tru.add_app(app=truchain)
+
+# Then we can log the record:
+
+tru.add_record(record)
 
 # ### Log App Feedback
 # Capturing app feedback such as user feedback of the responses can be added with one call.
@@ -198,7 +200,7 @@ tru.add_feedbacks(feedback_results)
 #
 # For demonstration purposes, we start the evaluator here but it can be started in another process.
 
-truchain_recorder: TruChain = TruChain(
+truchain: TruChain = TruChain(
     chain,
     app_id='Chain1_ChatApplication',
     feedbacks=[f_lang_match],
@@ -207,8 +209,7 @@ truchain_recorder: TruChain = TruChain(
 )
 
 tru.start_evaluator()
-with truchain_recorder as recording:
-    chain("This will be logged by deferred evaluator.")
+truchain("This will be logged by deferred evaluator.")
 tru.stop_evaluator()
 
 # # Custom Functions

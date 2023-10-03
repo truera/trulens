@@ -282,7 +282,9 @@ class Huggingface(Provider):
             if label['label'] == 'entailment':
                 return label['score']
 
+
 class Dummy(Huggingface):
+
     def __init__(self, name: str = None, **kwargs):
         kwargs['name'] = name or "dummyhugs"
         kwargs['endpoint'] = DummyEndpoint(name="dummyendhugspoint")

@@ -252,8 +252,10 @@ class GetItemOrAttribute(Step):
                 for r in self.__call__(obj=obj[0]):
                     yield r
             elif len(obj) == 0:
-                raise ValueError(f"Object not a dictionary or sequence of dictionaries: {obj}.")
-            else: # len(obj) > 1
+                raise ValueError(
+                    f"Object not a dictionary or sequence of dictionaries: {obj}."
+                )
+            else:  # len(obj) > 1
                 logger.warning(
                     f"Object (of type {type(obj).__name__}) is a sequence containing more than one dictionary. "
                     f"Lookup by item or attribute `{self.item_or_attribute}` is ambiguous. "
@@ -397,8 +399,8 @@ class GetItems(Step):
         return f"[{','.join(self.items)}]"
 
 
-
 class ParseException(Exception):
+
     def __init__(self, exp_string: str, exp_ast: ast.AST):
         self.exp_string = exp_string
         self.exp_ast = exp_ast
@@ -437,7 +439,7 @@ class JSONPath(SerialModel):
 
         if not isinstance(exp, ast.Expression):
             raise ParseException(s, exp)
-        
+
         exp = exp.body
 
         path = []
@@ -451,7 +453,7 @@ class JSONPath(SerialModel):
                     return GetIndices(indices=tuple(e.index for e in elts))
                 else:
                     raise ParseException(s, idx)
-                
+
             elif isinstance(idx, ast.Constant):
                 if isinstance(idx.value, str):
                     return GetItem(item=idx.value)
@@ -481,20 +483,25 @@ class JSONPath(SerialModel):
 
             elif isinstance(exp, ast.Subscript):
                 sub = exp.slice
-                
+
                 if isinstance(sub, ast.Index):
                     idx = sub.value
                     step = of_index(idx)
                     path.append(step)
 
                 elif isinstance(sub, ast.Slice):
-                    vals = tuple(of_index(v) for v in (sub.lower, sub.upper, sub.step))
-                    
-                    if not all(e is None or isinstance(e, GetIndex) for e in vals):
+                    vals = tuple(
+                        of_index(v) for v in (sub.lower, sub.upper, sub.step)
+                    )
+
+                    if not all(
+                            e is None or isinstance(e, GetIndex) for e in vals):
                         raise ParseException(s, exp)
 
                     vals = tuple(None if e is None else e.index for e in vals)
-                    path.append(GetSlice(start=vals[0], stop=vals[1], step=vals[2]))
+                    path.append(
+                        GetSlice(start=vals[0], stop=vals[1], step=vals[2])
+                    )
 
                 else:
                     raise ParseException(s, exp)
@@ -562,10 +569,9 @@ class JSONPath(SerialModel):
                     f"Trying to append to object which is not a list; "
                     f"is of type {type(existing).__name__} instead."
                 )
-            
+
         except Exception:
             return self.set(obj, [val])
-
 
     def set(self, obj: Any, val: Any) -> Any:
         """

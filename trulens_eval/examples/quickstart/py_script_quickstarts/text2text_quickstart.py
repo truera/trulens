@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # No Framework Quickstart
+# # Text to Text Quickstart
 #
 # In this quickstart you will create a simple text to text application and learn how to log it and get feedback.
 #
-# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/no_framework_quickstart.ipynb)
+# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/text2text_quickstart.ipynb)
 
 # ## Setup
 # ### Add API keys
@@ -87,10 +87,10 @@ tru_simple_hash_callable_recorder = TruBasicApp(
 )
 
 with tru_llm_standalone_recorder as recording:
-    llm_standalone(prompt_input)
+    tru_llm_standalone_recorder.app(prompt_input)
 
 with tru_simple_hash_callable_recorder as recording:
-    simple_hash_callable(prompt_input)
+    tru_simple_hash_callable_recorder.app(prompt_input)
 
 # ## Explore in a Dashboard
 

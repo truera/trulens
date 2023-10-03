@@ -337,7 +337,9 @@ class Instrument(object):
         # sure we instrument that thing.
 
         try:
-            return any(issubclass(cls, parent) for parent in self.include_classes)
+            return any(
+                issubclass(cls, parent) for parent in self.include_classes
+            )
         except Exception:
             return True
 
@@ -438,7 +440,9 @@ class Instrument(object):
 
             # Get any contexts already known from higher in the call stack.
             contexts = get_first_local_in_call_stack(
-                key="contexts", func=find_instrumented, offset=1, # DIFF
+                key="contexts",
+                func=find_instrumented,
+                offset=1,  # DIFF
                 skip=caller_frame()
             )
             # Note: are empty sets false?
@@ -470,7 +474,9 @@ class Instrument(object):
             # from app to app that are watching this method. Hence we index the
             # stacks by id of the call record list which is unique to each app.
             ctx_stacks = get_first_local_in_call_stack(
-                key="stacks", func=find_instrumented, offset=1,
+                key="stacks",
+                func=find_instrumented,
+                offset=1,
                 skip=caller_frame()
             )
             # Note: Empty dicts are false.
@@ -853,12 +859,16 @@ class Instrument(object):
         func = cls.__new__
 
         if hasattr(func, Instrument.INSTRUMENT):
-            logger.debug(f"Class {cls.__name__} __new__ is already instrumented.")
+            logger.debug(
+                f"Class {cls.__name__} __new__ is already instrumented."
+            )
             return
-        
+
         # @functools.wraps(func)
         def wrapped_new(cls, *args, **kwargs):
-            logger.debug(f"Creating a new instance of instrumented class {cls.__name__}.")
+            logger.debug(
+                f"Creating a new instance of instrumented class {cls.__name__}."
+            )
             # get deepest wrapped method here
             # get its self
             # get its path
