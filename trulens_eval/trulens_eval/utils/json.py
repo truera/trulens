@@ -77,6 +77,13 @@ def json_default(obj: Any) -> str:
 
 ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
 
+def jsonify_for_ui(*args, **kwargs):
+    """
+    Options for jsonify common to UI displays. Redact keys and hide special
+    fields.
+    """
+    return jsonify(*args, **kwargs, redact_keys=True, skip_specials=True)
+
 
 # TODO: refactor to somewhere else or change instrument to a generic filter
 def jsonify(

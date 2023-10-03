@@ -5,7 +5,7 @@ import pydantic
 
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Record
-from trulens_eval.utils.json import jsonify
+from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSONPath
 from trulens_eval.ux.apps import ChatRecord
@@ -163,7 +163,7 @@ def draw_selector(
         try:
             # Draw each value addressed by `path`:
             for val in path(obj):
-                json_val = jsonify(val)
+                json_val = jsonify_for_ui(val)
                 if isinstance(json_val, dict):
                     # Don't expand by default as there are large JSONs and
                     # streamlit scrolls to the bottom if shown.
