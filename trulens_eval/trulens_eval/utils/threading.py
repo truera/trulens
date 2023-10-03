@@ -78,18 +78,23 @@ class TP(SingletonPerName):  # "thread processing"
 
         prom = self._thread_starter(func, args, kwargs)
 
-        self.promises.put(prom)
+        # TODO bugfix
+        # self.promises.put(prom)
 
     def promise(self, func: Callable[..., T], *args, **kwargs) -> AsyncResult:
         self.finish_if_full()
 
         prom = self._thread_starter(func, args, kwargs)
 
-        self.promises.put(prom)
+        # TODO bugfix
+        # self.promises.put(prom)
 
         return prom
 
     def finish(self, timeout: Optional[float] = None) -> int:
+        # TODO bugfix
+        return
+
         logger.debug(f"Finishing {self.promises.qsize()} task(s).")
 
         timeouts = []
