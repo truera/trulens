@@ -22,6 +22,10 @@ REQUIREMENT_LANGCHAIN = (
     f"Please install it before use: `pip install langchain>={langchain_version}`."
 )
 
+REQUIREMENT_SKLEARN = (
+    f"scikit-learn is required for using embedding vector distances. "
+    f"Please install it before use: `pip install scikit-learn`."
+)
 
 class Dummy(object):
     """
