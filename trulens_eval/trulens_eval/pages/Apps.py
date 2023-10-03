@@ -323,7 +323,7 @@ if "records" not in st.session_state:
         st.write(app_json['app_id'])
         st.button(
             label="New Session",
-            key="select_app_input",
+            key=f"select_app_{app_json['app_id']}",
             on_click=select_app,
             args=(app_json,)
         )
