@@ -176,6 +176,9 @@ def migrate_legacy_sqlite(engine: Engine):
         # 2. Create empty staging database at first Alembic revision
         stg_file = Path(tmp).joinpath("migration-staging.sqlite")
         logger.debug("Creating staging DB at %s", stg_file)
+        
+        # Params needed for https://github.com/truera/trulens/issues/470
+        # Params are from https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn
         stg_engine = create_engine(f"sqlite:///{stg_file}",
                                             pool_size=10,
                                             max_overflow=2,
