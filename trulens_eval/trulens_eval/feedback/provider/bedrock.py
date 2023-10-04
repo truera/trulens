@@ -1,8 +1,6 @@
 import logging
 import os
 
-import boto3
-
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.utils.generated import re_1_10_rating
@@ -34,6 +32,8 @@ class Bedrock(Provider):
 
         - All other args/kwargs passed to the boto3 client constructor.
         """
+        import boto3
+        
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
