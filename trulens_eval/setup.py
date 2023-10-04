@@ -46,7 +46,6 @@ setup(
         'merkle-json>=1.0.0',
         'millify>=0.1.1',
         'openai>=0.27.6',
-        'litellm>=0.1.7701',
         'pinecone-client>=2.2.1',
         'pydantic>=1.10.7',
         'requests>=2.30.0',

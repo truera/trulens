@@ -1,8 +1,6 @@
 import logging
 import os
 
-import litellm
-
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import LiteLLMEndpoint
@@ -39,6 +37,8 @@ class LiteLLM(Provider):
             model_engine (str): The LiteLLM completion model.Defaults to `gpt-3.5-turbo`
             endpoint (Endpoint): Internal Usage for DB serialization
         """
+        import litellm
+        
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
         self_kwargs.update(**kwargs)

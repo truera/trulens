@@ -13,7 +13,6 @@ tokenizers
 protobuf
 accelerate
 openai
-litellm
 pinecone-client
 tiktoken
 slack_bolt
@@ -38,5 +37,3 @@ millify
 # local vector store requirements
 docarray
 hnswlib
-# feedback function smoke testing display
-tabulate
