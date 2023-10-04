@@ -63,3 +63,15 @@ Toxicity is currently only available to be used with HuggingFace, and uses a cla
 ## Moderation
 
 The OpenAI Moderation API is made available for use as feedback functions. This includes hate, hate/threatening, self-harm, sexual, sexual/minors, violence, and violence/graphic. Each is negated (ex: not_hate) so that a 0 would indicate that the moderation rule is violated. These feedback functions return a score in the range 0 to 1.
+
+## Stereotypes
+
+This evaluates stereotypes using OpenAI LLMs to check if gender or race were assumed with no prior indication. This is rated on a scale from 1 to 10 where 10 being no new gender or race assumptions. A two indicates gender or race assumption with no indication, and a one indicates gender or race changes with prior indication that is different.
+
+## Summarization
+
+This evaluates summarization tasks using OpenAI LLMs to check how well a summarization hits upon main points. This is rated on a scale from 1 to 10 where 10 being all points are addressed. 
+
+## Embeddings Distance
+
+Given an embedder, as is typical in vector DBs, this evaluates the distance of the query and document embeddings. Currently supporting cosine distance, L1/Manhattan distance, and L2/Euclidean distance.

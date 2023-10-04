@@ -28,7 +28,8 @@ from inspect import signature
 # TODO: move this to a more general place and apply it to other feedbacks that need it.
 def _tci(func):  # "typecheck inputs"
     """
-    Decorate a method to validate its inputs against its signature. Also make sure string inputs are non-empty.
+    Decorate a method to validate its inputs against its signature. Also make
+    sure string inputs are non-empty.
     """
 
     sig = signature(func)
@@ -59,8 +60,10 @@ def _tci(func):  # "typecheck inputs"
 
 
 class Huggingface(Provider):
-    """Out of the box feedback functions calling Huggingface APIs.
     """
+    Out of the box feedback functions calling Huggingface APIs.
+    """
+
     endpoint: Endpoint
 
     def __init__(self, name: str = None, endpoint=None, **kwargs):
@@ -71,13 +74,11 @@ class Huggingface(Provider):
         Create a Huggingface Provider with out of the box feedback functions.
 
         **Usage:**
-        ```
+        ```python
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
-
         ```
 
-        
         Args:
             endpoint (Endpoint): Internal Usage for DB serialization
         """
@@ -106,14 +107,15 @@ class Huggingface(Provider):
         probit_language_text1(text2))`
         
         **Usage:**
-        ```
+        ```python
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
 
         feedback = Feedback(huggingface_provider.language_match).on_input_output() 
         ```
-        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        The `on_input_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text1 (str): Text to evaluate.
@@ -121,7 +123,8 @@ class Huggingface(Provider):
 
         Returns:
 
-            float: A value between 0 and 1. 0 being "different languages" and 1 being "same languages".
+            float: A value between 0 and 1. 0 being "different languages" and 1
+            being "same languages".
         """
 
         def get_scores(text):
@@ -158,20 +161,22 @@ class Huggingface(Provider):
         function that uses a sentiment classifier on `text`.
         
         **Usage:**
-        ```
+        ```python
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
 
         feedback = Feedback(huggingface_provider.positive_sentiment).on_output() 
         ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "negative sentiment" and 1 being "positive sentiment".
+            float: A value between 0 and 1. 0 being "negative sentiment" and 1
+            being "positive sentiment".
         """
 
         max_length = 500
@@ -193,21 +198,23 @@ class Huggingface(Provider):
         uses a toxic comment classifier on `text`.
         
         **Usage:**
-        ```
+        ```python
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
 
         feedback = Feedback(huggingface_provider.not_toxic).on_output() 
         ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "toxic" and 1 being "not toxic".
+            float: A value between 0 and 1. 0 being "toxic" and 1 being "not
+            toxic".
         """
 
         assert len(text) > 0, "Input cannot be blank."
@@ -248,8 +255,10 @@ class Huggingface(Provider):
 
     @_tci
     def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
-        """ A groundedness measure for full document premise against hypothesis.
-        This Huggingface implementation uses DocNLI. The Hypoethsis still only works on single small hypothesis.
+        """
+        A groundedness measure for full document premise against hypothesis.
+        This Huggingface implementation uses DocNLI. The Hypoethsis still only
+        works on single small hypothesis.
 
         Args:
             premise (str): NLI Premise

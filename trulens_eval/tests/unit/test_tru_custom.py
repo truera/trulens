@@ -4,7 +4,7 @@ Tests for TruCustomApp.
 
 from unittest import main
 
-from examples.frameworks.custom.custom_app import CustomApp
+from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
 from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
@@ -21,7 +21,7 @@ class TestTruCustonApp(JSONTestCase):
         self.tru = Tru()
 
         self.ca = CustomApp()
-        self.ta = TruCustomApp(self.ca, app_id="custom_app")
+        self.ta_recorder = TruCustomApp(self.ca, app_id="custom_app")
 
     def test_with_record(self):
         question = "What is the capital of Indonesia?"
@@ -30,7 +30,7 @@ class TestTruCustonApp(JSONTestCase):
         response_normal = self.ca.respond_to_query(question)
 
         # Instrumented usage:
-        response_wrapped, record = self.ta.with_record(
+        response_wrapped, record = self.ta_recorder.with_record(
             self.ca.respond_to_query, input=question, record_metadata="meta1"
         )
 
@@ -47,7 +47,7 @@ class TestTruCustonApp(JSONTestCase):
         response_normal = self.ca.respond_to_query(question)
 
         # Instrumented usage:
-        with self.ta as recording:
+        with self.ta_recorder as recording:
             response_wrapped = self.ca.respond_to_query(input=question)
 
         self.assertEqual(response_normal, response_wrapped)
@@ -63,10 +63,10 @@ class TestTruCustonApp(JSONTestCase):
         response_normal2 = self.ca.respond_to_query(question2)
 
         # Instrumented usage:
-        with self.ta as recording1:
+        with self.ta_recorder as recording1:
             recording1.record_metadata = "meta1"
             response_wrapped1 = self.ca.respond_to_query(input=question1)
-            with self.ta as recording2:
+            with self.ta_recorder as recording2:
                 recording2.record_metadata = "meta2"
                 response_wrapped2 = self.ca.respond_to_query(input=question2)
 

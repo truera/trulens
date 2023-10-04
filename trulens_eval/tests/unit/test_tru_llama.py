@@ -2,7 +2,6 @@
 Tests for TruLlama.
 """
 
-import asyncio
 import unittest
 from unittest import main
 
@@ -13,10 +12,8 @@ from llama_index import VectorStoreIndex
 from llama_index.llms import OpenAI
 from tests.unit.test import JSONTestCase
 
-from trulens_eval import Tru
 from trulens_eval.keys import check_keys
 from trulens_eval.tru_llama import TruLlama
-import trulens_eval.utils.python  # makes sure asyncio gets instrumented
 
 check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
 
@@ -39,23 +36,27 @@ class TestLlamaIndex(JSONTestCase):
         self.index = VectorStoreIndex.from_documents(self.documents)
 
     def test_query_engine_async(self):
-        asyncio.run(self._test_query_engine_async())
+        self._test_query_engine_async()
 
     async def _test_query_engine_async(self):
         # Check that the instrumented async aquery method produces the same result as the query method.
 
         query_engine = self.index.as_query_engine()
 
-        tru_query_engine = TruLlama(query_engine)
-        llm_response_async, record_async = await tru_query_engine.aquery_with_record(
-            "What did the author do growing up?"
-        )
+        tru_query_engine_recorder = TruLlama(query_engine)
+        with tru_query_engine_recorder as recording:
+            llm_response_async = await query_engine.aquery(
+                "What did the author do growing up?"
+            )
+        record_async = recording.records[0]
 
         query_engine = self.index.as_query_engine()
-        tru_query_engine = TruLlama(query_engine)
-        llm_response_sync, record_sync = tru_query_engine.query_with_record(
-            "What did the author do growing up?"
-        )
+        tru_query_engine_recorder = TruLlama(query_engine)
+        with tru_query_engine_recorder as recording:
+            llm_response_sync = query_engine.query(
+                "What did the author do growing up?"
+            )
+        record_sync = recording.records[0]
 
         self.assertJSONEqual(
             llm_response_sync,
@@ -85,16 +86,20 @@ class TestLlamaIndex(JSONTestCase):
         # regardless of streaming option.
 
         query_engine = self.index.as_query_engine()
-        tru_query_engine = TruLlama(query_engine)
-        llm_response, record = tru_query_engine.query_with_record(
-            "What did the author do growing up?"
-        )
+        tru_query_engine_recorder = TruLlama(query_engine)
+        with tru_query_engine_recorder as recording:
+            llm_response = query_engine.query(
+                "What did the author do growing up?"
+            )
+        record = recording.records[0]
 
         query_engine = self.index.as_query_engine(streaming=True)
-        tru_query_engine = TruLlama(query_engine)
-        llm_response_stream, record_stream = tru_query_engine.query_with_record(
-            "What did the author do growing up?"
-        )
+        tru_query_engine_recorder = TruLlama(query_engine)
+        with tru_query_engine_recorder as stream_recording:
+            llm_response_stream = query_engine.query(
+                "What did the author do growing up?"
+            )
+        record_stream = stream_recording.records[0]
 
         self.assertJSONEqual(
             llm_response_stream.get_response(),
@@ -119,22 +124,26 @@ class TestLlamaIndex(JSONTestCase):
         )
 
     def test_chat_engine_async(self):
-        asyncio.run(self._test_chat_engine_async())
+        self._test_chat_engine_async()
 
     async def _test_chat_engine_async(self):
         # Check that the instrumented async achat method produces the same result as the chat method.
 
         chat_engine = self.index.as_chat_engine()
-        tru_chat_engine = TruLlama(chat_engine)
-        llm_response_async, record_async = await tru_chat_engine.achat_with_record(
-            "What did the author do growing up?"
-        )
+        tru_chat_engine_recorder = TruLlama(chat_engine)
+        with tru_chat_engine_recorder as arecording:
+            llm_response_async = await chat_engine.achat(
+                "What did the author do growing up?"
+            )
+        record_async = arecording.records[0]
 
         chat_engine = self.index.as_chat_engine()
-        tru_chat_engine = TruLlama(chat_engine)
-        llm_response_sync, record_sync = tru_chat_engine.chat_with_record(
-            "What did the author do growing up?"
-        )
+        tru_chat_engine_recorder = TruLlama(chat_engine)
+        with tru_chat_engine_recorder as recording:
+            llm_response_sync = await chat_engine.chat(
+                "What did the author do growing up?"
+            )
+        record_sync = recording.records[0]
 
         self.assertJSONEqual(
             llm_response_sync,

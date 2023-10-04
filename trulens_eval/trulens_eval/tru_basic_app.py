@@ -47,6 +47,9 @@ class TruWrapperApp(object):
     def _call(self, *args, **kwargs):
         return self._call_fn(*args, **kwargs)
 
+    def __call__(self, *args, **kwargs):
+        return self._call(*args, **kwargs)
+
     def __init__(self, call_fn: Callable):
         self._call_fn = call_fn
 
@@ -62,10 +65,17 @@ class TruBasicApp(App):
         
         from trulens_eval import TruBasicApp
         # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-        basic_app = TruBasicApp(custom_application, 
+        tru_recorder = TruBasicApp(custom_application, 
             app_id="Custom Application v1",
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
-        basic_app("Give me a response")
+
+        # Basic app works by turning your callable into an app
+        # This app is accessbile with the `app` attribute in the recorder
+        with tru_recorder as recording:
+            tru_recorder.app(question)
+
+        tru_record = recording.records[0]
+        
         ```
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
@@ -134,6 +144,6 @@ class TruBasicApp(App):
         """
         # NOTE: Actually text_to_text can take in more args.
 
-        self._with_dep_message(method="_call", is_async=False, with_record=True)
+        self._with_dep_message(method="call", is_async=False, with_record=True)
 
         return self.with_record(self.app._call, *args, **kwargs)

@@ -109,10 +109,23 @@ def stack_with_tasks() -> Sequence['frame']:
 
     ret = [fi.frame for fi in inspect.stack()[1:]]  # skip stack_with_task_stack
 
+    logger.debug("Getting cross-Task stacks. Current stack:")
+    for f in ret:
+        logger.debug(f"\t{f}")
+
     try:
         task_stack = get_task_stack(asyncio.current_task())
 
-        return merge_stacks(ret, task_stack)
+        logger.debug(f"Merging in stack from {asyncio.current_task()}:")
+        for s in task_stack:
+            logger.debug(f"\t{s}")
+
+        temp = merge_stacks(ret, task_stack)
+        logger.debug(f"Complete stack:")
+        for f in temp:
+            logger.debug(f"\t{f}")
+
+        return temp
 
     except:
         return ret
@@ -135,22 +148,32 @@ def _future_target_wrapper(stack, func, *args, **kwargs):
 def get_all_local_in_call_stack(
     key: str,
     func: Callable[[Callable], bool],
-    offset: int = 1
+    offset: Optional[int] = 1,
+    skip: Optional[Any] = None  # really frame
 ) -> Iterator[Any]:
     """
     Get the value of the local variable named `key` in the stack at all of the
     frames executing a function which `func` recognizes (returns True on)
-    starting from the top of the stack except `offset` top frames. Returns None
-    if `func` does not recognize the correct function. Raises RuntimeError if a
-    function is recognized but does not have `key` in its locals.
+    starting from the top of the stack except `offset` top frames. If `skip`
+    frame is provided, it is skipped as well. Returns None if `func` does not
+    recognize the correct function. Raises RuntimeError if a function is
+    recognized but does not have `key` in its locals.
 
     This method works across threads as long as they are started using the TP
     class above.
+
+    NOTE: `offset` is unreliable for skipping the intended frame when operating
+    with async tasks. In those cases, the `skip` argument is more reliable.
     """
 
     logger.debug(f"Looking for local '{key}' in the stack.")
 
-    frames = stack_with_tasks()[offset + 1:]  # + 1 to skip this method itself
+    if skip is not None:
+        logger.debug(f"Will be skipping {skip}.")
+
+    frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
+    # NOTE: skipping offset frames is done below since the full stack may need
+    # to be reconstructed there.
 
     # Using queue for frames as additional frames may be added due to handling threads.
     q = Queue()
@@ -171,10 +194,19 @@ def get_all_local_in_call_stack(
             assert "pre_start_stack" in locs, "Pre thread start stack expected but not found."
             for fi in locs['pre_start_stack']:
                 q.put(fi.frame)
+
+            continue
+
+        if offset is not None and offset > 0:
+            offset -= 1
             continue
 
         if func(f.f_code):
-            logger.debug(f"looking via {func.__name__}; found {f}")
+            logger.debug(f"Looking via {func.__name__}; found {f}")
+            if skip is not None and f == skip:
+                logger.debug(f"Skipping.")
+                continue
+
             locs = f.f_locals
             if key in locs:
                 yield locs[key]
@@ -187,21 +219,32 @@ def get_all_local_in_call_stack(
 def get_first_local_in_call_stack(
     key: str,
     func: Callable[[Callable], bool],
-    offset: int = 1
+    offset: Optional[int] = 1,
+    skip: Optional[Any] = None  # actually frame
 ) -> Optional[Any]:
     """
     Get the value of the local variable named `key` in the stack at the nearest
-    frame executing a function which `func` recognizes (returns True on).
-    Returns None if `func` does not recognize the correct function. Raises
-    RuntimeError if a function is recognized but does not have `key` in its
-    locals.
+    frame executing a function which `func` recognizes (returns True on)
+    starting from the top of the stack except `offset` top frames. If `skip`
+    frame is provided, it is skipped as well. Returns None if `func` does not
+    recognize the correct function. Raises RuntimeError if a function is
+    recognized but does not have `key` in its locals.
 
     This method works across threads as long as they are started using the TP
     class above.
+
+    NOTE: `offset` is unreliable for skipping the intended frame when operating
+    with async tasks. In those cases, the `skip` argument is more reliable.
     """
 
     try:
-        return next(iter(get_all_local_in_call_stack(key, func, offset + 1)))
+        return next(
+            iter(
+                get_all_local_in_call_stack(
+                    key, func, offset=offset + 1, skip=skip
+                )
+            )
+        )
     except StopIteration:
         return None
 

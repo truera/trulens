@@ -1,5 +1,6 @@
 import inspect
 import logging
+import pprint
 from typing import Any, Callable, Dict, List, Optional
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
@@ -14,6 +15,8 @@ from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
+
+pp = pprint.PrettyPrinter()
 
 
 class OpenAICallback(EndpointCallback):

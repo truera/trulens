@@ -7,10 +7,9 @@ on:
     paths:
       - "docs/trulens_eval/gh_top_intro.md"
       - "docs/trulens_eval/trulens_eval_gh_top_readme.ipynb"
-      - "trulens_eval/examples/frameworks/llama_index/llama_index_example.ipynb"
-      - "trulens_eval/examples/langchain_quickstart.ipynb"
-      - "trulens_eval/examples/logging.ipynb"
-      - "trulens_eval/examples/custom_feedback_functions.ipynb"
+      - "trulens_eval/examples/quickstart/llama_index_quickstart.ipynb"
+      - "trulens_eval/examples/quickstart/langchain_quickstart.ipynb"
+      - "trulens_eval/examples/quickstart/text2text_quickstart.ipynb"
       - ".github/workflows/*"
 jobs:
   Generate-Docs-and-Testing-Files:

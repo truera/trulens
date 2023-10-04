@@ -85,7 +85,7 @@ nav:
           - ⚡ Quickstarts:
               - LangChain Quickstart: trulens_eval/langchain_quickstart.ipynb
               - Llama-Index Quickstart: trulens_eval/llama_index_quickstart.ipynb
-              - No Framework Quickstart: trulens_eval/no_framework_quickstart.ipynb
+              - Python Native (Text to Text) Quickstart: trulens_eval/text2text_quickstart.ipynb
       - Evaluation:
           - 🎯 Feedback Functions:
               - Feedback Function Definitions: trulens_eval/function_definitions.md

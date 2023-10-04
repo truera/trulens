@@ -205,7 +205,7 @@ class Tru(SingletonPerName):
             assert app_id == app.app_id, "Record was produced by a different app."
 
             if self.db.get_app(app_id=app.app_id) is None:
-                logger.warn(
+                logger.warning(
                     "App {app_id} was not present in database. Adding it."
                 )
                 self.add_app(app=app)
@@ -271,7 +271,7 @@ class Tru(SingletonPerName):
         df, feedback_columns = self.db.get_records_and_feedback(app_ids)
 
         return df, feedback_columns
-    
+
     def get_leaderboard(self, app_ids: List[str]):
         """
         Get a leaderboard by app id from the
@@ -285,7 +285,9 @@ class Tru(SingletonPerName):
 
         col_agg_list = feedback_cols + ['latency', 'total_cost']
 
-        leaderboard = df.groupby('app_id')[col_agg_list].mean().sort_values(by=feedback_cols, ascending = False)
+        leaderboard = df.groupby('app_id')[col_agg_list].mean().sort_values(
+            by=feedback_cols, ascending=False
+        )
 
         return leaderboard
 
@@ -339,6 +341,7 @@ class Tru(SingletonPerName):
             proc = Process(target=runloop)
         else:
             proc = Thread(target=runloop)
+            proc.daemon = True
 
         # Start a persistent thread or process that evaluates feedback functions.
 
@@ -410,6 +413,19 @@ class Tru(SingletonPerName):
         else:
             Tru.dashboard_proc.kill()
             Tru.dashboard_proc = None
+
+    def run_dashboard_in_jupyter(self):
+        # TODO: check for jupyter
+
+        logger.warning(
+            "Running dashboard inside a notebook is an experimental feature and may not work well."
+        )
+
+        from streamlit_jupyter import StreamlitPatcher
+        StreamlitPatcher().jupyter()
+        from trulens_eval import Leaderboard
+
+        Leaderboard.main()
 
     def run_dashboard(
         self, force: bool = False, _dev: Optional[Path] = None
@@ -539,6 +555,8 @@ class Tru(SingletonPerName):
                     tunnel_proc, tunnel_proc.stderr, out_stderr, tunnel_started
                 )
             )
+            Tru.tunnel_listener_stdout.daemon = True
+            Tru.tunnel_listener_stderr.daemon = True
             Tru.tunnel_listener_stdout.start()
             Tru.tunnel_listener_stderr.start()
             if not tunnel_started.wait(timeout=DASHBOARD_START_TIMEOUT
@@ -584,6 +602,11 @@ class Tru(SingletonPerName):
             target=listen_to_dashboard,
             args=(proc, proc.stderr, out_stderr, started)
         )
+
+        # Purposely block main process from ending and wait for dashboard.
+        Tru.dashboard_listener_stdout.daemon = False
+        Tru.dashboard_listener_stderr.daemon = False
+
         Tru.dashboard_listener_stdout.start()
         Tru.dashboard_listener_stderr.start()
 

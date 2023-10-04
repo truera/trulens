@@ -4,10 +4,13 @@ Serialization utilities.
 
 from __future__ import annotations
 
+import ast
+from ast import dump
+from ast import parse
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Dict, Iterable, Optional, Sequence, Set, Tuple, TypeVar, Union
+    Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, TypeVar, Union
 )
 
 from merkle_json import MerkleJson
@@ -214,13 +217,36 @@ class GetItem(Step):
 class GetItemOrAttribute(Step):
     # For item/attribute agnostic addressing.
 
+    # NOTE: We also allow to lookup elements within sequences if the subelements
+    # have the item or attribute. We issue warning if this is ambiguous (looking
+    # up in a sequence of more than 1 element).
+
     item_or_attribute: str  # distinct from "item" for deserialization
 
     def __hash__(self):
         return hash(self.item_or_attribute)
 
     def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
-        if isinstance(obj, Dict):
+        # Special handling of sequences. See NOTE above.
+        if isinstance(obj, Sequence):
+            if len(obj) == 1:
+                for r in self.__call__(obj=obj[0]):
+                    yield r
+            elif len(obj) == 0:
+                raise ValueError(
+                    f"Object not a dictionary or sequence of dictionaries: {obj}."
+                )
+            else:  # len(obj) > 1
+                logger.warning(
+                    f"Object (of type {type(obj).__name__}) is a sequence containing more than one dictionary. "
+                    f"Lookup by item or attribute `{self.item_or_attribute}` is ambiguous. "
+                    f"Use a lookup by index(es) or slice first to disambiguate."
+                )
+                for r in self.__call__(obj=obj[0]):
+                    yield r
+
+        # Otherwise handle a dict or object with the named attribute.
+        elif isinstance(obj, Dict):
             if self.item_or_attribute in obj:
                 yield obj[self.item_or_attribute]
             else:
@@ -354,6 +380,16 @@ class GetItems(Step):
         return f"[{','.join(self.items)}]"
 
 
+class ParseException(Exception):
+
+    def __init__(self, exp_string: str, exp_ast: ast.AST):
+        self.exp_string = exp_string
+        self.exp_ast = exp_ast
+
+    def __str__(self):
+        return f"Failed to parse expression `{self.exp_string}` as a `JSONPath`.\n{dump(self.exp_ast)}"
+
+
 class JSONPath(SerialModel):
     """
     Utilitiy class for building JSONPaths.
@@ -371,6 +407,96 @@ class JSONPath(SerialModel):
     def __init__(self, path: Optional[Tuple[Step, ...]] = None):
 
         super().__init__(path=path or ())
+
+    @staticmethod
+    def of_string(s: str) -> 'JSONPath':
+        if len(s) == 0:
+            return JSONPath()
+
+        try:
+            exp = parse(f"PLACEHOLDER.{s}", mode="eval")
+        except SyntaxError as e:
+            raise ParseException(s, None)
+
+        if not isinstance(exp, ast.Expression):
+            raise ParseException(s, exp)
+
+        exp = exp.body
+
+        path = []
+
+        def of_index(idx):
+            if isinstance(idx, ast.Tuple):
+                elts = tuple(of_index(elt.value) for elt in idx.elts)
+                if all(isinstance(e, GetItem) for e in elts):
+                    return GetItems(items=tuple(e.item for e in elts))
+                elif all(isinstance(e, int) for e in elts):
+                    return GetIndices(indices=tuple(e.index for e in elts))
+                else:
+                    raise ParseException(s, idx)
+
+            elif isinstance(idx, ast.Constant):
+                if isinstance(idx.value, str):
+                    return GetItem(item=idx.value)
+                elif isinstance(idx.value, int):
+                    return GetIndex(index=idx.value)
+                else:
+                    raise ParseException(s, idx)
+
+            elif isinstance(idx, ast.UnaryOp):
+                if isinstance(idx.op, ast.USub):
+                    oper = of_index(idx.operand)
+                    if not isinstance(oper, GetIndex):
+                        raise ParseException(s, idx)
+                    return GetIndex(index=-oper.index)
+
+            elif idx is None:
+                return None
+
+            else:
+                raise ParseException(s, exp)
+
+        while exp is not None:
+            if isinstance(exp, ast.Attribute):
+                attr_name = exp.attr
+                path.append(GetItemOrAttribute(item_or_attribute=attr_name))
+                exp = exp.value
+
+            elif isinstance(exp, ast.Subscript):
+                sub = exp.slice
+
+                if isinstance(sub, ast.Index):
+                    idx = sub.value
+                    step = of_index(idx)
+                    path.append(step)
+
+                elif isinstance(sub, ast.Slice):
+                    vals = tuple(
+                        of_index(v) for v in (sub.lower, sub.upper, sub.step)
+                    )
+
+                    if not all(
+                            e is None or isinstance(e, GetIndex) for e in vals):
+                        raise ParseException(s, exp)
+
+                    vals = tuple(None if e is None else e.index for e in vals)
+                    path.append(
+                        GetSlice(start=vals[0], stop=vals[1], step=vals[2])
+                    )
+
+                else:
+                    raise ParseException(s, exp)
+
+                exp = exp.value
+            elif isinstance(exp, ast.Name):
+                if exp.id != "PLACEHOLDER":
+                    raise ParseException(s, exp)
+
+                exp = None
+            else:
+                raise ParseException(s, exp)
+
+        return JSONPath(path=path[::-1])
 
     def __str__(self):
         return "*" + ("".join(map(repr, self.path)))
@@ -405,7 +531,35 @@ class JSONPath(SerialModel):
 
         return True
 
+    def set_or_append(self, obj: Any, val: Any) -> Any:
+        """
+        If `obj` at path `self` is None or does not exist, sets it to a list
+        containing only the given `val`. If it already exists as a sequence,
+        appends `val` to that sequence as a list. If it is set but not a sequence,
+        error is thrown.
+        
+        """
+        try:
+            existing = self.get_sole_item(obj)
+            if isinstance(existing, Sequence):
+                return self.set(obj, list(existing) + [val])
+            elif existing is None:
+                return self.set(obj, [val])
+            else:
+                raise ValueError(
+                    f"Trying to append to object which is not a list; "
+                    f"is of type {type(existing).__name__} instead."
+                )
+
+        except Exception:
+            return self.set(obj, [val])
+
     def set(self, obj: Any, val: Any) -> Any:
+        """
+        In `obj` at path `self` exists, change it to `val`. Otherwise create a
+        spot for it with Munch objects and then set it.
+        """
+
         if len(self.path) == 0:
             return val
 

@@ -1,13 +1,17 @@
+# IF MOVING ANY IPYNB, MAKE SURE TO RE-SYMLINK. MANY IPYNB REFERENCED HERE LIVE IN OTHER PATHS
+
 rm -rf break.md
 rm -rf alltools.ipynb
 
 # Combined notebook flow - will be tested
+# IF MOVING ANY IPYNB, MAKE SURE TO RE-SYMLINK. MANY IPYNB REFERENCED HERE LIVE IN OTHER PATHS
 nbmerge langchain_quickstart.ipynb logging.ipynb custom_feedback_functions.ipynb >> all_tools.ipynb
 
 # Colab quickstarts
+# IF MOVING ANY IPYNB, MAKE SURE TO RE-SYMLINK. MANY IPYNB REFERENCED HERE LIVE IN OTHER PATHS
 nbmerge colab_dependencies.ipynb langchain_quickstart.ipynb >> langchain_quickstart_colab.ipynb
 nbmerge colab_dependencies.ipynb llama_index_quickstart.ipynb >> llama_index_quickstart_colab.ipynb
-nbmerge colab_dependencies.ipynb no_framework_quickstart.ipynb >> no_framework_quickstart_colab.ipynb
+nbmerge colab_dependencies.ipynb text2text_quickstart.ipynb >> text2text_quickstart_colab.ipynb
 
 # Create pypi page documentation
 
@@ -18,32 +22,42 @@ printf  "\n\n" >> break.md
 cat gh_top_intro.md break.md ../trulens_explain/gh_top_intro.md > TOP_README.md
 
 # Create non-jupyter scripts
-jupyter nbconvert --to script langchain_quickstart.ipynb
-jupyter nbconvert --to script llama_index_quickstart.ipynb
-jupyter nbconvert --to script no_framework_quickstart.ipynb
-jupyter nbconvert --to script all_tools.ipynb
+mkdir -p ./py_script_quickstarts/
+jupyter nbconvert --to script --output-dir=./py_script_quickstarts/ langchain_quickstart.ipynb
+jupyter nbconvert --to script --output-dir=./py_script_quickstarts/ llama_index_quickstart.ipynb
+jupyter nbconvert --to script --output-dir=./py_script_quickstarts/ text2text_quickstart.ipynb
+jupyter nbconvert --to script --output-dir=./py_script_quickstarts/ all_tools.ipynb
 
 # gnu sed/gsed needed on mac:
 SED=`which -a gsed sed | head -n1`
 
 # Fix nbmerge ids field invalid for ipynb
-$SED -i "/id\"\:/d" all_tools.ipynb langchain_quickstart_colab.ipynb llama_index_quickstart_colab.ipynb no_framework_quickstart_colab.ipynb
+$SED -i "/id\"\:/d" all_tools.ipynb langchain_quickstart_colab.ipynb llama_index_quickstart_colab.ipynb text2text_quickstart_colab.ipynb
 
 ## Remove ipynb JSON calls
-$SED -i "/JSON/d" langchain_quickstart.py llama_index_quickstart.py no_framework_quickstart.py all_tools.py 
+$SED -i "/JSON/d" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py 
 ## Replace jupyter display with python print
-$SED -i "s/display/print/g" langchain_quickstart.py llama_index_quickstart.py no_framework_quickstart.py all_tools.py
+$SED -i "s/display/print/g" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py
 ## Remove cell metadata
-$SED -i "/\# In\[/d" langchain_quickstart.py llama_index_quickstart.py no_framework_quickstart.py all_tools.py
+$SED -i "/\# In\[/d" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py
 ## Remove single # lines
-$SED -i "/\#$/d" langchain_quickstart.py llama_index_quickstart.py no_framework_quickstart.py all_tools.py
+$SED -i "/\#$/d" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py
 ## Collapse multiple empty line from sed replacements with a single line
-$SED -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" langchain_quickstart.py llama_index_quickstart.py no_framework_quickstart.py all_tools.py
+$SED -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py
+# Move generated files to their end locations
+# EVERYTHING BELOW IS LINKED TO DOCUMENTATION OR TESTS; MAKE SURE YOU UPDATE LINKS IF YOU CHANGE
+# IF NAMES CHANGED; CHANGE THE LINK NAMES TOO
 
-# Move all generated files to the generated_files folder
+# Github users will land on these readmes
 mv README.md ../../trulens_eval/README.md
 mv TOP_README.md ../../README.md
 
-mv *.py ../../trulens_eval/examples/
-mv *quickstart_colab.ipynb ../../trulens_eval/examples/colab/quickstarts/
+# Links are referenced in intro.md and gh_intro.md
+# There are symlinks from ../../trulens_eval/generated_files/ to these scripts for testing
+mkdir -p ../../trulens_eval/examples/quickstart/colab/
+mv *quickstart_colab.ipynb ../../trulens_eval/examples/quickstart/colab/
+mkdir -p ../../trulens_eval/examples/quickstart/py_script_quickstarts/
+mv ./py_script_quickstarts/*.py ../../trulens_eval/examples/quickstart/py_script_quickstarts/
+
+# Trulens tests run off of these files
 mv all_tools* ../../trulens_eval/generated_files/

@@ -1214,6 +1214,91 @@ class OpenAI(Provider):
         )
         return oai_chat_response
 
+    def summary_with_cot_reasons(self, source: str, summary: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that tries to distill main points and compares a summary against those main points.
+        This feedback function only has a chain of thought implementation as it is extremely important in function assessment. 
+
+        **Usage:**
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.summary_with_cot_reasons).on_input_output()
+        ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+
+        Args:
+            source (str): Text corresponding to source material. 
+            summary (str): Text corresponding to a summary.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "main points missed" and 1 being "no main points missed".
+        """
+        system_prompt = str.format(
+            prompts.SUMMARIZATION_PROMPT, source=source, summary=summary
+        )
+        return self._extract_score_and_reasons_from_response(system_prompt)
+
+    def stereotypes(self, prompt: str, response: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check adding assumed stereotypes in the response when not present in the prompt.
+
+        **Usage:**
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.stereotypes).on_input_output()
+        ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+
+        Args:
+            prompt (str): A text prompt to an agent. 
+            response (str): The agent's response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "assumed stereotypes" and 1 being "no assumed stereotypes".
+        """
+        system_prompt = str.format(
+            prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
+        )
+        return self._extract_score_and_reasons_from_response(system_prompt)
+
+    def stereotypes_with_cot_reasons(self, prompt: str, response: str) -> float:
+        """
+        Uses OpenAI's Chat Completion Model. A function that completes a
+        template to check adding assumed stereotypes in the response when not present in the prompt.
+
+        **Usage:**
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(openai_provider.stereotypes_with_cot_reasons).on_input_output()
+        ```
+        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+
+        Args:
+            prompt (str): A text prompt to an agent. 
+            response (str): The agent's response to the prompt.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "assumed stereotypes" and 1 being "no assumed stereotypes".
+        """
+        system_prompt = str.format(
+            prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
+        )
+        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
+        return self._extract_score_and_reasons_from_response(system_prompt)
+
 
 class AzureOpenAI(OpenAI):
     """Out of the box feedback functions calling AzureOpenAI APIs. 

@@ -78,10 +78,11 @@ TO PLACE
 
 """
 
-__version__ = "0.12.0"
+__version__ = "0.14.0"
 
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Huggingface
+from trulens_eval.feedback import LiteLLM
 from trulens_eval.feedback import OpenAI
 from trulens_eval.feedback.provider import Provider
 from trulens_eval.schema import FeedbackMode
@@ -90,6 +91,7 @@ from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
 from trulens_eval.tru_basic_app import TruBasicApp
 from trulens_eval.tru_chain import TruChain
+from trulens_eval.tru_custom_app import instrument
 from trulens_eval.tru_custom_app import TruCustomApp
 from trulens_eval.tru_llama import TruLlama
 from trulens_eval.utils.threading import TP
@@ -102,6 +104,7 @@ __all__ = [
     'TruLlama',
     'Feedback',
     'OpenAI',
+    'LiteLLM',
     'Huggingface',
     'FeedbackMode',
     'Provider',

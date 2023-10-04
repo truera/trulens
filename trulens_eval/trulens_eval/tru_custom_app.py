@@ -70,13 +70,13 @@ import TruCustomApp
 
 ca = CustomApp()
 
-# Normal app **Usage:**
+# Normal app Usage:
 response = ca.respond_to_query("What is the capital of Indonesia?")
 
 # Wrapping app with `TruCustomApp`: 
 ta = TruCustomApp(ca)
 
-# Wrapped **Usage:** must use the general `with_record` (or `awith_record`) method:
+# Wrapped Usage: must use the general `with_record` (or `awith_record`) method:
 response, record = ta.with_record(
     ca.respond_to_query, input="What is the capital of Indonesia?"
 )
@@ -194,9 +194,12 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
   solution as needed.
 """
 
+from asyncio import sleep
+import inspect
+from inspect import signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Set
+from typing import Any, Callable, ClassVar, Optional, Set
 
 from pydantic import Field
 
@@ -224,6 +227,8 @@ class TruCustomApp(App):
         **Usage:**
 
         ```
+        from trulens_eval import instrument
+        
         class CustomApp:
 
             def __init__(self):
@@ -248,19 +253,28 @@ class TruCustomApp(App):
         ca = CustomApp()
         from trulens_eval import TruCustomApp
         # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-        custom_app = TruCustomApp(ca, 
+        tru_recorder = TruCustomApp(ca, 
             app_id="Custom Application v1",
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
         
         question = "What is the capital of Indonesia?"
 
-        # Normal **Usage:**
+        # Normal Usage:
         response_normal = ca.respond_to_query(question)
 
-        # Instrumented **Usage:**
-        response_wrapped, record = custom_app.with_record(
-            ca.respond_to_query, input=question, record_metadata="meta1"
-        )
+        # Instrumented Usage:
+        with tru_recorder as recording:
+            ca.respond_to_query(question)
+
+        tru_record = recording.records[0]
+
+        # To add record metadata 
+        with tru_recorder as recording:
+            recording.record_metadata="this is metadata for all records in this context that follow this line"
+            ca.respond_to_query("What is llama 2?")
+            recording.record_metadata="this is different metadata for all records in this context that follow this line"
+            ca.respond_to_query("Where do I download llama 2?")
+        
         ```
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
@@ -275,6 +289,9 @@ class TruCustomApp(App):
     # the object walk finds them. If not, a message is shown to let user know
     # how to let the TruCustomApp constructor know where these methods are.
     functions_to_instrument: ClassVar[Set[Callable]] = set([])
+
+    main_method: Optional[Callable] = Field(exclude=True)
+    main_async_method: Optional[Callable] = Field(exclude=True)
 
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs):
         """
@@ -391,6 +408,36 @@ class TruCustomApp(App):
             raise RuntimeError(
                 f"TruCustomApp nor wrapped app have attribute named {__name}."
             )
+
+    def main_call(self, human: str):
+        if self.main_method is None:
+            raise RuntimeError(
+                "`main_method` was not specified so we do not know how to run this app."
+            )
+
+        sig = signature(self.main_method)
+        bindings = sig.bind(self.app, human)  # self.app is app's "self"
+
+        return self.with_(self.main_method, *bindings.args, **bindings.kwargs)
+
+    async def main_acall(self, human: str):
+        # TODO: work in progress
+
+        # must return an async generator of tokens/pieces that can be appended to create the full response
+
+        if self.main_async_method is None:
+            raise RuntimeError(
+                "`main_async_method` was not specified so we do not know how to run this app."
+            )
+
+        sig = signature(self.main_async_method)
+        bindings = sig.bind(self.app, human)  # self.app is app's "self"
+
+        generator = await self.awith_(
+            self.main_async_method, *bindings.args, **bindings.kwargs
+        )
+
+        return generator
 
 
 class instrument(base_instrument):
