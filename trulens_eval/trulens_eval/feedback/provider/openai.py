@@ -59,6 +59,7 @@ class OpenAI(Provider):
             lambda: openai.Moderation.create(input=text)
         )
 
+    # TODEP
     def moderation_not_hate(self, text: str) -> float:
         """
         Uses OpenAI's Moderation API. A function that checks if text is hate
@@ -86,6 +87,7 @@ class OpenAI(Provider):
             openai_response["results"][0]["category_scores"]["hate"]
         )
 
+    # TODEP
     def moderation_not_hatethreatening(self, text: str) -> float:
         """
         Uses OpenAI's Moderation API. A function that checks if text is
@@ -114,6 +116,7 @@ class OpenAI(Provider):
             openai_response["results"][0]["category_scores"]["hate/threatening"]
         )
 
+    # TODEP
     def moderation_not_selfharm(self, text: str) -> float:
         """
         Uses OpenAI's Moderation API. A function that checks if text is about
@@ -142,6 +145,7 @@ class OpenAI(Provider):
             openai_response["results"][0]["category_scores"]["self-harm"]
         )
 
+    # TODEP
     def moderation_not_sexual(self, text: str) -> float:
         """
         Uses OpenAI's Moderation API. A function that checks if text is sexual
@@ -171,6 +175,7 @@ class OpenAI(Provider):
             openai_response["results"][0]["category_scores"]["sexual"]
         )
 
+    # TODEP
     def moderation_not_sexualminors(self, text: str) -> float:
         """
         Uses OpenAI's Moderation API. A function that checks if text is about
@@ -199,6 +204,7 @@ class OpenAI(Provider):
             openai_response["results"][0]["category_scores"]["sexual/minors"]
         )
 
+    # TODEP
     def moderation_not_violence(self, text: str) -> float:
         """
         Uses OpenAI's Moderation API. A function that checks if text is about
@@ -227,6 +233,7 @@ class OpenAI(Provider):
             openai_response["results"][0]["category_scores"]["violence"]
         )
 
+    # TODEP
     def moderation_not_violencegraphic(self, text: str) -> float:
         """
         Uses OpenAI's Moderation API. A function that checks if text is about
@@ -424,6 +431,7 @@ class OpenAI(Provider):
         )
         return self._extract_score_and_reasons_from_response(system_prompt)
 
+    # TODEP
     def qs_relevance_with_cot_reasons(
         self, question: str, statement: str
     ) -> float:
@@ -472,6 +480,7 @@ class OpenAI(Provider):
         )
         return self._extract_score_and_reasons_from_response(system_prompt)
 
+    # TODEP
     def relevance(self, prompt: str, response: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -514,6 +523,7 @@ class OpenAI(Provider):
         )
         return self._extract_score_and_reasons_from_response(system_prompt)
 
+    # TODEP
     def relevance_with_cot_reasons(self, prompt: str, response: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -560,6 +570,7 @@ class OpenAI(Provider):
         )
         return self._extract_score_and_reasons_from_response(system_prompt)
 
+    # TODEP
     def sentiment(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -663,6 +674,7 @@ class OpenAI(Provider):
         )
         return re_1_10_rating(agreement_txt) / 10
 
+    # TODEP
     def conciseness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -747,6 +759,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def coherence(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -774,6 +787,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def coherence_with_cot_reasons(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -803,6 +817,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def harmfulness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -830,6 +845,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def harmfulness_with_cot_reasons(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -861,6 +877,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def maliciousness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -888,6 +905,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def maliciousness_with_cot_reasons(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -917,6 +935,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def helpfulness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -943,6 +962,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def helpfulness_with_cot_reasons(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -972,6 +992,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def controversiality(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -1026,6 +1047,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def misogyny(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -1052,6 +1074,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def misogyny_with_cot_reasons(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -1080,6 +1103,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def criminality(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -1107,6 +1131,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def criminality_with_cot_reasons(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -1136,6 +1161,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def insensitivity(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -1162,6 +1188,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    # TODEP
     def insensitivity_with_cot_reasons(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a

@@ -35,7 +35,10 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
-
+# TODO Rename:
+# Option:
+#  Feedback -> FeedbackRunner
+#  FeedbackDefinition -> FeedbackRunnerDefinition
 class Feedback(FeedbackDefinition):
     # Implementation, not serializable, note that FeedbackDefinition contains
     # `implementation` meant to serialize the below.
