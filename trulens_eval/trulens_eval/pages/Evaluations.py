@@ -232,7 +232,6 @@ else:
 
             st.markdown('')
 
-            col1, col2 = st.columns(2)
 
             prompt = selected_rows['input'][0]
             response = selected_rows['output'][0]
@@ -244,20 +243,26 @@ else:
 
             row = selected_rows.head().iloc[0]
 
-            input_response_tab, = col1.tabs(['Input / Response'])
+            # Display input/response side by side. In each column, we put them in tabs mainly for 
+            # formatting/styling purposes.
+            input_col, response_col = st.columns(2)
 
-            with input_response_tab:
+            input_tab, = input_col.tabs(['Input'])
+            with input_tab:
                 with st.expander(
                         f"Input {render_selector_markdown(Select.RecordInput)}",
                         expanded=True):
                     write_or_json(st, obj=prompt)
 
+
+            response_tab, = response_col.tabs(['Response'])
+            with response_tab:
                 with st.expander(
                         f"Response {render_selector_markdown(Select.RecordOutput)}",
                         expanded=True):
                     write_or_json(st, obj=response)
 
-            feedback_tab, metadata_tab = col2.tabs(['Feedback', 'Metadata'])
+            feedback_tab, metadata_tab = st.tabs(['Feedback', 'Metadata'])
 
             with metadata_tab:
                 metadata = app_json.get('metadata')
