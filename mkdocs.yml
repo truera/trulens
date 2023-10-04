@@ -114,7 +114,11 @@ nav:
               - TruCustom: trulens_eval/api/trucustom.md
 
       - Guides: 
-          - 🔍 Use Cases: trulens_eval/use_cases.md
+          - 🔍 Use Cases:
+              - Any LLM App: trulens_eval/use_cases_any.md
+              - RAGs: trulens_eval/use_cases_rag.md
+              - LLM Agents: trulens_eval/use_cases_agent.md
+              - Dev to Prod: trulens_eval/use_cases_production.md
       - Contributing:
           - 🤝 Contrbution Guidelines: trulens_eval/CONTRIBUTING.md
 
