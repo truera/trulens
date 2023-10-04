@@ -20,6 +20,7 @@ markdown_extensions:
   - pymdownx.caret
   - pymdownx.critic
   - pymdownx.details
+  - pymdownx.extra
   - pymdownx.inlinehilite
   - pymdownx.magiclink
   - pymdownx.mark
@@ -32,6 +33,7 @@ markdown_extensions:
       enable_dollar_delimiter: True #for use of inline $..$
   - markdown_include.include:
       base_path: docs
+  - attr_list
 
 
 plugins:
@@ -110,7 +112,9 @@ nav:
               - TruChain: trulens_eval/api/truchain.md
               - TruLlama: trulens_eval/api/trullama.md
               - TruCustom: trulens_eval/api/trucustom.md
-              - AppDefinition: trulens_eval/api/appdefinition.md
+
+      - Guides: 
+          - 🔍 Use Cases: trulens_eval/use_cases.md
       - Contributing:
           - 🤝 Contrbution Guidelines: trulens_eval/CONTRIBUTING.md
 
