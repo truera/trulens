@@ -295,7 +295,7 @@ class AppUI(traitlets.HasTraits):
 
         self.display_top.children += (self.current_record.d,)
 
-        self.d = widgets.VBox(
+        self.widget = widgets.VBox(
             [
                 widgets.HBox(
                     [
