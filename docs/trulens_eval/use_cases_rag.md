@@ -1,6 +1,6 @@
 
 # For Retrieval Augmented Generation (RAG)
-This section highlights different end-to-end use cases that TruLens can help with when building RAG applications. For each use case, we not only motivate the use case but also discuss which components are most helpful for solving that use case.ß
+This section highlights different end-to-end use cases that TruLens can help with when building RAG applications. For each use case, we not only motivate the use case but also discuss which components are most helpful for solving that use case.
 
 !!! info "[Detect and Mitigate Hallucination](#)"
     Use groundedness feedback to ensure that your LLM responds using only the information retrieved from a verified knowledge source.

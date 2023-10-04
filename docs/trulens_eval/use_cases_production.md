@@ -7,4 +7,10 @@ This section highlights different end-to-end use cases that TruLens can help wit
     Evaluate your applications that leverage async mode.
 
 !!! info "[Deferred Evaluation](#)"
+    Defer evaluations to off-peak times.
+
+!!! info "[Using AzureOpenAI](#)"
+    Evaluate your applications that leverage async mode.
+
+!!! info "[Using AWS Bedrock](#)"
     Evaluate your applications that leverage async mode.
