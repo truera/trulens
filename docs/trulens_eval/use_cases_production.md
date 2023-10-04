@@ -9,8 +9,8 @@ This section highlights different end-to-end use cases that TruLens can help wit
 !!! info "[Deferred Evaluation](#)"
     Defer evaluations to off-peak times.
 
-!!! info "[Using AzureOpenAI](#)"
+!!! info "[Using AzureOpenAI](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/expositional/models/azure_openai.ipynb)"
     Evaluate your applications that leverage async mode.
 
-!!! info "[Using AWS Bedrock](#)"
+!!! info "[Using AWS Bedrock](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/expositional/models/bedrock.ipynb)"
     Evaluate your applications that leverage async mode.
