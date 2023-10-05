@@ -1,10 +1,11 @@
 import logging
 import os
+from overrides import override
 
 import openai
 
 from trulens_eval.feedback import prompts
-from trulens_eval.feedback.provider.base import Provider
+from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.keys import set_openai_key
@@ -13,12 +14,13 @@ from trulens_eval.utils.generated import re_1_10_rating
 logger = logging.getLogger(__name__)
 
 
-class OpenAI(Provider):
+class OpenAI(LLMProvider):
     """Out of the box feedback functions calling OpenAI APIs.
     """
     model_engine: str
     endpoint: Endpoint
 
+    @override
     def __init__(
         self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
     ):
@@ -51,6 +53,7 @@ class OpenAI(Provider):
 
         set_openai_key()
 
+    @override
     def _create_chat_completion(self, *args, **kwargs):
         return openai.ChatCompletion.create(*args, **kwargs)
 
@@ -254,7 +257,7 @@ class OpenAI(Provider):
         return 1 - int(
             openai_response["results"][0]["category_scores"]["violence/graphic"]
         )
-
+    @override
     def _find_relevant_string(self, full_source, hypothesis):
         return self.endpoint.run_me(
             lambda: self._create_chat_completion(
@@ -281,7 +284,8 @@ class OpenAI(Provider):
                 ]
             )["choices"][0]["message"]["content"]
         )
-
+    
+    @override
     def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
         """ A groundedness measure best used for summarized premise against simple hypothesis.
         This OpenAI implementation uses information overlap prompts.
@@ -314,6 +318,7 @@ class OpenAI(Provider):
             )
         ) / 10
 
+    @override
     def _groundedness_doc_in_out(
         self, premise: str, hypothesis: str, chain_of_thought=True
     ) -> str:
@@ -352,6 +357,7 @@ class OpenAI(Provider):
             )["choices"][0]["message"]["content"]
         )
 
+    @override
     def _extract_score_and_reasons_from_response(
         self, system_prompt: str, user_prompt: str = None, normalize=10
     ):
@@ -381,7 +387,8 @@ class OpenAI(Provider):
             return score, {"reason": response}
         else:
             return re_1_10_rating(response) / normalize
-
+    
+    @override
     def qs_relevance(self, question: str, statement: str) -> float:
         """
         Uses OpenAI's Chat Completion App. A function that completes a
@@ -424,6 +431,7 @@ class OpenAI(Provider):
         )
         return self._extract_score_and_reasons_from_response(system_prompt)
 
+    @override
     def qs_relevance_with_cot_reasons(
         self, question: str, statement: str
     ) -> float:
@@ -472,6 +480,7 @@ class OpenAI(Provider):
         )
         return self._extract_score_and_reasons_from_response(system_prompt)
 
+    @override
     def relevance(self, prompt: str, response: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -514,6 +523,7 @@ class OpenAI(Provider):
         )
         return self._extract_score_and_reasons_from_response(system_prompt)
 
+    @override
     def relevance_with_cot_reasons(self, prompt: str, response: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -560,6 +570,7 @@ class OpenAI(Provider):
         )
         return self._extract_score_and_reasons_from_response(system_prompt)
 
+    @override
     def sentiment(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -586,6 +597,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    @override
     def sentiment_with_cot_reasons(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -615,6 +627,7 @@ class OpenAI(Provider):
             system_prompt, user_prompt=text
         )
 
+    @override
     def model_agreement(self, prompt: str, response: str) -> float:
         """
         Uses OpenAI's Chat GPT Model. A function that gives Chat GPT the same
@@ -663,6 +676,7 @@ class OpenAI(Provider):
         )
         return re_1_10_rating(agreement_txt) / 10
 
+    @override
     def conciseness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a
@@ -690,7 +704,7 @@ class OpenAI(Provider):
         return self._extract_score_and_reasons_from_response(
             system_prompt, user_prompt=text
         )
-
+    @override
     def correctness(self, text: str) -> float:
         """
         Uses OpenAI's Chat Completion Model. A function that completes a

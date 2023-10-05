@@ -75,5 +75,3 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
         kwargs['obj'] = self
 
         super().__init__(*args, **kwargs)
-
-        self._instrument_module_members(bedrock, "completion")
