@@ -12,14 +12,14 @@ class RecordViewer extends StreamlitComponentBase {
 
     // This seems to currently be the best way to type args, since
     // StreamlitComponentBase appears happy to just give it "any".
-    const { record_json: recordJSON, app_json: appJSON } = this.props.args as DataRaw;
+    const { record_json: recordJSON } = this.props.args as DataRaw;
 
     const { font: fontFamily } = this.props.theme as { font: string };
 
     /**
      * Actual code begins
      */
-    const root = createTreeFromCalls(recordJSON, appJSON);
+    const root = createTreeFromCalls(recordJSON);
 
     return (
       <div style={{ fontFamily, display: 'flex', flexDirection: 'column', gap: 16 }}>
