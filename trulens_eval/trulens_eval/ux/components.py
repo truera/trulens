@@ -136,7 +136,7 @@ def draw_calls(record: Record, index: int) -> None:
 def draw_prompt_info(query: JSONPath, component: ComponentView) -> None:
     prompt_details_json = jsonify(component.json, skip_specials=True)
 
-    st.subheader(f"*Prompt Details*")
+    st.caption(f"Prompt details")
 
     path = Select.for_app(query)
 

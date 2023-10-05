@@ -61,16 +61,16 @@ export default function RecordTableRowRecursive({
         <TableCell>
           <Box sx={{ ml: depth, display: 'flex', flexDirection: 'row' }}>
             {node.children.length > 0 && (
-              <IconButton onClick={() => setExpanded(!expanded)} disableRipple>
+              <IconButton onClick={() => setExpanded(!expanded)} disableRipple size="small">
                 {expanded ? <ArrowDropDown /> : <ArrowRight />}
               </IconButton>
             )}
-            <Box sx={{ display: 'flex', flexDirection: 'column', ml: node.children.length === 0 ? 5 : 0 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', ml: node.children.length === 0 ? 5 : 0 }}>
               <Typography>
                 {node.name}
                 {node.methodName ? `.${node.methodName}` : ''}
               </Typography>
-              <Typography variant="code" sx={{ px: 0.5 }}>
+              <Typography variant="code" sx={{ ml: 1, px: 1 }}>
                 {selector}
               </Typography>
             </Box>
