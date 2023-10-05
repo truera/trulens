@@ -51,7 +51,7 @@ setup(
         'requests>=2.30.0',
         'slack-bolt>=1.18.0',
         'slack-sdk>=3.21.3',
-        'streamlit>=1.26.0',
+        'streamlit>=1.27.0',
         'streamlit-aggrid>=0.3.4.post3',
         'streamlit-extras>=0.2.7',
         'streamlit-javascript>=0.1.5',  # for copy to clipboard functionality (in progress)
