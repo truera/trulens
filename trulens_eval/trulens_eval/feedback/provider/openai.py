@@ -1,6 +1,5 @@
 import logging
 import os
-from overrides import override
 
 import openai
 
@@ -20,7 +19,6 @@ class OpenAI(LLMProvider):
     model_engine: str
     endpoint: Endpoint
 
-    @override
     def __init__(
         self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
     ):
@@ -53,7 +51,6 @@ class OpenAI(LLMProvider):
 
         set_openai_key()
 
-    @override
     def _create_chat_completion(self, *args, **kwargs):
         return openai.ChatCompletion.create(*args, **kwargs)
 

@@ -64,7 +64,6 @@ setup(
         'numpy>=1.23.5',
         'sqlalchemy>=2.0.19',
         'alembic>=1.11.2',
-        'overrides>=7.4.0',
         # 'nest_asyncio>=1.5.6',  # NOTE(piotrm): disabling for now, need more investigation of compatibility issues
     ],
 )

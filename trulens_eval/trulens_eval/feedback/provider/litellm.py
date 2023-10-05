@@ -1,6 +1,5 @@
 import logging
 import os
-from overrides import override
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import LLMProvider
@@ -18,7 +17,6 @@ class LiteLLM(LLMProvider):
     model_engine: str
     endpoint: Endpoint
 
-    @override
     def __init__(
         self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
     ):
@@ -50,7 +48,6 @@ class LiteLLM(LLMProvider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
     
-    @override
     def _create_chat_completion(self, messages, *args, **kwargs):
         import litellm
         return litellm.completion(messages = messages, *args, **kwargs)

@@ -1,6 +1,5 @@
 import logging
 import os
-from overrides import override
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import LLMProvider
@@ -17,7 +16,6 @@ class Bedrock(LLMProvider):
     model_id: str
     region_name: str
 
-    @override
     def __init__(
         self, *args, model_id="amazon.titan-tg1-large", region_name="us-east-1", **kwargs
     ):
@@ -48,7 +46,6 @@ class Bedrock(LLMProvider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-    @override
     def _create_chat_completion(self, prompt, *args, **kwargs):
 
         # NOTE(joshr): only tested with sso auth
