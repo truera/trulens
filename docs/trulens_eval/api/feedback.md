@@ -10,6 +10,8 @@ Basic Text-to-Text Wrapper: [TruBasicApp](https://www.trulens.org/trulens_eval/a
 Any Custom App Wrapper: [TruCustomApp](https://www.trulens.org/trulens_eval/api/trucustom/)
 
 
+::: trulens_eval.trulens_eval.feedback.provider.base
+
 ::: trulens_eval.trulens_eval.feedback.provider.openai
 
 ::: trulens_eval.trulens_eval.feedback.provider.hugs
