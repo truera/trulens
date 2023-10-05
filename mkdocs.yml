@@ -96,7 +96,11 @@ nav:
                   - Context Relevance: trulens_eval/context_relevance_smoke_tests.ipynb
           - 📚 API Reference:
               - Feedback Functions: trulens_eval/api/feedback.md
-              - Providers: trulens_eval/api/providers.md
+              - Providers: 
+                  - OpenAI: trulens_eval/api/openai_provider.md
+                  - AWS Bedrock: trulens_eval/api/bedrock_provider.md
+                  - HuggingFace: trulens_eval/api/huggingface_provider.md
+                  - LiteLLM: trulens_eval/api/litellm_provider.md
       - Tracking:
           - 🎺 Instrumentation:
               - Overview: trulens_eval/basic_instrumentation.ipynb
