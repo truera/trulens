@@ -1,7 +1,6 @@
 import logging
 import os
 from overrides import override
-import litellm
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import LLMProvider
@@ -40,7 +39,6 @@ class LiteLLM(LLMProvider):
             model_engine (str): The LiteLLM completion model.Defaults to `gpt-3.5-turbo`
             endpoint (Endpoint): Internal Usage for DB serialization
         """
-        import litellm
         
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
@@ -54,4 +52,5 @@ class LiteLLM(LLMProvider):
     
     @override
     def _create_chat_completion(self, messages, *args, **kwargs):
+        import litellm
         return litellm.completion(messages = messages, *args, **kwargs)

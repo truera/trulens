@@ -36,8 +36,6 @@ class Bedrock(LLMProvider):
 
         - All other args/kwargs passed to the boto3 client constructor.
         """
-        import boto3
-
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
