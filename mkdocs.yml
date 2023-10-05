@@ -96,6 +96,7 @@ nav:
                   - Context Relevance: trulens_eval/context_relevance_smoke_tests.ipynb
           - 📚 API Reference:
               - Feedback Functions: trulens_eval/api/feedback.md
+              - Providers: trulens_eval/api/providers.md
       - Tracking:
           - 🎺 Instrumentation:
               - Overview: trulens_eval/basic_instrumentation.ipynb
