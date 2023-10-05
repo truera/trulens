@@ -202,7 +202,7 @@ def draw_rec(
 
     if record_json is not None:
         with col2:
-            st.write(f"TODO link to {record_json['record_id']}.")
+            # st.write(f"TODO link to {record_json['record_id']}.")
 
             for selector_idx, selector in enumerate(st.session_state.selectors_record):
                 draw_selector(
@@ -319,13 +319,22 @@ if "records" not in st.session_state:
 
     st.title("App Runner")
 
-    for app_json in AppDefinition.get_loadable_apps():
+    loadable_apps = AppDefinition.get_loadable_apps()
+
+    for app_json in loadable_apps:
         st.write(app_json['app_id'])
         st.button(
             label="New Session",
             key=f"select_app_{app_json['app_id']}",
             on_click=select_app,
             args=(app_json,)
+        )
+
+    if len(loadable_apps) == 0:
+        st.write(
+            "No loadable apps found in database. "
+            "To make an app loadable, specify a loader function via the `initial_app_loader` argument when wrapping the app."
+            "See the notebook at https://github.com/truera/trulens/blob/34dcb7537cff394b8a6b793b6bbfcb429f79d79c/trulens_eval/examples/experimental/streamlit_appui_example.ipynb for an example."
         )
     
 else:
@@ -340,7 +349,7 @@ else:
 
     st.button(label="End session", on_click=end_session)
 
-    st.write(f"TODO: link to {app_json['app_id']} on other pages.")
+    # st.write(f"TODO: link to {app_json['app_id']} on other pages.")
 
     left, right = st.columns([1/3, 2/3])
 
