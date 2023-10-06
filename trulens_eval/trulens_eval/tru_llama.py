@@ -291,7 +291,7 @@ class TruLlama(App):
 
             if attr is not None:
                 return getattr(ret, attr)
-            else: # attr is None
+            else:  # attr is None
                 return App.main_output(self, func, sig, bindings, ret)
 
         except NotImplementedError:
@@ -326,7 +326,7 @@ class TruLlama(App):
             attr = self._main_output_attribute(ret)
             assert attr is not None
             return getattr(ret, attr)
-        
+
         except Exception:
             raise NotImplementedError(
                 f"Do not know what in object of type {type(ret).__name__} is the main app output."
@@ -341,7 +341,7 @@ class TruLlama(App):
             attr = self._main_output_attribute(ret)
             assert attr is not None
             return getattr(ret, attr)
-        
+
         except Exception:
             raise NotImplementedError(
                 f"Do not know what in object of type {type(ret).__name__} is the main app output."
