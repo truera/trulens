@@ -24,9 +24,9 @@ class HuggingfaceCallback(EndpointCallback):
             self.cost.n_successful_requests += 1
             content = json.loads(response.text)
 
-            # Huggingface free inference api for classification returns a list
-            # with one element which itself contains scores for each class.
-            self.cost.n_classes += len(content[0])
+            # Handle case when multiple items returned by hf api
+            for item in content:
+                self.cost.n_classes += len(item)
 
 
 class HuggingfaceEndpoint(Endpoint, WithClassInfo):
