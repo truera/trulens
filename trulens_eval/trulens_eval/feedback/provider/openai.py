@@ -262,6 +262,7 @@ class OpenAI(LLMProvider):
             openai_response["results"][0]["category_scores"]["violence/graphic"]
         )
 
+
 class AzureOpenAI(OpenAI):
     """Out of the box feedback functions calling AzureOpenAI APIs. 
     Has the same functionality as OpenAI out of the box feedback functions.

@@ -7,7 +7,7 @@
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
 
-# ! pip install trulens_eval==0.14.0 langchain>=0.0.263
+# ! pip install trulens_eval==0.15.0 langchain>=0.0.263
 
 # ## Setup
 # ### Add API keys

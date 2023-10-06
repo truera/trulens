@@ -91,10 +91,10 @@ class TruBasicApp(App):
     )
 
     def __init__(
-            self,
-            text_to_text: Optional[Callable] = None,
-            app: Optional[TruWrapperApp] = None,
-            **kwargs
+        self,
+        text_to_text: Optional[Callable] = None,
+        app: Optional[TruWrapperApp] = None,
+        **kwargs
     ):
         """
         Wrap a callable for monitoring.
@@ -123,7 +123,7 @@ class TruBasicApp(App):
 
     def main_call(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.
-        
+
         return self.app._call(human)
 
     async def main_acall(self, human: str) -> str:
