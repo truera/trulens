@@ -7,6 +7,8 @@
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/text2text_quickstart.ipynb)
 
+# ! pip install trulens_eval==0.15.1
+
 # ## Setup
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys

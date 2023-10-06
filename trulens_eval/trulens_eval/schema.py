@@ -569,12 +569,10 @@ class AppDefinition(SerialModel, WithClassInfo):
                 else:
                     self.initial_app_loader_dump = SerialBytes(data=dump)
 
-
                     # This is an older serialization approach that saved things
                     # in local files instead of the DB. Leaving here for now as
                     # serialization of large apps might make this necessary
                     # again.
-
                     """
                     path_json = Path.cwd() / f"{app_id}.json"
                     path_dill = Path.cwd() / f"{app_id}.dill"
