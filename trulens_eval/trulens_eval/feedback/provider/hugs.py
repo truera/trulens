@@ -86,10 +86,15 @@ class Huggingface(Provider):
         kwargs['name'] = name
 
         self_kwargs = dict()
+
+        # TODO: figure out why all of this logic is necessary:
         if endpoint is None:
             self_kwargs['endpoint'] = HuggingfaceEndpoint(**kwargs)
         else:
-            self_kwargs['endpoint'] = endpoint
+            if isinstance(endpoint, Endpoint):
+                self_kwargs['endpoint'] = endpoint
+            else:
+                self_kwargs['endpoint'] = HuggingfaceEndpoint(**endpoint)
 
         self_kwargs['name'] = name or "huggingface"
 
