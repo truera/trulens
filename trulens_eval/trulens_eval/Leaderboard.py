@@ -101,7 +101,7 @@ def streamlit_app():
 
             if math.isnan(mean):
                 pass
-            elif("distance" in col_name):
+            elif ("distance" in col_name):
                 feedback_cols[i].metric(
                     label=col_name,
                     value=f'{round(mean, 2)}',

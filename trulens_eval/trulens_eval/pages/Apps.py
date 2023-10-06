@@ -24,7 +24,7 @@ add_logo()
 
 def remove_selector(
     container,
-    type: str, # either "app" or "record"
+    type: str,  # either "app" or "record"
     selector_idx: int,
     record_idx: int,
     selector: str,
@@ -54,10 +54,11 @@ def remove_selector(
     for container in st.session_state[f"containers_{key_norec}"]:
         del container
 
+
 def update_selector(
     container,
     type: str,
-    selector_idx: int, 
+    selector_idx: int,
     record_idx: int,
     selector: str,
     rec: Optional[ChatRecord] = None
@@ -75,6 +76,7 @@ def update_selector(
     new_val = st.session_state[f"edit_input_{key}"]
 
     state[state.index(selector)] = new_val
+
 
 def draw_selector(
     type: str,
@@ -102,7 +104,7 @@ def draw_selector(
     if f"containers_{key_norec}" not in st.session_state:
         st.session_state[f"containers_{key_norec}"] = []
     st.session_state[f"containers_{key_norec}"].append(container)
-    
+
     # Cannot stack columns too deeply:
     #c1, c2 = st.columns(2)
 
@@ -112,8 +114,7 @@ def draw_selector(
 
     # Put everything in this expander:
     exp = container.expander(
-        label=selector,
-        expanded=st.session_state[f"expanded_{key_norec}"]
+        label=selector, expanded=st.session_state[f"expanded_{key_norec}"]
     )
 
     # Delete button.
@@ -173,9 +174,10 @@ def draw_selector(
 
         except Exception as e:
             exp.write(f"enumeration error: {e}")
-            
+
+
 def draw_rec(
-    cols, # expects two columns
+    cols,  # expects two columns
     record_idx: int,
     rec: ChatRecord,
     skip_human: bool = False
@@ -204,7 +206,8 @@ def draw_rec(
         with col2:
             # st.write(f"TODO link to {record_json['record_id']}.")
 
-            for selector_idx, selector in enumerate(st.session_state.selectors_record):
+            for selector_idx, selector in enumerate(
+                    st.session_state.selectors_record):
                 draw_selector(
                     type="record",
                     selector_idx=selector_idx,
@@ -212,6 +215,7 @@ def draw_rec(
                     selector=selector,
                     rec=rec
                 )
+
 
 def add_selector(type: str):
     """
@@ -237,16 +241,13 @@ def select_app(app_json: JSON):
     Select the app to start a session with by its JSON.
     """
 
-    tru_app = AppDefinition.new_session(
-        app_definition_json=app_json
-    )
+    tru_app = AppDefinition.new_session(app_definition_json=app_json)
 
-    st.session_state.records = [
-        ChatRecord(app_json=app_json, app=tru_app)
-    ]
+    st.session_state.records = [ChatRecord(app_json=app_json, app=tru_app)]
 
     for type in ["app", "record"]:
         st.session_state[f'selectors_{type}'] = []
+
 
 def run_record(cols):
     """
@@ -263,11 +264,7 @@ def run_record(cols):
     current_record.human = human_input
 
     # Draw the ChatRecord so far, just human input.
-    draw_rec(
-        cols=cols,
-        record_idx=last_record_index,
-        rec=current_record
-    )
+    draw_rec(cols=cols, record_idx=last_record_index, rec=current_record)
 
     # TODO: set some sort of progress bar or do async computation for computer
     # response.
@@ -296,11 +293,9 @@ def run_record(cols):
 
     # Add the next ChatRecord that contains the updated app state:
     st.session_state.records.append(
-        ChatRecord(
-            app=tru_app,
-            app_json=tru_app.dict()
-        )
+        ChatRecord(app=tru_app, app_json=tru_app.dict())
     )
+
 
 def end_session():
     """
@@ -308,6 +303,7 @@ def end_session():
     """
 
     del st.session_state['records']
+
 
 # NOTE: using callbacks for all interactions as otherwise I'm seeing various
 # problems.
@@ -333,10 +329,10 @@ if "records" not in st.session_state:
     if len(loadable_apps) == 0:
         st.write(
             "No loadable apps found in database. "
-            "To make an app loadable, specify a loader function via the `initial_app_loader` argument when wrapping the app."
-            "See the notebook at https://github.com/truera/trulens/blob/34dcb7537cff394b8a6b793b6bbfcb429f79d79c/trulens_eval/examples/experimental/streamlit_appui_example.ipynb for an example."
+            "To make an app loadable, specify a loader function via the `initial_app_loader` argument when wrapping the app. "
+            "See the notebook at https://github.com/truera/trulens/blob/main/trulens_eval/examples/experimental/streamlit_appui_example.ipynb for an example."
         )
-    
+
 else:
     # Otherwise a model was selected, and there should be at least one
     # ChatRecord in the state.
@@ -351,7 +347,7 @@ else:
 
     # st.write(f"TODO: link to {app_json['app_id']} on other pages.")
 
-    left, right = st.columns([1/3, 2/3])
+    left, right = st.columns([1 / 3, 2 / 3])
 
     with left:
         # On the left are app selectors that show the properties of the app as
@@ -362,7 +358,8 @@ else:
             label="add app selector",
             key="add_app_selector_input",
             placeholder="path here",
-            on_change=add_selector, args=("app",)
+            on_change=add_selector,
+            args=("app",)
         )
 
         # Draw existing app selectors.
@@ -377,7 +374,7 @@ else:
 
     with right:
         # On the right 2/3 are rows, one per ChatRecord. Within the 2/3 is the
-        # chat inputs/outputs in the left 1/3 and selectors on the right 1/3. 
+        # chat inputs/outputs in the left 1/3 and selectors on the right 1/3.
 
         # Before the rows, first is a new record selector input.
         st.text_input(
@@ -385,19 +382,20 @@ else:
             placeholder="path here",
             key="add_record_selector_input",
             on_change=add_selector,
-            args=("record", )
+            args=("record",)
         )
 
         # Then the rows corresponding to ChatRecord:
         for i, rec in enumerate(st.session_state.records):
             cols = st.columns(2)
             draw_rec(cols, record_idx=i, rec=rec)
-    
+
     # NOTE: chat input cannot be inside column.
     human_input = st.chat_input(
         on_submit=run_record,
         key="human_input",
         kwargs=dict(
-            cols=cols # should be the cols of the last row from the above enumeration.
+            cols=
+            cols  # should be the cols of the last row from the above enumeration.
         )
     )

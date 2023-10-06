@@ -10,10 +10,10 @@ ImpCallable = Callable[..., Union[float, Tuple[float, Dict[str, Any]]]]
 # Signature of aggregation functions.
 AggCallable = Callable[[Iterable[float]], float]
 
-# Main class holding and running feedback functions:
-from trulens_eval.feedback.feedback import Feedback
 # Specific feedback functions:
 from trulens_eval.feedback.embeddings import Embeddings
+# Main class holding and running feedback functions:
+from trulens_eval.feedback.feedback import Feedback
 from trulens_eval.feedback.groundedness import Groundedness
 from trulens_eval.feedback.groundtruth import GroundTruthAgreement
 from trulens_eval.feedback.provider.cohere import Cohere
@@ -22,8 +22,9 @@ from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.feedback.provider.litellm import LiteLLM
 from trulens_eval.feedback.provider.openai import AzureOpenAI
 from trulens_eval.feedback.provider.openai import OpenAI
+from trulens_eval.feedback.provider.bedrock import Bedrock
 
 __all__ = [
     'Feedback', 'Embeddings', 'Groundedness', 'GroundTruthAgreement', 'OpenAI', 'AzureOpenAI',
-    'Huggingface', 'Cohere', 'LiteLLM'
+    'Huggingface', 'Cohere', 'LiteLLM','Bedrock'
 ]

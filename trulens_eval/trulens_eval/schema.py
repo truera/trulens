@@ -26,23 +26,27 @@ import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, TypeVar, Union
+from typing import (
+    Any, Callable, ClassVar, Dict, Optional, Sequence, TypeVar, Union
+)
 
 import dill
 import humanize
 from munch import Munch as Bunch
 import pydantic
 
-from trulens_eval.utils.json import json_str_of_obj, jsonify
+from trulens_eval.utils.json import json_str_of_obj
+from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.serial import GetItemOrAttribute, SerialBytes
+from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import SerialBytes
 from trulens_eval.utils.serial import SerialModel
 
 T = TypeVar("T")
@@ -64,7 +68,8 @@ FeedbackResultID = str
 
 # Record related:
 
-MAX_DILL_SIZE = 1024 * 1024 # 1MB
+MAX_DILL_SIZE = 1024 * 1024  # 1MB
+
 
 class RecordAppCallMethod(SerialModel):
     path: JSONPath
@@ -464,8 +469,7 @@ class AppDefinition(SerialModel, WithClassInfo):
 
     @staticmethod
     def continue_session(
-        app_definition_json: JSON,
-        app: Any
+        app_definition_json: JSON, app: Any
     ) -> 'AppDefinition':
         # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
         """
@@ -501,13 +505,13 @@ class AppDefinition(SerialModel, WithClassInfo):
             app = initial_app_loader()
             defn = dill.dumps(initial_app_loader, recurse=True)
             serial_bytes = SerialBytes(data=defn)
-        
+
         app_definition_json['app'] = app
         app_definition_json['initial_app_loader_dump'] = serial_bytes
 
-        cls = WithClassInfo.get_class(app_definition_json)
+        cls: Type[App] = WithClassInfo.get_class(app_definition_json)
 
-        return cls(**app_definition_json)
+        return cls.parse_obj(app_definition_json)
 
     def jsonify_extra(self, content):
         # Called by jsonify for us to add any data we might want to add to the
@@ -564,6 +568,12 @@ class AppDefinition(SerialModel, WithClassInfo):
                     )
                 else:
                     self.initial_app_loader_dump = SerialBytes(data=dump)
+
+
+                    # This is an older serialization approach that saved things
+                    # in local files instead of the DB. Leaving here for now as
+                    # serialization of large apps might make this necessary
+                    # again.
 
                     """
                     path_json = Path.cwd() / f"{app_id}.json"
