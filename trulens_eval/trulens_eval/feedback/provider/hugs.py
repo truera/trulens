@@ -293,7 +293,10 @@ class Huggingface(Provider):
         NER model to detect PII.
         **Usage:**
         ```
-       
+        hugs = Huggingface()
+
+        # Define a pii_detection feedback function using HuggingFace.
+        f_pii_detection = Feedback(hugs.pii_detection).on_input()
         ```
         The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
@@ -343,6 +346,15 @@ class Huggingface(Provider):
     def pii_detection_with_cot_reasons(self, text: str):
         """
         NER model to detect PII, with reasons.
+
+        **Usage:**
+        ```
+        hugs = Huggingface()
+
+        # Define a pii_detection feedback function using HuggingFace.
+        f_pii_detection = Feedback(hugs.pii_detection).on_input()
+        ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
         """
 
         # Initialize a dictionary to store reasons
