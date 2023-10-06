@@ -175,7 +175,7 @@ class Endpoint(SerialModel, SingletonPerName):
             j, Sequence
         ) and len(j) > 0, f"Post did not return a sequence: {j}"
 
-        return j[0]
+        return j
 
     def run_me(self, thunk: Thunk[T]) -> T:
         """

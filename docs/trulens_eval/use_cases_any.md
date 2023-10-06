@@ -10,3 +10,6 @@ This section highlights different end-to-end use cases that TruLens can help wit
 
 !!! info "[Language Verification](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/expositional/models/language_verification.ipynb)"
     Verify your LLM application responds in the same language it is prompted.
+
+!!! info "[PII Detection](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/expositional/models/pii_detection.ipynb)"
+    Verify your LLM application responds in the same language it is prompted.
