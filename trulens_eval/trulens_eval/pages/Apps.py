@@ -329,8 +329,8 @@ if "records" not in st.session_state:
     if len(loadable_apps) == 0:
         st.write(
             "No loadable apps found in database. "
-            "To make an app loadable, specify a loader function via the `initial_app_loader` argument when wrapping the app."
-            "See the notebook at https://github.com/truera/trulens/blob/34dcb7537cff394b8a6b793b6bbfcb429f79d79c/trulens_eval/examples/experimental/streamlit_appui_example.ipynb for an example."
+            "To make an app loadable, specify a loader function via the `initial_app_loader` argument when wrapping the app. "
+            "See the notebook at https://github.com/truera/trulens/blob/main/trulens_eval/examples/experimental/streamlit_appui_example.ipynb for an example."
         )
 
 else:
