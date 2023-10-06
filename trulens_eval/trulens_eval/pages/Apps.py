@@ -276,6 +276,7 @@ def run_record(cols):
     # Run the app and collect the record.
     with tru_app as rec:
         comp_response = tru_app.main_call(human_input)
+
     record: Record = rec.get()
 
     # Update ChatRecord.
