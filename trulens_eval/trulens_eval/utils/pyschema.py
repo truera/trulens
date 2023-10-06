@@ -26,7 +26,9 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from types import ModuleType
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union, ClassVar
+from typing import (
+    Any, Callable, ClassVar, Dict, Optional, Sequence, Tuple, Union
+)
 
 import pydantic
 from pydantic import Field
@@ -421,7 +423,7 @@ class ObjSerial(Obj):
 
         # TODO: dataclasses
         # TODO: dataclasses_json
-        
+
         # NOTE: Something related to pydantic models incorrectly sets signature
         # of cls so we need to check cls.__call__ instead.
         # TODO: app serialization
@@ -581,6 +583,7 @@ class Function(FunctionOrMethod):
 
 # Key of structure where class information is stored.
 CLASS_INFO = "__tru_class_info"
+
 
 class WithClassInfo(pydantic.BaseModel):
     """

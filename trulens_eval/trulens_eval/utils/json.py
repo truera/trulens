@@ -19,7 +19,7 @@ from merkle_json import MerkleJson
 import pydantic
 
 from trulens_eval.keys import redact_value
-from trulens_eval.utils.pyschema import WithClassInfo, _clean_attributes
+from trulens_eval.utils.pyschema import _clean_attributes
 from trulens_eval.utils.pyschema import _safe_getattr
 from trulens_eval.utils.pyschema import CIRCLE
 from trulens_eval.utils.pyschema import Class
@@ -27,9 +27,11 @@ from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import ERROR
 from trulens_eval.utils.pyschema import NOSERIO
 from trulens_eval.utils.pyschema import noserio
-from trulens_eval.utils.serial import JSON, SerialBytes
+from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import SerialBytes
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -76,6 +78,7 @@ def json_default(obj: Any) -> str:
 
 
 ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
+
 
 def jsonify_for_ui(*args, **kwargs):
     """

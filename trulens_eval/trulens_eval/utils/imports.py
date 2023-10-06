@@ -27,6 +27,7 @@ REQUIREMENT_SKLEARN = (
     f"Please install it before use: `pip install scikit-learn`."
 )
 
+
 class Dummy(object):
     """
     Class to pretend to be a module or some other imported object. Will raise an
