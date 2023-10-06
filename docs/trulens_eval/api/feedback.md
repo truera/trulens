@@ -14,6 +14,10 @@ Any Custom App Wrapper: [TruCustomApp](https://www.trulens.org/trulens_eval/api/
 
 ::: trulens_eval.trulens_eval.feedback.provider.hugs
 
+::: trulens_eval.trulens_eval.feedback.provider.litellm
+
 ::: trulens_eval.trulens_eval.feedback.groundedness
 
 ::: trulens_eval.trulens_eval.feedback.groundtruth
+
+::: trulens_eval.trulens_eval.feedback.embeddings

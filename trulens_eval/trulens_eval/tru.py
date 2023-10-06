@@ -255,8 +255,15 @@ class Tru(SingletonPerName):
         Look up a app from the database.
         """
 
-        # TODO: unserialize
         return self.db.get_app(app_id)
+
+    def get_apps(self) -> Iterable[JSON]:
+        """
+        Look up all apps from the database.
+        """
+
+        return self.db.get_apps()
+    
 
     def get_records_and_feedback(self, app_ids: List[str]):
         """
