@@ -73,6 +73,16 @@ class Tru(SingletonPerName):
 
         return TruLlama(tru=self, app=engine, **kwargs)
 
+    def Basic(self, text_to_text, **kwargs):
+        from trulens_eval.tru_basic_app import TruBasicApp
+
+        return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
+
+    def Custom(self, app, **kwargs):
+        from trulens_eval.tru_custom_app import TruCustomApp
+
+        return TruCustomApp(tru=self, app=app, **kwargs)
+
     def __init__(
         self,
         database_url: Optional[str] = None,
