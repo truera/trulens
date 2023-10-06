@@ -20,6 +20,7 @@ HUGS_CHAT_API_URL = "https://api-inference.huggingface.co/models/facebook/blende
 HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
 HUGS_NLI_API_URL = "https://api-inference.huggingface.co/models/ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
 HUGS_DOCNLI_API_URL = "https://api-inference.huggingface.co/models/MoritzLaurer/DeBERTa-v3-base-mnli-fever-docnli-ling-2c"
+HUGS_PII_DETECTION_API_URL = "https://api-inference.huggingface.co/models/bigcode/starpii"
 
 import functools
 from inspect import signature
@@ -287,6 +288,116 @@ class Huggingface(Provider):
             if label['label'] == 'entailment':
                 return label['score']
 
+    def pii_detection(self, text: str) -> float:
+        """
+        NER model to detect PII.
+        **Usage:**
+        ```
+        hugs = Huggingface()
+
+        # Define a pii_detection feedback function using HuggingFace.
+        f_pii_detection = Feedback(hugs.pii_detection).on_input()
+        ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+        Args:
+            input (str): A text prompt that may contain a name.
+
+        Returns:
+            - float: the likelihood that a name is contained in the input text.
+        """
+
+        # Initialize a list to store scores for "NAME" entities
+        likelihood_scores = []
+
+        payload = {"inputs": text}
+
+        hf_response = self.endpoint.post(
+            url = HUGS_PII_DETECTION_API_URL,
+            payload = payload)
+        
+        # If the response is a dictionary, convert it to a list. This is for when only one name is identified.
+        if isinstance(hf_response, dict):
+            hf_response = [hf_response]
+
+        if not isinstance(hf_response, list):
+            raise ValueError(f"Unexpected response from Huggingface API: {hf_response}")
+
+        # Iterate through the entities and extract scores for "NAME" entities
+        for entity in hf_response:
+            likelihood_scores.append(entity["score"])
+
+        # Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)
+        sum_individual_probabilities = sum(likelihood_scores)
+
+        # Initialize the total likelihood for at least one name
+        total_likelihood = sum_individual_probabilities
+
+        # Calculate the product of pairwise likelihood scores (P(A and B), P(A and C), ...)
+        for i in range(len(likelihood_scores)):
+            for j in range(i + 1, len(likelihood_scores)):
+                pairwise_likelihood = likelihood_scores[i] * likelihood_scores[j]
+                total_likelihood -= pairwise_likelihood
+
+        score = 1 - total_likelihood
+
+        return score
+    
+    def pii_detection_with_cot_reasons(self, text: str):
+        """
+        NER model to detect PII, with reasons.
+
+        **Usage:**
+        ```
+        hugs = Huggingface()
+
+        # Define a pii_detection feedback function using HuggingFace.
+        f_pii_detection = Feedback(hugs.pii_detection).on_input()
+        ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+        """
+
+        # Initialize a dictionary to store reasons
+        reasons = {}
+
+        # Initialize a list to store scores for "NAME" entities
+        likelihood_scores = []
+
+        payload = {"inputs": text}
+
+        hf_response = self.endpoint.post(
+            url = HUGS_PII_DETECTION_API_URL,
+            payload = payload)
+        
+        # Convert the response to a list if it's not already a list
+        if not isinstance(hf_response, list):
+            hf_response = [hf_response]
+
+        # Check if the response is a list
+        if not isinstance(hf_response, list):
+            raise ValueError("Unexpected response from Huggingface API: response should be a list or a dictionary")
+
+        
+        # Iterate through the entities and extract "word" and "score" for "NAME" entities
+        for i, entity in enumerate(hf_response):
+            reasons[f"{entity.get('entity_group')} detected: {entity['word']}"] = f"Score: {entity['score']}"
+            likelihood_scores.append(entity["score"])
+
+        # Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)
+        sum_individual_probabilities = sum(likelihood_scores)
+
+        # Initialize the total likelihood for at least one name
+        total_likelihood = sum_individual_probabilities
+
+        # Calculate the product of pairwise likelihood scores (P(A and B), P(A and C), ...)
+        for i in range(len(likelihood_scores)):
+            for j in range(i + 1, len(likelihood_scores)):
+                pairwise_likelihood = likelihood_scores[i] * likelihood_scores[j]
+                total_likelihood -= pairwise_likelihood
+
+        score = 1 - total_likelihood
+
+        return score, reasons
 
 class Dummy(Huggingface):
 
