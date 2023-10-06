@@ -2,10 +2,10 @@
 # For Retrieval Augmented Generation (RAG)
 This section highlights different end-to-end use cases that TruLens can help with when building RAG applications. For each use case, we not only motivate the use case but also discuss which components are most helpful for solving that use case.
 
-!!! info "[Detect and Mitigate Hallucination](#)"
+!!! info "[Detect and Mitigate Hallucination](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb)"
     Use groundedness feedback to ensure that your LLM responds using only the information retrieved from a verified knowledge source.
 
-!!! info "[Improve Retrieval Quality](#)"
+!!! info "[Improve Retrieval Quality](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/expositional/frameworks/llama_index/llama_index_retrievalquality.ipynb)"
     Measure and identify ways to improve the quality of retrieval for your RAG.
 
 !!! info "[Optimize App Configuration](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/expositional/vector-dbs/pinecone/pinecone_evals_build_better_rags.ipynb)"
