@@ -29,6 +29,7 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, TypeVar, Union
 
 import dill
+import humanize
 from munch import Munch as Bunch
 import pydantic
 
@@ -63,6 +64,7 @@ FeedbackResultID = str
 
 # Record related:
 
+MAX_DILL_SIZE = 1024 * 1024 # 1MB
 
 class RecordAppCallMethod(SerialModel):
     path: JSONPath
@@ -494,11 +496,10 @@ class AppDefinition(SerialModel, WithClassInfo):
         if initial_app_loader is None:
             assert defn is not None, "Cannot create new session without `initial_app_loader`."
             serial_bytes = SerialBytes.parse_obj(defn)
-            print(f"loading {serial_bytes}")
             app = dill.loads(serial_bytes.data)()
         else:
             app = initial_app_loader()
-            defn = dill.dumps(initial_app_loader)
+            defn = dill.dumps(initial_app_loader, recurse=True)
             serial_bytes = SerialBytes(data=defn)
         
         app_definition_json['app'] = app
@@ -554,11 +555,11 @@ class AppDefinition(SerialModel, WithClassInfo):
         # EXPERIMENTAL
         if 'initial_app_loader' in kwargs:
             try:
-                dump = dill.dumps(kwargs['initial_app_loader'])
+                dump = dill.dumps(kwargs['initial_app_loader'], recurse=True)
 
-                if len(dump) > 4096:
+                if len(dump) > MAX_DILL_SIZE:
                     logger.warning(
-                        "`initial_app_loader` dump is too big. "
+                        f"`initial_app_loader` dump is too big ({humanize.naturalsize(len(dump))} > {humanize.naturaldate(MAX_DILL_SIZE)} bytes). "
                         "If you are loading large objects, include the loading logic inside `initial_app_loader`."
                     )
                 else:
