@@ -1,0 +1,4063 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Evaluate and track LLM applications. Explain Deep Neural Nets.">
+      
+      
+      
+      
+        <link rel="prev" href="../bedrock_provider/">
+      
+      
+        <link rel="next" href="../litellm_provider/">
+      
+      
+      <link rel="icon" href="../../../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.3">
+    
+    
+      
+        <title>HuggingFace - TruLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.79e020e9.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.a5377069.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../stylesheets/cover.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#litellm-apis" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="TruLens" class="md-header__button md-logo" aria-label="TruLens" data-md-component="logo">
+      
+  <img src="../../../img/squid.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            TruLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              HuggingFace
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08Z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/truera/trulens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    truera/trulens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../welcome/" class="md-tabs__link">
+        
+  
+    
+  
+  Welcome to TruLens!
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../install/" class="md-tabs__link">
+          
+  
+    
+  
+  Eval
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../trulens_explain/install/" class="md-tabs__link">
+          
+  
+    
+  
+  Explain
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="TruLens" class="md-nav__button md-logo" aria-label="TruLens" data-md-component="logo">
+      
+  <img src="../../../img/squid.png" alt="logo">
+
+    </a>
+    TruLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/truera/trulens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    truera/trulens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../welcome/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Welcome to TruLens!
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Eval
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Eval
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🚀 Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1_2" id="__nav_3_1_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    ⚡ Quickstarts
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_1_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1_2">
+            <span class="md-nav__icon md-icon"></span>
+            ⚡ Quickstarts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../langchain_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Langchain Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../llama_index_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Llama-Index Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../text2text_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Text to Text Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Evaluation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Evaluation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2_1" id="__nav_3_2_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    🎯 Feedback Functions
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            🎯 Feedback Functions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../function_definitions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feedback Function Definitions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feedback_function_guide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feedback Function Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../custom_feedback_functions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Custom Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_1_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2_1_4" id="__nav_3_2_1_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Smoke Tests
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_1_4">
+            <span class="md-nav__icon md-icon"></span>
+            Smoke Tests
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../answer_relevance_smoke_tests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Answer Relevance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../context_relevance_smoke_tests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Context Relevance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_2_2" id="__nav_3_2_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    📚 API Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            📚 API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feedback/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feedback Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_2_2_2" id="__nav_3_2_2_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Providers
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_2_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_2_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Providers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../openai_provider/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenAI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bedrock_provider/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AWS Bedrock
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    HuggingFace
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    HuggingFace
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface" class="md-nav__link">
+    Huggingface
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.language_match" class="md-nav__link">
+    language_match()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.not_toxic" class="md-nav__link">
+    not_toxic()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.pii_detection" class="md-nav__link">
+    pii_detection()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.pii_detection_with_cot_reasons" class="md-nav__link">
+    pii_detection_with_cot_reasons()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.positive_sentiment" class="md-nav__link">
+    positive_sentiment()
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../litellm_provider/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LiteLLM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Tracking
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Tracking
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3_1" id="__nav_3_3_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    🎺 Instrumentation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            🎺 Instrumentation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../basic_instrumentation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../langchain_instrumentation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LangChain Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../llama_index_instrumentation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Llama-Index Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3_2" id="__nav_3_3_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    🚚 Logging
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            🚚 Logging
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../where_to_log/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Where to Log
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../logging/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Logging Methods
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3_3" id="__nav_3_3_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    📚 API Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            📚 API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tru/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tru
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trubasicapp/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TruBasicApp
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../truchain/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TruChain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trullama/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TruLlama
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trucustom/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TruCustom
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Guides
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4_1" id="__nav_3_4_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    🔍 Use Cases
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            🔍 Use Cases
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../use_cases_any/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Any LLM App
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../use_cases_rag/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RAGs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../use_cases_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LLM Agents
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../use_cases_production/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev to Prod
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🤝 Contrbution Guidelines
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Explain
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Explain
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🚀 Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ⚡ Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/attribution_parameterization/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Attributions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    API Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/api/attribution/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Attribution
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/api/model_wrappers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Models
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/api/slices/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Slices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/api/quantities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quantities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/api/distributions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Distributions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/api/visualizations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visualizations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface" class="md-nav__link">
+    Huggingface
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.language_match" class="md-nav__link">
+    language_match()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.not_toxic" class="md-nav__link">
+    not_toxic()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.pii_detection" class="md-nav__link">
+    pii_detection()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.pii_detection_with_cot_reasons" class="md-nav__link">
+    pii_detection_with_cot_reasons()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.positive_sentiment" class="md-nav__link">
+    positive_sentiment()
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="litellm-apis">LiteLLM APIs<a class="headerlink" href="#litellm-apis" title="Permanent link">&para;</a></h1>
+<p>Below is how you can instantiate HuggingFace as a provider, along with feedback functions available only from HuggingFace.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<a id="trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface"></a>
+  <div class="doc doc-contents first">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="trulens_eval.feedback.provider.base.Provider">Provider</span></code></p>
+
+  
+      <p>Out of the box feedback functions calling Huggingface APIs.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Huggingface</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Out of the box feedback functions calling Huggingface APIs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">endpoint</span><span class="p">:</span> <span class="n">Endpoint</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
+        <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
+        <span class="c1"># down below. Adding it as None here as a temporary hack.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a Huggingface Provider with out of the box feedback functions.</span>
+
+<span class="sd">        **Usage:**</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from trulens_eval.feedback.provider.hugs import Huggingface</span>
+<span class="sd">        huggingface_provider = Huggingface()</span>
+<span class="sd">        ```</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            endpoint (Endpoint): Internal Usage for DB serialization</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="n">self_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="c1"># TODO: figure out why all of this logic is necessary:</span>
+        <span class="k">if</span> <span class="n">endpoint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">HuggingfaceEndpoint</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">endpoint</span><span class="p">,</span> <span class="n">Endpoint</span><span class="p">):</span>
+                <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoint</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">HuggingfaceEndpoint</span><span class="p">(</span><span class="o">**</span><span class="n">endpoint</span><span class="p">)</span>
+
+        <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;huggingface&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">self_kwargs</span>
+        <span class="p">)</span>  <span class="c1"># need to include pydantic.BaseModel.__init__</span>
+
+    <span class="c1"># TODEP</span>
+    <span class="nd">@_tci</span>
+    <span class="k">def</span> <span class="nf">language_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Uses Huggingface&#39;s papluca/xlm-roberta-base-language-detection model. A</span>
+<span class="sd">        function that uses language detection on `text1` and `text2` and</span>
+<span class="sd">        calculates the probit difference on the language detected on text1. The</span>
+<span class="sd">        function is: `1.0 - (|probit_language_text1(text1) -</span>
+<span class="sd">        probit_language_text1(text2))`</span>
+
+<span class="sd">        **Usage:**</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from trulens_eval import Feedback</span>
+<span class="sd">        from trulens_eval.feedback.provider.hugs import Huggingface</span>
+<span class="sd">        huggingface_provider = Huggingface()</span>
+
+<span class="sd">        feedback = Feedback(huggingface_provider.language_match).on_input_output() </span>
+<span class="sd">        ```</span>
+<span class="sd">        The `on_input_output()` selector can be changed. See [Feedback Function</span>
+<span class="sd">        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            text1 (str): Text to evaluate.</span>
+<span class="sd">            text2 (str): Comparative text to evaluate.</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">            float: A value between 0 and 1. 0 being &quot;different languages&quot; and 1</span>
+<span class="sd">            being &quot;same languages&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">get_scores</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">}</span>
+            <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+                <span class="n">url</span><span class="o">=</span><span class="n">HUGS_LANGUAGE_API_URL</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">}</span>
+
+        <span class="n">max_length</span> <span class="o">=</span> <span class="mi">500</span>
+        <span class="n">scores1</span><span class="p">:</span> <span class="n">AsyncResult</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">promise</span><span class="p">(</span>
+            <span class="n">get_scores</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text1</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">scores2</span><span class="p">:</span> <span class="n">AsyncResult</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">promise</span><span class="p">(</span>
+            <span class="n">get_scores</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text2</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">scores1</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">scores1</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="n">scores2</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">scores2</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+
+        <span class="n">langs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">scores1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">prob1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">scores1</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">langs</span><span class="p">])</span>
+        <span class="n">prob2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">scores2</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">langs</span><span class="p">])</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">prob1</span> <span class="o">-</span> <span class="n">prob2</span>
+
+        <span class="n">l1</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span> <span class="nb">ord</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="mf">2.0</span>
+
+        <span class="k">return</span> <span class="n">l1</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">text1_scores</span><span class="o">=</span><span class="n">scores1</span><span class="p">,</span> <span class="n">text2_scores</span><span class="o">=</span><span class="n">scores2</span><span class="p">)</span>
+
+    <span class="c1"># TODEP</span>
+    <span class="nd">@_tci</span>
+    <span class="k">def</span> <span class="nf">positive_sentiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Uses Huggingface&#39;s cardiffnlp/twitter-roberta-base-sentiment model. A</span>
+<span class="sd">        function that uses a sentiment classifier on `text`.</span>
+
+<span class="sd">        **Usage:**</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from trulens_eval import Feedback</span>
+<span class="sd">        from trulens_eval.feedback.provider.hugs import Huggingface</span>
+<span class="sd">        huggingface_provider = Huggingface()</span>
+
+<span class="sd">        feedback = Feedback(huggingface_provider.positive_sentiment).on_output() </span>
+<span class="sd">        ```</span>
+<span class="sd">        The `on_output()` selector can be changed. See [Feedback Function</span>
+<span class="sd">        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            text (str): Text to evaluate.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: A value between 0 and 1. 0 being &quot;negative sentiment&quot; and 1</span>
+<span class="sd">            being &quot;positive sentiment&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">max_length</span> <span class="o">=</span> <span class="mi">500</span>
+        <span class="n">truncated_text</span> <span class="o">=</span> <span class="n">text</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">truncated_text</span><span class="p">}</span>
+
+        <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="n">url</span><span class="o">=</span><span class="n">HUGS_SENTIMENT_API_URL</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;LABEL_2&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span>
+
+    <span class="c1"># TODEP</span>
+    <span class="nd">@_tci</span>
+    <span class="k">def</span> <span class="nf">not_toxic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Uses Huggingface&#39;s martin-ha/toxic-comment-model model. A function that</span>
+<span class="sd">        uses a toxic comment classifier on `text`.</span>
+
+<span class="sd">        **Usage:**</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from trulens_eval import Feedback</span>
+<span class="sd">        from trulens_eval.feedback.provider.hugs import Huggingface</span>
+<span class="sd">        huggingface_provider = Huggingface()</span>
+
+<span class="sd">        feedback = Feedback(huggingface_provider.not_toxic).on_output() </span>
+<span class="sd">        ```</span>
+<span class="sd">        The `on_output()` selector can be changed. See [Feedback Function</span>
+<span class="sd">        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+
+
+<span class="sd">        Args:</span>
+<span class="sd">            text (str): Text to evaluate.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: A value between 0 and 1. 0 being &quot;toxic&quot; and 1 being &quot;not</span>
+<span class="sd">            toxic&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Input cannot be blank.&quot;</span>
+
+        <span class="n">max_length</span> <span class="o">=</span> <span class="mi">500</span>
+        <span class="n">truncated_text</span> <span class="o">=</span> <span class="n">text</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">truncated_text</span><span class="p">}</span>
+        <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="n">url</span><span class="o">=</span><span class="n">HUGS_TOXIC_API_URL</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;toxic&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span>
+
+    <span class="c1"># TODEP</span>
+    <span class="nd">@_tci</span>
+    <span class="k">def</span> <span class="nf">_summarized_groundedness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">premise</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; A groundedness measure best used for summarized premise against simple hypothesis.</span>
+<span class="sd">        This Huggingface implementation uses NLI.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            premise (str): NLI Premise</span>
+<span class="sd">            hypothesis (str): NLI Hypothesis</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: NLI Entailment</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;.&#39;</span> <span class="o">==</span> <span class="n">premise</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">premise</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="n">premise</span> <span class="o">=</span> <span class="n">premise</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span>
+        <span class="n">nli_string</span> <span class="o">=</span> <span class="n">premise</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="n">hypothesis</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">nli_string</span><span class="p">}</span>
+        <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">HUGS_NLI_API_URL</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;entailment&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span>
+
+    <span class="c1"># TODEP</span>
+    <span class="nd">@_tci</span>
+    <span class="k">def</span> <span class="nf">_doc_groundedness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">premise</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A groundedness measure for full document premise against hypothesis.</span>
+<span class="sd">        This Huggingface implementation uses DocNLI. The Hypoethsis still only</span>
+<span class="sd">        works on single small hypothesis.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            premise (str): NLI Premise</span>
+<span class="sd">            hypothesis (str): NLI Hypothesis</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: NLI Entailment</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nli_string</span> <span class="o">=</span> <span class="n">premise</span> <span class="o">+</span> <span class="s1">&#39; [SEP] &#39;</span> <span class="o">+</span> <span class="n">hypothesis</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">nli_string</span><span class="p">}</span>
+        <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="n">url</span><span class="o">=</span><span class="n">HUGS_DOCNLI_API_URL</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;entailment&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">pii_detection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        NER model to detect PII.</span>
+<span class="sd">        **Usage:**</span>
+<span class="sd">        ```</span>
+<span class="sd">        hugs = Huggingface()</span>
+
+<span class="sd">        # Define a pii_detection feedback function using HuggingFace.</span>
+<span class="sd">        f_pii_detection = Feedback(hugs.pii_detection).on_input()</span>
+<span class="sd">        ```</span>
+<span class="sd">        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input (str): A text prompt that may contain a name.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            - float: the likelihood that a name is contained in the input text.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Initialize a list to store scores for &quot;NAME&quot; entities</span>
+        <span class="n">likelihood_scores</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">}</span>
+
+        <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">HUGS_PII_DETECTION_API_URL</span><span class="p">,</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="p">)</span>
+
+        <span class="c1"># If the response is a dictionary, convert it to a list. This is for when only one name is identified.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">hf_response</span> <span class="o">=</span> <span class="p">[</span><span class="n">hf_response</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected response from Huggingface API: </span><span class="si">{</span><span class="n">hf_response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Iterate through the entities and extract scores for &quot;NAME&quot; entities</span>
+        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
+            <span class="n">likelihood_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">])</span>
+
+        <span class="c1"># Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)</span>
+        <span class="n">sum_individual_probabilities</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">likelihood_scores</span><span class="p">)</span>
+
+        <span class="c1"># Initialize the total likelihood for at least one name</span>
+        <span class="n">total_likelihood</span> <span class="o">=</span> <span class="n">sum_individual_probabilities</span>
+
+        <span class="c1"># Calculate the product of pairwise likelihood scores (P(A and B), P(A and C), ...)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">likelihood_scores</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">likelihood_scores</span><span class="p">)):</span>
+                <span class="n">pairwise_likelihood</span> <span class="o">=</span> <span class="n">likelihood_scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">likelihood_scores</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">total_likelihood</span> <span class="o">-=</span> <span class="n">pairwise_likelihood</span>
+
+        <span class="n">score</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">total_likelihood</span>
+
+        <span class="k">return</span> <span class="n">score</span>
+
+    <span class="k">def</span> <span class="nf">pii_detection_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        NER model to detect PII, with reasons.</span>
+
+<span class="sd">        **Usage:**</span>
+<span class="sd">        ```</span>
+<span class="sd">        hugs = Huggingface()</span>
+
+<span class="sd">        # Define a pii_detection feedback function using HuggingFace.</span>
+<span class="sd">        f_pii_detection = Feedback(hugs.pii_detection).on_input()</span>
+<span class="sd">        ```</span>
+<span class="sd">        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Initialize a dictionary to store reasons</span>
+        <span class="n">reasons</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Initialize a list to store scores for &quot;NAME&quot; entities</span>
+        <span class="n">likelihood_scores</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">}</span>
+
+        <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">HUGS_PII_DETECTION_API_URL</span><span class="p">,</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="p">)</span>
+
+        <span class="c1"># Convert the response to a list if it&#39;s not already a list</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">hf_response</span> <span class="o">=</span> <span class="p">[</span><span class="n">hf_response</span><span class="p">]</span>
+
+        <span class="c1"># Check if the response is a list</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unexpected response from Huggingface API: response should be a list or a dictionary&quot;</span><span class="p">)</span>
+
+
+        <span class="c1"># Iterate through the entities and extract &quot;word&quot; and &quot;score&quot; for &quot;NAME&quot; entities</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">entity</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hf_response</span><span class="p">):</span>
+            <span class="n">reasons</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;entity_group&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> detected: </span><span class="si">{</span><span class="n">entity</span><span class="p">[</span><span class="s1">&#39;word&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Score: </span><span class="si">{</span><span class="n">entity</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">likelihood_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">])</span>
+
+        <span class="c1"># Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)</span>
+        <span class="n">sum_individual_probabilities</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">likelihood_scores</span><span class="p">)</span>
+
+        <span class="c1"># Initialize the total likelihood for at least one name</span>
+        <span class="n">total_likelihood</span> <span class="o">=</span> <span class="n">sum_individual_probabilities</span>
+
+        <span class="c1"># Calculate the product of pairwise likelihood scores (P(A and B), P(A and C), ...)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">likelihood_scores</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">likelihood_scores</span><span class="p">)):</span>
+                <span class="n">pairwise_likelihood</span> <span class="o">=</span> <span class="n">likelihood_scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">likelihood_scores</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">total_likelihood</span> <span class="o">-=</span> <span class="n">pairwise_likelihood</span>
+
+        <span class="n">score</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">total_likelihood</span>
+
+        <span class="k">return</span> <span class="n">score</span><span class="p">,</span> <span class="n">reasons</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h2 id="trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.__init__" class="doc doc-heading">
+          <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+<a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.__init__" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Create a Huggingface Provider with out of the box feedback functions.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
+<span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
+</code></pre></div></p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>endpoint</code></td>
+          <td>
+                <code><span title="trulens_eval.feedback.provider.endpoint.base.Endpoint">Endpoint</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Internal Usage for DB serialization</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
+    <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
+    <span class="c1"># down below. Adding it as None here as a temporary hack.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a Huggingface Provider with out of the box feedback functions.</span>
+
+<span class="sd">    **Usage:**</span>
+<span class="sd">    ```python</span>
+<span class="sd">    from trulens_eval.feedback.provider.hugs import Huggingface</span>
+<span class="sd">    huggingface_provider = Huggingface()</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        endpoint (Endpoint): Internal Usage for DB serialization</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="n">self_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="c1"># TODO: figure out why all of this logic is necessary:</span>
+    <span class="k">if</span> <span class="n">endpoint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">HuggingfaceEndpoint</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">endpoint</span><span class="p">,</span> <span class="n">Endpoint</span><span class="p">):</span>
+            <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoint</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">HuggingfaceEndpoint</span><span class="p">(</span><span class="o">**</span><span class="n">endpoint</span><span class="p">)</span>
+
+    <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;huggingface&quot;</span>
+
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">self_kwargs</span>
+    <span class="p">)</span>  <span class="c1"># need to include pydantic.BaseModel.__init__</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h2 id="trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.language_match" class="doc doc-heading">
+          <code class=" language-python"><span class="n">language_match</span><span class="p">(</span><span class="n">text1</span><span class="p">,</span> <span class="n">text2</span><span class="p">)</span></code>
+
+<a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.language_match" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Uses Huggingface's papluca/xlm-roberta-base-language-detection model. A
+function that uses language detection on <code>text1</code> and <code>text2</code> and
+calculates the probit difference on the language detected on text1. The
+function is: <code>1.0 - (|probit_language_text1(text1) -
+probit_language_text1(text2))</code></p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
+<span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
+
+<span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">huggingface_provider</span><span class="o">.</span><span class="n">language_match</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span> 
+</code></pre></div>
+The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
+Guide</a></p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>text1</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>text2</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Comparative text to evaluate.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <p>Returns:</p>
+<div class="codehilite"><pre><span></span><code>float: A value between 0 and 1. 0 being &quot;different languages&quot; and 1
+being &quot;same languages&quot;.
+</code></pre></div>
+
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
+<span class="k">def</span> <span class="nf">language_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uses Huggingface&#39;s papluca/xlm-roberta-base-language-detection model. A</span>
+<span class="sd">    function that uses language detection on `text1` and `text2` and</span>
+<span class="sd">    calculates the probit difference on the language detected on text1. The</span>
+<span class="sd">    function is: `1.0 - (|probit_language_text1(text1) -</span>
+<span class="sd">    probit_language_text1(text2))`</span>
+
+<span class="sd">    **Usage:**</span>
+<span class="sd">    ```python</span>
+<span class="sd">    from trulens_eval import Feedback</span>
+<span class="sd">    from trulens_eval.feedback.provider.hugs import Huggingface</span>
+<span class="sd">    huggingface_provider = Huggingface()</span>
+
+<span class="sd">    feedback = Feedback(huggingface_provider.language_match).on_input_output() </span>
+<span class="sd">    ```</span>
+<span class="sd">    The `on_input_output()` selector can be changed. See [Feedback Function</span>
+<span class="sd">    Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        text1 (str): Text to evaluate.</span>
+<span class="sd">        text2 (str): Comparative text to evaluate.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        float: A value between 0 and 1. 0 being &quot;different languages&quot; and 1</span>
+<span class="sd">        being &quot;same languages&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">get_scores</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">}</span>
+        <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="n">url</span><span class="o">=</span><span class="n">HUGS_LANGUAGE_API_URL</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">}</span>
+
+    <span class="n">max_length</span> <span class="o">=</span> <span class="mi">500</span>
+    <span class="n">scores1</span><span class="p">:</span> <span class="n">AsyncResult</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">promise</span><span class="p">(</span>
+        <span class="n">get_scores</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text1</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">scores2</span><span class="p">:</span> <span class="n">AsyncResult</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">promise</span><span class="p">(</span>
+        <span class="n">get_scores</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text2</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="n">scores1</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">scores1</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+    <span class="n">scores2</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">scores2</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+
+    <span class="n">langs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">scores1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">prob1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">scores1</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">langs</span><span class="p">])</span>
+    <span class="n">prob2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">scores2</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">langs</span><span class="p">])</span>
+    <span class="n">diff</span> <span class="o">=</span> <span class="n">prob1</span> <span class="o">-</span> <span class="n">prob2</span>
+
+    <span class="n">l1</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span> <span class="nb">ord</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="mf">2.0</span>
+
+    <span class="k">return</span> <span class="n">l1</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">text1_scores</span><span class="o">=</span><span class="n">scores1</span><span class="p">,</span> <span class="n">text2_scores</span><span class="o">=</span><span class="n">scores2</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h2 id="trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.not_toxic" class="doc doc-heading">
+          <code class=" language-python"><span class="n">not_toxic</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></code>
+
+<a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.not_toxic" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Uses Huggingface's martin-ha/toxic-comment-model model. A function that
+uses a toxic comment classifier on <code>text</code>.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
+<span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
+
+<span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">huggingface_provider</span><span class="o">.</span><span class="n">not_toxic</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
+The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
+Guide</a></p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>text</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>float</code></td>          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "toxic" and 1 being "not</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td></td>          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>toxic".</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
+<span class="k">def</span> <span class="nf">not_toxic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uses Huggingface&#39;s martin-ha/toxic-comment-model model. A function that</span>
+<span class="sd">    uses a toxic comment classifier on `text`.</span>
+
+<span class="sd">    **Usage:**</span>
+<span class="sd">    ```python</span>
+<span class="sd">    from trulens_eval import Feedback</span>
+<span class="sd">    from trulens_eval.feedback.provider.hugs import Huggingface</span>
+<span class="sd">    huggingface_provider = Huggingface()</span>
+
+<span class="sd">    feedback = Feedback(huggingface_provider.not_toxic).on_output() </span>
+<span class="sd">    ```</span>
+<span class="sd">    The `on_output()` selector can be changed. See [Feedback Function</span>
+<span class="sd">    Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+
+
+<span class="sd">    Args:</span>
+<span class="sd">        text (str): Text to evaluate.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: A value between 0 and 1. 0 being &quot;toxic&quot; and 1 being &quot;not</span>
+<span class="sd">        toxic&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Input cannot be blank.&quot;</span>
+
+    <span class="n">max_length</span> <span class="o">=</span> <span class="mi">500</span>
+    <span class="n">truncated_text</span> <span class="o">=</span> <span class="n">text</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">truncated_text</span><span class="p">}</span>
+    <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+        <span class="n">url</span><span class="o">=</span><span class="n">HUGS_TOXIC_API_URL</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;toxic&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h2 id="trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.pii_detection" class="doc doc-heading">
+          <code class=" language-python"><span class="n">pii_detection</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></code>
+
+<a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.pii_detection" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>NER model to detect PII.
+<strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code>hugs = Huggingface()
+
+# Define a pii_detection feedback function using HuggingFace.
+f_pii_detection = Feedback(hugs.pii_detection).on_input()
+</code></pre></div>
+The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide : Selectors</a></p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>input</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A text prompt that may contain a name.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <ul>
+<li>float: the likelihood that a name is contained in the input text.</li>
+</ul>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">pii_detection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    NER model to detect PII.</span>
+<span class="sd">    **Usage:**</span>
+<span class="sd">    ```</span>
+<span class="sd">    hugs = Huggingface()</span>
+
+<span class="sd">    # Define a pii_detection feedback function using HuggingFace.</span>
+<span class="sd">    f_pii_detection = Feedback(hugs.pii_detection).on_input()</span>
+<span class="sd">    ```</span>
+<span class="sd">    The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input (str): A text prompt that may contain a name.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        - float: the likelihood that a name is contained in the input text.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Initialize a list to store scores for &quot;NAME&quot; entities</span>
+    <span class="n">likelihood_scores</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">}</span>
+
+    <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">HUGS_PII_DETECTION_API_URL</span><span class="p">,</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="p">)</span>
+
+    <span class="c1"># If the response is a dictionary, convert it to a list. This is for when only one name is identified.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">hf_response</span> <span class="o">=</span> <span class="p">[</span><span class="n">hf_response</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected response from Huggingface API: </span><span class="si">{</span><span class="n">hf_response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Iterate through the entities and extract scores for &quot;NAME&quot; entities</span>
+    <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
+        <span class="n">likelihood_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">])</span>
+
+    <span class="c1"># Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)</span>
+    <span class="n">sum_individual_probabilities</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">likelihood_scores</span><span class="p">)</span>
+
+    <span class="c1"># Initialize the total likelihood for at least one name</span>
+    <span class="n">total_likelihood</span> <span class="o">=</span> <span class="n">sum_individual_probabilities</span>
+
+    <span class="c1"># Calculate the product of pairwise likelihood scores (P(A and B), P(A and C), ...)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">likelihood_scores</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">likelihood_scores</span><span class="p">)):</span>
+            <span class="n">pairwise_likelihood</span> <span class="o">=</span> <span class="n">likelihood_scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">likelihood_scores</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">total_likelihood</span> <span class="o">-=</span> <span class="n">pairwise_likelihood</span>
+
+    <span class="n">score</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">total_likelihood</span>
+
+    <span class="k">return</span> <span class="n">score</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h2 id="trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.pii_detection_with_cot_reasons" class="doc doc-heading">
+          <code class=" language-python"><span class="n">pii_detection_with_cot_reasons</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></code>
+
+<a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.pii_detection_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>NER model to detect PII, with reasons.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code>hugs = Huggingface()
+
+# Define a pii_detection feedback function using HuggingFace.
+f_pii_detection = Feedback(hugs.pii_detection).on_input()
+</code></pre></div>
+The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide : Selectors</a></p>
+
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">pii_detection_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    NER model to detect PII, with reasons.</span>
+
+<span class="sd">    **Usage:**</span>
+<span class="sd">    ```</span>
+<span class="sd">    hugs = Huggingface()</span>
+
+<span class="sd">    # Define a pii_detection feedback function using HuggingFace.</span>
+<span class="sd">    f_pii_detection = Feedback(hugs.pii_detection).on_input()</span>
+<span class="sd">    ```</span>
+<span class="sd">    The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Initialize a dictionary to store reasons</span>
+    <span class="n">reasons</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Initialize a list to store scores for &quot;NAME&quot; entities</span>
+    <span class="n">likelihood_scores</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">}</span>
+
+    <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">HUGS_PII_DETECTION_API_URL</span><span class="p">,</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="p">)</span>
+
+    <span class="c1"># Convert the response to a list if it&#39;s not already a list</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">hf_response</span> <span class="o">=</span> <span class="p">[</span><span class="n">hf_response</span><span class="p">]</span>
+
+    <span class="c1"># Check if the response is a list</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unexpected response from Huggingface API: response should be a list or a dictionary&quot;</span><span class="p">)</span>
+
+
+    <span class="c1"># Iterate through the entities and extract &quot;word&quot; and &quot;score&quot; for &quot;NAME&quot; entities</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">entity</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hf_response</span><span class="p">):</span>
+        <span class="n">reasons</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;entity_group&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> detected: </span><span class="si">{</span><span class="n">entity</span><span class="p">[</span><span class="s1">&#39;word&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Score: </span><span class="si">{</span><span class="n">entity</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">likelihood_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">])</span>
+
+    <span class="c1"># Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)</span>
+    <span class="n">sum_individual_probabilities</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">likelihood_scores</span><span class="p">)</span>
+
+    <span class="c1"># Initialize the total likelihood for at least one name</span>
+    <span class="n">total_likelihood</span> <span class="o">=</span> <span class="n">sum_individual_probabilities</span>
+
+    <span class="c1"># Calculate the product of pairwise likelihood scores (P(A and B), P(A and C), ...)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">likelihood_scores</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">likelihood_scores</span><span class="p">)):</span>
+            <span class="n">pairwise_likelihood</span> <span class="o">=</span> <span class="n">likelihood_scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">likelihood_scores</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">total_likelihood</span> <span class="o">-=</span> <span class="n">pairwise_likelihood</span>
+
+    <span class="n">score</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">total_likelihood</span>
+
+    <span class="k">return</span> <span class="n">score</span><span class="p">,</span> <span class="n">reasons</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h2 id="trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.positive_sentiment" class="doc doc-heading">
+          <code class=" language-python"><span class="n">positive_sentiment</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></code>
+
+<a href="#trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface.positive_sentiment" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
+function that uses a sentiment classifier on <code>text</code>.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
+<span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
+
+<span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">huggingface_provider</span><span class="o">.</span><span class="n">positive_sentiment</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
+The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
+Guide</a></p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>text</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>float</code></td>          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "negative sentiment" and 1</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td></td>          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>being "positive sentiment".</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
+<span class="k">def</span> <span class="nf">positive_sentiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uses Huggingface&#39;s cardiffnlp/twitter-roberta-base-sentiment model. A</span>
+<span class="sd">    function that uses a sentiment classifier on `text`.</span>
+
+<span class="sd">    **Usage:**</span>
+<span class="sd">    ```python</span>
+<span class="sd">    from trulens_eval import Feedback</span>
+<span class="sd">    from trulens_eval.feedback.provider.hugs import Huggingface</span>
+<span class="sd">    huggingface_provider = Huggingface()</span>
+
+<span class="sd">    feedback = Feedback(huggingface_provider.positive_sentiment).on_output() </span>
+<span class="sd">    ```</span>
+<span class="sd">    The `on_output()` selector can be changed. See [Feedback Function</span>
+<span class="sd">    Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        text (str): Text to evaluate.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: A value between 0 and 1. 0 being &quot;negative sentiment&quot; and 1</span>
+<span class="sd">        being &quot;positive sentiment&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">max_length</span> <span class="o">=</span> <span class="mi">500</span>
+    <span class="n">truncated_text</span> <span class="o">=</span> <span class="n">text</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">truncated_text</span><span class="p">}</span>
+
+    <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+        <span class="n">url</span><span class="o">=</span><span class="n">HUGS_SENTIMENT_API_URL</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;LABEL_2&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.indexes", "navigation.sections", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "toc.follow", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.a264c092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.6eac0284.min.js"></script>
+      
+        <script src="../../../javascript/config.js"></script>
+      
+        <script src="../../../javascript/app.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
+      
+        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+      
+    
+  </body>
+</html>
