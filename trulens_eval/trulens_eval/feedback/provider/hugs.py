@@ -336,7 +336,9 @@ class Huggingface(Provider):
                 pairwise_likelihood = likelihood_scores[i] * likelihood_scores[j]
                 total_likelihood -= pairwise_likelihood
 
-        return total_likelihood
+        score = 1 - total_likelihood
+
+        return score
     
     def pii_detection_with_cot_reasons(self, text: str):
         """
@@ -381,7 +383,9 @@ class Huggingface(Provider):
                 pairwise_likelihood = likelihood_scores[i] * likelihood_scores[j]
                 total_likelihood -= pairwise_likelihood
 
-        return total_likelihood, reasons
+        score = 1 - total_likelihood
+
+        return score, reasons
 
 class Dummy(Huggingface):
 
