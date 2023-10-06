@@ -187,8 +187,7 @@ else:
         for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
             if "distance" in feedback_col:
                 gb.configure_column(
-                    feedback_col,
-                    hide=feedback_col.endswith("_calls")
+                    feedback_col, hide=feedback_col.endswith("_calls")
                 )
             else:
                 gb.configure_column(
@@ -228,7 +227,6 @@ else:
 
             st.markdown('')
 
-
             prompt = selected_rows['input'][0]
             response = selected_rows['output'][0]
             details = selected_rows['app_json'][0]
@@ -239,7 +237,7 @@ else:
 
             row = selected_rows.head().iloc[0]
 
-            # Display input/response side by side. In each column, we put them in tabs mainly for 
+            # Display input/response side by side. In each column, we put them in tabs mainly for
             # formatting/styling purposes.
             input_col, response_col = st.columns(2)
 
@@ -249,7 +247,6 @@ else:
                         f"Input {render_selector_markdown(Select.RecordInput)}",
                         expanded=True):
                     write_or_json(st, obj=prompt)
-
 
             response_tab, = response_col.tabs(['Response'])
             with response_tab:
@@ -283,7 +280,9 @@ else:
 
                         def highlight(s):
                             if "distance" in feedback_name:
-                                return [f'background-color: {CATEGORY.UNKNOWN.color}'] * len(s)
+                                return [
+                                    f'background-color: {CATEGORY.UNKNOWN.color}'
+                                ] * len(s)
                             cat = CATEGORY.of_score(s.result)
                             return [f'background-color: {cat.color}'] * len(s)
 

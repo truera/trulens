@@ -30,6 +30,7 @@ with OptionalImports(message=REQUIREMENT_EVALUATE):
 
 logger = logging.getLogger(__name__)
 
+
 # TODEP
 class GroundTruthAgreement(SerialModel, WithClassInfo):
     """Measures Agreement against a Ground Truth.
@@ -173,7 +174,6 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ret = np.nan
 
         return ret
-
 
     def numeric_difference(
         self, prompt: str, response: str, score: float

@@ -52,9 +52,7 @@ Respond with all sentences, unchanged from the excerpt, that are directly relate
 
 SENTIMENT_SYSTEM_PROMPT = v2.Sentiment.prompt.template
 
-
 COHERE_SENTIMENT_EXAMPLES = v2.BinarySentiment.examples
-
 
 COHERE_NOT_DISINFORMATION_EXAMPLES = v2.Disinofmration.examples
 

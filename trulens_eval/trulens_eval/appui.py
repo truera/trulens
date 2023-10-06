@@ -60,7 +60,10 @@ class SelectorValue(HasTraits):
     selector = traitlets.Any()
     obj = traitlets.Any()
 
-    def __init__(self, selector: Selector, stdout_display: widgets.Output, instrument: Instrument):
+    def __init__(
+        self, selector: Selector, stdout_display: widgets.Output,
+        instrument: Instrument
+    ):
         self.selector = selector
         self.obj = None
 
@@ -178,7 +181,9 @@ class RecordWidget():
         for s in self.record_selections:
             if s not in self.record_values:
                 sv = SelectorValue(
-                    selector=s, stdout_display=self.stdout_display, instrument=self.instrument
+                    selector=s,
+                    stdout_display=self.stdout_display,
+                    instrument=self.instrument
                 )
                 self.record_values[s] = sv
                 self.d_extras.children += (sv.w,)

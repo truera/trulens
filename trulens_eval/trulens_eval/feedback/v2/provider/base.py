@@ -2,11 +2,17 @@ from abc import abstractmethod
 from typing import Iterable, Optional
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.trulens_eval.feedback.base import ClassificationModel, Hate, HateThreatening, Model, WithExamples, WithPrompt
+from trulens_eval.trulens_eval.feedback.base import ClassificationModel
+from trulens_eval.trulens_eval.feedback.base import Hate
+from trulens_eval.trulens_eval.feedback.base import HateThreatening
+from trulens_eval.trulens_eval.feedback.base import Model
+from trulens_eval.trulens_eval.feedback.base import WithExamples
+from trulens_eval.trulens_eval.feedback.base import WithPrompt
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
 # Level 4 feedback abstraction
+
 
 class Provider(SerialModel, WithClassInfo):
 
@@ -68,7 +74,7 @@ class Provider(SerialModel, WithClassInfo):
 class OpenAIProvider(Provider):
     default_completion_model: str = ""
 
-    def supported_models(self) -> Iterable[Model]:    
+    def supported_models(self) -> Iterable[Model]:
         return super().supported_models()
 
     def __init__(self):
@@ -83,13 +89,12 @@ class OpenAIProvider(Provider):
         if isinstance(model, WithPrompt):
             prompt = model.prompt
         else:
-            raise ValueError("Cannot classify for model {model} without at least a prompt.")
+            raise ValueError(
+                "Cannot classify for model {model} without at least a prompt."
+            )
 
         if isinstance(model, WithExamples):
             # add few shots
             pass
-
-
-
 
         pass
