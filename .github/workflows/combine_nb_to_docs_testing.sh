@@ -32,18 +32,18 @@ jupyter nbconvert --to script --output-dir=./py_script_quickstarts/ all_tools.ip
 SED=`which -a gsed sed | head -n1`
 
 # Fix nbmerge ids field invalid for ipynb
-$SED -i "/id\"\:/d" all_tools.ipynb langchain_quickstart_colab.ipynb llama_index_quickstart_colab.ipynb text2text_quickstart_colab.ipynb
+$SED'' -e "/id\"\:/d" all_tools.ipynb langchain_quickstart_colab.ipynb llama_index_quickstart_colab.ipynb text2text_quickstart_colab.ipynb
 
 ## Remove ipynb JSON calls
-$SED -i "/JSON/d" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py 
+$SED'' -e "/JSON/d" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py 
 ## Replace jupyter display with python print
-$SED -i "s/display/print/g" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py
+$SED'' -e  "s/display/print/g" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py
 ## Remove cell metadata
-$SED -i "/\# In\[/d" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py
+$SED'' -e  "/\# In\[/d" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py
 ## Remove single # lines
-$SED -i "/\#$/d" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py
+$SED'' -e  "/\#$/d" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py
 ## Collapse multiple empty line from sed replacements with a single line
-$SED -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py
+$SED'' -e "/./b" -e ":n" -e "N;s/\\n$//;tn" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py
 # Move generated files to their end locations
 # EVERYTHING BELOW IS LINKED TO DOCUMENTATION OR TESTS; MAKE SURE YOU UPDATE LINKS IF YOU CHANGE
 # IF NAMES CHANGED; CHANGE THE LINK NAMES TOO

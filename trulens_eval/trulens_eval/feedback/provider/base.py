@@ -57,6 +57,7 @@ class LLMProvider(Provider, ABC):
     def _find_relevant_string(self, full_source, hypothesis):
         return self.endpoint.run_me(
             lambda: self._create_chat_completion(
+                model=self.model_engine,
                 prompt = 
                             str.format(
                                 prompts.SYSTEM_FIND_SUPPORTING,
