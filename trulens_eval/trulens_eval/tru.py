@@ -263,7 +263,6 @@ class Tru(SingletonPerName):
         """
 
         return self.db.get_apps()
-    
 
     def get_records_and_feedback(self, app_ids: List[str]):
         """

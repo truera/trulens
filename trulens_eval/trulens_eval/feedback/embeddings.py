@@ -1,23 +1,20 @@
-import numpy as np
-from pydantic import PrivateAttr
 from typing import Dict, Tuple, Union
 
-
 from llama_index import ServiceContext
+import numpy as np
+from pydantic import PrivateAttr
+
 from trulens_eval.utils.imports import REQUIREMENT_SKLEARN
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
-class Embeddings(SerialModel,WithClassInfo):
+
+class Embeddings(SerialModel, WithClassInfo):
     """Embedding related feedback function implementations.
     """
-    _embed_model: 'Embedder'= PrivateAttr()
+    _embed_model: 'Embedder' = PrivateAttr()
 
-    def __init__(
-        self,
-        embed_model: 'Embedder'=None
-    ):
-        
+    def __init__(self, embed_model: 'Embedder' = None):
         """Instantiates embeddings for feedback functions. 
 
         **Example Vector DB Creation:**
@@ -51,8 +48,8 @@ class Embeddings(SerialModel,WithClassInfo):
             import sklearn
         except:
             raise ImportError(REQUIREMENT_SKLEARN)
-        
-        service_context = ServiceContext.from_defaults(embed_model = embed_model)
+
+        service_context = ServiceContext.from_defaults(embed_model=embed_model)
         self._embed_model = service_context.embed_model
         super().__init__(obj=self)
 
@@ -88,11 +85,23 @@ class Embeddings(SerialModel,WithClassInfo):
             - float: the embedding vector distance
         """
         import sklearn
-        query_embed = np.asarray(self._embed_model.get_query_embedding(query)).reshape(1, -1) # sklearn expects 2d array (first dimension number of samples)
-        document_embed = np.asarray(self._embed_model.get_text_embedding(document)).reshape(1, -1) # sklearn expects 2d array (first dimension number of samples)
+        query_embed = np.asarray(
+            self._embed_model.get_query_embedding(query)
+        ).reshape(
+            1, -1
+        )  # sklearn expects 2d array (first dimension number of samples)
+        document_embed = np.asarray(
+            self._embed_model.get_text_embedding(document)
+        ).reshape(
+            1, -1
+        )  # sklearn expects 2d array (first dimension number of samples)
 
-        return sklearn.metrics.pairwise.cosine_distances(query_embed,document_embed)[0][0] # final results will be dimensions (sample query x sample doc) === (1,1)
-    
+        return sklearn.metrics.pairwise.cosine_distances(
+            query_embed, document_embed
+        )[0][
+            0
+        ]  # final results will be dimensions (sample query x sample doc) === (1,1)
+
     def manhattan_distance(
         self, query: str, document: str
     ) -> Union[float, Tuple[float, Dict[str, str]]]:
@@ -125,11 +134,23 @@ class Embeddings(SerialModel,WithClassInfo):
             - float: the embedding vector distance
         """
         import sklearn
-        query_embed = np.asarray(self._embed_model.get_query_embedding(query)).reshape(1, -1) # sklearn expects 2d array (first dimension number of samples)
-        document_embed = np.asarray(self._embed_model.get_text_embedding(document)).reshape(1, -1) # sklearn expects 2d array (first dimension number of samples)
+        query_embed = np.asarray(
+            self._embed_model.get_query_embedding(query)
+        ).reshape(
+            1, -1
+        )  # sklearn expects 2d array (first dimension number of samples)
+        document_embed = np.asarray(
+            self._embed_model.get_text_embedding(document)
+        ).reshape(
+            1, -1
+        )  # sklearn expects 2d array (first dimension number of samples)
 
-        return sklearn.metrics.pairwise.manhattan_distances(query_embed,document_embed)[0][0] # final results will be dimensions (sample query x sample doc) === (1,1)
-    
+        return sklearn.metrics.pairwise.manhattan_distances(
+            query_embed, document_embed
+        )[0][
+            0
+        ]  # final results will be dimensions (sample query x sample doc) === (1,1)
+
     def euclidean_distance(
         self, query: str, document: str
     ) -> Union[float, Tuple[float, Dict[str, str]]]:
@@ -162,8 +183,19 @@ class Embeddings(SerialModel,WithClassInfo):
             - float: the embedding vector distance
         """
         import sklearn
-        query_embed = np.asarray(self._embed_model.get_query_embedding(query)).reshape(1, -1) # sklearn expects 2d array (first dimension number of samples)
-        document_embed = np.asarray(self._embed_model.get_text_embedding(document)).reshape(1, -1) # sklearn expects 2d array (first dimension number of samples)
+        query_embed = np.asarray(
+            self._embed_model.get_query_embedding(query)
+        ).reshape(
+            1, -1
+        )  # sklearn expects 2d array (first dimension number of samples)
+        document_embed = np.asarray(
+            self._embed_model.get_text_embedding(document)
+        ).reshape(
+            1, -1
+        )  # sklearn expects 2d array (first dimension number of samples)
 
-        return sklearn.metrics.pairwise.euclidean_distances(query_embed,document_embed)[0][0] # final results will be dimensions (sample query x sample doc) === (1,1)
-    
+        return sklearn.metrics.pairwise.euclidean_distances(
+            query_embed, document_embed
+        )[0][
+            0
+        ]  # final results will be dimensions (sample query x sample doc) === (1,1)
