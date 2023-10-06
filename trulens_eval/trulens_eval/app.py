@@ -493,11 +493,11 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 # constructor here.
                 f.implementation.load()
 
-    def main_call(self, human: str):
+    def main_call(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.
         raise NotImplementedError()
 
-    async def main_acall(self, human: str):
+    async def main_acall(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.
         raise NotImplementedError()
 

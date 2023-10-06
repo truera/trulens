@@ -223,8 +223,8 @@ class AppUI(traitlets.HasTraits):
         self,
         app: App,
         use_async: bool = False,
-        app_selectors: Optional[List[JSONPath]] = None,
-        record_selectors: Optional[List[JSONPath]] = None
+        app_selectors: Optional[List[Union[str, JSONPath]]] = None,
+        record_selectors: Optional[List[Union[str, JSONPath]]] = None
     ):
         self.use_async = use_async
 
