@@ -9,6 +9,7 @@ from trulens_eval.utils.serial import JSON
 
 
 class ChatRecord(pydantic.BaseModel):
+
     class Config:
         arbitrary_types_allowed = True
 

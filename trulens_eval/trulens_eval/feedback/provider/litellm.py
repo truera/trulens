@@ -38,7 +38,7 @@ class LiteLLM(Provider):
             endpoint (Endpoint): Internal Usage for DB serialization
         """
         import litellm
-        
+
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
