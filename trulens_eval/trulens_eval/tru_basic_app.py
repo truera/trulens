@@ -7,7 +7,7 @@ from inspect import signature
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Callable, ClassVar
+from typing import Callable, ClassVar, Optional
 
 from pydantic import Field
 
@@ -90,7 +90,12 @@ class TruBasicApp(App):
         const=True
     )
 
-    def __init__(self, text_to_text: Callable, **kwargs):
+    def __init__(
+            self,
+            text_to_text: Optional[Callable] = None,
+            app: Optional[TruWrapperApp] = None,
+            **kwargs
+    ):
         """
         Wrap a callable for monitoring.
 
@@ -102,8 +107,12 @@ class TruBasicApp(App):
         """
 
         super().update_forward_refs()
-        app = TruWrapperApp(text_to_text)
-        kwargs['app'] = TruWrapperApp(text_to_text)
+        if text_to_text is not None:
+            app = TruWrapperApp(text_to_text)
+        else:
+            assert app is not None, "Need to provide either `app: TruWrapperApp` or a `text_to_text: Callable`."
+
+        kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
         kwargs['instrument'] = TruBasicCallableInstrument(app=self)
 
@@ -111,6 +120,15 @@ class TruBasicApp(App):
 
         # Setup the DB-related things:
         self.post_init()
+
+    def main_call(self, human: str) -> str:
+        # If available, a single text to a single text invocation of this app.
+        
+        return self.app._call(human)
+
+    async def main_acall(self, human: str) -> str:
+        # If available, a single text to a single text invocation of this app.
+        raise NotImplementedError()
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments

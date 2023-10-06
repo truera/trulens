@@ -258,7 +258,7 @@ class TruChain(App):
 
         out_key = self.app.output_keys[0]
 
-        return self.with_(self.app, human)[out_key]
+        return self.app(human)[out_key]
 
     async def main_acall(self, human: str):
         # If available, a single text to a single text invocation of this app.
