@@ -20,15 +20,22 @@ feature information about the encoded object types in the dictionary under the
 util.py:CLASS_INFO key.
 """
 
-from abc import ABC
 from datetime import datetime
 from enum import Enum
+import json
 import logging
-from typing import Any, ClassVar, Dict, Optional, Sequence, TypeVar, Union
+from pathlib import Path
+from pprint import PrettyPrinter
+from typing import (
+    Any, Callable, ClassVar, Dict, Optional, Sequence, TypeVar, Union
+)
 
+import dill
+import humanize
 from munch import Munch as Bunch
 import pydantic
 
+from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
 from trulens_eval.utils.pyschema import Class
@@ -39,11 +46,13 @@ from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import SerialBytes
 from trulens_eval.utils.serial import SerialModel
 
 T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
+pp = PrettyPrinter()
 
 # Identifier types.
 
@@ -58,6 +67,8 @@ FeedbackResultID = str
 # inspect the contents a little better before unserializaing.
 
 # Record related:
+
+MAX_DILL_SIZE = 1024 * 1024  # 1MB
 
 
 class RecordAppCallMethod(SerialModel):
@@ -417,7 +428,7 @@ class FeedbackMode(str, Enum):
     DEFERRED = "deferred"
 
 
-class AppDefinition(SerialModel, WithClassInfo, ABC):
+class AppDefinition(SerialModel, WithClassInfo):
     # Serialized fields here whereas app.py:App contains
     # non-serialized fields.
 
@@ -446,10 +457,61 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
     # Wrapped app in jsonized form.
     app: JSON
 
+    # EXPERIMENTAL
+    # NOTE: temporary unsafe serialization of function that loads the app:
+    # Dump of the initial app before any invocations. Can be used to create a new session.
+    initial_app_loader_dump: Optional[SerialBytes] = None
+
     # Info to store about the app and to display in dashboard. This is useful if
     # app itself cannot be serialized. `app_extra_json`, then, can stand in place for
     # whatever the user might want to see about the app.
     app_extra_json: JSON
+
+    @staticmethod
+    def continue_session(
+        app_definition_json: JSON, app: Any
+    ) -> 'AppDefinition':
+        # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
+        """
+        Create a copy of the json serialized app with the enclosed app being
+        initialized to its initial state before any records are produced (i.e.
+        blank memory).
+        """
+
+        app_definition_json['app'] = app
+
+        cls = WithClassInfo.get_class(app_definition_json)
+
+        return cls(**app_definition_json)
+
+    @staticmethod
+    def new_session(
+        app_definition_json: JSON,
+        initial_app_loader: Optional[Callable] = None
+    ) -> 'AppDefinition':
+        """
+        Create a copy of the json serialized app with the enclosed app being
+        initialized to its initial state before any records are produced (i.e.
+        blank memory).
+        """
+
+        defn = app_definition_json['initial_app_loader_dump']
+
+        if initial_app_loader is None:
+            assert defn is not None, "Cannot create new session without `initial_app_loader`."
+            serial_bytes = SerialBytes.parse_obj(defn)
+            app = dill.loads(serial_bytes.data)()
+        else:
+            app = initial_app_loader()
+            defn = dill.dumps(initial_app_loader, recurse=True)
+            serial_bytes = SerialBytes(data=defn)
+
+        app_definition_json['app'] = app
+        app_definition_json['initial_app_loader_dump'] = serial_bytes
+
+        cls = WithClassInfo.get_class(app_definition_json)
+
+        return cls(**app_definition_json)
 
     def jsonify_extra(self, content):
         # Called by jsonify for us to add any data we might want to add to the
@@ -493,6 +555,59 @@ class AppDefinition(SerialModel, WithClassInfo, ABC):
         if metadata is None:
             metadata = {}
         self.metadata = metadata
+
+        # EXPERIMENTAL
+        if 'initial_app_loader' in kwargs:
+            try:
+                dump = dill.dumps(kwargs['initial_app_loader'], recurse=True)
+
+                if len(dump) > MAX_DILL_SIZE:
+                    logger.warning(
+                        f"`initial_app_loader` dump is too big ({humanize.naturalsize(len(dump))} > {humanize.naturaldate(MAX_DILL_SIZE)} bytes). "
+                        "If you are loading large objects, include the loading logic inside `initial_app_loader`."
+                    )
+                else:
+                    self.initial_app_loader_dump = SerialBytes(data=dump)
+                    """
+                    path_json = Path.cwd() / f"{app_id}.json"
+                    path_dill = Path.cwd() / f"{app_id}.dill"
+
+                    with path_json.open("w") as fh:
+                        fh.write(json_str_of_obj(self))
+
+                    with path_dill.open("wb") as fh:
+                        fh.write(dump)
+
+                    print(f"Wrote loadable app to {path_json} and {path_dill}.")
+                    """
+
+            except Exception as e:
+                logger.warning(
+                    f"Could not serialize app loader. "
+                    f"Some trulens features may not be available: {e}"
+                )
+
+    @staticmethod
+    def get_loadable_apps():
+        # EXPERIMENTAL
+        """
+        Gets a list of all of the loadable apps. This is those that have
+        `initial_app_loader_dump` set.
+        """
+
+        rets = []
+
+        from trulens_eval import Tru
+
+        tru = Tru()
+
+        apps = tru.get_apps()
+        for app in apps:
+            dump = app['initial_app_loader_dump']
+            if dump is not None:
+                rets.append(app)
+
+        return rets
 
     def dict(self):
         return jsonify(self)

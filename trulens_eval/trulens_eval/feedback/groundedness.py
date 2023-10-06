@@ -12,26 +12,6 @@ from trulens_eval.feedback.provider.openai import OpenAI
 from trulens_eval.utils.generated import re_1_10_rating
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
-"""
-TODO: feedback collections refactor
-
-class FeedbackCollection(SerialModel, WithClassInfo):
-    ...
-
-class Syntax():
-    ...
-
-class Truth():
-    ...
-
-class Relevance():
-    ...
-
-class Safety(RequiresCompletionProvider):
-
-    of_prompt(...) -> ...
-    ...
-"""
 
 logger = logging.getLogger(__name__)
 

@@ -67,8 +67,6 @@ class LiteLLMEndpoint(Endpoint, WithClassInfo):
     def __init__(self, *args, **kwargs):
         import os
 
-        import litellm
-
         kwargs['name'] = "litellm"
         kwargs['callback_class'] = LiteLLMCallback
 
@@ -76,5 +74,3 @@ class LiteLLMEndpoint(Endpoint, WithClassInfo):
         kwargs['obj'] = self
 
         super().__init__(*args, **kwargs)
-
-        self._instrument_module_members(litellm, "completion")

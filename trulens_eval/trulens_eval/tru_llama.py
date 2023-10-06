@@ -6,7 +6,7 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Tuple, Union
+from typing import Any, Callable, ClassVar, Optional, Tuple, Union
 
 from pydantic import Field
 
@@ -286,24 +286,66 @@ class TruLlama(App):
         returned `ret`.
         """
 
+        try:
+            attr = self._main_output_attribute(ret)
+
+            if attr is not None:
+                return getattr(ret, attr)
+            else:  # attr is None
+                return App.main_output(self, func, sig, bindings, ret)
+
+        except NotImplementedError:
+            return None
+
+    def _main_output_attribute(self, ret: Any) -> Optional[str]:
+        """
+        Which attribute in ret contains the main output of this llama_index app.
+        """
+
         if isinstance(ret, Response):  # query, aquery
-            return ret.response
+            return "response"
 
         elif isinstance(ret, AgentChatResponse):  #  chat, achat
-            return ret.response
+            return "response"
 
         elif isinstance(ret, (StreamingResponse, StreamingAgentChatResponse)):
-            logger.warning(
+            raise NotImplementedError(
                 "App produced a streaming response. "
                 "Tracking content of streams in llama_index is not yet supported. "
                 "App main_output will be None."
             )
 
-            return None
+        return None
 
-        else:
+    def main_call(self, human: str):
+        # If available, a single text to a single text invocation of this app.
 
-            return App.main_output(self, func, sig, bindings, ret)
+        ret = self.with_(self.app.query, human)
+
+        try:
+            attr = self._main_output_attribute(ret)
+            assert attr is not None
+            return getattr(ret, attr)
+
+        except Exception:
+            raise NotImplementedError(
+                f"Do not know what in object of type {type(ret).__name__} is the main app output."
+            )
+
+    async def main_acall(self, human: str):
+        # If available, a single text to a single text invocation of this app.
+
+        ret = await self.awith_(self.app.aquery, human).response
+
+        try:
+            attr = self._main_output_attribute(ret)
+            assert attr is not None
+            return getattr(ret, attr)
+
+        except Exception:
+            raise NotImplementedError(
+                f"Do not know what in object of type {type(ret).__name__} is the main app output."
+            )
 
     # TODEP
     # llama_index.chat_engine.types.BaseChatEngine

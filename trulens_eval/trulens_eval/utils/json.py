@@ -27,9 +27,11 @@ from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import ERROR
 from trulens_eval.utils.pyschema import NOSERIO
 from trulens_eval.utils.pyschema import noserio
+from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import SerialBytes
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -76,6 +78,14 @@ def json_default(obj: Any) -> str:
 
 
 ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
+
+
+def jsonify_for_ui(*args, **kwargs):
+    """
+    Options for jsonify common to UI displays. Redact keys and hide special
+    fields.
+    """
+    return jsonify(*args, **kwargs, redact_keys=True, skip_specials=True)
 
 
 # TODO: refactor to somewhere else or change instrument to a generic filter
@@ -132,6 +142,10 @@ def jsonify(
             return redact_value(obj)
         else:
             return obj
+
+    # TODO: remove eventually
+    if isinstance(obj, SerialBytes):
+        return obj.dict()
 
     if isinstance(obj, Path):
         return str(obj)
@@ -253,7 +267,7 @@ def jsonify(
 
     # Add class information for objects that are to be instrumented, known as
     # "components".
-    if instrument.to_instrument_object(obj):
+    if instrument.to_instrument_object(obj) or isinstance(obj, WithClassInfo):
         content[CLASS_INFO] = Class.of_class(
             cls=obj.__class__, with_bases=True
         ).dict()

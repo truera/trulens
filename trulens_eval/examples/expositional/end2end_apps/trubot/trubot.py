@@ -83,7 +83,11 @@ f_qs_relevance = Feedback(openai.qs_relevance).on_input().on(
 # the context sources as passed to an internal `combine_docs_chain._call`.
 
 
-def get_or_make_app(cid: str, selector: int = 0) -> TruChain:
+def get_or_make_app(
+    cid: str,
+    selector: int = 0,
+    feedback_mode=FeedbackMode.DEFERRED
+) -> TruChain:
     """
     Create a new app for the given conversation id `cid` or return an existing
     one. Return the new or existing app. `selector` determines which app
@@ -181,7 +185,7 @@ def get_or_make_app(cid: str, selector: int = 0) -> TruChain:
         chain=app,
         app_id=app_id,
         feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance],
-        feedback_mode=FeedbackMode.DEFERRED
+        feedback_mode=feedback_mode
     )
 
     convos[cid] = tc

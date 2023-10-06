@@ -9,8 +9,9 @@ from traitlets import HasTraits
 from traitlets import Unicode
 
 from trulens_eval.app import App
+from trulens_eval.instruments import Instrument
 from trulens_eval.utils.json import JSON_BASES
-from trulens_eval.utils.json import jsonify
+from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import JSONPath
 
 pp = PrettyPrinter()
@@ -59,7 +60,10 @@ class SelectorValue(HasTraits):
     selector = traitlets.Any()
     obj = traitlets.Any()
 
-    def __init__(self, selector: Selector, stdout_display: widgets.Output):
+    def __init__(
+        self, selector: Selector, stdout_display: widgets.Output,
+        instrument: Instrument
+    ):
         self.selector = selector
         self.obj = None
 
@@ -72,6 +76,11 @@ class SelectorValue(HasTraits):
 
         self.selector.observe(self.update_selector, "jpath")
         self.observe(self.update_obj, "obj")
+
+        self.instrument = instrument
+
+    def _jsonify(self, obj):
+        return jsonify_for_ui(obj=obj, instrument=self.instrument)
 
     def update_selector(self, ev):
         self.update()
@@ -96,7 +105,7 @@ class SelectorValue(HasTraits):
                     for inner_obj in jpath(obj):
                         inner_class = type(inner_obj)
                         inner_obj_id = id(inner_obj)
-                        inner_obj = jsonify(inner_obj)
+                        inner_obj = self._jsonify(inner_obj)
 
                         ret_html += f"<div>({inner_class.__name__} at 0x{inner_obj_id:x}): "  # as {type(inner_obj).__name__}): "
 
@@ -131,11 +140,12 @@ class SelectorValue(HasTraits):
         self.w_listing.value = f"<div>{ret_html}</div>"
 
 
-class RecordWiget():
+class RecordWidget():
 
     def __init__(
         self,
         record_selections,
+        instrument: Instrument,
         record=None,
         human_or_input=None,
         stdout_display: widgets.Output = None
@@ -157,6 +167,8 @@ class RecordWiget():
         self.human = ""
         self.comp = ""
 
+        self.instrument = instrument
+
         self.d = widgets.VBox(
             [self.w_human, self.d_comp, self.d_extras],
             layout={
@@ -169,7 +181,9 @@ class RecordWiget():
         for s in self.record_selections:
             if s not in self.record_values:
                 sv = SelectorValue(
-                    selector=s, stdout_display=self.stdout_display
+                    selector=s,
+                    stdout_display=self.stdout_display,
+                    instrument=self.instrument
                 )
                 self.record_values[s] = sv
                 self.d_extras.children += (sv.w,)
@@ -245,10 +259,11 @@ class AppUI(traitlets.HasTraits):
         self.app_selections = {}
         self.record_selections = []
 
-        self.current_record = RecordWiget(
+        self.current_record = RecordWidget(
             record_selections=self.record_selections,
             human_or_input=self.main_input,
-            stdout_display=self.display_stdout
+            stdout_display=self.display_stdout,
+            instrument=self.app.instrument
         )
         self.current_record_record = None
 
@@ -285,7 +300,7 @@ class AppUI(traitlets.HasTraits):
 
         self.display_top.children += (self.current_record.d,)
 
-        self.d = widgets.VBox(
+        self.widget = widgets.VBox(
             [
                 widgets.HBox(
                     [
@@ -343,7 +358,11 @@ class AppUI(traitlets.HasTraits):
                 make_on_delete=self.make_on_delete_app_selector
             )
 
-        sw = SelectorValue(selector=sel, stdout_display=self.display_stdout)
+        sw = SelectorValue(
+            selector=sel,
+            stdout_display=self.display_stdout,
+            instrument=self.app.instrument
+        )
         self.app_selections[sel] = sw
         sw.obj = self.app
 
@@ -414,10 +433,11 @@ class AppUI(traitlets.HasTraits):
 
         self.update_app_selections()
 
-        self.current_record = RecordWiget(
+        self.current_record = RecordWidget(
             record_selections=self.record_selections,
             human_or_input=self.main_input,
-            stdout_display=self.display_stdout
+            stdout_display=self.display_stdout,
+            instrument=self.app.instrument
         )
         self.records.append(self.current_record)
         self.display_top.children += (self.current_record.d,)

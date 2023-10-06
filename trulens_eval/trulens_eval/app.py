@@ -16,6 +16,7 @@ from typing import (
     Tuple, Type
 )
 
+import dill
 import pydantic
 from pydantic import Field
 
@@ -37,6 +38,7 @@ from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import callable_name
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
+from trulens_eval.utils.pyschema import ObjSerial
 from trulens_eval.utils.serial import all_objects
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON

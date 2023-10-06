@@ -10,7 +10,8 @@ from ast import parse
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, TypeVar, Union
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple,
+    TypeVar, Union
 )
 
 from merkle_json import MerkleJson
@@ -73,6 +74,26 @@ class SerialModel(pydantic.BaseModel):
             setattr(self, k, v)
 
         return self
+
+
+class SerialBytes(pydantic.BaseModel):
+    # Raw data that we want to nonetheless serialize .
+    data: bytes
+
+    def dict(self):
+        import base64
+        encoded = base64.b64encode(self.data)
+        return dict(data=encoded)
+
+    @classmethod
+    def parse_obj(cls, d: Any):
+        import base64
+
+        if isinstance(d, Dict):
+            encoded = d['data']
+            return SerialBytes(data=base64.b64decode(encoded))
+        else:
+            raise ValueError(d)
 
 
 # JSONPath, a container for selector/accessors/setters of data stored in a json
@@ -387,7 +408,7 @@ class ParseException(Exception):
         self.exp_ast = exp_ast
 
     def __str__(self):
-        return f"Failed to parse expression `{self.exp_string}` as a `JSONPath`.\n{dump(self.exp_ast)}"
+        return f"Failed to parse expression `{self.exp_string}` as a `JSONPath`.\n{dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
 
 
 class JSONPath(SerialModel):
