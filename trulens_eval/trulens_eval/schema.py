@@ -509,9 +509,9 @@ class AppDefinition(SerialModel, WithClassInfo):
         app_definition_json['app'] = app
         app_definition_json['initial_app_loader_dump'] = serial_bytes
 
-        cls = WithClassInfo.get_class(app_definition_json)
+        cls: Type[App] = WithClassInfo.get_class(app_definition_json)
 
-        return cls(**app_definition_json)
+        return cls.parse_obj(app_definition_json)
 
     def jsonify_extra(self, content):
         # Called by jsonify for us to add any data we might want to add to the
@@ -568,6 +568,13 @@ class AppDefinition(SerialModel, WithClassInfo):
                     )
                 else:
                     self.initial_app_loader_dump = SerialBytes(data=dump)
+
+
+                    # This is an older serialization approach that saved things
+                    # in local files instead of the DB. Leaving here for now as
+                    # serialization of large apps might make this necessary
+                    # again.
+
                     """
                     path_json = Path.cwd() / f"{app_id}.json"
                     path_dill = Path.cwd() / f"{app_id}.dill"

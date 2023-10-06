@@ -199,14 +199,14 @@ import inspect
 from inspect import signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Optional, Set
+from typing import Any, Callable, ClassVar, Optional, Set, Union
 
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.instruments import instrument as base_instrument
-from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import Class, Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.serial import JSONPath
 from trulens_eval.utils.text import UNICODE_CHECK
@@ -290,8 +290,10 @@ class TruCustomApp(App):
     # how to let the TruCustomApp constructor know where these methods are.
     functions_to_instrument: ClassVar[Set[Callable]] = set([])
 
-    main_method: Optional[Callable] = Field(exclude=True)
-    main_async_method: Optional[Callable] = Field(exclude=True)
+    main_method: Optional[Function] = None # serialized version of the below
+    main_method_loaded: Optional[Callable] = Field(exclude=True) 
+
+    # main_async_method: Optional[Union[Callable, Method]] = None # = Field(exclude=True)
 
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs):
         """
@@ -307,11 +309,58 @@ class TruCustomApp(App):
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
 
-        kwargs['instrument'] = Instrument(
+        instrument = Instrument(
             app=self  # App mixes in WithInstrumentCallbacks
         )
+        kwargs['instrument'] = instrument
 
+        if 'main_method' in kwargs:
+            main_method = kwargs['main_method']
+
+            # TODO: ARGPARSE
+            if isinstance(main_method, dict):
+                main_method = Function(**main_method)
+
+            if isinstance(main_method, Function):
+                main_method_loaded = main_method.load()
+                main_name = main_method.name
+
+                cls = main_method.cls.load()
+                mod = main_method.module.load().__name__
+
+            else:
+                main_name = main_method.__name__
+                main_method_loaded = main_method
+
+                if not hasattr(main_method_loaded, "__self__"):
+                    raise ValueError("Please specify `main_method` as a bound method (like `someapp.somemethod` instead of `Someclass.somemethod`).")
+
+                app_self = main_method_loaded.__self__
+
+                assert app_self == app, "`main_method`'s bound self must be the same as `app`."
+
+                cls = app_self.__class__
+                mod = cls.__module__
+
+            instrument.include_modules.add(mod)
+            instrument.include_classes.add(cls)
+            instrument.include_methods[main_name] = lambda o: isinstance(o, cls)
+
+        # This does instrumentation:
         super().__init__(**kwargs)
+
+        # Needed to split this part to after the instrumentation so that the
+        # getattr below gets the instrumented version of main method.
+        if 'main_method' in kwargs:
+            # Set main_method to the unbound version. Will be passing in app for
+            # "self" manually when needed.
+            main_method_loaded = getattr(cls, main_name)
+
+            # This will be serialized as part of this TruCustomApp. Importatly, it is unbound.
+            main_method = Function.of_function(main_method_loaded, cls=cls)
+
+            self.main_method = main_method
+            self.main_method_loaded = main_method_loaded
 
         methods_to_instrument = methods_to_instrument or dict()
 
@@ -399,6 +448,8 @@ class TruCustomApp(App):
         # A message for cases where a user calls something that the wrapped
         # app has but we do not wrap yet.
 
+        print(__name)
+
         if hasattr(self.app, __name):
             return RuntimeError(
                 f"TruCustomApp has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
@@ -410,16 +461,18 @@ class TruCustomApp(App):
             )
 
     def main_call(self, human: str):
-        if self.main_method is None:
+        if self.main_method_loaded is None:
             raise RuntimeError(
                 "`main_method` was not specified so we do not know how to run this app."
             )
 
-        sig = signature(self.main_method)
+        sig = signature(self.main_method_loaded)
         bindings = sig.bind(self.app, human)  # self.app is app's "self"
 
-        return self.with_(self.main_method, *bindings.args, **bindings.kwargs)
+        return self.main_method_loaded(*bindings.args, **bindings.kwargs)
 
+    """
+    # Async work ongoing:
     async def main_acall(self, human: str):
         # TODO: work in progress
 
@@ -433,11 +486,10 @@ class TruCustomApp(App):
         sig = signature(self.main_async_method)
         bindings = sig.bind(self.app, human)  # self.app is app's "self"
 
-        generator = await self.awith_(
-            self.main_async_method, *bindings.args, **bindings.kwargs
-        )
+        generator = await self.main_async_method(*bindings.args, **bindings.kwargs)
 
         return generator
+    """
 
 
 class instrument(base_instrument):
