@@ -27,7 +27,7 @@ from trulens_eval.db import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
-from trulens_eval.utils.json import jsonify
+from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import JSONPath
 from trulens_eval.ux.components import draw_agent_info
 from trulens_eval.ux.components import draw_call
@@ -51,10 +51,6 @@ tru = Tru()
 lms = tru.db
 
 df_results, feedback_cols = lms.get_records_and_feedback([])
-
-
-def jsonify_for_ui(*args, **kwargs):
-    return jsonify(*args, **kwargs, redact_keys=True, skip_specials=True)
 
 
 def render_component(query, component, header=True):

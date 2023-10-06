@@ -148,6 +148,11 @@ class SqlAlchemyDB(DB):
                                                                  ).first():
                 return json.loads(_app.app_json)
 
+    def get_apps(self) -> Iterable[JSON]:
+        with self.Session.begin() as session:
+            for _app in session.query(orm.AppDefinition):
+                yield json.loads(_app.app_json)
+
     def insert_app(self, app: schema.AppDefinition) -> schema.AppID:
         # TODO: thread safety
 
