@@ -8,6 +8,8 @@ various langchain classes and example classes:
 
 from typing import List, Type
 
+from concurrent.futures import wait
+
 from trulens_eval import app
 from trulens_eval.feedback import Feedback
 from trulens_eval.utils.containers import first
@@ -128,7 +130,9 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
             ) for doc in docs
         )
 
-        results = list((doc, promise.result()) for (doc, promise) in futures)
+        wait([future for (_, future) in futures])
+
+        results = list((doc, future.result()) for (doc, future) in futures)
         filtered = map(first, filter(second, results))
 
         # Return only the filtered ones.

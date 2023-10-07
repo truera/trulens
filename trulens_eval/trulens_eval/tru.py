@@ -1,3 +1,4 @@
+from concurrent import futures
 import logging
 from multiprocessing import Process
 import os
@@ -114,9 +115,8 @@ class Tru(SingletonPerName):
 
         if database_file:
             warnings.warn(
-                DeprecationWarning(
-                    "`database_file` is deprecated, use `database_url` instead as in `database_url='sqlite:///filename'."
-                )
+                "`database_file` is deprecated, use `database_url` instead as in `database_url='sqlite:///filename'.",
+                DeprecationWarning, stacklevel=2
             )
 
         if database_url is None:
@@ -183,7 +183,7 @@ class Tru(SingletonPerName):
         record: Record,
         feedback_functions: Sequence[Feedback],
         app: Optional[AppDefinition] = None,
-    ) -> Sequence[JSON]:
+    ) -> Iterable[JSON]:
         """
         Run a collection of feedback functions and report their result.
 
@@ -222,14 +222,16 @@ class Tru(SingletonPerName):
 
         evals = []
 
+        tp = TP()
+
         for func in feedback_functions:
             evals.append(
-                TP().promise(lambda f: f.run(app=app, record=record), func)
+                tp.submit_robust(lambda f: f.run(app=app, record=record), func)
             )
 
-        evals = map(lambda p: p.get(), evals)
+        for res in futures.as_completed(evals):
+            yield res.result()
 
-        return list(evals)
 
     def add_app(self, app: AppDefinition) -> None:
         """

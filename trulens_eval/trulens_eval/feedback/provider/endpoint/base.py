@@ -10,6 +10,7 @@ from types import ModuleType
 from typing import (
     Any, Awaitable, Dict, Optional, Sequence, Tuple, Type, TypeVar
 )
+import warnings
 
 import pydantic
 import requests
@@ -843,7 +844,8 @@ class DummyEndpoint(Endpoint):
     def post(
         self, url: str, payload: JSON, timeout: Optional[int] = None
     ) -> Any:
-        # classification results only, like from huggingface
+        # Classification results only, like from huggingface. Simulates
+        # overloaded, model loading, frozen, error.
 
         self.pace_me()
 
@@ -855,13 +857,32 @@ class DummyEndpoint(Endpoint):
         """
 
         if self.is_loading:
-            # "model loading message"
+            # First response is always the model loading message. Randomly
+            # reverts to loading as well.
             j = dict(estimated_time=1.2345)
             self.is_loading = False
-        elif random.randint(a=0, b=50) == 0:
-            # randomly overloaded
-            j = dict(error="overloaded")
 
+        elif random.randint(a=0, b=100) < 1:
+            # 1% chance to never return.
+            while True:
+                sleep(10000000)
+
+        elif random.randint(a=0, b=100-1) < 1:
+            # 1% chance to produce exception.
+
+            raise RuntimeError("Simulated error happened.")
+
+        elif random.randint(a=0, b=100-1-1) < 5:
+            # 5% chance to revert to loading message.
+
+            j = dict(estimated_time=1.2345)
+            self.is_loading = False
+
+        elif random.randint(a=0, b=100-1-1-5) <= 5:
+            # 5% chance to say api is overloaded.
+
+            j = dict(error="overloaded")
+        
         else:
             # otherwise a constant success
 
@@ -886,15 +907,14 @@ class DummyEndpoint(Endpoint):
         # how long to wait:
         if "estimated_time" in j:
             wait_time = j['estimated_time']
-            logger.error(f"Waiting for {j} ({wait_time}) second(s).")
+            warnings.warn(f"Waiting for {j} ({wait_time}) second(s).", ResourceWarning, stacklevel=2)
             sleep(wait_time + 2)
             return self.post(url, payload)
 
         if isinstance(j, Dict) and "error" in j:
             error = j['error']
-            logger.error(f"API error: {j}.")
             if error == "overloaded":
-                logger.error("Waiting for overloaded API before trying again.")
+                warnings.warn("Waiting for overloaded API before trying again.", ResourceWarning, stacklevel=2)
                 sleep(10)
                 return self.post(url, payload)
             else:

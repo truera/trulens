@@ -735,6 +735,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 meta=jsonify(record_metadata)
             )
 
+        tp = TP()
+
         # Finishing record needs to be done in a thread lock, done there:
         record = ctx.finish_record(build_record)
 
@@ -744,7 +746,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
             elif self.feedback_mode in [FeedbackMode.DEFERRED,
                                         FeedbackMode.WITH_APP_THREAD]:
-                TP().runlater(self._handle_error, record=record, error=error)
+                tp.submit_robust(self._handle_error, record=record, error=error)
 
             raise error
 
@@ -753,7 +755,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         elif self.feedback_mode in [FeedbackMode.DEFERRED,
                                     FeedbackMode.WITH_APP_THREAD]:
-            TP().runlater(self._handle_record, record=record)
+            tp.submit_robust(self._handle_record, record=record)
 
         return record
 
@@ -902,10 +904,14 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         Write out record-related info to database if set.
         """
 
+        print("entering _handle_record")
+
         if self.tru is None or self.feedback_mode is None:
             return
 
+        print("adding record")
         record_id = self.tru.add_record(record=record)
+        print("done")
 
         if len(self.feedbacks) == 0:
             return
@@ -924,11 +930,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         elif self.feedback_mode in [FeedbackMode.WITH_APP,
                                     FeedbackMode.WITH_APP_THREAD]:
 
-            results = self.tru.run_feedback_functions(
+            for result in self.tru.run_feedback_functions(
                 record=record, feedback_functions=self.feedbacks, app=self
-            )
-
-            for result in results:
+            ):
                 self.tru.add_feedback(result)
 
     def _handle_error(self, record: Record, error: Exception):
