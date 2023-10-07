@@ -62,7 +62,7 @@ class OpenAI(LLMProvider):
         
         if 'model' not in kwargs:
             kwargs['model'] = self.model_engine
-            
+
         if 'temperature' not in kwargs:
             kwargs['temperature'] = 0.0
         
@@ -118,7 +118,7 @@ class OpenAI(LLMProvider):
             hate".
         """
         openai_response = self._moderation(text)
-        return 1 - float(
+        return 1.0 - float(
             openai_response["results"][0]["category_scores"]["hate"]
         )
 
@@ -147,7 +147,7 @@ class OpenAI(LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return 1 - int(
+        return 1.0 - float(
             openai_response["results"][0]["category_scores"]["hate/threatening"]
         )
 
@@ -176,7 +176,7 @@ class OpenAI(LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return 1 - int(
+        return 1 - float(
             openai_response["results"][0]["category_scores"]["self-harm"]
         )
 
@@ -206,7 +206,7 @@ class OpenAI(LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return 1 - int(
+        return 1 - float(
             openai_response["results"][0]["category_scores"]["sexual"]
         )
 
@@ -264,7 +264,7 @@ class OpenAI(LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return 1 - int(
+        return 1 - float(
             openai_response["results"][0]["category_scores"]["violence"]
         )
 
@@ -293,7 +293,7 @@ class OpenAI(LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return 1 - int(
+        return 1 - float(
             openai_response["results"][0]["category_scores"]["violence/graphic"]
         )
 
@@ -320,7 +320,6 @@ class AzureOpenAI(OpenAI):
         openai_provider = AzureOpenAI(deployment_id="...")
 
         ```
-
 
         Args:
             model_engine (str, optional): The specific model version. Defaults to "gpt-35-turbo".

@@ -390,7 +390,7 @@ class LLMProvider(Provider, ABC):
         agreement_txt = self._get_answer_agreement(
             prompt, response, chat_response
         )
-        return re_1_10_rating(agreement_txt) / 10
+        return re_1_10_rating(agreement_txt) / 10.0
 
     def _langchain_evaluate(self, text: str, system_prompt: str) -> float:
         """
@@ -411,7 +411,7 @@ class LLMProvider(Provider, ABC):
                 prompt=system_prompt
             )
             )
-        ) / 10
+        ) / 10.0
 
     def conciseness(self, text: str) -> float:
         """
