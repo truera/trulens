@@ -904,14 +904,10 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         Write out record-related info to database if set.
         """
 
-        print("entering _handle_record")
-
         if self.tru is None or self.feedback_mode is None:
             return
-
-        print("adding record")
+        
         record_id = self.tru.add_record(record=record)
-        print("done")
 
         if len(self.feedbacks) == 0:
             return

@@ -9,7 +9,7 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from queue import Queue
-from typing import Any, Callable, Dict, Hashable, Optional, Sequence, TypeVar
+from typing import Any, Callable, Dict, Hashable, Iterator, Optional, Sequence, TypeVar
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -139,6 +139,8 @@ def _future_target_wrapper(stack, func, *args, **kwargs):
     the stack and need to do this to the frames prior to thread starts.
     """
 
+    # TODO: See if threading.stack_size([size]) can be used instead.
+    
     # Keep this for looking up via get_first_local_in_call_stack .
     pre_start_stack = stack
 

@@ -40,10 +40,10 @@ class TP(SingletonPerName):  # "thread processing"
     # Store here stacks of calls to various thread starting methods so that we
     # can retrieve the trace of calls that caused a thread to start.
 
-    MAX_THREADS = 99999999
+    MAX_THREADS = 128
 
     # How long to wait for any task before restarting it.
-    ROBUST_TIMEOUT = 5.0
+    ROBUST_TIMEOUT = 60.0
 
     # How many times to restart a failed or timed-out task.
     ROBUST_RETRIES = 3
@@ -116,6 +116,7 @@ class TP(SingletonPerName):  # "thread processing"
         return self.submit(func, *args, **kwargs)
     
     def submit(self, func: Callable[..., T], *args, **kwargs) -> 'Future[T]':
+        """
         nonfull = False
 
         while not nonfull:
@@ -124,9 +125,10 @@ class TP(SingletonPerName):  # "thread processing"
             if not nonfull:
                 sleep(1)
 
-        future = self._thread_starter(func, args, kwargs)
-
         print(f"add {func.__name__}")
+        """
+        
+        future = self._thread_starter(func, args, kwargs)
 
         with self.futures_lock:
             self.futures.add(future)
@@ -140,13 +142,21 @@ class TP(SingletonPerName):  # "thread processing"
             retries: int = TP.ROBUST_RETRIES
 
             res = None
+            future = self._thread_starter(func, args, kwargs)
+
             while res is None and retries > 0:
                 try:
-                    future = self._thread_starter(func, args, kwargs)
+                    
                     res = future.result(timeout=TP.ROBUST_TIMEOUT)
 
                 except TimeoutError as e:
                     logger.warning(f"Run of {func.__name__} in {threading.current_thread()} timed out. retries={retries}.")
+
+                    #with self.futures_lock:
+                    #    self.futures.remove(future)
+
+                    future.cancel()
+                    future = self._thread_starter(func, args, kwargs)
 
                     res = None
                     retries -= 1
@@ -157,6 +167,12 @@ class TP(SingletonPerName):  # "thread processing"
                 # TODO: limit this to API/resource errors, don't include user errors that will always fail.
                 except Exception as e:
                     logger.warning(f"Run of {func.__name__} in {threading.current_thread()} failed with {e}. retries={retries}.")
+
+                    #with self.futures_lock:
+                    #    self.futures.remove(future)
+
+                    future.cancel()
+                    future = self._thread_starter(func, args, kwargs)
 
                     res = None
                     retries -= 1
@@ -182,26 +198,27 @@ class TP(SingletonPerName):  # "thread processing"
 
                 print(f"waiting for {len(futures)} futures")
 
-                for f in as_completed(futures):
-                    print(f"remove {f}")
-                    
+                for f in as_completed(futures, timeout=1):
+                    # print(f"remove {f}")
+
                     with self.futures_lock:
                         self.futures.remove(f)
     
-                        try:
-                            f.result()
-                            self.completed_tasks += 1
+                    try:
+                        f.result()
+                        self.completed_tasks += 1
 
-                        except TimeoutError:
-                            logger.warning(f"Run of {f} timed out.")
-                            self.timedout_tasks += 1
-                            
-                        except Exception as e:
-                            logger.warning(f"Run of {f} failed with {e}.")
-                            self.failed_tasks += 1
+                    except TimeoutError:
+                        logger.warning(f"Run of {f} timed out.")
+                        self.timedout_tasks += 1
+                        
+                    except Exception as e:
+                        logger.warning(f"Run of {f} failed with {e}.")
+                        self.failed_tasks += 1
 
             except TimeoutError as e:
-                print(e)
+                # print(e)
+                pass
 
             #for f in self.thread_pool.
             #    self.finish()
