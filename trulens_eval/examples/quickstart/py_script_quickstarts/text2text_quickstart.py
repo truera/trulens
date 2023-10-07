@@ -10,7 +10,7 @@
 # In[ ]:
 
 
-# ! pip install trulens_eval==0.15.1
+# ! pip install trulens_eval==0.14.0
 
 
 # ## Setup
