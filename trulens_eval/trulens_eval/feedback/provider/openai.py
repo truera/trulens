@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Dict, Mapping, Optional, Sequence
 
 import openai
 
@@ -16,7 +17,8 @@ logger = logging.getLogger(__name__)
 class OpenAI(LLMProvider):
     """Out of the box feedback functions calling OpenAI APIs.
     """
-    model_engine: str
+    # model_engine: str # LLMProvider
+
     endpoint: Endpoint
 
     def __init__(
@@ -29,10 +31,9 @@ class OpenAI(LLMProvider):
         Create an OpenAI Provider with out of the box feedback functions.
 
         **Usage:**
-        ```
+        ```python
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
-
         ```
 
         Args:
@@ -51,8 +52,42 @@ class OpenAI(LLMProvider):
 
         set_openai_key()
 
-    def _create_chat_completion(self, *args, **kwargs):
-        return openai.ChatCompletion.create(*args, **kwargs)
+    # LLMProvider requirement
+    def _create_chat_completion(
+        self,
+        prompt: Optional[str] = None,
+        messages: Optional[Sequence[Dict]] = None,
+        **kwargs
+    ) -> str:
+        
+        if 'model' not in kwargs:
+            kwargs['model'] = self.model_engine
+            
+        if 'temperature' not in kwargs:
+            kwargs['temperature'] = 0.0
+        
+        if prompt is not None:
+            comp = openai.ChatCompletion.create(
+                messages=[
+                            {
+                                "role": "system",
+                                "content":  prompt
+                            }
+                       ],
+                **kwargs
+            )
+        elif messages is not None:
+            comp = openai.ChatCompletion.create(
+                messages = messages,
+                **kwargs
+            )
+
+        else:
+            raise ValueError("`prompt` or `messages` must be specified.")
+
+        assert isinstance(comp, dict)
+
+        return comp["choices"][0]["message"]["content"]
 
     def _moderation(self, text: str):
         return self.endpoint.run_me(

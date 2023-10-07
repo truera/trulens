@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional, Sequence, Tuple, Union
 import logging
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
@@ -28,6 +28,8 @@ class Provider(SerialModel, WithClassInfo):
 
 class LLMProvider(Provider, ABC):
 
+    model_engine: str
+
     def __init__(
         self, *args, **kwargs
     ):
@@ -44,7 +46,12 @@ class LLMProvider(Provider, ABC):
         )  # need to include pydantic.BaseModel.__init__
 
     @abstractmethod
-    def _create_chat_completion(self, prompt, *args, **kwargs):
+    def _create_chat_completion(
+        self,
+        prompt: Optional[str] = None,
+        messages: Optional[Sequence[Dict]] = None,
+        **kwargs
+    ) -> str:
         """
         Chat Completion Model
 
@@ -54,19 +61,18 @@ class LLMProvider(Provider, ABC):
         # text
         pass
 
-    def _find_relevant_string(self, full_source, hypothesis):
+    def _find_relevant_string(self, full_source: str, hypothesis: str) -> str:
         return self.endpoint.run_me(
             lambda: self._create_chat_completion(
-                model=self.model_engine,
                 prompt = 
-                            str.format(
-                                prompts.SYSTEM_FIND_SUPPORTING,
-                                prompt=full_source,
-                            ) + "\n" +
-                            str.format(
-                                prompts.USER_FIND_SUPPORTING,
-                                response=hypothesis
-                            )
+                    str.format(
+                        prompts.SYSTEM_FIND_SUPPORTING,
+                        prompt=full_source,
+                    ) + "\n" +
+                    str.format(
+                        prompts.USER_FIND_SUPPORTING,
+                        response=hypothesis
+                    )
             )
         )
 
@@ -82,17 +88,15 @@ class LLMProvider(Provider, ABC):
             float: Information Overlap
         """
         return re_1_10_rating(
-            self.endpoint.run_me(lambda: 
-            self._create_chat_completion(
-                    prompt=
-                                str.format(
-                                    prompts.LLM_GROUNDEDNESS,
-                                    premise=premise,
-                                    hypothesis=hypothesis,
-                                )
+            self.endpoint.run_me(lambda: self._create_chat_completion(
+                prompt=
+                    str.format(
+                        prompts.LLM_GROUNDEDNESS,
+                        premise=premise,
+                        hypothesis=hypothesis,
+                    )
                 )
-            ) / 10
-        )
+             )) / 10
             
     def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
         """An LLM prompt using the entire document for premise and entire statement document for hypothesis
@@ -104,21 +108,25 @@ class LLMProvider(Provider, ABC):
         Returns:
             str: An LLM response using a scorecard template
         """
-        return self.endpoint.run_me(lambda:
-                                    self._create_chat_completion(
+        return self.endpoint.run_me(
+            lambda: self._create_chat_completion(
                 prompt=
-                            str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) + 
-                            str.format(
-                                prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
-                                premise=premise,
-                                hypothesis=hypothesis
-                            )
+                    str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) + 
+                    str.format(
+                        prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
+                        premise=premise,
+                        hypothesis=hypothesis
+                    )
             )
         )
 
     def _extract_score_and_reasons_from_response(
-        self, system_prompt: str, user_prompt: str = None, normalize=10
-    ):
+        self,
+        system_prompt: str,
+        user_prompt: Optional[str] = None,
+        normalize: float = 10.0
+    ) -> Union[float, Tuple[float, Dict]]:
+        
         """Extractor for our LLM prompts. If CoT is used; it will look for "Supporting Evidence" template.
         Otherwise, it will look for the typical 1-10 scoring.
 
@@ -134,8 +142,8 @@ class LLMProvider(Provider, ABC):
 
         response = self.endpoint.run_me(
             lambda: self._create_chat_completion(
-                model=self.model_engine, temperature=0.0, messages=llm_messages
-            )["choices"][0]["message"]["content"]
+                messages=llm_messages
+            )
         )
         if "Supporting Evidence" in response:
             score = 0
@@ -176,14 +184,14 @@ class LLMProvider(Provider, ABC):
             self.endpoint.run_me(lambda:
                 self._create_chat_completion(
                     prompt=
-                                str.format(
-                                    prompts.QS_RELEVANCE,
-                                    question=question,
-                                    statement=statement
-                                )
+                        str.format(
+                            prompts.QS_RELEVANCE,
+                            question=question,
+                            statement=statement
+                        )
                 )
-            ) / 10
-        )
+            )) / 10
+
     def qs_relevance_with_cot_reasons(
         self, question: str, statement: str
     ) -> float:
@@ -222,7 +230,7 @@ class LLMProvider(Provider, ABC):
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
         return self.endpoint.run_me(
-            lambda:self._extract_score_and_reasons_from_response(system_prompt)
+            lambda: self._extract_score_and_reasons_from_response(system_prompt)
         )
 
     def relevance(self, prompt: str, response: str) -> float:
@@ -254,17 +262,13 @@ class LLMProvider(Provider, ABC):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
             "relevant".
         """
-        return re_1_10_rating(
-            self.endpoint.run_me(lambda:
-            self._create_chat_completion(prompt = 
-                                str.format(
-                                    prompts.PR_RELEVANCE,
-                                    prompt=prompt,
-                                    response=response
-                                )
-                )
-            )
-        ) / 10
+        return re_1_10_rating(self.endpoint.run_me(lambda:self._create_chat_completion(
+            prompt = str.format(
+                        prompts.PR_RELEVANCE,
+                        prompt=prompt,
+                        response=response
+                    )
+                ))) / 10
     
     def relevance_with_cot_reasons(self, prompt: str, response: str) -> float:
         """
