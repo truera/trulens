@@ -6,7 +6,7 @@ from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import BedrockEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.utils.generated import re_1_10_rating
+from trulens_eval.utils.generated import re_0_10_rating
 
 import json
 

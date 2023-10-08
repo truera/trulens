@@ -9,7 +9,7 @@ from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.keys import set_openai_key
-from trulens_eval.utils.generated import re_1_10_rating
+from trulens_eval.utils.generated import re_0_10_rating
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +90,7 @@ class OpenAI(LLMProvider):
         return comp["choices"][0]["message"]["content"]
 
     def _moderation(self, text: str):
+        # See https://platform.openai.com/docs/guides/moderation/overview .
         return self.endpoint.run_me(
             lambda: openai.Moderation.create(input=text)
         )
@@ -101,21 +102,22 @@ class OpenAI(LLMProvider):
         speech.
 
         **Usage:**
-        ```
+        ```python
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
         feedback = Feedback(openai_provider.moderation_not_hate).on_output() 
         ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "hate" and 1 being "not
-            hate".
+            float: A value between 0.0 (hate) and 1.0 (not hate).
         """
         openai_response = self._moderation(text)
         return 1.0 - float(
@@ -129,21 +131,22 @@ class OpenAI(LLMProvider):
         threatening speech.
 
         **Usage:**
-        ```
+        ```python
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
         feedback = Feedback(openai_provider.moderation_not_hatethreatening).on_output() 
         ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "threatening" and 1 being
-            "not threatening".
+            float: A value between 0.0 (threatening) and 1.0 (not threatening).
         """
         openai_response = self._moderation(text)
 
@@ -158,25 +161,26 @@ class OpenAI(LLMProvider):
         self harm.
 
         **Usage:**
-        ```
+        ```python
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
         feedback = Feedback(openai_provider.moderation_not_selfharm).on_output() 
         ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "self harm" and 1 being "not
-            self harm".
+            float: A value between 0.0 (self harm) and 1.0 (not self harm).
         """
         openai_response = self._moderation(text)
 
-        return 1 - float(
+        return 1.0 - float(
             openai_response["results"][0]["category_scores"]["self-harm"]
         )
 
@@ -187,26 +191,26 @@ class OpenAI(LLMProvider):
         speech.
 
         **Usage:**
-        ```
+        ```python
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
         feedback = Feedback(openai_provider.moderation_not_sexual).on_output() 
-        ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
+        ```
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
         
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "sexual" and 1 being "not
-            sexual".
+            float: A value between 0.0 (sexual) and 1.0 (not sexual).
         """
         openai_response = self._moderation(text)
 
-        return 1 - float(
+        return 1.0 - float(
             openai_response["results"][0]["category_scores"]["sexual"]
         )
 
@@ -217,25 +221,28 @@ class OpenAI(LLMProvider):
         sexual minors.
 
         **Usage:**
-        ```
+        ```python
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
         feedback = Feedback(openai_provider.moderation_not_sexualminors).on_output() 
         ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "sexual minors" and 1 being
-            "not sexual minors".
+            float: A value between 0.0 (sexual minors) and 1.0 (not sexual
+            minors).
         """
+
         openai_response = self._moderation(text)
 
-        return 1 - int(
+        return 1 - float(
             openai_response["results"][0]["category_scores"]["sexual/minors"]
         )
 
@@ -246,25 +253,26 @@ class OpenAI(LLMProvider):
         violence.
 
         **Usage:**
-        ```
+        ```python
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
         feedback = Feedback(openai_provider.moderation_not_violence).on_output() 
+
         ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "violence" and 1 being "not
-            violence".
+            float: A value between 0.0 (violence) and 1.0 (not violence).
         """
         openai_response = self._moderation(text)
 
-        return 1 - float(
+        return 1.0 - float(
             openai_response["results"][0]["category_scores"]["violence"]
         )
 
@@ -275,25 +283,27 @@ class OpenAI(LLMProvider):
         graphic violence.
 
         **Usage:**
-        ```
+        ```python
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
 
         feedback = Feedback(openai_provider.moderation_not_violencegraphic).on_output() 
         ```
-        The `on_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "graphic violence" and 1
-            being "not graphic violence".
+            float: A value between 0.0 (graphic violence) and 1.0 (not graphic
+            violence).
         """
         openai_response = self._moderation(text)
 
-        return 1 - float(
+        return 1.0 - float(
             openai_response["results"][0]["category_scores"]["violence/graphic"]
         )
 
