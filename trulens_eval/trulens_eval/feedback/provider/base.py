@@ -134,7 +134,7 @@ class LLMProvider(Provider, ABC):
         """
         Extractor for our LLM prompts. If CoT is used; it will look for
         "Supporting Evidence" template. Otherwise, it will look for the typical
-        1-10 scoring.
+        0-10 scoring.
 
         Args:
             system_prompt (str): A pre-formated system prompt
@@ -958,7 +958,7 @@ class LLMProvider(Provider, ABC):
             float: A value between 0.0 (main points missed) and 1.0 (no main
             points missed).
         """
-        
+
         system_prompt = str.format(
             prompts.SUMMARIZATION_PROMPT, source=source, summary=summary
         )
