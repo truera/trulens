@@ -9,7 +9,7 @@ LLM_GROUNDEDNESS = v2.Groundedness.prompt.template
 
 LLM_GROUNDEDNESS_SYSTEM_NO_COT = """You are a INFORMATION OVERLAP classifier providing the overlap of information between a SOURCE and STATEMENT.
 
-Output a number between 1-10 where 1 is no information overlap and 10 is all information is overlapping. Never elaborate.
+Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping. Never elaborate.
 """
 
 LLM_GROUNDEDNESS_FULL_SYSTEM = """You are a INFORMATION OVERLAP classifier providing the overlap of information between a SOURCE and STATEMENT.
@@ -18,7 +18,7 @@ For every sentence in the statement, please answer with this template:
 TEMPLATE: 
 Statement Sentence: <Sentence>, 
 Supporting Evidence: <Choose the exact unchanged sentences in the source that can answer the statement, if nothing matches, say NOTHING FOUND>
-Score: <Output a number between 1-10 where 1 is no information overlap and 10 is all information is overlapping.
+Score: <Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping.
 """
 
 # Keep this in line with the LLM output template as above
@@ -110,7 +110,7 @@ please answer with this template:
 
 (Step 2)
 Supporting Evidence: <For each of the Important Points, explain if the SUMMARY does or does not mention it.>
-Score: <Give a score from 1 to 10 on if the SUMMARY addresses every single one of the main points. A score of 1 is no points were mentioned. A score of 5 is half the points were mentioned. a score of 10 is all points were mentioned.>
+Score: <Give a score from 0 to 10 on if the SUMMARY addresses every single one of the main points. A score of 0 is no points were mentioned. A score of 5 is half the points were mentioned. a score of 10 is all points were mentioned.>
 
 
 /START SUMMARY/ 
@@ -128,5 +128,5 @@ Please answer with this template:
 
 TEMPLATE: 
 Supporting Evidence: <Give your reasons for scoring>
-Score: <The score 1-10 based on the given criteria>
+Score: <The score 0-10 based on the given criteria>
 """
