@@ -9,7 +9,7 @@ from trulens_eval.feedback.provider import Provider
 from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.feedback.provider.openai import AzureOpenAI
 from trulens_eval.feedback.provider.openai import OpenAI
-from trulens_eval.utils.generated import re_1_10_rating
+from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
@@ -98,7 +98,7 @@ class Groundedness(SerialModel, WithClassInfo):
 
         groundedness_scores = {}
         if isinstance(self.groundedness_provider, (AzureOpenAI, OpenAI)):
-            groundedness_scores[f"full_doc_score"] = re_1_10_rating(
+            groundedness_scores[f"full_doc_score"] = re_0_10_rating(
                 self.summarize_provider._groundedness_doc_in_out(
                     source, statement, chain_of_thought=False
                 )
@@ -164,7 +164,7 @@ class Groundedness(SerialModel, WithClassInfo):
             for line in reason.split('\n'):
                 if "Score" in line:
                     groundedness_scores[f"statement_{i}"
-                                       ] = re_1_10_rating(line) / 10
+                                       ] = re_0_10_rating(line) / 10
                     i += 1
             return groundedness_scores, {"reason": reason}
         elif isinstance(self.groundedness_provider, Huggingface):

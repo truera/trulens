@@ -37,6 +37,9 @@ test-database-future:
 test-feedback:
 	$(CONDA); python -m unittest tests.unit.test_feedback
 
+test-providers:
+	$(CONDA); python -m unittest tests.unit.test_providers
+
 test-tru-chain:
 	$(CONDA); python -m unittest tests.unit.test_tru_chain
 
