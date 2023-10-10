@@ -1,11 +1,12 @@
 import logging
 import os
+from typing import Dict, Optional, Sequence
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import BedrockEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.utils.generated import re_1_10_rating
+from trulens_eval.utils.generated import re_0_10_rating
 
 import json
 
@@ -46,15 +47,22 @@ class Bedrock(LLMProvider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-    def _create_chat_completion(self, prompt, *args, **kwargs):
+    # LLMProvider requirement
+    def _create_chat_completion(
+        self,
+        prompt: Optional[str] = None,
+        messages: Optional[Sequence[Dict]] = None,
+        **kwargs
+    ) -> str:
 
         # NOTE(joshr): only tested with sso auth
         import boto3
         import json
         bedrock = boto3.client(service_name='bedrock-runtime')
 
-        body = json.dumps({
-            "inputText": prompt})
+        assert prompt is not None, "Bedrock can only operate on `prompt`, not `messages`."
+
+        body = json.dumps({"inputText": prompt})
 
         modelId = self.model_id
 
