@@ -6,7 +6,7 @@ import pydantic
 
 from trulens_eval.feedback.provider import Provider
 from trulens_eval.feedback.provider.openai import OpenAI
-from trulens_eval.utils.generated import re_1_10_rating
+from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import WithClassInfo
@@ -167,7 +167,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             agreement_txt = self.provider._get_answer_agreement(
                 prompt, response, ground_truth_response
             )
-            ret = re_1_10_rating(agreement_txt) / 10, dict(
+            ret = re_0_10_rating(agreement_txt) / 10, dict(
                 ground_truth_response=ground_truth_response
             )
         else:
