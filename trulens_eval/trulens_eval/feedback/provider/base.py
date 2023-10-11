@@ -1,16 +1,15 @@
-from typing import Dict, Optional, Sequence, Tuple, Union
+from abc import ABC
+from abc import abstractmethod
 import logging
+from typing import Dict, Optional, Sequence, Tuple, Union
 import warnings
 
+from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.generated import re_0_10_rating
-from trulens_eval.feedback import prompts
 
-from abc import ABC, abstractmethod
-
-import logging
 logger = logging.getLogger(__name__)
 
 
@@ -27,13 +26,12 @@ class Provider(SerialModel, WithClassInfo):
 
         super().__init__(name=name, **kwargs)
 
+
 class LLMProvider(Provider, ABC):
 
     model_engine: str
 
-    def __init__(
-        self, *args, **kwargs
-    ):
+    def __init__(self, *args, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack
@@ -65,15 +63,11 @@ class LLMProvider(Provider, ABC):
     def _find_relevant_string(self, full_source: str, hypothesis: str) -> str:
         return self.endpoint.run_me(
             lambda: self._create_chat_completion(
-                prompt = 
-                    str.format(
-                        prompts.SYSTEM_FIND_SUPPORTING,
-                        prompt=full_source,
-                    ) + "\n" +
-                    str.format(
-                        prompts.USER_FIND_SUPPORTING,
-                        response=hypothesis
-                    )
+                prompt=str.format(
+                    prompts.SYSTEM_FIND_SUPPORTING,
+                    prompt=full_source,
+                ) + "\n" + str.
+                format(prompts.USER_FIND_SUPPORTING, response=hypothesis)
             )
         )
 
@@ -90,16 +84,17 @@ class LLMProvider(Provider, ABC):
             float: Information Overlap
         """
         return re_0_10_rating(
-            self.endpoint.run_me(lambda: self._create_chat_completion(
-                prompt=
-                    str.format(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    prompt=str.format(
                         prompts.LLM_GROUNDEDNESS,
                         premise=premise,
                         hypothesis=hypothesis,
                     )
                 )
-             )) / 10.0
-            
+            )
+        ) / 10.0
+
     def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
         """
         An LLM prompt using the entire document for premise and entire statement
@@ -114,13 +109,12 @@ class LLMProvider(Provider, ABC):
         """
         return self.endpoint.run_me(
             lambda: self._create_chat_completion(
-                prompt=
-                    str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) + 
-                    str.format(
-                        prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
-                        premise=premise,
-                        hypothesis=hypothesis
-                    )
+                prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) + str.
+                format(
+                    prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
+                    premise=premise,
+                    hypothesis=hypothesis
+                )
             )
         )
 
@@ -130,7 +124,6 @@ class LLMProvider(Provider, ABC):
         user_prompt: Optional[str] = None,
         normalize: float = 10.0
     ) -> Union[float, Tuple[float, Dict]]:
-        
         """
         Extractor for our LLM prompts. If CoT is used; it will look for
         "Supporting Evidence" template. Otherwise, it will look for the typical
@@ -147,9 +140,7 @@ class LLMProvider(Provider, ABC):
             llm_messages.append({"role": "user", "content": user_prompt})
 
         response = self.endpoint.run_me(
-            lambda: self._create_chat_completion(
-                messages=llm_messages
-            )
+            lambda: self._create_chat_completion(messages=llm_messages)
         )
         if "Supporting Evidence" in response:
             score = 0.0
@@ -190,16 +181,16 @@ class LLMProvider(Provider, ABC):
             float: A value between 0.0 (not relevant) and 1.0 (relevant).
         """
         return re_0_10_rating(
-            self.endpoint.run_me(lambda:
-                self._create_chat_completion(
-                    prompt=
-                        str.format(
-                            prompts.QS_RELEVANCE,
-                            question=question,
-                            statement=statement
-                        )
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    prompt=str.format(
+                        prompts.QS_RELEVANCE,
+                        question=question,
+                        statement=statement
+                    )
                 )
-            )) / 10
+            )
+        ) / 10
 
     def qs_relevance_with_cot_reasons(
         self, question: str, statement: str
@@ -239,7 +230,8 @@ class LLMProvider(Provider, ABC):
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
         return self.endpoint.run_me(
-            lambda: self._extract_score_and_reasons_from_response(system_prompt)
+            lambda: self.
+            _extract_score_and_reasons_from_response(system_prompt)
         )
 
     def relevance(self, prompt: str, response: str) -> float:
@@ -274,14 +266,16 @@ class LLMProvider(Provider, ABC):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
             "relevant".
         """
-        return re_0_10_rating(self.endpoint.run_me(lambda:self._create_chat_completion(
-            prompt = str.format(
-                        prompts.PR_RELEVANCE,
-                        prompt=prompt,
-                        response=response
+        return re_0_10_rating(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    prompt=str.format(
+                        prompts.PR_RELEVANCE, prompt=prompt, response=response
                     )
-                ))) / 10.0
-    
+                )
+            )
+        ) / 10.0
+
     def relevance_with_cot_reasons(self, prompt: str, response: str) -> float:
         """
         Uses chat completion Model. A function that completes a template to
@@ -346,13 +340,13 @@ class LLMProvider(Provider, ABC):
         """
 
         return re_0_10_rating(
-            self.endpoint.run_me(lambda:
-            self._create_chat_completion(
-                    prompt = prompts.SENTIMENT_SYSTEM_PROMPT + text
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    prompt=prompts.SENTIMENT_SYSTEM_PROMPT + text
                 )
             )
         ) / 10.0
-    
+
     def sentiment_with_cot_reasons(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a
@@ -406,11 +400,12 @@ class LLMProvider(Provider, ABC):
         """
         warnings.warn(
             "`model_agreement` has been deprecated. "
-            "Use `GroundTruthAgreement(ground_truth)` instead.", DeprecationWarning
+            "Use `GroundTruthAgreement(ground_truth)` instead.",
+            DeprecationWarning
         )
         chat_response = self._create_chat_completion(
-                prompt = prompts.CORRECT_SYSTEM_PROMPT
-            )
+            prompt=prompts.CORRECT_SYSTEM_PROMPT
+        )
         agreement_txt = self._get_answer_agreement(
             prompt, response, chat_response
         )
@@ -433,10 +428,9 @@ class LLMProvider(Provider, ABC):
         """
 
         return re_0_10_rating(
-            self.endpoint.run_me(lambda: self._create_chat_completion(
-                prompt=system_prompt
-            ))
-         ) / 10.0
+            self.endpoint.
+            run_me(lambda: self._create_chat_completion(prompt=system_prompt))
+        ) / 10.0
 
     def conciseness(self, text: str) -> float:
         """
@@ -459,7 +453,9 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.0 (not concise) and 1.0 (concise).
         """
-        return self._langchain_evaluate(text, prompts.LANGCHAIN_CONCISENESS_PROMPT)
+        return self._langchain_evaluate(
+            text, prompts.LANGCHAIN_CONCISENESS_PROMPT
+        )
 
     def correctness(self, text: str) -> float:
         """
@@ -485,7 +481,7 @@ class LLMProvider(Provider, ABC):
         return self._extract_score_and_reasons_from_response(
             system_prompt, user_prompt=text
         )
-    
+
     def correctness_with_cot_reasons(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -582,7 +578,9 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.0 (not harmful) and 1.0 (harmful)".
         """
-        return self._langchain_evaluate(text, prompts.LANGCHAIN_HARMFULNESS_PROMPT)
+        return self._langchain_evaluate(
+            text, prompts.LANGCHAIN_HARMFULNESS_PROMPT
+        )
 
     def harmfulness_with_cot_reasons(self, text: str) -> float:
         """
@@ -627,8 +625,10 @@ class LLMProvider(Provider, ABC):
             float: A value between 0.0 (not malicious) and 1.0 (malicious).
         """
 
-        return self._langchain_evaluate(text, prompts.LANGCHAIN_MALICIOUSNESS_PROMPT)
-    
+        return self._langchain_evaluate(
+            text, prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
+        )
+
     def maliciousness_with_cot_reasons(self, text: str) -> float:
         """
         Uses chat compoletion model. A function that completes a
@@ -680,7 +680,7 @@ class LLMProvider(Provider, ABC):
         return self._extract_score_and_reasons_from_response(
             system_prompt, user_prompt=text
         )
- 
+
     def helpfulness_with_cot_reasons(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -836,7 +836,7 @@ class LLMProvider(Provider, ABC):
         return self._extract_score_and_reasons_from_response(
             system_prompt, user_prompt=text
         )
-    
+
     def criminality_with_cot_reasons(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -932,9 +932,9 @@ class LLMProvider(Provider, ABC):
         """
 
         return self.endpoint.run_me(
-            lambda:self._create_chat_completion(
+            lambda: self._create_chat_completion(
                 prompt=(prompts.AGREEMENT_SYSTEM_PROMPT %
-                (prompt, response)) + check_response
+                        (prompt, response)) + check_response
             )
         )
 
