@@ -2399,12 +2399,8 @@ inner list spanning a distribution's instance.</p>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Input point from which the distribution is derived. If
-list/tuple, the point is defined by multiple tensors.</p>
-            </div>
-          </td>
+          <td><p>Input point from which the distribution is derived. If
+list/tuple, the point is defined by multiple tensors.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -2414,12 +2410,8 @@ list/tuple, the point is defined by multiple tensors.</p>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="trulens.utils.typing.ModelInputs">ModelInputs</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Optional wrapped model input arguments that produce value z at
-cut.</p>
-            </div>
-          </td>
+          <td><p>Optional wrapped model input arguments that produce value z at
+cut.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -2440,41 +2432,25 @@ cut.</p>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.Uniform">Uniform</span>[<span title="trulens.utils.typing.TensorLike">TensorLike</span>]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>List of points which are all assigned equal probability mass in the</p>
-            </div>
-          </td>
+          <td><p>List of points which are all assigned equal probability mass in the</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.Uniform">Uniform</span>[<span title="trulens.utils.typing.TensorLike">TensorLike</span>]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>distribution of interest, i.e., the distribution of interest is a</p>
-            </div>
-          </td>
+          <td><p>distribution of interest, i.e., the distribution of interest is a</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.Uniform">Uniform</span>[<span title="trulens.utils.typing.TensorLike">TensorLike</span>]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>discrete, uniform distribution over the list of returned points. If</p>
-            </div>
-          </td>
+          <td><p>discrete, uniform distribution over the list of returned points. If</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.Uniform">Uniform</span>[<span title="trulens.utils.typing.TensorLike">TensorLike</span>]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>z is multi-input, returns a distribution for each input.</p>
-            </div>
-          </td>
+          <td><p>z is multi-input, returns a distribution for each input.</p></td>
         </tr>
     </tbody>
   </table>
@@ -2580,13 +2556,9 @@ cut.</p>
           <td>
                 <code><span title="trulens.nn.slices.Cut">Cut</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
+          <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
 applied to the input. otherwise, the distribution should be applied
-to the latent space defined by the cut.</p>
-            </div>
-          </td>
+to the latent space defined by the cut.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -2647,31 +2619,19 @@ to the latent space defined by the cut.</p>
           <td>
                 <code><span title="trulens.nn.slices.Cut">Cut</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be</p>
-            </div>
-          </td>
+          <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.nn.slices.Cut">Cut</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>applied to the input. otherwise, the distribution should be applied</p>
-            </div>
-          </td>
+          <td><p>applied to the input. otherwise, the distribution should be applied</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.nn.slices.Cut">Cut</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>to the latent space defined by the cut.</p>
-            </div>
-          </td>
+          <td><p>to the latent space defined by the cut.</p></td>
         </tr>
     </tbody>
   </table>
@@ -2734,12 +2694,8 @@ feature.</p>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The activation of the layer the DoI is applied to. DoI may be
-multi-input in which case activation will be a list.</p>
-            </div>
-          </td>
+          <td><p>The activation of the layer the DoI is applied to. DoI may be
+multi-input in which case activation will be a list.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -2749,12 +2705,8 @@ multi-input in which case activation will be a list.</p>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="trulens.utils.typing.ModelInputs">ModelInputs</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Optional wrapped model input arguments that produce activation
-at cut.</p>
-            </div>
-          </td>
+          <td><p>Optional wrapped model input arguments that produce activation
+at cut.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -2775,41 +2727,25 @@ at cut.</p>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>An array with the same shape as <code>activation</code> that will be</p>
-            </div>
-          </td>
+          <td><p>An array with the same shape as <code>activation</code> that will be</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>multiplied by the gradient to obtain the attribution. The default</p>
-            </div>
-          </td>
+          <td><p>multiplied by the gradient to obtain the attribution. The default</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>implementation of this method simply returns <code>activation</code>. If</p>
-            </div>
-          </td>
+          <td><p>implementation of this method simply returns <code>activation</code>. If</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>activation is multi-input, returns one multiplier for each.</p>
-            </div>
-          </td>
+          <td><p>activation is multi-input, returns one multiplier for each.</p></td>
         </tr>
     </tbody>
   </table>
@@ -3098,11 +3034,7 @@ Gradients.</p>
           <td>
                 <code>float</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The variance of the Gaussian noise to be added around the point.</p>
-            </div>
-          </td>
+          <td><p>The variance of the Gaussian noise to be added around the point.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -3112,11 +3044,7 @@ Gradients.</p>
           <td>
                 <code>int</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Number of samples returned by each call to this DoI.</p>
-            </div>
-          </td>
+          <td><p>Number of samples returned by each call to this DoI.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -3126,13 +3054,9 @@ Gradients.</p>
           <td>
                 <code><span title="trulens.nn.slices.Cut">Cut</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
+          <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
 applied to the input. otherwise, the distribution should be applied
-to the latent space defined by the cut.</p>
-            </div>
-          </td>
+to the latent space defined by the cut.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3609,13 +3533,9 @@ sample of <code>resolution</code> points equally spaced along this segment.</p>
           <td>
                 <code>Cut, optional, from DoI</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI
+          <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI
 will be applied to the input. otherwise, the distribution should
-be applied to the latent space defined by the cut. </p>
-            </div>
-          </td>
+be applied to the latent space defined by the cut. </p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3625,18 +3545,14 @@ be applied to the latent space defined by the cut. </p>
           <td>
                 <code><span title="trulens.utils.typing.BaselineLike">BaselineLike</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The baseline to interpolate from. Must be same shape as the
+          <td><p>The baseline to interpolate from. Must be same shape as the
 space the distribution acts over, i.e., the shape of the points,
 <code>z</code>, eventually passed to <code>__call__</code>. If <code>cut</code> is <code>None</code>, this
 must be the same shape as the input, otherwise this must be the
 same shape as the latent space defined by the cut. If <code>None</code> is
 given, <code>baseline</code> will be the zero vector in the appropriate
 shape. If the baseline is callable, it is expected to return the
-<code>baseline</code>, given <code>z</code> and optional model arguments.</p>
-            </div>
-          </td>
+<code>baseline</code>, given <code>z</code> and optional model arguments.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3646,13 +3562,9 @@ shape. If the baseline is callable, it is expected to return the
           <td>
                 <code>int</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Number of points returned by each call to this DoI. A higher
+          <td><p>Number of points returned by each call to this DoI. A higher
 resolution is more computationally expensive, but gives a better
-approximation of the DoI this object mathematically represents.</p>
-            </div>
-          </td>
+approximation of the DoI this object mathematically represents.</p></td>
           <td>
                 <code>10</code>
           </td>
@@ -3770,11 +3682,7 @@ feature.</p>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The activation of the layer the DoI is applied to.</p>
-            </div>
-          </td>
+          <td><p>The activation of the layer the DoI is applied to.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -3795,11 +3703,7 @@ feature.</p>
           <td>
                 <code><span title="trulens.utils.typing.Inputs">Inputs</span>[<span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The activation adjusted by the baseline passed to the constructor.</p>
-            </div>
-          </td>
+          <td><p>The activation adjusted by the baseline passed to the constructor.</p></td>
         </tr>
     </tbody>
   </table>
@@ -4032,13 +3936,9 @@ feature.</p>
           <td>
                 <code><span title="trulens.nn.slices.Cut">Cut</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
+          <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
 applied to the input. otherwise, the distribution should be applied
-to the latent space defined by the cut.</p>
-            </div>
-          </td>
+to the latent space defined by the cut.</p></td>
           <td>
                 <code>None</code>
           </td>

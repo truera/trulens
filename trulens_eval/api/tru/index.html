@@ -3340,14 +3340,10 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
           <td>
                 <code><span title="typing.Optional">Optional</span>[str]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>SQLAlchemy database URL. Defaults to a local
+          <td><p>SQLAlchemy database URL. Defaults to a local
                   SQLite database file at 'default.sqlite'
                   See <a href="https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls">this article</a>
-                  on SQLAlchemy database URLs.</p>
-            </div>
-          </td>
+                  on SQLAlchemy database URLs.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3357,11 +3353,7 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
           <td>
                 <code><span title="typing.Optional">Optional</span>[str]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>(Deprecated) Path to a local SQLite database file</p>
-            </div>
-          </td>
+          <td><p>(Deprecated) Path to a local SQLite database file</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3371,11 +3363,7 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
           <td>
                 <code>bool</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>whether to redact secret keys in data to be written to database.</p>
-            </div>
-          </td>
+          <td><p>whether to redact secret keys in data to be written to database.</p></td>
           <td>
                 <code>False</code>
           </td>
@@ -3645,11 +3633,7 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="trulens_eval.schema.Record">Record</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Record</p>
-            </div>
-          </td>
+          <td><p>Record</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3658,11 +3642,7 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
           <td><code>**kwargs</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Record fields.</p>
-            </div>
-          </td>
+          <td><p>Record fields.</p></td>
           <td>
                 <code>{}</code>
           </td>
@@ -3682,11 +3662,7 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
         <tr>
 <td><code>RecordID</code></td>          <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Unique record identifier.</p>
-            </div>
-          </td>
+          <td><p>Unique record identifier.</p></td>
         </tr>
     </tbody>
   </table>
@@ -4015,11 +3991,7 @@ changes in a database created with an older version of trulens_eval.</p>
           <td>
                 <code>force</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>bool: Stop existing dashboard(s) first.</p>
-            </div>
-          </td>
+          <td><p>bool: Stop existing dashboard(s) first.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -4029,13 +4001,9 @@ changes in a database created with an older version of trulens_eval.</p>
           <td>
                 <code>_dev</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Optional[Path]: If given, run dashboard with the given
+          <td><p>Optional[Path]: If given, run dashboard with the given
 PYTHONPATH. This can be used to run the dashboard from outside of
-its pip package installation folder.</p>
-            </div>
-          </td>
+its pip package installation folder.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -4056,11 +4024,7 @@ its pip package installation folder.</p>
           <td>
                 <code>-ValueError</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Dashboard is already running.</p>
-            </div>
-          </td>
+          <td><p>Dashboard is already running.</p></td>
         </tr>
     </tbody>
   </table>
@@ -4078,13 +4042,9 @@ its pip package installation folder.</p>
           <td>
                 <code><span title="multiprocessing.Process">Process</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <ul>
+          <td><ul>
 <li>Process: Process containing streamlit dashboard.</li>
-</ul>
-            </div>
-          </td>
+</ul></td>
         </tr>
     </tbody>
   </table>
@@ -4520,11 +4480,7 @@ its pip package installation folder.</p>
           <td>
                 <code><span title="trulens_eval.schema.Record">Record</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The record on which to evaluate the feedback</p>
-            </div>
-          </td>
+          <td><p>The record on which to evaluate the feedback</p></td>
           <td>
               <em>required</em>
           </td>
@@ -4534,11 +4490,7 @@ its pip package installation folder.</p>
           <td>
                 <code>App</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The app that produced the given record.</p>
-            </div>
-          </td>
+          <td><p>The app that produced the given record.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -4548,11 +4500,7 @@ its pip package installation folder.</p>
           <td>
                 <code><span title="typing.Sequence">Sequence</span>[<span title="trulens_eval.feedback.Feedback">Feedback</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A collection of feedback</p>
-            </div>
-          </td>
+          <td><p>A collection of feedback</p></td>
           <td>
               <em>required</em>
           </td>
@@ -4839,12 +4787,8 @@ its pip package installation folder.</p>
           <td>
                 <code>force</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>bool: Also try to find any other dashboard processes not
-started in this notebook and shut them down too.</p>
-            </div>
-          </td>
+          <td><p>bool: Also try to find any other dashboard processes not
+started in this notebook and shut them down too.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -4865,11 +4809,7 @@ started in this notebook and shut them down too.</p>
           <td>
                 <code>-ValueError</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Dashboard is not running.</p>
-            </div>
-          </td>
+          <td><p>Dashboard is not running.</p></td>
         </tr>
     </tbody>
   </table>

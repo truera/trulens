@@ -2735,11 +2735,7 @@ be overridden by passing in values to <code>__call__</code>).</p>
           <td><code>model</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The wrapped model whose channel we're visualizing.</p>
-            </div>
-          </td>
+          <td><p>The wrapped model whose channel we're visualizing.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -2748,12 +2744,8 @@ be overridden by passing in values to <code>__call__</code>).</p>
           <td><code>layer</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The identifier (either index or name) of the layer in which the 
-channel we're visualizing resides.</p>
-            </div>
-          </td>
+          <td><p>The identifier (either index or name) of the layer in which the 
+channel we're visualizing resides.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -2762,12 +2754,8 @@ channel we're visualizing resides.</p>
           <td><code>channel</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Index of the channel (for convolutional layers) or internal 
-neuron (for fully-connected layers) that we'd like to visualize.</p>
-            </div>
-          </td>
+          <td><p>Index of the channel (for convolutional layers) or internal 
+neuron (for fully-connected layers) that we'd like to visualize.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -2776,13 +2764,9 @@ neuron (for fully-connected layers) that we'd like to visualize.</p>
           <td><code>channel_axis</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If different from the channel axis specified by the backend, the
+          <td><p>If different from the channel axis specified by the backend, the
 supplied <code>channel_axis</code> will be used if operating on a 
-convolutional layer with 4-D image format.</p>
-            </div>
-          </td>
+convolutional layer with 4-D image format.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -2791,15 +2775,11 @@ convolutional layer with 4-D image format.</p>
           <td><code>agg_fn</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Function with which to aggregate the remaining dimensions 
+          <td><p>Function with which to aggregate the remaining dimensions 
 (except the batch dimension) in order to get a single scalar 
 value for each channel; If <code>None</code>, a sum over each neuron in the
 channel will be taken. This argument is not used when the 
-channels are scalars, e.g., for dense layers.</p>
-            </div>
-          </td>
+channels are scalars, e.g., for dense layers.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -2808,13 +2788,9 @@ channels are scalars, e.g., for dense layers.</p>
           <td><code>doi</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The distribution of interest to use when computing the input
+          <td><p>The distribution of interest to use when computing the input
 attributions towards the specified channel. If <code>None</code>, 
-<code>PointDoI</code> will be used.</p>
-            </div>
-          </td>
+<code>PointDoI</code> will be used.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -2823,13 +2799,9 @@ attributions towards the specified channel. If <code>None</code>,
           <td><code>blur</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Gives the radius of a Gaussian blur to be applied to the 
+          <td><p>Gives the radius of a Gaussian blur to be applied to the 
 attributions before visualizing. This can be used to help focus
-on salient regions rather than specific salient pixels.</p>
-            </div>
-          </td>
+on salient regions rather than specific salient pixels.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -2838,13 +2810,9 @@ on salient regions rather than specific salient pixels.</p>
           <td><code>threshold</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Value in the range [0, 1]. Attribution values at or  below the 
+          <td><p>Value in the range [0, 1]. Attribution values at or  below the 
 percentile given by <code>threshold</code> (after normalization, blurring,
-etc.) will be masked.</p>
-            </div>
-          </td>
+etc.) will be masked.</p></td>
           <td>
                 <code>0.5</code>
           </td>
@@ -2853,12 +2821,8 @@ etc.) will be masked.</p>
           <td><code>masked_opacity</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Value in the range [0, 1] specifying the opacity for the parts
-of the image that are masked.</p>
-            </div>
-          </td>
+          <td><p>Value in the range [0, 1] specifying the opacity for the parts
+of the image that are masked.</p></td>
           <td>
                 <code>0.2</code>
           </td>
@@ -2868,12 +2832,8 @@ of the image that are masked.</p>
           <td>
                 <code>bool</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If <code>True</code>, the attributions will be averaged across the channel
-dimension, resulting in a 1-channel attribution map.</p>
-            </div>
-          </td>
+          <td><p>If <code>True</code>, the attributions will be averaged across the channel
+dimension, resulting in a 1-channel attribution map.</p></td>
           <td>
                 <code>True</code>
           </td>
@@ -2882,13 +2842,9 @@ dimension, resulting in a 1-channel attribution map.</p>
           <td><code>use_attr_as_opacity</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If <code>True</code>, instead of using <code>threshold</code> and <code>masked_opacity</code>,
+          <td><p>If <code>True</code>, instead of using <code>threshold</code> and <code>masked_opacity</code>,
 the opacity of each pixel is given by the 0-1-normalized 
-attribution value.</p>
-            </div>
-          </td>
+attribution value.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -2897,13 +2853,9 @@ attribution value.</p>
           <td><code>positive_only</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If <code>True</code>, only pixels with positive attribution will be 
+          <td><p>If <code>True</code>, only pixels with positive attribution will be 
 unmasked (or given nonzero opacity when <code>use_attr_as_opacity</code> is
-true).</p>
-            </div>
-          </td>
+true).</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3763,11 +3715,7 @@ over the given image.</p>
           <td><code>attributions</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A <code>np.ndarray</code> containing the attributions to be visualized.</p>
-            </div>
-          </td>
+          <td><p>A <code>np.ndarray</code> containing the attributions to be visualized.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -3776,14 +3724,10 @@ over the given image.</p>
           <td><code>x</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A <code>np.ndarray</code> of items in the same shape as <code>attributions</code>
+          <td><p>A <code>np.ndarray</code> of items in the same shape as <code>attributions</code>
 corresponding to the records explained by the given 
 attributions. The visualization will be superimposed onto the
-corresponding set of records.</p>
-            </div>
-          </td>
+corresponding set of records.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -3792,12 +3736,8 @@ corresponding set of records.</p>
           <td><code>output_file</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>File name to save the visualization image to. If <code>None</code>, no
-image will be saved, but the figure can still be displayed.</p>
-            </div>
-          </td>
+          <td><p>File name to save the visualization image to. If <code>None</code>, no
+image will be saved, but the figure can still be displayed.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3806,12 +3746,8 @@ image will be saved, but the figure can still be displayed.</p>
           <td><code>imshow</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If true, a the visualization will be displayed. Otherwise the
-figure will not be displayed, but the figure can still be saved.</p>
-            </div>
-          </td>
+          <td><p>If true, a the visualization will be displayed. Otherwise the
+figure will not be displayed, but the figure can still be saved.</p></td>
           <td>
                 <code>True</code>
           </td>
@@ -3820,12 +3756,8 @@ figure will not be displayed, but the figure can still be saved.</p>
           <td><code>fig</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The <code>pyplot</code> figure to display the visualization in. If <code>None</code>,
-a new figure will be created.</p>
-            </div>
-          </td>
+          <td><p>The <code>pyplot</code> figure to display the visualization in. If <code>None</code>,
+a new figure will be created.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3834,14 +3766,10 @@ a new figure will be created.</p>
           <td><code>return_tiled</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If true, the returned array will be in the same shape as the
+          <td><p>If true, the returned array will be in the same shape as the
 visualization, with no batch dimension and the samples in the
 batch tiled along the width and height dimensions. If false, the
-returned array will be reshaped to match <code>attributions</code>.</p>
-            </div>
-          </td>
+returned array will be reshaped to match <code>attributions</code>.</p></td>
           <td>
                 <code>False</code>
           </td>
@@ -3850,14 +3778,10 @@ returned array will be reshaped to match <code>attributions</code>.</p>
           <td><code>overlay_opacity</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>float
+          <td><p>float
 Value in the range [0, 1] specifying the opacity for the heatmap
 overlay. If <code>None</code>, defaults to the value supplied to the 
-constructor.</p>
-            </div>
-          </td>
+constructor.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3866,9 +3790,7 @@ constructor.</p>
           <td><code>normalization_type</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Specifies one of the following configurations for normalizing
+          <td><p>Specifies one of the following configurations for normalizing
 the attributions (each item is normalized separately):</p>
 <ul>
 <li><code>'unsigned_max'</code>: normalizes the attributions to the range 
@@ -3900,9 +3822,7 @@ the attributions (each item is normalized separately):</p>
   maximum attribution value.</li>
 <li><code>'unnormalized'</code>: leaves the attributions unaffected.</li>
 </ul>
-<p>If <code>None</code>, defaults to the value supplied to the constructor.</p>
-            </div>
-          </td>
+<p>If <code>None</code>, defaults to the value supplied to the constructor.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3911,14 +3831,10 @@ the attributions (each item is normalized separately):</p>
           <td><code>blur</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Gives the radius of a Gaussian blur to be applied to the 
+          <td><p>Gives the radius of a Gaussian blur to be applied to the 
 attributions before visualizing. This can be used to help focus
 on salient regions rather than specific salient pixels. If
-<code>None</code>, defaults to the value supplied to the constructor.</p>
-            </div>
-          </td>
+<code>None</code>, defaults to the value supplied to the constructor.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3927,13 +3843,9 @@ on salient regions rather than specific salient pixels. If
           <td><code>cmap</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>matplotlib.colors.Colormap | str, optional
+          <td><p>matplotlib.colors.Colormap | str, optional
 Colormap or name of a Colormap to use for the visualization. If
-<code>None</code>, defaults to the value supplied to the constructor.</p>
-            </div>
-          </td>
+<code>None</code>, defaults to the value supplied to the constructor.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3954,31 +3866,19 @@ Colormap or name of a Colormap to use for the visualization. If
           <td>
                 <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A <code>np.ndarray</code> array of the numerical representation of the</p>
-            </div>
-          </td>
+          <td><p>A <code>np.ndarray</code> array of the numerical representation of the</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>attributions as modified for the visualization. This includes </p>
-            </div>
-          </td>
+          <td><p>attributions as modified for the visualization. This includes </p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>normalization, blurring, etc.</p>
-            </div>
-          </td>
+          <td><p>normalization, blurring, etc.</p></td>
         </tr>
     </tbody>
   </table>
@@ -4310,13 +4210,9 @@ be overridden by passing in values to <code>__call__</code>).</p>
           <td><code>overlay_opacity</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>float
+          <td><p>float
 Value in the range [0, 1] specifying the opacity for the heatmap
-overlay.</p>
-            </div>
-          </td>
+overlay.</p></td>
           <td>
                 <code>0.5</code>
           </td>
@@ -4325,9 +4221,7 @@ overlay.</p>
           <td><code>normalization_type</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Specifies one of the following configurations for normalizing
+          <td><p>Specifies one of the following configurations for normalizing
 the attributions (each item is normalized separately):</p>
 <ul>
 <li><code>'unsigned_max'</code>: normalizes the attributions to the range 
@@ -4361,9 +4255,7 @@ the attributions (each item is normalized separately):</p>
 </ul>
 <p>If <code>None</code>, either <code>'unsigned_max'</code> (for single-channel data) or 
 <code>'unsigned_max_positive_centered'</code> (for multi-channel data) is
-used.</p>
-            </div>
-          </td>
+used.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -4372,13 +4264,9 @@ used.</p>
           <td><code>blur</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Gives the radius of a Gaussian blur to be applied to the 
+          <td><p>Gives the radius of a Gaussian blur to be applied to the 
 attributions before visualizing. This can be used to help focus
-on salient regions rather than specific salient pixels.</p>
-            </div>
-          </td>
+on salient regions rather than specific salient pixels.</p></td>
           <td>
                 <code>10.0</code>
           </td>
@@ -4387,15 +4275,11 @@ on salient regions rather than specific salient pixels.</p>
           <td><code>cmap</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>matplotlib.colors.Colormap | str, optional
+          <td><p>matplotlib.colors.Colormap | str, optional
 Colormap or name of a Colormap to use for the visualization. If 
 <code>None</code>, the colormap will be chosen based on the normalization 
 type. This argument is only used for single-channel data
-(including when <code>combine_channels</code> is True).</p>
-            </div>
-          </td>
+(including when <code>combine_channels</code> is True).</p></td>
           <td>
                 <code>&#39;jet&#39;</code>
           </td>
@@ -5026,13 +4910,9 @@ be overridden by passing in values to <code>__call__</code>).</p>
           <td><code>blur</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Gives the radius of a Gaussian blur to be applied to the 
+          <td><p>Gives the radius of a Gaussian blur to be applied to the 
 attributions before visualizing. This can be used to help focus
-on salient regions rather than specific salient pixels.</p>
-            </div>
-          </td>
+on salient regions rather than specific salient pixels.</p></td>
           <td>
                 <code>5.0</code>
           </td>
@@ -5041,13 +4921,9 @@ on salient regions rather than specific salient pixels.</p>
           <td><code>threshold</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Value in the range [0, 1]. Attribution values at or  below the 
+          <td><p>Value in the range [0, 1]. Attribution values at or  below the 
 percentile given by <code>threshold</code> (after normalization, blurring,
-etc.) will be masked.</p>
-            </div>
-          </td>
+etc.) will be masked.</p></td>
           <td>
                 <code>0.5</code>
           </td>
@@ -5056,12 +4932,8 @@ etc.) will be masked.</p>
           <td><code>masked_opacity</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Value in the range [0, 1] specifying the opacity for the parts
-of the image that are masked.</p>
-            </div>
-          </td>
+          <td><p>Value in the range [0, 1] specifying the opacity for the parts
+of the image that are masked.</p></td>
           <td>
                 <code>0.2</code>
           </td>
@@ -5070,12 +4942,8 @@ of the image that are masked.</p>
           <td><code>combine_channels</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If <code>True</code>, the attributions will be averaged across the channel
-dimension, resulting in a 1-channel attribution map.</p>
-            </div>
-          </td>
+          <td><p>If <code>True</code>, the attributions will be averaged across the channel
+dimension, resulting in a 1-channel attribution map.</p></td>
           <td>
                 <code>True</code>
           </td>
@@ -5084,13 +4952,9 @@ dimension, resulting in a 1-channel attribution map.</p>
           <td><code>use_attr_as_opacity</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If <code>True</code>, instead of using <code>threshold</code> and <code>masked_opacity</code>,
+          <td><p>If <code>True</code>, instead of using <code>threshold</code> and <code>masked_opacity</code>,
 the opacity of each pixel is given by the 0-1-normalized 
-attribution value.</p>
-            </div>
-          </td>
+attribution value.</p></td>
           <td>
                 <code>False</code>
           </td>
@@ -5099,13 +4963,9 @@ attribution value.</p>
           <td><code>positive_only</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If <code>True</code>, only pixels with positive attribution will be 
+          <td><p>If <code>True</code>, only pixels with positive attribution will be 
 unmasked (or given nonzero opacity when <code>use_attr_as_opacity</code> is
-true).</p>
-            </div>
-          </td>
+true).</p></td>
           <td>
                 <code>True</code>
           </td>
@@ -5667,12 +5527,8 @@ true).</p>
           <td>
                 <code><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>ModelWrapper
-The wrapped model whose channel we're visualizing.</p>
-            </div>
-          </td>
+          <td><p>ModelWrapper
+The wrapped model whose channel we're visualizing.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -5682,14 +5538,10 @@ The wrapped model whose channel we're visualizing.</p>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" title="trulens_explain.trulens.visualizations.Output" href="#trulens_explain.trulens.visualizations.Output">Output</a>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Output, optional
+          <td><p>Output, optional
 Visualization output format. Defaults to PlainText unless
 ipython is detected and in which case defaults to IPython
-format.</p>
-            </div>
-          </td>
+format.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -5699,12 +5551,8 @@ format.</p>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Iterable">Iterable</span>[str]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Iterable[str], optional
-Names of prediction classes for classification models.</p>
-            </div>
-          </td>
+          <td><p>Iterable[str], optional
+Names of prediction classes for classification models.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -5714,12 +5562,8 @@ Names of prediction classes for classification models.</p>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Callable">Callable</span>[[<span title="trulens_explain.trulens.visualizations.NLP.TextBatch">TextBatch</span>], <span title="trulens.utils.typing.ModelInputs">ModelInputs</span>]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Callable[[TextBatch], ModelInput], optional
-Method to tokenize an instance.</p>
-            </div>
-          </td>
+          <td><p>Callable[[TextBatch], ModelInput], optional
+Method to tokenize an instance.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -5729,12 +5573,8 @@ Method to tokenize an instance.</p>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Callable">Callable</span>[[<span title="trulens.utils.typing.Tensor">Tensor</span>], str]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Callable[[Tensor], str], optional
-Method to invert/decode the tokenization.</p>
-            </div>
-          </td>
+          <td><p>Callable[[Tensor], str], optional
+Method to invert/decode the tokenization.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -5744,13 +5584,9 @@ Method to invert/decode the tokenization.</p>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Callable">Callable</span>[[<span title="trulens.utils.typing.ModelInputs">ModelInputs</span>], <span title="typing.Iterable">Iterable</span>[<span title="trulens.utils.typing.Tensor">Tensor</span>]]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Callable[[ModelInputs], Iterable[Tensor]], optional
+          <td><p>Callable[[ModelInputs], Iterable[Tensor]], optional
 Method to extract input/token ids from model inputs (tokenize
-output) if needed.</p>
-            </div>
-          </td>
+output) if needed.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -5760,13 +5596,9 @@ output) if needed.</p>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Callable">Callable</span>[[<span title="trulens_explain.trulens.visualizations.NLP.ModelOutput">ModelOutput</span>], <span title="typing.Iterable">Iterable</span>[<span title="trulens.utils.typing.Tensor">Tensor</span>]]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Callable[[ModelOutput], Iterable[Tensor]], optional
+          <td><p>Callable[[ModelOutput], Iterable[Tensor]], optional
 Method to extract outout logits from output structures if
-needed.</p>
-            </div>
-          </td>
+needed.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -5776,13 +5608,9 @@ needed.</p>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Callable">Callable</span>[[<span title="trulens.utils.typing.Tensor">Tensor</span>], <span title="trulens.utils.typing.Tensor">Tensor</span>]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Callable[[Tensor], Tensor], optional
+          <td><p>Callable[[Tensor], Tensor], optional
 Method to aggregate attribution for embedding into a single
-value. Defaults to sum.</p>
-            </div>
-          </td>
+value. Defaults to sum.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -5792,12 +5620,8 @@ value. Defaults to sum.</p>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Set">Set</span>[int]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Set[int], optional
-For token-based visualizations, which tokens to hide.</p>
-            </div>
-          </td>
+          <td><p>Set[int], optional
+For token-based visualizations, which tokens to hide.</p></td>
           <td>
                 <code>set()</code>
           </td>
@@ -6004,12 +5828,8 @@ For token-based visualizations, which tokens to hide.</p>
           <td>
                 <code><span title="typing.Iterable">Iterable</span>[str]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Iterable[str]
-The input texts to visualize.</p>
-            </div>
-          </td>
+          <td><p>Iterable[str]
+The input texts to visualize.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -6019,12 +5839,8 @@ The input texts to visualize.</p>
           <td>
                 <code><span title="trulens.nn.attribution.AttributionMethod">AttributionMethod</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>AttributionMethod
-The attribution method to generate the token importances with.</p>
-            </div>
-          </td>
+          <td><p>AttributionMethod
+The attribution method to generate the token importances with.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -6044,11 +5860,7 @@ The attribution method to generate the token importances with.</p>
         <tr>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The visualization in the format specified by this class's <code>output</code> parameter.</p>
-            </div>
-          </td>
+          <td><p>The visualization in the format specified by this class's <code>output</code> parameter.</p></td>
         </tr>
     </tbody>
   </table>
@@ -6581,11 +6393,7 @@ The attribution method to generate the token importances with.</p>
           <td>
                 <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>An array of 4D batched image data.</p>
-            </div>
-          </td>
+          <td><p>An array of 4D batched image data.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -6606,51 +6414,31 @@ The attribution method to generate the token importances with.</p>
           <td>
                 <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A tiled array of the images from <code>a</code>. The resulting array has rank</p>
-            </div>
-          </td>
+          <td><p>A tiled array of the images from <code>a</code>. The resulting array has rank</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>3 for color images, and 2 for grayscale images (the batch dimension</p>
-            </div>
-          </td>
+          <td><p>3 for color images, and 2 for grayscale images (the batch dimension</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>is removed, as well as the channel dimension for grayscale images).</p>
-            </div>
-          </td>
+          <td><p>is removed, as well as the channel dimension for grayscale images).</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The resulting array has its color channel dimension ordered last to</p>
-            </div>
-          </td>
+          <td><p>The resulting array has its color channel dimension ordered last to</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>fit the requirements of the <code>matplotlib</code> library.</p>
-            </div>
-          </td>
+          <td><p>fit the requirements of the <code>matplotlib</code> library.</p></td>
         </tr>
     </tbody>
   </table>
@@ -7542,11 +7330,7 @@ use with input-attributions.</p>
           <td><code>attributions</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A <code>np.ndarray</code> containing the attributions to be visualized.</p>
-            </div>
-          </td>
+          <td><p>A <code>np.ndarray</code> containing the attributions to be visualized.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -7555,12 +7339,8 @@ use with input-attributions.</p>
           <td><code>output_file</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>File name to save the visualization image to. If <code>None</code>, no
-image will be saved, but the figure can still be displayed.</p>
-            </div>
-          </td>
+          <td><p>File name to save the visualization image to. If <code>None</code>, no
+image will be saved, but the figure can still be displayed.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -7569,12 +7349,8 @@ image will be saved, but the figure can still be displayed.</p>
           <td><code>imshow</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If true, a the visualization will be displayed. Otherwise the
-figure will not be displayed, but the figure can still be saved.</p>
-            </div>
-          </td>
+          <td><p>If true, a the visualization will be displayed. Otherwise the
+figure will not be displayed, but the figure can still be saved.</p></td>
           <td>
                 <code>True</code>
           </td>
@@ -7583,12 +7359,8 @@ figure will not be displayed, but the figure can still be saved.</p>
           <td><code>fig</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The <code>pyplot</code> figure to display the visualization in. If <code>None</code>,
-a new figure will be created.</p>
-            </div>
-          </td>
+          <td><p>The <code>pyplot</code> figure to display the visualization in. If <code>None</code>,
+a new figure will be created.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -7597,14 +7369,10 @@ a new figure will be created.</p>
           <td><code>return_tiled</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If true, the returned array will be in the same shape as the
+          <td><p>If true, the returned array will be in the same shape as the
 visualization, with no batch dimension and the samples in the
 batch tiled along the width and height dimensions. If false, the
-returned array will be reshaped to match <code>attributions</code>.</p>
-            </div>
-          </td>
+returned array will be reshaped to match <code>attributions</code>.</p></td>
           <td>
                 <code>False</code>
           </td>
@@ -7613,13 +7381,9 @@ returned array will be reshaped to match <code>attributions</code>.</p>
           <td><code>combine_channels</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If <code>True</code>, the attributions will be averaged across the channel
+          <td><p>If <code>True</code>, the attributions will be averaged across the channel
 dimension, resulting in a 1-channel attribution map. If <code>None</code>,
-defaults to the value supplied to the constructor.</p>
-            </div>
-          </td>
+defaults to the value supplied to the constructor.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -7628,9 +7392,7 @@ defaults to the value supplied to the constructor.</p>
           <td><code>normalization_type</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Specifies one of the following configurations for normalizing
+          <td><p>Specifies one of the following configurations for normalizing
 the attributions (each item is normalized separately):</p>
 <ul>
 <li><code>'unsigned_max'</code>: normalizes the attributions to the range 
@@ -7662,9 +7424,7 @@ the attributions (each item is normalized separately):</p>
   maximum attribution value.</li>
 <li><code>'unnormalized'</code>: leaves the attributions unaffected.</li>
 </ul>
-<p>If <code>None</code>, defaults to the value supplied to the constructor.</p>
-            </div>
-          </td>
+<p>If <code>None</code>, defaults to the value supplied to the constructor.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -7673,14 +7433,10 @@ the attributions (each item is normalized separately):</p>
           <td><code>blur</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Gives the radius of a Gaussian blur to be applied to the 
+          <td><p>Gives the radius of a Gaussian blur to be applied to the 
 attributions before visualizing. This can be used to help focus
 on salient regions rather than specific salient pixels. If
-<code>None</code>, defaults to the value supplied to the constructor.</p>
-            </div>
-          </td>
+<code>None</code>, defaults to the value supplied to the constructor.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -7689,13 +7445,9 @@ on salient regions rather than specific salient pixels. If
           <td><code>cmap</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>matplotlib.colors.Colormap | str, optional
+          <td><p>matplotlib.colors.Colormap | str, optional
 Colormap or name of a Colormap to use for the visualization. If
-<code>None</code>, defaults to the value supplied to the constructor.</p>
-            </div>
-          </td>
+<code>None</code>, defaults to the value supplied to the constructor.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -7716,31 +7468,19 @@ Colormap or name of a Colormap to use for the visualization. If
           <td>
                 <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A <code>np.ndarray</code> array of the numerical representation of the</p>
-            </div>
-          </td>
+          <td><p>A <code>np.ndarray</code> array of the numerical representation of the</p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>attributions as modified for the visualization. This includes </p>
-            </div>
-          </td>
+          <td><p>attributions as modified for the visualization. This includes </p></td>
         </tr>
         <tr>
           <td>
                 <code><span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>normalization, blurring, etc.</p>
-            </div>
-          </td>
+          <td><p>normalization, blurring, etc.</p></td>
         </tr>
     </tbody>
   </table>
@@ -8037,12 +7777,8 @@ be overridden by passing in values to <code>__call__</code>).</p>
           <td>
                 <code>bool</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If <code>True</code>, the attributions will be averaged across the channel
-dimension, resulting in a 1-channel attribution map.</p>
-            </div>
-          </td>
+          <td><p>If <code>True</code>, the attributions will be averaged across the channel
+dimension, resulting in a 1-channel attribution map.</p></td>
           <td>
                 <code>False</code>
           </td>
@@ -8052,9 +7788,7 @@ dimension, resulting in a 1-channel attribution map.</p>
           <td>
                 <code>str</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Specifies one of the following configurations for normalizing
+          <td><p>Specifies one of the following configurations for normalizing
 the attributions (each item is normalized separately):</p>
 <ul>
 <li><code>'unsigned_max'</code>: normalizes the attributions to the range 
@@ -8088,9 +7822,7 @@ the attributions (each item is normalized separately):</p>
 </ul>
 <p>If <code>None</code>, either <code>'unsigned_max'</code> (for single-channel data) or 
 <code>'unsigned_max_positive_centered'</code> (for multi-channel data) is
-used.</p>
-            </div>
-          </td>
+used.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -8100,13 +7832,9 @@ used.</p>
           <td>
                 <code>float</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Gives the radius of a Gaussian blur to be applied to the 
+          <td><p>Gives the radius of a Gaussian blur to be applied to the 
 attributions before visualizing. This can be used to help focus
-on salient regions rather than specific salient pixels.</p>
-            </div>
-          </td>
+on salient regions rather than specific salient pixels.</p></td>
           <td>
                 <code>0.0</code>
           </td>
@@ -8116,15 +7844,11 @@ on salient regions rather than specific salient pixels.</p>
           <td>
                 <code><span title="matplotlib.colors.Colormap">Colormap</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>matplotlib.colors.Colormap | str, optional
+          <td><p>matplotlib.colors.Colormap | str, optional
 Colormap or name of a Colormap to use for the visualization. If 
 <code>None</code>, the colormap will be chosen based on the normalization 
 type. This argument is only used for single-channel data
-(including when <code>combine_channels</code> is True).</p>
-            </div>
-          </td>
+(including when <code>combine_channels</code> is True).</p></td>
           <td>
                 <code>None</code>
           </td>

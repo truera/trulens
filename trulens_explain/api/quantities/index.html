@@ -2198,11 +2198,7 @@ roof of the car, a “car feature” not shared by convertibles.</p>
           <td>
                 <code>int</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The index of the class the QoI is for.</p>
-            </div>
-          </td>
+          <td><p>The index of the class the QoI is for.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -2344,11 +2340,7 @@ for each input.</p>
           <td>
                 <code><span title="typing.List">List</span>[int]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A sequence of classes corresponding to each input.</p>
-            </div>
-          </td>
+          <td><p>A sequence of classes corresponding to each input.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -2500,11 +2492,7 @@ relative to another.</p>
           <td>
                 <code>int</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The index of the class the QoI is for.</p>
-            </div>
-          </td>
+          <td><p>The index of the class the QoI is for.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -2514,11 +2502,7 @@ relative to another.</p>
           <td>
                 <code>int</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The index of the class to compare against.</p>
-            </div>
-          </td>
+          <td><p>The index of the class to compare against.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -2793,12 +2777,8 @@ activation is returned.</p>
           <td>
                 <code><span title="typing.Union">Union</span>[int, <span title="typing.List">List</span>[int]]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Channel to return. If a list is provided, then the quantity sums 
-over each of the channels in the list.</p>
-            </div>
-          </td>
+          <td><p>Channel to return. If a list is provided, then the quantity sums 
+over each of the channels in the list.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -2808,14 +2788,10 @@ over each of the channels in the list.</p>
           <td>
                 <code><span title="typing.Optional">Optional</span>[int]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Channel dimension index, if relevant, e.g., for 2D convolutional
+          <td><p>Channel dimension index, if relevant, e.g., for 2D convolutional
 layers. If <code>channel_axis</code> is <code>None</code>, then the channel axis of 
 the relevant backend will be used. This argument is not used 
-when the channels are scalars, e.g., for dense layers.</p>
-            </div>
-          </td>
+when the channels are scalars, e.g., for dense layers.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -2825,15 +2801,11 @@ when the channels are scalars, e.g., for dense layers.</p>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="typing.Callable">Callable</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Function with which to aggregate the remaining dimensions 
+          <td><p>Function with which to aggregate the remaining dimensions 
 (except the batch dimension) in order to get a single scalar 
 value for each channel. If <code>agg_fn</code> is <code>None</code> then a sum over 
 each neuron in the channel will be taken. This argument is not 
-used when the channels are scalars, e.g., for dense layers.</p>
-            </div>
-          </td>
+used when the channels are scalars, e.g., for dense layers.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3039,13 +3011,9 @@ model's output as the QoI.</p>
           <td>
                 <code><span title="typing.Callable">Callable</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A callable that takes a single argument representing the model's 
+          <td><p>A callable that takes a single argument representing the model's 
 tensor output and returns a differentiable batched scalar tensor 
-representing the QoI.</p>
-            </div>
-          </td>
+representing the QoI.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -3269,11 +3237,7 @@ class.</p>
           <td>
                 <code>int</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Output dimension over which max operation is taken.</p>
-            </div>
-          </td>
+          <td><p>Output dimension over which max operation is taken.</p></td>
           <td>
                 <code>1</code>
           </td>
@@ -3283,9 +3247,7 @@ class.</p>
           <td>
                 <code><span title="typing.Union">Union</span>[<span title="typing.Callable">Callable</span>, str, None]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Activation function to be applied to the output before taking 
+          <td><p>Activation function to be applied to the output before taking 
 the max. If <code>activation</code> is a string, use the corresponding 
 named activation function implemented by the backend. The 
 following strings are currently supported as shorthands for the
@@ -3295,9 +3257,7 @@ respective standard activation functions:</p>
 <li><code>'softmax'</code> </li>
 </ul>
 <p>If <code>activation</code> is <code>None</code>, no activation function is applied to
-the input.</p>
-            </div>
-          </td>
+the input.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3555,12 +3515,8 @@ output behavior that the attributions describe.</p>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Outputs">Outputs</span>, <span title="trulens.utils.typing.Tensor">Tensor</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Output point from which the quantity is derived. Must be a
-differentiable tensor.</p>
-            </div>
-          </td>
+          <td><p>Output point from which the quantity is derived. Must be a
+differentiable tensor.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -3581,11 +3537,7 @@ differentiable tensor.</p>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Outputs">Outputs</span>, <span title="trulens.utils.typing.Tensor">Tensor</span>]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A differentiable batched scalar tensor representing the QoI.</p>
-            </div>
-          </td>
+          <td><p>A differentiable batched scalar tensor representing the QoI.</p></td>
         </tr>
     </tbody>
   </table>
@@ -3886,15 +3838,11 @@ activations below the threshold.</p>
           <td>
                 <code>float</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A threshold to determine the element-wise sign of the input 
+          <td><p>A threshold to determine the element-wise sign of the input 
 tensor. The elements with activations higher than the threshold 
 will retain their sign, while the elements with activations 
 lower than the threshold will have their sign flipped (or vice 
-versa if <code>low_minus_high</code> is set to <code>True</code>).</p>
-            </div>
-          </td>
+versa if <code>low_minus_high</code> is set to <code>True</code>).</p></td>
           <td>
               <em>required</em>
           </td>
@@ -3904,14 +3852,10 @@ versa if <code>low_minus_high</code> is set to <code>True</code>).</p>
           <td>
                 <code>bool</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If <code>True</code>, substract the output with activations above the 
+          <td><p>If <code>True</code>, substract the output with activations above the 
 threshold from the output with activations below the threshold. 
 If <code>False</code>, substract the output with activations below the 
-threshold from the output with activations above the threshold.</p>
-            </div>
-          </td>
+threshold from the output with activations above the threshold.</p></td>
           <td>
                 <code>False</code>
           </td>
@@ -3921,18 +3865,14 @@ threshold from the output with activations above the threshold.</p>
           <td>
                 <code><span title="typing.Union">Union</span>[<span title="typing.Callable">Callable</span>, str, None]</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>str or function, optional
+          <td><p>str or function, optional
 Activation function to be applied to the quantity before taking
 the threshold. If <code>activation</code> is a string, use the 
 corresponding activation function implemented by the backend 
 (currently supported: <code>'sigmoid'</code> and <code>'softmax'</code>). Otherwise, 
 if <code>activation</code> is not <code>None</code>, it will be treated as a callable.
 If <code>activation</code> is <code>None</code>, do not apply an activation function 
-to the quantity.</p>
-            </div>
-          </td>
+to the quantity.</p></td>
           <td>
                 <code>None</code>
           </td>

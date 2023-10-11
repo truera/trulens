@@ -2318,12 +2318,8 @@ of each variable towards particular predictions.</p>
           <td>
                 <code><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>ModelWrapper
-Model for which attributions are calculated.</p>
-            </div>
-          </td>
+          <td><p>ModelWrapper
+Model for which attributions are calculated.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -2333,17 +2329,13 @@ Model for which attributions are calculated.</p>
           <td>
                 <code>int</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>int (optional)
+          <td><p>int (optional)
 Will rebatch instances to this size if given. This may be
 required for GPU usage if using a DoI which produces multiple
 instances per user-provided instance. Many valued DoIs will
 expand the tensors sent to each layer to original_batch_size *
 doi_size. The rebatch size will break up original_batch_size *
-doi_size into rebatch_size chunks to send to model.</p>
-            </div>
-          </td>
+doi_size into rebatch_size chunks to send to model.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -2443,18 +2435,14 @@ a single point, thus being a good measure of model sensitivity. </p>
           <td>
                 <code><span title="trulens.utils.typing.ArgsLike">ArgsLike</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>ArgsLike, model_kwargs: KwargsLike
+          <td><p>ArgsLike, model_kwargs: KwargsLike
 The args and kwargs given to the call method of a model. This
 should represent the records to obtain attributions for, assumed
 to be a <em>batched</em> input. if <code>self.model</code> supports evaluation on
 <em>data tensors</em>, the  appropriate tensor type may be used (e.g.,
 Pytorch models may accept Pytorch tensors in addition to
 <code>np.ndarray</code>s). The shape of the inputs must match the input
-shape of <code>self.model</code>. </p>
-            </div>
-          </td>
+shape of <code>self.model</code>. </p></td>
           <td>
                 <code>()</code>
           </td>
@@ -3018,11 +3006,7 @@ is essentially an alias for</p>
           <td><code>model</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Model for which attributions are calculated.</p>
-            </div>
-          </td>
+          <td><p>Model for which attributions are calculated.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -3031,18 +3015,14 @@ is essentially an alias for</p>
           <td><code>qoi_cut</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The cut determining the layer from which the QoI is derived.
+          <td><p>The cut determining the layer from which the QoI is derived.
 Expects a <code>Cut</code> object, or a related type that can be
 interpreted as a <code>Cut</code>, as documented below.</p>
 <p>If an <code>int</code> is given, it represents the index of a layer in
 <code>model</code>. </p>
 <p>If a <code>str</code> is given, it represents the name of a layer in
 <code>model</code>. </p>
-<p><code>None</code> is an alternative for <code>slices.OutputCut()</code>.</p>
-            </div>
-          </td>
+<p><code>None</code> is an alternative for <code>slices.OutputCut()</code>.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3051,9 +3031,7 @@ interpreted as a <code>Cut</code>, as documented below.</p>
           <td><code>qoi</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>quantities.QoI | int | tuple | str
+          <td><p>quantities.QoI | int | tuple | str
 Quantity of interest to attribute. Expects a <code>QoI</code> object, or a
 related type that can be interpreted as a <code>QoI</code>, as documented
 below.</p>
@@ -3070,9 +3048,7 @@ representing the QoI, i.e., ```python quantities.LambdaQoI(qoi)
 </code></pre></div></p>
 <p>If the string, <code>'max'</code>, is given, the quantity of interest is
 taken to be the output for the class with the maximum score,
-i.e., <code>python quantities.MaxClassQoI()</code></p>
-            </div>
-          </td>
+i.e., <code>python quantities.MaxClassQoI()</code></p></td>
           <td>
                 <code>&#39;max&#39;</code>
           </td>
@@ -3081,15 +3057,11 @@ i.e., <code>python quantities.MaxClassQoI()</code></p>
           <td><code>doi_cut</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>For models which have non-differentiable pre-processing at the
+          <td><p>For models which have non-differentiable pre-processing at the
 start of the model, specify the cut of the initial
 differentiable input form. For NLP models, for example, this
 could point to the embedding layer. If not provided, InputCut is
-assumed.</p>
-            </div>
-          </td>
+assumed.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3098,9 +3070,7 @@ assumed.</p>
           <td><code>doi</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>distributions.DoI | str
+          <td><p>distributions.DoI | str
 Distribution of interest over inputs. Expects a <code>DoI</code> object, or
 a related type that can be interpreted as a <code>DoI</code>, as documented
 below.</p>
@@ -3110,9 +3080,7 @@ distributions.PointDoi()</code></p>
 <p>If the string, <code>'linear'</code>, is given, the distribution is taken
 to be the linear interpolation from the zero input to the point
 passed to <code>attributions</code>, i.e., <code>python
-distributions.LinearDoi()</code></p>
-            </div>
-          </td>
+distributions.LinearDoi()</code></p></td>
           <td>
                 <code>&#39;point&#39;</code>
           </td>
@@ -3121,14 +3089,10 @@ distributions.LinearDoi()</code></p>
           <td><code>multiply_activation</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>bool, optional
+          <td><p>bool, optional
 Whether to multiply the gradient result by its corresponding
 activation, thus converting from "<em>influence space</em>" to
-"<em>attribution space</em>."</p>
-            </div>
-          </td>
+"<em>attribution space</em>."</p></td>
           <td>
                 <code>True</code>
           </td>
@@ -3573,11 +3537,7 @@ activation, thus converting from "<em>influence space</em>" to
           <td>
                 <code><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Model for which attributions are calculated.</p>
-            </div>
-          </td>
+          <td><p>Model for which attributions are calculated.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -3586,13 +3546,9 @@ activation, thus converting from "<em>influence space</em>" to
           <td><code>baseline</code></td>
           <td>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The baseline to interpolate from. Must be same shape as the 
+          <td><p>The baseline to interpolate from. Must be same shape as the 
 input. If <code>None</code> is given, the zero vector in the appropriate 
-shape will be used.</p>
-            </div>
-          </td>
+shape will be used.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -3602,14 +3558,10 @@ shape will be used.</p>
           <td>
                 <code>int</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Number of points to use in the approximation. A higher 
+          <td><p>Number of points to use in the approximation. A higher 
 resolution is more computationally expensive, but gives a better
 approximation of the mathematical formula this attribution 
-method represents.</p>
-            </div>
-          </td>
+method represents.</p></td>
           <td>
                 <code>50</code>
           </td>
@@ -4716,11 +4668,7 @@ specifies the records over which the attributions are aggregated.</p>
           <td>
                 <code><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Model for which attributions are calculated.</p>
-            </div>
-          </td>
+          <td><p>Model for which attributions are calculated.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -4730,9 +4678,7 @@ specifies the records over which the attributions are aggregated.</p>
           <td>
                 <code><span title="trulens_explain.trulens.nn.attribution.SliceLike">SliceLike</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The slice to use when computing the attributions. The slice 
+          <td><p>The slice to use when computing the attributions. The slice 
 keeps track of the layer whose output attributions are 
 calculated and the layer for which the quantity of interest is 
 computed. Expects a <code>Slice</code> object, or a related type that can
@@ -4748,9 +4694,7 @@ respectively.</p>
 an <code>int</code>, <code>str</code>, or <code>None</code>. If an <code>int</code> is given, it represents 
 the index of a layer in <code>model</code>. If a <code>str</code> is given, it 
 represents the name of a layer in <code>model</code>. <code>None</code> is an 
-alternative for <code>slices.InputCut</code>.</p>
-            </div>
-          </td>
+alternative for <code>slices.InputCut</code>.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -4760,9 +4704,7 @@ alternative for <code>slices.InputCut</code>.</p>
           <td>
                 <code><span title="trulens_explain.trulens.nn.attribution.QoiLike">QoiLike</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Quantity of interest to attribute. Expects a <code>QoI</code> object, or a
+          <td><p>Quantity of interest to attribute. Expects a <code>QoI</code> object, or a
 related type that can be interpreted as a <code>QoI</code>, as documented
 below.</p>
 <p>If an <code>int</code> is given, the quantity of interest is taken to be 
@@ -4784,9 +4726,7 @@ representing the QoI, i.e.,
 taken to be the output for the class with the maximum score, 
 i.e., 
 <div class="highlight"><pre><span></span><code><span class="n">quantities</span><span class="o">.</span><span class="n">MaxClassQoI</span><span class="p">()</span>
-</code></pre></div></p>
-            </div>
-          </td>
+</code></pre></div></p></td>
           <td>
               <em>required</em>
           </td>
@@ -4796,9 +4736,7 @@ i.e.,
           <td>
                 <code><span title="trulens_explain.trulens.nn.attribution.DoiLike">DoiLike</span></code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Distribution of interest over inputs. Expects a <code>DoI</code> object, or
+          <td><p>Distribution of interest over inputs. Expects a <code>DoI</code> object, or
 a related type that can be interpreted as a <code>DoI</code>, as documented
 below.</p>
 <p>If the string, <code>'point'</code>, is given, the distribution is taken to
@@ -4809,9 +4747,7 @@ be the single point passed to <code>attributions</code>, i.e.,
 to be the linear interpolation from the zero input to the point 
 passed to <code>attributions</code>, i.e., 
 <div class="highlight"><pre><span></span><code><span class="n">distributions</span><span class="o">.</span><span class="n">LinearDoi</span><span class="p">()</span>
-</code></pre></div></p>
-            </div>
-          </td>
+</code></pre></div></p></td>
           <td>
               <em>required</em>
           </td>
@@ -4821,13 +4757,9 @@ passed to <code>attributions</code>, i.e.,
           <td>
                 <code>bool</code>
           </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Whether to multiply the gradient result by its corresponding
+          <td><p>Whether to multiply the gradient result by its corresponding
 activation, thus converting from "<em>influence space</em>" to 
-"<em>attribution space</em>."</p>
-            </div>
-          </td>
+"<em>attribution space</em>."</p></td>
           <td>
                 <code>True</code>
           </td>
