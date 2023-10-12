@@ -1,4 +1,5 @@
-from concurrent.futures import Future, wait
+from concurrent.futures import Future
+from concurrent.futures import wait
 import logging
 from multiprocessing.pool import AsyncResult
 from typing import Dict, Optional, Tuple
@@ -9,6 +10,7 @@ from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
@@ -388,7 +390,6 @@ class Huggingface(Provider):
         if not isinstance(hf_response, list):
             raise ValueError("Unexpected response from Huggingface API: response should be a list or a dictionary")
 
-        
         # Iterate through the entities and extract "word" and "score" for "NAME" entities
         for i, entity in enumerate(hf_response):
             reasons[f"{entity.get('entity_group')} detected: {entity['word']}"] = f"Score: {entity['score']}"
@@ -412,8 +413,20 @@ class Huggingface(Provider):
 
 class Dummy(Huggingface):
 
-    def __init__(self, name: str = None, **kwargs):
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        error_prob: float = 1/100,
+        loading_prob: float = 1/100,
+        freeze_prob: float = 1/100,
+        overloaded_prob: float = 1/100,
+        rpm: float = 600,
+        **kwargs
+    ):
         kwargs['name'] = name or "dummyhugs"
-        kwargs['endpoint'] = DummyEndpoint(name="dummyendhugspoint")
+        kwargs['endpoint'] = DummyEndpoint(
+            name="dummyendhugspoint",
+            **locals_except("self", "name", "kwargs")
+        )
 
         super().__init__(**kwargs)

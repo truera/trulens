@@ -251,7 +251,7 @@ class Feedback(FeedbackDefinition):
                     f"{UNICODE_YIELD} Feedback task starting: {feedback_ident}"
                 )
 
-                tp.submit_robust(prepare_feedback, row)
+                tp.submit(prepare_feedback, row)
                 started_count += 1
 
             elif row.status in [FeedbackResultStatus.RUNNING]:
@@ -261,7 +261,7 @@ class Feedback(FeedbackDefinition):
                         f"{UNICODE_YIELD} Feedback task last made progress over 30 seconds ago. "
                         f"Retrying: {feedback_ident}"
                     )
-                    tp.submit_robust(prepare_feedback, row)
+                    tp.submit(prepare_feedback, row)
                     started_count += 1
 
                 else:
@@ -277,7 +277,7 @@ class Feedback(FeedbackDefinition):
                         f"{UNICODE_YIELD} Feedback task last made progress over 5 minutes ago. "
                         f"Retrying: {feedback_ident}"
                     )
-                    tp.submit_robust(prepare_feedback, row)
+                    tp.submit(prepare_feedback, row)
                     started_count += 1
 
                 else:

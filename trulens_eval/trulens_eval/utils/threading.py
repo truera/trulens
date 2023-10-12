@@ -2,24 +2,30 @@
 Multi-threading utilities.
 """
 
+import asyncio
 from concurrent.futures import Future, as_completed, wait
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
 from inspect import stack
 import logging
 from queue import Queue
+import sys
 from threading import Lock, Thread
 import threading
 from time import sleep
+import types
 from typing import Callable, Optional, TypeVar
 import warnings
+from timeoutcontext import timeout
 
-from trulens_eval.utils.python import _future_target_wrapper
+from trulens_eval.utils.python import _future_target_wrapper, code_line
 from trulens_eval.utils.python import SingletonPerName
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
+DEFAULT_NETWORK_TIMEOUT: float = 10.0 # seconds
 
 
 class ThreadPoolExecutor(fThreadPoolExecutor):
@@ -35,7 +41,7 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         )
 
 
-class TP(SingletonPerName):  # "thread processing"
+class TP(SingletonPerName['TP']):  # "thread processing"
 
     # Store here stacks of calls to various thread starting methods so that we
     # can retrieve the trace of calls that caused a thread to start.
@@ -43,10 +49,7 @@ class TP(SingletonPerName):  # "thread processing"
     MAX_THREADS = 128
 
     # How long to wait for any task before restarting it.
-    ROBUST_TIMEOUT = 60.0
-
-    # How many times to restart a failed or timed-out task.
-    ROBUST_RETRIES = 3
+    DEBUG_TIMEOUT = 60.0 # TODO: adjust after dev
 
     def __init__(self):
         if hasattr(self, "thread_pool"):
@@ -54,41 +57,61 @@ class TP(SingletonPerName):  # "thread processing"
             return
 
         # Run tasks started with this class using this pool.
-        self.thread_pool = fThreadPoolExecutor(max_workers=TP.MAX_THREADS, thread_name_prefix="TP.submit")
+        self.thread_pool = fThreadPoolExecutor(
+            max_workers=TP.MAX_THREADS,
+            thread_name_prefix="TP.submit"
+        )
+
+        # Keep a seperate pool for threads whose function is only to wait for
+        # the tasks executed in the above pool. Keeping this seperate to prevent
+        # the deadlock whereas the wait thread waits for a tasks which will
+        # never be run because the thread pool is filled with wait threads.
+        self.thread_pool_debug_tasks = ThreadPoolExecutor(
+            max_workers=TP.MAX_THREADS,
+            thread_name_prefix="TP._submit"
+        )
 
         # Store the futures for the tasks started with this class here.
         # This enforces an upper bound on how many tasks can be queued at once.
         # self.futures = Queue(maxsize=TP.MAX_THREADS)
-        self.futures = set()
-        self.futures_lock = Lock()
+        # self.futures = set()
+        # self.futures_lock = Lock()
 
         # Will keep track of tasks that are timing out here and kill them
         # eventually. This is needed given the task limit imposed by the above
         # queue.
-        self.timeouts = dict()
+        # self.timeouts = dict()
 
         # We want to run futures which are never waited on otherwise. This
         # thread will do this.
-        self.finisher_thread = Thread(target=self.finisher)
-        self.finisher_thread.start()
+        # self.finisher_thread = Thread(target=self.finisher)
+        # self.finisher_thread.start()
 
         self.completed_tasks = 0
         self.timedout_tasks = 0
         self.failed_tasks = 0
 
+    def _run_with_timeout(self, func: Callable[..., T], *args, **kwargs) -> T:
 
-    def _thread_starter(self, func, args, kwargs) -> Future:
-        #present_stack = stack()
+        fut: 'Future[T]' = self.thread_pool.submit(func, *args, **kwargs)
 
-        future = self.thread_pool.submit(
-            func, 
-            *args,
-            **kwargs
-        )
+        try:
+            res: T = fut.result(timeout=TP.DEBUG_TIMEOUT)
+            return res
 
-        # print(future)
+        except TimeoutError as e:
+            logger.error(
+                f"Run of {func.__name__} in {threading.current_thread()} timed out after {TP.DEBUG_TIMEOUT} second(s).\n"
+                f"{code_line(func)}"
+            )
 
-        return future
+            raise e
+
+        except Exception as e:
+            logger.warning(
+                f"Run of {func.__name__} in {threading.current_thread()} failed with: {e}"
+            )
+            raise e
 
     """
     def finish_if_full(self):
@@ -105,123 +128,21 @@ class TP(SingletonPerName):  # "thread processing"
         self.futures.put(future)
     """
 
-    def promise(self, func: Callable[..., T], *args, **kwargs) -> 'Future[T]':
-
-        warnings.warn(
-            "TP.promise will be deprecated. Use `TP.submit` or `TP.submit_robust` instead.",
-            DeprecationWarning,
-            stacklevel=2
-        )
-
-        return self.submit(func, *args, **kwargs)
-    
     def submit(self, func: Callable[..., T], *args, **kwargs) -> 'Future[T]':
-        """
-        nonfull = False
+        return self._submit(func, *args, **kwargs)
 
-        while not nonfull:
-            with self.futures_lock:
-                nonfull = len(self.futures) < TP.MAX_THREADS // 2
-            if not nonfull:
-                sleep(1)
+    def _submit(self, func: Callable[..., T], *args, **kwargs) -> 'Future[T]':
+        # Submit a concurrent tasks to run `func` with the given `args` and
+        # `kwargs` but stop with error if it ever takes too long. This is only
+        # meant for debugging purposes as we expect all concurrent tasks to have
+        # their own retry/timeout capabilities.
 
-        print(f"add {func.__name__}")
-        """
-        
-        future = self._thread_starter(func, args, kwargs)
-
-        with self.futures_lock:
-            self.futures.add(future)
-
-        return future
-
-    def submit_robust(self, func: Callable[..., T], *args, **kwargs) -> 'Future[T]':
-        # Submit an async task to run `func` wrapped with retry capabilities.
-
-        def run(*args, **kwargs):
-            retries: int = TP.ROBUST_RETRIES
-
-            res = None
-            future = self._thread_starter(func, args, kwargs)
-
-            while res is None and retries > 0:
-                try:
-                    
-                    res = future.result(timeout=TP.ROBUST_TIMEOUT)
-
-                except TimeoutError as e:
-                    logger.warning(f"Run of {func.__name__} in {threading.current_thread()} timed out. retries={retries}.")
-
-                    #with self.futures_lock:
-                    #    self.futures.remove(future)
-
-                    future.cancel()
-                    future = self._thread_starter(func, args, kwargs)
-
-                    res = None
-                    retries -= 1
-
-                    if retries == 0:
-                        raise e
-                    
-                # TODO: limit this to API/resource errors, don't include user errors that will always fail.
-                except Exception as e:
-                    logger.warning(f"Run of {func.__name__} in {threading.current_thread()} failed with {e}. retries={retries}.")
-
-                    #with self.futures_lock:
-                    #    self.futures.remove(future)
-
-                    future.cancel()
-                    future = self._thread_starter(func, args, kwargs)
-
-                    res = None
-                    retries -= 1
-
-                    if retries == 0:
-                        raise e
-                    
-            return res
-
-        return self.submit(run, *args, **kwargs)
-
-    def finisher(self):
-        while True:
-            if len(self.futures) == 0:
-                sleep(1)
-
-            try:
-                with self.futures_lock:
-                    futures = list(self.futures)
-
-                #dones, not_dones = wait(futures, timeout=5)
-                #print(f"done/not_done={len(dones)}/{len(not_dones)}")
-
-                print(f"waiting for {len(futures)} futures")
-
-                for f in as_completed(futures, timeout=1):
-                    # print(f"remove {f}")
-
-                    with self.futures_lock:
-                        self.futures.remove(f)
-    
-                    try:
-                        f.result()
-                        self.completed_tasks += 1
-
-                    except TimeoutError:
-                        logger.warning(f"Run of {f} timed out.")
-                        self.timedout_tasks += 1
-                        
-                    except Exception as e:
-                        logger.warning(f"Run of {f} failed with {e}.")
-                        self.failed_tasks += 1
-
-            except TimeoutError as e:
-                # print(e)
-                pass
-
-            #for f in self.thread_pool.
-            #    self.finish()
+        return self.thread_pool_debug_tasks.submit(
+            self._run_with_timeout,
+            func,
+            *args,
+            **kwargs
+        )
 
     """
     def finish(self, timeout: Optional[float] = 5.0) -> int:

@@ -8,13 +8,13 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import Iterable, List, Optional, Sequence, Union
+from typing import Callable, Iterable, List, Optional, Sequence, Tuple, Union
 import warnings
 
 import pkg_resources
 
 from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
-from trulens_eval.db import JSON
+from trulens_eval.db import DB, JSON
 from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult
@@ -178,33 +178,19 @@ class Tru(SingletonPerName):
 
     update_record = add_record
 
-    def run_feedback_functions(
+    def _submit_feedback_functions(
         self,
         record: Record,
         feedback_functions: Sequence[Feedback],
         app: Optional[AppDefinition] = None,
-    ) -> Iterable[JSON]:
-        """
-        Run a collection of feedback functions and report their result.
-
-        Parameters:
-
-            record (Record): The record on which to evaluate the feedback
-            functions.
-
-            app (App, optional): The app that produced the given record.
-            If not provided, it is looked up from the given database `db`.
-
-            feedback_functions (Sequence[Feedback]): A collection of feedback
-            functions to evaluate.
-
-        Returns nothing.
-        """
-
+        on_done: Optional[Callable[['Future[Tuple[Feedback,FeedbackResult]]'], None]] = None
+    ) -> List['Future[Tuple[Feedback,FeedbackResult]]']:
         app_id = record.app_id
 
+        self.db: DB
+
         if app is None:
-            app = self.db.get_app(app_id=app_id)
+            app = AppDefinition.parse_obj(self.db.get_app(app_id=app_id))
             if app is None:
                 raise RuntimeError(
                     "App {app_id} not present in db. "
@@ -220,18 +206,53 @@ class Tru(SingletonPerName):
                 )
                 self.add_app(app=app)
 
-        evals = []
+        futures = []
 
-        tp = TP()
+        tp: TP = TP()
 
-        for func in feedback_functions:
-            evals.append(
-                tp.submit_robust(lambda f: f.run(app=app, record=record), func)
+        for ffunc in feedback_functions:
+            fut: 'Future[Tuple[Feedback,FeedbackResult]]' = \
+                tp.submit(lambda f: (f, f.run(app=app, record=record)), ffunc)
+            
+            if on_done is not None:
+                fut.add_done_callback(on_done)
+            
+            futures.append(fut)
+
+        return futures
+
+    def run_feedback_functions(
+        self,
+        record: Record,
+        feedback_functions: Sequence[Feedback],
+        app: Optional[AppDefinition] = None,
+    ) -> Iterable[FeedbackResult]:
+        """
+        Run a collection of feedback functions and report their result.
+
+        Parameters:
+
+            record (Record): The record on which to evaluate the feedback
+            functions.
+
+            app (App, optional): The app that produced the given record.
+            If not provided, it is looked up from the given database `db`.
+
+            feedback_functions (Sequence[Feedback]): A collection of feedback
+            functions to evaluate.
+
+        Yields `FeedbackResult`, one for each element of `feedback_functions`
+        potentially in random order.
+        """
+
+        for res in futures.as_completed(
+            self._submit_feedback_functions(
+                record=record,
+                feedback_functions=feedback_functions,
+                app=app
             )
-
-        for res in futures.as_completed(evals):
+        ):
             yield res.result()
-
 
     def add_app(self, app: AppDefinition) -> None:
         """
