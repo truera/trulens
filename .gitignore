@@ -41,4 +41,3 @@ credentials.toml
 
 # Generated Files, not enabling this yet
 # trulens_eval/generated_files/*.{py,md,ipynb}
-.vscode/settings.json
