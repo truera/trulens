@@ -2,21 +2,15 @@
 Multi-threading utilities.
 """
 
-import asyncio
-from concurrent.futures import Future, as_completed, wait
+
+from concurrent.futures import Future
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
 from inspect import stack
 import logging
-from queue import Queue
-import sys
-from threading import Lock, Thread
 import threading
-from time import sleep
-import types
-from typing import Callable, Optional, TypeVar
-import warnings
-from timeoutcontext import timeout
+
+from typing import Callable, TypeVar
 
 from trulens_eval.utils.python import _future_target_wrapper, code_line
 from trulens_eval.utils.python import SingletonPerName
