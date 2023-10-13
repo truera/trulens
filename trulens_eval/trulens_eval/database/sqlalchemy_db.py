@@ -35,8 +35,8 @@ from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import RecordID
-from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.text import UNICODE_CHECK, UNICODE_CLOCK, UNICODE_HOURGLASS, UNICODE_STOP
 
 logger = logging.getLogger(__name__)
 
@@ -232,7 +232,22 @@ class SqlAlchemyDB(DB):
                     _feedback_result
                 )  # insert new result # .add was not thread safe
 
-            print(f"{UNICODE_CHECK} added feedback result {_feedback_result.feedback_result_id}")
+            status = FeedbackResultStatus(_feedback_result.status)
+
+            if status == FeedbackResultStatus.DONE:
+                icon = UNICODE_CHECK
+            elif status == FeedbackResultStatus.RUNNING:
+                icon = UNICODE_HOURGLASS
+            elif status == FeedbackResultStatus.NONE:
+                icon = UNICODE_CLOCK
+            elif status == FeedbackResultStatus.FAILED:
+                icon = UNICODE_STOP
+            else:
+                icon = "???"
+
+            print(
+                f"{icon} feedback result {_feedback_result.name} {status.name} {_feedback_result.feedback_result_id}"
+            )
 
             return _feedback_result.feedback_result_id
 

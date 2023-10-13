@@ -43,7 +43,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
     MAX_THREADS = 128
 
     # How long to wait for any task before restarting it.
-    DEBUG_TIMEOUT = 60.0 # TODO: adjust after dev
+    DEBUG_TIMEOUT = 600.0 # 5 minutes
 
     def __init__(self):
         if hasattr(self, "thread_pool"):
@@ -62,35 +62,25 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         # never be run because the thread pool is filled with wait threads.
         self.thread_pool_debug_tasks = ThreadPoolExecutor(
             max_workers=TP.MAX_THREADS,
-            thread_name_prefix="TP._submit"
+            thread_name_prefix="TP.submit with debug timeout"
         )
-
-        # Store the futures for the tasks started with this class here.
-        # This enforces an upper bound on how many tasks can be queued at once.
-        # self.futures = Queue(maxsize=TP.MAX_THREADS)
-        # self.futures = set()
-        # self.futures_lock = Lock()
-
-        # Will keep track of tasks that are timing out here and kill them
-        # eventually. This is needed given the task limit imposed by the above
-        # queue.
-        # self.timeouts = dict()
-
-        # We want to run futures which are never waited on otherwise. This
-        # thread will do this.
-        # self.finisher_thread = Thread(target=self.finisher)
-        # self.finisher_thread.start()
 
         self.completed_tasks = 0
         self.timedout_tasks = 0
         self.failed_tasks = 0
 
-    def _run_with_timeout(self, func: Callable[..., T], *args, **kwargs) -> T:
+    def _run_with_timeout(
+        self,
+        func: Callable[..., T],
+        *args,
+        timeout: float = DEBUG_TIMEOUT,
+        **kwargs
+    ) -> T:
 
         fut: 'Future[T]' = self.thread_pool.submit(func, *args, **kwargs)
 
         try:
-            res: T = fut.result(timeout=TP.DEBUG_TIMEOUT)
+            res: T = fut.result(timeout=timeout)
             return res
 
         except TimeoutError as e:
@@ -107,25 +97,30 @@ class TP(SingletonPerName['TP']):  # "thread processing"
             )
             raise e
 
-    """
-    def finish_if_full(self):
-        if self.futures.full():
-            print("Task queue full. Finishing existing tasks.")
-            self.finish()
-    """
+    def submit(
+        self,
+        func: Callable[..., T],
+        *args,
+        timeout: float = DEBUG_TIMEOUT,
+        **kwargs
+    ) -> 'Future[T]':
+        
+        # TODO(piotrm): need deadlock fixes here. If submit or _submit was called
+        # earlier in the stack, do not use a threadpool to evaluate this task
+        # and instead create a new thread for it. This prevents tasks in a
+        # threadpool adding sub-tasks in the same threadpool which can lead to
+        # deadlocks. Alternatively just raise an exception in those cases.
 
-    """
-    def runlater(self, func: Callable, *args, **kwargs) -> None:
-        future = self._thread_starter(func, args, kwargs)
+        return self._submit(func, *args, timeout = timeout, **kwargs)
 
-        # TODO bugfix
-        self.futures.put(future)
-    """
-
-    def submit(self, func: Callable[..., T], *args, **kwargs) -> 'Future[T]':
-        return self._submit(func, *args, **kwargs)
-
-    def _submit(self, func: Callable[..., T], *args, **kwargs) -> 'Future[T]':
+    def _submit(
+        self,
+        func: Callable[..., T],
+        *args,
+        timeout: float = DEBUG_TIMEOUT,
+        **kwargs
+    ) -> 'Future[T]':
+        
         # Submit a concurrent tasks to run `func` with the given `args` and
         # `kwargs` but stop with error if it ever takes too long. This is only
         # meant for debugging purposes as we expect all concurrent tasks to have
@@ -135,66 +130,6 @@ class TP(SingletonPerName['TP']):  # "thread processing"
             self._run_with_timeout,
             func,
             *args,
+            timeout=timeout,
             **kwargs
         )
-
-    """
-    def finish(self, timeout: Optional[float] = 5.0) -> int:
-        # TODO bugfix
-        # return
-
-        logger.debug(f"Finishing {self.futures.qsize()} task(s).")
-
-        timeouts = []
-
-        # concurrent.futures.wait
-
-        while not self.futures.empty():
-            future = self.futures.get()
-            try:
-                future.result(timeout=timeout)
-
-                self.completed_tasks += 1
-
-                if future in self.timeouts:
-                    del self.timeouts[future]
-
-            except TimeoutError:
-                if future in self.timeouts:
-                    self.timeouts[future] += 1
-                else:
-                    self.timeouts[future] = 1
-
-                if self.timeouts[future] > 3:
-                    warnings.warn(f"Task for {future} timed out 3 times. Stopping it.", RuntimeWarning, stacklevel=3)
-
-                    del self.timeouts[future]
-                    future.cancel()
-
-                    self.timedout_tasks += 1
-
-                else:
-                    timeouts.append(future)
-
-        for future in timeouts:
-            self.futures.put(future)
-
-        if len(timeouts) == 0:
-            logger.debug("Done.")
-        else:
-            logger.debug("Some tasks timed out.")
-
-        return len(timeouts)
-    """
-        
-    """
-    def _status(self) -> List[str]:
-        import pandas as pd
-
-        rows = []
-
-        for p in self.thread_pool._pool:
-            rows.append([p.is_alive(), str(p)])
-
-        return pd.DataFrame(rows, columns=["alive", "thread"])
-    """

@@ -1,4 +1,4 @@
-from concurrent import futures
+from concurrent.futures import as_completed, wait
 import logging
 from multiprocessing import Process
 import os
@@ -14,7 +14,8 @@ import warnings
 import pkg_resources
 
 from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
-from trulens_eval.db import DB, JSON
+from trulens_eval.db import DB
+from trulens_eval.db import JSON
 from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult
@@ -245,7 +246,7 @@ class Tru(SingletonPerName):
         potentially in random order.
         """
 
-        for res in futures.as_completed(
+        for res in as_completed(
             self._submit_feedback_functions(
                 record=record,
                 feedback_functions=feedback_functions,
@@ -330,9 +331,11 @@ class Tru(SingletonPerName):
 
         return leaderboard
 
-    def start_evaluator(self,
-                        restart=False,
-                        fork=False) -> Union[Process, Thread]:
+    def start_evaluator(
+        self,
+        restart=False,
+        fork=False
+    ) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread.
         """
@@ -347,24 +350,18 @@ class Tru(SingletonPerName):
                     "Evaluator is already running in this process."
                 )
 
-        from trulens_eval.feedback import Feedback
-
         if not fork:
             self.evaluator_stop = threading.Event()
 
         def runloop():
             while fork or not self.evaluator_stop.is_set():
-                #print(
-                #    "Looking for things to do. Stop me with `tru.stop_evaluator()`.",
-                #    end=''
-                #)
-                started_count = Feedback.evaluate_deferred(tru=self)
+                futures = Feedback.evaluate_deferred(tru=self)
 
-                if started_count > 0:
+                if len(futures) > 0:
                     print(
-                        f"{UNICODE_YIELD}{UNICODE_YIELD}{UNICODE_YIELD} Started {started_count} deferred feedback functions."
+                        f"{UNICODE_YIELD}{UNICODE_YIELD}{UNICODE_YIELD} Started {len(futures)} deferred feedback functions."
                     )
-                    TP().finish()
+                    wait(futures)
                     print(
                         f"{UNICODE_CHECK}{UNICODE_CHECK}{UNICODE_CHECK} Finished evaluating deferred feedback functions."
                     )
@@ -454,6 +451,11 @@ class Tru(SingletonPerName):
             Tru.dashboard_proc = None
 
     def run_dashboard_in_jupyter(self):
+        """
+        Experimental approach to attempt to display the dashboard inside a
+        jupyter notebook. Relies on the `streamlit_jupyter` package.
+        """
+        # EXPERIMENTAL
         # TODO: check for jupyter
 
         logger.warning(

@@ -6,7 +6,7 @@ import json
 import logging
 import pprint
 import traceback
-from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 import warnings
 
 import numpy as np
@@ -214,7 +214,7 @@ class Feedback(FeedbackDefinition):
         self.selectors = selectors
 
     @staticmethod
-    def evaluate_deferred(tru: 'Tru') -> int:
+    def evaluate_deferred(tru: 'Tru') -> List['Future[Tuple[Feedback, FeedbackResult]]']:
         """
         Evaluates feedback functions that were specified to be deferred. Returns
         an integer indicating how many evaluates were run.
@@ -229,7 +229,7 @@ class Feedback(FeedbackDefinition):
             app_json = row.app_json
 
             feedback = Feedback(**row.feedback_json)
-            feedback.run_and_log(
+            return feedback, feedback.run_and_log(
                 record=record,
                 app=app_json,
                 tru=tru,
@@ -238,9 +238,9 @@ class Feedback(FeedbackDefinition):
 
         feedbacks = db.get_feedback()
 
-        started_count = 0
-
         tp = TP()
+
+        futures: List['Future[Tuple[Feedback, FeedbackResult]]'] = []
 
         for i, row in feedbacks.iterrows():
             feedback_ident = f"{row.fname} for app {row.app_json['app_id']}, record {row.record_id}"
@@ -251,8 +251,7 @@ class Feedback(FeedbackDefinition):
                     f"{UNICODE_YIELD} Feedback task starting: {feedback_ident}"
                 )
 
-                tp.submit(prepare_feedback, row)
-                started_count += 1
+                futures.append(tp.submit(prepare_feedback, row))
 
             elif row.status in [FeedbackResultStatus.RUNNING]:
                 now = datetime.now().timestamp()
@@ -261,8 +260,7 @@ class Feedback(FeedbackDefinition):
                         f"{UNICODE_YIELD} Feedback task last made progress over 30 seconds ago. "
                         f"Retrying: {feedback_ident}"
                     )
-                    tp.submit(prepare_feedback, row)
-                    started_count += 1
+                    futures.append(tp.submit(prepare_feedback, row))
 
                 else:
                     print(
@@ -277,8 +275,7 @@ class Feedback(FeedbackDefinition):
                         f"{UNICODE_YIELD} Feedback task last made progress over 5 minutes ago. "
                         f"Retrying: {feedback_ident}"
                     )
-                    tp.submit(prepare_feedback, row)
-                    started_count += 1
+                    futures.append(tp.submit(prepare_feedback, row))
 
                 else:
                     print(
@@ -289,7 +286,7 @@ class Feedback(FeedbackDefinition):
             elif row.status == FeedbackResultStatus.DONE:
                 pass
 
-        return started_count
+        return futures
 
     def __call__(self, *args, **kwargs) -> Any:
         assert self.imp is not None, "Feedback definition needs an implementation to call."
