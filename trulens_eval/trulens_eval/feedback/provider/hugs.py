@@ -11,7 +11,7 @@ from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.python import locals_except
-from trulens_eval.utils.threading import TP
+from trulens_eval.utils.threading import TP, ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -144,15 +144,14 @@ class Huggingface(Provider):
             )
             return {r['label']: r['score'] for r in hf_response}
 
-        tp = TP()
-
-        max_length = 500
-        f_scores1: Future[Dict] = tp.submit(
-            get_scores, text=text1[:max_length]
-        )
-        f_scores2: Future[Dict] = tp.submit(
-            get_scores, text=text2[:max_length]
-        )
+        with ThreadPoolExecutor(max_workers=2) as tpool:
+            max_length = 500
+            f_scores1: Future[Dict] = tpool.submit(
+                get_scores, text=text1[:max_length]
+            )
+            f_scores2: Future[Dict] = tpool.submit(
+                get_scores, text=text2[:max_length]
+            )
 
         wait([f_scores1, f_scores2])
 
