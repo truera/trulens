@@ -239,6 +239,11 @@ class Groundedness(SerialModel, WithClassInfo):
         all_results = []
 
         statements_to_scores = {}
+
+        # Ensure source_statements_multi_output is a list
+        if not isinstance(source_statements_multi_output, list):
+            source_statements_multi_output = [source_statements_multi_output]
+
         for multi_output in source_statements_multi_output:
             for k in multi_output:
                 if k not in statements_to_scores:
