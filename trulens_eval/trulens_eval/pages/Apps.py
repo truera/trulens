@@ -313,14 +313,18 @@ if "records" not in st.session_state:
 
     loadable_apps = AppDefinition.get_loadable_apps()
 
+    st.divider()
+
     for app_json in loadable_apps:
-        st.write(app_json['app_id'])
+        st.subheader(app_json['app_id'])
         st.button(
             label="New Session",
             key=f"select_app_{app_json['app_id']}",
             on_click=select_app,
             args=(app_json,)
         )
+
+        st.divider()
 
     if len(loadable_apps) == 0:
         st.write(
@@ -342,13 +346,6 @@ else:
     st.button(label="End session", on_click=end_session)
 
     # st.write(f"TODO: link to {app_json['app_id']} on other pages.")
-
-
-
-
-
-
-
 
     st.divider()
 
@@ -409,20 +406,22 @@ else:
                 args=("record",),
                 label_visibility="collapsed"
             )
-            st.text_input(
-                label="add record selector",
-                placeholder="Add a record selector to view details about the records (e.g. cost.cost).",
-                key="add_record_selector_input",
-                on_change=add_selector,
-                args=("record",),
-                label_visibility="collapsed"
-            )
+        st.text_input(
+            label="add record selector",
+            placeholder="Add a record selector to view details about the records (e.g. cost.cost).",
+            key="add_record_selector_input",
+            on_change=add_selector,
+            args=("record",),
+            label_visibility="collapsed"
+        )
 
-        
 
         # Rows corresponding to ChatRecord:
         for i, rec in enumerate(st.session_state.records):
             draw_rec(record_idx=i, rec=rec)
+
+        if len(st.session_state.records) == 0 or st.session_state.records[0].record_json is None:
+            st.caption('Begin a chat session by typing in a message below')
 
     # NOTE: chat input cannot be inside column.
     human_input = st.chat_input(
