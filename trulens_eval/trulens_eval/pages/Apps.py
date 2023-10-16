@@ -117,21 +117,6 @@ def draw_selector(
         label=selector, expanded=st.session_state[f"expanded_{key_norec}"]
     )
 
-    # Delete button.
-    exp.button(
-        f"remove",
-        key=f"delete_button_{key}",
-        on_click=remove_selector,
-        kwargs=dict(
-            container=container,
-            type=type,
-            selector_idx=selector_idx,
-            record_idx=record_idx,
-            selector=selector,
-            rec=rec
-        )
-    )
-
     # Edit input.
     exp.text_input(
         label="App selector",
@@ -213,6 +198,16 @@ def draw_rec(
                 rec=rec
             )
 
+def set_selector(type: str):
+    """
+    Set the selectors of type `type` in session state.
+    """
+
+    # Get value from session:
+    input_key = f"set_{type}_selector_input"
+    val = st.session_state[input_key]
+
+    st.session_state[f"selectors_{type}"] = val
 
 def add_selector(type: str):
     """
@@ -229,6 +224,9 @@ def add_selector(type: str):
     # Add selector if not already in there:
     if val not in state:
         state.append(val)
+
+        # Clear input
+        st.session_state[input_key] = ""
     else:
         print(f"{type} selector {val} already exists")
 
@@ -246,7 +244,7 @@ def select_app(app_json: JSON):
         st.session_state[f'selectors_{type}'] = []
 
 
-def run_record():
+def run_record(col):
     """
     Assuming a user provided some input in the appropriate text box, run the app
     from its final state on the new input.
@@ -261,7 +259,8 @@ def run_record():
     current_record.human = human_input
 
     # Draw the ChatRecord so far, just human input.
-    draw_rec(record_idx=last_record_index, rec=current_record)
+    with col:
+        draw_rec(record_idx=last_record_index, rec=current_record)
 
     # TODO: set some sort of progress bar or do async computation for computer
     # response.
@@ -277,11 +276,12 @@ def run_record():
 
     # Draw/update record row with the computer response and selector values that
     # are based on the Record.
-    draw_rec(
-        record_idx=last_record_index,
-        rec=current_record,
-        skip_human=True
-    )
+    with col:
+        draw_rec(
+            record_idx=last_record_index,
+            rec=current_record,
+            skip_human=True
+        )
 
     # Doing this after draw_rec so that the computer output can show up before
     # we start rendering selected values.
@@ -343,23 +343,60 @@ else:
 
     # st.write(f"TODO: link to {app_json['app_id']} on other pages.")
 
+    # Create an add app selector input:
+    st.write('**App selectors**')
+    if len(st.session_state.selectors_app) > 0:
+        st.multiselect(
+            'Current app selectors',
+            st.session_state.selectors_app,
+            st.session_state.selectors_app,
+            on_change=set_selector,
+            key="set_app_selector_input",
+            args=("app",),
+            label_visibility="collapsed"
+        )
+    st.text_input(
+        label="add app selector",
+        key="add_app_selector_input",
+        placeholder="Add an app selector (e.g. app.llm.model_name)",
+        on_change=add_selector,
+        args=("app",),
+        label_visibility="collapsed"
+    )
+
+
+
+
+    st.write('**Record selectors**')
+    if len(st.session_state.selectors_record) > 0:
+        st.multiselect(
+            'Current record selectors',
+            st.session_state.selectors_record,
+            st.session_state.selectors_record,
+            on_change=set_selector,
+            key="set_record_selector_input",
+            args=("record",),
+            label_visibility="collapsed"
+        )
+    st.text_input(
+        label="add record selector",
+        placeholder="Add a record selector to view details about the records (e.g. cost.cost).",
+        key="add_record_selector_input",
+        on_change=add_selector,
+        args=("record",),
+        label_visibility="collapsed"
+    )
+
+    st.divider()
+
     left, right = st.columns([1 / 3, 2 / 3])
 
     with left:
         # On the left are app selectors that show the properties of the app as
         # it is at the current/final state of the session.
 
-        st.write("**App details**")
-
-        # Create an add app selector input:
-        st.text_input(
-            label="add app selector",
-            key="add_app_selector_input",
-            placeholder="Add an app selector (e.g. app.llm.model_name)",
-            on_change=add_selector,
-            args=("app",),
-            label_visibility="collapsed"
-        )
+        st.write("#### App details")
+        st.caption("Details about your app. Use app selectors above")
 
         # Draw existing app selectors.
         for i, selector in enumerate(st.session_state.selectors_app):
@@ -373,19 +410,9 @@ else:
 
     with right:
         # On the right 2/3 are rows, one per ChatRecord. 
-        st.write("**Record details**")
+        st.write("#### Chat session")
 
-        # Before the rows, first is a new record selector input.
-        st.text_input(
-            label="add record selector",
-            placeholder="Add a record selector to view details about the record.",
-            key="add_record_selector_input",
-            on_change=add_selector,
-            args=("record",),
-            label_visibility="collapsed"
-        )
-
-        # Then the rows corresponding to ChatRecord:
+        # Rows corresponding to ChatRecord:
         for i, rec in enumerate(st.session_state.records):
             draw_rec(record_idx=i, rec=rec)
 
@@ -393,4 +420,7 @@ else:
     human_input = st.chat_input(
         on_submit=run_record,
         key="human_input",
+        kwargs=dict(
+            col=right # should be the cols of the last row from the above enumeration.
+        )
     )
