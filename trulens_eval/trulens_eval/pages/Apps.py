@@ -134,7 +134,7 @@ def draw_selector(
 
     # Edit input.
     exp.text_input(
-        label="App.",
+        label="App selector",
         value=selector,
         key=f"edit_input_{key}",
         on_change=update_selector,
@@ -145,7 +145,8 @@ def draw_selector(
             record_idx=record_idx,
             selector=selector,
             rec=rec
-        )
+        ),
+        label_visibility="collapsed"
     )
 
     # Get the relevant JSON to path into.
@@ -177,7 +178,6 @@ def draw_selector(
 
 
 def draw_rec(
-    cols,  # expects two columns
     record_idx: int,
     rec: ChatRecord,
     skip_human: bool = False
@@ -188,33 +188,30 @@ def draw_rec(
     drawn by an earlier call).
     """
 
-    col1, col2 = cols
 
     record_json = rec.record_json
 
-    with col1:
-        if not skip_human:
-            if rec.human is not None:
-                with st.chat_message("Human", avatar="🧑‍💻"):
-                    st.write(rec.human)
+    if not skip_human:
+        if rec.human is not None:
+            with st.chat_message("Human", avatar="🧑‍💻"):
+                st.write(rec.human)
 
-        if rec.computer is not None:
-            with st.chat_message("Computer", avatar="🤖"):
-                st.write(rec.computer)
+    if rec.computer is not None:
+        with st.chat_message("Computer", avatar="🤖"):
+            st.write(rec.computer)
 
     if record_json is not None:
-        with col2:
-            # st.write(f"TODO link to {record_json['record_id']}.")
+        # st.write(f"TODO link to {record_json['record_id']}.")
 
-            for selector_idx, selector in enumerate(
-                    st.session_state.selectors_record):
-                draw_selector(
-                    type="record",
-                    selector_idx=selector_idx,
-                    record_idx=record_idx,
-                    selector=selector,
-                    rec=rec
-                )
+        for selector_idx, selector in enumerate(
+                st.session_state.selectors_record):
+            draw_selector(
+                type="record",
+                selector_idx=selector_idx,
+                record_idx=record_idx,
+                selector=selector,
+                rec=rec
+            )
 
 
 def add_selector(type: str):
@@ -249,7 +246,7 @@ def select_app(app_json: JSON):
         st.session_state[f'selectors_{type}'] = []
 
 
-def run_record(cols):
+def run_record():
     """
     Assuming a user provided some input in the appropriate text box, run the app
     from its final state on the new input.
@@ -264,7 +261,7 @@ def run_record(cols):
     current_record.human = human_input
 
     # Draw the ChatRecord so far, just human input.
-    draw_rec(cols=cols, record_idx=last_record_index, rec=current_record)
+    draw_rec(record_idx=last_record_index, rec=current_record)
 
     # TODO: set some sort of progress bar or do async computation for computer
     # response.
@@ -281,7 +278,6 @@ def run_record(cols):
     # Draw/update record row with the computer response and selector values that
     # are based on the Record.
     draw_rec(
-        cols=cols,
         record_idx=last_record_index,
         rec=current_record,
         skip_human=True
@@ -353,13 +349,16 @@ else:
         # On the left are app selectors that show the properties of the app as
         # it is at the current/final state of the session.
 
+        st.write("**App details**")
+
         # Create an add app selector input:
         st.text_input(
             label="add app selector",
             key="add_app_selector_input",
-            placeholder="path here",
+            placeholder="Add an app selector (e.g. app.llm.model_name)",
             on_change=add_selector,
-            args=("app",)
+            args=("app",),
+            label_visibility="collapsed"
         )
 
         # Draw existing app selectors.
@@ -373,29 +372,25 @@ else:
             )
 
     with right:
-        # On the right 2/3 are rows, one per ChatRecord. Within the 2/3 is the
-        # chat inputs/outputs in the left 1/3 and selectors on the right 1/3.
+        # On the right 2/3 are rows, one per ChatRecord. 
+        st.write("**Record details**")
 
         # Before the rows, first is a new record selector input.
         st.text_input(
             label="add record selector",
-            placeholder="path here",
+            placeholder="Add a record selector to view details about the record.",
             key="add_record_selector_input",
             on_change=add_selector,
-            args=("record",)
+            args=("record",),
+            label_visibility="collapsed"
         )
 
         # Then the rows corresponding to ChatRecord:
         for i, rec in enumerate(st.session_state.records):
-            cols = st.columns(2)
-            draw_rec(cols, record_idx=i, rec=rec)
+            draw_rec(record_idx=i, rec=rec)
 
     # NOTE: chat input cannot be inside column.
     human_input = st.chat_input(
         on_submit=run_record,
         key="human_input",
-        kwargs=dict(
-            cols=
-            cols  # should be the cols of the last row from the above enumeration.
-        )
     )
