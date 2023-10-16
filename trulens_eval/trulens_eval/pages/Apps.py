@@ -343,49 +343,12 @@ else:
 
     # st.write(f"TODO: link to {app_json['app_id']} on other pages.")
 
-    # Create an add app selector input:
-    st.write('**App selectors**')
-    if len(st.session_state.selectors_app) > 0:
-        st.multiselect(
-            'Current app selectors',
-            st.session_state.selectors_app,
-            st.session_state.selectors_app,
-            on_change=set_selector,
-            key="set_app_selector_input",
-            args=("app",),
-            label_visibility="collapsed"
-        )
-    st.text_input(
-        label="add app selector",
-        key="add_app_selector_input",
-        placeholder="Add an app selector (e.g. app.llm.model_name)",
-        on_change=add_selector,
-        args=("app",),
-        label_visibility="collapsed"
-    )
 
 
 
 
-    st.write('**Record selectors**')
-    if len(st.session_state.selectors_record) > 0:
-        st.multiselect(
-            'Current record selectors',
-            st.session_state.selectors_record,
-            st.session_state.selectors_record,
-            on_change=set_selector,
-            key="set_record_selector_input",
-            args=("record",),
-            label_visibility="collapsed"
-        )
-    st.text_input(
-        label="add record selector",
-        placeholder="Add a record selector to view details about the records (e.g. cost.cost).",
-        key="add_record_selector_input",
-        on_change=add_selector,
-        args=("record",),
-        label_visibility="collapsed"
-    )
+
+
 
     st.divider()
 
@@ -396,7 +359,29 @@ else:
         # it is at the current/final state of the session.
 
         st.write("#### App details")
-        st.caption("Details about your app. Use app selectors above")
+        st.caption("Details about your app. Use app selectors below to select the pieces of information to highlight.")
+
+        # Create an add app selector input:
+        st.write('**App selectors**')
+        if len(st.session_state.selectors_app) > 0:
+            st.multiselect(
+                'Current app selectors',
+                st.session_state.selectors_app,
+                st.session_state.selectors_app,
+                on_change=set_selector,
+                key="set_app_selector_input",
+                args=("app",),
+                label_visibility="collapsed"
+            )
+        st.text_input(
+            label="add app selector",
+            key="add_app_selector_input",
+            placeholder="Add an app selector (e.g. app.llm.model_name)",
+            on_change=add_selector,
+            args=("app",),
+            label_visibility="collapsed"
+        )
+
 
         # Draw existing app selectors.
         for i, selector in enumerate(st.session_state.selectors_app):
@@ -410,7 +395,30 @@ else:
 
     with right:
         # On the right 2/3 are rows, one per ChatRecord. 
-        st.write("#### Chat session")
+        st.write("#### Records")
+        st.caption("Your interactive chat session. Type in a message below to 'chat' with the LLM application. Record selectors can be used to surface information on a per-record level.")
+
+        st.write('**Record selectors**')
+        if len(st.session_state.selectors_record) > 0:
+            st.multiselect(
+                'Current record selectors',
+                st.session_state.selectors_record,
+                st.session_state.selectors_record,
+                on_change=set_selector,
+                key="set_record_selector_input",
+                args=("record",),
+                label_visibility="collapsed"
+            )
+            st.text_input(
+                label="add record selector",
+                placeholder="Add a record selector to view details about the records (e.g. cost.cost).",
+                key="add_record_selector_input",
+                on_change=add_selector,
+                args=("record",),
+                label_visibility="collapsed"
+            )
+
+        
 
         # Rows corresponding to ChatRecord:
         for i, rec in enumerate(st.session_state.records):
