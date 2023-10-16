@@ -96,7 +96,7 @@ class SerialBytes(pydantic.BaseModel):
             raise ValueError(d)
 
 
-# JSONPath, a container for selector/accessors/setters of data stored in a json
+# Lens, a container for selector/accessors/setters of data stored in a json
 # structure. Cannot make abstract since pydantic will try to initialize it.
 class Step(SerialModel):  #, abc.ABC):
     """
@@ -121,7 +121,8 @@ class Step(SerialModel):  #, abc.ABC):
             'stop': GetSlice,
             'step': GetSlice,
             'items': GetItems,
-            'indices': GetIndices
+            'indices': GetIndices,
+            'call': GetCall
         }
 
         a = next(iter(d.keys()))
@@ -131,11 +132,12 @@ class Step(SerialModel):  #, abc.ABC):
             raise RuntimeError(f"Don't know how to deserialize Step with {d}.")
 
     # @abc.abstractmethod
-    def __call__(self, obj: Any) -> Iterable[Any]:
+    def get(self, obj: Any) -> Iterable[Any]:
         """
         Get the element of `obj`, indexed by `self`.
         """
         raise NotImplementedError()
+
 
     # @abc.abstractmethod
     def set(self, obj: Any, val: Any) -> Any:
@@ -145,7 +147,8 @@ class Step(SerialModel):  #, abc.ABC):
         raise NotImplementedError()
 
 
-class GetAttribute(Step):
+class GetCall(Step):
+    # TODO
     attribute: str
 
     def __hash__(self):
@@ -175,13 +178,43 @@ class GetAttribute(Step):
         return f".{self.attribute}"
 
 
+class GetAttribute(Step):
+    attribute: str
+
+    def __hash__(self):
+        return hash(self.attribute)
+
+    def get(self, obj: Any) -> Iterable[Any]:
+        if hasattr(obj, self.attribute):
+            yield getattr(obj, self.attribute)
+        else:
+            raise ValueError(
+                f"Object {obj} does not have attribute: {self.attribute}"
+            )
+
+    def set(self, obj: Any, val: Any) -> Any:
+        if obj is None:
+            obj = Bunch()
+
+        if hasattr(obj, self.attribute):
+            setattr(obj, self.attribute, val)
+            return obj
+        else:
+            # might fail
+            setattr(obj, self.attribute, val)
+            return obj
+
+    def __repr__(self):
+        return f".{self.attribute}"
+
+
 class GetIndex(Step):
     index: int
 
     def __hash__(self):
         return hash(self.index)
 
-    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+    def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
             if len(obj) > self.index:
                 yield obj[self.index]
@@ -213,7 +246,7 @@ class GetItem(Step):
     def __hash__(self):
         return hash(self.item)
 
-    def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
+    def get(self, obj: Dict[str, T]) -> Iterable[T]:
         if isinstance(obj, Dict):
             if self.item in obj:
                 yield obj[self.item]
@@ -247,7 +280,7 @@ class GetItemOrAttribute(Step):
     def __hash__(self):
         return hash(self.item_or_attribute)
 
-    def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
+    def get(self, obj: Dict[str, T]) -> Iterable[T]:
         # Special handling of sequences. See NOTE above.
         if isinstance(obj, Sequence):
             if len(obj) == 1:
@@ -305,7 +338,7 @@ class GetSlice(Step):
     def __hash__(self):
         return hash((self.start, self.stop, self.step))
 
-    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+    def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
             lower, upper, step = slice(self.start, self.stop,
                                        self.step).indices(len(obj))
@@ -347,7 +380,7 @@ class GetIndices(Step):
     def __hash__(self):
         return hash(tuple(self.indices))
 
-    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+    def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
             for i in self.indices:
                 yield obj[i]
@@ -379,7 +412,7 @@ class GetItems(Step):
     def __hash__(self):
         return hash(tuple(self.items))
 
-    def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
+    def get(self, obj: Dict[str, T]) -> Iterable[T]:
         if isinstance(obj, Dict):
             for i in self.items:
                 yield obj[i]
@@ -408,18 +441,24 @@ class ParseException(Exception):
         self.exp_ast = exp_ast
 
     def __str__(self):
-        return f"Failed to parse expression `{self.exp_string}` as a `JSONPath`.\n{dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
+        return f"Failed to parse expression `{self.exp_string}` as a `Lens`.\n{dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
 
 
-class JSONPath(SerialModel):
+class Lens(SerialModel):
     """
-    Utilitiy class for building JSONPaths.
+    Lenses into python objects.
 
     **Usage:**
     
     ```python
 
-        JSONPath().record[5]['somekey]
+        path = Lens().record[5]['somekey']
+
+        obj = ... # some object that contains a value at `obj.record[5]['somekey]`
+
+        value_at_path = path.get(obj) # that value
+
+        new_obj = path.set(obj, 42) # updates the value to be 42 instead
     ```
     """
 
@@ -430,12 +469,22 @@ class JSONPath(SerialModel):
         super().__init__(path=path or ())
 
     @staticmethod
-    def of_string(s: str) -> 'JSONPath':
+    def of_string(s: str) -> 'Lens':
+        """
+        Convert a string representing a python expression into a Lens.
+        """
+
+        # NOTE(piotrm): we use python parser for this which means only things
+        # which are valid python expressions (with additional constraints) can
+        # be converted.
+
         if len(s) == 0:
-            return JSONPath()
+            return Lens()
 
         try:
-            exp = parse(f"PLACEHOLDER.{s}", mode="eval")
+            # NOTE: "eval" here means to parse an expression, not a statement.
+            exp = parse(f"PLACEHOLDER.{s}", mode="eval") 
+
         except SyntaxError as e:
             raise ParseException(s, None)
 
@@ -517,13 +566,13 @@ class JSONPath(SerialModel):
             else:
                 raise ParseException(s, exp)
 
-        return JSONPath(path=path[::-1])
+        return Lens(path=path[::-1])
 
     def __str__(self):
         return "*" + ("".join(map(repr, self.path)))
 
     def __repr__(self):
-        return "JSONPath()" + ("".join(map(repr, self.path)))
+        return "Lens()" + ("".join(map(repr, self.path)))
 
     def __hash__(self):
         return hash(self.path)
@@ -531,15 +580,15 @@ class JSONPath(SerialModel):
     def __len__(self):
         return len(self.path)
 
-    def __add__(self, other: JSONPath):
-        return JSONPath(path=self.path + other.path)
+    def __add__(self, other: Lens):
+        return Lens(path=self.path + other.path)
 
-    def is_immediate_prefix_of(self, other: JSONPath):
+    def is_immediate_prefix_of(self, other: Lens):
         return self.is_prefix_of(other) and len(self.path) + 1 == len(
             other.path
         )
 
-    def is_prefix_of(self, other: JSONPath):
+    def is_prefix_of(self, other: Lens):
         p = self.path
         pother = other.path
 
@@ -585,17 +634,17 @@ class JSONPath(SerialModel):
             return val
 
         first = self.path[0]
-        rest = JSONPath(path=self.path[1:])
+        rest = Lens(path=self.path[1:])
 
         try:
-            firsts = first(obj)
+            firsts = first.get(obj)
             first_obj, firsts = iterable_peek(firsts)
 
         except (ValueError, IndexError, KeyError, AttributeError):
 
             # `first` points to an element that does not exist, use `set` to create a spot for it.
             obj = first.set(obj, None)  # will create a spot for `first`
-            firsts = first(obj)
+            firsts = first.get(obj)
 
         for first_obj in firsts:
             obj = first.set(
@@ -606,29 +655,31 @@ class JSONPath(SerialModel):
         return obj
 
     def get_sole_item(self, obj: Any) -> Any:
-        return next(self.__call__(obj))
+        return next(self.get(obj))
+    
+    # TODO: using call for a different purpose than get
 
-    def __call__(self, obj: Any) -> Iterable[Any]:
+    def get(self, obj: Any) -> Iterable[Any]:
         if len(self.path) == 0:
             yield obj
             return
 
         first = self.path[0]
         if len(self.path) == 1:
-            rest = JSONPath(path=())
+            rest = Lens(path=())
         else:
-            rest = JSONPath(path=self.path[1:])
+            rest = Lens(path=self.path[1:])
 
-        for first_selection in first.__call__(obj):
-            for rest_selection in rest.__call__(first_selection):
+        for first_selection in first.get(obj):
+            for rest_selection in rest.get(first_selection):
                 yield rest_selection
 
-    def _append(self, step: Step) -> JSONPath:
-        return JSONPath(path=self.path + (step,))
+    def _append(self, step: Step) -> Lens:
+        return Lens(path=self.path + (step,))
 
     def __getitem__(
         self, item: int | str | slice | Sequence[int] | Sequence[str]
-    ) -> JSONPath:
+    ) -> Lens:
         if isinstance(item, int):
             return self._append(GetIndex(index=item))
         if isinstance(item, str):
@@ -651,16 +702,18 @@ class JSONPath(SerialModel):
 
         raise TypeError(f"Unhandled item type {type(item)}.")
 
-    def __getattr__(self, attr: str) -> JSONPath:
+    def __getattr__(self, attr: str) -> Lens:
         return self._append(GetItemOrAttribute(item_or_attribute=attr))
 
+# TODO: Deprecate old name.
+JSONPath = Lens
 
-def leaf_queries(obj_json: JSON, query: JSONPath = None) -> Iterable[JSONPath]:
+def leaf_queries(obj_json: JSON, query: Lens = None) -> Iterable[Lens]:
     """
     Get all queries for the given object that select all of its leaf values.
     """
 
-    query = query or JSONPath()
+    query = query or Lens()
 
     if isinstance(obj_json, JSON_BASES):
         yield query
@@ -681,12 +734,12 @@ def leaf_queries(obj_json: JSON, query: JSONPath = None) -> Iterable[JSONPath]:
         yield query
 
 
-def all_queries(obj: Any, query: JSONPath = None) -> Iterable[JSONPath]:
+def all_queries(obj: Any, query: Lens = None) -> Iterable[Lens]:
     """
     Get all queries for the given object.
     """
 
-    query = query or JSONPath()
+    query = query or Lens()
 
     if isinstance(obj, JSON_BASES):
         yield query
@@ -721,12 +774,12 @@ def all_queries(obj: Any, query: JSONPath = None) -> Iterable[JSONPath]:
 
 
 def all_objects(obj: Any,
-                query: JSONPath = None) -> Iterable[Tuple[JSONPath, Any]]:
+                query: Lens = None) -> Iterable[Tuple[Lens, Any]]:
     """
     Get all queries for the given object.
     """
 
-    query = query or JSONPath()
+    query = query or Lens()
 
     yield (query, obj)
 
@@ -769,12 +822,12 @@ def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
 
 
 def matching_objects(obj: Any,
-                     match: Callable) -> Iterable[Tuple[JSONPath, Any]]:
+                     match: Callable) -> Iterable[Tuple[Lens, Any]]:
     for q, val in all_objects(obj):
         if match(q, val):
             yield (q, val)
 
 
-def matching_queries(obj: Any, match: Callable) -> Iterable[JSONPath]:
+def matching_queries(obj: Any, match: Callable) -> Iterable[Lens]:
     for q, _ in matching_objects(obj, match=match):
         yield q
