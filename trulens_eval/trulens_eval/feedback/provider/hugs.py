@@ -365,10 +365,21 @@ class Huggingface(Provider):
 
         payload = {"inputs": text}
 
-        hf_response = self.endpoint.post(
-            url = HUGS_PII_DETECTION_API_URL,
-            payload = payload)
-        
+        try:
+            hf_response = self.endpoint.post(
+                url = HUGS_PII_DETECTION_API_URL,
+                payload = payload)
+        except Exception as e:
+            hf_response = [
+                {
+                    "entity_group": "NONE",
+                    "score": 0.0,
+                    "word": np.nan,
+                    "start": np.nan,
+                    "end": np.nan
+                }
+                ]
+
         # Convert the response to a list if it's not already a list
         if not isinstance(hf_response, list):
             hf_response = [hf_response]
@@ -380,7 +391,7 @@ class Huggingface(Provider):
         
         # Iterate through the entities and extract "word" and "score" for "NAME" entities
         for i, entity in enumerate(hf_response):
-            reasons[f"{entity.get('entity_group')} detected: {entity['word']}"] = f"Score: {entity['score']}"
+            reasons[f"{entity.get('entity_group')} detected: {entity['word']}"] = f"PII Likelihood: {entity['score']}"
             likelihood_scores.append(entity["score"])
 
         # Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)
