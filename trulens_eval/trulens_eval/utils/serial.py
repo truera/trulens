@@ -622,9 +622,13 @@ class Lens(pydantic.BaseModel):
                         raise ParseException(s, exp)
 
                     vals = tuple(None if e is None else e.index for e in vals)
+                    
                     path.append(
                         GetSlice(start=vals[0], stop=vals[1], step=vals[2])
                     )
+
+                elif isinstance(sub, ast.Constant):
+                    path.append(of_index(sub))
 
                 else:
                     raise ParseException(s, exp)

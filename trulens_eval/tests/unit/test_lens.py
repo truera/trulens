@@ -19,7 +19,6 @@ class TestLens(TestCase):
 
     def setUp(self):
 
-        # Don't try to print this object.
         self.obj1 = dict(
             outerkey = Munch(
                 intkey = 42,
@@ -30,9 +29,6 @@ class TestLens(TestCase):
             outerstr = "lalala",
             outerint = 0xdeadbeef
         )
-
-        # Because it contains itself:
-        # self.obj1['outerkey'].innerkey = self.obj1
 
     def testParse(self):
 
