@@ -48,8 +48,7 @@ setup(
         'millify>=0.1.1',
         'openai>=0.27.6',
         'pinecone-client>=2.2.1',
-        'pydantic>=1.10.7',
-        'requests>=2.30.0',
+        'pydantic>=1.10.7<2', # TODO(piotrm): need some migration for pydantic 2
         'humanize>=4.6.0',
         'slack-bolt>=1.18.0',
         'slack-sdk>=3.21.3',
