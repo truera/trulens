@@ -1,5 +1,6 @@
 SHELL := /bin/bash
-CONDA_ENV := py38_trulens
+CONDA_ENV := py311_trulens
+# CONDA_ENV := py38_trulens
 CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate $(CONDA_ENV)
 
 trubot:
