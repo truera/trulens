@@ -147,7 +147,8 @@ class WithFeedbackFilterNodes(VectorIndexRetriever):
         # Evaluate the filter on each, in parallel.
         futures = (
             (
-                node, ex.submit(
+                node,
+                ex.submit(
                     lambda query, node: self.feedback(
                         query.query_str, node.node.get_text()
                     ) > self.threshold,

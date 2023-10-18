@@ -1,4 +1,5 @@
-from concurrent.futures import as_completed, wait
+from concurrent.futures import as_completed
+from concurrent.futures import wait
 import logging
 from multiprocessing import Process
 import os
@@ -117,7 +118,8 @@ class Tru(SingletonPerName):
         if database_file:
             warnings.warn(
                 "`database_file` is deprecated, use `database_url` instead as in `database_url='sqlite:///filename'.",
-                DeprecationWarning, stacklevel=2
+                DeprecationWarning,
+                stacklevel=2
             )
 
         if database_url is None:
@@ -184,7 +186,8 @@ class Tru(SingletonPerName):
         record: Record,
         feedback_functions: Sequence[Feedback],
         app: Optional[AppDefinition] = None,
-        on_done: Optional[Callable[['Future[Tuple[Feedback,FeedbackResult]]'], None]] = None
+        on_done: Optional[Callable[['Future[Tuple[Feedback,FeedbackResult]]'],
+                                   None]] = None
     ) -> List['Future[Tuple[Feedback,FeedbackResult]]']:
         app_id = record.app_id
 
@@ -214,10 +217,10 @@ class Tru(SingletonPerName):
         for ffunc in feedback_functions:
             fut: 'Future[Tuple[Feedback,FeedbackResult]]' = \
                 tp.submit(lambda f: (f, f.run(app=app, record=record)), ffunc)
-            
+
             if on_done is not None:
                 fut.add_done_callback(on_done)
-            
+
             futures.append(fut)
 
         return futures
@@ -246,13 +249,8 @@ class Tru(SingletonPerName):
         potentially in random order.
         """
 
-        for res in as_completed(
-            self._submit_feedback_functions(
-                record=record,
-                feedback_functions=feedback_functions,
-                app=app
-            )
-        ):
+        for res in as_completed(self._submit_feedback_functions(
+                record=record, feedback_functions=feedback_functions, app=app)):
             yield res.result()
 
     def add_app(self, app: AppDefinition) -> None:
@@ -331,11 +329,9 @@ class Tru(SingletonPerName):
 
         return leaderboard
 
-    def start_evaluator(
-        self,
-        restart=False,
-        fork=False
-    ) -> Union[Process, Thread]:
+    def start_evaluator(self,
+                        restart=False,
+                        fork=False) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread.
         """
