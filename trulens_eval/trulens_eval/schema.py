@@ -27,7 +27,7 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, ClassVar, Dict, Optional, Sequence, TypeVar, Union
+    Any, Callable, ClassVar, Dict, Optional, Sequence, Type, TypeVar, Union
 )
 
 import dill

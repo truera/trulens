@@ -150,21 +150,26 @@ app.print_instrumented()
 
 ### output example:
 Components:
-Custom of trulens_eval.app component: *.__app__.app
-Custom of trulens_eval.app component: *.__app__.app.llm
-Custom of trulens_eval.app component: *.__app__.app.retriever
-Custom of trulens_eval.app component: *.__app__.app.template
+	TruCustomApp (Other) at 0x171bd3380 with path *.__app__
+	CustomApp (Custom) at 0x12114b820 with path *.__app__.app
+	CustomLLM (Custom) at 0x12114be50 with path *.__app__.app.llm
+	CustomMemory (Custom) at 0x12114bf40 with path *.__app__.app.memory
+	CustomRetriever (Custom) at 0x12114bd60 with path *.__app__.app.retriever
+	CustomTemplate (Custom) at 0x12114bf10 with path *.__app__.app.template
 
 Methods:
-Object at 0x1064c6d30:
-	<function CustomApp.retrieve_chunks at 0x14c6c5700> with path *.__app__.app
-	<function CustomApp.respond_to_query at 0x14c6c5790> with path *.__app__.app
-Object at 0x1064c6dc0:
-	<function CustomLLM.generate at 0x14c6c51f0> with path *.__app__.app.llm
-Object at 0x1064c6f70:
-	<function CustomRetriever.retrieve_chunks at 0x14c6b5c10> with path *.__app__.app.retriever
-Object at 0x106272100:
-	<function CustomTemplate.fill at 0x14c6c54c0> with path *.__app__.app.template
+Object at 0x12114b820:
+	<function CustomApp.retrieve_chunks at 0x299132ca0> with path *.__app__.app
+	<function CustomApp.respond_to_query at 0x299132d30> with path *.__app__.app
+	<function CustomApp.arespond_to_query at 0x299132dc0> with path *.__app__.app
+Object at 0x12114be50:
+	<function CustomLLM.generate at 0x299106b80> with path *.__app__.app.llm
+Object at 0x12114bf40:
+	<function CustomMemory.remember at 0x299132670> with path *.__app__.app.memory
+Object at 0x12114bd60:
+	<function CustomRetriever.retrieve_chunks at 0x299132790> with path *.__app__.app.retriever
+Object at 0x12114bf10:
+	<function CustomTemplate.fill at 0x299132a60> with path *.__app__.app.template
 ```
 
 - If an instrumented / decorated method's owner object cannot be found when
@@ -423,7 +428,7 @@ class TruCustomApp(App):
             else:
                 for obj_id, m, full_path in obj_ids_methods_and_full_paths:
                     try:
-                        next(full_path(json))
+                        next(full_path.get(json))
 
                     except Exception as e:
                         logger.warning(

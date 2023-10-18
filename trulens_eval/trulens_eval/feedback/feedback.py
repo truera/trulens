@@ -643,7 +643,7 @@ class Feedback(FeedbackDefinition):
 
             q_within_o = Select.Query(path=q.path[1:])
             try:
-                arg_vals[k] = list(q_within_o(o))
+                arg_vals[k] = list(q_within_o.get(o))
             except Exception as e:
                 raise RuntimeError(
                     f"Could not locate {q_within_o} in app/record."

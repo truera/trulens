@@ -318,7 +318,7 @@ else:
 
             record_str = selected_rows['record_json'][0]
             record_json = json.loads(record_str)
-            record = Record(**record_json)
+            record = Record.parse_obj(record_json)
 
             classes: Iterable[Tuple[JSONPath, ComponentView]
                              ] = list(instrumented_component_views(app_json))
