@@ -51,9 +51,6 @@ class Groundedness(SerialModel, WithClassInfo):
             groundedness_provider (Provider, optional): groundedness provider options: OpenAI LLM or HuggingFace NLI. Defaults to OpenAI().
             summarize_provider (Provider, optional): Internal Usage for DB serialization.
         """
-        logger.warning(
-            "Feedback function `groundedness_measure` was renamed to `groundedness_measure_with_cot_reasons`. The new functionality of `groundedness_measure` function will no longer emit reasons as a lower cost option. It may have reduced accuracy due to not using Chain of Thought reasoning in the scoring."
-        )
 
         summarize_provider = OpenAI()
         if groundedness_provider is None:
@@ -95,12 +92,15 @@ class Groundedness(SerialModel, WithClassInfo):
         Returns:
             float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
+        logger.warning(
+            "Feedback function `groundedness_measure` was renamed to `groundedness_measure_with_cot_reasons`. The new functionality of `groundedness_measure` function will no longer emit reasons as a lower cost option. It may have reduced accuracy due to not using Chain of Thought reasoning in the scoring."
+        )
 
         groundedness_scores = {}
         if isinstance(self.groundedness_provider, (AzureOpenAI, OpenAI)):
             groundedness_scores[f"full_doc_score"] = re_0_10_rating(
                 self.summarize_provider._groundedness_doc_in_out(
-                    source, statement, chain_of_thought=False
+                    source, statement
                 )
             ) / 10
             reason = "Reasons not supplied for non chain of thought function"
@@ -239,6 +239,11 @@ class Groundedness(SerialModel, WithClassInfo):
         all_results = []
 
         statements_to_scores = {}
+
+        # Ensure source_statements_multi_output is a list
+        if not isinstance(source_statements_multi_output, list):
+            source_statements_multi_output = [source_statements_multi_output]
+
         for multi_output in source_statements_multi_output:
             for k in multi_output:
                 if k not in statements_to_scores:
