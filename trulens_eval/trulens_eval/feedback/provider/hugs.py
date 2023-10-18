@@ -1,6 +1,8 @@
+from concurrent.futures import Future
+from concurrent.futures import wait
 import logging
 from multiprocessing.pool import AsyncResult
-from typing import Dict
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 
@@ -8,7 +10,8 @@ from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.utils.threading import TP
+from trulens_eval.utils.python import locals_except
+from trulens_eval.utils.threading import TP, ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +70,7 @@ class Huggingface(Provider):
 
     endpoint: Endpoint
 
-    def __init__(self, name: str = None, endpoint=None, **kwargs):
+    def __init__(self, name: Optional[str] = None, endpoint=None, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
@@ -105,7 +108,7 @@ class Huggingface(Provider):
 
     # TODEP
     @_tci
-    def language_match(self, text1: str, text2: str) -> float:
+    def language_match(self, text1: str, text2: str) -> Tuple[float, Dict]:
         """
         Uses Huggingface's papluca/xlm-roberta-base-language-detection model. A
         function that uses language detection on `text1` and `text2` and
@@ -141,23 +144,26 @@ class Huggingface(Provider):
             )
             return {r['label']: r['score'] for r in hf_response}
 
-        max_length = 500
-        scores1: AsyncResult[Dict] = TP().promise(
-            get_scores, text=text1[:max_length]
-        )
-        scores2: AsyncResult[Dict] = TP().promise(
-            get_scores, text=text2[:max_length]
-        )
+        with ThreadPoolExecutor(max_workers=2) as tpool:
+            max_length = 500
+            f_scores1: Future[Dict] = tpool.submit(
+                get_scores, text=text1[:max_length]
+            )
+            f_scores2: Future[Dict] = tpool.submit(
+                get_scores, text=text2[:max_length]
+            )
 
-        scores1: Dict = scores1.get()
-        scores2: Dict = scores2.get()
+        wait([f_scores1, f_scores2])
+
+        scores1: Dict = f_scores1.result()
+        scores2: Dict = f_scores2.result()
 
         langs = list(scores1.keys())
         prob1 = np.array([scores1[k] for k in langs])
         prob2 = np.array([scores2[k] for k in langs])
         diff = prob1 - prob2
 
-        l1 = 1.0 - (np.linalg.norm(diff, ord=1)) / 2.0
+        l1: float = float(1.0 - (np.linalg.norm(diff, ord=1)) / 2.0)
 
         return l1, dict(text1_scores=scores1, text2_scores=scores2)
 
@@ -197,7 +203,9 @@ class Huggingface(Provider):
 
         for label in hf_response:
             if label['label'] == 'LABEL_2':
-                return label['score']
+                return float(label['score'])
+            
+        raise RuntimeError("LABEL_2 not found in huggingface api response.")
 
     # TODEP
     @_tci
@@ -238,6 +246,8 @@ class Huggingface(Provider):
         for label in hf_response:
             if label['label'] == 'toxic':
                 return label['score']
+            
+        raise RuntimeError("LABEL_2 not found in huggingface api response.")
 
     # TODEP
     @_tci
@@ -262,6 +272,8 @@ class Huggingface(Provider):
         for label in hf_response:
             if label['label'] == 'entailment':
                 return label['score']
+            
+        raise RuntimeError("LABEL_2 not found in huggingface api response.")
 
     # TODEP
     @_tci
@@ -377,7 +389,6 @@ class Huggingface(Provider):
         if not isinstance(hf_response, list):
             raise ValueError("Unexpected response from Huggingface API: response should be a list or a dictionary")
 
-        
         # Iterate through the entities and extract "word" and "score" for "NAME" entities
         for i, entity in enumerate(hf_response):
             reasons[f"{entity.get('entity_group')} detected: {entity['word']}"] = f"Score: {entity['score']}"
@@ -401,8 +412,20 @@ class Huggingface(Provider):
 
 class Dummy(Huggingface):
 
-    def __init__(self, name: str = None, **kwargs):
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        error_prob: float = 1/100,
+        loading_prob: float = 1/100,
+        freeze_prob: float = 1/100,
+        overloaded_prob: float = 1/100,
+        rpm: float = 600,
+        **kwargs
+    ):
         kwargs['name'] = name or "dummyhugs"
-        kwargs['endpoint'] = DummyEndpoint(name="dummyendhugspoint")
+        kwargs['endpoint'] = DummyEndpoint(
+            name="dummyendhugspoint",
+            **locals_except("self", "name", "kwargs")
+        )
 
         super().__init__(**kwargs)

@@ -1,5 +1,6 @@
 import asyncio
 from asyncio import sleep
+from concurrent.futures import wait
 
 from examples.expositional.end2end_apps.custom_app.custom_llm import CustomLLM
 from examples.expositional.end2end_apps.custom_app.custom_memory import \
@@ -8,6 +9,7 @@ from examples.expositional.end2end_apps.custom_app.custom_retriever import \
     CustomRetriever
 
 from trulens_eval.tru_custom_app import instrument
+from trulens_eval.utils.threading import ThreadPoolExecutor
 
 instrument.method(CustomRetriever, "retrieve_chunks")
 instrument.method(CustomMemory, "remember")
@@ -42,6 +44,18 @@ class CustomApp:
     @instrument
     def respond_to_query(self, input):
         chunks = self.retrieve_chunks(input)
+
+        # Creates a few threads to process chunks in parallel to test apps that
+        # make use of threads.
+        ex = ThreadPoolExecutor(max_workers=max(1, len(chunks)))
+
+        futures = list(
+            ex.submit(lambda chunk: chunk + " processed", chunk=chunk) for chunk in chunks
+        )
+
+        wait(futures)
+        chunks = list(future.result() for future in futures)
+
         self.memory.remember(input)
 
         answer = self.llm.generate(",".join(chunks))
