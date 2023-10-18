@@ -2,26 +2,31 @@
 Multi-threading utilities.
 """
 
+
+from concurrent.futures import Future
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
+from concurrent.futures import TimeoutError
 from inspect import stack
 import logging
-from multiprocessing.pool import AsyncResult
-from multiprocessing.pool import ThreadPool
-from queue import Queue
-from time import sleep
-from typing import Callable, List, Optional, TypeVar
+import threading
 
-import pandas as pd
+from typing import Callable, TypeVar
 
-from trulens_eval.utils.python import _future_target_wrapper
+from trulens_eval.utils.python import _future_target_wrapper, code_line
 from trulens_eval.utils.python import SingletonPerName
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
+DEFAULT_NETWORK_TIMEOUT: float = 10.0 # seconds
+
 
 class ThreadPoolExecutor(fThreadPoolExecutor):
+    """
+    A ThreadPoolExecutor that keeps track of the stack prior to each thread's
+    invocation.
+    """
 
     def submit(self, fn, /, *args, **kwargs):
         present_stack = stack()
@@ -30,91 +35,101 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         )
 
 
-class TP(SingletonPerName):  # "thread processing"
+class TP(SingletonPerName['TP']):  # "thread processing"
 
     # Store here stacks of calls to various thread starting methods so that we
     # can retrieve the trace of calls that caused a thread to start.
 
-    # pre_run_stacks = dict()
+    MAX_THREADS = 128
+
+    # How long to wait for any task before restarting it.
+    DEBUG_TIMEOUT = 600.0 # 5 minutes
 
     def __init__(self):
         if hasattr(self, "thread_pool"):
             # Already initialized as per SingletonPerName mechanism.
             return
 
-        # TODO(piotrm): if more tasks than `processes` get added, future ones
-        # will block and earlier ones may never start executing.
-        self.thread_pool = ThreadPool(processes=64)
-        self.running = 0
-        self.promises = Queue(maxsize=64)
-
-    def runrepeatedly(self, func: Callable, rpm: float = 6, *args, **kwargs):
-
-        def runner():
-            while True:
-                func(*args, **kwargs)
-                sleep(60 / rpm)
-
-        self.runlater(runner)
-
-    def _thread_starter(self, func, args, kwargs):
-        present_stack = stack()
-
-        prom = self.thread_pool.apply_async(
-            _future_target_wrapper,
-            args=(present_stack, func) + args,
-            kwds=kwargs
+        # Run tasks started with this class using this pool.
+        self.thread_pool = fThreadPoolExecutor(
+            max_workers=TP.MAX_THREADS,
+            thread_name_prefix="TP.submit"
         )
 
-        return prom
+        # Keep a seperate pool for threads whose function is only to wait for
+        # the tasks executed in the above pool. Keeping this seperate to prevent
+        # the deadlock whereas the wait thread waits for a tasks which will
+        # never be run because the thread pool is filled with wait threads.
+        self.thread_pool_debug_tasks = ThreadPoolExecutor(
+            max_workers=TP.MAX_THREADS,
+            thread_name_prefix="TP.submit with debug timeout"
+        )
 
-    def finish_if_full(self):
-        if self.promises.full():
-            print("Task queue full. Finishing existing tasks.")
-            self.finish()
+        self.completed_tasks = 0
+        self.timedout_tasks = 0
+        self.failed_tasks = 0
 
-    def runlater(self, func: Callable, *args, **kwargs) -> None:
-        self.finish_if_full()
+    def _run_with_timeout(
+        self,
+        func: Callable[..., T],
+        *args,
+        timeout: float = DEBUG_TIMEOUT,
+        **kwargs
+    ) -> T:
 
-        prom = self._thread_starter(func, args, kwargs)
+        fut: 'Future[T]' = self.thread_pool.submit(func, *args, **kwargs)
 
-        self.promises.put(prom)
+        try:
+            res: T = fut.result(timeout=timeout)
+            return res
 
-    def promise(self, func: Callable[..., T], *args, **kwargs) -> AsyncResult:
-        self.finish_if_full()
+        except TimeoutError as e:
+            logger.error(
+                f"Run of {func.__name__} in {threading.current_thread()} timed out after {TP.DEBUG_TIMEOUT} second(s).\n"
+                f"{code_line(func)}"
+            )
 
-        prom = self._thread_starter(func, args, kwargs)
+            raise e
 
-        self.promises.put(prom)
+        except Exception as e:
+            logger.warning(
+                f"Run of {func.__name__} in {threading.current_thread()} failed with: {e}"
+            )
+            raise e
 
-        return prom
+    def submit(
+        self,
+        func: Callable[..., T],
+        *args,
+        timeout: float = DEBUG_TIMEOUT,
+        **kwargs
+    ) -> 'Future[T]':
+        
+        # TODO(piotrm): need deadlock fixes here. If submit or _submit was called
+        # earlier in the stack, do not use a threadpool to evaluate this task
+        # and instead create a new thread for it. This prevents tasks in a
+        # threadpool adding sub-tasks in the same threadpool which can lead to
+        # deadlocks. Alternatively just raise an exception in those cases.
 
-    def finish(self, timeout: Optional[float] = None) -> int:
-        logger.debug(f"Finishing {self.promises.qsize()} task(s).")
+        return self._submit(func, *args, timeout = timeout, **kwargs)
 
-        timeouts = []
+    def _submit(
+        self,
+        func: Callable[..., T],
+        *args,
+        timeout: float = DEBUG_TIMEOUT,
+        **kwargs
+    ) -> 'Future[T]':
+        
+        # Submit a concurrent tasks to run `func` with the given `args` and
+        # `kwargs` but stop with error if it ever takes too long. This is only
+        # meant for debugging purposes as we expect all concurrent tasks to have
+        # their own retry/timeout capabilities.
 
-        while not self.promises.empty():
-            prom = self.promises.get()
-            try:
-                prom.get(timeout=timeout)
-            except TimeoutError:
-                timeouts.append(prom)
-
-        for prom in timeouts:
-            self.promises.put(prom)
-
-        if len(timeouts) == 0:
-            logger.debug("Done.")
-        else:
-            logger.debug("Some tasks timed out.")
-
-        return len(timeouts)
-
-    def _status(self) -> List[str]:
-        rows = []
-
-        for p in self.thread_pool._pool:
-            rows.append([p.is_alive(), str(p)])
-
-        return pd.DataFrame(rows, columns=["alive", "thread"])
+        return self.thread_pool_debug_tasks.submit(
+            self._run_with_timeout,
+            func,
+            *args,
+            timeout=timeout,
+            **kwargs
+        )

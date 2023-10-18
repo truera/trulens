@@ -9,13 +9,35 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from queue import Queue
-from typing import Any, Callable, Dict, Hashable, Optional, Sequence, TypeVar
+from typing import Any, Callable, Dict, Generic, Hashable, Iterator, Optional, Sequence, Type, TypeVar, Union
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 T = TypeVar("T")
 Thunk = Callable[[], T]
+
+
+# Function utilities.
+
+def code_line(func) -> Optional[str]:
+    """
+    Get a string representation of the location of the given function `func`.
+    """
+    if hasattr(func, "__code__"):
+        code = func.__code__
+        return f"{code.co_filename}:{code.co_firstlineno}"
+    else:
+        return None
+
+def locals_except(*exceptions):
+    """
+    Get caller's locals except for the named exceptions.
+    """
+
+    locs = caller_frame(offset=1).f_locals # 1 to skip this call
+
+    return {k: v for k, v in locs.items() if k not in exceptions}
 
 # Python call stack utilities
 
@@ -139,6 +161,8 @@ def _future_target_wrapper(stack, func, *args, **kwargs):
     the stack and need to do this to the frames prior to thread starts.
     """
 
+    # TODO: See if threading.stack_size([size]) can be used instead.
+    
     # Keep this for looking up via get_first_local_in_call_stack .
     pre_start_stack = stack
 
@@ -251,8 +275,9 @@ def get_first_local_in_call_stack(
 
 # Class utilities
 
+T = TypeVar("T")
 
-class SingletonPerName():
+class SingletonPerName(Generic[T]):
     """
     Class for creating singleton instances except there being one instance max,
     there is one max per different `name` argument. If `name` is never given,
@@ -262,7 +287,7 @@ class SingletonPerName():
     # Hold singleton instances here.
     instances: Dict[Hashable, 'SingletonPerName'] = dict()
 
-    def __new__(cls, *args, name: str = None, **kwargs):
+    def __new__(cls: Type[SingletonPerName[T]], *args, name: Optional[str] = None, **kwargs) -> SingletonPerName[T]:
         """
         Create the singleton instance if it doesn't already exist and return it.
         """
@@ -275,4 +300,6 @@ class SingletonPerName():
             )
             SingletonPerName.instances[k] = super().__new__(cls)
 
-        return SingletonPerName.instances[k]
+        obj: cls = SingletonPerName.instances[k]
+
+        return obj
