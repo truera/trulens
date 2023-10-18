@@ -36,6 +36,7 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import RecordID
 from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.text import UNICODE_CHECK, UNICODE_CLOCK, UNICODE_HOURGLASS, UNICODE_STOP
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +146,9 @@ class SqlAlchemyDB(DB):
                 session.merge(_rec)  # update existing
             else:
                 session.merge(_rec)  # add new record # .add was not thread safe
+
+            print(f"{UNICODE_CHECK} added record {_rec.record_id}")
+
             return _rec.record_id
 
     def get_app(self, app_id: str) -> Optional[JSON]:
@@ -171,6 +175,8 @@ class SqlAlchemyDB(DB):
                 )
                 session.merge(_app)  # .add was not thread safe
 
+            print(f"{UNICODE_CHECK} added app {_app.app_id}")
+
             return _app.app_id
 
     def insert_feedback_definition(
@@ -188,6 +194,8 @@ class SqlAlchemyDB(DB):
                     feedback_definition, redact_keys=self.redact_keys
                 )
                 session.merge(_fb_def)  # .add was not thread safe
+
+            print(f"{UNICODE_CHECK} added feedback definition {_fb_def.feedback_definition_id}")
 
             return _fb_def.feedback_definition_id
 
@@ -223,6 +231,24 @@ class SqlAlchemyDB(DB):
                 session.merge(
                     _feedback_result
                 )  # insert new result # .add was not thread safe
+
+            status = FeedbackResultStatus(_feedback_result.status)
+
+            if status == FeedbackResultStatus.DONE:
+                icon = UNICODE_CHECK
+            elif status == FeedbackResultStatus.RUNNING:
+                icon = UNICODE_HOURGLASS
+            elif status == FeedbackResultStatus.NONE:
+                icon = UNICODE_CLOCK
+            elif status == FeedbackResultStatus.FAILED:
+                icon = UNICODE_STOP
+            else:
+                icon = "???"
+
+            print(
+                f"{icon} feedback result {_feedback_result.name} {status.name} {_feedback_result.feedback_result_id}"
+            )
+
             return _feedback_result.feedback_result_id
 
     def get_feedback(
