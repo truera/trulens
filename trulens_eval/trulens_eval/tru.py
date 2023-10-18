@@ -1,3 +1,4 @@
+from concurrent.futures import as_completed, wait
 import logging
 from multiprocessing import Process
 import os
@@ -7,12 +8,13 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import Iterable, List, Optional, Sequence, Union
+from typing import Callable, Iterable, List, Optional, Sequence, Tuple, Union
 import warnings
 
 import pkg_resources
 
 from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
+from trulens_eval.db import DB
 from trulens_eval.db import JSON
 from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
@@ -114,9 +116,8 @@ class Tru(SingletonPerName):
 
         if database_file:
             warnings.warn(
-                DeprecationWarning(
-                    "`database_file` is deprecated, use `database_url` instead as in `database_url='sqlite:///filename'."
-                )
+                "`database_file` is deprecated, use `database_url` instead as in `database_url='sqlite:///filename'.",
+                DeprecationWarning, stacklevel=2
             )
 
         if database_url is None:
@@ -178,33 +179,19 @@ class Tru(SingletonPerName):
 
     update_record = add_record
 
-    def run_feedback_functions(
+    def _submit_feedback_functions(
         self,
         record: Record,
         feedback_functions: Sequence[Feedback],
         app: Optional[AppDefinition] = None,
-    ) -> Sequence[JSON]:
-        """
-        Run a collection of feedback functions and report their result.
-
-        Parameters:
-
-            record (Record): The record on which to evaluate the feedback
-            functions.
-
-            app (App, optional): The app that produced the given record.
-            If not provided, it is looked up from the given database `db`.
-
-            feedback_functions (Sequence[Feedback]): A collection of feedback
-            functions to evaluate.
-
-        Returns nothing.
-        """
-
+        on_done: Optional[Callable[['Future[Tuple[Feedback,FeedbackResult]]'], None]] = None
+    ) -> List['Future[Tuple[Feedback,FeedbackResult]]']:
         app_id = record.app_id
 
+        self.db: DB
+
         if app is None:
-            app = self.db.get_app(app_id=app_id)
+            app = AppDefinition.parse_obj(self.db.get_app(app_id=app_id))
             if app is None:
                 raise RuntimeError(
                     "App {app_id} not present in db. "
@@ -220,16 +207,53 @@ class Tru(SingletonPerName):
                 )
                 self.add_app(app=app)
 
-        evals = []
+        futures = []
 
-        for func in feedback_functions:
-            evals.append(
-                TP().promise(lambda f: f.run(app=app, record=record), func)
+        tp: TP = TP()
+
+        for ffunc in feedback_functions:
+            fut: 'Future[Tuple[Feedback,FeedbackResult]]' = \
+                tp.submit(lambda f: (f, f.run(app=app, record=record)), ffunc)
+            
+            if on_done is not None:
+                fut.add_done_callback(on_done)
+            
+            futures.append(fut)
+
+        return futures
+
+    def run_feedback_functions(
+        self,
+        record: Record,
+        feedback_functions: Sequence[Feedback],
+        app: Optional[AppDefinition] = None,
+    ) -> Iterable[FeedbackResult]:
+        """
+        Run a collection of feedback functions and report their result.
+
+        Parameters:
+
+            record (Record): The record on which to evaluate the feedback
+            functions.
+
+            app (App, optional): The app that produced the given record.
+            If not provided, it is looked up from the given database `db`.
+
+            feedback_functions (Sequence[Feedback]): A collection of feedback
+            functions to evaluate.
+
+        Yields `FeedbackResult`, one for each element of `feedback_functions`
+        potentially in random order.
+        """
+
+        for res in as_completed(
+            self._submit_feedback_functions(
+                record=record,
+                feedback_functions=feedback_functions,
+                app=app
             )
-
-        evals = map(lambda p: p.get(), evals)
-
-        return list(evals)
+        ):
+            yield res.result()
 
     def add_app(self, app: AppDefinition) -> None:
         """
@@ -307,9 +331,11 @@ class Tru(SingletonPerName):
 
         return leaderboard
 
-    def start_evaluator(self,
-                        restart=False,
-                        fork=False) -> Union[Process, Thread]:
+    def start_evaluator(
+        self,
+        restart=False,
+        fork=False
+    ) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread.
         """
@@ -324,24 +350,18 @@ class Tru(SingletonPerName):
                     "Evaluator is already running in this process."
                 )
 
-        from trulens_eval.feedback import Feedback
-
         if not fork:
             self.evaluator_stop = threading.Event()
 
         def runloop():
             while fork or not self.evaluator_stop.is_set():
-                #print(
-                #    "Looking for things to do. Stop me with `tru.stop_evaluator()`.",
-                #    end=''
-                #)
-                started_count = Feedback.evaluate_deferred(tru=self)
+                futures = Feedback.evaluate_deferred(tru=self)
 
-                if started_count > 0:
+                if len(futures) > 0:
                     print(
-                        f"{UNICODE_YIELD}{UNICODE_YIELD}{UNICODE_YIELD} Started {started_count} deferred feedback functions."
+                        f"{UNICODE_YIELD}{UNICODE_YIELD}{UNICODE_YIELD} Started {len(futures)} deferred feedback functions."
                     )
-                    TP().finish()
+                    wait(futures)
                     print(
                         f"{UNICODE_CHECK}{UNICODE_CHECK}{UNICODE_CHECK} Finished evaluating deferred feedback functions."
                     )
@@ -431,6 +451,11 @@ class Tru(SingletonPerName):
             Tru.dashboard_proc = None
 
     def run_dashboard_in_jupyter(self):
+        """
+        Experimental approach to attempt to display the dashboard inside a
+        jupyter notebook. Relies on the `streamlit_jupyter` package.
+        """
+        # EXPERIMENTAL
         # TODO: check for jupyter
 
         logger.warning(
