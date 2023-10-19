@@ -2,24 +2,23 @@
 Multi-threading utilities.
 """
 
-
 from concurrent.futures import Future
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
 from inspect import stack
 import logging
 import threading
-
 from typing import Callable, TypeVar
 
-from trulens_eval.utils.python import _future_target_wrapper, code_line
+from trulens_eval.utils.python import _future_target_wrapper
+from trulens_eval.utils.python import code_line
 from trulens_eval.utils.python import SingletonPerName
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
-DEFAULT_NETWORK_TIMEOUT: float = 10.0 # seconds
+DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
 
 
 class ThreadPoolExecutor(fThreadPoolExecutor):
@@ -43,7 +42,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
     MAX_THREADS = 128
 
     # How long to wait for any task before restarting it.
-    DEBUG_TIMEOUT = 600.0 # 5 minutes
+    DEBUG_TIMEOUT = 600.0  # 5 minutes
 
     def __init__(self):
         if hasattr(self, "thread_pool"):
@@ -52,8 +51,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
 
         # Run tasks started with this class using this pool.
         self.thread_pool = fThreadPoolExecutor(
-            max_workers=TP.MAX_THREADS,
-            thread_name_prefix="TP.submit"
+            max_workers=TP.MAX_THREADS, thread_name_prefix="TP.submit"
         )
 
         # Keep a seperate pool for threads whose function is only to wait for
@@ -104,14 +102,14 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         timeout: float = DEBUG_TIMEOUT,
         **kwargs
     ) -> 'Future[T]':
-        
+
         # TODO(piotrm): need deadlock fixes here. If submit or _submit was called
         # earlier in the stack, do not use a threadpool to evaluate this task
         # and instead create a new thread for it. This prevents tasks in a
         # threadpool adding sub-tasks in the same threadpool which can lead to
         # deadlocks. Alternatively just raise an exception in those cases.
 
-        return self._submit(func, *args, timeout = timeout, **kwargs)
+        return self._submit(func, *args, timeout=timeout, **kwargs)
 
     def _submit(
         self,
@@ -120,16 +118,12 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         timeout: float = DEBUG_TIMEOUT,
         **kwargs
     ) -> 'Future[T]':
-        
+
         # Submit a concurrent tasks to run `func` with the given `args` and
         # `kwargs` but stop with error if it ever takes too long. This is only
         # meant for debugging purposes as we expect all concurrent tasks to have
         # their own retry/timeout capabilities.
 
         return self.thread_pool_debug_tasks.submit(
-            self._run_with_timeout,
-            func,
-            *args,
-            timeout=timeout,
-            **kwargs
+            self._run_with_timeout, func, *args, timeout=timeout, **kwargs
         )

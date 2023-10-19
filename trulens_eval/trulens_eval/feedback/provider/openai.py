@@ -59,28 +59,22 @@ class OpenAI(LLMProvider):
         messages: Optional[Sequence[Dict]] = None,
         **kwargs
     ) -> str:
-        
+
         if 'model' not in kwargs:
             kwargs['model'] = self.model_engine
 
         if 'temperature' not in kwargs:
             kwargs['temperature'] = 0.0
-        
+
         if prompt is not None:
             comp = openai.ChatCompletion.create(
-                messages=[
-                            {
-                                "role": "system",
-                                "content":  prompt
-                            }
-                       ],
-                **kwargs
+                messages=[{
+                    "role": "system",
+                    "content": prompt
+                }], **kwargs
             )
         elif messages is not None:
-            comp = openai.ChatCompletion.create(
-                messages = messages,
-                **kwargs
-            )
+            comp = openai.ChatCompletion.create(messages=messages, **kwargs)
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
@@ -306,6 +300,7 @@ class OpenAI(LLMProvider):
         return 1.0 - float(
             openai_response["results"][0]["category_scores"]["violence/graphic"]
         )
+
 
 class AzureOpenAI(OpenAI):
     """Out of the box feedback functions calling AzureOpenAI APIs. 

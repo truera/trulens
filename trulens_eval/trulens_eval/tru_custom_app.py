@@ -211,7 +211,8 @@ from pydantic import Field
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.instruments import instrument as base_instrument
-from trulens_eval.utils.pyschema import Class, Function
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.serial import JSONPath
 from trulens_eval.utils.text import UNICODE_CHECK
@@ -295,8 +296,8 @@ class TruCustomApp(App):
     # how to let the TruCustomApp constructor know where these methods are.
     functions_to_instrument: ClassVar[Set[Callable]] = set([])
 
-    main_method: Optional[Function] = None # serialized version of the below
-    main_method_loaded: Optional[Callable] = Field(exclude=True) 
+    main_method: Optional[Function] = None  # serialized version of the below
+    main_method_loaded: Optional[Callable] = Field(exclude=True)
 
     # main_async_method: Optional[Union[Callable, Method]] = None # = Field(exclude=True)
 
@@ -338,7 +339,9 @@ class TruCustomApp(App):
                 main_method_loaded = main_method
 
                 if not hasattr(main_method_loaded, "__self__"):
-                    raise ValueError("Please specify `main_method` as a bound method (like `someapp.somemethod` instead of `Someclass.somemethod`).")
+                    raise ValueError(
+                        "Please specify `main_method` as a bound method (like `someapp.somemethod` instead of `Someclass.somemethod`)."
+                    )
 
                 app_self = main_method_loaded.__self__
 
