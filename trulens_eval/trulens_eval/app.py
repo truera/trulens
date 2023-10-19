@@ -995,7 +995,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         for t in self.instrumented():
             path = JSONPath(t[0].path[1:])
-            obj = next(iter(path(self)))
+            obj = next(iter(path.get(self)))
             object_strings.append(
                 f"\t{type(obj).__name__} ({t[1].__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"
             )
