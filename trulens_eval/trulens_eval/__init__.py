@@ -85,6 +85,7 @@ from trulens_eval.feedback import Huggingface
 from trulens_eval.feedback import LiteLLM
 from trulens_eval.feedback import Bedrock
 from trulens_eval.feedback import OpenAI
+from trulens_eval.feedback import Replicate
 from trulens_eval.feedback.provider import Provider
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Query
@@ -108,6 +109,7 @@ __all__ = [
     'LiteLLM',
     'Bedrock',
     'Huggingface',
+    'Replicate',
     'FeedbackMode',
     'Provider',
     'Query',  # to deprecate in 0.3.0

@@ -23,8 +23,9 @@ from trulens_eval.feedback.provider.litellm import LiteLLM
 from trulens_eval.feedback.provider.openai import AzureOpenAI
 from trulens_eval.feedback.provider.openai import OpenAI
 from trulens_eval.feedback.provider.bedrock import Bedrock
+from trulens_eval.feedback.provider.replicate import Replicate
 
 __all__ = [
     'Feedback', 'Embeddings', 'Groundedness', 'GroundTruthAgreement', 'OpenAI', 'AzureOpenAI',
-    'Huggingface', 'Cohere', 'LiteLLM','Bedrock'
+    'Huggingface', 'Cohere', 'LiteLLM','Bedrock','Replicate'
 ]
