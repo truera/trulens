@@ -28,7 +28,7 @@ from trulens_eval.utils.pyschema import ERROR
 from trulens_eval.utils.pyschema import NOSERIO
 from trulens_eval.utils.pyschema import noserio
 from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSON, Lens
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSONPath
 from trulens_eval.utils.serial import SerialBytes
@@ -199,6 +199,9 @@ def jsonify(
 
     elif isinstance(obj, pydantic.BaseModel):
         # Not even trying to use pydantic.dict here.
+
+        if isinstance(obj, Lens): # special handling of paths
+            return obj.json()
 
         temp = {}
         new_dicted[id(obj)] = temp

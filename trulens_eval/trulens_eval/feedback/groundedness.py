@@ -99,9 +99,8 @@ class Groundedness(SerialModel, WithClassInfo):
         groundedness_scores = {}
         if isinstance(self.groundedness_provider, (AzureOpenAI, OpenAI)):
             groundedness_scores[f"full_doc_score"] = re_0_10_rating(
-                self.summarize_provider._groundedness_doc_in_out(
-                    source, statement
-                )
+                self.summarize_provider.
+                _groundedness_doc_in_out(source, statement)
             ) / 10
             reason = "Reasons not supplied for non chain of thought function"
         elif isinstance(self.groundedness_provider, Huggingface):

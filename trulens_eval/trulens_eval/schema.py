@@ -27,7 +27,8 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, ClassVar, Dict, Optional, Sequence, TypeVar, Union
+    Any, Callable, ClassVar, Dict, List, Mapping, Optional, Sequence, Type,
+    TypeVar, Union
 )
 
 import dill
@@ -163,8 +164,8 @@ class Record(SerialModel):
     record_id: RecordID
     app_id: AppID
 
-    cost: Optional[Cost] = None  # pydantic.Field(default_factory=Cost)
-    perf: Optional[Perf] = None  # pydantic.Field(default_factory=Perf)
+    cost: Optional[Cost] = None
+    perf: Optional[Perf] = None
 
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
@@ -180,7 +181,14 @@ class Record(SerialModel):
     # via `layout_calls_as_app`.
     calls: Sequence[RecordAppCall] = []
 
+    # Feedback results only filled for records that were just produced. Will not
+    # be filled in when read from database. Also, will not fill in when using
+    # `FeedbackMode.DEFERRED`.
+    feedback_results: Optional[List['Future[FeedbackResult]']
+                              ] = pydantic.Field(exclude=True)
+
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
+        # Fixed record_id for obj_id_of_id below.
         super().__init__(record_id="temporary", **kwargs)
 
         if record_id is None:
@@ -204,16 +212,17 @@ class Record(SerialModel):
               would be in the AppDefinitionstructure.
         """
 
-        # TODO: problem: collissions
         ret = Bunch(**self.dict())
 
         for call in self.calls:
-            frame_info = call.top(
-            )  # info about the method call is at the top of the stack
+            # Info about the method call is at the top of the stack
+            frame_info = call.top()
+
+            # Adds another attribute to path, from method name:
             path = frame_info.path._append(
                 GetItemOrAttribute(item_or_attribute=frame_info.method.name)
-            )  # adds another attribute to path, from method name
-            # TODO: append if already there
+            )
+
             ret = path.set_or_append(obj=ret, val=call)
 
         return ret
@@ -569,12 +578,10 @@ class AppDefinition(SerialModel, WithClassInfo):
                 else:
                     self.initial_app_loader_dump = SerialBytes(data=dump)
 
-
                     # This is an older serialization approach that saved things
                     # in local files instead of the DB. Leaving here for now as
                     # serialization of large apps might make this necessary
                     # again.
-
                     """
                     path_json = Path.cwd() / f"{app_id}.json"
                     path_dill = Path.cwd() / f"{app_id}.dill"
