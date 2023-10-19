@@ -369,6 +369,8 @@ class Huggingface(Provider):
             hf_response = self.endpoint.post(
                 url = HUGS_PII_DETECTION_API_URL,
                 payload = payload)
+
+        # TODO: Make error handling more granular so it's not swallowed.
         except Exception as e:
             hf_response = [
                 {
