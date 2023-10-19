@@ -711,15 +711,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
     # WithInstrumentCallbacks requirement
     def _on_add_record(
-        self,
-        ctx: RecordingContext,
-        func: Callable,
-        sig: Signature,
-        bindings: BoundArguments,
-        ret: Any,
-        error: Any,
-        perf: Perf,
-        cost: Cost
+        self, ctx: RecordingContext, func: Callable, sig: Signature,
+        bindings: BoundArguments, ret: Any, error: Any, perf: Perf, cost: Cost
     ) -> Record:
         """
         Called by instrumented methods if they use _new_record to construct a
@@ -846,13 +839,11 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         res, _ = self.with_record(func, *args, **kwargs)
         return res
 
-    def with_record(
-        self,
-        func,
-        *args,
-        record_metadata: JSON = None,
-        **kwargs
-    ) -> Tuple[Any, Record]:
+    def with_record(self,
+                    func,
+                    *args,
+                    record_metadata: JSON = None,
+                    **kwargs) -> Tuple[Any, Record]:
         """
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
@@ -915,8 +906,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         self.tru.add_feedback(res)
 
     def _handle_record(
-        self,
-        record: Record
+        self, record: Record
     ) -> Optional[List['Future[Tuple[Feedback, FeedbackResult]]']]:
         """
         Write out record-related info to database if set and schedule feedback
@@ -925,10 +915,10 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         if self.tru is None or self.feedback_mode is None:
             return None
-        
+
         self.tru: Tru
         self.db: DB
-        
+
         # Need to add record to db before evaluating feedback functions.
         record_id = self.tru.add_record(record=record)
 
@@ -957,7 +947,6 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 app=self,
                 on_done=self._add_future_feedback
             )
-
 
     def _handle_error(self, record: Record, error: Exception):
         if self.db is None:
@@ -1006,7 +995,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         for t in self.instrumented():
             path = JSONPath(t[0].path[1:])
-            obj = next(iter(path(self)))
+            obj = next(iter(path.get(self)))
             object_strings.append(
                 f"\t{type(obj).__name__} ({t[1].__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"
             )

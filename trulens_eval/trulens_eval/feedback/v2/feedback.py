@@ -108,9 +108,9 @@ class GroundTruth(Semantics):
 
 supported_criteria = {
     # NOTE: typo in "response" below is intentional. Still in langchain as of Sept 26, 2023.
-    key.value: value
-        .replace(" If so, response Y. If not, respond N.", '') # older version of langchain had this typo
-        .replace(" If so, respond Y. If not, respond N.", '') # new one is fixed
+    key.value: value.replace(" If so, response Y. If not, respond N.", ''
+                            )  # older version of langchain had this typo
+    .replace(" If so, respond Y. If not, respond N.", '')  # new one is fixed
     if isinstance(value, str) else value
     for key, value in _SUPPORTED_CRITERIA.items()
 }
@@ -425,7 +425,6 @@ class Harmfulness(Moderation, WithPrompt):
 class Insensitivity(Semantics, WithPrompt):  # categorize
     # openai.insensitivity
     # openai.insensitivity_with_cot_reasons
-
     """
     Examples and categorization of racial insensitivity: https://sph.umn.edu/site/docs/hewg/microaggressions.pdf .
     """

@@ -1,5 +1,8 @@
 """
 Serialization utilities.
+
+TODO: Lens class: can we store just the python AST instead of building up our
+own "Step" classes to hold the same data? We are already using AST for parsing.
 """
 
 from __future__ import annotations
@@ -7,10 +10,12 @@ from __future__ import annotations
 import ast
 from ast import dump
 from ast import parse
+from copy import copy
 import logging
 from pprint import PrettyPrinter
+
 from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple,
+    Any, Callable, Dict, Iterable, Iterator, List, Optional, Sequence, Set, Tuple,
     TypeVar, Union
 )
 
@@ -47,27 +52,23 @@ class SerialModel(pydantic.BaseModel):
     """
 
     @classmethod
-    def model_validate(cls, obj: Any, **kwargs):
+    def validate(cls, obj: Any):
         # import hierarchy circle here
         from trulens_eval.utils.pyschema import Class
         from trulens_eval.utils.pyschema import CLASS_INFO
         from trulens_eval.utils.pyschema import WithClassInfo
 
-        if isinstance(obj, dict):
+        if isinstance(obj, Dict):
             if CLASS_INFO in obj:
 
                 cls = Class(**obj[CLASS_INFO])
                 del obj[CLASS_INFO]
-                model = cls.model_validate(obj, **kwargs)
+                model = cls.validate(obj=obj)
 
                 return WithClassInfo.of_model(model=model, cls=cls)
 
-            else:
-                print(
-                    f"Warning: May not be able to properly reconstruct object {obj}."
-                )
-
-                return super().model_validate(obj, **kwargs)
+        return super().validate(obj)
+            
 
     def update(self, **d):
         for k, v in d.items():
@@ -85,57 +86,69 @@ class SerialBytes(pydantic.BaseModel):
         encoded = base64.b64encode(self.data)
         return dict(data=encoded)
 
-    @classmethod
-    def parse_obj(cls, d: Any):
+    def parse_raw(cls, data: Union[str, bytes]) -> 'SerialBytes':
         import base64
 
-        if isinstance(d, Dict):
-            encoded = d['data']
+        if isinstance(data, bytes):
+            return cls.parse_obj(dict(data=base64.b64decode(data)))
+        else:
+            return super().parse_raw(data)
+
+    """
+    @classmethod
+    def parse_obj(cls, obj: Any):
+        import base64
+
+        if isinstance(obj, Dict):
+            encoded = obj['data']
             return SerialBytes(data=base64.b64decode(encoded))
         else:
-            raise ValueError(d)
+            raise ValueError(obj)
+    """
 
 
-# JSONPath, a container for selector/accessors/setters of data stored in a json
+# Lens, a container for selector/accessors/setters of data stored in a json
 # structure. Cannot make abstract since pydantic will try to initialize it.
-class Step(SerialModel):  #, abc.ABC):
+class Step(pydantic.BaseModel):  #, abc.ABC):
     """
     A step in a selection path.
     """
 
     @classmethod
-    def __get_validator__(cls):
-        yield cls.validate
+    def validate(cls, obj):
 
-    @classmethod
-    def validate(cls, d):
-        if not isinstance(d, Dict):
-            return d
+        if isinstance(obj, Step):
+            return obj
+        
+        elif isinstance(obj, Dict):
+        
+            ATTRIBUTE_TYPE_MAP = {
+                'item': GetItem,
+                'index': GetIndex,
+                'attribute': GetAttribute,
+                'item_or_attribute': GetItemOrAttribute,
+                'start': GetSlice,
+                'stop': GetSlice,
+                'step': GetSlice,
+                'items': GetItems,
+                'indices': GetIndices,
+                'collect': Collect
+            }
 
-        ATTRIBUTE_TYPE_MAP = {
-            'item': GetItem,
-            'index': GetIndex,
-            'attribute': GetAttribute,
-            'item_or_attribute': GetItemOrAttribute,
-            'start': GetSlice,
-            'stop': GetSlice,
-            'step': GetSlice,
-            'items': GetItems,
-            'indices': GetIndices
-        }
-
-        a = next(iter(d.keys()))
-        if a in ATTRIBUTE_TYPE_MAP:
-            return ATTRIBUTE_TYPE_MAP[a](**d)
-        else:
-            raise RuntimeError(f"Don't know how to deserialize Step with {d}.")
+            a = next(iter(obj.keys()))
+            if a in ATTRIBUTE_TYPE_MAP:
+                return ATTRIBUTE_TYPE_MAP[a](**obj)
+            
+        raise RuntimeError(f"Do not know how to interpret {obj} as a `Lens` `Step`.")
+            
 
     # @abc.abstractmethod
-    def __call__(self, obj: Any) -> Iterable[Any]:
+    def get(self, obj: Any) -> Iterable[Any]:
         """
         Get the element of `obj`, indexed by `self`.
         """
         raise NotImplementedError()
+
 
     # @abc.abstractmethod
     def set(self, obj: Any, val: Any) -> Any:
@@ -144,14 +157,39 @@ class Step(SerialModel):  #, abc.ABC):
         """
         raise NotImplementedError()
 
+class Collect(Step):
+    # Need something for `Step.validate` to tell that it is looking at Collect.
+    collect: None = None
+    
+    def __hash__(self):
+        return hash("collect")
 
-class GetAttribute(Step):
+    def get(self, obj: Any) -> Iterable[List[Any]]:
+        # Needs to be handled in Lens class itself.
+        raise NotImplementedError()
+        
+    def set(self, obj: Any, val: Any) -> Any:
+        raise NotImplementedError()
+
+    def __repr__(self):
+        return f".collect()"
+
+
+class StepItemOrAttribute(Step):
+    def get_item_or_attribute(self):
+        raise NotImplementedError()
+
+
+class GetAttribute(StepItemOrAttribute):
     attribute: str
 
     def __hash__(self):
         return hash(self.attribute)
 
-    def __call__(self, obj: Any) -> Iterable[Any]:
+    def get_item_or_attribute(self):
+        return self.attribute
+
+    def get(self, obj: Any) -> Iterable[Any]:
         if hasattr(obj, self.attribute):
             yield getattr(obj, self.attribute)
         else:
@@ -162,6 +200,9 @@ class GetAttribute(Step):
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = Bunch()
+
+        # might cause isses
+        obj = copy(obj)
 
         if hasattr(obj, self.attribute):
             setattr(obj, self.attribute, val)
@@ -181,7 +222,7 @@ class GetIndex(Step):
     def __hash__(self):
         return hash(self.index)
 
-    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+    def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
             if len(obj) > self.index:
                 yield obj[self.index]
@@ -196,6 +237,9 @@ class GetIndex(Step):
 
         assert isinstance(obj, Sequence), "Sequence expected."
 
+        # copy
+        obj = list(obj)
+
         if self.index >= 0:
             while len(obj) <= self.index:
                 obj.append(None)
@@ -207,13 +251,16 @@ class GetIndex(Step):
         return f"[{self.index}]"
 
 
-class GetItem(Step):
+class GetItem(StepItemOrAttribute):
     item: str
 
     def __hash__(self):
         return hash(self.item)
 
-    def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
+    def get_item_or_attribute(self):
+        return self.item
+
+    def get(self, obj: Dict[str, T]) -> Iterable[T]:
         if isinstance(obj, Dict):
             if self.item in obj:
                 yield obj[self.item]
@@ -228,6 +275,9 @@ class GetItem(Step):
 
         assert isinstance(obj, Dict), "Dictionary expected."
 
+        # copy
+        obj = {k: v for k, v in obj.items()}
+
         obj[self.item] = val
         return obj
 
@@ -235,7 +285,7 @@ class GetItem(Step):
         return f"[{repr(self.item)}]"
 
 
-class GetItemOrAttribute(Step):
+class GetItemOrAttribute(StepItemOrAttribute):
     # For item/attribute agnostic addressing.
 
     # NOTE: We also allow to lookup elements within sequences if the subelements
@@ -247,7 +297,10 @@ class GetItemOrAttribute(Step):
     def __hash__(self):
         return hash(self.item_or_attribute)
 
-    def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
+    def get_item_or_attribute(self):
+        return self.item_or_attribute
+
+    def get(self, obj: Dict[str, T]) -> Iterable[T]:
         # Special handling of sequences. See NOTE above.
         if isinstance(obj, Sequence):
             if len(obj) == 1:
@@ -286,9 +339,13 @@ class GetItemOrAttribute(Step):
         if obj is None:
             obj = dict()
 
-        if isinstance(obj, Dict):
+        if isinstance(obj, Dict) and not isinstance(obj, Bunch):
+            # Bunch claims to be a Dict.
+            # copy
+            obj = {k: v for k, v in obj.items()}
             obj[self.item_or_attribute] = val
         else:
+            obj = copy(obj) # might cause issues
             setattr(obj, self.item_or_attribute, val)
 
         return obj
@@ -305,7 +362,7 @@ class GetSlice(Step):
     def __hash__(self):
         return hash((self.start, self.stop, self.step))
 
-    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+    def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
             lower, upper, step = slice(self.start, self.stop,
                                        self.step).indices(len(obj))
@@ -315,6 +372,8 @@ class GetSlice(Step):
             raise ValueError("Object is not a sequence.")
 
     def set(self, obj: Any, val: Any) -> Any:
+        # raise NotImplementedError
+    
         if obj is None:
             obj = []
 
@@ -323,10 +382,14 @@ class GetSlice(Step):
         lower, upper, step = slice(self.start, self.stop,
                                    self.step).indices(len(obj))
 
+        # copy
+        obj = list(obj)
+
         for i in range(lower, upper, step):
             obj[i] = val
 
         return obj
+        
 
     def __repr__(self):
         pieces = ":".join(
@@ -347,7 +410,10 @@ class GetIndices(Step):
     def __hash__(self):
         return hash(tuple(self.indices))
 
-    def __call__(self, obj: Sequence[T]) -> Iterable[T]:
+    def __init__(self, indices):
+        super().__init__(indices=tuple(indices))
+
+    def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
             for i in self.indices:
                 yield obj[i]
@@ -355,10 +421,15 @@ class GetIndices(Step):
             raise ValueError("Object is not a sequence.")
 
     def set(self, obj: Any, val: Any) -> Any:
+        # raise NotImplementedError
+        
         if obj is None:
             obj = []
 
         assert isinstance(obj, Sequence), "Sequence expected."
+
+        # copy
+        obj = list(obj)
 
         for i in self.indices:
             if i >= 0:
@@ -379,7 +450,10 @@ class GetItems(Step):
     def __hash__(self):
         return hash(tuple(self.items))
 
-    def __call__(self, obj: Dict[str, T]) -> Iterable[T]:
+    def __init__(self, items):
+        super().__init__(items=tuple(items))
+
+    def get(self, obj: Dict[str, T]) -> Iterable[T]:
         if isinstance(obj, Dict):
             for i in self.items:
                 yield obj[i]
@@ -387,10 +461,15 @@ class GetItems(Step):
             raise ValueError("Object is not a dictionary.")
 
     def set(self, obj: Any, val: Any) -> Any:
+        # raise NotImplementedError
+
         if obj is None:
             obj = dict()
 
         assert isinstance(obj, Dict), "Dictionary expected."
+
+        # copy
+        obj = {k: v for k, v in obj.items()}
 
         for i in self.items:
             obj[i] = val
@@ -398,7 +477,7 @@ class GetItems(Step):
         return obj
 
     def __repr__(self):
-        return f"[{','.join(self.items)}]"
+        return "[" + (','.join(f"'{i}'" for i in self.items)) + "]"
 
 
 class ParseException(Exception):
@@ -408,34 +487,66 @@ class ParseException(Exception):
         self.exp_ast = exp_ast
 
     def __str__(self):
-        return f"Failed to parse expression `{self.exp_string}` as a `JSONPath`.\n{dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
+        return f"Failed to parse expression `{self.exp_string}` as a `Lens`.\nAST={dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
 
+class Lens(pydantic.BaseModel):
+    # Not using SerialModel as we have special handling of serialization to/from
+    # strings for this class which interferes with SerialModel mechanisms.
 
-class JSONPath(SerialModel):
     """
-    Utilitiy class for building JSONPaths.
+    Lenses into python objects.
 
     **Usage:**
     
     ```python
 
-        JSONPath().record[5]['somekey]
+        path = Lens().record[5]['somekey']
+
+        obj = ... # some object that contains a value at `obj.record[5]['somekey]`
+
+        value_at_path = path.get(obj) # that value
+
+        new_obj = path.set(obj, 42) # updates the value to be 42 instead
     ```
     """
 
     path: Tuple[Step, ...]
 
-    def __init__(self, path: Optional[Tuple[Step, ...]] = None):
+    @classmethod
+    def validate(cls, obj):
+        if isinstance(obj, str):
+            return Lens.of_string(obj)
+        else:
+            return super().validate(obj)
 
-        super().__init__(path=path or ())
+    def json(self):
+        return str(self)
+    
+    def __init__(self, path: Optional[Tuple[Step, ...]] = None):
+        if path is None:
+            path = ()
+            
+        super().__init__(path=path)
+    
 
     @staticmethod
-    def of_string(s: str) -> 'JSONPath':
+    def of_string(s: str) -> 'Lens':
+        """
+        Convert a string representing a python expression into a Lens.
+        """
+
+        # NOTE(piotrm): we use python parser for this which means only things
+        # which are valid python expressions (with additional constraints) can
+        # be converted.
+
         if len(s) == 0:
-            return JSONPath()
+            return Lens()
 
         try:
-            exp = parse(f"PLACEHOLDER.{s}", mode="eval")
+            # NOTE: "eval" here means to parse an expression, not a statement.
+            # exp = parse(f"PLACEHOLDER.{s}", mode="eval") 
+            exp = parse(s, mode="eval") 
+
         except SyntaxError as e:
             raise ParseException(s, None)
 
@@ -447,28 +558,38 @@ class JSONPath(SerialModel):
         path = []
 
         def of_index(idx):
+
             if isinstance(idx, ast.Tuple):
-                elts = tuple(of_index(elt.value) for elt in idx.elts)
+
+                elts = tuple(of_index(elt) for elt in idx.elts)
+
                 if all(isinstance(e, GetItem) for e in elts):
                     return GetItems(items=tuple(e.item for e in elts))
-                elif all(isinstance(e, int) for e in elts):
+                
+                elif all(isinstance(e, GetIndex) for e in elts):
                     return GetIndices(indices=tuple(e.index for e in elts))
+                
                 else:
                     raise ParseException(s, idx)
 
             elif isinstance(idx, ast.Constant):
+
                 if isinstance(idx.value, str):
                     return GetItem(item=idx.value)
+                
                 elif isinstance(idx.value, int):
                     return GetIndex(index=idx.value)
+                
                 else:
                     raise ParseException(s, idx)
 
             elif isinstance(idx, ast.UnaryOp):
+
                 if isinstance(idx.op, ast.USub):
                     oper = of_index(idx.operand)
                     if not isinstance(oper, GetIndex):
                         raise ParseException(s, idx)
+                    
                     return GetIndex(index=-oper.index)
 
             elif idx is None:
@@ -487,8 +608,8 @@ class JSONPath(SerialModel):
                 sub = exp.slice
 
                 if isinstance(sub, ast.Index):
-                    idx = sub.value
-                    step = of_index(idx)
+                    step = of_index(sub.value)
+
                     path.append(step)
 
                 elif isinstance(sub, ast.Slice):
@@ -501,29 +622,95 @@ class JSONPath(SerialModel):
                         raise ParseException(s, exp)
 
                     vals = tuple(None if e is None else e.index for e in vals)
+
                     path.append(
                         GetSlice(start=vals[0], stop=vals[1], step=vals[2])
                     )
+
+                elif isinstance(sub, ast.Tuple):
+                    path.append(of_index(sub))
+
+                elif isinstance(sub, ast.Constant):
+                    path.append(of_index(sub))
 
                 else:
                     raise ParseException(s, exp)
 
                 exp = exp.value
-            elif isinstance(exp, ast.Name):
-                if exp.id != "PLACEHOLDER":
+
+            elif isinstance(exp, ast.List):
+                # Need this case for paths that do not start with item/attribute
+                # but instead go directly to something bracketed, which is a
+                # list in python syntax.
+
+                if not all(isinstance(el, ast.Constant) for el in exp.elts):
                     raise ParseException(s, exp)
+                
+                if len(exp.elts) == 0:
+                    logger.warning(f"Path {s} is getting zero items/indices, it will not produce anything.")
+                    path.append(GetIndices(indices=()))
+
+                elif len(exp.elts) == 1:
+                    el = exp.elts[0]
+                    if isinstance(el.value, int):
+                        path.append(GetIndex(index=el.value))
+                    elif isinstance(el.value, str):
+                        path.append(GetItem(item=el.value))
+                    else:
+                        raise ParseException(s, exp)
+        
+                else:
+                    if all(isinstance(el.value, int) for el in exp.elts):
+                        path.append(GetIndices(indices=tuple(el.value for el in exp.elts)))
+
+                    elif all(isinstance(el.value, str) for el in exp.elts):
+                        path.append(GetItems(items=tuple(el.value for el in exp.elts)))
+                    
+                    else:
+                        raise ParseException(s, exp)
+                    
+                exp = None
+
+            elif isinstance(exp, ast.Name):
+                path.append(GetItemOrAttribute(item_or_attribute=exp.id))
 
                 exp = None
+
+            elif isinstance(exp, ast.Call):
+                if not isinstance(exp.func, ast.Attribute):
+                    raise ParseException(s, exp)
+                
+                funcname = exp.func.attr
+                if funcname == "collect":
+                    path.append(
+                        Collect()
+                    )
+
+                else:
+                    raise TypeError(f"`{funcname}` is not a handled call for paths.")
+
+                if len(exp.args) + len(exp.keywords) != 0:
+                    logger.warning(f"args/kwargs for `{funcname}` are ignored")
+
+                exp = exp.func.value
+
             else:
                 raise ParseException(s, exp)
 
-        return JSONPath(path=path[::-1])
+        return Lens(path=path[::-1])
 
     def __str__(self):
-        return "*" + ("".join(map(repr, self.path)))
+        ret = ""
+        for step in self.path:
+            if isinstance(step, StepItemOrAttribute) and ret == "":
+                ret = step.get_item_or_attribute()
+            else:
+                ret += repr(step)
+
+        return ret
 
     def __repr__(self):
-        return "JSONPath()" + ("".join(map(repr, self.path)))
+        return "Lens()" + ("".join(map(repr, self.path)))
 
     def __hash__(self):
         return hash(self.path)
@@ -531,15 +718,15 @@ class JSONPath(SerialModel):
     def __len__(self):
         return len(self.path)
 
-    def __add__(self, other: JSONPath):
-        return JSONPath(path=self.path + other.path)
+    def __add__(self, other: Lens):
+        return Lens(path=self.path + other.path)
 
-    def is_immediate_prefix_of(self, other: JSONPath):
+    def is_immediate_prefix_of(self, other: Lens):
         return self.is_prefix_of(other) and len(self.path) + 1 == len(
             other.path
         )
 
-    def is_prefix_of(self, other: JSONPath):
+    def is_prefix_of(self, other: Lens):
         p = self.path
         pother = other.path
 
@@ -575,7 +762,7 @@ class JSONPath(SerialModel):
         except Exception:
             return self.set(obj, [val])
 
-    def set(self, obj: Any, val: Any) -> Any:
+    def set(self, obj: T, val: Union[Any, T]) -> T:
         """
         In `obj` at path `self` exists, change it to `val`. Otherwise create a
         spot for it with Munch objects and then set it.
@@ -585,50 +772,79 @@ class JSONPath(SerialModel):
             return val
 
         first = self.path[0]
-        rest = JSONPath(path=self.path[1:])
+        rest = Lens(path=self.path[1:])
 
         try:
-            firsts = first(obj)
+            firsts = first.get(obj)
             first_obj, firsts = iterable_peek(firsts)
 
         except (ValueError, IndexError, KeyError, AttributeError):
 
             # `first` points to an element that does not exist, use `set` to create a spot for it.
             obj = first.set(obj, None)  # will create a spot for `first`
-            firsts = first(obj)
+            firsts = first.get(obj)
 
         for first_obj in firsts:
             obj = first.set(
                 obj,
-                rest.set(first_obj, val),
+                rest.set(first_obj, val)
             )
 
         return obj
 
     def get_sole_item(self, obj: Any) -> Any:
-        return next(self.__call__(obj))
+        all_objects = list(self.get(obj))
 
-    def __call__(self, obj: Any) -> Iterable[Any]:
+        assert len(all_objects) == 1, f"Lens {self} did not address exactly a single object."
+
+        return all_objects[0]
+
+    def __call__(self, *args, **kwargs):
+        error_msg = ("Only `collect` is a valid function name in python call syntax when building lenses. "
+                     "Note that applying a selector/path/JSONPAth/Lens now requires to use the `get` method instead of `__call__`.")
+
+        assert len(self.path) > 0, error_msg
+        assert isinstance(self.path[-1], StepItemOrAttribute), error_msg
+
+        funcname = self.path[-1].get_item_or_attribute()
+
+        if funcname == "collect":
+            return Lens(path=self.path[0:-1] + (Collect(), ))
+
+        else:
+            raise TypeError(error_msg)
+
+    # TODO: reserving __call__ for a different purposes than get
+
+    def get(self, obj: Any) -> Iterable[Any]:
         if len(self.path) == 0:
             yield obj
             return
 
-        first = self.path[0]
+        # Need to do the recursion by breaking down steps from the end in order
+        # to support `Collect`.
+        last_step = self.path[-1]
         if len(self.path) == 1:
-            rest = JSONPath(path=())
+            start = Lens(path=())
         else:
-            rest = JSONPath(path=self.path[1:])
+            start = Lens(path=self.path[0:-1])
 
-        for first_selection in first.__call__(obj):
-            for rest_selection in rest.__call__(first_selection):
-                yield rest_selection
+        start_items = start.get(obj)
 
-    def _append(self, step: Step) -> JSONPath:
-        return JSONPath(path=self.path + (step,))
+        if isinstance(last_step, Collect):
+            yield list(start_items)
+
+        else:
+            for start_selection in start_items:
+                for last_selection in last_step.get(start_selection):
+                    yield last_selection
+
+    def _append(self, step: Step) -> Lens:
+        return Lens(path=self.path + (step,))
 
     def __getitem__(
         self, item: int | str | slice | Sequence[int] | Sequence[str]
-    ) -> JSONPath:
+    ) -> Lens:
         if isinstance(item, int):
             return self._append(GetIndex(index=item))
         if isinstance(item, str):
@@ -651,16 +867,29 @@ class JSONPath(SerialModel):
 
         raise TypeError(f"Unhandled item type {type(item)}.")
 
-    def __getattr__(self, attr: str) -> JSONPath:
+    def __getattr__(self, attr: str) -> Lens:
+        if attr == "_ipython_canary_method_should_not_exist_":
+            # NOTE(piotrm): when displaying objects, ipython checks whether they
+            # have overwritten __getattr__ by looking up this attribute. If it
+            # does not result in AttributeError or None, IPython knows it was
+            # overwritten and it will not try to use any of the _repr_*_ methdos
+            # to display the object. In our case, this will result Lenses being
+            # constructed with this canary attribute name. We instead return
+            # None here to let ipython know we have overwritten __getattr__ but
+            # we do not construct any Lenses.
+            return 0xdead
+        
         return self._append(GetItemOrAttribute(item_or_attribute=attr))
 
+# TODO: Deprecate old name.
+JSONPath = Lens
 
-def leaf_queries(obj_json: JSON, query: JSONPath = None) -> Iterable[JSONPath]:
+def leaf_queries(obj_json: JSON, query: Lens = None) -> Iterable[Lens]:
     """
     Get all queries for the given object that select all of its leaf values.
     """
 
-    query = query or JSONPath()
+    query = query or Lens()
 
     if isinstance(obj_json, JSON_BASES):
         yield query
@@ -681,12 +910,12 @@ def leaf_queries(obj_json: JSON, query: JSONPath = None) -> Iterable[JSONPath]:
         yield query
 
 
-def all_queries(obj: Any, query: JSONPath = None) -> Iterable[JSONPath]:
+def all_queries(obj: Any, query: Lens = None) -> Iterable[Lens]:
     """
     Get all queries for the given object.
     """
 
-    query = query or JSONPath()
+    query = query or Lens()
 
     if isinstance(obj, JSON_BASES):
         yield query
@@ -720,13 +949,15 @@ def all_queries(obj: Any, query: JSONPath = None) -> Iterable[JSONPath]:
         yield query
 
 
-def all_objects(obj: Any,
-                query: JSONPath = None) -> Iterable[Tuple[JSONPath, Any]]:
+def all_objects(
+    obj: Any,
+    query: Lens = None
+) -> Iterable[Tuple[Lens, Any]]:
     """
     Get all queries for the given object.
     """
 
-    query = query or JSONPath()
+    query = query or Lens()
 
     yield (query, obj)
 
@@ -753,12 +984,10 @@ def all_objects(obj: Any,
                 yield res
 
     elif isinstance(obj, Iterable):
-        pass
-        # print(f"Cannot create query for Iterable types like {obj.__class__.__name__} at query {query}. Convert the iterable to a sequence first.")
+        logger.debug(f"Cannot create query for Iterable types like {obj.__class__.__name__} at query {query}. Convert the iterable to a sequence first.")
 
     else:
-        pass
-        # print(f"Unhandled object type {obj} {type(obj)}")
+        logger.debug(f"Unhandled object type {obj} {type(obj)}")
 
 
 def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
@@ -769,12 +998,12 @@ def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
 
 
 def matching_objects(obj: Any,
-                     match: Callable) -> Iterable[Tuple[JSONPath, Any]]:
+                     match: Callable) -> Iterable[Tuple[Lens, Any]]:
     for q, val in all_objects(obj):
         if match(q, val):
             yield (q, val)
 
 
-def matching_queries(obj: Any, match: Callable) -> Iterable[JSONPath]:
+def matching_queries(obj: Any, match: Callable) -> Iterable[Lens]:
     for q, _ in matching_objects(obj, match=match):
         yield q

@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from typing import Dict, Optional, Sequence
@@ -8,8 +9,6 @@ from trulens_eval.feedback.provider.endpoint import BedrockEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.generated import re_0_10_rating
 
-import json
-
 logger = logging.getLogger(__name__)
 
 
@@ -18,7 +17,11 @@ class Bedrock(LLMProvider):
     region_name: str
 
     def __init__(
-        self, *args, model_id="amazon.titan-tg1-large", region_name="us-east-1", **kwargs
+        self,
+        *args,
+        model_id="amazon.titan-tg1-large",
+        region_name="us-east-1",
+        **kwargs
     ):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
@@ -41,7 +44,9 @@ class Bedrock(LLMProvider):
 
         self_kwargs['model_id'] = model_id
         self_kwargs['region_name'] = region_name
-        self_kwargs['endpoint'] = BedrockEndpoint(region_name = region_name, *args, **kwargs)
+        self_kwargs['endpoint'] = BedrockEndpoint(
+            region_name=region_name, *args, **kwargs
+        )
 
         super().__init__(
             **self_kwargs
@@ -56,8 +61,9 @@ class Bedrock(LLMProvider):
     ) -> str:
 
         # NOTE(joshr): only tested with sso auth
-        import boto3
         import json
+
+        import boto3
         bedrock = boto3.client(service_name='bedrock-runtime')
 
         assert prompt is not None, "Bedrock can only operate on `prompt`, not `messages`."
@@ -68,6 +74,7 @@ class Bedrock(LLMProvider):
 
         response = bedrock.invoke_model(body=body, modelId=modelId)
 
-        response_body = json.loads(response.get('body').read()).get('results')[0]["outputText"]
+        response_body = json.loads(response.get('body').read()
+                                  ).get('results')[0]["outputText"]
         # text
         return response_body

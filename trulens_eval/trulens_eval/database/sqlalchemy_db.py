@@ -36,7 +36,10 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import RecordID
 from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.text import UNICODE_CHECK, UNICODE_CLOCK, UNICODE_HOURGLASS, UNICODE_STOP
+from trulens_eval.utils.text import UNICODE_CHECK
+from trulens_eval.utils.text import UNICODE_CLOCK
+from trulens_eval.utils.text import UNICODE_HOURGLASS
+from trulens_eval.utils.text import UNICODE_STOP
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +198,9 @@ class SqlAlchemyDB(DB):
                 )
                 session.merge(_fb_def)  # .add was not thread safe
 
-            print(f"{UNICODE_CHECK} added feedback definition {_fb_def.feedback_definition_id}")
+            print(
+                f"{UNICODE_CHECK} added feedback definition {_fb_def.feedback_definition_id}"
+            )
 
             return _fb_def.feedback_definition_id
 

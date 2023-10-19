@@ -50,7 +50,8 @@ class CustomApp:
         ex = ThreadPoolExecutor(max_workers=max(1, len(chunks)))
 
         futures = list(
-            ex.submit(lambda chunk: chunk + " processed", chunk=chunk) for chunk in chunks
+            ex.submit(lambda chunk: chunk + " processed", chunk=chunk)
+            for chunk in chunks
         )
 
         wait(futures)

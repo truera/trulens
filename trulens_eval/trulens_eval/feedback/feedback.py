@@ -214,7 +214,9 @@ class Feedback(FeedbackDefinition):
         self.selectors = selectors
 
     @staticmethod
-    def evaluate_deferred(tru: 'Tru') -> List['Future[Tuple[Feedback, FeedbackResult]]']:
+    def evaluate_deferred(
+        tru: 'Tru'
+    ) -> List['Future[Tuple[Feedback, FeedbackResult]]']:
         """
         Evaluates feedback functions that were specified to be deferred. Returns
         an integer indicating how many evaluates were run.
@@ -421,8 +423,6 @@ class Feedback(FeedbackDefinition):
         """
         Same as `run` but will try multiple times upon non-user errors.
         """
-
-
 
     def run(
         self, app: Union[AppDefinition, JSON], record: Record
@@ -657,7 +657,7 @@ class Feedback(FeedbackDefinition):
 
             q_within_o = Select.Query(path=q.path[1:])
             try:
-                arg_vals[k] = list(q_within_o(o))
+                arg_vals[k] = list(q_within_o.get(o))
             except Exception as e:
                 raise RuntimeError(
                     f"Could not locate {q_within_o} in app/record."
