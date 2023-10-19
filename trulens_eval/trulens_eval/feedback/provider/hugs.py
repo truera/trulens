@@ -387,6 +387,7 @@ class Huggingface(Provider):
 
         # TODO: Make error handling more granular so it's not swallowed.
         except Exception as e:
+            logger.debug("No PII was found")
             hf_response = [
                 {
                     "entity_group": "NONE",
