@@ -17,7 +17,7 @@ from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.threading import TP
+from trulens_eval.utils.threading import ThreadPoolExecutor
 
 with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.indices.query.schema import QueryBundle
@@ -142,10 +142,13 @@ class WithFeedbackFilterNodes(VectorIndexRetriever):
         # Get relevant docs using super class:
         nodes = super()._retrieve(query_bundle)
 
+        ex = ThreadPoolExecutor(max_workers=max(1, len(nodes)))
+
         # Evaluate the filter on each, in parallel.
-        promises = (
+        futures = (
             (
-                node, TP().promise(
+                node,
+                ex.submit(
                     lambda query, node: self.feedback(
                         query.query_str, node.node.get_text()
                     ) > self.threshold,
@@ -154,7 +157,10 @@ class WithFeedbackFilterNodes(VectorIndexRetriever):
                 )
             ) for node in nodes
         )
-        results = ((node, promise.get()) for (node, promise) in promises)
+
+        wait([future for (_, future) in futures])
+
+        results = ((node, future.result()) for (node, future) in futures)
         filtered = map(first, filter(second, results))
 
         # Return only the filtered ones.

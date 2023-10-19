@@ -6,7 +6,8 @@ import json
 import logging
 import pprint
 import traceback
-from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+import warnings
 
 import numpy as np
 import pydantic
@@ -213,7 +214,9 @@ class Feedback(FeedbackDefinition):
         self.selectors = selectors
 
     @staticmethod
-    def evaluate_deferred(tru: 'Tru') -> int:
+    def evaluate_deferred(
+        tru: 'Tru'
+    ) -> List['Future[Tuple[Feedback, FeedbackResult]]']:
         """
         Evaluates feedback functions that were specified to be deferred. Returns
         an integer indicating how many evaluates were run.
@@ -228,7 +231,7 @@ class Feedback(FeedbackDefinition):
             app_json = row.app_json
 
             feedback = Feedback(**row.feedback_json)
-            feedback.run_and_log(
+            return feedback, feedback.run_and_log(
                 record=record,
                 app=app_json,
                 tru=tru,
@@ -237,7 +240,9 @@ class Feedback(FeedbackDefinition):
 
         feedbacks = db.get_feedback()
 
-        started_count = 0
+        tp = TP()
+
+        futures: List['Future[Tuple[Feedback, FeedbackResult]]'] = []
 
         for i, row in feedbacks.iterrows():
             feedback_ident = f"{row.fname} for app {row.app_json['app_id']}, record {row.record_id}"
@@ -248,8 +253,7 @@ class Feedback(FeedbackDefinition):
                     f"{UNICODE_YIELD} Feedback task starting: {feedback_ident}"
                 )
 
-                TP().runlater(prepare_feedback, row)
-                started_count += 1
+                futures.append(tp.submit(prepare_feedback, row))
 
             elif row.status in [FeedbackResultStatus.RUNNING]:
                 now = datetime.now().timestamp()
@@ -258,8 +262,7 @@ class Feedback(FeedbackDefinition):
                         f"{UNICODE_YIELD} Feedback task last made progress over 30 seconds ago. "
                         f"Retrying: {feedback_ident}"
                     )
-                    TP().runlater(prepare_feedback, row)
-                    started_count += 1
+                    futures.append(tp.submit(prepare_feedback, row))
 
                 else:
                     print(
@@ -274,8 +277,7 @@ class Feedback(FeedbackDefinition):
                         f"{UNICODE_YIELD} Feedback task last made progress over 5 minutes ago. "
                         f"Retrying: {feedback_ident}"
                     )
-                    TP().runlater(prepare_feedback, row)
-                    started_count += 1
+                    futures.append(tp.submit(prepare_feedback, row))
 
                 else:
                     print(
@@ -286,7 +288,7 @@ class Feedback(FeedbackDefinition):
             elif row.status == FeedbackResultStatus.DONE:
                 pass
 
-        return started_count
+        return futures
 
     def __call__(self, *args, **kwargs) -> Any:
         assert self.imp is not None, "Feedback definition needs an implementation to call."
@@ -411,6 +413,17 @@ class Feedback(FeedbackDefinition):
             name=self.supplied_name
         )
 
+    def run_robust(
+        self,
+        app: Union[AppDefinition, JSON],
+        record: Record,
+        timeout: float = 30,
+        retries: int = 3
+    ):
+        """
+        Same as `run` but will try multiple times upon non-user errors.
+        """
+
     def run(
         self, app: Union[AppDefinition, JSON], record: Record
     ) -> FeedbackResult:
@@ -461,10 +474,9 @@ class Feedback(FeedbackDefinition):
                     )
                     cost += part_cost
                 except Exception as e:
-                    print(
+                    raise RuntimeError(
                         f"Evaluation of {self.name} failed on inputs: \n{pp.pformat(ins)[0:128]}\n{e}."
                     )
-                    continue
 
                 if isinstance(result_and_meta, Tuple):
                     # If output is a tuple of two, we assume it is the float/multifloat and the metadata.
@@ -506,8 +518,10 @@ class Feedback(FeedbackDefinition):
                 feedback_calls.append(feedback_call)
 
             if len(result_vals) == 0:
-                logger.warning(
-                    f"Feedback function {self.supplied_name if self.supplied_name is not None else self.name} with aggregation {self.agg} had no inputs."
+                warnings.warn(
+                    f"Feedback function {self.supplied_name if self.supplied_name is not None else self.name} with aggregation {self.agg} had no inputs.",
+                    UserWarning,
+                    stacklevel=1
                 )
                 result = np.nan
 
@@ -559,7 +573,7 @@ class Feedback(FeedbackDefinition):
         tru: 'Tru',
         app: Union[AppDefinition, JSON] = None,
         feedback_result_id: Optional[FeedbackResultID] = None
-    ) -> FeedbackResult:
+    ) -> Optional[FeedbackResult]:
         record_id = record.record_id
         app_id = record.app_id
 

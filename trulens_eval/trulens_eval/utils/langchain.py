@@ -6,6 +6,7 @@ various langchain classes and example classes:
   documents via a threshold on a specified feedback function.
 """
 
+from concurrent.futures import wait
 from typing import List, Type
 
 from trulens_eval import app
@@ -128,7 +129,9 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
             ) for doc in docs
         )
 
-        results = list((doc, promise.result()) for (doc, promise) in futures)
+        wait([future for (_, future) in futures])
+
+        results = list((doc, future.result()) for (doc, future) in futures)
         filtered = map(first, filter(second, results))
 
         # Return only the filtered ones.
