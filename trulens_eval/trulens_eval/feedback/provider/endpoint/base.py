@@ -17,12 +17,13 @@ import requests
 
 from trulens_eval.keys import ApiKeyError
 from trulens_eval.schema import Cost
-from trulens_eval.utils.threading import DEFAULT_NETWORK_TIMEOUT
-from trulens_eval.utils.python import get_first_local_in_call_stack, locals_except
+from trulens_eval.utils.python import get_first_local_in_call_stack
+from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils.threading import DEFAULT_NETWORK_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
@@ -146,7 +147,10 @@ class Endpoint(SerialModel, SingletonPerName):
         return
 
     def post(
-        self, url: str, payload: JSON, timeout: float = DEFAULT_NETWORK_TIMEOUT
+        self,
+        url: str,
+        payload: JSON,
+        timeout: float = DEFAULT_NETWORK_TIMEOUT
     ) -> Any:
         self.pace_me()
         ret = requests.post(
@@ -180,7 +184,8 @@ class Endpoint(SerialModel, SingletonPerName):
         if len(j) == 1:
             return j[0]
 
-        else: return j
+        else:
+            return j
 
     def run_me(self, thunk: Thunk[T]) -> T:
         """
@@ -845,24 +850,17 @@ class DummyEndpoint(Endpoint):
     # How often to produce the overloaded message.
     overloaded_prob: float
 
-    def __new__(
-        cls,
-        *args,
-        **kwargs
-    ):
+    def __new__(cls, *args, **kwargs):
 
-        return super(Endpoint, cls).__new__(
-            cls,
-            name="dummyendpoint"
-        )
+        return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
 
     def __init__(
-        self, 
+        self,
         name: str = "dummyendpoint",
-        error_prob: float = 1/100,
-        freeze_prob: float = 1/100,
-        overloaded_prob: float = 1/100,
-        loading_prob: float = 1/100,
+        error_prob: float = 1 / 100,
+        freeze_prob: float = 1 / 100,
+        overloaded_prob: float = 1 / 100,
+        loading_prob: float = 1 / 100,
         rpm: float = DEFAULT_RPM * 10,
         **kwargs
     ):
@@ -876,13 +874,20 @@ class DummyEndpoint(Endpoint):
         kwargs['name'] = name
         kwargs['callback_class'] = EndpointCallback
 
-        super().__init__(**kwargs, **locals_except("self", "name", "kwargs", "__class__"))
+        super().__init__(
+            **kwargs, **locals_except("self", "name", "kwargs", "__class__")
+        )
 
-        print(f"Using DummyEndpoint with {locals_except('self', 'name', 'kwargs', '__class__')}")
+        print(
+            f"Using DummyEndpoint with {locals_except('self', 'name', 'kwargs', '__class__')}"
+        )
 
     # TODO: make a robust version of POST or use tenacity
     def post(
-        self, url: str, payload: JSON, timeout: float = DEFAULT_NETWORK_TIMEOUT
+        self,
+        url: str,
+        payload: JSON,
+        timeout: float = DEFAULT_NETWORK_TIMEOUT
     ) -> Any:
         # Classification results only, like from huggingface. Simulates
         # overloaded, model loading, frozen, error.
@@ -950,14 +955,22 @@ class DummyEndpoint(Endpoint):
         # how long to wait:
         if "estimated_time" in j:
             wait_time = j['estimated_time']
-            warnings.warn(f"Waiting for {j} ({wait_time}) second(s).", ResourceWarning, stacklevel=2)
+            warnings.warn(
+                f"Waiting for {j} ({wait_time}) second(s).",
+                ResourceWarning,
+                stacklevel=2
+            )
             sleep(wait_time + 2)
             return self.post(url, payload)
 
         if isinstance(j, Dict) and "error" in j:
             error = j['error']
             if error == "overloaded":
-                warnings.warn("Waiting for overloaded API before trying again.", ResourceWarning, stacklevel=2)
+                warnings.warn(
+                    "Waiting for overloaded API before trying again.",
+                    ResourceWarning,
+                    stacklevel=2
+                )
                 sleep(10)
                 return self.post(url, payload)
             else:

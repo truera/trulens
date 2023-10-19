@@ -11,7 +11,8 @@ from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.python import locals_except
-from trulens_eval.utils.threading import TP, ThreadPoolExecutor
+from trulens_eval.utils.threading import ThreadPoolExecutor
+from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
 
@@ -204,7 +205,7 @@ class Huggingface(Provider):
         for label in hf_response:
             if label['label'] == 'LABEL_2':
                 return float(label['score'])
-            
+
         raise RuntimeError("LABEL_2 not found in huggingface api response.")
 
     # TODEP
@@ -246,7 +247,7 @@ class Huggingface(Provider):
         for label in hf_response:
             if label['label'] == 'toxic':
                 return label['score']
-            
+
         raise RuntimeError("LABEL_2 not found in huggingface api response.")
 
     # TODEP
@@ -272,7 +273,7 @@ class Huggingface(Provider):
         for label in hf_response:
             if label['label'] == 'entailment':
                 return label['score']
-            
+
         raise RuntimeError("LABEL_2 not found in huggingface api response.")
 
     # TODEP
@@ -325,15 +326,17 @@ class Huggingface(Provider):
         payload = {"inputs": text}
 
         hf_response = self.endpoint.post(
-            url = HUGS_PII_DETECTION_API_URL,
-            payload = payload)
-        
+            url=HUGS_PII_DETECTION_API_URL, payload=payload
+        )
+
         # If the response is a dictionary, convert it to a list. This is for when only one name is identified.
         if isinstance(hf_response, dict):
             hf_response = [hf_response]
 
         if not isinstance(hf_response, list):
-            raise ValueError(f"Unexpected response from Huggingface API: {hf_response}")
+            raise ValueError(
+                f"Unexpected response from Huggingface API: {hf_response}"
+            )
 
         # Iterate through the entities and extract scores for "NAME" entities
         for entity in hf_response:
@@ -354,7 +357,7 @@ class Huggingface(Provider):
         score = 1 - total_likelihood
 
         return score
-    
+
     def pii_detection_with_cot_reasons(self, text: str):
         """
         NER model to detect PII, with reasons.
@@ -378,20 +381,23 @@ class Huggingface(Provider):
         payload = {"inputs": text}
 
         hf_response = self.endpoint.post(
-            url = HUGS_PII_DETECTION_API_URL,
-            payload = payload)
-        
+            url=HUGS_PII_DETECTION_API_URL, payload=payload
+        )
+
         # Convert the response to a list if it's not already a list
         if not isinstance(hf_response, list):
             hf_response = [hf_response]
 
         # Check if the response is a list
         if not isinstance(hf_response, list):
-            raise ValueError("Unexpected response from Huggingface API: response should be a list or a dictionary")
+            raise ValueError(
+                "Unexpected response from Huggingface API: response should be a list or a dictionary"
+            )
 
         # Iterate through the entities and extract "word" and "score" for "NAME" entities
         for i, entity in enumerate(hf_response):
-            reasons[f"{entity.get('entity_group')} detected: {entity['word']}"] = f"Score: {entity['score']}"
+            reasons[f"{entity.get('entity_group')} detected: {entity['word']}"
+                   ] = f"Score: {entity['score']}"
             likelihood_scores.append(entity["score"])
 
         # Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)
@@ -410,22 +416,22 @@ class Huggingface(Provider):
 
         return score, reasons
 
+
 class Dummy(Huggingface):
 
     def __init__(
         self,
         name: Optional[str] = None,
-        error_prob: float = 1/100,
-        loading_prob: float = 1/100,
-        freeze_prob: float = 1/100,
-        overloaded_prob: float = 1/100,
+        error_prob: float = 1 / 100,
+        loading_prob: float = 1 / 100,
+        freeze_prob: float = 1 / 100,
+        overloaded_prob: float = 1 / 100,
         rpm: float = 600,
         **kwargs
     ):
         kwargs['name'] = name or "dummyhugs"
         kwargs['endpoint'] = DummyEndpoint(
-            name="dummyendhugspoint",
-            **locals_except("self", "name", "kwargs")
+            name="dummyendhugspoint", **locals_except("self", "name", "kwargs")
         )
 
         super().__init__(**kwargs)

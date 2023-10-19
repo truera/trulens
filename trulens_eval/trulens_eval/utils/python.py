@@ -9,7 +9,10 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from queue import Queue
-from typing import Any, Callable, Dict, Generic, Hashable, Iterator, Optional, Sequence, Type, TypeVar, Union
+from typing import (
+    Any, Callable, Dict, Generic, Hashable, Iterator, Optional, Sequence, Type,
+    TypeVar, Union
+)
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -17,8 +20,8 @@ pp = PrettyPrinter()
 T = TypeVar("T")
 Thunk = Callable[[], T]
 
-
 # Function utilities.
+
 
 def code_line(func) -> Optional[str]:
     """
@@ -30,14 +33,16 @@ def code_line(func) -> Optional[str]:
     else:
         return None
 
+
 def locals_except(*exceptions):
     """
     Get caller's locals except for the named exceptions.
     """
 
-    locs = caller_frame(offset=1).f_locals # 1 to skip this call
+    locs = caller_frame(offset=1).f_locals  # 1 to skip this call
 
     return {k: v for k, v in locs.items() if k not in exceptions}
+
 
 # Python call stack utilities
 
@@ -162,7 +167,7 @@ def _future_target_wrapper(stack, func, *args, **kwargs):
     """
 
     # TODO: See if threading.stack_size([size]) can be used instead.
-    
+
     # Keep this for looking up via get_first_local_in_call_stack .
     pre_start_stack = stack
 
@@ -277,6 +282,7 @@ def get_first_local_in_call_stack(
 
 T = TypeVar("T")
 
+
 class SingletonPerName(Generic[T]):
     """
     Class for creating singleton instances except there being one instance max,
@@ -287,7 +293,12 @@ class SingletonPerName(Generic[T]):
     # Hold singleton instances here.
     instances: Dict[Hashable, 'SingletonPerName'] = dict()
 
-    def __new__(cls: Type[SingletonPerName[T]], *args, name: Optional[str] = None, **kwargs) -> SingletonPerName[T]:
+    def __new__(
+        cls: Type[SingletonPerName[T]],
+        *args,
+        name: Optional[str] = None,
+        **kwargs
+    ) -> SingletonPerName[T]:
         """
         Create the singleton instance if it doesn't already exist and return it.
         """
