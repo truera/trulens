@@ -27,7 +27,8 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, ClassVar, Dict, List, Mapping, Optional, Sequence, Type, TypeVar, Union
+    Any, Callable, ClassVar, Dict, List, Mapping, Optional, Sequence, Type,
+    TypeVar, Union
 )
 
 import dill
@@ -183,7 +184,8 @@ class Record(SerialModel):
     # Feedback results only filled for records that were just produced. Will not
     # be filled in when read from database. Also, will not fill in when using
     # `FeedbackMode.DEFERRED`.
-    feedback_results: Optional[List['Future[FeedbackResult]']] = pydantic.Field(exclude=True)
+    feedback_results: Optional[List['Future[FeedbackResult]']
+                              ] = pydantic.Field(exclude=True)
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
         # Fixed record_id for obj_id_of_id below.
@@ -219,7 +221,7 @@ class Record(SerialModel):
             # Adds another attribute to path, from method name:
             path = frame_info.path._append(
                 GetItemOrAttribute(item_or_attribute=frame_info.method.name)
-            )  
+            )
 
             ret = path.set_or_append(obj=ret, val=call)
 
@@ -576,12 +578,10 @@ class AppDefinition(SerialModel, WithClassInfo):
                 else:
                     self.initial_app_loader_dump = SerialBytes(data=dump)
 
-
                     # This is an older serialization approach that saved things
                     # in local files instead of the DB. Leaving here for now as
                     # serialization of large apps might make this necessary
                     # again.
-
                     """
                     path_json = Path.cwd() / f"{app_id}.json"
                     path_dill = Path.cwd() / f"{app_id}.dill"

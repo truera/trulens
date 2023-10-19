@@ -325,7 +325,9 @@ class TruLlama(App):
         elif isinstance(self.app, BaseChatEngine):
             ret = self.app.chat(human)
         else:
-            raise RuntimeError(f"Do not know what the main method for app of type {type(self.app).__name__} is.")
+            raise RuntimeError(
+                f"Do not know what the main method for app of type {type(self.app).__name__} is."
+            )
 
         try:
             attr = self._main_output_attribute(ret)
@@ -345,7 +347,9 @@ class TruLlama(App):
         elif isinstance(self.app, BaseChatEngine):
             ret = await self.app.achat(human)
         else:
-            raise RuntimeError(f"Do not know what the main async method for app of type {type(self.app).__name__} is.")
+            raise RuntimeError(
+                f"Do not know what the main async method for app of type {type(self.app).__name__} is."
+            )
 
         try:
             attr = self._main_output_attribute(ret)
@@ -360,9 +364,7 @@ class TruLlama(App):
     # TODEP
     # llama_index.chat_engine.types.BaseChatEngine
     def chat(self, *args, **kwargs) -> AgentChatResponse:
-        assert isinstance(
-            self.app, BaseChatEngine
-        )
+        assert isinstance(self.app, BaseChatEngine)
 
         self._with_dep_message(method="chat", is_async=False, with_record=False)
 
@@ -372,9 +374,7 @@ class TruLlama(App):
     # TODEP
     # llama_index.chat_engine.types.BaseChatEngine
     async def achat(self, *args, **kwargs) -> AgentChatResponse:
-        assert isinstance(
-            self.app, BaseChatEngine
-        )
+        assert isinstance(self.app, BaseChatEngine)
 
         self._with_dep_message(method="achat", is_async=True, with_record=False)
 
@@ -384,9 +384,7 @@ class TruLlama(App):
     # TODEP
     # llama_index.chat_engine.types.BaseChatEngine
     def stream_chat(self, *args, **kwargs) -> StreamingAgentChatResponse:
-        assert isinstance(
-            self.app, BaseChatEngine
-        )
+        assert isinstance(self.app, BaseChatEngine)
 
         self._with_dep_message(
             method="stream_chat", is_async=False, with_record=False
@@ -398,9 +396,7 @@ class TruLlama(App):
     # TODEP
     # llama_index.chat_engine.types.BaseChatEngine
     async def astream_chat(self, *args, **kwargs) -> StreamingAgentChatResponse:
-        assert isinstance(
-            self.app, BaseChatEngine
-        )
+        assert isinstance(self.app, BaseChatEngine)
 
         self._with_dep_message(
             method="astream_chat", is_async=True, with_record=False
@@ -413,9 +409,7 @@ class TruLlama(App):
     # llama_index.indices.query.base.BaseQueryEngine
     def query(self, *args, **kwargs) -> RESPONSE_TYPE:
 
-        assert isinstance(
-            self.app, BaseQueryEngine
-        )
+        assert isinstance(self.app, BaseQueryEngine)
 
         self._with_dep_message(
             method="query", is_async=False, with_record=False
@@ -428,9 +422,7 @@ class TruLlama(App):
     # llama_index.indices.query.base.BaseQueryEngine
     async def aquery(self, *args, **kwargs) -> RESPONSE_TYPE:
 
-        assert isinstance(
-            self.app, BaseQueryEngine
-        )
+        assert isinstance(self.app, BaseQueryEngine)
 
         self._with_dep_message(
             method="aquery", is_async=True, with_record=False
@@ -444,9 +436,7 @@ class TruLlama(App):
     def query_with_record(self, *args,
                           **kwargs) -> Tuple[RESPONSE_TYPE, Record]:
 
-        assert isinstance(
-            self.app, BaseQueryEngine
-        )
+        assert isinstance(self.app, BaseQueryEngine)
 
         self._with_dep_message(method="query", is_async=False, with_record=True)
 
@@ -456,9 +446,7 @@ class TruLlama(App):
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .
     async def aquery_with_record(self, *args,
                                  **kwargs) -> Tuple[RESPONSE_TYPE, Record]:
-        assert isinstance(
-            self.app, BaseQueryEngine
-        )
+        assert isinstance(self.app, BaseQueryEngine)
 
         self._with_dep_message(method="aquery", is_async=True, with_record=True)
 
@@ -469,9 +457,7 @@ class TruLlama(App):
     def chat_with_record(self, *args,
                          **kwargs) -> Tuple[AgentChatResponse, Record]:
 
-        assert isinstance(
-            self.app, BaseChatEngine
-        )
+        assert isinstance(self.app, BaseChatEngine)
 
         self._with_dep_message(method="chat", is_async=False, with_record=True)
 
@@ -481,9 +467,7 @@ class TruLlama(App):
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
     async def achat_with_record(self, *args,
                                 **kwargs) -> Tuple[AgentChatResponse, Record]:
-        assert isinstance(
-            self.app, BaseChatEngine
-        )
+        assert isinstance(self.app, BaseChatEngine)
 
         self._with_dep_message(method="achat", is_async=True, with_record=True)
 
@@ -495,9 +479,7 @@ class TruLlama(App):
         self, *args, **kwargs
     ) -> Tuple[StreamingAgentChatResponse, Record]:
 
-        assert isinstance(
-            self.app, BaseChatEngine
-        )
+        assert isinstance(self.app, BaseChatEngine)
 
         self._with_dep_message(
             method="stream", is_async=False, with_record=True
@@ -511,9 +493,7 @@ class TruLlama(App):
         self, *args, **kwargs
     ) -> Tuple[StreamingAgentChatResponse, Record]:
 
-        assert isinstance(
-            self.app, BaseChatEngine
-        )
+        assert isinstance(self.app, BaseChatEngine)
 
         self._with_dep_message(
             method="astream_chat", is_async=True, with_record=True

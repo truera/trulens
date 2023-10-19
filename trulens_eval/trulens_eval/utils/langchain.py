@@ -6,9 +6,8 @@ various langchain classes and example classes:
   documents via a threshold on a specified feedback function.
 """
 
-from typing import List, Type
-
 from concurrent.futures import wait
+from typing import List, Type
 
 from trulens_eval import app
 from trulens_eval.feedback import Feedback
