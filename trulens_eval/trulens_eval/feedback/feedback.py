@@ -413,17 +413,6 @@ class Feedback(FeedbackDefinition):
             name=self.supplied_name
         )
 
-    def run_robust(
-        self,
-        app: Union[AppDefinition, JSON],
-        record: Record,
-        timeout: float = 30,
-        retries: int = 3
-    ):
-        """
-        Same as `run` but will try multiple times upon non-user errors.
-        """
-
     def run(
         self, app: Union[AppDefinition, JSON], record: Record
     ) -> FeedbackResult:
