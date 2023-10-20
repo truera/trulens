@@ -71,7 +71,6 @@ class Feedback(FeedbackDefinition):
           float for feedback implementations that are run more than once.
         """
 
-        agg = agg or np.mean
         if name is not None:
             kwargs['supplied_name'] = name
 
@@ -109,20 +108,28 @@ class Feedback(FeedbackDefinition):
                     kwargs['aggregator'] = FunctionOrMethod.of_callable(
                         agg, loadable=True
                     )
-                except:
+                except Exception as e:
                     # User defined functions in script do not have a module so cannot be serialized
+                    logger.warning(
+                        f"Cannot serialize aggregator {agg}. "
+                        f"Deferred mode will default to `np.mean` as aggregator. "
+                        f"If you are not using FeedbackMode.DEFERRED, you can safely ignore this warning. "
+                        f"{e}")
                     pass
         else:
             if 'aggregator' in kwargs:
                 agg: AggCallable = FunctionOrMethod.pick(
                     **(kwargs['aggregator'])
                 ).load()
+            else:
+                # Default aggregator if neither serialized `aggregator` or
+                # loaded `agg` were specified.
+                agg = np.mean
 
         super().__init__(**kwargs)
 
         self.imp = imp
         self.agg = agg
-        self.supplied_name = name
 
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:

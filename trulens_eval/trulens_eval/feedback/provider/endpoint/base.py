@@ -932,19 +932,19 @@ class DummyEndpoint(Endpoint):
         r -= self.overloaded_prob
 
         if j is None:
-            # Otherwise a simulated success outcome with some constant results.
+            # Otherwise a simulated success outcome with some constant results plus some randomness.
 
             j = [
                 [
                     {
                         'label': 'LABEL_1',
-                        'score': 0.6034979224205017
+                        'score': 0.6034979224205017 + random.random()
                     }, {
                         'label': 'LABEL_2',
-                        'score': 0.2648237645626068
+                        'score': 0.2648237645626068 + random.random()
                     }, {
                         'label': 'LABEL_0',
-                        'score': 0.13167837262153625
+                        'score': 0.13167837262153625 + random.random()
                     }
                 ]
             ]
