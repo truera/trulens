@@ -27,25 +27,26 @@ export const getMethodNameFromCell = (stackCell: StackJSONRaw) => {
  * @returns name of the calling method in the stack cell.
  */
 export const getPathName = (stackCell: StackJSONRaw) => {
-  return stackCell.path;
-  /*
-  return stackCell.path.path
-    .map((p) => {
-      if (!p) return undefined;
+  if (typeof stackCell.path === "string") {
+    return stackCell.path;
+  } else {
+    return stackCell.path.path
+      .map((p) => {
+        if (!p) return undefined;
 
-      if ('item_or_attribute' in p) {
-        return `.${p.item_or_attribute}`;
-      }
+        if ('item_or_attribute' in p) {
+          return `.${p.item_or_attribute}`;
+        }
 
-      if ('index' in p) {
-        return `[${p.index}]`;
-      }
+        if ('index' in p) {
+          return `[${p.index}]`;
+        }
 
-      return undefined;
-    })
-    .filter(Boolean)
-    .join('');
-  */
+        return undefined;
+      })
+      .filter(Boolean)
+      .join('');
+  }
 };
 
 /**
