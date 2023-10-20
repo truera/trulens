@@ -510,14 +510,9 @@ class AppDefinition(SerialModel, WithClassInfo):
             assert serial_bytes_json is not None, "Cannot create new session without `initial_app_loader`."
             
             serial_bytes = SerialBytes.parse_obj(serial_bytes_json)
-            try:
-                app = dill.loads(serial_bytes.data)()
-            except Exception as e:
-                print(e)
-                print(serial_bytes)
-                print(serial_bytes_json)
-                raise e
-
+            
+            app = dill.loads(serial_bytes.data)()
+            
         else:
             app = initial_app_loader()
             data = dill.dumps(initial_app_loader, recurse=True)
