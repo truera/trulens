@@ -149,7 +149,7 @@ def draw_selector(
     if path is not None:
         try:
             # Draw each value addressed by `path`:
-            for val in path(obj):
+            for val in path.get(obj):
                 json_val = jsonify_for_ui(val)
                 if isinstance(json_val, dict):
                     # Don't expand by default as there are large JSONs and
