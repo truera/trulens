@@ -504,19 +504,23 @@ class AppDefinition(SerialModel, WithClassInfo):
         blank memory).
         """
 
-        defn = app_definition_json['initial_app_loader_dump']
+        serial_bytes_json: Optional[JSON] = app_definition_json['initial_app_loader_dump']
 
         if initial_app_loader is None:
-            assert defn is not None, "Cannot create new session without `initial_app_loader`."
-            serial_bytes = SerialBytes.parse_obj(defn)
+            assert serial_bytes_json is not None, "Cannot create new session without `initial_app_loader`."
+            
+            serial_bytes = SerialBytes.parse_obj(serial_bytes_json)
+            
             app = dill.loads(serial_bytes.data)()
+            
         else:
             app = initial_app_loader()
-            defn = dill.dumps(initial_app_loader, recurse=True)
-            serial_bytes = SerialBytes(data=defn)
+            data = dill.dumps(initial_app_loader, recurse=True)
+            serial_bytes = SerialBytes(data=data)
+            serial_bytes_json = serial_bytes.dict()
 
         app_definition_json['app'] = app
-        app_definition_json['initial_app_loader_dump'] = serial_bytes
+        app_definition_json['initial_app_loader_dump'] = serial_bytes_json
 
         cls: Type[App] = WithClassInfo.get_class(app_definition_json)
 
