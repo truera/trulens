@@ -27,6 +27,8 @@ export const getMethodNameFromCell = (stackCell: StackJSONRaw) => {
  * @returns name of the calling method in the stack cell.
  */
 export const getPathName = (stackCell: StackJSONRaw) => {
+  return stackCell.path;
+  /*
   return stackCell.path.path
     .map((p) => {
       if (!p) return undefined;
@@ -43,6 +45,7 @@ export const getPathName = (stackCell: StackJSONRaw) => {
     })
     .filter(Boolean)
     .join('');
+  */
 };
 
 /**
