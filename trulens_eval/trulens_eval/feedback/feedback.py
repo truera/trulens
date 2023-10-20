@@ -71,7 +71,6 @@ class Feedback(FeedbackDefinition):
           float for feedback implementations that are run more than once.
         """
 
-        agg = agg or np.mean
         if name is not None:
             kwargs['supplied_name'] = name
 
@@ -103,26 +102,34 @@ class Feedback(FeedbackDefinition):
 
         # Similarly with agg and aggregator.
         if agg is not None:
-            if 'aggregator' not in kwargs:
+            if kwargs.get('aggregator') is None:
                 try:
                     # These are for serialization to/from json and for db storage.
                     kwargs['aggregator'] = FunctionOrMethod.of_callable(
                         agg, loadable=True
                     )
-                except:
+                except Exception as e:
                     # User defined functions in script do not have a module so cannot be serialized
+                    logger.warning(
+                        f"Cannot serialize aggregator {agg}. "
+                        f"Deferred mode will default to `np.mean` as aggregator. "
+                        f"If you are not using FeedbackMode.DEFERRED, you can safely ignore this warning. "
+                        f"{e}")
                     pass
         else:
-            if 'aggregator' in kwargs:
+            if kwargs.get('aggregator') is not None:
                 agg: AggCallable = FunctionOrMethod.pick(
                     **(kwargs['aggregator'])
                 ).load()
+            else:
+                # Default aggregator if neither serialized `aggregator` or
+                # loaded `agg` were specified.
+                agg = np.mean
 
         super().__init__(**kwargs)
 
         self.imp = imp
         self.agg = agg
-        self.supplied_name = name
 
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:
@@ -208,8 +215,6 @@ class Feedback(FeedbackDefinition):
                 f"Cannot determine default paths for feedback function arguments. "
                 f"The feedback function has signature {sig}."
             )
-
-        print(f"setting selectors to {selectors}")
 
         self.selectors = selectors
 
@@ -412,17 +417,6 @@ class Feedback(FeedbackDefinition):
             agg=self.agg,
             name=self.supplied_name
         )
-
-    def run_robust(
-        self,
-        app: Union[AppDefinition, JSON],
-        record: Record,
-        timeout: float = 30,
-        retries: int = 3
-    ):
-        """
-        Same as `run` but will try multiple times upon non-user errors.
-        """
 
     def run(
         self, app: Union[AppDefinition, JSON], record: Record
