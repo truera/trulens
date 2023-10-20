@@ -250,8 +250,12 @@ class Tru(SingletonPerName):
         """
 
         for res in as_completed(self._submit_feedback_functions(
-                record=record, feedback_functions=feedback_functions, app=app)):
-            yield res.result()
+                record=record,
+                feedback_functions=feedback_functions,
+                app=app
+            )):
+            
+            yield res.result()[1]
 
     def add_app(self, app: AppDefinition) -> None:
         """
@@ -350,6 +354,8 @@ class Tru(SingletonPerName):
             self.evaluator_stop = threading.Event()
 
         def runloop():
+            assert self.evaluator_stop is not None
+
             while fork or not self.evaluator_stop.is_set():
                 futures = Feedback.evaluate_deferred(tru=self)
 
