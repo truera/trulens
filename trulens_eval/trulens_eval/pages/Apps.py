@@ -271,13 +271,6 @@ def run_record(col):
     # Update ChatRecord.
     current_record.computer = comp_response
 
-    # Draw/update record row with the computer response and selector values that
-    # are based on the Record.
-    with col:
-        draw_rec(
-            record_idx=last_record_index, rec=current_record, skip_human=True
-        )
-
     # Doing this after draw_rec so that the computer output can show up before
     # we start rendering selected values.
     current_record.record_json = record.dict()
