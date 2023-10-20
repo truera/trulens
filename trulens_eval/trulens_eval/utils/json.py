@@ -201,7 +201,7 @@ def jsonify(
         # Not even trying to use pydantic.dict here.
 
         if isinstance(obj, Lens): # special handling of paths
-            return obj.json()
+            return obj.dump()
 
         temp = {}
         new_dicted[id(obj)] = temp

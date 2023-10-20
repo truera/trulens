@@ -32,8 +32,8 @@ T = TypeVar("T")
 
 # JSON types
 
-JSON_BASES = (str, int, float, type(None))
-JSON_BASES_T = Union[str, int, float, type(None)]
+JSON_BASES = (str, int, float, bytes, type(None))
+JSON_BASES_T = Union[str, int, float, bytes, type(None)]
 
 # TODO: rename to "JSON_LIKE" as it is not stringly json.
 # JSON = Union[JSON_BASES_T, Sequence['JSON'], Dict[str, 'JSON']]
@@ -86,25 +86,27 @@ class SerialBytes(pydantic.BaseModel):
         encoded = base64.b64encode(self.data)
         return dict(data=encoded)
 
-    def parse_raw(cls, data: Union[str, bytes]) -> 'SerialBytes':
-        import base64
+    def __init__(self, data: Union[str, bytes]):
+        super().__init__(data=data)
 
-        if isinstance(data, bytes):
-            return cls.parse_obj(dict(data=base64.b64decode(data)))
-        else:
-            return super().parse_raw(data)
-
-    """
     @classmethod
-    def parse_obj(cls, obj: Any):
+    def parse_obj(cls, obj):
+        return cls.validate(obj)
+
+    @classmethod
+    def validate(cls, obj):
         import base64
 
         if isinstance(obj, Dict):
             encoded = obj['data']
-            return SerialBytes(data=base64.b64decode(encoded))
+            if isinstance(encoded, str):
+                return SerialBytes(data=base64.b64decode(encoded))
+            elif isinstance(encoded, bytes):
+                return SerialBytes(data=encoded)
+            else:
+                raise ValueError(obj)
         else:
             raise ValueError(obj)
-    """
 
 
 # Lens, a container for selector/accessors/setters of data stored in a json
@@ -519,7 +521,7 @@ class Lens(pydantic.BaseModel):
         else:
             return super().validate(obj)
 
-    def json(self):
+    def dump(self): # might be called "model_dump" in pydantic v2
         return str(self)
     
     def __init__(self, path: Optional[Tuple[Step, ...]] = None):
