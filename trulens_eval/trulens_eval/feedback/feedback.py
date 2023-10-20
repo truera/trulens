@@ -102,7 +102,7 @@ class Feedback(FeedbackDefinition):
 
         # Similarly with agg and aggregator.
         if agg is not None:
-            if 'aggregator' not in kwargs:
+            if kwargs.get('aggregator') is None:
                 try:
                     # These are for serialization to/from json and for db storage.
                     kwargs['aggregator'] = FunctionOrMethod.of_callable(
@@ -117,7 +117,7 @@ class Feedback(FeedbackDefinition):
                         f"{e}")
                     pass
         else:
-            if 'aggregator' in kwargs:
+            if kwargs.get('aggregator') is not None:
                 agg: AggCallable = FunctionOrMethod.pick(
                     **(kwargs['aggregator'])
                 ).load()
