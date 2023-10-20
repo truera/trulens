@@ -216,8 +216,6 @@ class Feedback(FeedbackDefinition):
                 f"The feedback function has signature {sig}."
             )
 
-        print(f"setting selectors to {selectors}")
-
         self.selectors = selectors
 
     @staticmethod
