@@ -304,7 +304,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
         # Special handling of sequences. See NOTE above.
         if isinstance(obj, Sequence):
             if len(obj) == 1:
-                for r in self.__call__(obj=obj[0]):
+                for r in self.get(obj=obj[0]):
                     yield r
             elif len(obj) == 0:
                 raise ValueError(
@@ -316,7 +316,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
                     f"Lookup by item or attribute `{self.item_or_attribute}` is ambiguous. "
                     f"Use a lookup by index(es) or slice first to disambiguate."
                 )
-                for r in self.__call__(obj=obj[0]):
+                for r in self.get(obj=obj[0]):
                     yield r
 
         # Otherwise handle a dict or object with the named attribute.
@@ -613,7 +613,7 @@ class Lens(pydantic.BaseModel):
                     path.append(step)
 
                 elif isinstance(sub, ast.Slice):
-                    vals = tuple(
+                    vals: Tuple[GetIndex, ...] = tuple(
                         of_index(v) for v in (sub.lower, sub.upper, sub.step)
                     )
 
@@ -621,10 +621,10 @@ class Lens(pydantic.BaseModel):
                             e is None or isinstance(e, GetIndex) for e in vals):
                         raise ParseException(s, exp)
 
-                    vals = tuple(None if e is None else e.index for e in vals)
+                    vals_indices: Tuple[Union[None, int], ...] = tuple(None if e is None else e.index for e in vals)
 
                     path.append(
-                        GetSlice(start=vals[0], stop=vals[1], step=vals[2])
+                        GetSlice(start=vals_indices[0], stop=vals_indices[1], step=vals_indices[2])
                     )
 
                 elif isinstance(sub, ast.Tuple):
@@ -813,8 +813,6 @@ class Lens(pydantic.BaseModel):
 
         else:
             raise TypeError(error_msg)
-
-    # TODO: reserving __call__ for a different purposes than get
 
     def get(self, obj: Any) -> Iterable[Any]:
         if len(self.path) == 0:
