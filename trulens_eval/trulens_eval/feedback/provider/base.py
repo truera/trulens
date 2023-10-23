@@ -377,10 +377,10 @@ class LLMProvider(Provider, ABC):
 
     def model_agreement(self, prompt: str, response: str) -> float:
         """
-        Uses chat completion model. A function that gives AWS Bedrock the same
+        Uses chat completion model. A function that gives a model the same
         prompt and gets a response, encouraging truthfulness. A second template
         is given to the model with a prompt that the original response is
-        correct, and measures whether previous AWS Bedrock response is similar.
+        correct, and measures whether previous model response is similar.
 
         **Usage:**
 
