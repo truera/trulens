@@ -6,7 +6,7 @@ This section highlights different end-to-end use cases that TruLens can help wit
 !!! info "[Async Evaluation](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/langchain_async.ipynb)"
     Evaluate your applications that leverage async mode.
 
-!!! info "[Deferred Evaluation](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/expositional/frameworks/llama_index/llama_index_complex_evals.ipynb)"
+!!! info "[Deferred Evaluation](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/experimental/deferred_example.ipynb)"
     Defer evaluations to off-peak times.
 
 !!! info "[Using AzureOpenAI](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/expositional/models/azure_openai.ipynb)"
