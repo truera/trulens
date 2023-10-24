@@ -1840,15 +1840,15 @@
 
 
 <h2 id="trulens_eval.trulens_eval.tru_llama.TruLlama" class="doc doc-heading">
-        <code>TruLlama</code>
+          <code>TruLlama</code>
 
 
 <a href="#trulens_eval.trulens_eval.tru_llama.TruLlama" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="trulens_eval.app.App">App</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="trulens_eval.app.App">App</span></code></p>
 
   
       <p>Instantiates the LLama Index Wrapper.</p>
@@ -1885,6 +1885,8 @@ with tru_recorder as recording:
 </code></pre></div>
 See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functions</a> for instantiating feedback functions.</p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -1901,7 +1903,11 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
           <td>
                 <code><span title="llama_index.indices.query.base.BaseQueryEngine">BaseQueryEngine</span></code>
           </td>
-          <td><p>A llama index application.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A llama index application.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1909,10 +1915,9 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     </tbody>
   </table>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">183</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">183</span>
 <span class="normal">184</span>
 <span class="normal">185</span>
 <span class="normal">186</span>
@@ -2231,27 +2236,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="normal">499</span>
 <span class="normal">500</span>
 <span class="normal">501</span>
-<span class="normal">502</span>
-<span class="normal">503</span>
-<span class="normal">504</span>
-<span class="normal">505</span>
-<span class="normal">506</span>
-<span class="normal">507</span>
-<span class="normal">508</span>
-<span class="normal">509</span>
-<span class="normal">510</span>
-<span class="normal">511</span>
-<span class="normal">512</span>
-<span class="normal">513</span>
-<span class="normal">514</span>
-<span class="normal">515</span>
-<span class="normal">516</span>
-<span class="normal">517</span>
-<span class="normal">518</span>
-<span class="normal">519</span>
-<span class="normal">520</span>
-<span class="normal">521</span>
-<span class="normal">522</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruLlama</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
+<span class="normal">502</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruLlama</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Instantiates the LLama Index Wrapper.</span>
 
 <span class="sd">        **Usage:**</span>
@@ -2396,7 +2381,9 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span><span class="p">):</span>
             <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">chat</span><span class="p">(</span><span class="n">human</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Do not know what the main method for app of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Do not know what the main method for app of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is.&quot;</span>
+            <span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_main_output_attribute</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
@@ -2416,7 +2403,9 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span><span class="p">):</span>
             <span class="n">ret</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">achat</span><span class="p">(</span><span class="n">human</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Do not know what the main async method for app of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Do not know what the main async method for app of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is.&quot;</span>
+            <span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_main_output_attribute</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
@@ -2431,9 +2420,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># TODEP</span>
     <span class="c1"># llama_index.chat_engine.types.BaseChatEngine</span>
     <span class="k">def</span> <span class="nf">chat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AgentChatResponse</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;chat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -2443,9 +2430,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># TODEP</span>
     <span class="c1"># llama_index.chat_engine.types.BaseChatEngine</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">achat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AgentChatResponse</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;achat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -2455,9 +2440,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># TODEP</span>
     <span class="c1"># llama_index.chat_engine.types.BaseChatEngine</span>
     <span class="k">def</span> <span class="nf">stream_chat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StreamingAgentChatResponse</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span>
             <span class="n">method</span><span class="o">=</span><span class="s2">&quot;stream_chat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span>
@@ -2469,9 +2452,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># TODEP</span>
     <span class="c1"># llama_index.chat_engine.types.BaseChatEngine</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">astream_chat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StreamingAgentChatResponse</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span>
             <span class="n">method</span><span class="o">=</span><span class="s2">&quot;astream_chat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span>
@@ -2484,9 +2465,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># llama_index.indices.query.base.BaseQueryEngine</span>
     <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RESPONSE_TYPE</span><span class="p">:</span>
 
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseQueryEngine</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseQueryEngine</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span>
             <span class="n">method</span><span class="o">=</span><span class="s2">&quot;query&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span>
@@ -2499,9 +2478,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># llama_index.indices.query.base.BaseQueryEngine</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">aquery</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RESPONSE_TYPE</span><span class="p">:</span>
 
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseQueryEngine</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseQueryEngine</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span>
             <span class="n">method</span><span class="o">=</span><span class="s2">&quot;aquery&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">False</span>
@@ -2515,9 +2492,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="k">def</span> <span class="nf">query_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
                           <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">RESPONSE_TYPE</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
 
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseQueryEngine</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseQueryEngine</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;query&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -2527,9 +2502,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">aquery_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
                                  <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">RESPONSE_TYPE</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseQueryEngine</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseQueryEngine</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;aquery&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -2540,9 +2513,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="k">def</span> <span class="nf">chat_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
                          <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">AgentChatResponse</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
 
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;chat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -2552,9 +2523,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">achat_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
                                 <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">AgentChatResponse</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;achat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -2566,9 +2535,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">StreamingAgentChatResponse</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
 
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span>
             <span class="n">method</span><span class="o">=</span><span class="s2">&quot;stream&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span>
@@ -2582,9 +2549,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">StreamingAgentChatResponse</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
 
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">BaseChatEngine</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_with_dep_message</span><span class="p">(</span>
             <span class="n">method</span><span class="o">=</span><span class="s2">&quot;astream_chat&quot;</span><span class="p">,</span> <span class="n">is_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_record</span><span class="o">=</span><span class="kc">True</span>
@@ -2592,11 +2557,12 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 
         <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">awith_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">astream_chat</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -2622,9 +2588,9 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 signature <code>sig</code> if it is to be called with the given bindings
 <code>bindings</code>.</p>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">259</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">259</span>
 <span class="normal">260</span>
 <span class="normal">261</span>
 <span class="normal">262</span>
@@ -2664,10 +2630,11 @@ signature <code>sig</code> if it is to be called with the given bindings
 
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">main_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">sig</span><span class="p">,</span> <span class="n">bindings</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2685,9 +2652,9 @@ signature <code>sig</code> if it is to be called with the given bindings
 signature <code>sig</code> after it is called with the given <code>bindings</code> and has
 returned <code>ret</code>.</p>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">280</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">280</span>
 <span class="normal">281</span>
 <span class="normal">282</span>
 <span class="normal">283</span>
@@ -2725,10 +2692,11 @@ returned <code>ret</code>.</p>
     <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2748,9 +2716,9 @@ returned <code>ret</code>.</p>
   
       <p>Get the path to the source nodes in the query output.</p>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">252</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">252</span>
 <span class="normal">253</span>
 <span class="normal">254</span>
 <span class="normal">255</span>
@@ -2762,7 +2730,7 @@ returned <code>ret</code>.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">select_outputs</span><span class="p">()</span><span class="o">.</span><span class="n">source_nodes</span><span class="p">[:]</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>

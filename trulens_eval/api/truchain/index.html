@@ -1882,15 +1882,15 @@
 
 
 <h2 id="trulens_eval.trulens_eval.tru_chain.TruChain" class="doc doc-heading">
-        <code>TruChain</code>
+          <code>TruChain</code>
 
 
 <a href="#trulens_eval.trulens_eval.tru_chain.TruChain" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="trulens_eval.app.App">App</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="trulens_eval.app.App">App</span></code></p>
 
   
       <p>Instantiates the Langchain Wrapper.</p>
@@ -1939,6 +1939,8 @@ with tru_recorder as recording:
 </code></pre></div>
 See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functions</a> for instantiating feedback functions.</p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -1955,7 +1957,11 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
           <td>
                 <code><span title="langchain.chains.base.Chain">Chain</span></code>
           </td>
-          <td><p>A langchain application.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A langchain application.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -1963,10 +1969,9 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     </tbody>
   </table>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">109</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">109</span>
 <span class="normal">110</span>
 <span class="normal">111</span>
 <span class="normal">112</span>
@@ -2436,11 +2441,12 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 
         <span class="k">return</span> <span class="n">ret</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -2465,9 +2471,9 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
       <p>Wrapped call to self.app._call with instrumentation. If you need to
 get the record, use <code>call_with_record</code> instead.</p>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">309</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">309</span>
 <span class="normal">310</span>
 <span class="normal">311</span>
 <span class="normal">312</span>
@@ -2489,10 +2495,11 @@ get the record, use <code>call_with_record</code> instead.</p>
 
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2514,9 +2521,9 @@ get the record, use <code>call_with_record</code> instead.</p>
 <li>More args in WithClassInfo</li>
 </ul>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">177</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
 <span class="normal">180</span>
@@ -2558,10 +2565,11 @@ get the record, use <code>call_with_record</code> instead.</p>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">post_init</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2581,9 +2589,9 @@ get the record, use <code>call_with_record</code> instead.</p>
   
       <p>Run the chain acall method and also return a record metadata object.</p>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">285</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">285</span>
 <span class="normal">286</span>
 <span class="normal">287</span>
 <span class="normal">288</span>
@@ -2599,10 +2607,11 @@ get the record, use <code>call_with_record</code> instead.</p>
 
     <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">awith_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">acall</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2618,9 +2627,9 @@ get the record, use <code>call_with_record</code> instead.</p>
   
       <p>Run the chain call method and also return a record metadata object.</p>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">296</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">296</span>
 <span class="normal">297</span>
 <span class="normal">298</span>
 <span class="normal">299</span>
@@ -2640,10 +2649,11 @@ get the record, use <code>call_with_record</code> instead.</p>
 
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="fm">__call__</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2661,9 +2671,9 @@ get the record, use <code>call_with_record</code> instead.</p>
 signature <code>sig</code> if it is to be called with the given bindings
 <code>bindings</code>.</p>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">217</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">217</span>
 <span class="normal">218</span>
 <span class="normal">219</span>
 <span class="normal">220</span>
@@ -2707,10 +2717,11 @@ signature <code>sig</code> if it is to be called with the given bindings
 
     <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">main_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">sig</span><span class="p">,</span> <span class="n">bindings</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2728,9 +2739,9 @@ signature <code>sig</code> if it is to be called with the given bindings
 signature <code>sig</code> after it is called with the given <code>bindings</code> and has
 returned <code>ret</code>.</p>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">240</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">240</span>
 <span class="normal">241</span>
 <span class="normal">242</span>
 <span class="normal">243</span>
@@ -2760,7 +2771,7 @@ returned <code>ret</code>.</p>
 
     <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">main_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">sig</span><span class="p">,</span> <span class="n">bindings</span><span class="p">,</span> <span class="n">ret</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>

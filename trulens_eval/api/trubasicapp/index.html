@@ -1826,15 +1826,15 @@
 
 
 <h2 id="trulens_eval.trulens_eval.tru_basic_app.TruBasicApp" class="doc doc-heading">
-        <code>TruBasicApp</code>
+          <code>TruBasicApp</code>
 
 
 <a href="#trulens_eval.trulens_eval.tru_basic_app.TruBasicApp" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="trulens_eval.app.App">App</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="trulens_eval.app.App">App</span></code></p>
 
   
       <p>Instantiates a Basic app that makes little assumptions. Assumes input text and output text.</p>
@@ -1857,6 +1857,8 @@ tru_record = recording.records[0]
 </code></pre></div>
 See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functions</a> for instantiating feedback functions.</p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -1873,7 +1875,11 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
           <td>
                 <code><span title="typing.Callable">Callable</span></code>
           </td>
-          <td><p>A text to text callable.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A text to text callable.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -1881,10 +1887,9 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     </tbody>
   </table>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 57</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 57</span>
 <span class="normal"> 58</span>
 <span class="normal"> 59</span>
 <span class="normal"> 60</span>
@@ -2031,10 +2036,10 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span>
-            <span class="n">text_to_text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">app</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TruWrapperApp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">text_to_text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">app</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TruWrapperApp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Wrap a callable for monitoring.</span>
@@ -2106,11 +2111,12 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">_call</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -2140,9 +2146,9 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <li>More args in WithClassInfo</li>
 </ul>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 93</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 93</span>
 <span class="normal"> 94</span>
 <span class="normal"> 95</span>
 <span class="normal"> 96</span>
@@ -2172,10 +2178,10 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="normal">120</span>
 <span class="normal">121</span>
 <span class="normal">122</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">text_to_text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">app</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TruWrapperApp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">text_to_text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TruWrapperApp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrap a callable for monitoring.</span>
@@ -2202,10 +2208,11 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="c1"># Setup the DB-related things:</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">post_init</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2222,6 +2229,8 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
       <p>Run the callable with the given arguments. Note that the wrapped
 callable is expected to take in a single string.</p>
 
+
+
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -2234,14 +2243,18 @@ callable is expected to take in a single string.</p>
         <tr>
 <td><code>dict</code></td>          <td>
           </td>
-          <td><p>record metadata</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>record metadata</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">155</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">155</span>
 <span class="normal">156</span>
 <span class="normal">157</span>
 <span class="normal">158</span>
@@ -2267,7 +2280,7 @@ callable is expected to take in a single string.</p>
 
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">_call</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>

@@ -1826,20 +1826,15 @@
 
 <a id="trulens_eval.trulens_eval.feedback.provider.hugs.Huggingface"></a>
   <div class="doc doc-contents first">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="trulens_eval.feedback.provider.base.Provider">Provider</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="trulens_eval.feedback.provider.base.Provider">Provider</span></code></p>
 
   
       <p>Out of the box feedback functions calling Huggingface APIs.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 63</span>
-<span class="normal"> 64</span>
-<span class="normal"> 65</span>
-<span class="normal"> 66</span>
-<span class="normal"> 67</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 67</span>
 <span class="normal"> 68</span>
 <span class="normal"> 69</span>
 <span class="normal"> 70</span>
@@ -2172,14 +2167,44 @@
 <span class="normal">397</span>
 <span class="normal">398</span>
 <span class="normal">399</span>
-<span class="normal">400</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Huggingface</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Huggingface</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Out of the box feedback functions calling Huggingface APIs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">endpoint</span><span class="p">:</span> <span class="n">Endpoint</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
         <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
         <span class="c1"># down below. Adding it as None here as a temporary hack.</span>
@@ -2217,7 +2242,7 @@
 
     <span class="c1"># TODEP</span>
     <span class="nd">@_tci</span>
-    <span class="k">def</span> <span class="nf">language_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">language_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Uses Huggingface&#39;s papluca/xlm-roberta-base-language-detection model. A</span>
 <span class="sd">        function that uses language detection on `text1` and `text2` and</span>
@@ -2253,23 +2278,26 @@
             <span class="p">)</span>
             <span class="k">return</span> <span class="p">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">}</span>
 
-        <span class="n">max_length</span> <span class="o">=</span> <span class="mi">500</span>
-        <span class="n">scores1</span><span class="p">:</span> <span class="n">AsyncResult</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">promise</span><span class="p">(</span>
-            <span class="n">get_scores</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text1</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
-        <span class="p">)</span>
-        <span class="n">scores2</span><span class="p">:</span> <span class="n">AsyncResult</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">promise</span><span class="p">(</span>
-            <span class="n">get_scores</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text2</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
-        <span class="p">)</span>
+        <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="k">as</span> <span class="n">tpool</span><span class="p">:</span>
+            <span class="n">max_length</span> <span class="o">=</span> <span class="mi">500</span>
+            <span class="n">f_scores1</span><span class="p">:</span> <span class="n">Future</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">tpool</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+                <span class="n">get_scores</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text1</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">f_scores2</span><span class="p">:</span> <span class="n">Future</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">tpool</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+                <span class="n">get_scores</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text2</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
+            <span class="p">)</span>
 
-        <span class="n">scores1</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">scores1</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-        <span class="n">scores2</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">scores2</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="n">wait</span><span class="p">([</span><span class="n">f_scores1</span><span class="p">,</span> <span class="n">f_scores2</span><span class="p">])</span>
+
+        <span class="n">scores1</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">f_scores1</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+        <span class="n">scores2</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">f_scores2</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
 
         <span class="n">langs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">scores1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="n">prob1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">scores1</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">langs</span><span class="p">])</span>
         <span class="n">prob2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">scores2</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">langs</span><span class="p">])</span>
         <span class="n">diff</span> <span class="o">=</span> <span class="n">prob1</span> <span class="o">-</span> <span class="n">prob2</span>
 
-        <span class="n">l1</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span> <span class="nb">ord</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">l1</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span> <span class="nb">ord</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">l1</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">text1_scores</span><span class="o">=</span><span class="n">scores1</span><span class="p">,</span> <span class="n">text2_scores</span><span class="o">=</span><span class="n">scores2</span><span class="p">)</span>
 
@@ -2309,7 +2337,9 @@
 
         <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;LABEL_2&#39;</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span>
+                <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">label</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">])</span>
+
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;LABEL_2 not found in huggingface api response.&quot;</span><span class="p">)</span>
 
     <span class="c1"># TODEP</span>
     <span class="nd">@_tci</span>
@@ -2351,6 +2381,8 @@
             <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;toxic&#39;</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span>
 
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;LABEL_2 not found in huggingface api response.&quot;</span><span class="p">)</span>
+
     <span class="c1"># TODEP</span>
     <span class="nd">@_tci</span>
     <span class="k">def</span> <span class="nf">_summarized_groundedness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">premise</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -2374,6 +2406,8 @@
         <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;entailment&#39;</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span>
+
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;LABEL_2 not found in huggingface api response.&quot;</span><span class="p">)</span>
 
     <span class="c1"># TODEP</span>
     <span class="nd">@_tci</span>
@@ -2425,15 +2459,17 @@
         <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">}</span>
 
         <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
-            <span class="n">url</span> <span class="o">=</span> <span class="n">HUGS_PII_DETECTION_API_URL</span><span class="p">,</span>
-            <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="p">)</span>
+            <span class="n">url</span><span class="o">=</span><span class="n">HUGS_PII_DETECTION_API_URL</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span>
+        <span class="p">)</span>
 
         <span class="c1"># If the response is a dictionary, convert it to a list. This is for when only one name is identified.</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="n">hf_response</span> <span class="o">=</span> <span class="p">[</span><span class="n">hf_response</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected response from Huggingface API: </span><span class="si">{</span><span class="n">hf_response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unexpected response from Huggingface API: </span><span class="si">{</span><span class="n">hf_response</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
 
         <span class="c1"># Iterate through the entities and extract scores for &quot;NAME&quot; entities</span>
         <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
@@ -2477,9 +2513,23 @@
 
         <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">}</span>
 
-        <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
-            <span class="n">url</span> <span class="o">=</span> <span class="n">HUGS_PII_DETECTION_API_URL</span><span class="p">,</span>
-            <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+                <span class="n">url</span> <span class="o">=</span> <span class="n">HUGS_PII_DETECTION_API_URL</span><span class="p">,</span>
+                <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="p">)</span>
+
+        <span class="c1"># TODO: Make error handling more granular so it&#39;s not swallowed.</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No PII was found&quot;</span><span class="p">)</span>
+            <span class="n">hf_response</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;entity_group&quot;</span><span class="p">:</span> <span class="s2">&quot;NONE&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                    <span class="s2">&quot;word&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                    <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                    <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="p">}</span>
+                <span class="p">]</span>
 
         <span class="c1"># Convert the response to a list if it&#39;s not already a list</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -2487,12 +2537,13 @@
 
         <span class="c1"># Check if the response is a list</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unexpected response from Huggingface API: response should be a list or a dictionary&quot;</span><span class="p">)</span>
-
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Unexpected response from Huggingface API: response should be a list or a dictionary&quot;</span>
+            <span class="p">)</span>
 
         <span class="c1"># Iterate through the entities and extract &quot;word&quot; and &quot;score&quot; for &quot;NAME&quot; entities</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">entity</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hf_response</span><span class="p">):</span>
-            <span class="n">reasons</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;entity_group&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> detected: </span><span class="si">{</span><span class="n">entity</span><span class="p">[</span><span class="s1">&#39;word&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Score: </span><span class="si">{</span><span class="n">entity</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">reasons</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;entity_group&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> detected: </span><span class="si">{</span><span class="n">entity</span><span class="p">[</span><span class="s1">&#39;word&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;PII Likelihood: </span><span class="si">{</span><span class="n">entity</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="n">likelihood_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">])</span>
 
         <span class="c1"># Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)</span>
@@ -2511,11 +2562,12 @@
 
         <span class="k">return</span> <span class="n">score</span><span class="p">,</span> <span class="n">reasons</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -2543,6 +2595,8 @@
 <span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
 </code></pre></div></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2559,7 +2613,11 @@
           <td>
                 <code><span title="trulens_eval.feedback.provider.endpoint.base.Endpoint">Endpoint</span></code>
           </td>
-          <td><p>Internal Usage for DB serialization</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Internal Usage for DB serialization</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -2567,13 +2625,9 @@
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 70</span>
-<span class="normal"> 71</span>
-<span class="normal"> 72</span>
-<span class="normal"> 73</span>
-<span class="normal"> 74</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 74</span>
 <span class="normal"> 75</span>
 <span class="normal"> 76</span>
 <span class="normal"> 77</span>
@@ -2603,7 +2657,11 @@
 <span class="normal">101</span>
 <span class="normal">102</span>
 <span class="normal">103</span>
-<span class="normal">104</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
     <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
     <span class="c1"># down below. Adding it as None here as a temporary hack.</span>
@@ -2639,10 +2697,11 @@
         <span class="o">**</span><span class="n">self_kwargs</span>
     <span class="p">)</span>  <span class="c1"># need to include pydantic.BaseModel.__init__</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2671,6 +2730,8 @@ probit_language_text1(text2))</code></p>
 The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2687,7 +2748,11 @@ Guide</a></p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -2697,13 +2762,19 @@ Guide</a></p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Comparative text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Comparative text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2718,24 +2789,28 @@ Guide</a></p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "different languages" and 1</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "different languages" and 1</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
-                <code>float</code>
+                <code><span title="typing.Dict">Dict</span></code>
           </td>
-          <td><p>being "same languages".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>being "same languages".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">107</span>
-<span class="normal">108</span>
-<span class="normal">109</span>
-<span class="normal">110</span>
-<span class="normal">111</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">111</span>
 <span class="normal">112</span>
 <span class="normal">113</span>
 <span class="normal">114</span>
@@ -2786,8 +2861,15 @@ Guide</a></p>
 <span class="normal">159</span>
 <span class="normal">160</span>
 <span class="normal">161</span>
-<span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
-<span class="k">def</span> <span class="nf">language_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
+<span class="k">def</span> <span class="nf">language_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses Huggingface&#39;s papluca/xlm-roberta-base-language-detection model. A</span>
 <span class="sd">    function that uses language detection on `text1` and `text2` and</span>
@@ -2823,30 +2905,34 @@ Guide</a></p>
         <span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">}</span>
 
-    <span class="n">max_length</span> <span class="o">=</span> <span class="mi">500</span>
-    <span class="n">scores1</span><span class="p">:</span> <span class="n">AsyncResult</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">promise</span><span class="p">(</span>
-        <span class="n">get_scores</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text1</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
-    <span class="p">)</span>
-    <span class="n">scores2</span><span class="p">:</span> <span class="n">AsyncResult</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">TP</span><span class="p">()</span><span class="o">.</span><span class="n">promise</span><span class="p">(</span>
-        <span class="n">get_scores</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text2</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
-    <span class="p">)</span>
+    <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="k">as</span> <span class="n">tpool</span><span class="p">:</span>
+        <span class="n">max_length</span> <span class="o">=</span> <span class="mi">500</span>
+        <span class="n">f_scores1</span><span class="p">:</span> <span class="n">Future</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">tpool</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+            <span class="n">get_scores</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text1</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">f_scores2</span><span class="p">:</span> <span class="n">Future</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">tpool</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+            <span class="n">get_scores</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text2</span><span class="p">[:</span><span class="n">max_length</span><span class="p">]</span>
+        <span class="p">)</span>
 
-    <span class="n">scores1</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">scores1</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-    <span class="n">scores2</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">scores2</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+    <span class="n">wait</span><span class="p">([</span><span class="n">f_scores1</span><span class="p">,</span> <span class="n">f_scores2</span><span class="p">])</span>
+
+    <span class="n">scores1</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">f_scores1</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+    <span class="n">scores2</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">f_scores2</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
 
     <span class="n">langs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">scores1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
     <span class="n">prob1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">scores1</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">langs</span><span class="p">])</span>
     <span class="n">prob2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">scores2</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">langs</span><span class="p">])</span>
     <span class="n">diff</span> <span class="o">=</span> <span class="n">prob1</span> <span class="o">-</span> <span class="n">prob2</span>
 
-    <span class="n">l1</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span> <span class="nb">ord</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">l1</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span> <span class="nb">ord</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">l1</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">text1_scores</span><span class="o">=</span><span class="n">scores1</span><span class="p">,</span> <span class="n">text2_scores</span><span class="o">=</span><span class="n">scores2</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2872,6 +2958,8 @@ uses a toxic comment classifier on <code>text</code>.</p>
 The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2888,13 +2976,19 @@ Guide</a></p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2909,29 +3003,28 @@ Guide</a></p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "toxic" and 1 being "not</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "toxic" and 1 being "not</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>toxic".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>toxic".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
-<span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span>
-<span class="normal">212</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">212</span>
 <span class="normal">213</span>
 <span class="normal">214</span>
 <span class="normal">215</span>
@@ -2959,7 +3052,18 @@ Guide</a></p>
 <span class="normal">237</span>
 <span class="normal">238</span>
 <span class="normal">239</span>
-<span class="normal">240</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
 <span class="k">def</span> <span class="nf">not_toxic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses Huggingface&#39;s martin-ha/toxic-comment-model model. A function that</span>
@@ -2997,11 +3101,14 @@ Guide</a></p>
     <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;toxic&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span>
+
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;LABEL_2 not found in huggingface api response.&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -3024,6 +3131,8 @@ f_pii_detection = Feedback(hugs.pii_detection).on_input()
 </code></pre></div>
 The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide : Selectors</a></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -3040,13 +3149,19 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
           <td>
                 <code>str</code>
           </td>
-          <td><p>A text prompt that may contain a name.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A text prompt that may contain a name.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -3061,29 +3176,20 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
           <td>
                 <code>float</code>
           </td>
-          <td><ul>
+          <td>
+            <div class="doc-md-description">
+              <ul>
 <li>float: the likelihood that a name is contained in the input text.</li>
-</ul></td>
+</ul>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">291</span>
-<span class="normal">292</span>
-<span class="normal">293</span>
-<span class="normal">294</span>
-<span class="normal">295</span>
-<span class="normal">296</span>
-<span class="normal">297</span>
-<span class="normal">298</span>
-<span class="normal">299</span>
-<span class="normal">300</span>
-<span class="normal">301</span>
-<span class="normal">302</span>
-<span class="normal">303</span>
-<span class="normal">304</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">304</span>
 <span class="normal">305</span>
 <span class="normal">306</span>
 <span class="normal">307</span>
@@ -3123,7 +3229,22 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
 <span class="normal">341</span>
 <span class="normal">342</span>
 <span class="normal">343</span>
-<span class="normal">344</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">pii_detection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">pii_detection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    NER model to detect PII.</span>
 <span class="sd">    **Usage:**</span>
@@ -3148,15 +3269,17 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
     <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">}</span>
 
     <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="n">HUGS_PII_DETECTION_API_URL</span><span class="p">,</span>
-        <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="p">)</span>
+        <span class="n">url</span><span class="o">=</span><span class="n">HUGS_PII_DETECTION_API_URL</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span>
+    <span class="p">)</span>
 
     <span class="c1"># If the response is a dictionary, convert it to a list. This is for when only one name is identified.</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="n">hf_response</span> <span class="o">=</span> <span class="p">[</span><span class="n">hf_response</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected response from Huggingface API: </span><span class="si">{</span><span class="n">hf_response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Unexpected response from Huggingface API: </span><span class="si">{</span><span class="n">hf_response</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
 
     <span class="c1"># Iterate through the entities and extract scores for &quot;NAME&quot; entities</span>
     <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
@@ -3178,10 +3301,11 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
 
     <span class="k">return</span> <span class="n">score</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -3204,24 +3328,9 @@ f_pii_detection = Feedback(hugs.pii_detection).on_input()
 </code></pre></div>
 The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide : Selectors</a></p>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">346</span>
-<span class="normal">347</span>
-<span class="normal">348</span>
-<span class="normal">349</span>
-<span class="normal">350</span>
-<span class="normal">351</span>
-<span class="normal">352</span>
-<span class="normal">353</span>
-<span class="normal">354</span>
-<span class="normal">355</span>
-<span class="normal">356</span>
-<span class="normal">357</span>
-<span class="normal">358</span>
-<span class="normal">359</span>
-<span class="normal">360</span>
-<span class="normal">361</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">361</span>
 <span class="normal">362</span>
 <span class="normal">363</span>
 <span class="normal">364</span>
@@ -3260,7 +3369,37 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
 <span class="normal">397</span>
 <span class="normal">398</span>
 <span class="normal">399</span>
-<span class="normal">400</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">pii_detection_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">pii_detection_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    NER model to detect PII, with reasons.</span>
 
@@ -3282,9 +3421,23 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
 
     <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">}</span>
 
-    <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="n">HUGS_PII_DETECTION_API_URL</span><span class="p">,</span>
-        <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">hf_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">HUGS_PII_DETECTION_API_URL</span><span class="p">,</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="p">)</span>
+
+    <span class="c1"># TODO: Make error handling more granular so it&#39;s not swallowed.</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No PII was found&quot;</span><span class="p">)</span>
+        <span class="n">hf_response</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;entity_group&quot;</span><span class="p">:</span> <span class="s2">&quot;NONE&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="s2">&quot;word&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="p">}</span>
+            <span class="p">]</span>
 
     <span class="c1"># Convert the response to a list if it&#39;s not already a list</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -3292,12 +3445,13 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
 
     <span class="c1"># Check if the response is a list</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hf_response</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unexpected response from Huggingface API: response should be a list or a dictionary&quot;</span><span class="p">)</span>
-
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Unexpected response from Huggingface API: response should be a list or a dictionary&quot;</span>
+        <span class="p">)</span>
 
     <span class="c1"># Iterate through the entities and extract &quot;word&quot; and &quot;score&quot; for &quot;NAME&quot; entities</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">entity</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hf_response</span><span class="p">):</span>
-        <span class="n">reasons</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;entity_group&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> detected: </span><span class="si">{</span><span class="n">entity</span><span class="p">[</span><span class="s1">&#39;word&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Score: </span><span class="si">{</span><span class="n">entity</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">reasons</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;entity_group&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> detected: </span><span class="si">{</span><span class="n">entity</span><span class="p">[</span><span class="s1">&#39;word&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;PII Likelihood: </span><span class="si">{</span><span class="n">entity</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="n">likelihood_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">])</span>
 
     <span class="c1"># Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)</span>
@@ -3316,10 +3470,11 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
 
     <span class="k">return</span> <span class="n">score</span><span class="p">,</span> <span class="n">reasons</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -3345,6 +3500,8 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -3361,13 +3518,19 @@ Guide</a></p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -3382,27 +3545,28 @@ Guide</a></p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0 and 1. 0 being "negative sentiment" and 1</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "negative sentiment" and 1</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>being "positive sentiment".</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>being "positive sentiment".</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/hugs.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">172</span>
 <span class="normal">173</span>
 <span class="normal">174</span>
 <span class="normal">175</span>
@@ -3430,7 +3594,16 @@ Guide</a></p>
 <span class="normal">197</span>
 <span class="normal">198</span>
 <span class="normal">199</span>
-<span class="normal">200</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_tci</span>
 <span class="k">def</span> <span class="nf">positive_sentiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses Huggingface&#39;s cardiffnlp/twitter-roberta-base-sentiment model. A</span>
@@ -3465,9 +3638,11 @@ Guide</a></p>
 
     <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">hf_response</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;LABEL_2&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">label</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">label</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">])</span>
+
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;LABEL_2 not found in huggingface api response.&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>

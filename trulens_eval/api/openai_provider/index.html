@@ -1855,16 +1855,15 @@
 
 <a id="trulens_eval.trulens_eval.feedback.provider.openai.OpenAI"></a>
   <div class="doc doc-contents first">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="trulens_eval.feedback.provider.base.LLMProvider">LLMProvider</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="trulens_eval.feedback.provider.base.LLMProvider">LLMProvider</span></code></p>
 
   
       <p>Out of the box feedback functions calling OpenAI APIs.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 17</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 17</span>
 <span class="normal"> 18</span>
 <span class="normal"> 19</span>
 <span class="normal"> 20</span>
@@ -2149,13 +2148,7 @@
 <span class="normal">299</span>
 <span class="normal">300</span>
 <span class="normal">301</span>
-<span class="normal">302</span>
-<span class="normal">303</span>
-<span class="normal">304</span>
-<span class="normal">305</span>
-<span class="normal">306</span>
-<span class="normal">307</span>
-<span class="normal">308</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">OpenAI</span><span class="p">(</span><span class="n">LLMProvider</span><span class="p">):</span>
+<span class="normal">302</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">OpenAI</span><span class="p">(</span><span class="n">LLMProvider</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Out of the box feedback functions calling OpenAI APIs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># model_engine: str # LLMProvider</span>
@@ -2209,19 +2202,13 @@
 
         <span class="k">if</span> <span class="n">prompt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">comp</span> <span class="o">=</span> <span class="n">openai</span><span class="o">.</span><span class="n">ChatCompletion</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
-                            <span class="p">{</span>
-                                <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span>
-                                <span class="s2">&quot;content&quot;</span><span class="p">:</span>  <span class="n">prompt</span>
-                            <span class="p">}</span>
-                       <span class="p">],</span>
-                <span class="o">**</span><span class="n">kwargs</span>
+                <span class="n">messages</span><span class="o">=</span><span class="p">[{</span>
+                    <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span>
+                <span class="p">}],</span> <span class="o">**</span><span class="n">kwargs</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">messages</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">comp</span> <span class="o">=</span> <span class="n">openai</span><span class="o">.</span><span class="n">ChatCompletion</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                <span class="n">messages</span> <span class="o">=</span> <span class="n">messages</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">kwargs</span>
-            <span class="p">)</span>
+            <span class="n">comp</span> <span class="o">=</span> <span class="n">openai</span><span class="o">.</span><span class="n">ChatCompletion</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`prompt` or `messages` must be specified.&quot;</span><span class="p">)</span>
@@ -2448,11 +2435,12 @@
             <span class="n">openai_response</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;category_scores&quot;</span><span class="p">][</span><span class="s2">&quot;violence/graphic&quot;</span><span class="p">]</span>
         <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -2480,6 +2468,8 @@
 <span class="n">openai_provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 </code></pre></div></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2496,7 +2486,11 @@
           <td>
                 <code>str</code>
           </td>
-          <td><p>The OpenAI completion model. Defaults to <code>gpt-3.5-turbo</code></p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The OpenAI completion model. Defaults to <code>gpt-3.5-turbo</code></p>
+            </div>
+          </td>
           <td>
                 <code>&#39;gpt-3.5-turbo&#39;</code>
           </td>
@@ -2506,7 +2500,11 @@
           <td>
                 <code><span title="trulens_eval.feedback.provider.endpoint.base.Endpoint">Endpoint</span></code>
           </td>
-          <td><p>Internal Usage for DB serialization</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Internal Usage for DB serialization</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -2514,9 +2512,9 @@
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">24</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">24</span>
 <span class="normal">25</span>
 <span class="normal">26</span>
 <span class="normal">27</span>
@@ -2576,10 +2574,11 @@
 
     <span class="n">set_openai_key</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2605,6 +2604,8 @@ speech.</p>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2621,13 +2622,19 @@ Guide</a></p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2642,14 +2649,24 @@ Guide</a></p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0.0 (hate) and 1.0 (not hate).</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0.0 (hate) and 1.0 (not hate).</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 99</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
 <span class="normal">100</span>
 <span class="normal">101</span>
 <span class="normal">102</span>
@@ -2669,13 +2686,7 @@ Guide</a></p>
 <span class="normal">116</span>
 <span class="normal">117</span>
 <span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_hate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">119</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_hate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is hate</span>
 <span class="sd">    speech.</span>
@@ -2703,10 +2714,11 @@ Guide</a></p>
         <span class="n">openai_response</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;category_scores&quot;</span><span class="p">][</span><span class="s2">&quot;hate&quot;</span><span class="p">]</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2732,6 +2744,8 @@ threatening speech.</p>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2748,13 +2762,19 @@ Guide</a></p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2769,14 +2789,24 @@ Guide</a></p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0.0 (threatening) and 1.0 (not threatening).</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0.0 (threatening) and 1.0 (not threatening).</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">128</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
 <span class="normal">129</span>
 <span class="normal">130</span>
 <span class="normal">131</span>
@@ -2797,13 +2827,7 @@ Guide</a></p>
 <span class="normal">146</span>
 <span class="normal">147</span>
 <span class="normal">148</span>
-<span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
-<span class="normal">154</span>
-<span class="normal">155</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_hatethreatening</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">149</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_hatethreatening</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is</span>
 <span class="sd">    threatening speech.</span>
@@ -2832,10 +2856,11 @@ Guide</a></p>
         <span class="n">openai_response</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;category_scores&quot;</span><span class="p">][</span><span class="s2">&quot;hate/threatening&quot;</span><span class="p">]</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2861,6 +2886,8 @@ self harm.</p>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2877,13 +2904,19 @@ Guide</a></p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2898,14 +2931,24 @@ Guide</a></p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0.0 (self harm) and 1.0 (not self harm).</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0.0 (self harm) and 1.0 (not self harm).</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">158</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
 <span class="normal">159</span>
 <span class="normal">160</span>
 <span class="normal">161</span>
@@ -2926,13 +2969,7 @@ Guide</a></p>
 <span class="normal">176</span>
 <span class="normal">177</span>
 <span class="normal">178</span>
-<span class="normal">179</span>
-<span class="normal">180</span>
-<span class="normal">181</span>
-<span class="normal">182</span>
-<span class="normal">183</span>
-<span class="normal">184</span>
-<span class="normal">185</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_selfharm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">179</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_selfharm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is about</span>
 <span class="sd">    self harm.</span>
@@ -2961,10 +2998,11 @@ Guide</a></p>
         <span class="n">openai_response</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;category_scores&quot;</span><span class="p">][</span><span class="s2">&quot;self-harm&quot;</span><span class="p">]</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2990,6 +3028,8 @@ speech.</p>
 The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -3006,13 +3046,19 @@ Guide</a></p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -3027,14 +3073,24 @@ Guide</a></p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0.0 (sexual) and 1.0 (not sexual).</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0.0 (sexual) and 1.0 (not sexual).</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">188</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
 <span class="normal">189</span>
 <span class="normal">190</span>
 <span class="normal">191</span>
@@ -3055,13 +3111,7 @@ Guide</a></p>
 <span class="normal">206</span>
 <span class="normal">207</span>
 <span class="normal">208</span>
-<span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span>
-<span class="normal">212</span>
-<span class="normal">213</span>
-<span class="normal">214</span>
-<span class="normal">215</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_sexual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">209</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_sexual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is sexual</span>
 <span class="sd">    speech.</span>
@@ -3090,10 +3140,11 @@ Guide</a></p>
         <span class="n">openai_response</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;category_scores&quot;</span><span class="p">][</span><span class="s2">&quot;sexual&quot;</span><span class="p">]</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -3119,6 +3170,8 @@ sexual minors.</p>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -3135,13 +3188,19 @@ Guide</a></p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -3156,20 +3215,34 @@ Guide</a></p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0.0 (sexual minors) and 1.0 (not sexual</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0.0 (sexual minors) and 1.0 (not sexual</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>minors).</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>minors).</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">218</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
 <span class="normal">219</span>
 <span class="normal">220</span>
 <span class="normal">221</span>
@@ -3192,13 +3265,7 @@ Guide</a></p>
 <span class="normal">238</span>
 <span class="normal">239</span>
 <span class="normal">240</span>
-<span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_sexualminors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">241</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_sexualminors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is about</span>
 <span class="sd">    sexual minors.</span>
@@ -3229,10 +3296,11 @@ Guide</a></p>
         <span class="n">openai_response</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;category_scores&quot;</span><span class="p">][</span><span class="s2">&quot;sexual/minors&quot;</span><span class="p">]</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -3258,6 +3326,8 @@ violence.</p>
 The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -3274,13 +3344,19 @@ Guide</a></p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -3295,14 +3371,24 @@ Guide</a></p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0.0 (violence) and 1.0 (not violence).</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0.0 (violence) and 1.0 (not violence).</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">250</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
 <span class="normal">251</span>
 <span class="normal">252</span>
 <span class="normal">253</span>
@@ -3323,13 +3409,7 @@ Guide</a></p>
 <span class="normal">268</span>
 <span class="normal">269</span>
 <span class="normal">270</span>
-<span class="normal">271</span>
-<span class="normal">272</span>
-<span class="normal">273</span>
-<span class="normal">274</span>
-<span class="normal">275</span>
-<span class="normal">276</span>
-<span class="normal">277</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_violence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">271</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_violence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is about</span>
 <span class="sd">    violence.</span>
@@ -3358,10 +3438,11 @@ Guide</a></p>
         <span class="n">openai_response</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;category_scores&quot;</span><span class="p">][</span><span class="s2">&quot;violence&quot;</span><span class="p">]</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -3387,6 +3468,8 @@ graphic violence.</p>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -3403,13 +3486,19 @@ Guide</a></p>
           <td>
                 <code>str</code>
           </td>
-          <td><p>Text to evaluate.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Text to evaluate.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -3424,20 +3513,34 @@ Guide</a></p>
 <td><code>float</code></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>A value between 0.0 (graphic violence) and 1.0 (not graphic</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>A value between 0.0 (graphic violence) and 1.0 (not graphic</p>
+            </div>
+          </td>
         </tr>
         <tr>
 <td></td>          <td>
                 <code>float</code>
           </td>
-          <td><p>violence).</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>violence).</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">280</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/openai.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
 <span class="normal">281</span>
 <span class="normal">282</span>
 <span class="normal">283</span>
@@ -3459,13 +3562,7 @@ Guide</a></p>
 <span class="normal">299</span>
 <span class="normal">300</span>
 <span class="normal">301</span>
-<span class="normal">302</span>
-<span class="normal">303</span>
-<span class="normal">304</span>
-<span class="normal">305</span>
-<span class="normal">306</span>
-<span class="normal">307</span>
-<span class="normal">308</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_violencegraphic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">302</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">moderation_not_violencegraphic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses OpenAI&#39;s Moderation API. A function that checks if text is about</span>
 <span class="sd">    graphic violence.</span>
@@ -3495,7 +3592,7 @@ Guide</a></p>
         <span class="n">openai_response</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;category_scores&quot;</span><span class="p">][</span><span class="s2">&quot;violence/graphic&quot;</span><span class="p">]</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>

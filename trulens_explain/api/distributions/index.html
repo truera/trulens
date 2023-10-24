@@ -1989,25 +1989,24 @@ interested in a more general behavior over a distribution of samples.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.distributions.DoI" class="doc doc-heading">
-        <code>DoI</code>
+          <code>DoI</code>
 
 
 <a href="#trulens_explain.trulens.nn.distributions.DoI" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="abc.ABC">AbstractBaseClass</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="abc.ABC">AbstractBaseClass</span></code></p>
 
   
       <p>Interface for distributions of interest. The <em>Distribution of Interest</em> 
 (DoI) specifies the samples over which an attribution method is 
 aggregated.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 42</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 42</span>
 <span class="normal"> 43</span>
 <span class="normal"> 44</span>
 <span class="normal"> 45</span>
@@ -2345,11 +2344,12 @@ aggregated.</p>
                 <span class="p">)</span>
             <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -2383,6 +2383,8 @@ layer. </p>
 Inputs[Uniform[TensorLike]]) with outer list spanning layer inputs, and
 inner list spanning a distribution's instance.</p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2399,8 +2401,12 @@ inner list spanning a distribution's instance.</p>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td><p>Input point from which the distribution is derived. If
-list/tuple, the point is defined by multiple tensors.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Input point from which the distribution is derived. If
+list/tuple, the point is defined by multiple tensors.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -2410,14 +2416,20 @@ list/tuple, the point is defined by multiple tensors.</p></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="trulens.utils.typing.ModelInputs">ModelInputs</span>]</code>
           </td>
-          <td><p>Optional wrapped model input arguments that produce value z at
-cut.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Optional wrapped model input arguments that produce value z at
+cut.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2432,32 +2444,48 @@ cut.</p></td>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.Uniform">Uniform</span>[<span title="trulens.utils.typing.TensorLike">TensorLike</span>]]</code>
           </td>
-          <td><p>List of points which are all assigned equal probability mass in the</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>List of points which are all assigned equal probability mass in the</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.Uniform">Uniform</span>[<span title="trulens.utils.typing.TensorLike">TensorLike</span>]]</code>
           </td>
-          <td><p>distribution of interest, i.e., the distribution of interest is a</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>distribution of interest, i.e., the distribution of interest is a</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.Uniform">Uniform</span>[<span title="trulens.utils.typing.TensorLike">TensorLike</span>]]</code>
           </td>
-          <td><p>discrete, uniform distribution over the list of returned points. If</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>discrete, uniform distribution over the list of returned points. If</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.Uniform">Uniform</span>[<span title="trulens.utils.typing.TensorLike">TensorLike</span>]]</code>
           </td>
-          <td><p>z is multi-input, returns a distribution for each input.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>z is multi-input, returns a distribution for each input.</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 91</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 91</span>
 <span class="normal"> 92</span>
 <span class="normal"> 93</span>
 <span class="normal"> 94</span>
@@ -2521,10 +2549,11 @@ cut.</p></td>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2539,6 +2568,8 @@ cut.</p></td>
   <div class="doc doc-contents ">
   
       <p>"Initialize DoI</p>
+
+
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -2556,9 +2587,13 @@ cut.</p></td>
           <td>
                 <code><span title="trulens.nn.slices.Cut">Cut</span></code>
           </td>
-          <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
+          <td>
+            <div class="doc-md-description">
+              <p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
 applied to the input. otherwise, the distribution should be applied
-to the latent space defined by the cut.</p></td>
+to the latent space defined by the cut.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -2566,9 +2601,9 @@ to the latent space defined by the cut.</p></td>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">49</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">49</span>
 <span class="normal">50</span>
 <span class="normal">51</span>
 <span class="normal">52</span>
@@ -2588,10 +2623,11 @@ to the latent space defined by the cut.</p></td>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_cut</span> <span class="o">=</span> <span class="n">cut</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2606,6 +2642,8 @@ to the latent space defined by the cut.</p></td>
   <div class="doc doc-contents ">
   
 
+
+
   <p><strong>Returns:</strong></p>
   <table>
     <thead>
@@ -2619,26 +2657,38 @@ to the latent space defined by the cut.</p></td>
           <td>
                 <code><span title="trulens.nn.slices.Cut">Cut</span></code>
           </td>
-          <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.nn.slices.Cut">Cut</span></code>
           </td>
-          <td><p>applied to the input. otherwise, the distribution should be applied</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>applied to the input. otherwise, the distribution should be applied</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.nn.slices.Cut">Cut</span></code>
           </td>
-          <td><p>to the latent space defined by the cut.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>to the latent space defined by the cut.</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">125</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">125</span>
 <span class="normal">126</span>
 <span class="normal">127</span>
 <span class="normal">128</span>
@@ -2654,10 +2704,11 @@ to the latent space defined by the cut.</p></td>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cut</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2678,6 +2729,8 @@ feature, while "attribution space" corresponds to an approximation of
 the net marginal contribution to the quantity of interest of each
 feature.</p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2694,8 +2747,12 @@ feature.</p>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td><p>The activation of the layer the DoI is applied to. DoI may be
-multi-input in which case activation will be a list.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The activation of the layer the DoI is applied to. DoI may be
+multi-input in which case activation will be a list.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -2705,14 +2762,20 @@ multi-input in which case activation will be a list.</p></td>
           <td>
                 <code><span title="typing.Optional">Optional</span>[<span title="trulens.utils.typing.ModelInputs">ModelInputs</span>]</code>
           </td>
-          <td><p>Optional wrapped model input arguments that produce activation
-at cut.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Optional wrapped model input arguments that produce activation
+at cut.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -2727,32 +2790,48 @@ at cut.</p></td>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td><p>An array with the same shape as <code>activation</code> that will be</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>An array with the same shape as <code>activation</code> that will be</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td><p>multiplied by the gradient to obtain the attribution. The default</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>multiplied by the gradient to obtain the attribution. The default</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td><p>implementation of this method simply returns <code>activation</code>. If</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>implementation of this method simply returns <code>activation</code>. If</p>
+            </div>
+          </td>
         </tr>
         <tr>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td><p>activation is multi-input, returns one multiplier for each.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>activation is multi-input, returns one multiplier for each.</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
 <span class="normal">155</span>
 <span class="normal">156</span>
 <span class="normal">157</span>
@@ -2810,7 +2889,7 @@ at cut.</p></td>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">om_of_many</span><span class="p">(</span><span class="n">activation</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -2828,24 +2907,23 @@ at cut.</p></td>
 
 
 <h2 id="trulens_explain.trulens.nn.distributions.DoiCutSupportError" class="doc doc-heading">
-        <code>DoiCutSupportError</code>
+          <code>DoiCutSupportError</code>
 
 
 <a href="#trulens_explain.trulens.nn.distributions.DoiCutSupportError" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code>ValueError</code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code>ValueError</code></p>
 
   
       <p>Exception raised if the distribution of interest is called on a cut whose
 output is not supported by the distribution of interest.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
 <span class="normal">35</span>
 <span class="normal">36</span>
 <span class="normal">37</span>
@@ -2857,7 +2935,7 @@ output is not supported by the distribution of interest.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   </div>
 
@@ -2868,24 +2946,23 @@ output is not supported by the distribution of interest.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.distributions.GaussianDoi" class="doc doc-heading">
-        <code>GaussianDoi</code>
+          <code>GaussianDoi</code>
 
 
 <a href="#trulens_explain.trulens.nn.distributions.GaussianDoi" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.distributions.DoI" href="#trulens_explain.trulens.nn.distributions.DoI">DoI</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.distributions.DoI" href="#trulens_explain.trulens.nn.distributions.DoI">DoI</a></code></p>
 
   
       <p>Distribution representing a Gaussian ball around the point. Used by Smooth
 Gradients.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">420</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">420</span>
 <span class="normal">421</span>
 <span class="normal">422</span>
 <span class="normal">423</span>
@@ -2991,11 +3068,12 @@ Gradients.</p>
 
         <span class="k">return</span> <span class="n">om_of_many</span><span class="p">(</span><span class="n">nested_map</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">gauss_of_input</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -3018,6 +3096,8 @@ Gradients.</p>
   <div class="doc doc-contents ">
   
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -3034,7 +3114,11 @@ Gradients.</p>
           <td>
                 <code>float</code>
           </td>
-          <td><p>The variance of the Gaussian noise to be added around the point.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The variance of the Gaussian noise to be added around the point.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -3044,7 +3128,11 @@ Gradients.</p>
           <td>
                 <code>int</code>
           </td>
-          <td><p>Number of samples returned by each call to this DoI.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Number of samples returned by each call to this DoI.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -3054,9 +3142,13 @@ Gradients.</p>
           <td>
                 <code><span title="trulens.nn.slices.Cut">Cut</span></code>
           </td>
-          <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
+          <td>
+            <div class="doc-md-description">
+              <p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
 applied to the input. otherwise, the distribution should be applied
-to the latent space defined by the cut.</p></td>
+to the latent space defined by the cut.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -3064,9 +3156,9 @@ to the latent space defined by the cut.</p></td>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">426</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">426</span>
 <span class="normal">427</span>
 <span class="normal">428</span>
 <span class="normal">429</span>
@@ -3098,7 +3190,7 @@ to the latent space defined by the cut.</p></td>
     <span class="bp">self</span><span class="o">.</span><span class="n">_var</span> <span class="o">=</span> <span class="n">var</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_resolution</span> <span class="o">=</span> <span class="n">resolution</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -3116,24 +3208,23 @@ to the latent space defined by the cut.</p></td>
 
 
 <h2 id="trulens_explain.trulens.nn.distributions.LinearDoi" class="doc doc-heading">
-        <code>LinearDoi</code>
+          <code>LinearDoi</code>
 
 
 <a href="#trulens_explain.trulens.nn.distributions.LinearDoi" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.distributions.DoI" href="#trulens_explain.trulens.nn.distributions.DoI">DoI</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.distributions.DoI" href="#trulens_explain.trulens.nn.distributions.DoI">DoI</a></code></p>
 
   
       <p>Distribution representing the linear interpolation between a baseline and 
 the given point. Used by Integrated Gradients.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
 <span class="normal">242</span>
 <span class="normal">243</span>
 <span class="normal">244</span>
@@ -3487,11 +3578,12 @@ the given point. Used by Integrated Gradients.</p>
             <span class="n">astype</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="n">tensor_wrapper</span><span class="o">.</span><span class="n">first_batchable</span><span class="p">(</span><span class="n">B</span><span class="p">))</span>
         <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -3517,6 +3609,8 @@ the given point. Used by Integrated Gradients.</p>
 on the line segment connecting <code>z</code> to <code>baseline</code>, approximated by a
 sample of <code>resolution</code> points equally spaced along this segment.</p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -3533,9 +3627,13 @@ sample of <code>resolution</code> points equally spaced along this segment.</p>
           <td>
                 <code>Cut, optional, from DoI</code>
           </td>
-          <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI
+          <td>
+            <div class="doc-md-description">
+              <p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI
 will be applied to the input. otherwise, the distribution should
-be applied to the latent space defined by the cut. </p></td>
+be applied to the latent space defined by the cut. </p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -3545,14 +3643,18 @@ be applied to the latent space defined by the cut. </p></td>
           <td>
                 <code><span title="trulens.utils.typing.BaselineLike">BaselineLike</span></code>
           </td>
-          <td><p>The baseline to interpolate from. Must be same shape as the
+          <td>
+            <div class="doc-md-description">
+              <p>The baseline to interpolate from. Must be same shape as the
 space the distribution acts over, i.e., the shape of the points,
 <code>z</code>, eventually passed to <code>__call__</code>. If <code>cut</code> is <code>None</code>, this
 must be the same shape as the input, otherwise this must be the
 same shape as the latent space defined by the cut. If <code>None</code> is
 given, <code>baseline</code> will be the zero vector in the appropriate
 shape. If the baseline is callable, it is expected to return the
-<code>baseline</code>, given <code>z</code> and optional model arguments.</p></td>
+<code>baseline</code>, given <code>z</code> and optional model arguments.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -3562,9 +3664,13 @@ shape. If the baseline is callable, it is expected to return the
           <td>
                 <code>int</code>
           </td>
-          <td><p>Number of points returned by each call to this DoI. A higher
+          <td>
+            <div class="doc-md-description">
+              <p>Number of points returned by each call to this DoI. A higher
 resolution is more computationally expensive, but gives a better
-approximation of the DoI this object mathematically represents.</p></td>
+approximation of the DoI this object mathematically represents.</p>
+            </div>
+          </td>
           <td>
                 <code>10</code>
           </td>
@@ -3572,9 +3678,9 @@ approximation of the DoI this object mathematically represents.</p></td>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
 <span class="normal">248</span>
 <span class="normal">249</span>
 <span class="normal">250</span>
@@ -3642,10 +3748,11 @@ approximation of the DoI this object mathematically represents.</p></td>
     <span class="bp">self</span><span class="o">.</span><span class="n">_baseline</span> <span class="o">=</span> <span class="n">baseline</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_resolution</span> <span class="o">=</span> <span class="n">resolution</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -3666,6 +3773,8 @@ feature, while "attribution space" corresponds to an approximation of
 the net marginal contribution to the quantity of interest of each 
 feature.</p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -3682,13 +3791,19 @@ feature.</p>
           <td>
                 <code><span title="trulens.utils.typing.OM">OM</span>[<span title="trulens.utils.typing.Inputs">Inputs</span>, <span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td><p>The activation of the layer the DoI is applied to.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The activation of the layer the DoI is applied to.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
         </tr>
     </tbody>
   </table>
+
+
 
   <p><strong>Returns:</strong></p>
   <table>
@@ -3703,14 +3818,18 @@ feature.</p>
           <td>
                 <code><span title="trulens.utils.typing.Inputs">Inputs</span>[<span title="trulens.utils.typing.TensorLike">TensorLike</span>]</code>
           </td>
-          <td><p>The activation adjusted by the baseline passed to the constructor.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The activation adjusted by the baseline passed to the constructor.</p>
+            </div>
+          </td>
         </tr>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">333</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">333</span>
 <span class="normal">334</span>
 <span class="normal">335</span>
 <span class="normal">336</span>
@@ -3806,7 +3925,7 @@ feature.</p>
     <span class="n">ret</span> <span class="o">=</span> <span class="n">nested_map</span><span class="p">(</span><span class="n">zipped</span><span class="p">,</span> <span class="n">zipped_subtract</span><span class="p">,</span> <span class="n">check_accessor</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">ret</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -3824,23 +3943,22 @@ feature.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.distributions.PointDoi" class="doc doc-heading">
-        <code>PointDoi</code>
+          <code>PointDoi</code>
 
 
 <a href="#trulens_explain.trulens.nn.distributions.PointDoi" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.distributions.DoI" href="#trulens_explain.trulens.nn.distributions.DoI">DoI</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.distributions.DoI" href="#trulens_explain.trulens.nn.distributions.DoI">DoI</a></code></p>
 
   
       <p>Distribution that puts all probability mass on a single point.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">213</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">213</span>
 <span class="normal">214</span>
 <span class="normal">215</span>
 <span class="normal">216</span>
@@ -3892,11 +4010,12 @@ feature.</p>
 
         <span class="k">return</span> <span class="n">om_of_many</span><span class="p">(</span><span class="n">nested_map</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">[</span><span class="n">x</span><span class="p">]))</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -3920,6 +4039,8 @@ feature.</p>
   
       <p>"Initialize PointDoI</p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -3936,9 +4057,13 @@ feature.</p>
           <td>
                 <code><span title="trulens.nn.slices.Cut">Cut</span></code>
           </td>
-          <td><p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
+          <td>
+            <div class="doc-md-description">
+              <p>The Cut in which the DoI will be applied. If <code>None</code>, the DoI will be
 applied to the input. otherwise, the distribution should be applied
-to the latent space defined by the cut.</p></td>
+to the latent space defined by the cut.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -3946,9 +4071,9 @@ to the latent space defined by the cut.</p></td>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">218</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/distributions.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">218</span>
 <span class="normal">219</span>
 <span class="normal">220</span>
 <span class="normal">221</span>
@@ -3968,7 +4093,7 @@ to the latent space defined by the cut.</p></td>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">super</span><span class="p">(</span><span class="n">PointDoi</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>

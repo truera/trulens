@@ -555,6 +555,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#retrieve-records-and-feedback" class="md-nav__link">
+    Retrieve records and feedback
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#explore-in-a-dashboard" class="md-nav__link">
     Explore in a Dashboard
   </a>
@@ -1851,6 +1858,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#retrieve-records-and-feedback" class="md-nav__link">
+    Retrieve records and feedback
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#explore-in-a-dashboard" class="md-nav__link">
     Explore in a Dashboard
   </a>
@@ -2973,9 +2987,9 @@ Licensed under the Apache License, Version 2.0.
                     </div>
                 </clipboard-copy>
             </div>
-            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># ! pip install trulens_eval==0.15.3 langchain&gt;=0.0.263</span>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># ! pip install trulens_eval==0.16.0 langchain&gt;=0.0.263</span>
 </pre></div>
-<div id="cell-1" class="clipboard-copy-txt"># ! pip install trulens_eval==0.15.3 langchain>=0.0.263</div>
+<div id="cell-1" class="clipboard-copy-txt"># ! pip install trulens_eval==0.16.0 langchain>=0.0.263</div>
         
         </div>
     </div>
@@ -3068,6 +3082,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
 
 <span class="c1"># Imports main tools:</span>
 <span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruChain</span><span class="p">,</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Huggingface</span><span class="p">,</span> <span class="n">Tru</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.schema</span> <span class="kn">import</span> <span class="n">FeedbackResult</span>
 <span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
 
 <span class="c1"># Imports from langchain to build app. You may need to install langchain first</span>
@@ -3082,6 +3097,7 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."</div>
 
 # Imports main tools:
 from trulens_eval import TruChain, Feedback, Huggingface, Tru
+from trulens_eval.schema import FeedbackResult
 tru = Tru()
 
 # Imports from langchain to build app. You may need to install langchain first
@@ -3393,7 +3409,7 @@ display(llm_response)</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="explore-in-a-dashboard">Explore in a Dashboard<a class="anchor-link" href="#explore-in-a-dashboard">&#182;</a></h2>
+<h2 id="retrieve-records-and-feedback">Retrieve records and feedback<a class="anchor-link" href="#retrieve-records-and-feedback">&#182;</a></h2>
 </div>
 </div>
 </div>
@@ -3418,11 +3434,121 @@ display(llm_response)</div>
                     </div>
                 </clipboard-copy>
             </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># The record of the ap invocation can be retrieved from the `recording`:</span>
+
+<span class="n">rec</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="c1"># use .get if only one record</span>
+<span class="c1"># recs = recording.records # use .records if multiple</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
+</pre></div>
+<div id="cell-10" class="clipboard-copy-txt"># The record of the ap invocation can be retrieved from the `recording`:
+
+rec = recording.get() # use .get if only one record
+# recs = recording.records # use .records if multiple
+
+display(rec)</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-11">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
+            <div class="highlight-ipynb hl-python "><pre><span></span><span class="c1"># The results of the feedback functions can be rertireved from the record. These</span>
+<span class="c1"># are `Future` instances (see `concurrent.futures`). You can use `as_completed`</span>
+<span class="c1"># to wait until they have finished evaluating.</span>
+
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">as_completed</span>
+
+<span class="k">for</span> <span class="n">feedback_future</span> <span class="ow">in</span>  <span class="n">as_completed</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">feedback_results</span><span class="p">):</span>
+    <span class="n">feedback</span><span class="p">,</span> <span class="n">feedback_result</span> <span class="o">=</span> <span class="n">feedback_future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+    
+    <span class="n">feedback</span><span class="p">:</span> <span class="n">Feedback</span>
+    <span class="n">feedbac_result</span><span class="p">:</span> <span class="n">FeedbackResult</span>
+
+    <span class="n">display</span><span class="p">(</span><span class="n">feedback</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">feedback_result</span><span class="o">.</span><span class="n">result</span><span class="p">)</span>
+</pre></div>
+<div id="cell-11" class="clipboard-copy-txt"># The results of the feedback functions can be rertireved from the record. These
+# are `Future` instances (see `concurrent.futures`). You can use `as_completed`
+# to wait until they have finished evaluating.
+
+from concurrent.futures import as_completed
+
+for feedback_future in  as_completed(rec.feedback_results):
+    feedback, feedback_result = feedback_future.result()
+    
+    feedback: Feedback
+    feedbac_result: FeedbackResult
+
+    display(feedback.name, feedback_result.result)
+</div>
+        
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div>
+<div  class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="explore-in-a-dashboard">Explore in a Dashboard<a class="anchor-link" href="#explore-in-a-dashboard">&#182;</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div  class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+            <div class="zeroclipboard-container">
+                <clipboard-copy for="cell-12">
+                <div>
+                    <span class="notice" hidden>Copied!</span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                        <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                        <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg>
+                    </div>
+                </clipboard-copy>
+            </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">run_dashboard</span><span class="p">()</span> <span class="c1"># open a local streamlit app to explore</span>
 
 <span class="c1"># tru.stop_dashboard() # stop if needed</span>
 </pre></div>
-<div id="cell-10" class="clipboard-copy-txt">tru.run_dashboard() # open a local streamlit app to explore
+<div id="cell-12" class="clipboard-copy-txt">tru.run_dashboard() # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed</div>
         
@@ -3500,7 +3626,7 @@ display(llm_response)</div>
         
         <div class="CodeMirror cm-s-jupyter">
             <div class="zeroclipboard-container">
-                <clipboard-copy for="cell-11">
+                <clipboard-copy for="cell-13">
                 <div>
                     <span class="notice" hidden>Copied!</span>
                     <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
@@ -3512,7 +3638,7 @@ display(llm_response)</div>
             </div>
             <div class="highlight-ipynb hl-python "><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">get_records_and_feedback</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[])[</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># pass an empty list of app_ids to get all</span>
 </pre></div>
-<div id="cell-11" class="clipboard-copy-txt">tru.get_records_and_feedback(app_ids=[])[0] # pass an empty list of app_ids to get all</div>
+<div id="cell-13" class="clipboard-copy-txt">tru.get_records_and_feedback(app_ids=[])[0] # pass an empty list of app_ids to get all</div>
         
         </div>
     </div>

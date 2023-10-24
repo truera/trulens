@@ -1964,15 +1964,15 @@ package.</p>
 
 
 <h2 id="trulens_explain.trulens.nn.attribution.AttributionMethod" class="doc doc-heading">
-        <code>AttributionMethod</code>
+          <code>AttributionMethod</code>
 
 
 <a href="#trulens_explain.trulens.nn.attribution.AttributionMethod" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="abc.ABC">AbstractBaseClass</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="abc.ABC">AbstractBaseClass</span></code></p>
 
   
       <p>Interface used by all attribution methods.</p>
@@ -1980,10 +1980,9 @@ package.</p>
 to assign values to the variables of the network that specify the importance
 of each variable towards particular predictions.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 82</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 82</span>
 <span class="normal"> 83</span>
 <span class="normal"> 84</span>
 <span class="normal"> 85</span>
@@ -2249,7 +2248,7 @@ of each variable towards particular predictions.</p>
 
         <span class="k">return</span> <span class="n">attributions</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
@@ -2284,6 +2283,7 @@ of each variable towards particular predictions.</p>
 
 
 
+
 <div class="doc doc-object doc-function">
 
 
@@ -2302,6 +2302,8 @@ of each variable towards particular predictions.</p>
   
       <p>Abstract constructor.</p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2318,8 +2320,12 @@ of each variable towards particular predictions.</p>
           <td>
                 <code><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></code>
           </td>
-          <td><p>ModelWrapper
-Model for which attributions are calculated.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>ModelWrapper
+Model for which attributions are calculated.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -2329,13 +2335,17 @@ Model for which attributions are calculated.</p></td>
           <td>
                 <code>int</code>
           </td>
-          <td><p>int (optional)
+          <td>
+            <div class="doc-md-description">
+              <p>int (optional)
 Will rebatch instances to this size if given. This may be
 required for GPU usage if using a DoI which produces multiple
 instances per user-provided instance. Many valued DoIs will
 expand the tensors sent to each layer to original_batch_size *
 doi_size. The rebatch size will break up original_batch_size *
-doi_size into rebatch_size chunks to send to model.</p></td>
+doi_size into rebatch_size chunks to send to model.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -2343,9 +2353,9 @@ doi_size into rebatch_size chunks to send to model.</p></td>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 91</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 91</span>
 <span class="normal"> 92</span>
 <span class="normal"> 93</span>
 <span class="normal"> 94</span>
@@ -2389,10 +2399,11 @@ doi_size into rebatch_size chunks to send to model.</p></td>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">rebatch_size</span> <span class="o">=</span> <span class="n">rebatch_size</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -2419,6 +2430,8 @@ determined by the Quantity of Interest on the same record. </p>
 <p>The Point Distribution of Interest will be determined by the gradient at
 a single point, thus being a good measure of model sensitivity. </p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -2435,14 +2448,18 @@ a single point, thus being a good measure of model sensitivity. </p>
           <td>
                 <code><span title="trulens.utils.typing.ArgsLike">ArgsLike</span></code>
           </td>
-          <td><p>ArgsLike, model_kwargs: KwargsLike
+          <td>
+            <div class="doc-md-description">
+              <p>ArgsLike, model_kwargs: KwargsLike
 The args and kwargs given to the call method of a model. This
 should represent the records to obtain attributions for, assumed
 to be a <em>batched</em> input. if <code>self.model</code> supports evaluation on
 <em>data tensors</em>, the  appropriate tensor type may be used (e.g.,
 Pytorch models may accept Pytorch tensors in addition to
 <code>np.ndarray</code>s). The shape of the inputs must match the input
-shape of <code>self.model</code>. </p></td>
+shape of <code>self.model</code>. </p>
+            </div>
+          </td>
           <td>
                 <code>()</code>
           </td>
@@ -2467,9 +2484,9 @@ If the quantity of interest features multiple outputs, a list for
 each will be returned.
 </code></pre></div>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">130</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">130</span>
 <span class="normal">131</span>
 <span class="normal">132</span>
 <span class="normal">133</span>
@@ -2639,7 +2656,7 @@ each will be returned.
 
     <span class="k">return</span> <span class="n">attributions</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -2657,7 +2674,7 @@ each will be returned.
 
 
 <h2 id="trulens_explain.trulens.nn.attribution.AttributionResult" class="doc doc-heading">
-        <code>AttributionResult</code>
+          <code>AttributionResult</code>
 
   
   <span class="doc doc-labels">
@@ -2672,10 +2689,9 @@ each will be returned.
   
       <p>_attribution method output container.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">63</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">63</span>
 <span class="normal">64</span>
 <span class="normal">65</span>
 <span class="normal">66</span>
@@ -2693,7 +2709,7 @@ each will be returned.
     <span class="n">gradients</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">[</span><span class="n">Inputs</span><span class="p">[</span><span class="n">Uniform</span><span class="p">[</span><span class="n">TensorLike</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">interventions</span><span class="p">:</span> <span class="n">Inputs</span><span class="p">[</span><span class="n">Uniform</span><span class="p">[</span><span class="n">TensorLike</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
@@ -2720,15 +2736,15 @@ each will be returned.
 
 
 <h2 id="trulens_explain.trulens.nn.attribution.InputAttribution" class="doc doc-heading">
-        <code>InputAttribution</code>
+          <code>InputAttribution</code>
 
 
 <a href="#trulens_explain.trulens.nn.attribution.InputAttribution" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.attribution.InternalInfluence" href="#trulens_explain.trulens.nn.attribution.InternalInfluence">InternalInfluence</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.attribution.InternalInfluence" href="#trulens_explain.trulens.nn.attribution.InternalInfluence">InternalInfluence</a></code></p>
 
   
       <p>Attributions of input features on either internal or output quantities. This
@@ -2741,10 +2757,9 @@ is essentially an alias for</p>
     <span class="n">multiply_activation</span><span class="p">)</span>
 </code></pre></div>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">672</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">672</span>
 <span class="normal">673</span>
 <span class="normal">674</span>
 <span class="normal">675</span>
@@ -2964,11 +2979,12 @@ is essentially an alias for</p>
             <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -2991,6 +3007,8 @@ is essentially an alias for</p>
   <div class="doc doc-contents ">
   
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -3006,7 +3024,11 @@ is essentially an alias for</p>
           <td><code>model</code></td>
           <td>
           </td>
-          <td><p>Model for which attributions are calculated.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Model for which attributions are calculated.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -3015,14 +3037,18 @@ is essentially an alias for</p>
           <td><code>qoi_cut</code></td>
           <td>
           </td>
-          <td><p>The cut determining the layer from which the QoI is derived.
+          <td>
+            <div class="doc-md-description">
+              <p>The cut determining the layer from which the QoI is derived.
 Expects a <code>Cut</code> object, or a related type that can be
 interpreted as a <code>Cut</code>, as documented below.</p>
 <p>If an <code>int</code> is given, it represents the index of a layer in
 <code>model</code>. </p>
 <p>If a <code>str</code> is given, it represents the name of a layer in
 <code>model</code>. </p>
-<p><code>None</code> is an alternative for <code>slices.OutputCut()</code>.</p></td>
+<p><code>None</code> is an alternative for <code>slices.OutputCut()</code>.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -3031,7 +3057,9 @@ interpreted as a <code>Cut</code>, as documented below.</p>
           <td><code>qoi</code></td>
           <td>
           </td>
-          <td><p>quantities.QoI | int | tuple | str
+          <td>
+            <div class="doc-md-description">
+              <p>quantities.QoI | int | tuple | str
 Quantity of interest to attribute. Expects a <code>QoI</code> object, or a
 related type that can be interpreted as a <code>QoI</code>, as documented
 below.</p>
@@ -3048,7 +3076,9 @@ representing the QoI, i.e., ```python quantities.LambdaQoI(qoi)
 </code></pre></div></p>
 <p>If the string, <code>'max'</code>, is given, the quantity of interest is
 taken to be the output for the class with the maximum score,
-i.e., <code>python quantities.MaxClassQoI()</code></p></td>
+i.e., <code>python quantities.MaxClassQoI()</code></p>
+            </div>
+          </td>
           <td>
                 <code>&#39;max&#39;</code>
           </td>
@@ -3057,11 +3087,15 @@ i.e., <code>python quantities.MaxClassQoI()</code></p></td>
           <td><code>doi_cut</code></td>
           <td>
           </td>
-          <td><p>For models which have non-differentiable pre-processing at the
+          <td>
+            <div class="doc-md-description">
+              <p>For models which have non-differentiable pre-processing at the
 start of the model, specify the cut of the initial
 differentiable input form. For NLP models, for example, this
 could point to the embedding layer. If not provided, InputCut is
-assumed.</p></td>
+assumed.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -3070,7 +3104,9 @@ assumed.</p></td>
           <td><code>doi</code></td>
           <td>
           </td>
-          <td><p>distributions.DoI | str
+          <td>
+            <div class="doc-md-description">
+              <p>distributions.DoI | str
 Distribution of interest over inputs. Expects a <code>DoI</code> object, or
 a related type that can be interpreted as a <code>DoI</code>, as documented
 below.</p>
@@ -3080,7 +3116,9 @@ distributions.PointDoi()</code></p>
 <p>If the string, <code>'linear'</code>, is given, the distribution is taken
 to be the linear interpolation from the zero input to the point
 passed to <code>attributions</code>, i.e., <code>python
-distributions.LinearDoi()</code></p></td>
+distributions.LinearDoi()</code></p>
+            </div>
+          </td>
           <td>
                 <code>&#39;point&#39;</code>
           </td>
@@ -3089,10 +3127,14 @@ distributions.LinearDoi()</code></p></td>
           <td><code>multiply_activation</code></td>
           <td>
           </td>
-          <td><p>bool, optional
+          <td>
+            <div class="doc-md-description">
+              <p>bool, optional
 Whether to multiply the gradient result by its corresponding
 activation, thus converting from "<em>influence space</em>" to
-"<em>attribution space</em>."</p></td>
+"<em>attribution space</em>."</p>
+            </div>
+          </td>
           <td>
                 <code>True</code>
           </td>
@@ -3100,9 +3142,9 @@ activation, thus converting from "<em>influence space</em>" to
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">687</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">687</span>
 <span class="normal">688</span>
 <span class="normal">689</span>
 <span class="normal">690</span>
@@ -3292,7 +3334,7 @@ activation, thus converting from "<em>influence space</em>" to
         <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -3310,15 +3352,15 @@ activation, thus converting from "<em>influence space</em>" to
 
 
 <h2 id="trulens_explain.trulens.nn.attribution.IntegratedGradients" class="doc doc-heading">
-        <code>IntegratedGradients</code>
+          <code>IntegratedGradients</code>
 
 
 <a href="#trulens_explain.trulens.nn.attribution.IntegratedGradients" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.attribution.InputAttribution" href="#trulens_explain.trulens.nn.attribution.InputAttribution">InputAttribution</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.attribution.InputAttribution" href="#trulens_explain.trulens.nn.attribution.InputAttribution">InputAttribution</a></code></p>
 
   
       <p>Implementation for the Integrated Gradients method from the following paper:</p>
@@ -3341,10 +3383,9 @@ activation, thus converting from "<em>influence space</em>" to
     <span class="n">multiply_activation</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">784</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">784</span>
 <span class="normal">785</span>
 <span class="normal">786</span>
 <span class="normal">787</span>
@@ -3494,11 +3535,12 @@ activation, thus converting from "<em>influence space</em>" to
             <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -3521,6 +3563,8 @@ activation, thus converting from "<em>influence space</em>" to
   <div class="doc doc-contents ">
   
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -3537,7 +3581,11 @@ activation, thus converting from "<em>influence space</em>" to
           <td>
                 <code><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></code>
           </td>
-          <td><p>Model for which attributions are calculated.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Model for which attributions are calculated.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -3546,9 +3594,13 @@ activation, thus converting from "<em>influence space</em>" to
           <td><code>baseline</code></td>
           <td>
           </td>
-          <td><p>The baseline to interpolate from. Must be same shape as the 
+          <td>
+            <div class="doc-md-description">
+              <p>The baseline to interpolate from. Must be same shape as the 
 input. If <code>None</code> is given, the zero vector in the appropriate 
-shape will be used.</p></td>
+shape will be used.</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -3558,10 +3610,14 @@ shape will be used.</p></td>
           <td>
                 <code>int</code>
           </td>
-          <td><p>Number of points to use in the approximation. A higher 
+          <td>
+            <div class="doc-md-description">
+              <p>Number of points to use in the approximation. A higher 
 resolution is more computationally expensive, but gives a better
 approximation of the mathematical formula this attribution 
-method represents.</p></td>
+method represents.</p>
+            </div>
+          </td>
           <td>
                 <code>50</code>
           </td>
@@ -3569,9 +3625,9 @@ method represents.</p></td>
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">815</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">815</span>
 <span class="normal">816</span>
 <span class="normal">817</span>
 <span class="normal">818</span>
@@ -3659,7 +3715,7 @@ method represents.</p></td>
         <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
@@ -3677,15 +3733,15 @@ method represents.</p></td>
 
 
 <h2 id="trulens_explain.trulens.nn.attribution.InternalInfluence" class="doc doc-heading">
-        <code>InternalInfluence</code>
+          <code>InternalInfluence</code>
 
 
 <a href="#trulens_explain.trulens.nn.attribution.InternalInfluence" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
   <div class="doc doc-contents ">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.attribution.AttributionMethod" href="#trulens_explain.trulens.nn.attribution.AttributionMethod">AttributionMethod</a></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_explain.trulens.nn.attribution.AttributionMethod" href="#trulens_explain.trulens.nn.attribution.AttributionMethod">AttributionMethod</a></code></p>
 
   
       <p>Internal attributions parameterized by a slice, quantity of interest, and
@@ -3716,10 +3772,9 @@ specifies the records over which the attributions are aggregated.</p>
 <span class="p">}</span>
 </code></pre></div>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">217</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">217</span>
 <span class="normal">218</span>
 <span class="normal">219</span>
 <span class="normal">220</span>
@@ -4625,11 +4680,12 @@ specifies the records over which the attributions are aggregated.</p>
         <span class="n">ret</span> <span class="o">=</span> <span class="n">nested_map</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">,</span> <span class="n">nest</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ret</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -4652,6 +4708,8 @@ specifies the records over which the attributions are aggregated.</p>
   <div class="doc doc-contents ">
   
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -4668,7 +4726,11 @@ specifies the records over which the attributions are aggregated.</p>
           <td>
                 <code><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></code>
           </td>
-          <td><p>Model for which attributions are calculated.</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Model for which attributions are calculated.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4678,7 +4740,9 @@ specifies the records over which the attributions are aggregated.</p>
           <td>
                 <code><span title="trulens_explain.trulens.nn.attribution.SliceLike">SliceLike</span></code>
           </td>
-          <td><p>The slice to use when computing the attributions. The slice 
+          <td>
+            <div class="doc-md-description">
+              <p>The slice to use when computing the attributions. The slice 
 keeps track of the layer whose output attributions are 
 calculated and the layer for which the quantity of interest is 
 computed. Expects a <code>Slice</code> object, or a related type that can
@@ -4694,7 +4758,9 @@ respectively.</p>
 an <code>int</code>, <code>str</code>, or <code>None</code>. If an <code>int</code> is given, it represents 
 the index of a layer in <code>model</code>. If a <code>str</code> is given, it 
 represents the name of a layer in <code>model</code>. <code>None</code> is an 
-alternative for <code>slices.InputCut</code>.</p></td>
+alternative for <code>slices.InputCut</code>.</p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4704,7 +4770,9 @@ alternative for <code>slices.InputCut</code>.</p></td>
           <td>
                 <code><span title="trulens_explain.trulens.nn.attribution.QoiLike">QoiLike</span></code>
           </td>
-          <td><p>Quantity of interest to attribute. Expects a <code>QoI</code> object, or a
+          <td>
+            <div class="doc-md-description">
+              <p>Quantity of interest to attribute. Expects a <code>QoI</code> object, or a
 related type that can be interpreted as a <code>QoI</code>, as documented
 below.</p>
 <p>If an <code>int</code> is given, the quantity of interest is taken to be 
@@ -4726,7 +4794,9 @@ representing the QoI, i.e.,
 taken to be the output for the class with the maximum score, 
 i.e., 
 <div class="highlight"><pre><span></span><code><span class="n">quantities</span><span class="o">.</span><span class="n">MaxClassQoI</span><span class="p">()</span>
-</code></pre></div></p></td>
+</code></pre></div></p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4736,7 +4806,9 @@ i.e.,
           <td>
                 <code><span title="trulens_explain.trulens.nn.attribution.DoiLike">DoiLike</span></code>
           </td>
-          <td><p>Distribution of interest over inputs. Expects a <code>DoI</code> object, or
+          <td>
+            <div class="doc-md-description">
+              <p>Distribution of interest over inputs. Expects a <code>DoI</code> object, or
 a related type that can be interpreted as a <code>DoI</code>, as documented
 below.</p>
 <p>If the string, <code>'point'</code>, is given, the distribution is taken to
@@ -4747,7 +4819,9 @@ be the single point passed to <code>attributions</code>, i.e.,
 to be the linear interpolation from the zero input to the point 
 passed to <code>attributions</code>, i.e., 
 <div class="highlight"><pre><span></span><code><span class="n">distributions</span><span class="o">.</span><span class="n">LinearDoi</span><span class="p">()</span>
-</code></pre></div></p></td>
+</code></pre></div></p>
+            </div>
+          </td>
           <td>
               <em>required</em>
           </td>
@@ -4757,9 +4831,13 @@ passed to <code>attributions</code>, i.e.,
           <td>
                 <code>bool</code>
           </td>
-          <td><p>Whether to multiply the gradient result by its corresponding
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to multiply the gradient result by its corresponding
 activation, thus converting from "<em>influence space</em>" to 
-"<em>attribution space</em>."</p></td>
+"<em>attribution space</em>."</p>
+            </div>
+          </td>
           <td>
                 <code>True</code>
           </td>
@@ -4767,9 +4845,9 @@ activation, thus converting from "<em>influence space</em>" to
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">254</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_explain/trulens/nn/attribution.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">254</span>
 <span class="normal">255</span>
 <span class="normal">256</span>
 <span class="normal">257</span>
@@ -4973,7 +5051,7 @@ activation, thus converting from "<em>influence space</em>" to
     <span class="bp">self</span><span class="o">.</span><span class="n">_return_grads</span> <span class="o">=</span> <span class="n">return_grads</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_return_doi</span> <span class="o">=</span> <span class="n">return_doi</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>

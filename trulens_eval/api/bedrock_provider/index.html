@@ -1757,14 +1757,14 @@
 
 <a id="trulens_eval.trulens_eval.feedback.provider.bedrock.Bedrock"></a>
   <div class="doc doc-contents first">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="trulens_eval.feedback.provider.base.LLMProvider">LLMProvider</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="trulens_eval.feedback.provider.base.LLMProvider">LLMProvider</span></code></p>
 
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/bedrock.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">16</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/bedrock.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">15</span>
+<span class="normal">16</span>
 <span class="normal">17</span>
 <span class="normal">18</span>
 <span class="normal">19</span>
@@ -1821,12 +1821,23 @@
 <span class="normal">70</span>
 <span class="normal">71</span>
 <span class="normal">72</span>
-<span class="normal">73</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Bedrock</span><span class="p">(</span><span class="n">LLMProvider</span><span class="p">):</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Bedrock</span><span class="p">(</span><span class="n">LLMProvider</span><span class="p">):</span>
     <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">region_name</span><span class="p">:</span> <span class="nb">str</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">model_id</span><span class="o">=</span><span class="s2">&quot;amazon.titan-tg1-large&quot;</span><span class="p">,</span> <span class="n">region_name</span><span class="o">=</span><span class="s2">&quot;us-east-1&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">model_id</span><span class="o">=</span><span class="s2">&quot;amazon.titan-tg1-large&quot;</span><span class="p">,</span>
+        <span class="n">region_name</span><span class="o">=</span><span class="s2">&quot;us-east-1&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
         <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
         <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
@@ -1849,7 +1860,9 @@
 
         <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;model_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_id</span>
         <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;region_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">region_name</span>
-        <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BedrockEndpoint</span><span class="p">(</span><span class="n">region_name</span> <span class="o">=</span> <span class="n">region_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BedrockEndpoint</span><span class="p">(</span>
+            <span class="n">region_name</span><span class="o">=</span><span class="n">region_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="o">**</span><span class="n">self_kwargs</span>
@@ -1864,8 +1877,9 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 
         <span class="c1"># NOTE(joshr): only tested with sso auth</span>
-        <span class="kn">import</span> <span class="nn">boto3</span>
         <span class="kn">import</span> <span class="nn">json</span>
+
+        <span class="kn">import</span> <span class="nn">boto3</span>
         <span class="n">bedrock</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="n">service_name</span><span class="o">=</span><span class="s1">&#39;bedrock-runtime&#39;</span><span class="p">)</span>
 
         <span class="k">assert</span> <span class="n">prompt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Bedrock can only operate on `prompt`, not `messages`.&quot;</span>
@@ -1876,15 +1890,17 @@
 
         <span class="n">response</span> <span class="o">=</span> <span class="n">bedrock</span><span class="o">.</span><span class="n">invoke_model</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">,</span> <span class="n">modelId</span><span class="o">=</span><span class="n">modelId</span><span class="p">)</span>
 
-        <span class="n">response_body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;body&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;results&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;outputText&quot;</span><span class="p">]</span>
+        <span class="n">response_body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;body&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                                  <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;results&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;outputText&quot;</span><span class="p">]</span>
         <span class="c1"># text</span>
         <span class="k">return</span> <span class="n">response_body</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -1919,9 +1935,10 @@
 </li>
 </ul>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/bedrock.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">20</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/bedrock.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">19</span>
+<span class="normal">20</span>
 <span class="normal">21</span>
 <span class="normal">22</span>
 <span class="normal">23</span>
@@ -1949,8 +1966,17 @@
 <span class="normal">45</span>
 <span class="normal">46</span>
 <span class="normal">47</span>
-<span class="normal">48</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">model_id</span><span class="o">=</span><span class="s2">&quot;amazon.titan-tg1-large&quot;</span><span class="p">,</span> <span class="n">region_name</span><span class="o">=</span><span class="s2">&quot;us-east-1&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+    <span class="n">model_id</span><span class="o">=</span><span class="s2">&quot;amazon.titan-tg1-large&quot;</span><span class="p">,</span>
+    <span class="n">region_name</span><span class="o">=</span><span class="s2">&quot;us-east-1&quot;</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">):</span>
     <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
     <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
@@ -1973,13 +1999,15 @@
 
     <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;model_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_id</span>
     <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;region_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">region_name</span>
-    <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BedrockEndpoint</span><span class="p">(</span><span class="n">region_name</span> <span class="o">=</span> <span class="n">region_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BedrockEndpoint</span><span class="p">(</span>
+        <span class="n">region_name</span><span class="o">=</span><span class="n">region_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span>
 
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
         <span class="o">**</span><span class="n">self_kwargs</span>
     <span class="p">)</span>  <span class="c1"># need to include pydantic.BaseModel.__init__</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>

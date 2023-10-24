@@ -1757,16 +1757,15 @@
 
 <a id="trulens_eval.trulens_eval.feedback.provider.litellm.LiteLLM"></a>
   <div class="doc doc-contents first">
-      <p class="doc doc-class-bases">
-        Bases: <code><span title="trulens_eval.feedback.provider.base.LLMProvider">LLMProvider</span></code></p>
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="trulens_eval.feedback.provider.base.LLMProvider">LLMProvider</span></code></p>
 
   
       <p>Out of the box feedback functions calling LiteLLM API.</p>
 
-
-        <details class="quote">
-          <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/litellm.py</code></summary>
-          <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">14</span>
+            <details class="quote">
+              <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/litellm.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">14</span>
 <span class="normal">15</span>
 <span class="normal">16</span>
 <span class="normal">17</span>
@@ -1842,13 +1841,14 @@
 
     <span class="k">def</span> <span class="nf">_create_chat_completion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messages</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="kn">import</span> <span class="nn">litellm</span>
-        <span class="k">return</span> <span class="n">litellm</span><span class="o">.</span><span class="n">completion</span><span class="p">(</span><span class="n">messages</span> <span class="o">=</span> <span class="n">messages</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">litellm</span><span class="o">.</span><span class="n">completion</span><span class="p">(</span><span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-        </details>
+            </details>
 
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -1876,6 +1876,8 @@
 litellm_provider = LiteLLM()
 </code></pre></div></p>
 
+
+
   <p><strong>Parameters:</strong></p>
   <table>
     <thead>
@@ -1892,7 +1894,11 @@ litellm_provider = LiteLLM()
           <td>
                 <code>str</code>
           </td>
-          <td><p>The LiteLLM completion model.Defaults to <code>gpt-3.5-turbo</code></p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>The LiteLLM completion model.Defaults to <code>gpt-3.5-turbo</code></p>
+            </div>
+          </td>
           <td>
                 <code>&#39;gpt-3.5-turbo&#39;</code>
           </td>
@@ -1902,7 +1908,11 @@ litellm_provider = LiteLLM()
           <td>
                 <code><span title="trulens_eval.feedback.provider.endpoint.base.Endpoint">Endpoint</span></code>
           </td>
-          <td><p>Internal Usage for DB serialization</p></td>
+          <td>
+            <div class="doc-md-description">
+              <p>Internal Usage for DB serialization</p>
+            </div>
+          </td>
           <td>
                 <code>None</code>
           </td>
@@ -1910,9 +1920,9 @@ litellm_provider = LiteLLM()
     </tbody>
   </table>
 
-      <details class="quote">
-        <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/litellm.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">20</span>
+          <details class="quote">
+            <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/litellm.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">20</span>
 <span class="normal">21</span>
 <span class="normal">22</span>
 <span class="normal">23</span>
@@ -1970,7 +1980,7 @@ litellm_provider = LiteLLM()
         <span class="o">**</span><span class="n">self_kwargs</span>
     <span class="p">)</span>  <span class="c1"># need to include pydantic.BaseModel.__init__</span>
 </code></pre></div></td></tr></table></div>
-      </details>
+          </details>
   </div>
 
 </div>
