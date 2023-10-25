@@ -1,6 +1,6 @@
 # Welcome to TruLens-Eval!
 
-![TruLens](https://www.trulens.org/Assets/image/Neural_Network_Explainability.png)
+![TruLens](https://www.trulens.org/assets/images/Neural_Network_Explainability.png)
 
 Evaluate and track your LLM experiments with TruLens. As you work on your models and prompts TruLens-Eval supports the iterative development and of a wide range of LLM applications by wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine.
 
@@ -20,7 +20,7 @@ TruLens-Eval has two key value propositions:
 
 The process for building your evaluated and tracked LLM application with TruLens is below 👇
 
-![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
+![Architecture Diagram](https://www.trulens.org/assets/images/TruLens_Architecture.png)
 
 ## Installation and Setup
 
