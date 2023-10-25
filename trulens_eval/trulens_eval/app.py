@@ -4,6 +4,8 @@ Generalized root type for various libraries like llama_index and langchain .
 
 from abc import ABC
 from abc import abstractmethod
+from concurrent import futures
+from concurrent.futures import as_completed
 import contextvars
 import inspect
 from inspect import BoundArguments
@@ -711,7 +713,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     def _on_add_record(
         self, ctx: RecordingContext, func: Callable, sig: Signature,
         bindings: BoundArguments, ret: Any, error: Any, perf: Perf, cost: Cost
-    ):
+    ) -> Record:
         """
         Called by instrumented methods if they use _new_record to construct a
         record call list. 
@@ -735,25 +737,27 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 meta=jsonify(record_metadata)
             )
 
+        # tp = TP()
+
         # Finishing record needs to be done in a thread lock, done there:
         record = ctx.finish_record(build_record)
 
         if error is not None:
-            if self.feedback_mode == FeedbackMode.WITH_APP:
-                self._handle_error(record=record, error=error)
-
-            elif self.feedback_mode in [FeedbackMode.DEFERRED,
-                                        FeedbackMode.WITH_APP_THREAD]:
-                TP().runlater(self._handle_error, record=record, error=error)
-
+            # May block on DB.
+            self._handle_error(record=record, error=error)
             raise error
 
-        if self.feedback_mode == FeedbackMode.WITH_APP:
-            self._handle_record(record=record)
+        # Will block on DB, but not on feedback evaluation, depending on
+        # FeedbackMode:
+        record.feedback_results = self._handle_record(record=record)
 
-        elif self.feedback_mode in [FeedbackMode.DEFERRED,
-                                    FeedbackMode.WITH_APP_THREAD]:
-            TP().runlater(self._handle_record, record=record)
+        if record.feedback_results is None:
+            return record
+
+        # If in blocking mode ("WITH_APP"), wait for feedbacks to finished
+        # evaluating before returning the record.
+        if self.feedback_mode in [FeedbackMode.WITH_APP]:
+            futures.wait(record.feedback_results)
 
         return record
 
@@ -897,18 +901,29 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 """
         )
 
-    def _handle_record(self, record: Record):
+    def _add_future_feedback(self, future: 'Future[Feedback, FeedbackResult]'):
+        _, res = future.result()
+        self.tru.add_feedback(res)
+
+    def _handle_record(
+        self, record: Record
+    ) -> Optional[List['Future[Tuple[Feedback, FeedbackResult]]']]:
         """
-        Write out record-related info to database if set.
+        Write out record-related info to database if set and schedule feedback
+        functions to be evaluated.
         """
 
         if self.tru is None or self.feedback_mode is None:
-            return
+            return None
 
+        self.tru: Tru
+        self.db: DB
+
+        # Need to add record to db before evaluating feedback functions.
         record_id = self.tru.add_record(record=record)
 
         if len(self.feedbacks) == 0:
-            return
+            return []
 
         # Add empty (to run) feedback to db.
         if self.feedback_mode == FeedbackMode.DEFERRED:
@@ -921,15 +936,17 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                     )
                 )
 
+            return None
+
         elif self.feedback_mode in [FeedbackMode.WITH_APP,
                                     FeedbackMode.WITH_APP_THREAD]:
 
-            results = self.tru.run_feedback_functions(
-                record=record, feedback_functions=self.feedbacks, app=self
+            return self.tru._submit_feedback_functions(
+                record=record,
+                feedback_functions=self.feedbacks,
+                app=self,
+                on_done=self._add_future_feedback
             )
-
-            for result in results:
-                self.tru.add_feedback(result)
 
     def _handle_error(self, record: Record, error: Exception):
         if self.db is None:
@@ -978,7 +995,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         for t in self.instrumented():
             path = JSONPath(t[0].path[1:])
-            obj = next(iter(path(self)))
+            obj = next(iter(path.get(self)))
             object_strings.append(
                 f"\t{type(obj).__name__} ({t[1].__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"
             )

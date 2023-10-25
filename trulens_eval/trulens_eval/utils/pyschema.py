@@ -199,7 +199,7 @@ class Class(SerialModel):
         return self.module.module_name + "." + self.name
 
     def __str__(self):
-        return f"{self.name}({self.module.module_name})"
+        return f"{self.name}({self.module.module_name if self.module is not None else 'no module'})"
 
     def base_class(self) -> 'Class':
         """

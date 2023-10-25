@@ -8,8 +8,9 @@ from time import sleep
 from types import AsyncGeneratorType
 from types import ModuleType
 from typing import (
-    Any, Awaitable, Dict, Optional, Sequence, Tuple, Type, TypeVar
+    Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
 )
+import warnings
 
 import pydantic
 import requests
@@ -17,10 +18,12 @@ import requests
 from trulens_eval.keys import ApiKeyError
 from trulens_eval.schema import Cost
 from trulens_eval.utils.python import get_first_local_in_call_stack
+from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils.threading import DEFAULT_NETWORK_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +147,10 @@ class Endpoint(SerialModel, SingletonPerName):
         return
 
     def post(
-        self, url: str, payload: JSON, timeout: Optional[int] = None
+        self,
+        url: str,
+        payload: JSON,
+        timeout: float = DEFAULT_NETWORK_TIMEOUT
     ) -> Any:
         self.pace_me()
         ret = requests.post(
@@ -178,7 +184,8 @@ class Endpoint(SerialModel, SingletonPerName):
         if len(j) == 1:
             return j[0]
 
-        else: return j
+        else:
+            return j
 
     def run_me(self, thunk: Thunk[T]) -> T:
         """
@@ -826,27 +833,64 @@ class DummyEndpoint(Endpoint):
     Endpoint for testing purposes. Should not make any network calls.
     """
 
-    # Pretend the model we are querying is loading as is in huggingface.
-    is_loading: bool = True
+    # Simulated result parameters below.
+
+    # How often to produce the "model loading" response.
+    loading_prob: float
+    # How much time to indicate as needed to load the model in the above response.
+    loading_time: Callable[[], float] = \
+        pydantic.Field(exclude=True, default_factory=lambda: lambda: random.uniform(0.73, 3.7))
+
+    # How often to produce an error response.
+    error_prob: float
+
+    # How often to produce freeze instead of producing a response.
+    freeze_prob: float
+
+    # How often to produce the overloaded message.
+    overloaded_prob: float
 
     def __new__(cls, *args, **kwargs):
+
         return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
 
-    def __init__(self, name: str = "dummyendpoint", **kwargs):
+    def __init__(
+        self,
+        name: str = "dummyendpoint",
+        error_prob: float = 1 / 100,
+        freeze_prob: float = 1 / 100,
+        overloaded_prob: float = 1 / 100,
+        loading_prob: float = 1 / 100,
+        rpm: float = DEFAULT_RPM * 10,
+        **kwargs
+    ):
         if hasattr(self, "callback_class"):
             # Already created with SingletonPerName mechanism
             return
 
+        assert error_prob + freeze_prob + overloaded_prob + loading_prob <= 1.0
+        assert rpm > 0
+
         kwargs['name'] = name
         kwargs['callback_class'] = EndpointCallback
-        kwargs['rpm'] = DEFAULT_RPM * 10
 
-        super().__init__(**kwargs)
+        super().__init__(
+            **kwargs, **locals_except("self", "name", "kwargs", "__class__")
+        )
 
+        print(
+            f"Using DummyEndpoint with {locals_except('self', 'name', 'kwargs', '__class__')}"
+        )
+
+    # TODO: make a robust version of POST or use tenacity
     def post(
-        self, url: str, payload: JSON, timeout: Optional[int] = None
+        self,
+        url: str,
+        payload: JSON,
+        timeout: float = DEFAULT_NETWORK_TIMEOUT
     ) -> Any:
-        # classification results only, like from huggingface
+        # Classification results only, like from huggingface. Simulates
+        # overloaded, model loading, frozen, error.
 
         self.pace_me()
 
@@ -857,28 +901,50 @@ class DummyEndpoint(Endpoint):
         )
         """
 
-        if self.is_loading:
-            # "model loading message"
-            j = dict(estimated_time=1.2345)
-            self.is_loading = False
-        elif random.randint(a=0, b=50) == 0:
-            # randomly overloaded
-            j = dict(error="overloaded")
+        r = random.random()
+        j: Optional[JSON] = None
 
-        else:
-            # otherwise a constant success
+        if r < self.freeze_prob:
+            # Simulated freeze outcome.
+
+            while True:
+                sleep(timeout)
+                raise TimeoutError()
+
+        r -= self.freeze_prob
+
+        if r < self.error_prob:
+            # Simulated error outcome.
+
+            raise RuntimeError("Simulated error happened.")
+        r -= self.error_prob
+
+        if r < self.loading_prob:
+            # Simulated loading model outcome.
+
+            j = dict(estimated_time=self.loading_time())
+        r -= self.loading_prob
+
+        if r < self.overloaded_prob:
+            # Simulated overloaded outcome.
+
+            j = dict(error="overloaded")
+        r -= self.overloaded_prob
+
+        if j is None:
+            # Otherwise a simulated success outcome with some constant results plus some randomness.
 
             j = [
                 [
                     {
                         'label': 'LABEL_1',
-                        'score': 0.6034979224205017
+                        'score': 0.6034979224205017 + random.random()
                     }, {
                         'label': 'LABEL_2',
-                        'score': 0.2648237645626068
+                        'score': 0.2648237645626068 + random.random()
                     }, {
                         'label': 'LABEL_0',
-                        'score': 0.13167837262153625
+                        'score': 0.13167837262153625 + random.random()
                     }
                 ]
             ]
@@ -889,15 +955,22 @@ class DummyEndpoint(Endpoint):
         # how long to wait:
         if "estimated_time" in j:
             wait_time = j['estimated_time']
-            logger.error(f"Waiting for {j} ({wait_time}) second(s).")
+            warnings.warn(
+                f"Waiting for {j} ({wait_time}) second(s).",
+                ResourceWarning,
+                stacklevel=2
+            )
             sleep(wait_time + 2)
             return self.post(url, payload)
 
         if isinstance(j, Dict) and "error" in j:
             error = j['error']
-            logger.error(f"API error: {j}.")
             if error == "overloaded":
-                logger.error("Waiting for overloaded API before trying again.")
+                warnings.warn(
+                    "Waiting for overloaded API before trying again.",
+                    ResourceWarning,
+                    stacklevel=2
+                )
                 sleep(10)
                 return self.post(url, payload)
             else:

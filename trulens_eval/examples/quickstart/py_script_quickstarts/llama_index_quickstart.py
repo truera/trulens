@@ -17,7 +17,7 @@
 # In[ ]:
 
 
-#! pip install trulens-eval==0.15.3 llama_index>=0.8.29post1 html2text>=2020.1.16
+#! pip install trulens-eval==0.16.0 llama_index>=0.8.29post1 html2text>=2020.1.16
 
 
 # ### Add API keys

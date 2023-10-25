@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist # we are including this in repo for convenient dev
 dist-ssr
 *.local
 

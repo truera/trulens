@@ -6,7 +6,8 @@ import json
 import logging
 import pprint
 import traceback
-from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+import warnings
 
 import numpy as np
 import pydantic
@@ -70,7 +71,6 @@ class Feedback(FeedbackDefinition):
           float for feedback implementations that are run more than once.
         """
 
-        agg = agg or np.mean
         if name is not None:
             kwargs['supplied_name'] = name
 
@@ -102,26 +102,34 @@ class Feedback(FeedbackDefinition):
 
         # Similarly with agg and aggregator.
         if agg is not None:
-            if 'aggregator' not in kwargs:
+            if kwargs.get('aggregator') is None:
                 try:
                     # These are for serialization to/from json and for db storage.
                     kwargs['aggregator'] = FunctionOrMethod.of_callable(
                         agg, loadable=True
                     )
-                except:
+                except Exception as e:
                     # User defined functions in script do not have a module so cannot be serialized
+                    logger.warning(
+                        f"Cannot serialize aggregator {agg}. "
+                        f"Deferred mode will default to `np.mean` as aggregator. "
+                        f"If you are not using FeedbackMode.DEFERRED, you can safely ignore this warning. "
+                        f"{e}")
                     pass
         else:
-            if 'aggregator' in kwargs:
+            if kwargs.get('aggregator') is not None:
                 agg: AggCallable = FunctionOrMethod.pick(
                     **(kwargs['aggregator'])
                 ).load()
+            else:
+                # Default aggregator if neither serialized `aggregator` or
+                # loaded `agg` were specified.
+                agg = np.mean
 
         super().__init__(**kwargs)
 
         self.imp = imp
         self.agg = agg
-        self.supplied_name = name
 
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:
@@ -208,12 +216,12 @@ class Feedback(FeedbackDefinition):
                 f"The feedback function has signature {sig}."
             )
 
-        print(f"setting selectors to {selectors}")
-
         self.selectors = selectors
 
     @staticmethod
-    def evaluate_deferred(tru: 'Tru') -> int:
+    def evaluate_deferred(
+        tru: 'Tru'
+    ) -> List['Future[Tuple[Feedback, FeedbackResult]]']:
         """
         Evaluates feedback functions that were specified to be deferred. Returns
         an integer indicating how many evaluates were run.
@@ -228,7 +236,7 @@ class Feedback(FeedbackDefinition):
             app_json = row.app_json
 
             feedback = Feedback(**row.feedback_json)
-            feedback.run_and_log(
+            return feedback, feedback.run_and_log(
                 record=record,
                 app=app_json,
                 tru=tru,
@@ -237,7 +245,9 @@ class Feedback(FeedbackDefinition):
 
         feedbacks = db.get_feedback()
 
-        started_count = 0
+        tp = TP()
+
+        futures: List['Future[Tuple[Feedback, FeedbackResult]]'] = []
 
         for i, row in feedbacks.iterrows():
             feedback_ident = f"{row.fname} for app {row.app_json['app_id']}, record {row.record_id}"
@@ -248,8 +258,7 @@ class Feedback(FeedbackDefinition):
                     f"{UNICODE_YIELD} Feedback task starting: {feedback_ident}"
                 )
 
-                TP().runlater(prepare_feedback, row)
-                started_count += 1
+                futures.append(tp.submit(prepare_feedback, row))
 
             elif row.status in [FeedbackResultStatus.RUNNING]:
                 now = datetime.now().timestamp()
@@ -258,8 +267,7 @@ class Feedback(FeedbackDefinition):
                         f"{UNICODE_YIELD} Feedback task last made progress over 30 seconds ago. "
                         f"Retrying: {feedback_ident}"
                     )
-                    TP().runlater(prepare_feedback, row)
-                    started_count += 1
+                    futures.append(tp.submit(prepare_feedback, row))
 
                 else:
                     print(
@@ -274,8 +282,7 @@ class Feedback(FeedbackDefinition):
                         f"{UNICODE_YIELD} Feedback task last made progress over 5 minutes ago. "
                         f"Retrying: {feedback_ident}"
                     )
-                    TP().runlater(prepare_feedback, row)
-                    started_count += 1
+                    futures.append(tp.submit(prepare_feedback, row))
 
                 else:
                     print(
@@ -286,7 +293,7 @@ class Feedback(FeedbackDefinition):
             elif row.status == FeedbackResultStatus.DONE:
                 pass
 
-        return started_count
+        return futures
 
     def __call__(self, *args, **kwargs) -> Any:
         assert self.imp is not None, "Feedback definition needs an implementation to call."
@@ -461,10 +468,9 @@ class Feedback(FeedbackDefinition):
                     )
                     cost += part_cost
                 except Exception as e:
-                    print(
+                    raise RuntimeError(
                         f"Evaluation of {self.name} failed on inputs: \n{pp.pformat(ins)[0:128]}\n{e}."
                     )
-                    continue
 
                 if isinstance(result_and_meta, Tuple):
                     # If output is a tuple of two, we assume it is the float/multifloat and the metadata.
@@ -506,8 +512,10 @@ class Feedback(FeedbackDefinition):
                 feedback_calls.append(feedback_call)
 
             if len(result_vals) == 0:
-                logger.warning(
-                    f"Feedback function {self.supplied_name if self.supplied_name is not None else self.name} with aggregation {self.agg} had no inputs."
+                warnings.warn(
+                    f"Feedback function {self.supplied_name if self.supplied_name is not None else self.name} with aggregation {self.agg} had no inputs.",
+                    UserWarning,
+                    stacklevel=1
                 )
                 result = np.nan
 
@@ -559,7 +567,7 @@ class Feedback(FeedbackDefinition):
         tru: 'Tru',
         app: Union[AppDefinition, JSON] = None,
         feedback_result_id: Optional[FeedbackResultID] = None
-    ) -> FeedbackResult:
+    ) -> Optional[FeedbackResult]:
         record_id = record.record_id
         app_id = record.app_id
 
@@ -643,7 +651,7 @@ class Feedback(FeedbackDefinition):
 
             q_within_o = Select.Query(path=q.path[1:])
             try:
-                arg_vals[k] = list(q_within_o(o))
+                arg_vals[k] = list(q_within_o.get(o))
             except Exception as e:
                 raise RuntimeError(
                     f"Could not locate {q_within_o} in app/record."

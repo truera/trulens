@@ -10,7 +10,7 @@
 # In[ ]:
 
 
-# ! pip install trulens_eval==0.15.3 langchain>=0.0.263
+# ! pip install trulens_eval==0.16.0 langchain>=0.0.263
 
 
 # ## Setup
@@ -34,6 +34,7 @@ from IPython.display import JSON
 
 # Imports main tools:
 from trulens_eval import TruChain, Feedback, Huggingface, Tru
+from trulens_eval.schema import FeedbackResult
 tru = Tru()
 
 # Imports from langchain to build app. You may need to install langchain first
@@ -114,6 +115,37 @@ with tru_recorder as recording:
     llm_response = chain(prompt_input)
 
 display(llm_response)
+
+
+# ## Retrieve records and feedback
+
+# In[ ]:
+
+
+# The record of the ap invocation can be retrieved from the `recording`:
+
+rec = recording.get() # use .get if only one record
+# recs = recording.records # use .records if multiple
+
+display(rec)
+
+
+# In[ ]:
+
+
+# The results of the feedback functions can be rertireved from the record. These
+# are `Future` instances (see `concurrent.futures`). You can use `as_completed`
+# to wait until they have finished evaluating.
+
+from concurrent.futures import as_completed
+
+for feedback_future in  as_completed(rec.feedback_results):
+    feedback, feedback_result = feedback_future.result()
+    
+    feedback: Feedback
+    feedbac_result: FeedbackResult
+
+    display(feedback.name, feedback_result.result)
 
 
 # ## Explore in a Dashboard

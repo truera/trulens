@@ -66,7 +66,9 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
 
     def __init__(self, region_name, *args, **kwargs):
         import boto3
-        client = boto3.client(service_name="bedrock-runtime", region_name=region_name)
+        client = boto3.client(
+            service_name="bedrock-runtime", region_name=region_name
+        )
 
         kwargs['name'] = "bedrock"
         kwargs['callback_class'] = BedrockCallback
