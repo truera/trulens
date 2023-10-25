@@ -127,6 +127,7 @@ COT_REASONS_TEMPLATE = \
 Please answer with this template:
 
 TEMPLATE: 
-Supporting Evidence: <Give your reasons for scoring>
+Criteria: <Provide the criteria for this evaluation>
+Reasoning: <Provide your reasons for scoring based on the listed criteria step by step. Tie it back to the evaluation being completed.>
 Score: <The score 0-10 based on the given criteria>
 """
