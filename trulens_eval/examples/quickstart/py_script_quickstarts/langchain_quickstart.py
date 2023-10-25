@@ -26,13 +26,10 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 
 # In[ ]:
 
-from IPython.display import JSON
-
 # Imports main tools:
 from trulens_eval import Feedback
 from trulens_eval import Huggingface
 from trulens_eval import Tru
-from trulens_eval import TruChain
 from trulens_eval.schema import FeedbackResult
 
 tru = Tru()
@@ -48,23 +45,33 @@ from langchain.prompts.chat import PromptTemplate
 
 # ### Create Simple LLM Application
 #
-# This example uses a LangChain framework and OpenAI LLM
+# This example uses a LangChain framework and OpenAI LLM.
 
 # In[ ]:
 
-full_prompt = HumanMessagePromptTemplate(
-    prompt=PromptTemplate(
-        template=
-        "Provide a helpful response with relevant background information for the following: {prompt}",
-        input_variables=["prompt"],
+
+def new_session() -> LLMChain:
+    # A function to return a chain for a new session. This is needed if you
+    # would like to run your app from the dashboard.
+
+    full_prompt = HumanMessagePromptTemplate(
+        prompt=PromptTemplate(
+            template=
+            "Provide a helpful response with relevant background information for the following: {prompt}",
+            input_variables=["prompt"],
+        )
     )
-)
 
-chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
+    chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
 
-llm = OpenAI(temperature=0.9, max_tokens=128)
+    llm = OpenAI(temperature=0.9, max_tokens=128)
 
-chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
+    chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
+
+    return chain
+
+
+chain = new_session()
 
 # ### Send your first request
 
@@ -94,8 +101,11 @@ f_lang_match = Feedback(hugs.language_match).on_input_output()
 
 # In[ ]:
 
-tru_recorder = TruChain(
-    chain, app_id='Chain1_ChatApplication', feedbacks=[f_lang_match]
+tru_recorder = tru.Chain(
+    chain,
+    app_id='Chain1_ChatApplication',
+    feedbacks=[f_lang_match],
+    new_session=new_session  # to interact with app in the dashboard
 )
 
 # In[ ]:
@@ -148,7 +158,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 #
 # Note: Average feedback values are returned and displayed in a range from 0 (worst) to 1 (best).
 #
-# ![Chain Leaderboard](https://www.trulens.org/Assets/image/Leaderboard.png)
+# ![Chain Leaderboard](https://www.trulens.org/assets/images/Leaderboard.png)
 #
 # To dive deeper on a particular chain, click "Select Chain".
 #
@@ -158,15 +168,21 @@ tru.run_dashboard()  # open a local streamlit app to explore
 #
 # The evaluations tab provides record-level metadata and feedback on the quality of your LLM application.
 #
-# ![Evaluations](https://www.trulens.org/Assets/image/Leaderboard.png)
+# ![Evaluations](https://www.trulens.org/assets/images/Leaderboard.png)
 #
 # ### Deep dive into full chain metadata
 #
 # Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain_recorder.
 #
-# ![Explore a Chain](https://www.trulens.org/Assets/image/Chain_Explore.png)
+# ![Explore a Chain](https://www.trulens.org/assets/images/Chain_Explore.png)
 #
 # If you prefer the raw format, you can quickly get it using the "Display full chain json" or "Display full record json" buttons at the bottom of the page.
+#
+# ### Run the Chain from the Dashboard
+#
+# ![App Runner](https://www.trulens.org/assets/images/appui/running_session.png)
+#
+# You can run the chain inside the dashboard by creating a new session on the "Apps" page. See more information about this feature in `dashboard_appui.ipynb`.
 
 # Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
 
