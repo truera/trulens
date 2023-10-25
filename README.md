@@ -27,7 +27,7 @@ TruLens-Eval has two key value propositions:
     * Anything that is tracked by the instrumentation can be evaluated!
 
 The process for building your evaluated and tracked LLM application with TruLens is shown below 👇
-![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
+![Architecture Diagram](https://www.trulens.org/assets/images/TruLens_Architecture.png)
 
 ### Installation and setup
 
