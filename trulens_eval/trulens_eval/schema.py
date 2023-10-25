@@ -541,7 +541,6 @@ class AppDefinition(SerialModel, WithClassInfo):
         metadata: Optional[Metadata] = None,
         feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
         app_extra_json: JSON = None,
-        new_session: Optional[Callable[[], Any]] = None,
         **kwargs
     ):
 
@@ -569,9 +568,6 @@ class AppDefinition(SerialModel, WithClassInfo):
         if metadata is None:
             metadata = {}
         self.metadata = metadata
-
-        if new_session is not None:
-            kwargs['initial_app_loader'] = new_session
 
         # EXPERIMENTAL
         if 'initial_app_loader' in kwargs:
