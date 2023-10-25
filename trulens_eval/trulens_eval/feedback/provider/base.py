@@ -142,11 +142,17 @@ class LLMProvider(Provider, ABC):
         response = self.endpoint.run_me(
             lambda: self._create_chat_completion(messages=llm_messages)
         )
-        if "Supporting Evidence" in response:
+        if "Supporting Evidence" or "Reason" in response:
             score = 0.0
             for line in response.split('\n'):
                 if "Score" in line:
                     score = re_0_10_rating(line) / normalize
+                if "Supporting Evidence" or "Reason" in line:
+                    parts = line.split(":")
+                    if len(parts) > 1:
+                        reason = ":".join(parts[1:]).strip()
+                    else:
+                        reason = "No reason supplied."
             return score, {"reason": response}
         else:
             return re_0_10_rating(response) / normalize
