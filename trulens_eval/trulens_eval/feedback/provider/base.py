@@ -126,7 +126,7 @@ class LLMProvider(Provider, ABC):
     ) -> Union[float, Tuple[float, Dict]]:
         """
         Extractor for our LLM prompts. If CoT is used; it will look for
-        "Supporting Evidence" template. Otherwise, it will look for the typical
+        "Supporting Evidence" or "Reasons" templates. Otherwise, it will look for the typical
         0-10 scoring.
 
         Args:
