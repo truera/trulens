@@ -147,7 +147,7 @@ class LLMProvider(Provider, ABC):
             for line in response.split('\n'):
                 if "Score" in line:
                     score = re_0_10_rating(line) / normalize
-                if "Supporting Evidence" or "Reason" in line:
+                if "Supporting Evidence" in line:
                     parts = line.split(":")
                     if len(parts) > 1:
                         reason = ":".join(parts[1:]).strip()
