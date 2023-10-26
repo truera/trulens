@@ -114,7 +114,8 @@ class Feedback(FeedbackDefinition):
                         f"Cannot serialize aggregator {agg}. "
                         f"Deferred mode will default to `np.mean` as aggregator. "
                         f"If you are not using FeedbackMode.DEFERRED, you can safely ignore this warning. "
-                        f"{e}")
+                        f"{e}"
+                    )
                     pass
         else:
             if kwargs.get('aggregator') is not None:
