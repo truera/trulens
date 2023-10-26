@@ -250,11 +250,8 @@ class Tru(SingletonPerName):
         """
 
         for res in as_completed(self._submit_feedback_functions(
-                record=record,
-                feedback_functions=feedback_functions,
-                app=app
-            )):
-            
+                record=record, feedback_functions=feedback_functions, app=app)):
+
             yield res.result()[1]
 
     def add_app(self, app: AppDefinition) -> None:

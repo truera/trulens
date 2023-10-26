@@ -62,7 +62,10 @@ def streamlit_app():
         metadata = app_json.get('metadata')
         #st.text('Metadata' + str(metadata))
         st.header(app, help=draw_metadata(metadata))
-        app_feedback_col_names = [col_name for col_name in feedback_col_names if not app_df[col_name].isna().all()]
+        app_feedback_col_names = [
+            col_name for col_name in feedback_col_names
+            if not app_df[col_name].isna().all()
+        ]
         col1, col2, col3, col4, *feedback_cols, col99 = st.columns(
             5 + len(app_feedback_col_names)
         )
