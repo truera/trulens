@@ -62,8 +62,12 @@ def streamlit_app():
         metadata = app_json.get('metadata')
         #st.text('Metadata' + str(metadata))
         st.header(app, help=draw_metadata(metadata))
+        app_feedback_col_names = [
+            col_name for col_name in feedback_col_names
+            if not app_df[col_name].isna().all()
+        ]
         col1, col2, col3, col4, *feedback_cols, col99 = st.columns(
-            5 + len(feedback_col_names)
+            5 + len(app_feedback_col_names)
         )
         latency_mean = app_df['latency'].apply(
             lambda td: td if td != MIGRATION_UNKNOWN_STR else None
@@ -91,7 +95,8 @@ def streamlit_app():
                 precision=2
             )
         )
-        for i, col_name in enumerate(feedback_col_names):
+
+        for i, col_name in enumerate(app_feedback_col_names):
             mean = app_df[col_name].mean()
 
             st.write(
@@ -99,9 +104,7 @@ def streamlit_app():
                 unsafe_allow_html=True,
             )
 
-            if math.isnan(mean):
-                pass
-            elif ("distance" in col_name):
+            if ("distance" in col_name):
                 feedback_cols[i].metric(
                     label=col_name,
                     value=f'{round(mean, 2)}',

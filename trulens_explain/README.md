@@ -1,6 +1,6 @@
 # Welcome to TruLens!
 
-![TruLens](https://www.trulens.org/Assets/image/Neural_Network_Explainability.png)
+![TruLens](https://www.trulens.org/assets/images/Neural_Network_Explainability.png)
 
 
 TruLens is a cross-framework library for deep learning explainability. It provides a uniform abstraction over a number of different frameworks. It provides a uniform abstraction layer over TensorFlow, PyTorch, and Keras and allows input and internal explanations.
