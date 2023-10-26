@@ -13,10 +13,8 @@ from inspect import Signature
 import logging
 from pprint import PrettyPrinter
 from threading import Lock
-from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
-    Tuple, Type
-)
+from typing import (Any, Callable, Dict, Hashable, Iterable, List, NewType,
+                    Optional, Sequence, Set, Tuple, Type, TypeVar, Union)
 
 import dill
 import pydantic
@@ -26,7 +24,7 @@ from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
 from trulens_eval.instruments import Instrument
 from trulens_eval.instruments import WithInstrumentCallbacks
-from trulens_eval.schema import AppDefinition
+from trulens_eval.schema import AppDefinition, AppType
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import FeedbackResult
@@ -40,7 +38,6 @@ from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import callable_name
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
-from trulens_eval.utils.pyschema import ObjSerial
 from trulens_eval.utils.serial import all_objects
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
@@ -48,7 +45,6 @@ from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSON_BASES_T
 from trulens_eval.utils.serial import JSONPath
 from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
 
@@ -408,7 +404,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     db: Optional[DB] = Field(exclude=True)
 
     # The wrapped app.
-    app: Any = Field(exclude=True)
+    app: AppType = Field(exclude=True)
 
     # Instrumentation class.
     instrument: Instrument = Field(exclude=True)

@@ -13,17 +13,16 @@ from ast import parse
 from copy import copy
 import logging
 from pprint import PrettyPrinter
-
-from typing import (
-    Any, Callable, Dict, Iterable, Iterator, List, Optional, Sequence, Set, Tuple,
-    TypeVar, Union
-)
+import tempfile
+from typing import (Any, Callable, Dict, Generic, Iterable, Iterator, List, Optional,
+                    Sequence, Set, Tuple, TypeVar, Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
 
 from trulens_eval.utils.containers import iterable_peek
+from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -43,6 +42,116 @@ JSON = Union[JSON_BASES_T, Sequence[Any], Dict[str, Any]]  # Any = JSON
 JSON_STRICT = Dict[str, JSON]
 
 mj = MerkleJson()
+
+MAX_DILL_SIZE = 1024 * 1024  # 1MB
+
+def loads(data: bytes | str) -> Any:
+    pass
+
+import dill
+import humanize
+from langchain.chains import load_chain
+from langchain.chains.base import Chain
+
+
+T = TypeVar("T")
+
+class Dump(pydantic.BaseModel, Generic[T]):
+    @classmethod
+    def validate(cls, obj):
+        if isinstance(obj, dict):
+            if hasattr(obj, "chain_json"):
+                return LangChainDump.load_obj(obj)
+            elif hasattr(obj, "dill_bytes"):
+                return DillDump.load_obj(obj)
+            elif hasattr(obj, "model_json"):
+                return PydanticDump.load_obj(obj)
+            elif hasattr(obj, "serial_model_dump"):
+                return SerialDump.load_obj(obj)
+
+        raise ValueError(f"Unknown dump type {type(obj).__name__}")
+
+    @classmethod
+    def dumpm(cls, obj: T, instrument: Optional['Instrument'] = None):
+        """
+        Dump `obj` to a model.
+        """
+        
+        dumped = None
+
+        # try lib-specific serialization:
+        if isinstance(obj, Chain):
+            try:
+                file = tempfile.NamedTemporaryFile(mode="r", suffix=".json")
+                obj.save(file.name)
+                
+                # Try loading first. Someimes a save will be ok but load will say
+                # "not supported".
+
+                load_chain(file.name)
+
+                dumped = LangChainDump(chain_json="")
+                # get file contents and put into LangChainDump
+
+            except Exception as e:
+                logger.warning(f"Could not save chain using langchain: {e}")
+            
+        # try our modified pydantic jsonification:
+        if isinstance(obj, SerialModel):
+            from trulens_eval.instruments import Instrument
+            from trulens_eval.utils.json import json_str_of_obj
+
+            dumped = SerialDump(
+                serial_model_json = json_str_of_obj(obj, instrument=instrument)
+            )
+
+        # try pydantic default jsonification:
+        if isinstance(obj, pydantic.BaseModel):
+            dumped = PydanticDump(model_json = obj.json())
+
+        # if all else fails, try dill
+        try:
+            data = dill.dumps(obj, recurse=True)
+            if len(data) > MAX_DILL_SIZE:
+                raise ValueError(f"Object too big to serialize raw. Size is {humanize.naturalsize(len(data))}.")
+
+            dumped = DillDump(dill_bytes=SerialBytes(data))
+        
+        except Exception as e:
+            logger.warning(f"Could not save object using dill: {e}")
+
+        if dumped is None:
+            raise RuntimeError("Failed to save object.")
+        else:
+            print(f"{UNICODE_CHECK} Object of type {type(obj).__name__} saved.")
+            return dumped
+
+class LangChainDump(Dump[T]):
+    chain_json: str
+
+    def loadm(self) -> T:
+        # write to temp file
+        file = ...
+
+        return load_chain(file)
+
+class DillDump(Dump[T]):
+    dill_bytes: SerialBytes
+
+    def loadm(self) -> T:
+        ...
+
+class PydanticDump(Dump[T]):
+    model_json: str
+
+    def loadm(self) -> T:
+        ...
+
+class SerialDump(Dump[T]):
+    serial_model_json: SerialModel
+
+    def loadm(self) -> T:
+        ...
 
 
 class SerialModel(pydantic.BaseModel):
