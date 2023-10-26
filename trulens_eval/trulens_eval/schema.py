@@ -454,12 +454,16 @@ def make_app_and_loader(app: AppLike) -> Tuple[AppType, Optional[AppLoader]]:
     if is_thunk(app):
         app_loader = app
         app: AppType = app_loader()
+
     else:
         try:
             app_dump = Dump.dumpm(app)
 
-            def app_loader():
-                return Dump.loadm(app_dump)
+            def _app_loader():
+                dump = Dump.parse_obj(app_dump)
+                return dump.loadm()
+            
+            app_loader = _app_loader
 
         except Exception as e:
             logger.warning(f"Could not create app loader ({e}). This app will not be usable from the dashboard.")
@@ -575,14 +579,24 @@ class AppDefinition(SerialModel, WithClassInfo):
         **kwargs
     ):
 
-        if new_session is None:
-            app, new_session = make_app_and_loader(app)
+        if app is None:
+            if new_session is None:
+                raise ValueError("Provide your app either as an `app` instance or a `new_session`, an app loader thunk")
+            else:
+                app = new_session()
+
         else:
-            if is_thunk(app):
-                raise ValueError(
-                    f"Conflicting specification of app loader. "
-                    f"Provide thunk to create your app either in the `app` argument or the `new_session` argument, but not both."
-                )
+
+            if new_session is None:
+                app, new_session = make_app_and_loader(app)
+
+            else:
+                if is_thunk(app):
+                    raise ValueError(
+                        f"Conflicting specification of app loader. "
+                        f"Provide thunk to create your app either in the `app` argument or the `new_session` argument, but not both."
+                    )
+
 
         # for us:
         kwargs['app_id'] = "temporary"  # will be adjusted below

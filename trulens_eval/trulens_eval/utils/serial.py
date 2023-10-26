@@ -137,7 +137,7 @@ class Dump(pydantic.BaseModel, Generic[T]):
         raise ValueError(f"Unknown dump type {type(obj).__name__}")
 
     @classmethod
-    def dumpm(cls, obj: T, instrument: Optional['Instrument'] = None):
+    def dumpm(cls, obj: T, instrument: Optional['Instrument'] = None) -> 'Dump':
         """
         Dump `obj` to a model.
         """
