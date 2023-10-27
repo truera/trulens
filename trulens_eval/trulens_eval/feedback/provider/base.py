@@ -153,7 +153,7 @@ class LLMProvider(Provider, ABC):
                         reason = ":".join(parts[1:]).strip()
                     else:
                         reason = "No reason supplied."
-            return score, {"reason": response}
+            return score, {"reason": reason}
         else:
             return re_0_10_rating(response) / normalize
 
