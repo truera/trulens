@@ -144,7 +144,6 @@ class LLMProvider(Provider, ABC):
         )
         if "Supporting Evidence" in response:
             score = 0.0
-            statement_sentence = ""
             supporting_evidence = ""
             for line in response.split('\n'):
                 if "Score" in line:
