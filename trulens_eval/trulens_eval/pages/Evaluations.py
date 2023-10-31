@@ -54,7 +54,9 @@ df_results, feedback_cols = lms.get_records_and_feedback([])
 
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {
-    row.feedback_json["implementation"]["name"]:
+    (
+        row.feedback_json.get("supplied_name", "") or row.feedback_json["implementation"]["name"]
+    ):
         (
             "HIGHER_IS_BETTER"
             if row.feedback_json["higher_is_better"] else "LOWER_IS_BETTER"
@@ -221,7 +223,7 @@ else:
                     cellStyle=cellstyle,
                     hide=feedback_col.endswith("_calls")
                 )
-                
+
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
