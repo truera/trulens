@@ -48,5 +48,5 @@ class LiteLLM(LLMProvider):
         )  # need to include pydantic.BaseModel.__init__
 
     def _create_chat_completion(self, messages, *args, **kwargs):
-        import litellm
-        return litellm.completion(messages=messages, *args, **kwargs)
+        from litellm import completion
+        return completion(model = self.model_engine, messages=messages, *args, **kwargs)["choices"][0]["message"]["content"]
