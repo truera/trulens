@@ -1,6 +1,8 @@
 import logging
 import os
 
+from typing import Dict, Optional, Sequence
+
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import LiteLLMEndpoint
@@ -47,6 +49,27 @@ class LiteLLM(LLMProvider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-    def _create_chat_completion(self, messages, *args, **kwargs):
-        import litellm
-        return litellm.completion(messages=messages, *args, **kwargs)
+    def _create_chat_completion(
+        self,
+        prompt: Optional[str] = None,
+        messages: Optional[Sequence[Dict]] = None,
+        **kwargs
+    ) -> str:
+        
+        from litellm import completion
+        if prompt is not None:
+            comp = completion(model = self.model_engine,
+                messages=[{
+                    "role": "system",
+                    "content": prompt
+                }], **kwargs
+            )
+        elif messages is not None:
+            comp = completion(model = self.model_engine, messages=messages, **kwargs)
+
+        else:
+            raise ValueError("`prompt` or `messages` must be specified.")
+
+        assert isinstance(comp, dict)
+
+        return comp["choices"][0]["message"]["content"]
