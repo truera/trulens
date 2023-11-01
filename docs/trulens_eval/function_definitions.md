@@ -28,7 +28,14 @@ TruLens offers two particular flavors of relevance:
     * Feedback mechanism should differentiate between seeming and actual relevance.
     * Relevant but inconclusive statements should get increasingly high scores as they are more helpful for answering the query.
 
-    You can read more information about the performance of question statement relevance by viewing its [smoke test results](../qs_relevance_smoke_tests/).
+    You can read more information about the performance of question statement relevance by viewing its [smoke test results](../context_relevance_smoke_tests/).
+
+## Groundedness
+
+Groundedness uses OpenAI LLMs or Huggingface NLI to attempt to check if an answer is grounded in its supplied contexts on a scale from 1 to 10. The information overlap or entailment between source and response is then measured, choosing the highest score between sources and then averaged and scaled from 0 to 1.
+
+You can read about the performance of groundedness evaluations by viewing its [smoke test results](../groundedness_smoke_tests/).
+
 
 ## Sentiment
 
@@ -43,10 +50,6 @@ Sentiment is currently available to use with OpenAI, HuggingFace or Cohere as th
 ## Model Agreement
 
 Model agreement uses OpenAI to attempt an honest answer at your prompt with system prompts for correctness, and then evaluates the agreement of your LLM response to this model on a scale from 1 to 10. The agreement with each honest bot is then averaged and scaled from 0 to 1.
-
-## Groundedness
-
-Groundedness uses OpenAI LLMs or Huggingface NLI to attempt to check if an answer is grounded in its supplied contexts on a scale from 1 to 10. The information overlap or entailment between source and response is then measured, choosing the highest score between sources and then averaged and scaled from 0 to 1.
 
 ## Language Match
 
