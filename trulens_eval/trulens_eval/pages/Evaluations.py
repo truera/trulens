@@ -314,7 +314,12 @@ else:
                                 return [
                                     f"background-color: {CATEGORY.UNKNOWN.color}"
                                 ] * len(s)
-                            cat = CATEGORY.of_score(s.result,)
+                            cat = CATEGORY.of_score(
+                                s.result,
+                                higher_is_better=feedback_directions.get(
+                                    fcol, default_direction
+                                ) == default_direction
+                            )
                             return [f"background-color: {cat.color}"] * len(s)
 
                         if call is not None and len(call) > 0:
