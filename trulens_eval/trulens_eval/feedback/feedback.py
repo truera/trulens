@@ -53,11 +53,15 @@ class Feedback(FeedbackDefinition):
     # An optional name. Only will affect display tables
     supplied_name: Optional[str] = None
 
+    # feedback direction
+    higher_is_better: Optional[bool] = pydantic.Field()
+
     def __init__(
         self,
         imp: Optional[Callable] = None,
         agg: Optional[Callable] = None,
         name: Optional[str] = None,
+        higher_is_better: Optional[bool] = None,
         **kwargs
     ):
         """
@@ -131,6 +135,12 @@ class Feedback(FeedbackDefinition):
 
         self.imp = imp
         self.agg = agg
+
+        # By default, higher score is better
+        if higher_is_better is None:
+            self.higher_is_better = True
+        else:
+            self.higher_is_better = higher_is_better
 
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:
@@ -312,7 +322,8 @@ class Feedback(FeedbackDefinition):
             imp=self.imp,
             selectors=self.selectors,
             agg=func,
-            name=self.supplied_name
+            name=self.supplied_name,
+            higher_is_better=self.higher_is_better
         )
 
     @staticmethod
@@ -368,7 +379,8 @@ class Feedback(FeedbackDefinition):
             imp=self.imp,
             selectors=new_selectors,
             agg=self.agg,
-            name=self.supplied_name
+            name=self.supplied_name,
+            higher_is_better=self.higher_is_better
         )
 
     on_input = on_prompt
@@ -391,7 +403,8 @@ class Feedback(FeedbackDefinition):
             imp=self.imp,
             selectors=new_selectors,
             agg=self.agg,
-            name=self.supplied_name
+            name=self.supplied_name,
+            higher_is_better=self.higher_is_better
         )
 
     on_output = on_response
@@ -416,7 +429,8 @@ class Feedback(FeedbackDefinition):
             imp=self.imp,
             selectors=new_selectors,
             agg=self.agg,
-            name=self.supplied_name
+            name=self.supplied_name,
+            higher_is_better=self.higher_is_better
         )
 
     def run(
