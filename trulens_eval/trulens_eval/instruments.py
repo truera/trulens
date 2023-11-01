@@ -7,7 +7,7 @@
 
 We collect app components and parameters by walking over its structure and
 producing a json reprensentation with everything we deem relevant to track. The
-function `util.py:jsonify` is the root of this process.
+function `utils/json.py:jsonify` is the root of this process.
 
 #### class/system specific
 
@@ -25,8 +25,8 @@ structures (see `schema.py`).
 
 ##### dataclasses (no present users)
 
-The built-in dataclasses package has similar functionality to pydantic but we
-presently do not handle it as we have no use cases.
+The built-in dataclasses package has similar functionality to pydantic. We
+use/serialize them using their field information.
 
 ##### dataclasses_json (llama_index)
 
@@ -44,7 +44,7 @@ In addition to collecting app parameters, we also collect:
       deserialized once we know their class and fields, for example.
     - This information is also used to determine component types without having
       to deserialize them first. 
-    - See `schema.py:Class` for details.
+    - See `utils/pyschema.py:Class` for details.
 
 ### Functions/Methods
 
@@ -106,17 +106,19 @@ tools as App Data (see above).
 - Thread-safety -- it is tricky to use global data to keep track of instrumented
   method calls in presence of multiple threads. For this reason we do not use
   global data and instead hide instrumenting data in the call stack frames of
-  the instrumentation methods. See `util.py:get_first_local_in_call_stack.py`.
+  the instrumentation methods. See
+  `utils/python.py:get_all_local_in_call_stack`.
 
 #### Threads
 
 Threads do not inherit call stacks from their creator. This is a problem due to
 our reliance on info stored on the stack. Therefore we have a limitation:
 
-- **Limitation**: Threads need to be started using the utility class TP in order
-  for instrumented methods called in a thread to be tracked. As we rely on call
+- **Limitation**: Threads need to be started using the utility class `TP` or the
+  `ThreadPoolExecutor` also defined in `utils/threading.py` in order for
+  instrumented methods called in a thread to be tracked. As we rely on call
   stack for call instrumentation we need to preserve the stack before a thread
-  start which python does not do.  See `util.py:TP._thread_starter`.
+  start which python does not do. 
 
 #### Async
 
@@ -148,6 +150,8 @@ such as `gather`.
   of the (same) apps and contain a list describing calls of both the first and
   second.
 
+  TODO(piotrm): This might have been fixed. Check.
+
 - Some apps cannot be serialized/jsonized. Sequential app is an example. This is
   a limitation of langchain itself.
 
@@ -176,8 +180,8 @@ stack for specific frames:
 
 #### Drawbacks
 
-- Python call stacks are implementation dependent and we do not expect to operate
-  on anything other than CPython.
+- Python call stacks are implementation dependent and we do not expect to
+  operate on anything other than CPython.
 
 - Python creates a fresh empty stack for each thread. Because of this, we need
   special handling of each thread created to make sure it keeps a hold of the
@@ -187,8 +191,8 @@ stack for specific frames:
 
 #### Alternatives
 
-- `contextvars` -- langchain uses these to manage contexts such as those used for
-  instrumenting/tracking LLM usage. These can be used to manage call stack
+- `contextvars` -- langchain uses these to manage contexts such as those used
+  for instrumenting/tracking LLM usage. These can be used to manage call stack
   information like we do. The drawback is that these are not threadsafe or at
   least need instrumenting thread creation. We have to do a similar thing by
   requiring threads created by our utility package which does stack management
