@@ -69,4 +69,3 @@ class LiteLLM(LLMProvider):
         assert isinstance(comp, dict)
 
         return comp["choices"][0]["message"]["content"]
-
