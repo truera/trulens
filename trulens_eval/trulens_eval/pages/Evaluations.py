@@ -59,7 +59,7 @@ feedback_directions = {
     ):
         (
             "HIGHER_IS_BETTER"
-            if row.feedback_json["higher_is_better"] else "LOWER_IS_BETTER"
+            if row.feedback_json.get("higher_is_better", True) else "LOWER_IS_BETTER"
         ) for _, row in lms.get_feedback_defs().iterrows()
 }
 default_direction = "HIGHER_IS_BETTER"
