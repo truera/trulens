@@ -11,6 +11,7 @@ This evaluates the *relevance* of the LLM response to the given text by LLM prom
 Relevance is currently only available with OpenAI ChatCompletion API.
 
 TruLens offers two particular flavors of relevance:
+
 1. *Prompt response relevance* is best for measuring the relationship of the final answer to the user inputed question. This flavor of relevance is particularly optimized for the following features:
 
     * Relevance requires adherence to the entire prompt.
@@ -19,7 +20,7 @@ TruLens offers two particular flavors of relevance:
     * Feedback mechanism should differentiate between seeming and actual relevance.
     * Relevant but inconclusive statements should get increasingly high scores as they are more helpful for answering the query.
 
-    You can read more information about the performance of prompt response relevance by viewing its [smoke test results](../pr_relevance_smoke_tests/).
+    You can read more information about the performance of prompt response relevance by viewing its [smoke test results](../answer_relevance_smoke_tests/).
 
 2. *Question statement relevance*, sometimes known as context relevance, is best for measuring the relationship of a provided context to the user inputed question. This flavor of relevance is optimized for a slightly different set of features:
     * Relevance requires adherence to the entire query.
