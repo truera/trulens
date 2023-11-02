@@ -2,12 +2,14 @@
 Tests for Feedback providers. 
 """
 
-import unittest
 from pprint import PrettyPrinter
 from typing import Callable, Dict, List, Tuple
-from unittest import TestCase, main
+import unittest
+from unittest import main
+from unittest import TestCase
 
-from trulens_eval.feedback.provider.base import LLMProvider, Provider
+from trulens_eval.feedback.provider.base import LLMProvider
+from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.openai import OpenAI
 from trulens_eval.keys import check_keys
 

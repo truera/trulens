@@ -156,11 +156,12 @@ class LLMProvider(Provider, ABC):
                     parts = line.split(":")
                     if len(parts) > 1:
                         supporting_evidence = ":".join(parts[1:]).strip()
-            reasons = {'reason':
-            (
-                f"{'Criteria: ' + str(criteria) + ' ' if criteria else ''}\n"
-                f"{'Supporting Evidence: ' + str(supporting_evidence) if supporting_evidence else ''}"
-            )
+            reasons = {
+                'reason':
+                    (
+                        f"{'Criteria: ' + str(criteria) + ' ' if criteria else ''}\n"
+                        f"{'Supporting Evidence: ' + str(supporting_evidence) if supporting_evidence else ''}"
+                    )
             }
             return score, reasons
         else:
