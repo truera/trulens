@@ -1,5 +1,4 @@
 import logging
-
 from typing import Dict, Optional, Sequence
 
 from trulens_eval.feedback.provider.base import LLMProvider
@@ -51,17 +50,21 @@ class LiteLLM(LLMProvider):
         messages: Optional[Sequence[Dict]] = None,
         **kwargs
     ) -> str:
-        
+
         from litellm import completion
         if prompt is not None:
-            comp = completion(model = self.model_engine,
+            comp = completion(
+                model=self.model_engine,
                 messages=[{
                     "role": "system",
                     "content": prompt
-                }], **kwargs
+                }],
+                **kwargs
             )
         elif messages is not None:
-            comp = completion(model = self.model_engine, messages=messages, **kwargs)
+            comp = completion(
+                model=self.model_engine, messages=messages, **kwargs
+            )
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
