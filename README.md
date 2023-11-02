@@ -43,18 +43,18 @@ TruLens supports the evaluation of tracking for any LLM app framework. Choose a 
 
 **Langchain**
 
-[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.17.0a/trulens_eval/examples/quickstart/langchain_quickstart.ipynb).
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.17.0a/trulens_eval/examples/quickstart/colab/langchain_quickstart_colab.ipynb)
+[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.17.0b/trulens_eval/examples/quickstart/langchain_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.17.0b/trulens_eval/examples/quickstart/colab/langchain_quickstart_colab.ipynb)
 
 **Llama-Index**
 
-[llama_index_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.17.0a/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb).
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.17.0a/trulens_eval/examples/quickstart/colab/llama_index_quickstart_colab.ipynb)
+[llama_index_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.17.0b/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.17.0b/trulens_eval/examples/quickstart/colab/llama_index_quickstart_colab.ipynb)
 
 **Custom Text to Text Apps**
 
-[text2text_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.17.0a/trulens_eval/examples/quickstart/text2text_quickstart.ipynb).
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.17.0a/trulens_eval/examples/quickstart/colab/text2text_quickstart_colab.ipynb)
+[text2text_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.17.0b/trulens_eval/examples/quickstart/text2text_quickstart.ipynb).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.17.0b/trulens_eval/examples/quickstart/colab/text2text_quickstart_colab.ipynb)
 
 ## TruLens-Explain
 
