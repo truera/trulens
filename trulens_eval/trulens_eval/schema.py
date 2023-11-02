@@ -379,11 +379,10 @@ class FeedbackResult(SerialModel):
     calls: Sequence[FeedbackCall] = []
 
     # Final result, potentially aggregating multiple calls.
-    result: Optional[
-        float] = None  
+    result: Optional[float] = None
 
     # Error information if there was an error.
-    error: Optional[str] = None  
+    error: Optional[str] = None
 
     # TODO: doc
     multi_result: Optional[str] = None
