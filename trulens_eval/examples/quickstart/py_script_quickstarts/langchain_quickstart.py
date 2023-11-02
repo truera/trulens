@@ -9,9 +9,7 @@
 
 # In[ ]:
 
-
 # ! pip install trulens_eval==0.17.0b langchain>=0.0.263
-
 
 # ## Setup
 # ### Add API keys
