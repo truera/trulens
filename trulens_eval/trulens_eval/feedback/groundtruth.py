@@ -175,9 +175,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
 
         return ret
 
-    def mae(
-        self, prompt: str, response: str, score: float
-    ) -> float:
+    def mae(self, prompt: str, response: str, score: float) -> float:
         """
         Method to look up the numeric expected score from a golden set and take the differnce.
 

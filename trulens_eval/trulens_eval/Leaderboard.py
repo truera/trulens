@@ -36,13 +36,15 @@ def streamlit_app():
 
     # Set the title and subtitle of the app
     st.title("App Leaderboard")
-    st.write("Average feedback values displayed in the range from 0 (worst) to 1 (best).")
+    st.write(
+        "Average feedback values displayed in the range from 0 (worst) to 1 (best)."
+    )
     df, feedback_col_names = lms.get_records_and_feedback([])
     feedback_directions = {
         (
-            row.feedback_json.get("supplied_name", "") or row.feedback_json["implementation"]["name"]
-        ):
-            row.feedback_json.get("higher_is_better", True)
+            row.feedback_json.get("supplied_name", "") or
+            row.feedback_json["implementation"]["name"]
+        ): row.feedback_json.get("higher_is_better", True)
         for _, row in lms.get_feedback_defs().iterrows()
     }
 
@@ -68,11 +70,15 @@ def streamlit_app():
         # st.text('Metadata' + str(metadata))
         st.header(app, help=draw_metadata(metadata))
         app_feedback_col_names = [
-            col_name for col_name in feedback_col_names if not app_df[col_name].isna().all()
+            col_name for col_name in feedback_col_names
+            if not app_df[col_name].isna().all()
         ]
-        col1, col2, col3, col4, *feedback_cols, col99 = st.columns(5 + len(app_feedback_col_names))
+        col1, col2, col3, col4, *feedback_cols, col99 = st.columns(
+            5 + len(app_feedback_col_names)
+        )
         latency_mean = (
-            app_df["latency"].apply(lambda td: td if td != MIGRATION_UNKNOWN_STR else None).mean()
+            app_df["latency"].
+            apply(lambda td: td if td != MIGRATION_UNKNOWN_STR else None).mean()
         )
 
         # app_df_feedback = df.loc[df.app_id == app]
@@ -82,8 +88,7 @@ def streamlit_app():
             "Average Latency (Seconds)",
             (
                 f"{millify(round(latency_mean, 5), precision=2)}"
-                if not math.isnan(latency_mean)
-                else "nan"
+                if not math.isnan(latency_mean) else "nan"
             ),
         )
         col3.metric(
@@ -93,7 +98,11 @@ def streamlit_app():
         col4.metric(
             "Total Tokens",
             millify(
-                sum(tokens for tokens in app_df.total_tokens if tokens is not None), precision=2
+                sum(
+                    tokens for tokens in app_df.total_tokens
+                    if tokens is not None
+                ),
+                precision=2
             ),
         )
 
@@ -107,18 +116,22 @@ def streamlit_app():
 
             if "distance" in col_name:
                 feedback_cols[i].metric(
-                    label=col_name, value=f"{round(mean, 2)}", delta_color="normal"
+                    label=col_name,
+                    value=f"{round(mean, 2)}",
+                    delta_color="normal"
                 )
             else:
-                cat = CATEGORY.of_score(mean, higher_is_better=feedback_directions[col_name])
+                cat = CATEGORY.of_score(
+                    mean, higher_is_better=feedback_directions[col_name]
+                )
                 feedback_cols[i].metric(
                     label=col_name,
                     value=f"{round(mean, 2)}",
                     delta=f"{cat.icon} {cat.adjective}",
                     delta_color=(
-                        "normal"
-                        if cat.compare(mean, CATEGORY.PASS[cat.direction].threshold)
-                        else "inverse"
+                        "normal" if cat.compare(
+                            mean, CATEGORY.PASS[cat.direction].threshold
+                        ) else "inverse"
                     ),
                 )
 
