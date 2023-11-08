@@ -19,7 +19,7 @@ The best way to support TruLens is to give us a ⭐ and join our [slack communit
 TruLens-Eval has two key value propositions:
 
 1. Evaluation:
-    * TruLens supports the the evaluation of inputs, outputs and internals of your LLM application using any model (including LLMs). 
+    * TruLens supports the evaluation of inputs, outputs and internals of your LLM application using any model (including LLMs). 
     * A number of feedback functions for evaluation are implemented out-of-the-box such as groundedness, relevance and toxicity. The framework is also easily extensible for custom evaluation requirements.
 2. Tracking:
     * TruLens contains instrumentation for any LLM application including question answering, retrieval-augmented generation, agent-based applications and more. This instrumentation allows for the tracking of a wide variety of usage metrics and metadata. Read more in the [instrumentation overview](basic_instrumentation.ipynb).
