@@ -223,7 +223,7 @@ def set_openai_key() -> None:
 
     if 'OPENAI_API_KEY' in os.environ:
         import openai
-        openai.api_key = os.environ["OPENAI_API_KEY"]
+        raise Exception("The 'openai.api_key' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_key=os.environ["OPENAI_API_KEY"])'")
 
 
 def get_cohere_agent() -> cohere.Client:

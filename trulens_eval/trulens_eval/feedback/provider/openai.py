@@ -3,6 +3,9 @@ import os
 from typing import Dict, Mapping, Optional, Sequence
 
 import openai
+from openai import OpenAI
+
+client = OpenAI()
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import LLMProvider
@@ -68,14 +71,12 @@ class OpenAI(LLMProvider):
             kwargs['temperature'] = 0.0
 
         if prompt is not None:
-            comp = openai.ChatCompletion.create(
-                messages=[{
-                    "role": "system",
-                    "content": prompt
-                }], **kwargs
-            )
+            comp = client.chat.completions.create(messages=[{
+                "role": "system",
+                "content": prompt
+            }], **kwargs)
         elif messages is not None:
-            comp = openai.ChatCompletion.create(messages=messages, **kwargs)
+            comp = client.chat.completions.create(messages=messages, **kwargs)
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
@@ -87,7 +88,7 @@ class OpenAI(LLMProvider):
     def _moderation(self, text: str):
         # See https://platform.openai.com/docs/guides/moderation/overview .
         return self.endpoint.run_me(
-            lambda: openai.Moderation.create(input=text)
+            lambda: client.moderations.create(input=text)
         )
 
     # TODEP
@@ -348,9 +349,9 @@ class AzureOpenAI(OpenAI):
         )  # need to include pydantic.BaseModel.__init__
 
         set_openai_key()
-        openai.api_type = "azure"
-        openai.api_base = os.getenv("OPENAI_API_BASE")
-        openai.api_version = os.getenv("OPENAI_API_VERSION")
+        raise Exception("The 'openai.api_type' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_type="azure")'")
+        raise Exception("The 'openai.api_base' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_base=os.getenv("OPENAI_API_BASE"))'")
+        raise Exception("The 'openai.api_version' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_version=os.getenv("OPENAI_API_VERSION"))'")
 
     def _create_chat_completion(self, *args, **kwargs):
         """
