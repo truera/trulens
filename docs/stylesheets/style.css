@@ -632,13 +632,12 @@ p {
 @media only screen and (max-width: 768px) {
   .nav__items {
     flex-direction: column;
-    display: flex;
     position: fixed;
-    top: 0;
+    top: calc(calc(var(--gap-lg) * 2 + 32px) + 0.5rem);
     left: 0;
     width: 100%;
     height: min-content;
-    background-color: var(--color-navigation) !important;
+    background-color: var(--color-navigation);
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.08);
     list-style-type: none;
     -webkit-font-smoothing: antialiased;
