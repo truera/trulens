@@ -29,8 +29,6 @@ from openai import OpenAI
 
 client = OpenAI()
 
-raise Exception("The 'openai.api_key' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_key=os.environ["OPENAI_API_KEY"])'")
-
 # ### Import from TruLens
 
 # In[ ]:
