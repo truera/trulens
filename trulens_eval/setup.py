@@ -46,7 +46,7 @@ setup(
         f'llama_index>={llama_version}',
         'merkle-json>=1.0.0',
         'millify>=0.1.1',
-        'openai>=0.27.6',
+        'openai==0.28.1',
         'pinecone-client>=2.2.1',
         'pydantic >=1.10.7, <2',  # TODO(piotrm): need some migration for pydantic 2
         'humanize>=4.6.0',
