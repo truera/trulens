@@ -1,5 +1,6 @@
 from typing import Dict, Tuple, Union
 
+from llama_index import ServiceContext
 import numpy as np
 from pydantic import PrivateAttr
 
@@ -15,8 +16,6 @@ class Embeddings(SerialModel, WithClassInfo):
 
     def __init__(self, embed_model: 'Embedder' = None):
         """Instantiates embeddings for feedback functions. 
-
-        **Trulens Eval Instantiation:**
         ```
         f_embed = feedback.Embeddings(embed_model=embed_model)
         ```
@@ -29,7 +28,8 @@ class Embeddings(SerialModel, WithClassInfo):
         except:
             raise ImportError(REQUIREMENT_SKLEARN)
 
-        self._embed_model = embed_model
+        service_context = ServiceContext.from_defaults(embed_model=embed_model)
+        self._embed_model = service_context.embed_model
         super().__init__(obj=self)
 
     def cosine_distance(
