@@ -25,8 +25,9 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 # In[ ]:
 
 import openai
+from openai import OpenAI
 
-openai.api_key = os.environ["OPENAI_API_KEY"]
+client = OpenAI()
 
 # ### Import from TruLens
 
@@ -49,20 +50,18 @@ tru = Tru()
 
 
 def llm_standalone(prompt):
-    return openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {
-                "role":
-                    "system",
-                "content":
-                    "You are a question and answer bot, and you answer super upbeat."
-            }, {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    )["choices"][0]["message"]["content"]
+    return client.chat.completions.create(model="gpt-3.5-turbo",
+    messages=[
+        {
+            "role":
+                "system",
+            "content":
+                "You are a question and answer bot, and you answer super upbeat."
+        }, {
+            "role": "user",
+            "content": prompt
+        }
+    ])["choices"][0]["message"]["content"]
 
 
 # In[ ]:

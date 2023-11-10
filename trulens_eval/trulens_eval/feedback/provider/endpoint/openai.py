@@ -171,12 +171,15 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         import os
 
-        import openai
+        from openai import OpenAI
+
+        # Initialize OpenAI client with api_key from environment variable
+        client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 
         for k, v in CONF_CLONE.items():
             if k in kwargs:
-                print(f"{UNICODE_CHECK} Setting openai.{k} explicitly.")
-                setattr(openai, k, kwargs[k])
+                print(f"{UNICODE_CHECK} Setting client.{k} explicitly.")
+                setattr(client, k, kwargs[k])
 
                 if v is not None:
                     print(f"{UNICODE_CHECK} Env. var. {v} set explicitly.")
@@ -187,10 +190,10 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
                     # attributes themselves and if so, copy over the ones we use via
                     # environment vars, to its respective env var.
 
-                    attr_val = getattr(openai, k)
+                    attr_val = getattr(client, k, None)
                     if attr_val is not None and attr_val != os.environ.get(v):
                         print(
-                            f"{UNICODE_CHECK} Env. var. {v} set from openai.{k} ."
+                            f"{UNICODE_CHECK} Env. var. {v} set from client.{k} ."
                         )
                         os.environ[v] = attr_val
 
@@ -209,5 +212,5 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         super().__init__(*args, **kwargs)
 
-        self._instrument_module_members(openai, "create")
-        self._instrument_module_members(openai, "acreate")
+        self._instrument_module_members(client, "create")
+        self._instrument_module_members(client, "acreate")
