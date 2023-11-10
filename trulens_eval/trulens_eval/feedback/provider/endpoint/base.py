@@ -234,7 +234,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
     def _instrument_module_members(self, mod: ModuleType, method_name: str):
         logger.debug(
-            f"Instrumenting {mod.__package__}.*.{method_name} for {self.name}"
+            f"Instrumenting {mod}.*.{method_name} for {self.name}"
         )
 
         for m in dir(mod):
