@@ -216,18 +216,12 @@ class Endpoint(SerialModel, SingletonPerName):
 
     def _instrument_module(self, mod: ModuleType, method_name: str) -> None:
         if hasattr(mod, method_name):
-            logger.debug(
-                f"Instrumenting {mod.__name__}.{method_name} for {self.name}"
-            )
             func = getattr(mod, method_name)
             w = self.wrap_function(func)
             setattr(mod, method_name, w)
 
     def _instrument_class(self, cls, method_name: str) -> None:
         if hasattr(cls, method_name):
-            logger.debug(
-                f"Instrumenting {cls.__name__}.{method_name} for {self.name}"
-            )
             func = getattr(cls, method_name)
             w = self.wrap_function(func)
             setattr(cls, method_name, w)
