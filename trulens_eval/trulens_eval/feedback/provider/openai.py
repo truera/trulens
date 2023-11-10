@@ -78,16 +78,14 @@ class OpenAI(LLMProvider):
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
-        comppletion_dict = completion.model_dump_json(indent=2)
-
-        return completion_dict["choices"][0]["message"]["content"]
+        return completion.choices[0].message.content
 
     def _moderation(self, text: str):
         # See https://platform.openai.com/docs/guides/moderation/overview .
         moderation_response = self.endpoint.run_me(
             lambda: client.moderations.create(input=text)
         )
-        return moderation_response.model_dump_json(indent=2)
+        return moderation_response.results[0]
 
     # TODEP
     def moderation_hate(self, text: str) -> float:
