@@ -212,5 +212,5 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         super().__init__(*args, **kwargs)
 
-        self._instrument_module_members(openai, "create")
-        self._instrument_module_members(openai, "acreate")
+        self._instrument_module_members(client, "create")
+        self._instrument_module_members(client, "acreate")
