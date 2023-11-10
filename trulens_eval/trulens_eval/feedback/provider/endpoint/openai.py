@@ -77,7 +77,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         self, func: Callable, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
     ) -> None:
-
+        print("handle_wrapped_call used. func: {func}, bindings: {bindings}, response: {response}")
         model_name = ""
         if 'model' in bindings.kwargs:
             model_name = bindings.kwargs['model']
@@ -87,7 +87,6 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             results = response['results']
 
         counted_something = False
-        print("test")
         if hasattr(response, 'usage'):
             counted_something = True
             usage = response.usage
@@ -149,7 +148,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         from openai import OpenAI
 
         # Initialize OpenAI client with api_key from environment variable
-        client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+        client = OpenAI()
 
         for k, v in CONF_CLONE.items():
             if k in kwargs:
@@ -187,5 +186,5 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         super().__init__(*args, **kwargs)
 
-        self._instrument_instance(client, "create")
+        self._instrument_instance(client.completions, "create")
         # note: acreate removed, new pattern is to use create from async client

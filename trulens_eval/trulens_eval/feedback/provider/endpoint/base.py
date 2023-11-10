@@ -215,16 +215,26 @@ class Endpoint(SerialModel, SingletonPerName):
         )
 
     def _instrument_module(self, mod: ModuleType, method_name: str) -> None:
+        print("instrument module called")
         if hasattr(mod, method_name):
             func = getattr(mod, method_name)
             w = self.wrap_function(func)
             setattr(mod, method_name, w)
 
     def _instrument_class(self, cls, method_name: str) -> None:
+        print(f"instrument class called, method: {method_name}")
         if hasattr(cls, method_name):
             func = getattr(cls, method_name)
             w = self.wrap_function(func)
             setattr(cls, method_name, w)
+
+    def _instrument_instance(self, obj, method_name: str) -> None:
+        print(f"instance: {obj} is _instrument_instance called, method:{method_name}")
+        if hasattr(obj, method_name):
+            print(f"hasattr satisfied, method:{method_name}")
+            method = getattr(obj, method_name)
+            wrapped_method = self.wrap_function(method)
+            setattr(obj, method_name, wrapped_method)
 
     def _instrument_module_members(self, mod: ModuleType, method_name: str):
         for m in dir(mod):
@@ -574,6 +584,7 @@ class Endpoint(SerialModel, SingletonPerName):
         pass
 
     def wrap_function(self, func):
+        print(f"wrap function called{func}")
         if hasattr(func, INSTRUMENT):
             # Store the types of callback classes that will handle calls to the
             # wrapped function in the INSTRUMENT attribute. This will be used to
