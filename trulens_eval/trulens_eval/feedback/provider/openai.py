@@ -408,11 +408,6 @@ class AzureOpenAI(OpenAI):
             **kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-        set_openai_key()
-        raise Exception("The 'openai.api_type' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_type='azure')'")
-        raise Exception("The 'openai.api_base' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_base=os.getenv('OPENAI_API_BASE'))'")
-        raise Exception("The 'openai.api_version' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_version=os.getenv('OPENAI_API_VERSION'))'")
-
     def _create_chat_completion(self, *args, **kwargs):
         """
         We need to pass `engine`
