@@ -49,7 +49,15 @@ def safe_hasattr(obj: Any, k: str) -> bool:
     except AttributeError:
         return False
 
-    if isinstance(v, property):
+    is_prop = False
+    try:
+        # OpenAI version 1 classes may cause this isinstance test to raise an
+        # exception.
+        is_prop = isinstance(v, property)
+    except Exception:
+        return False
+    
+    if is_prop:
         try:
             v.fget(obj)
             return True

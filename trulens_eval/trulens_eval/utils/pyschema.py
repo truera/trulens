@@ -26,13 +26,13 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from types import ModuleType
-from typing import (
-    Any, Callable, ClassVar, Dict, Optional, Sequence, Tuple, Union
-)
+from typing import (Any, Callable, ClassVar, Dict, Optional, Sequence, Tuple,
+                    Union)
 
 import pydantic
 from pydantic import Field
 
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
 
@@ -92,7 +92,15 @@ def safe_getattr(obj: Any, k: str) -> Any:
 
     v = inspect.getattr_static(obj, k)
 
-    if isinstance(v, property):
+    is_prop = False
+    try:
+        # OpenAI version 1 classes may cause this isinstance test to raise an
+        # exception.
+        is_prop = isinstance(v, property)
+    except Exception:
+        return False
+    
+    if is_prop:
         try:
             v = v.fget(obj)
             return v
