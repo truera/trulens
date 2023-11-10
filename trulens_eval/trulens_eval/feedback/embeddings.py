@@ -1,6 +1,5 @@
 from typing import Dict, Tuple, Union
 
-from llama_index import ServiceContext
 import numpy as np
 from pydantic import PrivateAttr
 
@@ -17,25 +16,6 @@ class Embeddings(SerialModel, WithClassInfo):
     def __init__(self, embed_model: 'Embedder' = None):
         """Instantiates embeddings for feedback functions. 
 
-        **Example Vector DB Creation:**
-        ```
-        vector_store = MilvusVectorStore(index_params={
-                "index_type": "IVF_FLAT",
-                "metric_type": "L2"
-                },
-                dim=384,
-                search_params={"nprobe": 20},
-                overwrite=True)
-        llm = OpenAI(model="gpt-3.5-turbo")
-        embed_model = HuggingFaceEmbeddings(model_name = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-        storage_context = StorageContext.from_defaults(vector_store = vector_store)
-        service_context = ServiceContext.from_defaults(embed_model = embed_model, llm = llm)
-        index = VectorStoreIndex.from_documents(wiki_docs,
-                    service_context=service_context,
-                    storage_context=storage_context)
-        query_engine = index.as_query_engine(top_k = 5)
-        ```
-
         **Trulens Eval Instantiation:**
         ```
         f_embed = feedback.Embeddings(embed_model=embed_model)
@@ -49,8 +29,7 @@ class Embeddings(SerialModel, WithClassInfo):
         except:
             raise ImportError(REQUIREMENT_SKLEARN)
 
-        service_context = ServiceContext.from_defaults(embed_model=embed_model)
-        self._embed_model = service_context.embed_model
+        self._embed_model = embed_model
         super().__init__(obj=self)
 
     def cosine_distance(
