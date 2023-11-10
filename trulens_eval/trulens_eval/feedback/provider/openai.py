@@ -84,9 +84,10 @@ class OpenAI(LLMProvider):
 
     def _moderation(self, text: str):
         # See https://platform.openai.com/docs/guides/moderation/overview .
-        return self.endpoint.run_me(
+        moderation_response = self.endpoint.run_me(
             lambda: client.moderations.create(input=text)
         )
+        return moderation_response.model_dump_json(indent=2)
 
     # TODEP
     def moderation_hate(self, text: str) -> float:
