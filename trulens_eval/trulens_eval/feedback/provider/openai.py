@@ -68,19 +68,19 @@ class OpenAI(LLMProvider):
             kwargs['temperature'] = 0.0
 
         if prompt is not None:
-            comp = client.chat.completions.create(messages=[{
+            completion = client.chat.completions.create(messages=[{
                 "role": "system",
                 "content": prompt
             }], **kwargs)
         elif messages is not None:
-            comp = client.chat.completions.create(messages=messages, **kwargs)
+            completion = client.chat.completions.create(messages=messages, **kwargs)
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
-        assert isinstance(comp, dict)
+        comppletion_dict = completion.model_dump_json(indent=2)
 
-        return comp["choices"][0]["message"]["content"]
+        return completion_dict["choices"][0]["message"]["content"]
 
     def _moderation(self, text: str):
         # See https://platform.openai.com/docs/guides/moderation/overview .
