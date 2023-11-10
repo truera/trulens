@@ -214,17 +214,6 @@ def get_config() -> Tuple[Path, dict]:
         # Put value in redaction list.
         values_to_redact.add(v)
 
-
-def set_openai_key() -> None:
-    """
-    Sets the openai class attribute `api_key` to its value from the
-    OPENAI_API_KEY env var.
-    """
-
-    if 'OPENAI_API_KEY' in os.environ:
-        import openai
-        raise Exception("The 'openai.api_key' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_key=os.environ['OPENAI_API_KEY'])'")
-
 def get_cohere_agent() -> cohere.Client:
     """
     Gete a singleton cohere agent. Sets its api key from env var COHERE_API_KEY.
