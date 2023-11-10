@@ -26,8 +26,9 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from types import ModuleType
-from typing import (Any, Callable, ClassVar, Dict, Optional, Sequence, Tuple,
-                    Union)
+from typing import (
+    Any, Callable, ClassVar, Dict, Optional, Sequence, Tuple, Union
+)
 
 import pydantic
 from pydantic import Field
@@ -99,7 +100,7 @@ def safe_getattr(obj: Any, k: str) -> Any:
         is_prop = isinstance(v, property)
     except Exception:
         return False
-    
+
     if is_prop:
         try:
             v = v.fget(obj)

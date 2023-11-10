@@ -10,9 +10,9 @@ import logging
 import threading
 from typing import Callable, TypeVar
 
-from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import _future_target_wrapper
 from trulens_eval.utils.python import code_line
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
 
 logger = logging.getLogger(__name__)

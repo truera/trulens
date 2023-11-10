@@ -9,9 +9,10 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from queue import Queue
-from typing import (Any, Callable, Dict, Generic, Hashable, Iterator, Optional,
-                    Sequence, Type, TypeVar, Union)
-
+from typing import (
+    Any, Callable, Dict, Generic, Hashable, Iterator, Optional, Sequence, Type,
+    TypeVar, Union
+)
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -20,6 +21,7 @@ T = TypeVar("T")
 Thunk = Callable[[], T]
 
 # Reflection utilities.
+
 
 def safe_signature(func_or_obj: Any):
     try:
@@ -56,7 +58,7 @@ def safe_hasattr(obj: Any, k: str) -> bool:
         is_prop = isinstance(v, property)
     except Exception:
         return False
-    
+
     if is_prop:
         try:
             v.fget(obj)

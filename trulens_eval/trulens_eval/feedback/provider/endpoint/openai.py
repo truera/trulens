@@ -11,8 +11,8 @@ import pydantic
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.keys import _check_key
-from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)

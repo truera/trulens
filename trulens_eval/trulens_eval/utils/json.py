@@ -10,8 +10,10 @@ import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
-                    Tuple, TypeVar, Union)
+from typing import (
+    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, TypeVar,
+    Union
+)
 
 from merkle_json import MerkleJson
 import pydantic
@@ -25,8 +27,8 @@ from trulens_eval.utils.pyschema import ERROR
 from trulens_eval.utils.pyschema import NOSERIO
 from trulens_eval.utils.pyschema import noserio
 from trulens_eval.utils.pyschema import safe_getattr
-from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSONPath

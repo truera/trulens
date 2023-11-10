@@ -7,8 +7,9 @@ from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple,
-                    Type, TypeVar)
+from typing import (
+    Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
+)
 import warnings
 
 import pydantic
@@ -16,9 +17,9 @@ import requests
 
 from trulens_eval.keys import ApiKeyError
 from trulens_eval.schema import Cost
-from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import locals_except
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.serial import JSON
