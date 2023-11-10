@@ -4,7 +4,7 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens_eval)
 [![Slack](https://img.shields.io/badge/slack-join-green?logo=slack)](https://communityinviter.com/apps/aiqualityforum/josh)
 [![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/welcome/)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.10.0/trulens_eval/examples/quickstart/colab/langchain_quickstart_colab.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.17.0/trulens_eval/examples/quickstart/colab/langchain_quickstart_colab.ipynb)
 
 # 🦑 **Welcome to TruLens!**
 
@@ -19,11 +19,11 @@ The best way to support TruLens is to give us a ⭐ and join our [slack communit
 TruLens-Eval has two key value propositions:
 
 1. Evaluation:
-    * TruLens supports the the evaluation of inputs, outputs and internals of your LLM application using any model (including LLMs). 
+    * TruLens supports the evaluation of inputs, outputs and internals of your LLM application using any model (including LLMs). 
     * A number of feedback functions for evaluation are implemented out-of-the-box such as groundedness, relevance and toxicity. The framework is also easily extensible for custom evaluation requirements.
 2. Tracking:
-    * TruLens contains instrumentation for any LLM application including question answering, retrieval-augmented generation, agent-based applications and more. This instrumentation allows for the tracking of a wide variety of usage metrics and metadata. Read more in the [instrumentation overview](basic_instrumentation.ipynb).
-    * TruLens' instrumentation can be applied to any LLM application without being tied down to a given framework. Additionally, deep integrations with [LangChain]() and [Llama-Index]() allow the capture of internal metadata and text.
+    * TruLens contains instrumentation for any LLM application including question answering, retrieval-augmented generation, agent-based applications and more. This instrumentation allows for the tracking of a wide variety of usage metrics and metadata. Read more in the [instrumentation overview](https://www.trulens.org/trulens_eval/basic_instrumentation/).
+    * TruLens' instrumentation can be applied to any LLM application without being tied down to a given framework. Additionally, deep integrations with [LangChain](https://www.trulens.org/trulens_eval/langchain_instrumentation/) and [Llama-Index](https://www.trulens.org/trulens_eval/llama_index_instrumentation/) allow the capture of internal metadata and text.
     * Anything that is tracked by the instrumentation can be evaluated!
 
 The process for building your evaluated and tracked LLM application with TruLens is shown below 👇
