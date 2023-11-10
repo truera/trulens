@@ -171,12 +171,12 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         import os
 
-        import openai
+        from openai import OpenAI
 
         for k, v in CONF_CLONE.items():
             if k in kwargs:
                 print(f"{UNICODE_CHECK} Setting openai.{k} explicitly.")
-                setattr(openai, k, kwargs[k])
+                setattr(OpenAI, k, kwargs[k])
 
                 if v is not None:
                     print(f"{UNICODE_CHECK} Env. var. {v} set explicitly.")
@@ -187,7 +187,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
                     # attributes themselves and if so, copy over the ones we use via
                     # environment vars, to its respective env var.
 
-                    attr_val = getattr(openai, k)
+                    attr_val = getattr(OpenAI, k)
                     if attr_val is not None and attr_val != os.environ.get(v):
                         print(
                             f"{UNICODE_CHECK} Env. var. {v} set from openai.{k} ."
