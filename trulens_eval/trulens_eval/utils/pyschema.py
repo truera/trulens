@@ -74,37 +74,16 @@ def noserio(obj, **extra: Dict) -> dict:
 
 
 def callable_name(c: Callable):
-    if hasattr(c, "__name__"):
+    if safe_hasattr(c, "__name__"):
         return c.__name__
-    elif hasattr(c, "__call__"):
+    elif safe_hasattr(c, "__call__"):
         return callable_name(c.__call__)
     else:
         return str(c)
 
 
-def safe_signature(func_or_obj: Any):
-    try:
-        assert isinstance(
-            func_or_obj, Callable
-        ), f"Expected a Callable. Got {type(func_or_obj)} instead."
-
-        return inspect.signature(func_or_obj)
-
-    except Exception as e:
-        if hasattr(func_or_obj, "__call__"):
-            # If given an obj that is callable (has __call__ defined), we want to
-            # return signature of that call instead of letting inspect.signature
-            # explore that object further. Doing so may produce exceptions due to
-            # contents of those objects producing exceptions when attempting to
-            # retrieve them.
-
-            return inspect.signature(func_or_obj.__call__)
-
-        else:
-            raise e
-
-
-def _safe_getattr(obj: Any, k: str) -> Any:
+# TODO: rename as functionality optionally produces JSONLike .
+def safe_getattr(obj: Any, k: str) -> Any:
     """
     Try to get the attribute `k` of the given object. This may evaluate some
     code if the attribute is a property and may fail. In that case, an dict
@@ -123,7 +102,7 @@ def _safe_getattr(obj: Any, k: str) -> Any:
         return v
 
 
-def _clean_attributes(obj) -> Dict[str, Any]:
+def clean_attributes(obj) -> Dict[str, Any]:
     """
     Determine which attributes of the given object should be enumerated for
     storage and/or display in UI. Returns a dict of those attributes and their
@@ -150,7 +129,7 @@ def _clean_attributes(obj) -> Dict[str, Any]:
             # the value.
             continue
 
-        v = _safe_getattr(obj, k)
+        v = safe_getattr(obj, k)
         ret[k] = v
 
     return ret

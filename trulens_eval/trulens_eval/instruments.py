@@ -223,11 +223,12 @@ from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordAppCallMethod
 from trulens_eval.utils.containers import dict_merge_with
 from trulens_eval.utils.json import jsonify
-from trulens_eval.utils.pyschema import _safe_getattr
 from trulens_eval.utils.pyschema import Method
-from trulens_eval.utils.pyschema import safe_signature
+from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.python import caller_frame
 from trulens_eval.utils.python import get_first_local_in_call_stack
+from trulens_eval.utils.python import safe_hasattr
+from trulens_eval.utils.python import safe_signature
 from trulens_eval.utils.serial import JSONPath
 
 logger = logging.getLogger(__name__)
@@ -389,11 +390,11 @@ class Instrument(object):
         Instrument a method to capture its inputs/outputs/errors.
         """
 
-        assert not hasattr(
+        assert not safe_hasattr(
             func, "__func__"
         ), "Function expected but method received."
 
-        if hasattr(func, Instrument.INSTRUMENT):
+        if safe_hasattr(func, Instrument.INSTRUMENT):
             logger.debug(f"\t\t\t{query}: {func} is already instrumented")
 
             # Notify the app instrumenting this method where it is located. Note
@@ -832,7 +833,7 @@ class Instrument(object):
 
             for method_name in [method_name]:
 
-                if hasattr(base, method_name):
+                if safe_hasattr(base, method_name):
                     original_fun = getattr(base, method_name)
 
                     logger.debug(
@@ -862,7 +863,7 @@ class Instrument(object):
 
         func = cls.__new__
 
-        if hasattr(func, Instrument.INSTRUMENT):
+        if safe_hasattr(func, Instrument.INSTRUMENT):
             logger.debug(
                 f"Class {cls.__name__} __new__ is already instrumented."
             )
@@ -941,7 +942,7 @@ class Instrument(object):
 
             for method_name in self.include_methods:
 
-                if hasattr(base, method_name):
+                if safe_hasattr(base, method_name):
                     check_class = self.include_methods[method_name]
                     if not check_class(obj):
                         continue
@@ -951,7 +952,7 @@ class Instrument(object):
                     # method is looked up from it, it actually comes from some
                     # other, even baser class which might come from builtins
                     # which we want to skip instrumenting.
-                    if hasattr(original_fun, "__self__"):
+                    if safe_hasattr(original_fun, "__self__"):
                         if not self.to_instrument_module(
                                 original_fun.__self__.__class__.__module__):
                             continue
@@ -986,7 +987,7 @@ class Instrument(object):
                         # Skip those starting with _ that also have non-_ versions.
 
             for k in attrs:
-                v = _safe_getattr(obj, k)
+                v = safe_getattr(obj, k)
 
                 if isinstance(v, (str, bool, int, float)):
                     pass

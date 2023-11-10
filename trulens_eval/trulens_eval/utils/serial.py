@@ -13,16 +13,15 @@ from ast import parse
 from copy import copy
 import logging
 from pprint import PrettyPrinter
-from typing import (
-    Any, Callable, Dict, Iterable, Iterator, List, Optional, Sequence, Set,
-    Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Iterable, Iterator, List, Optional,
+                    Sequence, Set, Tuple, TypeVar, Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
 
 from trulens_eval.utils.containers import iterable_peek
+from trulens_eval.utils.python import safe_hasattr
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -192,7 +191,7 @@ class GetAttribute(StepItemOrAttribute):
         return self.attribute
 
     def get(self, obj: Any) -> Iterable[Any]:
-        if hasattr(obj, self.attribute):
+        if safe_hasattr(obj, self.attribute):
             yield getattr(obj, self.attribute)
         else:
             raise ValueError(
@@ -206,7 +205,7 @@ class GetAttribute(StepItemOrAttribute):
         # might cause isses
         obj = copy(obj)
 
-        if hasattr(obj, self.attribute):
+        if safe_hasattr(obj, self.attribute):
             setattr(obj, self.attribute, val)
             return obj
         else:
@@ -330,7 +329,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
                     f"Key not in dictionary: {self.item_or_attribute}"
                 )
         else:
-            if hasattr(obj, self.item_or_attribute):
+            if safe_hasattr(obj, self.item_or_attribute):
                 yield getattr(obj, self.item_or_attribute)
             else:
                 raise ValueError(

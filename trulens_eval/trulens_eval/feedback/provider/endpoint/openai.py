@@ -11,6 +11,7 @@ import pydantic
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.keys import _check_key
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.text import UNICODE_CHECK
 
@@ -194,7 +195,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
                         )
                         os.environ[v] = attr_val
 
-        if hasattr(self, "name"):
+        if safe_hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
             return
 

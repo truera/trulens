@@ -10,23 +10,22 @@ import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import (
-    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, TypeVar,
-    Union
-)
+from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
+                    Tuple, TypeVar, Union)
 
 from merkle_json import MerkleJson
 import pydantic
 
 from trulens_eval.keys import redact_value
-from trulens_eval.utils.pyschema import _clean_attributes
-from trulens_eval.utils.pyschema import _safe_getattr
 from trulens_eval.utils.pyschema import CIRCLE
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
+from trulens_eval.utils.pyschema import clean_attributes
 from trulens_eval.utils.pyschema import ERROR
 from trulens_eval.utils.pyschema import NOSERIO
 from trulens_eval.utils.pyschema import noserio
+from trulens_eval.utils.pyschema import safe_getattr
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
@@ -208,7 +207,7 @@ def jsonify(
         new_dicted[id(obj)] = temp
         temp.update(
             {
-                k: recur(_safe_getattr(obj, k))
+                k: recur(safe_getattr(obj, k))
                 for k, v in obj.__fields__.items()
                 if not v.field_info.exclude and recur_key(k)
             }
@@ -230,7 +229,7 @@ def jsonify(
 
         temp.update(
             {
-                f.name: recur(_safe_getattr(obj, f.name))
+                f.name: recur(safe_getattr(obj, f.name))
                 for f in dataclasses.fields(obj)
                 if recur_key(f.name)
             }
@@ -248,7 +247,7 @@ def jsonify(
         temp = {}
         new_dicted[id(obj)] = temp
 
-        kvs = _clean_attributes(obj)
+        kvs = clean_attributes(obj)
 
         temp.update(
             {
@@ -276,7 +275,7 @@ def jsonify(
             cls=obj.__class__, with_bases=True
         ).dict()
 
-    if not isinstance(obj, JSONPath) and hasattr(obj, "jsonify_extra"):
+    if not isinstance(obj, JSONPath) and safe_hasattr(obj, "jsonify_extra"):
         # Problem with JSONPath and similar objects: they always say they have every attribute.
 
         content = obj.jsonify_extra(content)

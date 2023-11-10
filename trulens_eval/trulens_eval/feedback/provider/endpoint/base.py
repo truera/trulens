@@ -7,9 +7,8 @@ from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
 from types import ModuleType
-from typing import (
-    Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
-)
+from typing import (Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple,
+                    Type, TypeVar)
 import warnings
 
 import pydantic
@@ -17,6 +16,7 @@ import requests
 
 from trulens_eval.keys import ApiKeyError
 from trulens_eval.schema import Cost
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.python import SingletonPerName
@@ -111,7 +111,7 @@ class Endpoint(SerialModel, SingletonPerName):
         API usage, pacing, and utilities for API endpoints.
         """
 
-        if hasattr(self, "rpm"):
+        if safe_hasattr(self, "rpm"):
             # already initialized via the SingletonPerName mechanism
             return
 
@@ -215,7 +215,7 @@ class Endpoint(SerialModel, SingletonPerName):
         )
 
     def _instrument_module(self, mod: ModuleType, method_name: str) -> None:
-        if hasattr(mod, method_name):
+        if safe_hasattr(mod, method_name):
             logger.debug(
                 f"Instrumenting {mod.__name__}.{method_name} for {self.name}"
             )
@@ -224,7 +224,7 @@ class Endpoint(SerialModel, SingletonPerName):
             setattr(mod, method_name, w)
 
     def _instrument_class(self, cls, method_name: str) -> None:
-        if hasattr(cls, method_name):
+        if safe_hasattr(cls, method_name):
             logger.debug(
                 f"Instrumenting {cls.__name__}.{method_name} for {self.name}"
             )
@@ -584,7 +584,7 @@ class Endpoint(SerialModel, SingletonPerName):
         pass
 
     def wrap_function(self, func):
-        if hasattr(func, INSTRUMENT):
+        if safe_hasattr(func, INSTRUMENT):
             # Store the types of callback classes that will handle calls to the
             # wrapped function in the INSTRUMENT attribute. This will be used to
             # invoke appropriate callbacks when the wrapped function gets
@@ -864,7 +864,7 @@ class DummyEndpoint(Endpoint):
         rpm: float = DEFAULT_RPM * 10,
         **kwargs
     ):
-        if hasattr(self, "callback_class"):
+        if safe_hasattr(self, "callback_class"):
             # Already created with SingletonPerName mechanism
             return
 

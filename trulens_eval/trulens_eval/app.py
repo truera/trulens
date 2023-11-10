@@ -13,10 +13,8 @@ from inspect import Signature
 import logging
 from pprint import PrettyPrinter
 from threading import Lock
-from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
-    Tuple, Type
-)
+from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
+                    Sequence, Set, Tuple, Type)
 
 import dill
 import pydantic
@@ -41,6 +39,7 @@ from trulens_eval.utils.pyschema import callable_name
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import ObjSerial
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import all_objects
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
@@ -606,7 +605,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             for f, path in funcs.items():
                 """
                 # TODO: wider wrapping support
-                if hasattr(f, "__func__"):
+                if safe_hasattr(f, "__func__"):
                     if method.__func__ == func:
                         yield (method, path) 
                 else:
@@ -767,15 +766,15 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         instrumented is being used in a `with_` call.
         """
 
-        if not hasattr(func, "__name__"):
-            if hasattr(func, "__call__"):
+        if not safe_hasattr(func, "__name__"):
+            if safe_hasattr(func, "__call__"):
                 func = func.__call__
             else:
                 raise TypeError(
                     f"Unexpected type of callable `{type(func).__name__}`."
                 )
 
-        if not hasattr(func, Instrument.INSTRUMENT):
+        if not safe_hasattr(func, Instrument.INSTRUMENT):
             logger.warning(
                 f"Function `{func.__name__}` has not been instrumented. "
                 f"This may be ok if it will call a function that has been instrumented exactly once. "
