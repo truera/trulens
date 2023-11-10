@@ -114,7 +114,7 @@ class OpenAI(LLMProvider):
             float: A value between 0.0 (not hate) and 1.0 (hate).
         """
         openai_response = self._moderation(text)
-        return float(openai_response["results"][0]["category_scores"]["hate"])
+        return float(openai_response.category_scores.hate)
 
     # TODEP
     def moderation_hatethreatening(self, text: str) -> float:
@@ -145,7 +145,7 @@ class OpenAI(LLMProvider):
         openai_response = self._moderation(text)
 
         return float(
-            openai_response["results"][0]["category_scores"]["hate/threatening"]
+            openai_response.category_scores.hate_threatening
         )
 
     # TODEP
@@ -177,7 +177,7 @@ class OpenAI(LLMProvider):
         openai_response = self._moderation(text)
 
         return float(
-            openai_response["results"][0]["category_scores"]["self-harm"]
+            openai_response.category_scores.self_minus_harm
         )
 
     # TODEP
@@ -207,7 +207,7 @@ class OpenAI(LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return float(openai_response["results"][0]["category_scores"]["sexual"])
+        return float(openai_response.category_scores.sexual)
 
     # TODEP
     def moderation_sexualminors(self, text: str) -> float:
@@ -240,7 +240,7 @@ class OpenAI(LLMProvider):
         openai_response = self._moderation(text)
 
         return float(
-            openai_response["results"][0]["category_scores"]["sexual/minors"]
+            oopenai_response.category_scores.sexual_minors
         )
 
     # TODEP
@@ -272,7 +272,7 @@ class OpenAI(LLMProvider):
         openai_response = self._moderation(text)
 
         return float(
-            openai_response["results"][0]["category_scores"]["violence"]
+            openai_response.category_scores.violence
         )
 
     # TODEP
@@ -299,14 +299,78 @@ class OpenAI(LLMProvider):
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0.0 (graphic violence) and 1.0 (not graphic
+            float: A value between 0.0 (not graphic violence) and 1.0 (graphic
             violence).
         """
         openai_response = self._moderation(text)
 
         return float(
-            openai_response["results"][0]["category_scores"]["violence/graphic"]
+            openai_response.category_scores.violence_graphic
         )
+
+    # TODEP
+    def moderation_harassment(self, text: str) -> float:
+        """
+        Uses OpenAI's Moderation API. A function that checks if text is about
+        graphic violence.
+
+        **Usage:**
+        ```python
+        from trulens_eval import Feedback
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(
+            openai_provider.moderation_harassment, higher_is_better=False
+        ).on_output()
+        ```
+
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        Args:
+            text (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0.0 (not harrassment) and 1.0 (harrassment).
+        """
+        openai_response = self._moderation(text)
+
+        return float(
+            openai_response.category_scores.harassment
+        )
+
+    def moderation_harassment_threatening(self, text: str) -> float:
+        """
+        Uses OpenAI's Moderation API. A function that checks if text is about
+        graphic violence.
+
+        **Usage:**
+        ```python
+        from trulens_eval import Feedback
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(
+            openai_provider.moderation_harassment_threatening, higher_is_better=False
+        ).on_output()
+        ```
+
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        Args:
+            text (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0.0 (not harrassment/threatening) and 1.0 (harrassment/threatening).
+        """
+        openai_response = self._moderation(text)
+
+        return float(
+            openai_response.category_scores.harassment
+        )
+
 
 
 class AzureOpenAI(OpenAI):
