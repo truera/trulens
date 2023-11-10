@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
-
 class OpenAICallback(EndpointCallback):
 
     class Config:
@@ -88,9 +87,8 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             results = response['results']
 
         counted_something = False
-
+        print("test")
         if hasattr(response, 'usage'):
-            print("test")
             counted_something = True
             usage = response.usage
 
@@ -189,5 +187,5 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         super().__init__(*args, **kwargs)
 
-        self._instrument_module_members(client, "create")
-        self._instrument_module_members(client, "acreate")
+        self._instrument_instance(client, "create")
+        # note: acreate removed, new pattern is to use create from async client
