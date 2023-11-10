@@ -233,10 +233,6 @@ class Endpoint(SerialModel, SingletonPerName):
             setattr(cls, method_name, w)
 
     def _instrument_module_members(self, mod: ModuleType, method_name: str):
-        logger.debug(
-            f"Instrumenting {mod}.*.{method_name} for {self.name}"
-        )
-
         for m in dir(mod):
             obj = getattr(mod, m)
             self._instrument_class(obj, method_name=method_name)
