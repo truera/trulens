@@ -19,14 +19,11 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
-
 class OpenAICallback(EndpointCallback):
 
     class Config:
         arbitrary_types_allowed = True
 
-    # For openai cost tracking, we use the logic from langchain mostly
-    # implemented in the OpenAICallbackHandler class:
     langchain_handler: OpenAICallbackHandler = pydantic.Field(
         default_factory=OpenAICallbackHandler, exclude=True
     )
@@ -35,32 +32,16 @@ class OpenAICallback(EndpointCallback):
         default_factory=list, exclude=True
     )
 
-    def handle_classification(self, response: Dict) -> None:
-        # OpenAI's moderation API is not text generation and does not return
-        # usage information. Will count those as a classification.
-
-        super().handle_classification(response)
-
-        if "categories" in response:
-            self.cost.n_successful_requests += 1
-            self.cost.n_classes += len(response['categories'])
-
     def handle_generation_chunk(self, response: Any) -> None:
-        """
-        Called on every streaming chunk from an openai text generation process.
-        """
-
-        # self.langchain_handler.on_llm_new_token() # does nothing
-
         super().handle_generation_chunk(response=response)
 
         self.chunks.append(response)
 
-        if response.generation_info['choices'][0]['finish_reason'] == 'stop':
+        if response.choices[0].finish_reason == 'stop':
             llm_result = LLMResult(
                 llm_output=dict(
                     token_usage=dict(),
-                    model_name=response.generation_info['model']
+                    model_name=response.model
                 ),
                 generations=[self.chunks]
             )
@@ -68,21 +49,16 @@ class OpenAICallback(EndpointCallback):
             self.handle_generation(response=llm_result)
 
     def handle_generation(self, response: LLMResult) -> None:
-        """
-        Called upon a non-streaming text generation or at the completion of a
-        streamed generation.
-        """
-
         super().handle_generation(response)
 
         self.langchain_handler.on_llm_end(response)
 
-        # Copy over the langchain handler fields we also have.
         for cost_field, langchain_field in [
             ("cost", "total_cost"), ("n_tokens", "total_tokens"),
             ("n_successful_requests", "successful_requests"),
             ("n_prompt_tokens", "prompt_tokens"),
-            ("n_completion_tokens", "completion_tokens")
+            ("n_completion_tokens", "completion_tokens"),
+            ("total_cost", "total_cost")
         ]:
             setattr(
                 self.cost, cost_field,
@@ -92,7 +68,7 @@ class OpenAICallback(EndpointCallback):
 
 class OpenAIEndpoint(Endpoint, WithClassInfo):
     """
-    OpenAI endpoint. Instruments "create" methods in openai.* classes.
+    OpenAI endpoint. Instruments "create" methods in openai client.
     """
 
     def __new__(cls, *args, **kwargs):
@@ -102,7 +78,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         self, func: Callable, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
     ) -> None:
-
+        print("handle_wrapped_call used. func: {func}, bindings: {bindings}, response: {response}")
         model_name = ""
         if 'model' in bindings.kwargs:
             model_name = bindings.kwargs['model']
@@ -112,10 +88,9 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             results = response['results']
 
         counted_something = False
-
-        if 'usage' in response:
+        if hasattr(response, 'usage'):
             counted_something = True
-            usage = response['usage']
+            usage = response.usage
 
             llm_res = LLMResult(
                 generations=[[]],
@@ -128,10 +103,9 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             if callback is not None:
                 callback.handle_generation(response=llm_res)
 
-        if 'choices' in response and 'delta' in response['choices'][0]:
+        if 'choices' in response and 'delta' in response.choices[0]:
             # Streaming data.
-
-            content = response['choices'][0]['delta'].get('content')
+            content = response.choices[0].delta.content
 
             gen = Generation(text=content or '', generation_info=response)
             self.global_callback.handle_generation_chunk(gen)
@@ -172,7 +146,11 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         import os
 
+        #from openai import OpenAI
         import openai
+
+        # Initialize OpenAI client with api_key from environment variable
+        #client = OpenAI()
 
         for k, v in CONF_CLONE.items():
             if k in kwargs:
@@ -188,10 +166,10 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
                     # attributes themselves and if so, copy over the ones we use via
                     # environment vars, to its respective env var.
 
-                    attr_val = getattr(openai, k)
+                    attr_val = getattr(openai, k, None)
                     if attr_val is not None and attr_val != os.environ.get(v):
                         print(
-                            f"{UNICODE_CHECK} Env. var. {v} set from openai.{k} ."
+                            f"{UNICODE_CHECK} Env. var. {v} set from client.{k} ."
                         )
                         os.environ[v] = attr_val
 
@@ -211,4 +189,4 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         super().__init__(*args, **kwargs)
 
         self._instrument_module_members(openai, "create")
-        self._instrument_module_members(openai, "acreate")
+        # note: acreate removed, new pattern is to use create from async client

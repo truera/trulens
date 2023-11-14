@@ -7,9 +7,8 @@ from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
 from types import ModuleType
-from typing import (
-    Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
-)
+from typing import (Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple,
+                    Type, TypeVar)
 import warnings
 
 import pydantic
@@ -17,6 +16,7 @@ import requests
 
 from trulens_eval.keys import ApiKeyError
 from trulens_eval.schema import Cost
+from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.python import safe_hasattr
@@ -233,14 +233,21 @@ class Endpoint(SerialModel, SingletonPerName):
             w = self.wrap_function(func)
             setattr(cls, method_name, w)
 
-    def _instrument_module_members(self, mod: ModuleType, method_name: str):
-        logger.debug(
-            f"Instrumenting {mod.__package__}.*.{method_name} for {self.name}"
-        )
+    # TODO: Remove
+    # def _instrument_instance(self, obj, method_name: str) -> None:
+    #     print(f"instance: {obj} is _instrument_instance called, method:{method_name}")
+    #     if hasattr(obj, method_name):
+    #         print(f"hasattr satisfied, method:{method_name}")
+    #         method = getattr(obj, method_name)
+    #         wrapped_method = self.wrap_function(method)
+    #         setattr(obj, method_name, wrapped_method)
 
+    def _instrument_module_members(self, mod: ModuleType, method_name: str):
         for m in dir(mod):
-            obj = getattr(mod, m)
-            self._instrument_class(obj, method_name=method_name)
+            logger.debug(f"instrumenting module {mod} member {m} for method {method_name}")
+            if safe_hasattr(mod, m):
+                obj = safe_getattr(mod, m)
+                self._instrument_class(obj, method_name=method_name)
 
     # TODO: CODEDUP
     @staticmethod
@@ -845,7 +852,7 @@ class DummyEndpoint(Endpoint):
     # How often to produce an error response.
     error_prob: float
 
-    # How often to produce freeze instead of producing a response.
+    # How often to freeze instead of producing a response.
     freeze_prob: float
 
     # How often to produce the overloaded message.
@@ -883,7 +890,6 @@ class DummyEndpoint(Endpoint):
             f"Using DummyEndpoint with {locals_except('self', 'name', 'kwargs', '__class__')}"
         )
 
-    # TODO: make a robust version of POST or use tenacity
     def post(
         self,
         url: str,
