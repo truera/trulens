@@ -1,3 +1,13 @@
+"""
+# Dev Notes
+
+This class makes use of langchain's cost tracking for openai models. Changes to
+the involved classes will need to be adapted here. The important classes are:
+
+- `langchain.schema.LLMResult`
+- `langchain.callbacks.openai_info.OpenAICallbackHandler`
+"""
+
 import inspect
 import logging
 import pprint
@@ -54,11 +64,11 @@ class OpenAICallback(EndpointCallback):
         self.langchain_handler.on_llm_end(response)
 
         for cost_field, langchain_field in [
-            ("cost", "total_cost"), ("n_tokens", "total_tokens"),
+            ("cost", "total_cost"),
+            ("n_tokens", "total_tokens"),
             ("n_successful_requests", "successful_requests"),
             ("n_prompt_tokens", "prompt_tokens"),
-            ("n_completion_tokens", "completion_tokens"),
-            ("total_cost", "total_cost")
+            ("n_completion_tokens", "completion_tokens")
         ]:
             setattr(
                 self.cost, cost_field,
@@ -78,7 +88,8 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         self, func: Callable, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
     ) -> None:
-        print("handle_wrapped_call used. func: {func}, bindings: {bindings}, response: {response}")
+        logger.debug(f"handle_wrapped_call used. func: {func}, bindings: {bindings}, response: {response}")
+
         model_name = ""
         if 'model' in bindings.kwargs:
             model_name = bindings.kwargs['model']
@@ -90,8 +101,9 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         counted_something = False
         if hasattr(response, 'usage'):
             counted_something = True
-            usage = response.usage
+            usage = response.usage.dict()
 
+            # See how to construct in langchain.llms.openai.OpenAIChat._generate
             llm_res = LLMResult(
                 generations=[[]],
                 llm_output=dict(token_usage=usage, model_name=model_name),
@@ -188,5 +200,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         super().__init__(*args, **kwargs)
 
-        self._instrument_module_members(openai, "create")
+        from openai import resources
+
+        self._instrument_module_members(resources, "create")
         # note: acreate removed, new pattern is to use create from async client

@@ -398,7 +398,7 @@ else:
                             " component."
                         )
                         # Look up whether there was any data at that path even if not an instrumented component:
-                        app_component_json = list(match_query(app_json))[0]
+                        app_component_json = list(match_query.get(app_json))[0]
                         if app_component_json is not None:
                             with st.expander(
                                     "Uninstrumented app component details."):
