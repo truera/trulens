@@ -6,6 +6,13 @@ the involved classes will need to be adapted here. The important classes are:
 
 - `langchain.schema.LLMResult`
 - `langchain.callbacks.openai_info.OpenAICallbackHandler`
+
+# Changes in openai v1
+
+- Previously we instrumented classes `openai.*` and their methods `create` and
+  `acreate`. Now we instrument classes `openai.resources.*` and their `create`
+  methods. Unsure about async functionality.
+
 """
 
 import inspect
@@ -157,13 +164,11 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         )
 
         import os
-
-        #from openai import OpenAI
         import openai
 
         # Initialize OpenAI client with api_key from environment variable
-        #client = OpenAI()
-
+        # TODO: This will need to change if we allow users to pass in their own
+        # openai client.
         for k, v in CONF_CLONE.items():
             if k in kwargs:
                 print(f"{UNICODE_CHECK} Setting openai.{k} explicitly.")
