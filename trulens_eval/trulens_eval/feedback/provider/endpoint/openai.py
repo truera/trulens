@@ -13,6 +13,9 @@ the involved classes will need to be adapted here. The important classes are:
   `acreate`. Now we instrument classes `openai.resources.*` and their `create`
   methods. Unsure about async functionality.
 
+- openai methods produce structured data instead of dicts now. langchain expects
+  dicts so we convert them to dicts.
+
 """
 
 import inspect
