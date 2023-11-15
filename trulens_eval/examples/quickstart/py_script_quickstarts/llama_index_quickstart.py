@@ -45,8 +45,8 @@ tru = Tru()
 
 # In[ ]:
 
-from llama_index import SimpleWebPageReader
 from llama_index import VectorStoreIndex
+from llama_index.readers.web import SimpleWebPageReader
 
 documents = SimpleWebPageReader(html_to_text=True).load_data(
     ["http://paulgraham.com/worked.html"]
