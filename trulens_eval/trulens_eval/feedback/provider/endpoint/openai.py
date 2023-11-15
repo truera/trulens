@@ -11,7 +11,9 @@ the involved classes will need to be adapted here. The important classes are:
 
 - Previously we instrumented classes `openai.*` and their methods `create` and
   `acreate`. Now we instrument classes `openai.resources.*` and their `create`
-  methods. Unsure about async functionality.
+  methods. We also instrument `openai.resources.chat.*` and their `create`. To
+  be determined is the instrumentation of the other classes/modules under
+  `openai.resources`.
 
 - openai methods produce structured data instead of dicts now. langchain expects
   dicts so we convert them to dicts.
