@@ -3,9 +3,6 @@ import os
 from typing import Dict, Mapping, Optional, Sequence
 
 import openai
-from openai import OpenAI
-
-client = OpenAI()
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import LLMProvider
