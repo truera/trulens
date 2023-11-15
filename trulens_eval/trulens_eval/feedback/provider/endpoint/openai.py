@@ -21,7 +21,7 @@ the involved classes will need to be adapted here. The important classes are:
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, List, Optional
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
@@ -209,6 +209,9 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         super().__init__(*args, **kwargs)
 
         from openai import resources
+        from openai.resources import chat
 
         self._instrument_module_members(resources, "create")
+        self._instrument_module_members(chat, "create")
+        # resources includes AsyncChat
         # note: acreate removed, new pattern is to use create from async client

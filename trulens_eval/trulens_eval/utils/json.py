@@ -249,8 +249,9 @@ def jsonify(
         temp = {}
         new_dicted[id(obj)] = temp
 
-        kvs = clean_attributes(obj)
+        kvs = clean_attributes(obj, include_props=True)
 
+        # TODO(piotrm): object walks redo
         temp.update(
             {
                 k: recur(v) for k, v in kvs.items() if recur_key(k) and (

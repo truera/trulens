@@ -171,6 +171,10 @@ class SqlAlchemyDB(DB):
         with self.Session.begin() as session:
             if _app := session.query(orm.AppDefinition
                                     ).filter_by(app_id=app.app_id).first():
+                
+                j = app.json()
+                print("inserting json: ", j)
+
                 _app.app_json = app.json()
             else:
                 _app = orm.AppDefinition.parse(

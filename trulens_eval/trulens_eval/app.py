@@ -405,13 +405,15 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     tru: Optional[Tru] = Field(exclude=True)
 
     # Database interfaces for models/records/feedbacks.
-    # NOTE: Maybe mobe to schema.App .
+    # NOTE: Maybe move to schema.AppDefinition .
     db: Optional[DB] = Field(exclude=True)
 
     # The wrapped app.
     app: Any = Field(exclude=True)
 
-    # Instrumentation class.
+    # Instrumentation class. This is needed for serialization as it tells us
+    # which objects we want to be included in the json representation of this
+    # app.
     instrument: Instrument = Field(exclude=True)
 
     # Sequnces of records produced by the this class used as a context manager.
@@ -677,7 +679,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         # Need custom jsonification here because it is likely the model
         # structure contains loops.
 
-        return json_str_of_obj(self.dict(), *args, **kwargs)
+        return json_str_of_obj(self, *args, instrument=self.instrument, **kwargs)
 
     def dict(self):
         # Same problem as in json.
