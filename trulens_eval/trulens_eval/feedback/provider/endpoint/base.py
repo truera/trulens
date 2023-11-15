@@ -233,15 +233,6 @@ class Endpoint(SerialModel, SingletonPerName):
             w = self.wrap_function(func)
             setattr(cls, method_name, w)
 
-    # TODO: Remove
-    # def _instrument_instance(self, obj, method_name: str) -> None:
-    #     print(f"instance: {obj} is _instrument_instance called, method:{method_name}")
-    #     if hasattr(obj, method_name):
-    #         print(f"hasattr satisfied, method:{method_name}")
-    #         method = getattr(obj, method_name)
-    #         wrapped_method = self.wrap_function(method)
-    #         setattr(obj, method_name, wrapped_method)
-
     def _instrument_module_members(self, mod: ModuleType, method_name: str):
         for m in dir(mod):
             logger.debug(f"instrumenting module {mod} member {m} for method {method_name}")
