@@ -127,7 +127,7 @@ class SqlAlchemyDB(DB):
                 raise e
 
         # If we get here, our db revision does not need upgrade.
-        print("Your database does not need migration.")
+        logger.info("Your database does not need migration.")
 
     def reset_database(self):
         deleted = 0
@@ -137,7 +137,7 @@ class SqlAlchemyDB(DB):
             deleted += session.query(Record).delete()
             deleted += session.query(FeedbackResult).delete()
 
-        print(f"Deleted {deleted} rows.")
+        logger.info(f"Deleted {deleted} rows.")
 
     def insert_record(self, record: schema.Record) -> schema.RecordID:
         # TODO: thread safety
@@ -150,7 +150,7 @@ class SqlAlchemyDB(DB):
             else:
                 session.merge(_rec)  # add new record # .add was not thread safe
 
-            print(f"{UNICODE_CHECK} added record {_rec.record_id}")
+            logger.info(f"{UNICODE_CHECK} added record {_rec.record_id}")
 
             return _rec.record_id
 
@@ -171,9 +171,6 @@ class SqlAlchemyDB(DB):
         with self.Session.begin() as session:
             if _app := session.query(orm.AppDefinition
                                     ).filter_by(app_id=app.app_id).first():
-                
-                j = app.json()
-                print("inserting json: ", j)
 
                 _app.app_json = app.json()
             else:
@@ -182,7 +179,7 @@ class SqlAlchemyDB(DB):
                 )
                 session.merge(_app)  # .add was not thread safe
 
-            print(f"{UNICODE_CHECK} added app {_app.app_id}")
+            logger.info(f"{UNICODE_CHECK} added app {_app.app_id}")
 
             return _app.app_id
 
@@ -202,7 +199,7 @@ class SqlAlchemyDB(DB):
                 )
                 session.merge(_fb_def)  # .add was not thread safe
 
-            print(
+            logger.info(
                 f"{UNICODE_CHECK} added feedback definition {_fb_def.feedback_definition_id}"
             )
 
@@ -254,7 +251,7 @@ class SqlAlchemyDB(DB):
             else:
                 icon = "???"
 
-            print(
+            logger.info(
                 f"{icon} feedback result {_feedback_result.name} {status.name} {_feedback_result.feedback_result_id}"
             )
 
