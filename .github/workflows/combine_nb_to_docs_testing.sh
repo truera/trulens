@@ -7,12 +7,6 @@ rm -rf alltools.ipynb
 # IF MOVING ANY IPYNB, MAKE SURE TO RE-SYMLINK. MANY IPYNB REFERENCED HERE LIVE IN OTHER PATHS
 nbmerge langchain_quickstart.ipynb logging.ipynb custom_feedback_functions.ipynb >> all_tools.ipynb
 
-# Colab quickstarts
-# IF MOVING ANY IPYNB, MAKE SURE TO RE-SYMLINK. MANY IPYNB REFERENCED HERE LIVE IN OTHER PATHS
-nbmerge colab_dependencies.ipynb langchain_quickstart.ipynb >> langchain_quickstart_colab.ipynb
-nbmerge colab_dependencies.ipynb llama_index_quickstart.ipynb >> llama_index_quickstart_colab.ipynb
-nbmerge colab_dependencies.ipynb text2text_quickstart.ipynb >> text2text_quickstart_colab.ipynb
-
 # Create pypi page documentation
 
 cat intro.md > README.md
@@ -32,7 +26,7 @@ jupyter nbconvert --to script --output-dir=./py_script_quickstarts/ all_tools.ip
 SED=`which -a gsed sed | head -n1`
 
 # Fix nbmerge ids field invalid for ipynb
-$SED'' -e "/id\"\:/d" all_tools.ipynb langchain_quickstart_colab.ipynb llama_index_quickstart_colab.ipynb text2text_quickstart_colab.ipynb
+$SED'' -e "/id\"\:/d" all_tools.ipynb
 
 ## Remove ipynb JSON calls
 $SED'' -e "/JSON/d" ./py_script_quickstarts/langchain_quickstart.py ./py_script_quickstarts/llama_index_quickstart.py ./py_script_quickstarts/text2text_quickstart.py ./py_script_quickstarts/all_tools.py 
@@ -54,8 +48,6 @@ mv TOP_README.md ../../README.md
 
 # Links are referenced in intro.md and gh_intro.md
 # There are symlinks from ../../trulens_eval/generated_files/ to these scripts for testing
-mkdir -p ../../trulens_eval/examples/quickstart/colab/
-mv *quickstart_colab.ipynb ../../trulens_eval/examples/quickstart/colab/
 mkdir -p ../../trulens_eval/examples/quickstart/py_script_quickstarts/
 mv ./py_script_quickstarts/*.py ../../trulens_eval/examples/quickstart/py_script_quickstarts/
 
