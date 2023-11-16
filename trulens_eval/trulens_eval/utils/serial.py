@@ -14,7 +14,7 @@ from copy import copy
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, Dict, Iterable, Iterator, List, Optional, Sequence, Set,
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set,
     Tuple, TypeVar, Union
 )
 
