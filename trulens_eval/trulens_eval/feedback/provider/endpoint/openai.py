@@ -24,6 +24,7 @@ import inspect
 import logging
 import pprint
 from typing import Any, Callable, List, Optional
+import openai
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
@@ -93,6 +94,8 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
     OpenAI endpoint. Instruments "create" methods in openai client.
     """
 
+    client: openai.OpenAI 
+
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="openai")
 
@@ -159,51 +162,55 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         # don't copy to env. Regardless of env, set all of these as attributes
         # to openai.
 
-        # https://learn.microsoft.com/en-us/azure/cognitive-services/openai/how-to/switching-endpoints
-        CONF_CLONE = dict(
-            api_key="OPENAI_API_KEY",
-            organization=None,
-            api_type=None,
-            api_base=None,
-            api_version=None
-        )
+        # # https://learn.microsoft.com/en-us/azure/cognitive-services/openai/how-to/switching-endpoints
+        # CONF_CLONE = dict(
+        #     api_key="OPENAI_API_KEY",
+        #     organization=None,
+        #     api_type=None,
+        #     api_base=None,
+        #     api_version=None
+        # )
 
-        import os
-        import openai
+        # import os
+        # import openai
 
-        # Initialize OpenAI client with api_key from environment variable
-        # TODO: This will need to change if we allow users to pass in their own
-        # openai client.
-        for k, v in CONF_CLONE.items():
-            if k in kwargs:
-                print(f"{UNICODE_CHECK} Setting openai.{k} explicitly.")
-                setattr(openai, k, kwargs[k])
+        # # Initialize OpenAI client with api_key from environment variable
+        # # TODO: This will need to change if we allow users to pass in their own
+        # # openai client.
+        # for k, v in CONF_CLONE.items():
+        #     if k in kwargs:
+        #         print(f"{UNICODE_CHECK} Setting openai.{k} explicitly.")
+        #         setattr(openai, k, kwargs[k])
 
-                if v is not None:
-                    print(f"{UNICODE_CHECK} Env. var. {v} set explicitly.")
-                    os.environ[v] = kwargs[k]
-            else:
-                if v is not None:
-                    # If no value were explicitly set, check if the user set up openai
-                    # attributes themselves and if so, copy over the ones we use via
-                    # environment vars, to its respective env var.
+        #         if v is not None:
+        #             print(f"{UNICODE_CHECK} Env. var. {v} set explicitly.")
+        #             os.environ[v] = kwargs[k]
+        #     else:
+        #         if v is not None:
+        #             # If no value were explicitly set, check if the user set up openai
+        #             # attributes themselves and if so, copy over the ones we use via
+        #             # environment vars, to its respective env var.
 
-                    attr_val = getattr(openai, k, None)
-                    if attr_val is not None and attr_val != os.environ.get(v):
-                        print(
-                            f"{UNICODE_CHECK} Env. var. {v} set from client.{k} ."
-                        )
-                        os.environ[v] = attr_val
+        #             attr_val = getattr(openai, k, None)
+        #             if attr_val is not None and attr_val != os.environ.get(v):
+        #                 print(
+        #                     f"{UNICODE_CHECK} Env. var. {v} set from client.{k} ."
+        #                 )
+        #                 os.environ[v] = attr_val
 
         if safe_hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
             return
 
         # Will set up key to env but otherwise will not fail or print anything out.
-        _check_key("OPENAI_API_KEY", silent=True, warn=True)
+        # _check_key("OPENAI_API_KEY", silent=True, warn=True)
 
         kwargs['name'] = "openai"
         kwargs['callback_class'] = OpenAICallback
+
+        if 'client' not in kwargs:
+            from openai import OpenAI
+            kwargs['client'] = OpenAI()
 
         # for WithClassInfo:
         kwargs['obj'] = self

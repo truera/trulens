@@ -46,10 +46,6 @@ class OpenAI(LLMProvider):
         self_kwargs['model_engine'] = model_engine
         self_kwargs['endpoint'] = OpenAIEndpoint(*args, **kwargs)
 
-        if 'client' not in kwargs:
-            from openai import OpenAI
-            kwargs['client'] = OpenAI()
-
         super().__init__(
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
@@ -69,12 +65,12 @@ class OpenAI(LLMProvider):
             kwargs['temperature'] = 0.0
 
         if prompt is not None:
-            completion = self.client.chat.completions.create(messages=[{
+            completion = self.endpoint.client.chat.completions.create(messages=[{
                 "role": "system",
                 "content": prompt
             }], **kwargs)
         elif messages is not None:
-            completion = self.client.chat.completions.create(messages=messages, **kwargs)
+            completion = self.endpoint.client.chat.completions.create(messages=messages, **kwargs)
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
@@ -84,7 +80,7 @@ class OpenAI(LLMProvider):
     def _moderation(self, text: str):
         # See https://platform.openai.com/docs/guides/moderation/overview .
         moderation_response = self.endpoint.run_me(
-            lambda: self.client.moderations.create(input=text)
+            lambda: self.endpoint.client.moderations.create(input=text)
         )
         return moderation_response.results[0]
 
