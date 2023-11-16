@@ -10,16 +10,16 @@ from pprint import PrettyPrinter
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
-llama_version = "0.8.29post1"
+llama_version = "0.8.69"
 REQUIREMENT_LLAMA = (
     f"llama_index {llama_version} or above is required for instrumenting llama_index apps. "
-    f"Please install it before use: `pip install llama_index>={llama_version}`."
+    f"Please install it before use: `pip install 'llama_index>={llama_version}'`."
 )
 
-langchain_version = "0.0.302"
+langchain_version = "0.0.335"
 REQUIREMENT_LANGCHAIN = (
     f"langchain {langchain_version} or above is required for instrumenting langchain apps. "
-    f"Please install it before use: `pip install langchain>={langchain_version}`."
+    f"Please install it before use: `pip install 'langchain>={langchain_version}'`."
 )
 
 REQUIREMENT_SKLEARN = (
