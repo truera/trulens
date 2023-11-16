@@ -12,7 +12,7 @@ pyllama
 tokenizers
 protobuf
 accelerate
-openai==0.28.1 # temporary pin for openai until migration to 1.1.1
+openai>=1.1.1
 pinecone-client
 tiktoken
 slack_bolt

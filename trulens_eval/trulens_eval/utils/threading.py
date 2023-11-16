@@ -12,6 +12,7 @@ from typing import Callable, TypeVar
 
 from trulens_eval.utils.python import _future_target_wrapper
 from trulens_eval.utils.python import code_line
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
     DEBUG_TIMEOUT = 600.0  # 5 minutes
 
     def __init__(self):
-        if hasattr(self, "thread_pool"):
+        if safe_hasattr(self, "thread_pool"):
             # Already initialized as per SingletonPerName mechanism.
             return
 
