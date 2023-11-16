@@ -102,7 +102,7 @@ class SelectorValue(HasTraits):
                 try:
                     ret_html = ""
 
-                    for inner_obj in jpath(obj):
+                    for inner_obj in jpath.get(obj):
                         inner_class = type(inner_obj)
                         inner_obj_id = id(inner_obj)
                         inner_obj = self._jsonify(inner_obj)

@@ -5,9 +5,11 @@ Utilities for user-facing text generation.
 import logging
 import sys
 
+from trulens_eval.utils.python import safe_hasattr
+
 logger = logging.getLogger(__name__)
 
-if hasattr(sys.stdout, "reconfigure"):
+if safe_hasattr(sys.stdout, "reconfigure"):
     # Some stdout can't handle the below emojis (like terminal). This will skip over the emoji printing
     sys.stdout.reconfigure(errors="replace")
 
