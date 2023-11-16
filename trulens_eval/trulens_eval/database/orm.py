@@ -34,7 +34,7 @@ class AppDefinition(Base):
     ) -> "AppDefinition":
         return cls(
             app_id=obj.app_id,
-            app_json=json_str_of_obj(obj, redact_keys=redact_keys)
+            app_json=obj.json(redact_keys=redact_keys)
         )
 
 

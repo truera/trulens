@@ -20,6 +20,55 @@ pp = PrettyPrinter()
 T = TypeVar("T")
 Thunk = Callable[[], T]
 
+# Reflection utilities.
+
+
+def safe_signature(func_or_obj: Any):
+    try:
+        assert isinstance(
+            func_or_obj, Callable
+        ), f"Expected a Callable. Got {type(func_or_obj)} instead."
+
+        return inspect.signature(func_or_obj)
+
+    except Exception as e:
+        if safe_hasattr(func_or_obj, "__call__"):
+            # If given an obj that is callable (has __call__ defined), we want to
+            # return signature of that call instead of letting inspect.signature
+            # explore that object further. Doing so may produce exceptions due to
+            # contents of those objects producing exceptions when attempting to
+            # retrieve them.
+
+            return inspect.signature(func_or_obj.__call__)
+
+        else:
+            raise e
+
+
+def safe_hasattr(obj: Any, k: str) -> bool:
+    try:
+        v = inspect.getattr_static(obj, k)
+    except AttributeError:
+        return False
+
+    is_prop = False
+    try:
+        # OpenAI version 1 classes may cause this isinstance test to raise an
+        # exception.
+        is_prop = isinstance(v, property)
+    except Exception:
+        return False
+
+    if is_prop:
+        try:
+            v.fget(obj)
+            return True
+        except Exception as e:
+            return False
+    else:
+        return True
+
+
 # Function utilities.
 
 
@@ -43,7 +92,7 @@ def code_line(func) -> Optional[str]:
     """
     Get a string representation of the location of the given function `func`.
     """
-    if hasattr(func, "__code__"):
+    if safe_hasattr(func, "__code__"):
         code = func.__code__
         return f"{code.co_filename}:{code.co_firstlineno}"
     else:
@@ -111,7 +160,7 @@ def get_task_stack(task: asyncio.Task) -> Sequence['frame']:
     """
     Get the annotated stack (if available) on the given task.
     """
-    if hasattr(task, STACK):
+    if safe_hasattr(task, STACK):
         return getattr(task, STACK)
     else:
         # get_stack order is reverse of inspect.stack:

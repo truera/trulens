@@ -22,9 +22,7 @@ util.py:CLASS_INFO key.
 
 from datetime import datetime
 from enum import Enum
-import json
 import logging
-from pathlib import Path
 from pprint import PrettyPrinter
 from typing import (Any, Callable, ClassVar, Dict, List, Mapping, NewType,
                     Optional, Sequence, Tuple, Type, TypeVar, Union)
@@ -34,7 +32,6 @@ import humanize
 from munch import Munch as Bunch
 import pydantic
 
-from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
 from trulens_eval.utils.pyschema import Class
@@ -75,6 +72,10 @@ FeedbackResultID = str
 
 
 class RecordAppCallMethod(SerialModel):
+    """
+    Method information for the stacks inside `RecordAppCall`.
+    """
+
     path: JSONPath
     method: Method
 
@@ -120,6 +121,11 @@ class Cost(SerialModel):
 
 
 class Perf(SerialModel):
+    """
+    Performance information. Presently only the start and end times, and thus
+    latency.
+    """
+
     start_time: datetime
     end_time: datetime
 
@@ -163,6 +169,10 @@ class RecordAppCall(SerialModel):
 
 
 class Record(SerialModel):
+    """
+    Each instrumented method call produces one of these "record" instances.
+    """
+
     record_id: RecordID
     app_id: AppID
 
@@ -234,6 +244,9 @@ class Record(SerialModel):
 
 
 class Select:
+    """
+    Utilities for creating selectors using JSONPath/Lens and aliases/shortcuts.
+    """
 
     # Typing for type hints.
     Query: type = JSONPath
@@ -251,12 +264,15 @@ class Select:
 
     RecordCalls: Query = Record.app
 
+    @staticmethod
     def for_record(query: Query) -> Query:
         return Select.Query(path=Select.Record.path + query.path)
 
+    @staticmethod
     def for_app(query: Query) -> Query:
         return Select.Query(path=Select.App.path + query.path)
 
+    @staticmethod
     def render_for_dashboard(query: Query) -> str:
         """
         Render the given query for use in dashboard to help user specify
@@ -298,14 +314,33 @@ Query = Select
 
 
 class FeedbackResultStatus(Enum):
+    """
+    For deferred feedback evaluation, these values indicate status of evaluation.
+    """
+
+    # Initial value is none.
     NONE = "none"
+
+    # Once queued/started, status is updated to "running".
     RUNNING = "running"
+
+    # If run failed.
     FAILED = "failed"
+
+    # If run completed successfully.
     DONE = "done"
 
 
 class FeedbackCall(SerialModel):
+    """
+    Invocations of feedback function results in one of these instances. Note
+    that a single `Feedback` instance might require more than one call.
+    """
+
+    # Arguments to the feedback function.
     args: Dict[str, Optional[JSON]]
+
+    # Return value.
     ret: float
 
     # New in 0.6.0: Any additional data a feedback function returns to display
@@ -314,27 +349,41 @@ class FeedbackCall(SerialModel):
 
 
 class FeedbackResult(SerialModel):
+    """
+    Feedback results for a single `Feedback` instance. This might involve
+    multiple feedback function calls.
+    """
+
     feedback_result_id: FeedbackResultID
 
+    # Record over which the feedback was evaluated.
     record_id: RecordID
 
+    # The `Feedback` / `FeedbackDefinition` which was evaluated to get this
+    # result.
     feedback_definition_id: Optional[FeedbackDefinitionID] = None
 
-    # "last timestamp"
+    # Last timestamp involved in the evaluation.
     last_ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
+    # For deferred feedback evaluation, the status of the evaluation.
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
 
     cost: Cost = pydantic.Field(default_factory=Cost)
 
+    # Given name of the feedback.
     name: str
 
+    # Individual feedback function invocations.
     calls: Sequence[FeedbackCall] = []
-    result: Optional[
-        float] = None  # final result, potentially aggregating multiple calls
 
-    error: Optional[str] = None  # if there was an error
+    # Final result, potentially aggregating multiple calls.
+    result: Optional[float] = None
 
+    # Error information if there was an error.
+    error: Optional[str] = None
+
+    # TODO: doc
     multi_result: Optional[str] = None
 
     def __init__(
@@ -537,15 +586,16 @@ class AppDefinition(SerialModel, WithClassInfo):
         blank memory).
         """
 
-        serial_bytes_json: Optional[JSON] = app_definition_json['initial_app_loader_dump']
+        serial_bytes_json: Optional[JSON] = app_definition_json[
+            'initial_app_loader_dump']
 
         if initial_app_loader is None:
             assert serial_bytes_json is not None, "Cannot create new session without `initial_app_loader`."
-            
+
             serial_bytes = SerialBytes.parse_obj(serial_bytes_json)
-            
+
             app = dill.loads(serial_bytes.data)()
-            
+
         else:
             app = initial_app_loader()
             data = dill.dumps(initial_app_loader, recurse=True)
@@ -687,7 +737,15 @@ class AppDefinition(SerialModel, WithClassInfo):
         return rets
 
     def dict(self):
-        return jsonify(self)
+        # Unsure if the check below is needed. Sometimes we have an `app.App`` but
+        # it is considered an `AppDefinition` and is thus using this definition
+        # of `dict` instead of the one in `app.App`.
+
+        from trulens_eval.trulens_eval import app
+        if isinstance(self, app.App):
+            return jsonify(self, instrument=self.instrument)
+        else:
+            return jsonify(self)
 
     @classmethod
     def select_inputs(cls) -> JSONPath:

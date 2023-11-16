@@ -52,6 +52,18 @@ lms = tru.db
 
 df_results, feedback_cols = lms.get_records_and_feedback([])
 
+# TODO: remove code redundancy / redundant database calls
+feedback_directions = {
+    (
+        row.feedback_json.get("supplied_name", "") or
+        row.feedback_json["implementation"]["name"]
+    ): (
+        "HIGHER_IS_BETTER" if row.feedback_json.get("higher_is_better", True)
+        else "LOWER_IS_BETTER"
+    ) for _, row in lms.get_feedback_defs().iterrows()
+}
+default_direction = "HIGHER_IS_BETTER"
+
 
 def render_component(query, component, header=True):
     # Draw the accessor/path within the wrapped app of the component.
@@ -92,31 +104,31 @@ def render_component(query, component, header=True):
 
 # Renders record level metrics (e.g. total tokens, cost, latency) compared to the average when appropriate
 def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
-    app_specific_df = app_df[app_df['app_id'] == selected_rows['app_id'][0]]
+    app_specific_df = app_df[app_df["app_id"] == selected_rows["app_id"][0]]
 
     token_col, cost_col, latency_col = st.columns(3)
 
-    num_tokens = selected_rows['total_tokens'][0]
+    num_tokens = selected_rows["total_tokens"][0]
     token_col.metric(label="Total tokens (#)", value=num_tokens)
 
-    cost = selected_rows['total_cost'][0]
-    average_cost = app_specific_df['total_cost'].mean()
+    cost = selected_rows["total_cost"][0]
+    average_cost = app_specific_df["total_cost"].mean()
     delta_cost = "{:.3g}".format(cost - average_cost)
     cost_col.metric(
         label="Total cost (USD)",
-        value=selected_rows['total_cost'][0],
+        value=selected_rows["total_cost"][0],
         delta=delta_cost,
-        delta_color="inverse"
+        delta_color="inverse",
     )
 
-    latency = selected_rows['latency'][0]
-    average_latency = app_specific_df['latency'].mean()
+    latency = selected_rows["latency"][0]
+    average_latency = app_specific_df["latency"].mean()
     delta_latency = "{:.3g}s".format(latency - average_latency)
     latency_col.metric(
         label="Latency (s)",
-        value=selected_rows['latency'][0],
+        value=selected_rows["latency"][0],
         delta=delta_latency,
-        delta_color="inverse"
+        delta_color="inverse",
     )
 
 
@@ -125,20 +137,20 @@ if df_results.empty:
 
 else:
     apps = list(df_results.app_id.unique())
-    if 'app' in st.session_state:
+    if "app" in st.session_state:
         app = st.session_state.app
     else:
         app = apps
 
     st.experimental_set_query_params(app=app)
 
-    options = st.multiselect('Filter Applications', apps, default=app)
+    options = st.multiselect("Filter Applications", apps, default=app)
 
-    if (len(options) == 0):
+    if len(options) == 0:
         st.header("All Applications")
         app_df = df_results
 
-    elif (len(options) == 1):
+    elif len(options) == 1:
         st.header(options[0])
 
         app_df = df_results[df_results.app_id.isin(options)]
@@ -151,37 +163,46 @@ else:
     tab1, tab2 = st.tabs(["Records", "Feedback Functions"])
 
     with tab1:
-
-        gridOptions = {'alwaysShowHorizontalScroll': True}
+        gridOptions = {"alwaysShowHorizontalScroll": True}
         evaluations_df = app_df
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
-        cellstyle_jscode = JsCode(cellstyle_jscode)
-        gb.configure_column('type', header_name='App Type')
-        gb.configure_column('record_json', header_name='Record JSON', hide=True)
-        gb.configure_column('app_json', header_name='App JSON', hide=True)
-        gb.configure_column('cost_json', header_name='Cost JSON', hide=True)
-        gb.configure_column('perf_json', header_name='Perf. JSON', hide=True)
+        gb.configure_column("type", header_name="App Type")
+        gb.configure_column("record_json", header_name="Record JSON", hide=True)
+        gb.configure_column("app_json", header_name="App JSON", hide=True)
+        gb.configure_column("cost_json", header_name="Cost JSON", hide=True)
+        gb.configure_column("perf_json", header_name="Perf. JSON", hide=True)
 
-        gb.configure_column('record_id', header_name='Record ID', hide=True)
-        gb.configure_column('app_id', header_name='App ID')
+        gb.configure_column("record_id", header_name="Record ID", hide=True)
+        gb.configure_column("app_id", header_name="App ID")
 
-        gb.configure_column('feedback_id', header_name='Feedback ID', hide=True)
-        gb.configure_column('input', header_name='User Input')
+        gb.configure_column("feedback_id", header_name="Feedback ID", hide=True)
+        gb.configure_column("input", header_name="User Input")
         gb.configure_column(
-            'output',
-            header_name='Response',
+            "output",
+            header_name="Response",
         )
-        gb.configure_column('total_tokens', header_name='Total Tokens (#)')
-        gb.configure_column('total_cost', header_name='Total Cost (USD)')
-        gb.configure_column('latency', header_name='Latency (Seconds)')
-        gb.configure_column('tags', header_name='Tags')
-        gb.configure_column('ts', header_name='Time Stamp', sort="desc")
+        gb.configure_column("total_tokens", header_name="Total Tokens (#)")
+        gb.configure_column("total_cost", header_name="Total Cost (USD)")
+        gb.configure_column("latency", header_name="Latency (Seconds)")
+        gb.configure_column("tags", header_name="Tags")
+        gb.configure_column("ts", header_name="Time Stamp", sort="desc")
 
         non_feedback_cols = [
-            'app_id', 'type', 'ts', 'total_tokens', 'total_cost', 'record_json',
-            'latency', 'record_id', 'app_id', 'cost_json', 'app_json', 'input',
-            'output', 'perf_json'
+            "app_id",
+            "type",
+            "ts",
+            "total_tokens",
+            "total_cost",
+            "record_json",
+            "latency",
+            "record_id",
+            "app_id",
+            "cost_json",
+            "app_json",
+            "input",
+            "output",
+            "perf_json",
         ]
 
         for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
@@ -190,24 +211,32 @@ else:
                     feedback_col, hide=feedback_col.endswith("_calls")
                 )
             else:
+                # cell highlight depending on feedback direction
+                cellstyle = JsCode(
+                    cellstyle_jscode[feedback_directions.get(
+                        feedback_col, default_direction
+                    )]
+                )
+
                 gb.configure_column(
                     feedback_col,
-                    cellStyle=cellstyle_jscode,
+                    cellStyle=cellstyle,
                     hide=feedback_col.endswith("_calls")
                 )
+
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
-        #gb.configure_default_column(groupable=True, value=True, enableRowGroup=True, aggFunc="sum", editable=True)
+        # gb.configure_default_column(groupable=True, value=True, enableRowGroup=True, aggFunc="sum", editable=True)
         gridOptions = gb.build()
         data = AgGrid(
             evaluations_df,
             gridOptions=gridOptions,
             update_mode=GridUpdateMode.SELECTION_CHANGED,
-            allow_unsafe_jscode=True
+            allow_unsafe_jscode=True,
         )
 
-        selected_rows = data['selected_rows']
+        selected_rows = data["selected_rows"]
         selected_rows = pd.DataFrame(selected_rows)
 
         if len(selected_rows) == 0:
@@ -225,11 +254,11 @@ else:
 
             render_record_metrics(app_df, selected_rows)
 
-            st.markdown('')
+            st.markdown("")
 
-            prompt = selected_rows['input'][0]
-            response = selected_rows['output'][0]
-            details = selected_rows['app_json'][0]
+            prompt = selected_rows["input"][0]
+            response = selected_rows["output"][0]
+            details = selected_rows["app_json"][0]
 
             app_json = json.loads(
                 details
@@ -241,29 +270,29 @@ else:
             # formatting/styling purposes.
             input_col, response_col = st.columns(2)
 
-            input_tab, = input_col.tabs(['Input'])
+            (input_tab,) = input_col.tabs(["Input"])
             with input_tab:
                 with st.expander(
                         f"Input {render_selector_markdown(Select.RecordInput)}",
                         expanded=True):
                     write_or_json(st, obj=prompt)
 
-            response_tab, = response_col.tabs(['Response'])
+            (response_tab,) = response_col.tabs(["Response"])
             with response_tab:
                 with st.expander(
                         f"Response {render_selector_markdown(Select.RecordOutput)}",
                         expanded=True):
                     write_or_json(st, obj=response)
 
-            feedback_tab, metadata_tab = st.tabs(['Feedback', 'Metadata'])
+            feedback_tab, metadata_tab = st.tabs(["Feedback", "Metadata"])
 
             with metadata_tab:
-                metadata = app_json.get('metadata')
+                metadata = app_json.get("metadata")
                 if metadata:
                     with st.expander("Metadata"):
                         st.markdown(draw_metadata(metadata))
                 else:
-                    st.write('No metadata found')
+                    st.write("No metadata found")
 
             with feedback_tab:
                 if len(feedback_cols) == 0:
@@ -272,6 +301,8 @@ else:
                 for fcol in feedback_cols:
                     feedback_name = fcol
                     feedback_result = row[fcol]
+                    print(feedback_result)
+
                     if MULTI_CALL_NAME_DELIMITER in fcol:
                         fcol = fcol.split(MULTI_CALL_NAME_DELIMITER)[0]
                     feedback_calls = row[f"{fcol}_calls"]
@@ -281,13 +312,17 @@ else:
                         def highlight(s):
                             if "distance" in feedback_name:
                                 return [
-                                    f'background-color: {CATEGORY.UNKNOWN.color}'
+                                    f"background-color: {CATEGORY.UNKNOWN.color}"
                                 ] * len(s)
-                            cat = CATEGORY.of_score(s.result)
-                            return [f'background-color: {cat.color}'] * len(s)
+                            cat = CATEGORY.of_score(
+                                s.result,
+                                higher_is_better=feedback_directions.get(
+                                    fcol, default_direction
+                                ) == default_direction
+                            )
+                            return [f"background-color: {cat.color}"] * len(s)
 
                         if call is not None and len(call) > 0:
-
                             df = pd.DataFrame.from_records(
                                 [call[i]["args"] for i in range(len(call))]
                             )
@@ -317,7 +352,7 @@ else:
                                      expanded=True):
                         display_feedback_call(feedback_calls)
 
-            record_str = selected_rows['record_json'][0]
+            record_str = selected_rows["record_json"][0]
             record_json = json.loads(record_str)
             record = Record.parse_obj(record_json)
 
@@ -325,15 +360,15 @@ else:
                              ] = list(instrumented_component_views(app_json))
             classes_map = {path: view for path, view in classes}
 
-            st.markdown('')
-            st.subheader('Timeline')
+            st.markdown("")
+            st.subheader("Timeline")
             val = record_viewer(record_json, app_json)
-            st.markdown('')
+            st.markdown("")
 
             match_query = None
 
             # Assumes record_json['perf']['start_time'] is always present
-            if val != record_json['perf']['start_time'] and val != '':
+            if val != record_json["perf"]["start_time"] and val != "":
                 match = None
                 for call in record.calls:
                     if call.perf.start_time.isoformat() == val:
@@ -359,17 +394,23 @@ else:
                         )
                     else:
                         st.write(
-                            f"Call by {match_query} was not associated with any instrumented component."
+                            f"Call by `{match_query}` was not associated with any instrumented"
+                            " component."
                         )
                         # Look up whether there was any data at that path even if not an instrumented component:
-                        app_component_json = list(match_query(app_json))[0]
-                        if app_component_json is not None:
-                            with st.expander(
-                                    "Uninstrumented app component details."):
-                                st.json(app_component_json)
+                        
+                        try:
+                            app_component_json = list(match_query.get(app_json))[0]
+                            if app_component_json is not None:
+                                with st.expander(
+                                        "Uninstrumented app component details."):
+                                    st.json(app_component_json)
+                        except Exception:
+                            st.write(f"Recorded invocation by component `{match_query}` but cannot find this component in the app json.")
+    
 
                 else:
-                    st.text('No match found')
+                    st.text("No match found")
             else:
                 st.subheader(f"App {render_selector_markdown(Select.App)}")
                 with st.expander("App Details:"):
@@ -396,11 +437,9 @@ else:
             st.header("More options:")
 
             if st.button("Display full app json"):
-
                 st.write(jsonify_for_ui(app_json))
 
             if st.button("Display full record json"):
-
                 st.write(jsonify_for_ui(record_json))
 
     with tab2:
@@ -423,10 +462,10 @@ else:
                             ax.hist(
                                 app_df[feedback[ind]],
                                 bins=bins,
-                                edgecolor='black',
-                                color='#2D736D'
+                                edgecolor="black",
+                                color="#2D736D"
                             )
-                            ax.set_xlabel('Feedback Value')
-                            ax.set_ylabel('Frequency')
-                            ax.set_title(feedback[ind], loc='center')
+                            ax.set_xlabel("Feedback Value")
+                            ax.set_ylabel("Frequency")
+                            ax.set_title(feedback[ind], loc="center")
                             st.pyplot(fig)

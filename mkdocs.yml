@@ -96,6 +96,7 @@ nav:
               - Smoke Tests:
                   - Answer Relevance: trulens_eval/answer_relevance_smoke_tests.ipynb
                   - Context Relevance: trulens_eval/context_relevance_smoke_tests.ipynb
+                  - Groundedness: trulens_eval/groundedness_smoke_tests.ipynb
           - 📚 API Reference:
               - Feedback Functions: trulens_eval/api/feedback.md
               - Providers: 
