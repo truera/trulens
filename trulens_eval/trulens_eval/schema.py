@@ -22,9 +22,7 @@ util.py:CLASS_INFO key.
 
 from datetime import datetime
 from enum import Enum
-import json
 import logging
-from pathlib import Path
 from pprint import PrettyPrinter
 from typing import (
     Any, Callable, ClassVar, Dict, List, Mapping, Optional, Sequence, Type,
@@ -36,7 +34,6 @@ import humanize
 from munch import Munch as Bunch
 import pydantic
 
-from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
 from trulens_eval.utils.pyschema import Class
@@ -681,7 +678,15 @@ class AppDefinition(SerialModel, WithClassInfo):
         return rets
 
     def dict(self):
-        return jsonify(self)
+        # Unsure if the check below is needed. Sometimes we have an `app.App`` but
+        # it is considered an `AppDefinition` and is thus using this definition
+        # of `dict` instead of the one in `app.App`.
+
+        from trulens_eval.trulens_eval import app
+        if isinstance(self, app.App):
+            return jsonify(self, instrument=self.instrument)
+        else:
+            return jsonify(self)
 
     @classmethod
     def select_inputs(cls) -> JSONPath:

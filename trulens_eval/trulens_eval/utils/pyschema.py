@@ -33,6 +33,7 @@ from typing import (
 import pydantic
 from pydantic import Field
 
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
 
@@ -74,56 +75,50 @@ def noserio(obj, **extra: Dict) -> dict:
 
 
 def callable_name(c: Callable):
-    if hasattr(c, "__name__"):
+    if safe_hasattr(c, "__name__"):
         return c.__name__
-    elif hasattr(c, "__call__"):
+    elif safe_hasattr(c, "__call__"):
         return callable_name(c.__call__)
     else:
         return str(c)
 
 
-def safe_signature(func_or_obj: Any):
-    try:
-        assert isinstance(
-            func_or_obj, Callable
-        ), f"Expected a Callable. Got {type(func_or_obj)} instead."
-
-        return inspect.signature(func_or_obj)
-
-    except Exception as e:
-        if hasattr(func_or_obj, "__call__"):
-            # If given an obj that is callable (has __call__ defined), we want to
-            # return signature of that call instead of letting inspect.signature
-            # explore that object further. Doing so may produce exceptions due to
-            # contents of those objects producing exceptions when attempting to
-            # retrieve them.
-
-            return inspect.signature(func_or_obj.__call__)
-
-        else:
-            raise e
-
-
-def _safe_getattr(obj: Any, k: str) -> Any:
+# TODO: rename as functionality optionally produces JSONLike .
+def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
     """
     Try to get the attribute `k` of the given object. This may evaluate some
     code if the attribute is a property and may fail. In that case, an dict
     indicating so is returned.
+
+    If `get_prop` is False, will not return contents of properties (will raise
+    `ValueException`).
     """
 
     v = inspect.getattr_static(obj, k)
 
-    if isinstance(v, property):
+    is_prop = False
+    try:
+        # OpenAI version 1 classes may cause this isinstance test to raise an
+        # exception.
+        is_prop = isinstance(v, property)
+    except Exception as e:
+        return {ERROR: ObjSerial.of_object(e)}
+
+    if is_prop:
+        if not get_prop:
+            raise ValueError(f"{k} is a property")
+
         try:
             v = v.fget(obj)
             return v
+        
         except Exception as e:
             return {ERROR: ObjSerial.of_object(e)}
     else:
         return v
 
 
-def _clean_attributes(obj) -> Dict[str, Any]:
+def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
     """
     Determine which attributes of the given object should be enumerated for
     storage and/or display in UI. Returns a dict of those attributes and their
@@ -132,6 +127,9 @@ def _clean_attributes(obj) -> Dict[str, Any]:
     For enumerating contents of objects that do not support utility classes like
     pydantic, we use this method to guess what should be enumerated when
     serializing/displaying.
+
+    If `include_props` is True, will produce attributes which are properties;
+    otherwise those will be excluded. 
     """
 
     keys = dir(obj)
@@ -144,14 +142,17 @@ def _clean_attributes(obj) -> Dict[str, Any]:
             # exposed beyond immediate definitions. Ignoring these.
             continue
 
-        if k.startswith("_") and k[1:] in keys:
+        if include_props and k.startswith("_") and k[1:] in keys:
             # Objects often have properties named `name` with their values
-            # coming from `_name`. Lets avoid including both the property and
-            # the value.
+            # coming from `_name`. This check lets avoid including both the
+            # property and the value.
             continue
 
-        v = _safe_getattr(obj, k)
-        ret[k] = v
+        try:
+            v = safe_getattr(obj, k, get_prop=include_props)
+            ret[k] = v
+        except Exception as e:
+            logger.debug(str(e))
 
     return ret
 
