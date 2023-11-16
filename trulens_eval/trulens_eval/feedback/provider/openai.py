@@ -174,7 +174,7 @@ class OpenAI(LLMProvider):
         openai_response = self._moderation(text)
 
         return float(
-            openai_response.category_scores.self_minus_harm
+            openai_response.category_scores.self_harm
         )
 
     # TODEP
