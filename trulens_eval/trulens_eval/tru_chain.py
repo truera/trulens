@@ -19,6 +19,7 @@ from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.python import safe_hasattr
 
 logger = logging.getLogger(__name__)
 
@@ -271,7 +272,7 @@ class TruChain(App):
         # A message for cases where a user calls something that the wrapped
         # chain has but we do not wrap yet.
 
-        if hasattr(self.app, __name):
+        if safe_hasattr(self.app, __name):
             return RuntimeError(
                 f"TruChain has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
                 f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruChain`. "

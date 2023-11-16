@@ -7,6 +7,7 @@ from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
 import pydantic
 
 from trulens_eval.utils.generated import re_0_10_rating
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.text import make_retab
 
 # Level 1 abstraction
@@ -55,12 +56,12 @@ class Feedback(pydantic.BaseModel):
             for f in list(fields):
                 if f in parent.__fields__:
                     fields.remove(f)
-                    if hasattr(cls, f):
+                    if safe_hasattr(cls, f):
                         ret += twotab(f"{f} = {getattr(cls, f)}") + "\n"
                     else:
                         ret += twotab(f"{f} = instance specific") + "\n"
 
-        if hasattr(typ, "__doc__") and typ.__doc__ is not None:
+        if safe_hasattr(typ, "__doc__") and typ.__doc__ is not None:
             ret += "\nDocstring\n"
             ret += onetab(typ.__doc__) + "\n"
 
@@ -108,10 +109,12 @@ class GroundTruth(Semantics):
 
 supported_criteria = {
     # NOTE: typo in "response" below is intentional. Still in langchain as of Sept 26, 2023.
-    key.value: value.replace(" If so, response Y. If not, respond N.", ''
-                            )  # older version of langchain had this typo
-    .replace(" If so, respond Y. If not, respond N.", '')  # new one is fixed
-    if isinstance(value, str) else value
+    key.value:
+        value.replace(" If so, response Y. If not, respond N.", ''
+                     )  # older version of langchain had this typo
+        .replace(" If so, respond Y. If not, respond N.", ''
+                )  # new one is fixed
+        if isinstance(value, str) else value
     for key, value in _SUPPORTED_CRITERIA.items()
 }
 

@@ -8,7 +8,6 @@ from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.keys import set_openai_key
 from trulens_eval.utils.generated import re_0_10_rating
 
 logger = logging.getLogger(__name__)
@@ -51,8 +50,6 @@ class OpenAI(LLMProvider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-        set_openai_key()
-
     # LLMProvider requirement
     def _create_chat_completion(
         self,
@@ -71,27 +68,24 @@ class OpenAI(LLMProvider):
             kwargs['seed'] = 123
 
         if prompt is not None:
-            comp = openai.ChatCompletion.create(
-                messages=[{
-                    "role": "system",
-                    "content": prompt
-                }], **kwargs
-            )
+            completion = self.endpoint.client.chat.completions.create(messages=[{
+                "role": "system",
+                "content": prompt
+            }], **kwargs)
         elif messages is not None:
-            comp = openai.ChatCompletion.create(messages=messages, **kwargs)
+            completion = self.endpoint.client.chat.completions.create(messages=messages, **kwargs)
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
-        assert isinstance(comp, dict)
-
-        return comp["choices"][0]["message"]["content"]
+        return completion.choices[0].message.content
 
     def _moderation(self, text: str):
         # See https://platform.openai.com/docs/guides/moderation/overview .
-        return self.endpoint.run_me(
-            lambda: openai.Moderation.create(input=text)
+        moderation_response = self.endpoint.run_me(
+            lambda: self.endpoint.client.moderations.create(input=text)
         )
+        return moderation_response.results[0]
 
     # TODEP
     def moderation_hate(self, text: str) -> float:
@@ -120,7 +114,7 @@ class OpenAI(LLMProvider):
             float: A value between 0.0 (not hate) and 1.0 (hate).
         """
         openai_response = self._moderation(text)
-        return float(openai_response["results"][0]["category_scores"]["hate"])
+        return float(openai_response.category_scores.hate)
 
     # TODEP
     def moderation_hatethreatening(self, text: str) -> float:
@@ -151,7 +145,7 @@ class OpenAI(LLMProvider):
         openai_response = self._moderation(text)
 
         return float(
-            openai_response["results"][0]["category_scores"]["hate/threatening"]
+            openai_response.category_scores.hate_threatening
         )
 
     # TODEP
@@ -183,7 +177,7 @@ class OpenAI(LLMProvider):
         openai_response = self._moderation(text)
 
         return float(
-            openai_response["results"][0]["category_scores"]["self-harm"]
+            openai_response.category_scores.self_harm
         )
 
     # TODEP
@@ -213,7 +207,7 @@ class OpenAI(LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return float(openai_response["results"][0]["category_scores"]["sexual"])
+        return float(openai_response.category_scores.sexual)
 
     # TODEP
     def moderation_sexualminors(self, text: str) -> float:
@@ -246,7 +240,7 @@ class OpenAI(LLMProvider):
         openai_response = self._moderation(text)
 
         return float(
-            openai_response["results"][0]["category_scores"]["sexual/minors"]
+            oopenai_response.category_scores.sexual_minors
         )
 
     # TODEP
@@ -278,7 +272,7 @@ class OpenAI(LLMProvider):
         openai_response = self._moderation(text)
 
         return float(
-            openai_response["results"][0]["category_scores"]["violence"]
+            openai_response.category_scores.violence
         )
 
     # TODEP
@@ -305,14 +299,78 @@ class OpenAI(LLMProvider):
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0.0 (graphic violence) and 1.0 (not graphic
+            float: A value between 0.0 (not graphic violence) and 1.0 (graphic
             violence).
         """
         openai_response = self._moderation(text)
 
         return float(
-            openai_response["results"][0]["category_scores"]["violence/graphic"]
+            openai_response.category_scores.violence_graphic
         )
+
+    # TODEP
+    def moderation_harassment(self, text: str) -> float:
+        """
+        Uses OpenAI's Moderation API. A function that checks if text is about
+        graphic violence.
+
+        **Usage:**
+        ```python
+        from trulens_eval import Feedback
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(
+            openai_provider.moderation_harassment, higher_is_better=False
+        ).on_output()
+        ```
+
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        Args:
+            text (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0.0 (not harrassment) and 1.0 (harrassment).
+        """
+        openai_response = self._moderation(text)
+
+        return float(
+            openai_response.category_scores.harassment
+        )
+
+    def moderation_harassment_threatening(self, text: str) -> float:
+        """
+        Uses OpenAI's Moderation API. A function that checks if text is about
+        graphic violence.
+
+        **Usage:**
+        ```python
+        from trulens_eval import Feedback
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+
+        feedback = Feedback(
+            openai_provider.moderation_harassment_threatening, higher_is_better=False
+        ).on_output()
+        ```
+
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        Args:
+            text (str): Text to evaluate.
+
+        Returns:
+            float: A value between 0.0 (not harrassment/threatening) and 1.0 (harrassment/threatening).
+        """
+        openai_response = self._moderation(text)
+
+        return float(
+            openai_response.category_scores.harassment
+        )
+
 
 
 class AzureOpenAI(OpenAI):
@@ -349,11 +407,6 @@ class AzureOpenAI(OpenAI):
         super().__init__(
             **kwargs
         )  # need to include pydantic.BaseModel.__init__
-
-        set_openai_key()
-        openai.api_type = "azure"
-        openai.api_base = os.getenv("OPENAI_API_BASE")
-        openai.api_version = os.getenv("OPENAI_API_VERSION")
 
     def _create_chat_completion(self, *args, **kwargs):
         """
