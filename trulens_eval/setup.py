@@ -47,7 +47,8 @@ setup(
         'typing-inspect==0.8.0',  # langchain with python < 3.9 fix
         'typing_extensions==4.5.0',  # langchain with python < 3.9 fix
 
-        f'llama_index>={llama_version}',
+        f'llama_index=={llama_version}',
+        # VectorStoreIndex changes need to be taken account for in later versions
 
         'merkle-json>=1.0.0',
         'millify>=0.1.1',
