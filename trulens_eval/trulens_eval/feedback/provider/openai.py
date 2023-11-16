@@ -64,6 +64,9 @@ class OpenAI(LLMProvider):
         if 'temperature' not in kwargs:
             kwargs['temperature'] = 0.0
 
+        if 'seed' not in kwargs:
+            kwargs['seed'] = 123
+
         if prompt is not None:
             completion = self.endpoint.client.chat.completions.create(messages=[{
                 "role": "system",
