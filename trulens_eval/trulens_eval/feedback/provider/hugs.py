@@ -447,6 +447,44 @@ class Huggingface(Provider):
 
         return score, reasons
 
+class HallucinationEvaluator:
+    # Assuming the class has initialized API_URL and API_TOKEN
+
+    def __init__(self):
+        self.API_URL = "https://api-inference.huggingface.co/models/vectara/hallucination_evaluation_model"
+        self.API_TOKEN = os.getenv("HF_AUTH_TOKEN")
+        if not self.API_TOKEN:
+            raise ValueError("Please set the HF_AUTH_TOKEN environment variable.")
+        self.headers = {"Authorization": f"Bearer {self.API_TOKEN}"}
+
+    def query(self, payload):
+        response = requests.post(self.API_URL, headers=self.headers, json=payload)
+        return response.json()
+
+    def evaluate_hallucination(self, input1, input2):
+        """
+        Evaluates the hallucination score for a combined input of two statements.
+
+        Args:
+            input1 (str): First statement
+            input2 (str): Second statement
+
+        Returns:
+            float: Hallucination score
+        """
+        combined_input = f"{input1}. {input2}"
+        payload = {"inputs": combined_input}
+        output = self.query(payload)
+
+        score = output[0][0]['score']
+        return score
+
+# Example usage
+# hallucination_evaluator = HallucinationEvaluator()
+# input1 = "The sky is blue."
+# input2 = "Apples are red."
+# print(hallucination_evaluator.evaluate_hallucination(input1, input2))
+
 
 class Dummy(Huggingface):
 
