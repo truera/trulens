@@ -469,6 +469,143 @@ class HallucinationEvaluator:
 # print(hallucination_evaluator.evaluate_hallucination(input1, input2))
 
 
+import gradio as gr
+from gradio_client import Client
+
+class FalconChatBot:
+    def __init__(self, endpoint_url, default_api_name="/predict"):
+        """
+        Initializes the FalconChatBot with a specified endpoint URL and default API name.
+
+        Args:
+            endpoint_url (str): The URL of the Gradio API endpoint.
+            default_api_name (str): The default API name for predictions.
+        """
+        self.client = Client(endpoint_url)
+        self.default_api_name = default_api_name
+
+    def predict(self, user_message, assistant_message, max_new_tokens, temperature, top_p, repetition_penalty, api_name=None):
+        """
+        Makes a prediction based on the provided parameters.
+
+        Args:
+            user_message (str): User's message.
+            assistant_message (str): Assistant's message.
+            max_new_tokens (int): Maximum number of new tokens.
+            temperature (float): Temperature for randomness.
+            top_p (float): Top-p for nucleus sampling.
+            repetition_penalty (float): Penalty for repetition.
+            api_name (str, optional): The API name for the prediction. Defaults to the class's default_api_name.
+
+        Returns:
+            str: The prediction result.
+        """
+        if api_name is None:
+            api_name = self.default_api_name
+
+        result = self.client.predict(
+            user_message,
+            assistant_message,
+            max_new_tokens,
+            temperature,
+            top_p,
+            repetition_penalty,
+            api_name=api_name
+        )
+        return result
+
+# Example usage
+# endpoint_url = "https://your-gradio-api-url.hf.space/"
+# api_name = "/custom_predict"  # Example custom API name
+# chat_bot = FalconChatBot(endpoint_url)
+
+#user_message = "Hello, how are you?"
+# assistant_message = "I'm fine, thank you!"
+# max_new_tokens = 50
+# temperature = 0.7
+# top_p = 0.9
+# repetition_penalty = 1.2
+
+class GradioTextApp:
+    def __init__(self, endpoint_url, api_name="/predict"):
+        """
+        Initializes the GradioTextApp with a specified endpoint URL and API name.
+
+        Args:
+            endpoint_url (str): The URL of the Gradio API endpoint.
+            api_name (str): The API name for predictions.
+        """
+        self.client = Client(endpoint_url)
+        self.api_name = api_name
+
+    def predict(self, user_input):
+        """
+        Makes a prediction based on user input.
+
+        Args:
+            user_input (str): Input from the user.
+
+        Returns:
+            str: The prediction result.
+        """
+        result = self.client.predict(
+            user_input,  # str in 'user_input' Textbox component
+            api_name=self.api_name
+        )
+        return result
+
+# Example usage
+# endpoint_url = "https://your-gradio-api-url.hf.space/"
+# api_name = "/custom_predict"  # Example custom API name
+# gradio_text_app = GradioTextApp(endpoint_url, api_name)
+
+# user_input = "Hello, world!"
+# print(gradio_text_app.predict(user_input))
+
+# print(chat_bot.predict(user_message, assistant_message, max_new_tokens, temperature, top_p, repetition_penalty, api_name=api_name))
+
+from gradio_client import Client
+
+class GradioApp:
+    def __init__(self, endpoint_url, api_name="/predict"):
+        """
+        Initializes the GradioApp with a specified endpoint URL and API name.
+
+        Args:
+            endpoint_url (str): The URL of the Gradio API endpoint.
+            api_name (str): The API name for predictions.
+        """
+        self.client = Client(endpoint_url)
+        self.api_name = api_name
+
+    def predict(self, user_input, system_prompt):
+        """
+        Makes a prediction based on user input and system prompt.
+
+        Args:
+            user_input (str): Input from the user.
+            system_prompt (str): System prompt.
+
+        Returns:
+            str: The prediction result.
+        """
+        result = self.client.predict(
+            user_input,  # str in 'user_input' Textbox component
+            system_prompt,  # str in 'system_prompt' Textbox component
+            api_name=self.api_name
+        )
+        return result
+
+# Example usage
+# endpoint_url = "https://tonic-stablemed-chat.hf.space/"
+# api_name = "/custom_predict"  # Example custom API name
+# gradio_app = GradioApp(endpoint_url, api_name)
+
+# user_input = "Howdy!"
+# system_prompt = "Howdy!"
+# print(gradio_app.predict(user_input, system_prompt))
+
+
 class Dummy(Huggingface):
 
     def __init__(
