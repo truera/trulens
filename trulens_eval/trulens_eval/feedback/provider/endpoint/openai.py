@@ -157,6 +157,10 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             )
 
     def __init__(self, *args, **kwargs):
+        # NOTE: Large block of code below has been commented out due to changes
+        # in how openai parameters are set in openai v1. Our code may not be
+        # necessary but this needs investigation.
+
         # If any of these keys are in kwargs, copy over its value to the env
         # variable named as the respective value in this dict. If value is None,
         # don't copy to env. Regardless of env, set all of these as attributes
