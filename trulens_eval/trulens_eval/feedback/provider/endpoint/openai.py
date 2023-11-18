@@ -24,11 +24,11 @@ import inspect
 import logging
 import pprint
 from typing import Any, Callable, List, Optional
-import openai
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
 from langchain.schema import LLMResult
+import openai
 import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
@@ -41,6 +41,7 @@ from trulens_eval.utils.text import UNICODE_CHECK
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
 
 class OpenAICallback(EndpointCallback):
 
@@ -62,10 +63,7 @@ class OpenAICallback(EndpointCallback):
 
         if response.choices[0].finish_reason == 'stop':
             llm_result = LLMResult(
-                llm_output=dict(
-                    token_usage=dict(),
-                    model_name=response.model
-                ),
+                llm_output=dict(token_usage=dict(), model_name=response.model),
                 generations=[self.chunks]
             )
             self.chunks = []
@@ -77,8 +75,7 @@ class OpenAICallback(EndpointCallback):
         self.langchain_handler.on_llm_end(response)
 
         for cost_field, langchain_field in [
-            ("cost", "total_cost"),
-            ("n_tokens", "total_tokens"),
+            ("cost", "total_cost"), ("n_tokens", "total_tokens"),
             ("n_successful_requests", "successful_requests"),
             ("n_prompt_tokens", "prompt_tokens"),
             ("n_completion_tokens", "completion_tokens")
@@ -94,7 +91,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
     OpenAI endpoint. Instruments "create" methods in openai client.
     """
 
-    client: openai.OpenAI 
+    client: openai.OpenAI
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="openai")
@@ -103,7 +100,9 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         self, func: Callable, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
     ) -> None:
-        logger.debug(f"handle_wrapped_call used. func: {func}, bindings: {bindings}, response: {response}")
+        logger.debug(
+            f"handle_wrapped_call used. func: {func}, bindings: {bindings}, response: {response}"
+        )
 
         model_name = ""
         if 'model' in bindings.kwargs:
