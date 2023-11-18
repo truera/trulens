@@ -4,7 +4,7 @@ Feedback functions, analogous to labeling functions, provide a programmatic meth
 
 It can be useful to think of the range of evaluations on two axis: Scalable and Meaningful.
 
-![Range of Feedback Functions](../assets/image/Range_of_Feedback_Functions.png)
+![Range of Feedback Functions](../assets/images/Range_of_Feedback_Functions.png)
 
 ## Domain Expert (Ground Truth) Evaluations
 

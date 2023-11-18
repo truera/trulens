@@ -4,7 +4,7 @@ RAGs have become the standard architecture for providing LLMs with context in or
 
 TruEra has innovated the RAG triad to evaluate for hallucinations along each edge of the RAG architecture, shown below:
 
-![RAG Triad](../assets/image/RAG_Triad.jpg)
+![RAG Triad](../assets/images/RAG_Triad.jpg)
 
 The RAG triad is made up of 3 evaluations: context relevance, groundedness and answer relevance. Satisfactory evaluations on each provides us confidence that our LLM app is free form hallucination.
 

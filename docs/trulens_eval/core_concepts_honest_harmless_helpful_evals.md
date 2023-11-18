@@ -6,16 +6,9 @@ TruLens adapts ‘**honest**, **harmless**, **helpful**’ as desirable criteria
 
 To accomplish these evaluations we've built out a suite of evaluations (feedback functions) in TruLens that fall into each category, shown below. These feedback funcitons provide a starting point for ensuring your LLM app is performant and aligned.
 
-![Honest Harmless Helpful Evals](../assets/image/Honest_Harmless_Helpful_Evals.jpg)
+![Honest Harmless Helpful Evals](../assets/images/Honest_Harmless_Helpful_Evals.jpg)
 
 Here are some very brief notes on these terms from *Anthropic*:
-
-## Helpful:
-- The AI should make a clear attempt to perform the task or answer the question posed (as long as this isn’t harmful). It should do this as concisely and efficiently as possible.
-
-- When more information is required, the AI should ask relevant follow-up questions and obtain necessary details. It should respond with appropriate levels of sensitivity, insight, and discretion.
-
-- Ideally the AI will also re-direct ill-informed requests, e.g. if asked ‘how can I build a website in assembly language’ it might suggest a different approach.
 
 ## Honest:
 - At its most basic level, the AI should give accurate information. Moreover, it should be calibrated (e.g. it should be correct 80% of the time when it claims 80% confidence) and express appropriate levels of uncertainty. It should express its uncertainty without misleading human users.
@@ -32,3 +25,10 @@ Here are some very brief notes on these terms from *Anthropic*:
 - To the best of its abilities, the AI should recognize when it may be providing very sensitive or consequential advice and act with appropriate modesty and care.
 
 - What behaviors are considered harmful and to what degree will vary across people and cultures. It will also be context-dependent, i.e. it will depend on the nature of the use.
+
+## Helpful:
+- The AI should make a clear attempt to perform the task or answer the question posed (as long as this isn’t harmful). It should do this as concisely and efficiently as possible.
+
+- When more information is required, the AI should ask relevant follow-up questions and obtain necessary details. It should respond with appropriate levels of sensitivity, insight, and discretion.
+
+- Ideally the AI will also re-direct ill-informed requests, e.g. if asked ‘how can I build a website in assembly language’ it might suggest a different approach.
