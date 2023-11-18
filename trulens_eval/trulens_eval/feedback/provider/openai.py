@@ -68,12 +68,16 @@ class OpenAI(LLMProvider):
             kwargs['seed'] = 123
 
         if prompt is not None:
-            completion = self.endpoint.client.chat.completions.create(messages=[{
-                "role": "system",
-                "content": prompt
-            }], **kwargs)
+            completion = self.endpoint.client.chat.completions.create(
+                messages=[{
+                    "role": "system",
+                    "content": prompt
+                }], **kwargs
+            )
         elif messages is not None:
-            completion = self.endpoint.client.chat.completions.create(messages=messages, **kwargs)
+            completion = self.endpoint.client.chat.completions.create(
+                messages=messages, **kwargs
+            )
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
@@ -144,9 +148,7 @@ class OpenAI(LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return float(
-            openai_response.category_scores.hate_threatening
-        )
+        return float(openai_response.category_scores.hate_threatening)
 
     # TODEP
     def moderation_selfharm(self, text: str) -> float:
@@ -176,9 +178,7 @@ class OpenAI(LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return float(
-            openai_response.category_scores.self_harm
-        )
+        return float(openai_response.category_scores.self_harm)
 
     # TODEP
     def moderation_sexual(self, text: str) -> float:
@@ -239,9 +239,7 @@ class OpenAI(LLMProvider):
 
         openai_response = self._moderation(text)
 
-        return float(
-            oopenai_response.category_scores.sexual_minors
-        )
+        return float(oopenai_response.category_scores.sexual_minors)
 
     # TODEP
     def moderation_violence(self, text: str) -> float:
@@ -271,9 +269,7 @@ class OpenAI(LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return float(
-            openai_response.category_scores.violence
-        )
+        return float(openai_response.category_scores.violence)
 
     # TODEP
     def moderation_violencegraphic(self, text: str) -> float:
@@ -304,9 +300,7 @@ class OpenAI(LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return float(
-            openai_response.category_scores.violence_graphic
-        )
+        return float(openai_response.category_scores.violence_graphic)
 
     # TODEP
     def moderation_harassment(self, text: str) -> float:
@@ -336,9 +330,7 @@ class OpenAI(LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return float(
-            openai_response.category_scores.harassment
-        )
+        return float(openai_response.category_scores.harassment)
 
     def moderation_harassment_threatening(self, text: str) -> float:
         """
@@ -367,10 +359,7 @@ class OpenAI(LLMProvider):
         """
         openai_response = self._moderation(text)
 
-        return float(
-            openai_response.category_scores.harassment
-        )
-
+        return float(openai_response.category_scores.harassment)
 
 
 class AzureOpenAI(OpenAI):

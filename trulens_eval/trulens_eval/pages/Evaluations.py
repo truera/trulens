@@ -398,16 +398,20 @@ else:
                             " component."
                         )
                         # Look up whether there was any data at that path even if not an instrumented component:
-                        
+
                         try:
-                            app_component_json = list(match_query.get(app_json))[0]
+                            app_component_json = list(
+                                match_query.get(app_json)
+                            )[0]
                             if app_component_json is not None:
                                 with st.expander(
-                                        "Uninstrumented app component details."):
+                                        "Uninstrumented app component details."
+                                ):
                                     st.json(app_component_json)
                         except Exception:
-                            st.write(f"Recorded invocation by component `{match_query}` but cannot find this component in the app json.")
-    
+                            st.write(
+                                f"Recorded invocation by component `{match_query}` but cannot find this component in the app json."
+                            )
 
                 else:
                     st.text("No match found")
