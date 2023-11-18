@@ -12,13 +12,17 @@ TruLens provides a set of tools for developing and monitoring neural nets, inclu
 
 The best way to support TruLens is to give us a ⭐ on [GitHub](https://www.github.com/truera/trulens) and join our [slack community](https://communityinviter.com/apps/aiqualityforum/josh)!
 
-# Welcome to TruLens-Eval!
+## TruLens-Eval
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 ![TruLens](https://www.trulens.org/assets/image/Neural_Network_Explainability.png)
 =======
 ![TruLens](https://www.trulens.org/Assets/image/Neural_Network_Explainability.png)
 >>>>>>> bfadf96b (fix readme conflicts)
+=======
+![TruLens](https://www.trulens.org/assets/image/Neural_Network_Explainability.png)
+>>>>>>> 654e7b97 (small changes to reamde)
 
 Don't just vibe-check your llm app! Systematically evaluate and track your LLM experiments with TruLens. As you develop your app including prompts, models, retreivers, knowledge sources and more, TruLens-Eval is the tool you need to understand its performance.
 
@@ -40,7 +44,7 @@ Install the trulens-eval pip package from PyPI.
     pip install trulens-eval
 ```
 
-## Quick Usage
+### Quick Usage
 
 Walk through how to instrument and evaluate a RAG built from scratch with TruLens.
 
