@@ -10,11 +10,11 @@
 
 TruLens provides a set of tools for developing and monitoring neural nets, including large language models. This includes both tools for evaluation of LLMs and LLM-based applications with *TruLens-Eval* and deep learning explainability with *TruLens-Explain*. *TruLens-Eval* and *TruLens-Explain* are housed in separate packages and can be used independently.
 
-The best way to support TruLens is to give us a ⭐ and join our [slack community](https://communityinviter.com/apps/aiqualityforum/josh)!
+The best way to support TruLens is to give us a ⭐ on [GitHub](https://www.github.com/truera/trulens) and join our [slack community](https://communityinviter.com/apps/aiqualityforum/josh)!
 
-# Welcome to TruLens-Eval!
+## TruLens-Eval
 
-![TruLens](https://www.trulens.org/Assets/image/Neural_Network_Explainability.png)
+![TruLens](https://www.trulens.org/assets/image/Neural_Network_Explainability.png)
 
 Don't just vibe-check your llm app! Systematically evaluate and track your LLM experiments with TruLens. As you develop your app including prompts, models, retreivers, knowledge sources and more, TruLens-Eval is the tool you need to understand its performance.
 
@@ -26,9 +26,9 @@ Read more about the core concepts behind TruLens including [Feedback Functions](
 
 Build your first prototype then connect instrumentation and logging with TruLens. Decide what feedbacks you need, and specify them with TruLens to run alongside your app. Then iterate and compare versions of your app in an easy-to-use user interface 👇
 
-![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
+![Architecture Diagram](https://www.trulens.org/assets/image/TruLens_Architecture.png)
 
-## Installation and Setup
+### Installation and Setup
 
 Install the trulens-eval pip package from PyPI.
 
@@ -36,7 +36,7 @@ Install the trulens-eval pip package from PyPI.
     pip install trulens-eval
 ```
 
-## Quick Usage
+### Quick Usage
 
 Walk through how to instrument and evaluate a RAG built from scratch with TruLens.
 

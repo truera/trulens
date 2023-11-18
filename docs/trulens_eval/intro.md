@@ -1,6 +1,6 @@
 # Welcome to TruLens-Eval!
 
-![TruLens](https://www.trulens.org/Assets/image/Neural_Network_Explainability.png)
+![TruLens](https://www.trulens.org/assets/image/Neural_Network_Explainability.png)
 
 Don't just vibe-check your llm app! Systematically evaluate and track your LLM experiments with TruLens. As you develop your app including prompts, models, retreivers, knowledge sources and more, TruLens-Eval is the tool you need to understand its performance.
 
@@ -12,7 +12,7 @@ Read more about the core concepts behind TruLens including [Feedback Functions](
 
 Build your first prototype then connect instrumentation and logging with TruLens. Decide what feedbacks you need, and specify them with TruLens to run alongside your app. Then iterate and compare versions of your app in an easy-to-use user interface 👇
 
-![Architecture Diagram](https://www.trulens.org/Assets/image/TruLens_Architecture.png)
+![Architecture Diagram](https://www.trulens.org/assets/image/TruLens_Architecture.png)
 
 ## Installation and Setup
 
