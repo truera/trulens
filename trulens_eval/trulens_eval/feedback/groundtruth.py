@@ -175,13 +175,11 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
 
         return ret
 
-    def numeric_difference(
-        self, prompt: str, response: str, score: float
-    ) -> float:
+    def mae(self, prompt: str, response: str, score: float) -> float:
         """
         Method to look up the numeric expected score from a golden set and take the differnce.
 
-        Primarily used for feedback evaluation.
+        Primarily used for evaluation of model generated feedback against human feedback
 
         **Usage**
         ```
@@ -194,14 +192,14 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         ]
         ground_truth_collection = GroundTruthAgreement(golden_set)
 
-        f_groundtruth = Feedback(ground_truth.numeric_difference).on(Select.Record.calls[0].args.args[0]).on(Select.Record.calls[0].args.args[1]).on_output()
+        f_groundtruth = Feedback(ground_truth.mae).on(Select.Record.calls[0].args.args[0]).on(Select.Record.calls[0].args.args[1]).on_output()
         ```
 
         """
 
         expected_score = self._find_score(prompt, response)
         if expected_score:
-            ret = 1 - abs(float(score) - expected_score)
+            ret = abs(float(score) - expected_score)
             expected_score = "{:.2f}".format(expected_score
                                             ).rstrip('0').rstrip('.')
         else:

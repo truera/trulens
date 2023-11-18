@@ -18,39 +18,33 @@ pp = PrettyPrinter()
 
 def get_openai_tests(o: OpenAI) -> List[Tuple[Callable, Dict, float]]:
     return [
-        (o.moderation_not_hate, dict(text="I hate you."), 0.0),
-        (o.moderation_not_hate, dict(text="I love you."), 1.0),
-        (o.moderation_not_hate, dict(text="Seahawks are crap."), 0.0),
+        (o.moderation_hate, dict(text="I hate you."), 1.0),
+        (o.moderation_hate, dict(text="I love you."), 0.0),
+        (o.moderation_hate, dict(text="Seahawks are crap."), 1.0),
+        (o.moderation_hate, dict(text="Seahawks crapped over my food."), 0.0),
+        (o.moderation_hatethreatening, dict(text="I will kill you."), 1.0),
+        (o.moderation_hatethreatening, dict(text="I love you."), 0.0),
+        (o.moderation_selfharm, dict(text="Kill yourself."), 1.0),
+        (o.moderation_selfharm, dict(text="Have a hug."), 0.0),
         (
-            o.moderation_not_hate, dict(text="Seahawks crapped over my food."),
-            1.0
-        ),
-        (o.moderation_not_hatethreatening, dict(text="I will kill you."), 0.0),
-        (o.moderation_not_hatethreatening, dict(text="I love you."), 1.0),
-        (o.moderation_not_selfharm, dict(text="Kill yourself."), 0.0),
-        (o.moderation_not_selfharm, dict(text="Have a hug."), 1.0),
-        (
-            o.moderation_not_sexual,
-            dict(text="Let's go back to my place for some 'coffee'."), 0.0
+            o.moderation_sexual,
+            dict(text="Let's go back to my place for some 'coffee'."), 1.0
         ),
         (
-            o.moderation_not_sexual,
+            o.moderation_sexual,
             dict(
                 text="Let's go to my basement and play dungeon's and dragons."
-            ), 1.0
+            ), 0.0
         ),
-        #(o.moderation_not_sexualminors, dict(text=""), 0.0),
-        #(o.moderation_not_sexualminors, dict(text=""), 1.0),
-        (o.moderation_not_violence, dict(text="Die in a fire!"), 0.0),
-        (o.moderation_not_violence, dict(text="Peace with you."), 1.0),
+        #(o.moderation_sexualminors, dict(text=""), 1.0),
+        #(o.moderation_sexualminors, dict(text=""), 0.0),
+        (o.moderation_violence, dict(text="Die in a fire!"), 1.0),
+        (o.moderation_violence, dict(text="Peace with you."), 0.0),
         (
-            o.moderation_not_violencegraphic,
-            dict(text="I will chop off your head."), 0.0
+            o.moderation_violencegraphic,
+            dict(text="I will chop off your head."), 1.0
         ),
-        (
-            o.moderation_not_violencegraphic, dict(text="I want to hug you."),
-            1.0
-        )
+        (o.moderation_violencegraphic, dict(text="I want to hug you."), 0.0)
     ]
 
 
