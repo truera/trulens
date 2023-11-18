@@ -679,7 +679,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         # Need custom jsonification here because it is likely the model
         # structure contains loops.
 
-        return json_str_of_obj(self, *args, instrument=self.instrument, **kwargs)
+        return json_str_of_obj(
+            self, *args, instrument=self.instrument, **kwargs
+        )
 
     def dict(self):
         # Same problem as in json.

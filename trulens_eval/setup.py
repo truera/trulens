@@ -42,25 +42,18 @@ setup(
         'datasets>=2.12.0',
         'python-dotenv>=1.0.0',
         'kaggle>=1.5.13',
-
         f'langchain>={langchain_version}',  # required for cost tracking even outside of langchain
         'typing-inspect==0.8.0',  # langchain with python < 3.9 fix
         'typing_extensions==4.5.0',  # langchain with python < 3.9 fix
-
         f'llama_index=={llama_version}',
         # VectorStoreIndex changes need to be taken account for in later versions
-
         'merkle-json>=1.0.0',
         'millify>=0.1.1',
-
         'openai >=1.1.1, <2',
         # NOTE(piotrm): v2 likely to break things
-
         'pinecone-client>=2.2.1',
-
         'pydantic >=1.10.7, <2',
         # TODO(piotrm): need some migration for pydantic 2
-
         'humanize>=4.6.0',
         'slack-bolt>=1.18.0',
         'slack-sdk>=3.21.3',
@@ -69,7 +62,6 @@ setup(
         'streamlit-extras>=0.2.7',
         'streamlit-javascript>=0.1.5',  # for copy to clipboard functionality (in progress)
         'transformers>=4.10.0',
-        
         'frozendict>=2.3.8',
         'munch>=3.0.0',
         'ipywidgets>=8.0.6',
