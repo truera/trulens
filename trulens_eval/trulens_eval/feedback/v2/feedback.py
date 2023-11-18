@@ -109,12 +109,10 @@ class GroundTruth(Semantics):
 
 supported_criteria = {
     # NOTE: typo in "response" below is intentional. Still in langchain as of Sept 26, 2023.
-    key.value:
-        value.replace(" If so, response Y. If not, respond N.", ''
-                     )  # older version of langchain had this typo
-        .replace(" If so, respond Y. If not, respond N.", ''
-                )  # new one is fixed
-        if isinstance(value, str) else value
+    key.value: value.replace(" If so, response Y. If not, respond N.", ''
+                            )  # older version of langchain had this typo
+    .replace(" If so, respond Y. If not, respond N.", '')  # new one is fixed
+    if isinstance(value, str) else value
     for key, value in _SUPPORTED_CRITERIA.items()
 }
 
