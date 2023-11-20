@@ -7,10 +7,6 @@
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
 
-# In[ ]:
-
-# ! pip install trulens_eval==0.18.0 langchain>=0.0.335
-
 # ## Setup
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
@@ -142,31 +138,125 @@ tru.run_dashboard()  # open a local streamlit app to explore
 
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
-# ### Chain Leaderboard
+# Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
+
+# ## Or view results directly in your notebook
+
+# In[ ]:
+
+tru.get_records_and_feedback(app_ids=[]
+                            )[0]  # pass an empty list of app_ids to get all
+
+# # Llama-Index Quickstart
 #
-# Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics including cost and average feedback value across all of your LLM apps using the chain leaderboard. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up.
+# In this quickstart you will create a simple Llama Index App and learn how to log it and get feedback on an LLM response.
 #
-# Note: Average feedback values are returned and displayed in a range from 0 (worst) to 1 (best).
+# For evaluation, we will leverage the "hallucination triad" of groundedness, context relevance and answer relevance.
 #
-# ![Chain Leaderboard](https://www.trulens.org/assets/images/Leaderboard.png)
+# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb)
+
+# ## Setup
 #
-# To dive deeper on a particular chain, click "Select Chain".
+# ### Install dependencies
+# Let's install some of the dependencies for this notebook if we don't have them already
+
+# In[ ]:
+
+# pip install trulens-eval==0.18.0 llama_index>=0.8.69 html2text>=2020.1.16
+
+# ### Add API keys
+# For this quickstart, you will need Open AI and Huggingface keys. The OpenAI key is used for embeddings and GPT, and the Huggingface key is used for evaluation.
+
+# In[ ]:
+
+import os
+
+os.environ["OPENAI_API_KEY"] = "..."
+
+# ### Import from LlamaIndex and TruLens
+
+# In[ ]:
+
+from trulens_eval import Feedback
+from trulens_eval import Tru
+from trulens_eval import TruLlama
+from trulens_eval.feedback import Groundedness
+from trulens_eval.feedback.provider.openai import OpenAI
+
+tru = Tru()
+
+# ### Create Simple LLM Application
 #
-# ### Understand chain performance with Evaluations
-#
-# To learn more about the performance of a particular chain or LLM model, we can select it to view its evaluations at the record level. LLM quality is assessed through the use of feedback functions. Feedback functions are extensible methods for determining the quality of LLM responses and can be applied to any downstream LLM task. Out of the box we provide a number of feedback functions for assessing model agreement, sentiment, relevance and more.
-#
-# The evaluations tab provides record-level metadata and feedback on the quality of your LLM application.
-#
-# ![Evaluations](https://www.trulens.org/assets/images/Leaderboard.png)
-#
-# ### Deep dive into full chain metadata
-#
-# Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain_recorder.
-#
-# ![Explore a Chain](https://www.trulens.org/assets/images/Chain_Explore.png)
-#
-# If you prefer the raw format, you can quickly get it using the "Display full chain json" or "Display full record json" buttons at the bottom of the page.
+# This example uses LlamaIndex which internally uses an OpenAI LLM.
+
+# In[ ]:
+
+from llama_index import VectorStoreIndex
+from llama_index.readers.web import SimpleWebPageReader
+
+documents = SimpleWebPageReader(html_to_text=True).load_data(
+    ["http://paulgraham.com/worked.html"]
+)
+index = VectorStoreIndex.from_documents(documents)
+
+query_engine = index.as_query_engine()
+
+# ### Send your first request
+
+# In[ ]:
+
+response = query_engine.query("What did the author do growing up?")
+print(response)
+
+# ## Initialize Feedback Function(s)
+
+# In[ ]:
+
+import numpy as np
+
+# Initialize provider class
+openai = OpenAI()
+
+grounded = Groundedness(groundedness_provider=OpenAI())
+
+# Define a groundedness feedback function
+f_groundedness = Feedback(grounded.groundedness_measure_with_cot_reasons).on(
+    TruLlama.select_source_nodes().node.text.collect()
+).on_output().aggregate(grounded.grounded_statements_aggregator)
+
+# Question/answer relevance between overall question and answer.
+f_qa_relevance = Feedback(openai.relevance).on_input_output()
+
+# Question/statement relevance between question and each context chunk.
+f_qs_relevance = Feedback(openai.qs_relevance).on_input().on(
+    TruLlama.select_source_nodes().node.text
+).aggregate(np.mean)
+
+# ## Instrument app for logging with TruLens
+
+# In[ ]:
+
+tru_query_engine_recorder = TruLlama(
+    query_engine,
+    app_id='LlamaIndex_App1',
+    feedbacks=[f_groundedness, f_qa_relevance, f_qs_relevance]
+)
+
+# In[ ]:
+
+# or as context manager
+with tru_query_engine_recorder as recording:
+    query_engine.query("What did the author do growing up?")
+
+# ## Explore in a Dashboard
+
+# In[ ]:
+
+tru.run_dashboard()  # open a local streamlit app to explore
+
+# tru.stop_dashboard() # stop if needed
+
+# Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
 # Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
 
@@ -176,6 +266,500 @@ tru.run_dashboard()  # open a local streamlit app to explore
 
 tru.get_records_and_feedback(app_ids=[]
                             )[0]  # pass an empty list of app_ids to get all
+
+# # TruLens Quickstart
+#
+# In this quickstart you will create a RAG from scratch and learn how to log it and get feedback on an LLM response.
+#
+# For evaluation, we will leverage the "hallucination triad" of groundedness, context relevance and answer relevance.
+#
+# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/quickstart.ipynb)
+
+# In[ ]:
+
+import os
+
+os.environ["OPENAI_API_KEY"] = "..."
+
+# ## Get Data
+#
+# In this case, we'll just initialize some simple text in the notebook.
+
+# In[ ]:
+
+university_info = """
+The University of Washington, founded in 1861 in Seattle, is a public research university
+with over 45,000 students across three campuses in Seattle, Tacoma, and Bothell.
+As the flagship institution of the six public universities in Washington state,
+UW encompasses over 500 buildings and 20 million square feet of space,
+including one of the largest library systems in the world.
+"""
+
+# ## Create Vector Store
+#
+# Create a chromadb vector store in memory.
+
+# In[ ]:
+
+import chromadb
+from chromadb.utils import embedding_functions
+
+default_ef = embedding_functions.DefaultEmbeddingFunction()
+students_embeddings = default_ef([university_info])
+
+client = chromadb.Client()
+vector_store = client.create_collection(name="Students")
+
+vector_store.add(
+    embeddings=students_embeddings,
+    documents=[university_info],
+    metadatas=[
+        {
+            "source": "student info"
+        }, {
+            "source": "club info"
+        }, {
+            'source': 'university info'
+        }
+    ],
+    ids=["id1", "id2", "id3"]
+)
+
+# ## Build RAG from scratch
+#
+# Build a custom RAG from scratch, and add TruLens custom instrumentation.
+
+# In[ ]:
+
+from trulens_eval import Tru
+from trulens_eval.tru_custom_app import instrument
+
+tru = Tru()
+
+from openai import OpenAI
+
+oai_client = OpenAI()
+
+# In[ ]:
+
+
+class RAG_from_scratch:
+
+    @instrument
+    def retrieve(self, query: str) -> list:
+        """
+        Retrieve relevant text from vector store.
+        """
+        results = vector_store.query(query_texts=query, n_results=2)
+        return results['documents'][0]
+
+    @instrument
+    def generate_completion(self, query: str, context_str: list) -> str:
+        """
+        Generate answer from context.
+        """
+        completion = oai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            temperature=0,
+            messages=[
+                {
+                    "role": "user",
+                    "content":
+                        f"We have provided context information below. \n"
+                        f"---------------------\n"
+                        f"{context_str}"
+                        f"\n---------------------\n"
+                        f"Given this information, please answer the question: {query}"
+                }
+            ]
+        ).choices[0].message.content
+        return completion
+
+    @instrument
+    def query(self, query: str) -> str:
+        context_str = self.retrieve(query)
+        completion = self.generate_completion(query, context_str)
+        return completion
+
+
+rag = RAG_from_scratch()
+
+# ## Set up feedback functions.
+#
+# Here we'll use groundedness, answer relevance and context relevance to detect hallucination.
+
+# In[ ]:
+
+import numpy as np
+
+from trulens_eval import Feedback
+from trulens_eval import Select
+from trulens_eval.feedback import Groundedness
+from trulens_eval.feedback.provider.openai import OpenAI as fOpenAI
+
+# Initialize provider class
+fopenai = fOpenAI()
+
+grounded = Groundedness(groundedness_provider=fopenai)
+
+# Define a groundedness feedback function
+f_groundedness = (
+    Feedback(
+        grounded.groundedness_measure_with_cot_reasons, name="Groundedness"
+    ).on(Select.RecordCalls.retrieve.rets.collect()
+        ).on_output().aggregate(grounded.grounded_statements_aggregator)
+)
+
+# Question/answer relevance between overall question and answer.
+f_qa_relevance = (
+    Feedback(fopenai.relevance_with_cot_reasons, name="Answer Relevance").on(
+        Select.RecordCalls.retrieve.args.query
+    ).on_output()
+)
+
+# Question/statement relevance between question and each context chunk.
+f_context_relevance = (
+    Feedback(fopenai.qs_relevance_with_cot_reasons,
+             name="Context Relevance").on(
+                 Select.RecordCalls.retrieve.args.query
+             ).on(Select.RecordCalls.retrieve.rets.collect()
+                 ).aggregate(np.mean)
+)
+
+# ## Construct the app
+# Wrap the custom RAG with TruCustomApp, add list of feedbacks for eval
+
+# In[ ]:
+
+from trulens_eval import TruCustomApp
+
+tru_rag = TruCustomApp(
+    rag,
+    app_id='RAG v1',
+    feedbacks=[f_groundedness, f_qa_relevance, f_context_relevance]
+)
+
+# ## Run the app
+# Use `tru_rag` as a context manager for the custom RAG-from-scratch app.
+
+# In[ ]:
+
+with tru_rag as recording:
+    rag.query("When was the University of Washington founded?")
+
+# In[ ]:
+
+tru.run_dashboard()
+
+# # Prototype Evals
+# This notebook shows the use of the dummy feedback function provider which
+# behaves like the huggingface provider except it does not actually perform any
+# network calls and just produces constant results. It can be used to prototype
+# feedback function wiring for your apps before invoking potentially slow (to
+# run/to load) feedback functions.
+#
+# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/prototype_evals.ipynb)
+
+# ## Import libraries
+
+# In[ ]:
+
+from trulens_eval import Feedback
+from trulens_eval import Tru
+
+tru = Tru()
+
+tru.run_dashboard()
+
+# ## Set keys
+
+# In[ ]:
+
+import os
+
+os.environ["OPENAI_API_KEY"] = "..."
+
+# ## Build the app
+
+# In[ ]:
+
+from openai import OpenAI
+
+oai_client = OpenAI()
+
+from trulens_eval.tru_custom_app import instrument
+
+
+class APP:
+
+    @instrument
+    def completion(self, prompt):
+        completion = oai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            temperature=0,
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Please answer the question: {prompt}"
+                }
+            ]
+        ).choices[0].message.content
+        return completion
+
+
+llm_app = APP()
+
+# ## Create dummy feedback
+#
+# By setting the provider as `Dummy()`, you can erect your evaluation suite and then easily substitute in a real model provider (e.g. OpenAI) later.
+
+# In[ ]:
+
+from trulens_eval.feedback.provider.hugs import Dummy
+
+# hugs = Huggingface()
+hugs = Dummy()
+
+f_positive_sentiment = Feedback(hugs.positive_sentiment).on_output()
+
+# ## Create the app
+
+# In[ ]:
+
+# add trulens as a context manager for llm_app with dummy feedback
+from trulens_eval import TruCustomApp
+
+tru_app = TruCustomApp(
+    llm_app, app_id='LLM App v1', feedbacks=[f_positive_sentiment]
+)
+
+# ## Run the app
+
+# In[ ]:
+
+with tru_app as recording:
+    llm_app.completion('give me a good name for a colorful sock company')
+
+# In[ ]:
+
+tru.get_leaderboard(app_ids=[tru_app.app_id])
+
+# ## Logging Human Feedback
+#
+# In many situations, it can be useful to log human feedback from your users about your LLM app's performance. Combining human feedback along with automated feedback can help you drill down on subsets of your app that underperform, and uncover new failure modes. This example will walk you through a simple example of recording human feedback with TruLens.
+
+# In[ ]:
+
+import os
+from pathlib import Path
+import sys
+
+from trulens_eval import Tru
+from trulens_eval import TruChain
+
+tru = Tru()
+
+# ## Set Keys
+#
+# For this example, you need an OpenAI key.
+
+# In[3]:
+
+os.environ["OPENAI_API_KEY"] = "..."
+
+# ## Set up your app
+#
+# Here we set up a custom application using just an OpenAI chat completion. The process for logging human feedback is the same however you choose to set up your app.
+
+# In[4]:
+
+from openai import OpenAI
+
+oai_client = OpenAI()
+
+from trulens_eval.tru_custom_app import instrument
+
+
+class APP:
+
+    @instrument
+    def completion(self, prompt):
+        completion = oai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            temperature=0,
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Please answer the question: {prompt}"
+                }
+            ]
+        ).choices[0].message.content
+        return completion
+
+
+llm_app = APP()
+
+# add trulens as a context manager for llm_app
+from trulens_eval import TruCustomApp
+
+tru_app = TruCustomApp(llm_app, app_id='LLM App v1')
+
+# ## Run the app
+
+# In[5]:
+
+with tru_app as recording:
+    llm_app.completion("Give me 10 names for a colorful sock company")
+
+# ## Get the `record_id` that you will log human feedback to.
+
+# In[7]:
+
+records, feedback = tru.get_records_and_feedback(app_ids=["LLM App v1"])
+record_id = records.record_id[0]
+
+# ## Create a mechamism for recording human feedback.
+#
+# Be sure to click an emoji in the record to record `human_feedback` to log.
+
+# In[9]:
+
+from ipywidgets import Button
+from ipywidgets import HBox
+from ipywidgets import VBox
+
+thumbs_up_button = Button(description='👍')
+thumbs_down_button = Button(description='👎')
+
+human_feedback = None
+
+
+def on_thumbs_up_button_clicked(b):
+    global human_feedback
+    human_feedback = 1
+
+
+def on_thumbs_down_button_clicked(b):
+    global human_feedback
+    human_feedback = 0
+
+
+thumbs_up_button.on_click(on_thumbs_up_button_clicked)
+thumbs_down_button.on_click(on_thumbs_down_button_clicked)
+
+HBox([thumbs_up_button, thumbs_down_button])
+
+# In[10]:
+
+# add the human feedback to a particular app and record
+tru.add_feedback(
+    name="Human Feedack",
+    record_id=record_id,
+    app_id=tru_app.app_id,
+    result=human_feedback
+)
+
+# ## See the result logged with your app.
+
+# In[12]:
+
+tru.get_leaderboard(app_ids=[tru_app.app_id])
+
+# # Ground Truth Evaluations
+#
+# In this quickstart you will create a evaluate a LangChain app using ground truth. Ground truth evaluation can be especially useful during early LLM experiments when you have a small set of example queries that are critical to get right.
+#
+# Ground truth evaluation works by comparing the similarity of an LLM response compared to its matching verified response.
+#
+# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/groundtruth_evals.ipynb)
+
+# ### Add API keys
+# For this quickstart, you will need Open AI keys.
+
+# In[2]:
+
+import os
+
+os.environ["OPENAI_API_KEY"] = "..."
+
+# In[3]:
+
+from trulens_eval import Tru
+
+tru = Tru()
+
+# ### Create Simple LLM Application
+
+# In[4]:
+
+from openai import OpenAI
+
+oai_client = OpenAI()
+
+from trulens_eval.tru_custom_app import instrument
+
+
+class APP:
+
+    @instrument
+    def completion(self, prompt):
+        completion = oai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            temperature=0,
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Please answer the question: {prompt}"
+                }
+            ]
+        ).choices[0].message.content
+        return completion
+
+
+llm_app = APP()
+
+# ## Initialize Feedback Function(s)
+
+# In[5]:
+
+from trulens_eval import Feedback
+from trulens_eval.feedback import GroundTruthAgreement
+
+golden_set = [
+    {
+        "query": "who invented the lightbulb?",
+        "response": "Thomas Edison"
+    }, {
+        "query": "¿quien invento la bombilla?",
+        "response": "Thomas Edison"
+    }
+]
+
+f_groundtruth = Feedback(
+    GroundTruthAgreement(golden_set).agreement_measure, name="Ground Truth"
+).on_input_output()
+
+# ## Instrument chain for logging with TruLens
+
+# In[6]:
+
+# add trulens as a context manager for llm_app
+from trulens_eval import TruCustomApp
+
+tru_app = TruCustomApp(llm_app, app_id='LLM App v1', feedbacks=[f_groundtruth])
+
+# In[7]:
+
+# Instrumented query engine can operate as a context manager:
+with tru_app as recording:
+    llm_app.completion("¿quien invento la bombilla?")
+    llm_app.completion("who invented the lightbulb?")
+
+# ## See results
+
+# In[8]:
+
+tru.get_leaderboard(app_ids=[tru_app.app_id])
 
 # # Logging Methods
 #
