@@ -88,6 +88,10 @@ nav:
               - LangChain Quickstart: trulens_eval/langchain_quickstart.ipynb
               - Llama-Index Quickstart: trulens_eval/llama_index_quickstart.ipynb
               - Python Native (Text to Text) Quickstart: trulens_eval/text2text_quickstart.ipynb
+          - 🧠 Core Concepts:
+              - Feedback Functions: trulens_eval/core_concepts_feedback_functions.md
+              - RAG Triad: trulens_eval/core_concepts_rag_triad.md
+              - Honest, Harmless, Helpful Evals: trulens_eval/core_concepts_honest_harmless_helpful_evals.md
       - Evaluation:
           - 🎯 Feedback Functions:
               - Feedback Function Definitions: trulens_eval/function_definitions.md
