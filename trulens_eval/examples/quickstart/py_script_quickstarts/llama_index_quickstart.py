@@ -75,7 +75,7 @@ grounded = Groundedness(groundedness_provider=OpenAI())
 
 # Define a groundedness feedback function
 f_groundedness = Feedback(grounded.groundedness_measure_with_cot_reasons).on(
-    TruLlama.select_source_nodes().node.text
+    TruLlama.select_source_nodes().node.text.collect()
 ).on_output().aggregate(grounded.grounded_statements_aggregator)
 
 # Question/answer relevance between overall question and answer.

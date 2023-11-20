@@ -327,10 +327,12 @@ else:
                                 [call[i]["args"] for i in range(len(call))]
                             )
                             df["result"] = pd.DataFrame(
-                                [float(call[i]["ret"]) if call[i]["ret"] is not None else -1
+                                [
+                                    float(call[i]["ret"])
+                                    if call[i]["ret"] is not None else -1
                                     for i in range(len(call))
                                 ]
-)
+                            )
                             df["meta"] = pd.Series(
                                 [call[i]["meta"] for i in range(len(call))]
                             )
