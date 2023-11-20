@@ -100,10 +100,22 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         return super(Endpoint, cls).__new__(cls, name="openai")
 
     def handle_wrapped_call(
-        self, func: Callable, bindings: inspect.BoundArguments, response: Any,
+        self,
+        func: Callable,
+        bindings: inspect.BoundArguments,
+        response: Any,
         callback: Optional[EndpointCallback]
     ) -> None:
-        logger.debug(f"handle_wrapped_call used. func: {func}, bindings: {bindings}, response: {response}")
+        # TODO: cleanup/refactor. This method inspects the results of an
+        # instrumented call made by an openai client. As there are multiple
+        # types of calls being handled here, we need to make various checks to
+        # see what sort of data to process based on the call made.
+
+        logger.debug(
+            f"Handling openai instrumented call to func: {func},\n"
+            f"\tbindings: {bindings},\n"
+            f"\tresponse: {response}"
+        )
 
         model_name = ""
         if 'model' in bindings.kwargs:
