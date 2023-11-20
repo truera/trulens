@@ -6,6 +6,7 @@ from typing import Dict, Set, Tuple
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
+from openai import OpenAI as OpenAIClient
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.vectorstores import Pinecone
 import numpy as np
@@ -64,7 +65,7 @@ app_ids = {
 
 # Construct feedback functions.
 hugs = feedback.Huggingface()
-openai = feedback.OpenAI()
+openai = feedback.OpenAI(client=OpenAIClient())
 
 # Language match between question/answer.
 f_lang_match = Feedback(hugs.language_match).on_input_output()
