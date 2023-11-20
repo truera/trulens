@@ -45,7 +45,7 @@ export default function RecordTableRowRecursive({
   const { startTime, timeTaken, endTime } = getStartAndEndTimesForNode(node);
 
   let selector = 'Select.App';
-  if (node.path) selector += `.${node.path}`;
+  if (node.path) selector += `${node.path}`;
 
   const isNodeSelected = selectedNode === node.raw?.perf.start_time;
 
