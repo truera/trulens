@@ -7,10 +7,6 @@
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
 
-# In[ ]:
-
-# ! pip install trulens_eval==0.17.0 langchain>=0.0.263
-
 # ## Setup
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
@@ -141,32 +137,6 @@ tru.run_dashboard()  # open a local streamlit app to explore
 # tru.stop_dashboard() # stop if needed
 
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
-
-# ### Chain Leaderboard
-#
-# Understand how your LLM application is performing at a glance. Once you've set up logging and evaluation in your application, you can view key performance statistics including cost and average feedback value across all of your LLM apps using the chain leaderboard. As you iterate new versions of your LLM application, you can compare their performance across all of the different quality metrics you've set up.
-#
-# Note: Average feedback values are returned and displayed in a range from 0 (worst) to 1 (best).
-#
-# ![Chain Leaderboard](https://www.trulens.org/assets/images/Leaderboard.png)
-#
-# To dive deeper on a particular chain, click "Select Chain".
-#
-# ### Understand chain performance with Evaluations
-#
-# To learn more about the performance of a particular chain or LLM model, we can select it to view its evaluations at the record level. LLM quality is assessed through the use of feedback functions. Feedback functions are extensible methods for determining the quality of LLM responses and can be applied to any downstream LLM task. Out of the box we provide a number of feedback functions for assessing model agreement, sentiment, relevance and more.
-#
-# The evaluations tab provides record-level metadata and feedback on the quality of your LLM application.
-#
-# ![Evaluations](https://www.trulens.org/assets/images/Leaderboard.png)
-#
-# ### Deep dive into full chain metadata
-#
-# Click on a record to dive deep into all of the details of your chain stack and underlying LLM, captured by tru_chain_recorder.
-#
-# ![Explore a Chain](https://www.trulens.org/assets/images/Chain_Explore.png)
-#
-# If you prefer the raw format, you can quickly get it using the "Display full chain json" or "Display full record json" buttons at the bottom of the page.
 
 # Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
 

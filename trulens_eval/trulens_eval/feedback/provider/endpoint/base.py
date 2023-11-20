@@ -7,8 +7,9 @@ from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple,
-                    Type, TypeVar)
+from typing import (
+    Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
+)
 import warnings
 
 import pydantic
@@ -235,7 +236,9 @@ class Endpoint(SerialModel, SingletonPerName):
 
     def _instrument_module_members(self, mod: ModuleType, method_name: str):
         for m in dir(mod):
-            logger.debug(f"instrumenting module {mod} member {m} for method {method_name}")
+            logger.debug(
+                f"instrumenting module {mod} member {m} for method {method_name}"
+            )
             if safe_hasattr(mod, m):
                 obj = safe_getattr(mod, m)
                 self._instrument_class(obj, method_name=method_name)

@@ -111,7 +111,7 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
         try:
             v = v.fget(obj)
             return v
-        
+
         except Exception as e:
             return {ERROR: ObjSerial.of_object(e)}
     else:
