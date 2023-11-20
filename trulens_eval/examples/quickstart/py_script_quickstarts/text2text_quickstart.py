@@ -7,34 +7,25 @@
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/text2text_quickstart.ipynb)
 
-# In[ ]:
-
-# ! pip install trulens_eval==0.17.0 openai==1.1.1
-
 # ## Setup
 # ### Add API keys
-# For this quickstart you will need Open AI and Huggingface keys
+# For this quickstart you will need an OpenAI Key.
 
 # In[ ]:
 
-import logging
 import os
 
-# In[ ]:
-
 os.environ["OPENAI_API_KEY"] = "..."
-
-# In[ ]:
-
-from openai import OpenAI
-
-client = OpenAI()
 
 # ### Import from TruLens
 
 # In[ ]:
 
 from IPython.display import JSON
+# Create openai client
+from openai import OpenAI
+
+client = OpenAI()
 
 # Imports main tools:
 from trulens_eval import Feedback
