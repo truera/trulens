@@ -88,7 +88,7 @@ nav:
               - Quickstart: trulens_eval/quickstart.ipynb
               - LangChain Quickstart: trulens_eval/langchain_quickstart.ipynb
               - Llama-Index Quickstart: trulens_eval/llama_index_quickstart.ipynb
-              - Python Native (Text to Text) Quickstart: trulens_eval/text2text_quickstart.ipynb
+              - Text to Text Quickstart: trulens_eval/text2text_quickstart.ipynb
               - Ground Truth Evaluation Quickstart: trulens_eval/groundtruth_evals.ipynb
               - Human Feedback Quickstart: trulens_eval/human_feedback.ipynb
           - 🧠 Core Concepts:
