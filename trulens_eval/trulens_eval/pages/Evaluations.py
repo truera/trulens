@@ -339,6 +339,17 @@ else:
                             df = df.join(df.meta.apply(lambda m: pd.Series(m))
                                         ).drop(columns="meta")
 
+                            def flatten_list_of_list_of_strings(column):
+                                # Check if the column type is a list of lists of strings
+                                if all(isinstance(item, list) and all(isinstance(inner_item, list) and all(isinstance(string, str) for string in inner_item) for inner_item in item) for item in column):
+                                    # Flatten the list of lists of strings into a single list of strings
+                                    return ['\n\n=====\n\n'.join(inner_item) for item in column for inner_item in item]
+  
+                                else:
+                                    return column
+
+                            df = df.apply(flatten_list_of_list_of_strings)
+  
                             st.dataframe(
                                 df.style.apply(highlight, axis=1).format(
                                     "{:.2}", subset=["result"]
