@@ -13,9 +13,11 @@ from ast import parse
 from copy import copy
 import logging
 from pprint import PrettyPrinter
-import tempfile
-from typing import (Any, Callable, Dict, Generic, Iterable, Iterator, List, Optional,
-                    Sequence, Set, Tuple, TypeVar, Union)
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple,
+    TypeVar, Union
+)
+
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic

@@ -24,11 +24,11 @@ import inspect
 import logging
 import pprint
 from typing import Any, Callable, List, Optional
-import openai
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
 from langchain.schema import LLMResult
+import openai
 import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
@@ -41,6 +41,7 @@ from trulens_eval.utils.text import UNICODE_CHECK
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
 
 class OpenAICallback(EndpointCallback):
 
@@ -62,10 +63,7 @@ class OpenAICallback(EndpointCallback):
 
         if response.choices[0].finish_reason == 'stop':
             llm_result = LLMResult(
-                llm_output=dict(
-                    token_usage=dict(),
-                    model_name=response.model
-                ),
+                llm_output=dict(token_usage=dict(), model_name=response.model),
                 generations=[self.chunks]
             )
             self.chunks = []
@@ -77,8 +75,7 @@ class OpenAICallback(EndpointCallback):
         self.langchain_handler.on_llm_end(response)
 
         for cost_field, langchain_field in [
-            ("cost", "total_cost"),
-            ("n_tokens", "total_tokens"),
+            ("cost", "total_cost"), ("n_tokens", "total_tokens"),
             ("n_successful_requests", "successful_requests"),
             ("n_prompt_tokens", "prompt_tokens"),
             ("n_completion_tokens", "completion_tokens")
@@ -94,16 +91,28 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
     OpenAI endpoint. Instruments "create" methods in openai client.
     """
 
-    client: openai.OpenAI 
+    client: openai.OpenAI
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="openai")
 
     def handle_wrapped_call(
-        self, func: Callable, bindings: inspect.BoundArguments, response: Any,
+        self,
+        func: Callable,
+        bindings: inspect.BoundArguments,
+        response: Any,
         callback: Optional[EndpointCallback]
     ) -> None:
-        logger.debug(f"handle_wrapped_call used. func: {func}, bindings: {bindings}, response: {response}")
+        # TODO: cleanup/refactor. This method inspects the results of an
+        # instrumented call made by an openai client. As there are multiple
+        # types of calls being handled here, we need to make various checks to
+        # see what sort of data to process based on the call made.
+
+        logger.debug(
+            f"Handling openai instrumented call to func: {func},\n"
+            f"\tbindings: {bindings},\n"
+            f"\tresponse: {response}"
+        )
 
         model_name = ""
         if 'model' in bindings.kwargs:
@@ -157,6 +166,10 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             )
 
     def __init__(self, *args, **kwargs):
+        # NOTE: Large block of code below has been commented out due to changes
+        # in how openai parameters are set in openai v1. Our code may not be
+        # necessary but this needs investigation.
+
         # If any of these keys are in kwargs, copy over its value to the env
         # variable named as the respective value in this dict. If value is None,
         # don't copy to env. Regardless of env, set all of these as attributes

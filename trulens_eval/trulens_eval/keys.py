@@ -206,6 +206,7 @@ def get_config() -> Tuple[Path, dict]:
         # Put value in redaction list.
         values_to_redact.add(v)
 
+
 def get_cohere_agent() -> cohere.Client:
     """
     Gete a singleton cohere agent. Sets its api key from env var COHERE_API_KEY.
@@ -399,6 +400,7 @@ def check_keys(*keys: Tuple[str]) -> None:
         _check_key(k, v=v)
         values_to_redact.add(v)
         os.environ[k] = v
+
 
 def check_or_set_keys(*args: Tuple[str], **kwargs: Dict[str, str]) -> None:
     """
