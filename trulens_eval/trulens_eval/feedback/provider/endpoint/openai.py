@@ -97,11 +97,21 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         return super(Endpoint, cls).__new__(cls, name="openai")
 
     def handle_wrapped_call(
-        self, func: Callable, bindings: inspect.BoundArguments, response: Any,
+        self,
+        func: Callable,
+        bindings: inspect.BoundArguments,
+        response: Any,
         callback: Optional[EndpointCallback]
     ) -> None:
+        # TODO: cleanup/refactor. This method inspects the results of an
+        # instrumented call made by an openai client. As there are multiple
+        # types of calls being handled here, we need to make various checks to
+        # see what sort of data to process based on the call made.
+
         logger.debug(
-            f"handle_wrapped_call used. func: {func}, bindings: {bindings}, response: {response}"
+            f"Handling openai instrumented call to func: {func},\n"
+            f"\tbindings: {bindings},\n"
+            f"\tresponse: {response}"
         )
 
         model_name = ""
@@ -156,6 +166,10 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             )
 
     def __init__(self, *args, **kwargs):
+        # NOTE: Large block of code below has been commented out due to changes
+        # in how openai parameters are set in openai v1. Our code may not be
+        # necessary but this needs investigation.
+
         # If any of these keys are in kwargs, copy over its value to the env
         # variable named as the respective value in this dict. If value is None,
         # don't copy to env. Regardless of env, set all of these as attributes
