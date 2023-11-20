@@ -12,7 +12,7 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
-from ux.add_logo import add_logo
+from ux.add_logo import add_logo_and_style_overrides
 from ux.styles import CATEGORY
 
 from trulens_eval import Tru
@@ -45,7 +45,7 @@ st.title("Evaluations")
 
 st.runtime.legacy_caching.clear_cache()
 
-add_logo()
+add_logo_and_style_overrides()
 
 tru = Tru()
 lms = tru.db

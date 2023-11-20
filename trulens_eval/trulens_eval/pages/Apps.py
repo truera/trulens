@@ -13,13 +13,13 @@ from trulens_eval.ux.apps import ChatRecord
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 import streamlit as st
-from ux.add_logo import add_logo
+from ux.add_logo import add_logo_and_style_overrides
 
 st.set_page_config(page_title="App Runner", layout="wide")
 
 st.runtime.legacy_caching.clear_cache()
 
-add_logo()
+add_logo_and_style_overrides()
 
 
 def remove_selector(
