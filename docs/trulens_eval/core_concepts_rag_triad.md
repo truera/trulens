@@ -24,3 +24,5 @@ Last, our response still needs to helpfully answer the original question. We can
 
 By reaching satisfactory evaluations for this triad, we can make a nuanced statement about our application’s correctness; our application is verified to be hallucination free up to the limit of its knowledge base. In other words, if the vector database contains only accurate information, then the answers provided by the RAG are also accurate.
 
+To see the RAG triad in action, check out the [TruLens Quickstart](./quickstart.ipynb)
+
