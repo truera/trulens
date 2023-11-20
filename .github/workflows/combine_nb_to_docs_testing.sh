@@ -5,7 +5,7 @@ rm -rf alltools.ipynb
 
 # Combined notebook flow - will be tested
 # IF MOVING ANY IPYNB, MAKE SURE TO RE-SYMLINK. MANY IPYNB REFERENCED HERE LIVE IN OTHER PATHS
-nbmerge langchain_quickstart.ipynb llama_index_quickstart.ipynb quickstart.ipynb prototype_evals.ipynb human_feedback.ipynb logging.ipynb custom_feedback_functions.ipynb >> all_tools.ipynb
+nbmerge langchain_quickstart.ipynb llama_index_quickstart.ipynb quickstart.ipynb prototype_evals.ipynb human_feedback.ipynb groundtruth_evals.ipynb logging.ipynb custom_feedback_functions.ipynb >> all_tools.ipynb
 
 # Create pypi page documentation
 
