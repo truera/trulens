@@ -47,21 +47,19 @@ vector_store = client.create_collection(name="Students")
 vector_store.add(
     embeddings=students_embeddings,
     documents=[university_info],
-    metadatas=[
-        {
-            "source": "student info"
-        }, {
-            "source": "club info"
-        }, {
-            'source': 'university info'
-        }
-    ],
-    ids=["id1", "id2", "id3"]
+    metadatas=[{
+        'source': 'university info'
+    }],
+    ids=["id1"]
 )
 
 # ## Build RAG from scratch
 #
 # Build a custom RAG from scratch, and add TruLens custom instrumentation.
+
+# In[ ]:
+
+tru.reset_database()
 
 # In[ ]:
 
