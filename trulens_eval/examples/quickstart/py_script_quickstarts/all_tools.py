@@ -313,21 +313,19 @@ vector_store = client.create_collection(name="Students")
 vector_store.add(
     embeddings=students_embeddings,
     documents=[university_info],
-    metadatas=[
-        {
-            "source": "student info"
-        }, {
-            "source": "club info"
-        }, {
-            'source': 'university info'
-        }
-    ],
-    ids=["id1", "id2", "id3"]
+    metadatas=[{
+        'source': 'university info'
+    }],
+    ids=["id1"]
 )
 
 # ## Build RAG from scratch
 #
 # Build a custom RAG from scratch, and add TruLens custom instrumentation.
+
+# In[ ]:
+
+tru.reset_database()
 
 # In[ ]:
 
@@ -547,6 +545,8 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 # ## Logging Human Feedback
 #
 # In many situations, it can be useful to log human feedback from your users about your LLM app's performance. Combining human feedback along with automated feedback can help you drill down on subsets of your app that underperform, and uncover new failure modes. This example will walk you through a simple example of recording human feedback with TruLens.
+#
+# [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/human_feedback.ipynb)
 
 # In[ ]:
 
