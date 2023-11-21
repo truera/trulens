@@ -40,12 +40,13 @@ def streamlit_app():
         "Average feedback values displayed in the range from 0 (worst) to 1 (best)."
     )
     df, feedback_col_names = lms.get_records_and_feedback([])
+    feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
             row.feedback_json.get("supplied_name", "") or
             row.feedback_json["implementation"]["name"]
         ): row.feedback_json.get("higher_is_better", True)
-        for _, row in lms.get_feedback_defs().iterrows()
+        for _, row in feedback_defs.iterrows()
     }
 
     if df.empty:
@@ -122,7 +123,7 @@ def streamlit_app():
                 )
             else:
                 cat = CATEGORY.of_score(
-                    mean, higher_is_better=feedback_directions[col_name]
+                    mean, higher_is_better=higher_is_better
                 )
                 feedback_cols[i].metric(
                     label=col_name,
