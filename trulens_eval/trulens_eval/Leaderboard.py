@@ -115,6 +115,8 @@ def streamlit_app():
                 unsafe_allow_html=True,
             )
 
+            higher_is_better = feedback_directions.get(col_name, True)
+            
             if "distance" in col_name:
                 feedback_cols[i].metric(
                     label=col_name,
