@@ -11,16 +11,20 @@ import ast
 from ast import dump
 from ast import parse
 from copy import copy
+import json
 import logging
+from pathlib import Path
 from pprint import PrettyPrinter
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple,
-    TypeVar, Union
-)
+from ssl import SSLContext
+import tempfile
+import traceback
+from typing import (Any, Callable, Dict, Generic, Iterable, List, Optional,
+                    Sequence, Set, Tuple, Type, TypeVar, Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
+
 
 from trulens_eval.utils.containers import iterable_peek
 from trulens_eval.utils.text import UNICODE_CHECK
@@ -32,12 +36,13 @@ T = TypeVar("T")
 
 # JSON types
 
-JSON_BASES = (str, int, float, bytes, type(None))
-JSON_BASES_T = Union[str, int, float, bytes, type(None)]
+JSON_BASES = (str, int, float, type(None))
+JSON_BASES_T = Union[str, int, float, type(None)]
 
 # TODO: rename to "JSON_LIKE" as it is not stringly json.
 # JSON = Union[JSON_BASES_T, Sequence['JSON'], Dict[str, 'JSON']]
 JSON = Union[JSON_BASES_T, Sequence[Any], Dict[str, Any]]  # Any = JSON
+JSON_TYPES = (*JSON_BASES, Sequence, Dict)
 
 # TODO: rename to "JSON".
 JSON_STRICT = Dict[str, JSON]
@@ -54,7 +59,6 @@ import humanize
 from langchain.chains import load_chain
 from langchain.chains.base import Chain
 
-
 T = TypeVar("T")
 
 
@@ -65,7 +69,7 @@ class SerialModel(pydantic.BaseModel):
     """
 
     @classmethod
-    def validate(cls, obj: Any):
+    def validate(cls, obj: Any) -> SerialModel:
         # import hierarchy circle here
         from trulens_eval.utils.pyschema import Class
         from trulens_eval.utils.pyschema import CLASS_INFO
@@ -90,10 +94,14 @@ class SerialModel(pydantic.BaseModel):
 
 
 class SerialBytes(pydantic.BaseModel):
-    # Raw data that we want to nonetheless serialize .
+    # Raw data that we want to nonetheless put into a json structure.
     data: bytes
 
     def dict(self):
+        """
+        Encode the bytes as a string so we can be stored as json.
+        """
+        
         import base64
         encoded = base64.b64encode(self.data)
         return dict(data=encoded)
@@ -103,10 +111,6 @@ class SerialBytes(pydantic.BaseModel):
 
     @classmethod
     def parse_obj(cls, obj):
-        return cls.validate(obj)
-
-    @classmethod
-    def validate(cls, obj):
         import base64
 
         if isinstance(obj, Dict):
@@ -117,110 +121,413 @@ class SerialBytes(pydantic.BaseModel):
                 return SerialBytes(data=encoded)
             else:
                 raise ValueError(obj)
+            
+        elif isinstance(obj, bytes):
+            return SerialBytes(data=obj)
+        elif isinstance(obj, str):
+            return SerialBytes(data=base64.b64decode(obj))
+        elif isinstance(obj, SerialBytes):
+            return obj
         else:
-            raise ValueError(obj)
+            raise ValueError(f"Could not parse {obj} as SerialBytes.")
     
 
+def recreate_SSLContext():
+    # TODO: Figure out whether we want to preserve anything.
+    return None # SSLContext()
+
+@dill.register(SSLContext)
+def save_SSLContext(pickler, obj):
+    print("save_SSLContext")
+    pickler.save_reduce(recreate_SSLContext, (), obj=obj)
+
 class Dump(pydantic.BaseModel, Generic[T]):
+
     @classmethod
-    def validate(cls, obj):
+    def dumps(cls, obj: T, dumped_objects: Optional[Dict[int, Dump]] = None) -> str:
+        dumped_objects = dumped_objects or dict()
+
+        if isinstance(obj, str):
+            return obj
+        else:
+            from trulens_eval.utils.json import json_str_of_obj
+            d = Dump.dumpm(obj, dumped_objects=dumped_objects)
+            return json_str_of_obj(d)
+            
+
+    @classmethod
+    def loads(cls, dat: str) -> T:
+        obj = json.loads(dat)
+        dump = Dump.parse_obj(obj)
+        return dump.loadm()
+
+    @classmethod
+    def parse_obj(cls, obj):
+        # print(f"Dump.parse {type(obj)}")
         if isinstance(obj, dict):
-            if hasattr(obj, "chain_json"):
-                return LangChainDump.load_obj(obj)
-            elif hasattr(obj, "dill_bytes"):
-                return DillDump.load_obj(obj)
-            elif hasattr(obj, "model_json"):
-                return PydanticDump.load_obj(obj)
-            elif hasattr(obj, "serial_model_dump"):
-                return SerialDump.load_obj(obj)
-
-        raise ValueError(f"Unknown dump type {type(obj).__name__}")
+            if "chain_json" in obj:
+                return LangChainDump.parse_obj(obj)
+            elif "dill_bytes" in obj:
+                return DillDump.parse_obj(obj)
+            elif "model_json" in obj:
+                return PydanticDump.parse_obj(obj)
+            elif "json_str" in obj:
+                return JSONLikeDump.parse_obj(obj)
+            elif "serial_model_dump" in obj:
+                return SerialDump.parse_obj(obj)
+            else:
+                raise ValueError(f"Cannot determine dump type from keys {list(obj.keys())}")
+            
+        elif isinstance(obj, Dump):
+            return obj
+        
+        else:
+            raise ValueError(f"Unknown dump type {type(obj).__name__}")
 
     @classmethod
-    def dumpm(cls, obj: T, instrument: Optional['Instrument'] = None) -> 'Dump':
+    def dict_or_base(
+        cls,
+        obj: T,
+        dumped_objects: Optional[Dict[int, Any]] = None
+    ) -> JSON:
+        
+        if isinstance(obj, JSON_BASES):
+            return obj
+        else:
+            m = Dump.dumpm(obj, dumped_objects=dumped_objects)
+            print(f"calling pydantic dict on {type(m)}={m}")
+            return m.dict() # pydantic's dict
+
+    @classmethod
+    def loadm_or_base(cls, m: Dump[T] | JSON_BASES_T) -> T | JSON_BASES_T:
+        if isinstance(m, JSON_BASES):
+            return m
+        
+        elif isinstance(m, Dict):
+            return Dump.parse_obj(m).loadm()
+        
+        elif isinstance(m, Dump):
+            return m.loadm()
+        
+        else:
+            raise ValueError(f"Could not loadm_or_base from {m}")
+
+    @classmethod
+    def dumpm_or_base(
+        cls,
+        obj: T,
+        dumped_objects: Optional[Dict[int, Any]] = None
+    ) -> Dump[T] | JSON_BASES_T:
+        dumped_objects = dumped_objects or dict()
+
+        if id(obj) in dumped_objects:
+            return dumped_objects[id(obj)]
+        
+        if isinstance(obj, JSON_BASES):
+            return obj
+        else:
+            return cls.dumpm(obj, dumped_objects=dumped_objects)
+
+    @classmethod
+    def dumpm(
+        cls,
+        obj: T,
+        dumped_objects: Optional[Dict[int, Any]] = None
+    ) -> 'Dump[T]':
+        
         """
         Dump `obj` to a model.
         """
         
-        dumped = None
+        print(f"Dump.dumpm {type(obj)} {id(obj)}")
+
+        dumped_objects = dumped_objects or dict()
+        if id(obj) in dumped_objects:
+            return dumped_objects[id(obj)]
+
+        obj_desc = type(obj).__name__
 
         # try lib-specific serialization:
-        if dumped is None and isinstance(obj, Chain):
+
+        dumped = None
+            
+
+        if isinstance(obj, SSLContext):
+            obj = None
+
+        # strict json, dicts only with string keys
+        if dumped is None and isinstance(obj, JSON_TYPES):
             try:
-                file = tempfile.NamedTemporaryFile(mode="r", suffix=".json")
-                obj.save(file.name)
-                
-                # Try loading first. Someimes a save will be ok but load will say
-                # "not supported".
+                temp = JSONLikeDump.dumpm(obj, dumped_objects=dumped_objects)
 
-                load_chain(file.name)
+                # try loading
+                temp.loadm()
 
-                dumped = LangChainDump(chain_json="")
-                # get file contents and put into LangChainDump
+                dumped = temp
 
             except Exception as e:
-                logger.warning(f"Could not save chain using langchain: {e}")
+                logger.warning(f"Could not save {obj_desc} using json: {e}")
+
+        # langchain-specific
+        if dumped is None and isinstance(obj, Chain):
+            try:
+                temp = LangChainDump.dumpm(obj, dumped_objects=dumped_objects)
+            
+                temp.loadm()
+
+                dumped = temp
+                
+            except Exception as e:
+                logger.warning(f"Could not save {obj_desc} using langchain: {e}")
             
         # try our modified pydantic jsonification:
         if dumped is None and isinstance(obj, SerialModel):
-            from trulens_eval.instruments import Instrument
-            from trulens_eval.utils.json import json_str_of_obj
 
-            dumped = SerialDump(
-                serial_model_json = json_str_of_obj(obj, instrument=instrument)
-            )
+            try:
+                temp = SerialDump.dumpm(obj, dumped_objects=dumped_objects)
+
+                # try loading
+                temp.loadm()
+
+                dumped = temp
+
+            except Exception as e:
+                logger.warning(f"Could not save {obj_desc} using SerialModel: {e}")
 
         # try pydantic default jsonification:
         if dumped is None and isinstance(obj, pydantic.BaseModel):
-            dumped = PydanticDump(model_json = obj.json())
+            try:
 
+                temp = PydanticDump.dumpm(
+                    obj = obj,
+                    dumped_objects=dumped_objects
+                )
+
+                # try loading
+                temp.loadm()
+
+                dumped = temp
+
+            except Exception as e:
+                logger.warning(f"Could not save {obj_desc} using pydantic: {e}")
+                print(traceback.format_exc())
+                
         # if all else fails, try dill
         if dumped is None:
             try:
-                data: bytes = dill.dumps(obj, recurse=True)
-                if len(data) > MAX_DILL_SIZE:
-                    raise ValueError(f"Object too big to serialize raw. Size is {humanize.naturalsize(len(data))}.")
+                temp = DillDump.dumpm(obj, dumped_objects=dumped_objects)
+                temp.loadm()
+                dumped = temp
 
-                dumped = DillDump(dill_bytes=SerialBytes(data=data))
-            
             except Exception as e:
-                logger.warning(f"Could not save object using dill: {e}")
+                logger.warning(f"Could not save {obj_desc} using dill: {e}")
 
         if dumped is None:
-            raise RuntimeError("Failed to save object.")
+            raise RuntimeError(f"Failed to save {obj_desc} = {obj}")
+        
         else:
-            print(f"{UNICODE_CHECK} Object of type {type(obj).__name__} saved.")
+            print(f"{UNICODE_CHECK} Saved {obj_desc} using {type(dumped).__name__}.")
             return dumped
 
-class LangChainDump(Dump[T]):
+
+class JSONLikeDump(Dump[JSON]):
+    """
+    Dump of data that is already json-like. If it is not strict json (dict), we
+    box it into a dict first.
+    """
+
+    json_str: str
+
+    @classmethod
+    def parse_obj(cls, obj) -> Dump[JSON]:
+        assert isinstance(obj, Dict)
+        return JSONLikeDump(json_str=obj['json_str'])
+
+    @staticmethod
+    def dumpm(
+        obj: Any,
+        dumped_objects: Optional[Dict[int, Dump]]
+    ) -> 'JSONLikeDump':
+
+        print(f"JSONLikeDump.dumpm {type(obj)} {id(obj)}")
+
+        dumped_objects = dumped_objects or dict()
+        if id(obj) in dumped_objects:
+            # avoid infinite loops
+            return dumped_objects[id(obj)]
+
+        dumped = JSONLikeDump(json_str="temporary")
+        dumped_objects[id(obj)] = dumped
+
+        if isinstance(obj, JSON_BASES):
+            obj = {"__jsonlike_base": obj}
+        elif isinstance(obj, Sequence):
+            obj = {"__jsonlike_sequence": [Dump.dict_or_base(o, dumped_objects=dumped_objects) for o in obj]}
+        elif isinstance(obj, Dict):
+            obj = {k: Dump.dict_or_base(v, dumped_objects=dumped_objects) for k, v in obj.items()}
+        else:
+            raise ValueError(f"Cannot encode object {type(obj)} as json.")
+
+        dumped.json_str = json.dumps(obj)
+        return dumped
+        
+    def loadm(self) -> JSON:
+        temp = json.loads(self.json_str)
+        assert isinstance(temp, dict)
+
+        if "__jsonlike_base" in temp:
+            return temp['__jsonlike_base']
+        
+        elif "__jsonlike_sequence" in temp:
+            temp = temp['__jsonlike_sequence']
+            temp = [Dump.loadm_or_base(o) for o in temp]
+            return temp
+        
+        else:
+            temp = {k: Dump.loadm_or_base(v) for k, v in temp.items()}
+            return temp
+
+class LangChainDump(Dump[Chain]):
     chain_json: str
 
-    def loadm(self) -> T:
-        # write to temp file
-        file = ...
+    @staticmethod
+    def dumpm(
+        obj: Chain,
+        dumped_objects: Optional[Dict[int, Dump]] = None
+    ) -> LangChainDump:
+        print(f"LangChainDump.dumpm {type(obj)} {id(obj)}")
 
-        return load_chain(file)
+        dumped_objects = dumped_objects or dict()
+        if id(obj) in dumped_objects:
+            # avoid infinite loops
+            return dumped_objects[id(obj)]
+
+        file = tempfile.NamedTemporaryFile(mode="r", suffix=".json")
+
+        obj.save(file.name)
+        
+        chain_json = Path(file.name).read_text()
+        return LangChainDump(chain_json=chain_json)
+
+    def loadm(self) -> Chain:
+        # write to temp file
+        file = tempfile.NamedTemporaryFile(mode="w", suffix=".json")
+        Path(file.name).write_text(self.chain_json)
+
+        return load_chain(file.name)
 
 class DillDump(Dump[T]):
     dill_bytes: SerialBytes
 
-    def loadm(self) -> T:
-        ...
+    @classmethod
+    def parse_obj(cls, obj: Dict) -> DillDump[T]:
+        assert isinstance(obj, Dict)
+        return DillDump(dill_bytes=SerialBytes.parse_obj(obj['dill_bytes']))
 
-class PydanticDump(Dump[T]):
+    @staticmethod
+    def dumpm(
+        obj: T,
+        dumped_objects: Optional[Dict[int, Dump]] = None
+    ) -> DillDump[T]:
+        print(f"DillDump.dumpm {type(obj)} {id(obj)}")
+
+        dumped_objects = dumped_objects or dict()
+        if id(obj) in dumped_objects:
+            # avoid infinite loops
+            return dumped_objects[id(obj)]
+
+        from openai._resource import SyncAPIResource
+        if isinstance(obj, SyncAPIResource):
+            # Dill fails with recurse=True on these.
+            data: bytes = dill.dumps(obj, recurse=False)
+
+        else:
+            data: bytes = dill.dumps(obj, recurse=True)
+
+        if len(data) > MAX_DILL_SIZE:
+            raise ValueError(f"Object too big to serialize raw. Size is {humanize.naturalsize(len(data))}.")
+
+        dumped = DillDump(dill_bytes=SerialBytes.validate(dict(data=data)))
+
+        return dumped
+
+    def loadm(self) -> T:
+        return dill.loads(self.dill_bytes.data)
+
+class PydanticDump(Dump[pydantic.BaseModel]):
     model_json: str
+    class_json: str
 
-    def loadm(self) -> T:
-        ...
+    @classmethod
+    def parse_obj(cls, obj: Dict) -> PydanticDump:
+        assert isinstance(obj, Dict)
+
+        return PydanticDump(
+            model_json = obj['model_json'],
+            class_json = obj['class_json']
+        )                   
+
+    @staticmethod
+    def dumpm(
+        obj: pydantic.BaseModel,
+        dumped_objects: Optional[Dict[int, Dump]] = None
+    ) -> PydanticDump:
+        print(f"PydanticDump.dumpm {type(obj)} {id(obj)}")
+
+        dumped_objects = dumped_objects or dict()
+        if id(obj) in dumped_objects:
+            # avoid infinite loops
+            return dumped_objects[id(obj)]
+
+        from trulens_eval.utils.json import json_str_of_obj
+        from trulens_eval.utils.pyschema import Class
+        from trulens_eval.utils.pyschema import safe_getattr
+
+        dumped = PydanticDump(model_json="temp", class_json="temp")
+        dumped_objects[id(dumped)] = dumped
+
+        args = dict()
+        for k in obj.__fields__:
+            v = safe_getattr(obj, k)
+            args[k] = v
+
+        # args = Dump.dumps(args)#, dumped_objects=dumped_objects)
+
+        dumped.model_json = Dump.dumps(args, dumped_objects=dumped_objects)
+        dumped.class_json = Class.of_class(type(obj)).json()
+    
+        return dumped
+
+    def loadm(self) -> pydantic.BaseModel:
+        from trulens_eval.utils.pyschema import Class
+
+        cls = Class(**json.loads(self.class_json))
+        C: Type[pydantic.BaseModel] = cls.load()
+
+        args = Dump.loads(self.model_json)
+        assert isinstance(args, Dict)
+
+        return C(**args)
 
 class SerialDump(Dump[T]):
-    serial_model_json: SerialModel
+    serial_model_json: str
+
+    @staticmethod
+    def dumpm(obj: SerialModel, dumped_objects: Optional[Dict[int, Dump]] = None) -> SerialDump:
+        print(f"SerialDump.dumpm {type(obj)} {id(obj)}")
+
+        dumped_objects = dumped_objects or dict()
+        if id(obj) in dumped_objects:
+            # avoid infinite loops
+            return dumped_objects[id(obj)]
+
+        serial_model_json = obj.json()
+        return SerialDump(serial_model_json=serial_model_json)
 
     def loadm(self) -> T:
-        ...
+        json_model = json.loads(self.serial_model_json)
 
-
-
+        return SerialModel.validate(json_model)
 
 
 # Lens, a container for selector/accessors/setters of data stored in a json
