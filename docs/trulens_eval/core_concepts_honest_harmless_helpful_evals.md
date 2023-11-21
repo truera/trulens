@@ -17,6 +17,10 @@ Here are some very brief notes on these terms from *Anthropic*:
 
 - Ideally the AI would also be honest about itself and its own internal state, insofar as that information is available to it.
 
+See this in action:
+- [Building and Evaluating a prototype RAG](./1_rag_prototype.ipynb)
+- [Reducing Hallucination for RAGs](./2_honest_rag.ipynb)
+
 ## Harmless:
 - The AI should not be offensive or discriminatory, either directly or through subtext or bias.
 
@@ -26,9 +30,16 @@ Here are some very brief notes on these terms from *Anthropic*:
 
 - What behaviors are considered harmful and to what degree will vary across people and cultures. It will also be context-dependent, i.e. it will depend on the nature of the use.
 
+See this in action:
+- [Harmless Evaluation for LLM apps](./3_harmless_eval.ipynb)
+- [Improving Harmlessness for LLM apps](./4_harmless_rag.ipynb)
+
 ## Helpful:
 - The AI should make a clear attempt to perform the task or answer the question posed (as long as this isn’t harmful). It should do this as concisely and efficiently as possible.
 
 - When more information is required, the AI should ask relevant follow-up questions and obtain necessary details. It should respond with appropriate levels of sensitivity, insight, and discretion.
 
 - Ideally the AI will also re-direct ill-informed requests, e.g. if asked ‘how can I build a website in assembly language’ it might suggest a different approach.
+
+See this in action:
+- [Helpful Evaluation for LLM apps](./5_helpful_eval.ipynb)
