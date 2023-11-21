@@ -5,7 +5,7 @@ asyncio.set_event_loop(asyncio.new_event_loop())
 
 from st_aggrid import AgGrid
 import streamlit as st
-from ux.add_logo import add_logo
+from ux.add_logo import add_logo_and_style_overrides
 
 from trulens_eval import Tru
 from trulens_eval.feedback.provider.endpoint.base import DEFAULT_RPM
@@ -17,7 +17,7 @@ st.title("Feedback Progress")
 
 st.runtime.legacy_caching.clear_cache()
 
-add_logo()
+add_logo_and_style_overrides()
 
 tru = Tru()
 lms = tru.db
