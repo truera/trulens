@@ -9,6 +9,7 @@ from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.keys import _check_key
 from trulens_eval.keys import get_huggingface_headers
 from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.python import safe_hasattr
 
 
 class HuggingfaceCallback(EndpointCallback):
@@ -61,7 +62,7 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
             callback.handle_classification(response=response)
 
     def __init__(self, *args, **kwargs):
-        if hasattr(self, "name"):
+        if safe_hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
             return
 

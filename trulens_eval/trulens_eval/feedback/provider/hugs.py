@@ -382,8 +382,8 @@ class Huggingface(Provider):
 
         try:
             hf_response = self.endpoint.post(
-                url = HUGS_PII_DETECTION_API_URL,
-                payload = payload)
+                url=HUGS_PII_DETECTION_API_URL, payload=payload
+            )
 
         # TODO: Make error handling more granular so it's not swallowed.
         except Exception as e:
@@ -396,7 +396,7 @@ class Huggingface(Provider):
                     "start": np.nan,
                     "end": np.nan
                 }
-                ]
+            ]
 
         # Convert the response to a list if it's not already a list
         if not isinstance(hf_response, list):
@@ -410,7 +410,8 @@ class Huggingface(Provider):
 
         # Iterate through the entities and extract "word" and "score" for "NAME" entities
         for i, entity in enumerate(hf_response):
-            reasons[f"{entity.get('entity_group')} detected: {entity['word']}"] = f"PII Likelihood: {entity['score']}"
+            reasons[f"{entity.get('entity_group')} detected: {entity['word']}"
+                   ] = f"PII Likelihood: {entity['score']}"
             likelihood_scores.append(entity["score"])
 
         # Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)

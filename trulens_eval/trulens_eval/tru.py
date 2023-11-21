@@ -23,6 +23,7 @@ from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import Record
 from trulens_eval.utils.notebook_utils import is_notebook
 from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_LOCK
@@ -103,7 +104,7 @@ class Tru(SingletonPerName):
            database_file: (Deprecated) Path to a local SQLite database file
            database_redact_keys: whether to redact secret keys in data to be written to database.
         """
-        if hasattr(self, "db"):
+        if safe_hasattr(self, "db"):
             if database_url is not None or database_file is not None:
                 logger.warning(
                     f"Tru was already initialized. Cannot change database_url={database_url} or database_file={database_file} ."
@@ -250,11 +251,8 @@ class Tru(SingletonPerName):
         """
 
         for res in as_completed(self._submit_feedback_functions(
-                record=record,
-                feedback_functions=feedback_functions,
-                app=app
-            )):
-            
+                record=record, feedback_functions=feedback_functions, app=app)):
+
             yield res.result()[1]
 
     def add_app(self, app: AppDefinition) -> None:

@@ -144,10 +144,26 @@ class LLMProvider(Provider, ABC):
         )
         if "Supporting Evidence" in response:
             score = 0.0
+            supporting_evidence = ""
             for line in response.split('\n'):
                 if "Score" in line:
                     score = re_0_10_rating(line) / normalize
-            return score, {"reason": response}
+                if "Criteria" in line:
+                    parts = line.split(":")
+                    if len(parts) > 1:
+                        criteria = ":".join(parts[1:]).strip()
+                if "Supporting Evidence" in line:
+                    parts = line.split(":")
+                    if len(parts) > 1:
+                        supporting_evidence = ":".join(parts[1:]).strip()
+            reasons = {
+                'reason':
+                    (
+                        f"{'Criteria: ' + str(criteria) + ' ' if criteria else ''}\n"
+                        f"{'Supporting Evidence: ' + str(supporting_evidence) if supporting_evidence else ''}"
+                    )
+            }
+            return score, reasons
         else:
             return re_0_10_rating(response) / normalize
 
@@ -377,10 +393,10 @@ class LLMProvider(Provider, ABC):
 
     def model_agreement(self, prompt: str, response: str) -> float:
         """
-        Uses chat completion model. A function that gives AWS Bedrock the same
+        Uses chat completion model. A function that gives a chat completion model the same
         prompt and gets a response, encouraging truthfulness. A second template
         is given to the model with a prompt that the original response is
-        correct, and measures whether previous AWS Bedrock response is similar.
+        correct, and measures whether previous chat completion response is similar.
 
         **Usage:**
 

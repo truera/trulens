@@ -13,9 +13,8 @@ from ast import parse
 from copy import copy
 import logging
 from pprint import PrettyPrinter
-
 from typing import (
-    Any, Callable, Dict, Iterable, Iterator, List, Optional, Sequence, Set, Tuple,
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple,
     TypeVar, Union
 )
 
@@ -68,7 +67,6 @@ class SerialModel(pydantic.BaseModel):
                 return WithClassInfo.of_model(model=model, cls=cls)
 
         return super().validate(obj)
-            
 
     def update(self, **d):
         for k, v in d.items():
@@ -121,9 +119,9 @@ class Step(pydantic.BaseModel):  #, abc.ABC):
 
         if isinstance(obj, Step):
             return obj
-        
+
         elif isinstance(obj, Dict):
-        
+
             ATTRIBUTE_TYPE_MAP = {
                 'item': GetItem,
                 'index': GetIndex,
@@ -140,9 +138,10 @@ class Step(pydantic.BaseModel):  #, abc.ABC):
             a = next(iter(obj.keys()))
             if a in ATTRIBUTE_TYPE_MAP:
                 return ATTRIBUTE_TYPE_MAP[a](**obj)
-            
-        raise RuntimeError(f"Do not know how to interpret {obj} as a `Lens` `Step`.")
-            
+
+        raise RuntimeError(
+            f"Do not know how to interpret {obj} as a `Lens` `Step`."
+        )
 
     # @abc.abstractmethod
     def get(self, obj: Any) -> Iterable[Any]:
@@ -151,7 +150,6 @@ class Step(pydantic.BaseModel):  #, abc.ABC):
         """
         raise NotImplementedError()
 
-
     # @abc.abstractmethod
     def set(self, obj: Any, val: Any) -> Any:
         """
@@ -159,17 +157,18 @@ class Step(pydantic.BaseModel):  #, abc.ABC):
         """
         raise NotImplementedError()
 
+
 class Collect(Step):
     # Need something for `Step.validate` to tell that it is looking at Collect.
     collect: None = None
-    
+
     def __hash__(self):
         return hash("collect")
 
     def get(self, obj: Any) -> Iterable[List[Any]]:
         # Needs to be handled in Lens class itself.
         raise NotImplementedError()
-        
+
     def set(self, obj: Any, val: Any) -> Any:
         raise NotImplementedError()
 
@@ -178,6 +177,7 @@ class Collect(Step):
 
 
 class StepItemOrAttribute(Step):
+
     def get_item_or_attribute(self):
         raise NotImplementedError()
 
@@ -347,7 +347,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
             obj = {k: v for k, v in obj.items()}
             obj[self.item_or_attribute] = val
         else:
-            obj = copy(obj) # might cause issues
+            obj = copy(obj)  # might cause issues
             setattr(obj, self.item_or_attribute, val)
 
         return obj
@@ -375,7 +375,7 @@ class GetSlice(Step):
 
     def set(self, obj: Any, val: Any) -> Any:
         # raise NotImplementedError
-    
+
         if obj is None:
             obj = []
 
@@ -391,7 +391,6 @@ class GetSlice(Step):
             obj[i] = val
 
         return obj
-        
 
     def __repr__(self):
         pieces = ":".join(
@@ -424,7 +423,7 @@ class GetIndices(Step):
 
     def set(self, obj: Any, val: Any) -> Any:
         # raise NotImplementedError
-        
+
         if obj is None:
             obj = []
 
@@ -491,10 +490,10 @@ class ParseException(Exception):
     def __str__(self):
         return f"Failed to parse expression `{self.exp_string}` as a `Lens`.\nAST={dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
 
+
 class Lens(pydantic.BaseModel):
     # Not using SerialModel as we have special handling of serialization to/from
     # strings for this class which interferes with SerialModel mechanisms.
-
     """
     Lenses into python objects.
 
@@ -521,15 +520,14 @@ class Lens(pydantic.BaseModel):
         else:
             return super().validate(obj)
 
-    def dump(self): # might be called "model_dump" in pydantic v2
+    def dump(self):  # might be called "model_dump" in pydantic v2
         return str(self)
-    
+
     def __init__(self, path: Optional[Tuple[Step, ...]] = None):
         if path is None:
             path = ()
-            
+
         super().__init__(path=path)
-    
 
     @staticmethod
     def of_string(s: str) -> 'Lens':
@@ -546,8 +544,8 @@ class Lens(pydantic.BaseModel):
 
         try:
             # NOTE: "eval" here means to parse an expression, not a statement.
-            # exp = parse(f"PLACEHOLDER.{s}", mode="eval") 
-            exp = parse(s, mode="eval") 
+            # exp = parse(f"PLACEHOLDER.{s}", mode="eval")
+            exp = parse(s, mode="eval")
 
         except SyntaxError as e:
             raise ParseException(s, None)
@@ -567,10 +565,10 @@ class Lens(pydantic.BaseModel):
 
                 if all(isinstance(e, GetItem) for e in elts):
                     return GetItems(items=tuple(e.item for e in elts))
-                
+
                 elif all(isinstance(e, GetIndex) for e in elts):
                     return GetIndices(indices=tuple(e.index for e in elts))
-                
+
                 else:
                     raise ParseException(s, idx)
 
@@ -578,10 +576,10 @@ class Lens(pydantic.BaseModel):
 
                 if isinstance(idx.value, str):
                     return GetItem(item=idx.value)
-                
+
                 elif isinstance(idx.value, int):
                     return GetIndex(index=idx.value)
-                
+
                 else:
                     raise ParseException(s, idx)
 
@@ -591,7 +589,7 @@ class Lens(pydantic.BaseModel):
                     oper = of_index(idx.operand)
                     if not isinstance(oper, GetIndex):
                         raise ParseException(s, idx)
-                    
+
                     return GetIndex(index=-oper.index)
 
             elif idx is None:
@@ -623,10 +621,16 @@ class Lens(pydantic.BaseModel):
                             e is None or isinstance(e, GetIndex) for e in vals):
                         raise ParseException(s, exp)
 
-                    vals_indices: Tuple[Union[None, int], ...] = tuple(None if e is None else e.index for e in vals)
+                    vals_indices: Tuple[Union[None, int], ...] = tuple(
+                        None if e is None else e.index for e in vals
+                    )
 
                     path.append(
-                        GetSlice(start=vals_indices[0], stop=vals_indices[1], step=vals_indices[2])
+                        GetSlice(
+                            start=vals_indices[0],
+                            stop=vals_indices[1],
+                            step=vals_indices[2]
+                        )
                     )
 
                 elif isinstance(sub, ast.Tuple):
@@ -647,9 +651,11 @@ class Lens(pydantic.BaseModel):
 
                 if not all(isinstance(el, ast.Constant) for el in exp.elts):
                     raise ParseException(s, exp)
-                
+
                 if len(exp.elts) == 0:
-                    logger.warning(f"Path {s} is getting zero items/indices, it will not produce anything.")
+                    logger.warning(
+                        f"Path {s} is getting zero items/indices, it will not produce anything."
+                    )
                     path.append(GetIndices(indices=()))
 
                 elif len(exp.elts) == 1:
@@ -660,17 +666,23 @@ class Lens(pydantic.BaseModel):
                         path.append(GetItem(item=el.value))
                     else:
                         raise ParseException(s, exp)
-        
+
                 else:
                     if all(isinstance(el.value, int) for el in exp.elts):
-                        path.append(GetIndices(indices=tuple(el.value for el in exp.elts)))
+                        path.append(
+                            GetIndices(
+                                indices=tuple(el.value for el in exp.elts)
+                            )
+                        )
 
                     elif all(isinstance(el.value, str) for el in exp.elts):
-                        path.append(GetItems(items=tuple(el.value for el in exp.elts)))
-                    
+                        path.append(
+                            GetItems(items=tuple(el.value for el in exp.elts))
+                        )
+
                     else:
                         raise ParseException(s, exp)
-                    
+
                 exp = None
 
             elif isinstance(exp, ast.Name):
@@ -681,15 +693,15 @@ class Lens(pydantic.BaseModel):
             elif isinstance(exp, ast.Call):
                 if not isinstance(exp.func, ast.Attribute):
                     raise ParseException(s, exp)
-                
+
                 funcname = exp.func.attr
                 if funcname == "collect":
-                    path.append(
-                        Collect()
-                    )
+                    path.append(Collect())
 
                 else:
-                    raise TypeError(f"`{funcname}` is not a handled call for paths.")
+                    raise TypeError(
+                        f"`{funcname}` is not a handled call for paths."
+                    )
 
                 if len(exp.args) + len(exp.keywords) != 0:
                     logger.warning(f"args/kwargs for `{funcname}` are ignored")
@@ -787,23 +799,24 @@ class Lens(pydantic.BaseModel):
             firsts = first.get(obj)
 
         for first_obj in firsts:
-            obj = first.set(
-                obj,
-                rest.set(first_obj, val)
-            )
+            obj = first.set(obj, rest.set(first_obj, val))
 
         return obj
 
     def get_sole_item(self, obj: Any) -> Any:
         all_objects = list(self.get(obj))
 
-        assert len(all_objects) == 1, f"Lens {self} did not address exactly a single object."
+        assert len(
+            all_objects
+        ) == 1, f"Lens {self} did not address exactly a single object."
 
         return all_objects[0]
 
     def __call__(self, *args, **kwargs):
-        error_msg = ("Only `collect` is a valid function name in python call syntax when building lenses. "
-                     "Note that applying a selector/path/JSONPAth/Lens now requires to use the `get` method instead of `__call__`.")
+        error_msg = (
+            "Only `collect` is a valid function name in python call syntax when building lenses. "
+            "Note that applying a selector/path/JSONPAth/Lens now requires to use the `get` method instead of `__call__`."
+        )
 
         assert len(self.path) > 0, error_msg
         assert isinstance(self.path[-1], StepItemOrAttribute), error_msg
@@ -811,7 +824,7 @@ class Lens(pydantic.BaseModel):
         funcname = self.path[-1].get_item_or_attribute()
 
         if funcname == "collect":
-            return Lens(path=self.path[0:-1] + (Collect(), ))
+            return Lens(path=self.path[0:-1] + (Collect(),))
 
         else:
             raise TypeError(error_msg)
@@ -878,11 +891,13 @@ class Lens(pydantic.BaseModel):
             # None here to let ipython know we have overwritten __getattr__ but
             # we do not construct any Lenses.
             return 0xdead
-        
+
         return self._append(GetItemOrAttribute(item_or_attribute=attr))
+
 
 # TODO: Deprecate old name.
 JSONPath = Lens
+
 
 def leaf_queries(obj_json: JSON, query: Lens = None) -> Iterable[Lens]:
     """
@@ -949,10 +964,7 @@ def all_queries(obj: Any, query: Lens = None) -> Iterable[Lens]:
         yield query
 
 
-def all_objects(
-    obj: Any,
-    query: Lens = None
-) -> Iterable[Tuple[Lens, Any]]:
+def all_objects(obj: Any, query: Lens = None) -> Iterable[Tuple[Lens, Any]]:
     """
     Get all queries for the given object.
     """
@@ -984,7 +996,9 @@ def all_objects(
                 yield res
 
     elif isinstance(obj, Iterable):
-        logger.debug(f"Cannot create query for Iterable types like {obj.__class__.__name__} at query {query}. Convert the iterable to a sequence first.")
+        logger.debug(
+            f"Cannot create query for Iterable types like {obj.__class__.__name__} at query {query}. Convert the iterable to a sequence first."
+        )
 
     else:
         logger.debug(f"Unhandled object type {obj} {type(obj)}")
@@ -997,8 +1011,7 @@ def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:
         yield (path_str, val)
 
 
-def matching_objects(obj: Any,
-                     match: Callable) -> Iterable[Tuple[Lens, Any]]:
+def matching_objects(obj: Any, match: Callable) -> Iterable[Tuple[Lens, Any]]:
     for q, val in all_objects(obj):
         if match(q, val):
             yield (q, val)

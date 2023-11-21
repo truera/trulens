@@ -214,6 +214,7 @@ from trulens_eval.instruments import instrument as base_instrument
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import JSONPath
 from trulens_eval.utils.text import UNICODE_CHECK
 
@@ -338,7 +339,7 @@ class TruCustomApp(App):
                 main_name = main_method.__name__
                 main_method_loaded = main_method
 
-                if not hasattr(main_method_loaded, "__self__"):
+                if not safe_hasattr(main_method_loaded, "__self__"):
                     raise ValueError(
                         "Please specify `main_method` as a bound method (like `someapp.somemethod` instead of `Someclass.somemethod`)."
                     )
@@ -458,7 +459,7 @@ class TruCustomApp(App):
 
         print(__name)
 
-        if hasattr(self.app, __name):
+        if safe_hasattr(self.app, __name):
             return RuntimeError(
                 f"TruCustomApp has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
                 f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruCustomApp`. "

@@ -85,9 +85,16 @@ nav:
       - Getting Started:
           - 🚀 Installation: trulens_eval/install.md
           - ⚡ Quickstarts:
+              - Quickstart: trulens_eval/quickstart.ipynb
               - LangChain Quickstart: trulens_eval/langchain_quickstart.ipynb
               - Llama-Index Quickstart: trulens_eval/llama_index_quickstart.ipynb
-              - Python Native (Text to Text) Quickstart: trulens_eval/text2text_quickstart.ipynb
+              - Text to Text Quickstart: trulens_eval/text2text_quickstart.ipynb
+              - Ground Truth Evaluation Quickstart: trulens_eval/groundtruth_evals.ipynb
+              - Human Feedback Quickstart: trulens_eval/human_feedback.ipynb
+          - 🧠 Core Concepts:
+              - Feedback Functions: trulens_eval/core_concepts_feedback_functions.md
+              - RAG Triad: trulens_eval/core_concepts_rag_triad.md
+              - Honest, Harmless, Helpful Evals: trulens_eval/core_concepts_honest_harmless_helpful_evals.md
       - Evaluation:
           - 🎯 Feedback Functions:
               - Feedback Function Definitions: trulens_eval/function_definitions.md
@@ -96,6 +103,7 @@ nav:
               - Smoke Tests:
                   - Answer Relevance: trulens_eval/answer_relevance_smoke_tests.ipynb
                   - Context Relevance: trulens_eval/context_relevance_smoke_tests.ipynb
+                  - Groundedness: trulens_eval/groundedness_smoke_tests.ipynb
           - 📚 API Reference:
               - Feedback Functions: trulens_eval/api/feedback.md
               - Providers: 

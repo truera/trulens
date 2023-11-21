@@ -7,9 +7,9 @@ from unittest import main
 
 from llama_index import ServiceContext
 from llama_index import set_global_service_context
-from llama_index import SimpleWebPageReader
 from llama_index import VectorStoreIndex
 from llama_index.llms import OpenAI
+from llama_index.readers.web import SimpleWebPageReader
 from tests.unit.test import JSONTestCase
 
 from trulens_eval.keys import check_keys

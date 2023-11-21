@@ -41,6 +41,7 @@ from trulens_eval.utils.pyschema import callable_name
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import ObjSerial
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import all_objects
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
@@ -404,13 +405,15 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     tru: Optional[Tru] = Field(exclude=True)
 
     # Database interfaces for models/records/feedbacks.
-    # NOTE: Maybe mobe to schema.App .
+    # NOTE: Maybe move to schema.AppDefinition .
     db: Optional[DB] = Field(exclude=True)
 
     # The wrapped app.
     app: Any = Field(exclude=True)
 
-    # Instrumentation class.
+    # Instrumentation class. This is needed for serialization as it tells us
+    # which objects we want to be included in the json representation of this
+    # app.
     instrument: Instrument = Field(exclude=True)
 
     # Sequnces of records produced by the this class used as a context manager.
@@ -606,7 +609,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             for f, path in funcs.items():
                 """
                 # TODO: wider wrapping support
-                if hasattr(f, "__func__"):
+                if safe_hasattr(f, "__func__"):
                     if method.__func__ == func:
                         yield (method, path) 
                 else:
@@ -676,7 +679,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         # Need custom jsonification here because it is likely the model
         # structure contains loops.
 
-        return json_str_of_obj(self.dict(), *args, **kwargs)
+        return json_str_of_obj(
+            self, *args, instrument=self.instrument, **kwargs
+        )
 
     def dict(self):
         # Same problem as in json.
@@ -767,15 +772,15 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         instrumented is being used in a `with_` call.
         """
 
-        if not hasattr(func, "__name__"):
-            if hasattr(func, "__call__"):
+        if not safe_hasattr(func, "__name__"):
+            if safe_hasattr(func, "__call__"):
                 func = func.__call__
             else:
                 raise TypeError(
                     f"Unexpected type of callable `{type(func).__name__}`."
                 )
 
-        if not hasattr(func, Instrument.INSTRUMENT):
+        if not safe_hasattr(func, Instrument.INSTRUMENT):
             logger.warning(
                 f"Function `{func.__name__}` has not been instrumented. "
                 f"This may be ok if it will call a function that has been instrumented exactly once. "

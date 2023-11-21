@@ -48,14 +48,6 @@ print(os.environ)
   its parent folders. An example of a .env file is found in
   `trulens_eval/trulens_eval/env.example` .
 
-- *3rd party* -- For some keys, set them as arguments to the 3rd-party endpoint class. For
-  example, with `openai`, do this ahead of the `check_keys` check:
-
-```python
-import openai
-openai.api_key = "something"
-```
-
 - *Endpoint class* For some keys, set them as arguments to trulens_eval endpoint class that
   manages the endpoint. For example, with `openai`, do this ahead of the
   `check_keys` check:
@@ -215,17 +207,6 @@ def get_config() -> Tuple[Path, dict]:
         values_to_redact.add(v)
 
 
-def set_openai_key() -> None:
-    """
-    Sets the openai class attribute `api_key` to its value from the
-    OPENAI_API_KEY env var.
-    """
-
-    if 'OPENAI_API_KEY' in os.environ:
-        import openai
-        openai.api_key = os.environ["OPENAI_API_KEY"]
-
-
 def get_cohere_agent() -> cohere.Client:
     """
     Gete a singleton cohere agent. Sets its api key from env var COHERE_API_KEY.
@@ -279,9 +260,9 @@ def _check_key(
   - in a .env file in {Path.cwd()} or its parents,
   - explicitly passed to function `check_or_set_keys` of `trulens_eval.keys`,
   - passed to the endpoint or feedback collection constructor that needs it (`trulens_eval.feedback.provider_apis.OpenAIEndpoint`, etc.), or
-  - set in api utility class that expects it (i.e. `openai`, etc.).
+  - set in api utility class that expects it (i.e. `OpenAI(api_key=)`, etc.).
 
-For the last two options, the name of the argument may differ from {k} (i.e. `openai.api_key` for `OPENAI_API_KEY`).
+For the last two options, the name of the argument may differ from {k} (i.e. `OpenAI(api_key=)` for `OPENAI_API_KEY`).
 """
         if not silent:
             print(f"{UNICODE_STOP} {msg}")
@@ -326,9 +307,6 @@ def _collect_keys(*args: Tuple[str], **kwargs: Dict[str,
     - Explicitly passed to `check_or_set_keys`.
 
     - Using vars defined in a .env file in current folder or one of its parents.
-
-    - Using 3rd party class attributes (i.e. OpenAI.api_key). This one requires the
-      user to initialize our Endpoint class for that 3rd party api.
 
     - With initialization of trulens_eval Endpoint class that handles a 3rd party api.
     """
@@ -422,8 +400,6 @@ def check_keys(*keys: Tuple[str]) -> None:
         _check_key(k, v=v)
         values_to_redact.add(v)
         os.environ[k] = v
-
-    set_openai_key()
 
 
 def check_or_set_keys(*args: Tuple[str], **kwargs: Dict[str, str]) -> None:

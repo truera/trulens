@@ -6,7 +6,9 @@ from tqdm.auto import tqdm
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider import Provider
+from trulens_eval.feedback.provider.bedrock import Bedrock
 from trulens_eval.feedback.provider.hugs import Huggingface
+from trulens_eval.feedback.provider.litellm import LiteLLM
 from trulens_eval.feedback.provider.openai import AzureOpenAI
 from trulens_eval.feedback.provider.openai import OpenAI
 from trulens_eval.utils.generated import re_0_10_rating
@@ -20,16 +22,11 @@ class Groundedness(SerialModel, WithClassInfo):
     """Measures Groundedness.
     """
     groundedness_provider: Provider
-    summarize_provider: Provider
 
-    def __init__(
-        self,
-        summarize_provider: Provider = None,
-        groundedness_provider: Provider = None
-    ):
+    def __init__(self, groundedness_provider: Provider = None):
         """Instantiates the groundedness providers. Currently the groundedness functions work well with a summarizer.
-        This class will use an OpenAI summarizer to find the relevant strings in a text. The groundedness_provider can 
-        either be an llm with OpenAI or NLI with huggingface.
+        This class will use an LLM to find the relevant strings in a text. The groundedness_provider can 
+        either be an LLM provider (such as OpenAI) or NLI with huggingface.
 
         Usage 1:
         ```
@@ -52,16 +49,9 @@ class Groundedness(SerialModel, WithClassInfo):
             summarize_provider (Provider, optional): Internal Usage for DB serialization.
         """
 
-        summarize_provider = OpenAI()
         if groundedness_provider is None:
             groundedness_provider = OpenAI()
-        if not isinstance(groundedness_provider,
-                          (OpenAI, AzureOpenAI, Huggingface)):
-            raise Exception(
-                "Groundedness is only supported groundedness_provider as OpenAI, AzureOpenAI or Huggingface Providers."
-            )
         super().__init__(
-            summarize_provider=summarize_provider,
             groundedness_provider=groundedness_provider,
             obj=self  # for WithClassInfo
         )
@@ -97,9 +87,10 @@ class Groundedness(SerialModel, WithClassInfo):
         )
 
         groundedness_scores = {}
-        if isinstance(self.groundedness_provider, (AzureOpenAI, OpenAI)):
+        if isinstance(self.groundedness_provider,
+                      (AzureOpenAI, OpenAI, LiteLLM, Bedrock)):
             groundedness_scores[f"full_doc_score"] = re_0_10_rating(
-                self.summarize_provider.
+                self.groundedness_provider.
                 _groundedness_doc_in_out(source, statement)
             ) / 10
             reason = "Reasons not supplied for non chain of thought function"
@@ -153,10 +144,11 @@ class Groundedness(SerialModel, WithClassInfo):
             float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
         groundedness_scores = {}
-        if isinstance(self.groundedness_provider, (AzureOpenAI, OpenAI)):
+        if isinstance(self.groundedness_provider,
+                      (AzureOpenAI, OpenAI, LiteLLM, Bedrock)):
             plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
             if len(statement) > plausible_junk_char_min:
-                reason = self.summarize_provider._groundedness_doc_in_out(
+                reason = self.groundedness_provider._groundedness_doc_in_out(
                     source, statement
                 )
             i = 0
@@ -208,7 +200,7 @@ class Groundedness(SerialModel, WithClassInfo):
                      desc="Groundendess per statement in source")):
             plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
             if len(hypothesis) > plausible_junk_char_min:
-                supporting_premise = self.summarize_provider._find_relevant_string(
+                supporting_premise = self.groundedness_provider._find_relevant_string(
                     source, hypothesis
                 )
                 score = self.groundedness_provider._summarized_groundedness(
