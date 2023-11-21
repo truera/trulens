@@ -332,7 +332,7 @@ else:
                                     if call[i]["ret"] is not None else -1
                                     for i in range(len(call))
                                 ]
-)
+                            )
                             df["meta"] = pd.Series(
                                 [call[i]["meta"] for i in range(len(call))]
                             )
