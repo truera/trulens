@@ -188,8 +188,9 @@ class TruLlama(App):
 
         LLama-Index code: [LLama Index Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html)
         ```python
-         # Code snippet taken from llama_index 0.8.15 (API subject to change with new versions)
-        from llama_index import VectorStoreIndex, SimpleWebPageReader
+         # Code snippet taken from llama_index 0.8.29 (API subject to change with new versions)
+        from llama_index import VectorStoreIndex
+        from llama_index.readers.web import SimpleWebPageReader
 
         documents = SimpleWebPageReader(
             html_to_text=True
