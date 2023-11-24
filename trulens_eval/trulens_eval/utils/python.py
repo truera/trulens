@@ -72,6 +72,22 @@ def safe_hasattr(obj: Any, k: str) -> bool:
 # Function utilities.
 
 
+def is_thunk(obj: Any) -> bool:
+    """
+    Determine whether the given object `obj` is a thunk, that is, a function
+    with no arguments.
+    """
+
+    if not isinstance(obj, Callable):
+        return False
+    
+    sig = inspect.signature(obj)
+    if len(sig.parameters) == 0:
+        return True
+    
+    return False
+
+
 def code_line(func) -> Optional[str]:
     """
     Get a string representation of the location of the given function `func`.

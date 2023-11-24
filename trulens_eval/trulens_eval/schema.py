@@ -24,10 +24,8 @@ from datetime import datetime
 from enum import Enum
 import logging
 from pprint import PrettyPrinter
-from typing import (
-    Any, Callable, ClassVar, Dict, List, Mapping, Optional, Sequence, Type,
-    TypeVar, Union
-)
+from typing import (Any, Callable, ClassVar, Dict, List, Mapping, NewType,
+                    Optional, Sequence, Tuple, Type, TypeVar, Union)
 
 import dill
 import humanize
@@ -41,9 +39,13 @@ from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.python import is_thunk
+from trulens_eval.utils.serial import Dump
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import loads
+from trulens_eval.utils.serial import MAX_DILL_SIZE
 from trulens_eval.utils.serial import SerialBytes
 from trulens_eval.utils.serial import SerialModel
 
@@ -66,7 +68,7 @@ FeedbackResultID = str
 
 # Record related:
 
-MAX_DILL_SIZE = 1024 * 1024  # 1MB
+
 
 
 class RecordAppCallMethod(SerialModel):
@@ -486,6 +488,37 @@ class FeedbackMode(str, Enum):
     DEFERRED = "deferred"
 
 
+# Wrapped apps.
+AppType = NewType("AppType", object)
+
+AppLoader = Callable[[], AppType]
+
+# Wrapped app or thunk loading it.
+AppLike = Union[AppType, AppLoader]
+
+
+def make_app_and_loader(app: AppLike) -> Tuple[AppType, Optional[AppLoader]]:
+    app_loader: Optional[AppLoader] = None
+
+    if is_thunk(app):
+        app_loader = app
+        app: AppType = app_loader()
+
+    else:
+        try:
+            app_dump = Dump.dumpm(app)
+
+            def _app_loader():
+                dump = Dump.parse_obj(app_dump)
+                return dump.loadm()
+            
+            app_loader = _app_loader
+
+        except Exception as e:
+            logger.warning(f"Could not create app loader ({e}). This app will not be usable from the dashboard.")
+
+    return (app, app_loader)
+
 class AppDefinition(SerialModel, WithClassInfo):
     # Serialized fields here whereas app.py:App contains
     # non-serialized fields.
@@ -586,13 +619,34 @@ class AppDefinition(SerialModel, WithClassInfo):
 
     def __init__(
         self,
+        app: AppLike,
         app_id: Optional[AppID] = None,
         tags: Optional[Tags] = None,
         metadata: Optional[Metadata] = None,
         feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
         app_extra_json: JSON = None,
+        new_session: Optional[Callable[[], Any]] = None,
         **kwargs
     ):
+
+        if app is None:
+            if new_session is None:
+                raise ValueError("Provide your app either as an `app` instance or a `new_session`, an app loader thunk")
+            else:
+                app = new_session()
+
+        else:
+
+            if new_session is None:
+                app, new_session = make_app_and_loader(app)
+
+            else:
+                if is_thunk(app):
+                    raise ValueError(
+                        f"Conflicting specification of app loader. "
+                        f"Provide thunk to create your app either in the `app` argument or the `new_session` argument, but not both."
+                    )
+
 
         # for us:
         kwargs['app_id'] = "temporary"  # will be adjusted below
@@ -600,6 +654,7 @@ class AppDefinition(SerialModel, WithClassInfo):
         kwargs['tags'] = ""
         kwargs['metadata'] = {}
         kwargs['app_extra_json'] = app_extra_json or dict()
+        kwargs['app'] = app
 
         # for WithClassInfo:
         kwargs['obj'] = self
@@ -618,6 +673,10 @@ class AppDefinition(SerialModel, WithClassInfo):
         if metadata is None:
             metadata = {}
         self.metadata = metadata
+
+        # TODO: deprecate the name 'initial_app_loader'
+        if new_session is not None:
+            kwargs['initial_app_loader'] = new_session
 
         # EXPERIMENTAL
         if 'initial_app_loader' in kwargs:
