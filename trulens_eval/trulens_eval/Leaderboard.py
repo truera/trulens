@@ -116,7 +116,7 @@ def streamlit_app():
             )
 
             higher_is_better = feedback_directions.get(col_name, True)
-            
+
             if "distance" in col_name:
                 feedback_cols[i].metric(
                     label=col_name,
@@ -124,9 +124,7 @@ def streamlit_app():
                     delta_color="normal"
                 )
             else:
-                cat = CATEGORY.of_score(
-                    mean, higher_is_better=higher_is_better
-                )
+                cat = CATEGORY.of_score(mean, higher_is_better=higher_is_better)
                 feedback_cols[i].metric(
                     label=col_name,
                     value=f"{round(mean, 2)}",
