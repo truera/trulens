@@ -373,7 +373,7 @@ class Endpoint(SerialModel, SingletonPerName):
         Track costs of all of the apis we can currently track, over the
         execution of thunk.
         """
-        
+
         result, cbs = Endpoint.track_all_costs(
             thunk,
             with_openai=with_openai,
