@@ -97,10 +97,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         return super(Endpoint, cls).__new__(cls, name="openai")
 
     def handle_wrapped_call(
-        self,
-        func: Callable,
-        bindings: inspect.BoundArguments,
-        response: Any,
+        self, func: Callable, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
     ) -> None:
         # TODO: cleanup/refactor. This method inspects the results of an
