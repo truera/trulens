@@ -43,8 +43,8 @@ setup(
         'python-dotenv>=1.0.0',
         'kaggle>=1.5.13',
         f'langchain>={langchain_version}',  # required for cost tracking even outside of langchain
-        'typing-inspect==0.8.0',  # langchain with python < 3.9 fix
-        'typing_extensions==4.5.0',  # langchain with python < 3.9 fix
+        'typing-inspect>=0.8.0',  # langchain with python < 3.9 fix
+        'typing_extensions>=4.5.0',  # langchain with python < 3.9 fix
         f'llama_index>={llama_version}',
         # VectorStoreIndex changes need to be taken account for in later versions
         'merkle-json>=1.0.0',
