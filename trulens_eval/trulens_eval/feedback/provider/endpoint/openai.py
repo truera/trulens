@@ -33,13 +33,11 @@ import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
-from trulens_eval.keys import _check_key
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +47,10 @@ pp = pprint.PrettyPrinter()
 class OpenAIClient(SerialModel):
     """
     A wrapper for openai clients that allows them to be serialized into json.
-    Does not serialize API key though.
+    Does not serialize API key though. You can access openai.OpenAI under the
+    `client` attribute. Any attributes not defined by this wrapper are looked up
+    from the wrapped `client` so you should be able to use this instance as if
+    it were an `openai.OpenAI` instance.
     """
 
     class Config:
@@ -69,21 +70,26 @@ class OpenAIClient(SerialModel):
         client_kwargs: Optional[dict] = None
     ):
         if client is None:
-            assert client_kwargs is not None and client_cls is not None
+            if client_kwargs is None and client_cls is None:
+                client = oai.OpenAI()
 
-            if isinstance(client_cls, dict):
-                # TODO: figure out proper pydantic way of doing these things. I
-                # don't think we should be required to parse args like this.
-                client_cls = Class(**client_cls)
+            elif client_kwargs is None or client_cls is None:
+                raise ValueError("`client_kwargs` and `client_cls` are both needed to deserialize an openai.`OpenAI` client.")
 
-            cls = client_cls.load()
+            else:
+                if isinstance(client_cls, dict):
+                    # TODO: figure out proper pydantic way of doing these things. I
+                    # don't think we should be required to parse args like this.
+                    client_cls = Class(**client_cls)
 
-            timeout = client_kwargs.get("timeout")
-            if timeout is not None:
-                client_kwargs['timeout'] = oai.Timeout(**timeout)
+                cls = client_cls.load()
+
+                timeout = client_kwargs.get("timeout")
+                if timeout is not None:
+                    client_kwargs['timeout'] = oai.Timeout(**timeout)
 
 
-            client = cls(**client_kwargs)
+                client = cls(**client_kwargs)
 
         if client_cls is None:
             assert client is not None
@@ -301,6 +307,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         client = kwargs.get("client")
         if client is None:
             kwargs['client'] = OpenAIClient()
+
         else:
             # Convert openai client to our wrapper.
 

@@ -1,20 +1,11 @@
 import logging
-import os
-from typing import Dict, Mapping, Optional, Sequence
+from typing import Dict, Optional, Sequence
 
-import openai
-
-from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.utils.generated import re_0_10_rating
 
 logger = logging.getLogger(__name__)
-
-
-
-
 
 class OpenAI(LLMProvider):
     """Out of the box feedback functions calling OpenAI APIs.
@@ -383,10 +374,9 @@ class AzureOpenAI(OpenAI):
         - OPENAI_API_KEY
 
         **Usage:**
-        ```
+        ```python
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = AzureOpenAI(deployment_id="...")
-
         ```
 
         Args:
