@@ -2,23 +2,15 @@
 
 ![TruLens](https://www.trulens.org/assets/images/Neural_Network_Explainability.png)
 
-Evaluate and track your LLM experiments with TruLens. As you work on your models and prompts TruLens-Eval supports the iterative development and of a wide range of LLM applications by wrapping your application to log key metadata across the entire chain (or off chain if your project does not use chains) on your local machine.
+**Don't just vibe-check your llm app!** Systematically evaluate and track your LLM experiments with TruLens. As you develop your app including prompts, models, retreivers, knowledge sources and more, TruLens-Eval is the tool you need to understand its performance.
 
-Using feedback functions, you can objectively evaluate the quality of the responses provided by an LLM to your requests. This is completed with minimal latency, as this is achieved in a sequential call for your application, and evaluations are logged to your local machine. Finally, we provide an easy to use Streamlit dashboard run locally on your machine for you to better understand your LLM’s performance.
+Fine-grained, stack-agnostic instrumentation and comprehensive evaluations help you to identify failure modes & systematically iterate to improve your application.
 
-## Value Propositions
+Read more about the core concepts behind TruLens including [Feedback Functions](../docs/trulens_eval/core_concepts_feedback_functions.md), [The RAG Triad](../docs/trulens_eval/core_concepts_rag_triad.md), and [Honest, Harmless and Helpful Evals](../docs/trulens_eval/core_concepts_honest_harmless_helpful_evals.md).
 
-TruLens-Eval has two key value propositions:
+## TruLens in the development workflow
 
-1. Evaluation:
-    * TruLens supports the evaluation of inputs, outputs and internals of your LLM application using any model (including LLMs). 
-    * A number of feedback functions for evaluation are implemented out-of-the-box such as groundedness, relevance and toxicity. The framework is also easily extensible for custom evaluation requirements.
-2. Tracking:
-    * TruLens contains instrumentation for any LLM application including question answering, retrieval-augmented generation, agent-based applications and more. This instrumentation allows for the tracking of a wide variety of usage metrics and metadata. Read more in the [instrumentation overview](https://www.trulens.org/trulens_eval/basic_instrumentation/).
-    * TruLens' instrumentation can be applied to any LLM application without being tied down to a given framework. Additionally, deep integrations with [LangChain](https://www.trulens.org/trulens_eval/langchain_instrumentation/) and [Llama-Index](https://www.trulens.org/trulens_eval/llama_index_instrumentation/) allow the capture of internal metadata and text.
-    * Anything that is tracked by the instrumentation can be evaluated!
-
-The process for building your evaluated and tracked LLM application with TruLens is below 👇
+Build your first prototype then connect instrumentation and logging with TruLens. Decide what feedbacks you need, and specify them with TruLens to run alongside your app. Then iterate and compare versions of your app in an easy-to-use user interface 👇
 
 ![Architecture Diagram](https://www.trulens.org/assets/images/TruLens_Architecture.png)
 
@@ -30,34 +22,11 @@ Install the trulens-eval pip package from PyPI.
     pip install trulens-eval
 ```
 
-## Setting Keys
-
-In any of the quickstarts, you will need [OpenAI](https://platform.openai.com/account/api-keys) and [Huggingface](https://huggingface.co/settings/tokens) keys. You can add keys by setting the environmental variables:
-
-```python
-import os
-os.environ["OPENAI_API_KEY"] = "..."
-os.environ["HUGGINGFACE_API_KEY"] = "..."
-```
-
 ## Quick Usage
 
-TruLens supports the evaluation of tracking for any LLM app framework. Choose a framework below to get started:
+Walk through how to instrument and evaluate a RAG built from scratch with TruLens.
 
-**Langchain**
-
-[langchain_quickstart.ipynb](https://github.com/truera/trulens/blob/main/trulens_eval/examples/quickstart/langchain_quickstart.ipynb).
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/colab/langchain_quickstart_colab.ipynb)
-
-**Llama-Index**
-
-[llama_index_quickstart.ipynb](https://github.com/truera/trulens/blob/releases/rc-trulens-eval-0.17.0/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb).
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/colab/llama_index_quickstart_colab.ipynb)
-
-**Custom Text to Text Apps**
-
-[text2text_quickstart.ipynb](https://github.com/truera/trulens/blob/main/trulens_eval/examples/quickstart/text2text_quickstart.ipynb).
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/colab/text2text_quickstart_colab.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/quickstart.ipynb)
 
 ### 💡 Contributing
 

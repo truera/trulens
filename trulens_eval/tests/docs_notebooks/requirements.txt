@@ -1,3 +1,4 @@
 jinja2==3.0.3
 nbformat==5.0.8
 nbconvert==6.0.7
+chromadb==0.4.18

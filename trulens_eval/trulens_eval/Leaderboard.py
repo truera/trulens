@@ -23,9 +23,9 @@ from trulens_eval.ux.components import draw_metadata
 
 st.set_page_config(page_title="Leaderboard", layout="wide")
 
-from trulens_eval.ux.add_logo import add_logo
+from trulens_eval.ux.add_logo import add_logo_and_style_overrides
 
-add_logo()
+add_logo_and_style_overrides()
 
 database_url = None
 
@@ -40,12 +40,13 @@ def streamlit_app():
         "Average feedback values displayed in the range from 0 (worst) to 1 (best)."
     )
     df, feedback_col_names = lms.get_records_and_feedback([])
+    feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
             row.feedback_json.get("supplied_name", "") or
             row.feedback_json["implementation"]["name"]
         ): row.feedback_json.get("higher_is_better", True)
-        for _, row in lms.get_feedback_defs().iterrows()
+        for _, row in feedback_defs.iterrows()
     }
 
     if df.empty:
@@ -114,6 +115,8 @@ def streamlit_app():
                 unsafe_allow_html=True,
             )
 
+            higher_is_better = feedback_directions.get(col_name, True)
+
             if "distance" in col_name:
                 feedback_cols[i].metric(
                     label=col_name,
@@ -121,9 +124,7 @@ def streamlit_app():
                     delta_color="normal"
                 )
             else:
-                cat = CATEGORY.of_score(
-                    mean, higher_is_better=feedback_directions[col_name]
-                )
+                cat = CATEGORY.of_score(mean, higher_is_better=higher_is_better)
                 feedback_cols[i].metric(
                     label=col_name,
                     value=f"{round(mean, 2)}",

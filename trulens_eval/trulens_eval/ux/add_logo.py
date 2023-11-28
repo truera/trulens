@@ -7,7 +7,7 @@ from trulens_eval import __package__
 from trulens_eval import __version__
 
 
-def add_logo():
+def add_logo_and_style_overrides():
     logo = open(
         pkg_resources.resource_filename('trulens_eval', 'ux/trulens_logo.svg'),
         "rb"
@@ -36,6 +36,13 @@ def add_logo():
                 color: #aaaaaa;
                 content: "{__package__} {__version__}";
                 font-size: 10pt;
+            }}
+
+            /* For list items in st.dataframe */
+            #portal .clip-region .boe-bubble {{
+                height: auto;
+                border-radius: 4px;
+                padding: 8px;
             }}
         </style>
         """,
