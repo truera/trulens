@@ -9,6 +9,7 @@ from langchain.llms import OpenAI
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.vectorstores import Pinecone
 import numpy as np
+import openai
 import pinecone
 from slack_bolt import App
 from slack_sdk import WebClient
@@ -64,7 +65,7 @@ app_ids = {
 
 # Construct feedback functions.
 hugs = feedback.Huggingface()
-openai = feedback.OpenAI()
+openai = feedback.OpenAI(client=openai.OpenAI())
 
 # Language match between question/answer.
 f_lang_match = Feedback(hugs.language_match).on_input_output()
