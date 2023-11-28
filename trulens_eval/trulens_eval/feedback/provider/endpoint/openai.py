@@ -122,7 +122,7 @@ class OpenAIClient(SerialModel):
         )
 
     def __getattr__(self, k):
-        # Pass through attribute lookups to 
+        # Pass through attribute lookups to `self.client`, the openai.OpenAI instance.
         if safe_hasattr(self.client, k):
             return safe_getattr(self.client, k)
         
