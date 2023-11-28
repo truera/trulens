@@ -28,19 +28,99 @@ from typing import Any, Callable, List, Optional
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
 from langchain.schema import LLMResult
-import openai
+import openai as oai
 import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.keys import _check_key
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
+from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
+
+class OpenAIClient(SerialModel):
+    """
+    A wrapper for openai clients that allows them to be serialized into json.
+    Does not serialize API key though.
+    """
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    # Deserialized representation.
+    client: oai.OpenAI = pydantic.Field(exclude=True)
+
+    # Serialized representation.
+    client_cls: Class
+    client_kwargs: dict
+
+    def __init__(
+        self,
+        client: Optional[oai.OpenAI] = None,
+        client_cls: Optional[Class] = None,
+        client_kwargs: Optional[dict] = None
+    ):
+        if client is None:
+            assert client_kwargs is not None and client_cls is not None
+
+            if isinstance(client_cls, dict):
+                # TODO: figure out proper pydantic way of doing these things. I
+                # don't think we should be required to parse args like this.
+                client_cls = Class(**client_cls)
+
+            cls = client_cls.load()
+
+            timeout = client_kwargs.get("timeout")
+            if timeout is not None:
+                client_kwargs['timeout'] = oai.Timeout(**timeout)
+
+
+            client = cls(**client_kwargs)
+
+        if client_cls is None:
+            assert client is not None
+
+            client_class = type(client)
+
+            # Recreate constructor arguments and store in this dict.
+            client_kwargs = {}
+
+            # Guess the contructor arguments based on signature of __new__.
+            sig = inspect.signature(client_class.__init__)
+
+            for k, _ in sig.parameters.items():
+
+                if k in ['api_key', 'default_headers']:
+                    # Skip anything that might have the api_key in it.
+                    # default_headers contains the api_key.
+                    continue
+
+                if safe_hasattr(client, k):
+                    client_kwargs[k] = safe_getattr(client, k)
+
+            # Create serializable class description.
+            client_cls = Class.of_class(client_class)
+
+        super().__init__(
+            client = client,
+            client_cls = client_cls,
+            client_kwargs = client_kwargs
+        )
+
+    def __getattr__(self, k):
+        # Pass through attribute lookups to 
+        if safe_hasattr(self.client, k):
+            return safe_getattr(self.client, k)
+        
+        raise AttributeError(f"No attribute {k} in wrapper OpenAiClient nor the wrapped OpenAI client.")
 
 
 class OpenAICallback(EndpointCallback):
@@ -91,7 +171,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
     OpenAI endpoint. Instruments "create" methods in openai client.
     """
 
-    client: openai.OpenAI
+    client: OpenAIClient
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="openai")
@@ -218,9 +298,18 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         kwargs['name'] = "openai"
         kwargs['callback_class'] = OpenAICallback
 
-        if 'client' not in kwargs:
-            from openai import OpenAI
-            kwargs['client'] = OpenAI()
+        client = kwargs.get("client")
+        if client is None:
+            kwargs['client'] = OpenAIClient()
+        else:
+            # Convert openai client to our wrapper.
+
+            if not isinstance(client, OpenAIClient):
+                assert isinstance(client, oai.OpenAI), "OpenAI client expected"
+
+                client = OpenAIClient(client=client)
+
+            kwargs['client'] = client
 
         # for WithClassInfo:
         kwargs['obj'] = self

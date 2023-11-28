@@ -42,6 +42,21 @@ T = TypeVar("T")
 
 mj = MerkleJson()
 
+# Add encoders for some types that pydantic cannot handle but we need.
+
+# httpx.URL needed for openai client.
+import httpx
+def encode_httpx_url(obj: httpx.URL):
+    return str(obj)
+
+pydantic.json.ENCODERS_BY_TYPE[httpx.URL] = encode_httpx_url
+
+# Another thing we need for openai client.
+from openai import Timeout
+def encode_openai_timeout(obj: Timeout):
+    return obj.as_dict()
+
+pydantic.json.ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
 
 def obj_id_of_obj(obj: dict, prefix="obj"):
     """
@@ -63,17 +78,23 @@ def json_str_of_obj(
         jsonify(obj, *args, redact_keys=redact_keys, **kwargs),
         default=json_default
     )
-
-
+    
 def json_default(obj: Any) -> str:
     """
-    Produce a representation of an object which cannot be json-serialized.
+    Produce a representation of an object which does not have a json serializer.
     """
+
+    #import httpx
+
+    # Needed for openai clients.
+    #if isinstance(obj, httpx.URL):
+    #    return json.dumps(jdict)
 
     # Try the encoders included with pydantic first (should handle things like
     # Datetime):
     try:
         return pydantic.json.pydantic_encoder(obj)
+
     except:
         # Otherwise give up and indicate a non-serialization.
         return noserio(obj)
