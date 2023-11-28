@@ -84,14 +84,8 @@ def json_default(obj: Any) -> str:
     Produce a representation of an object which does not have a json serializer.
     """
 
-    #import httpx
-
-    # Needed for openai clients.
-    #if isinstance(obj, httpx.URL):
-    #    return json.dumps(jdict)
-
     # Try the encoders included with pydantic first (should handle things like
-    # Datetime):
+    # Datetime, and our additional encoders above):
     try:
         return pydantic.json.pydantic_encoder(obj)
 
