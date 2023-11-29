@@ -16,6 +16,12 @@ pr:
       - trulens_eval
       - docs/trulens_eval/*.ipynb
 
+schedules:
+  - cron: "0 0 * * *"
+    displayName: Daily midnight build
+    branches:
+      include:
+        - main
 
 jobs:
   - job: quickstartTests
@@ -86,7 +92,7 @@ jobs:
           pip install docarray hnswlib # requirements for HNSW local Vector DB
           pip install faiss-cpu unstructured # requirements for FAISS local Vector DB
           pip install 'bert_score>=0.3.13' 'evaluate>=0.4.0' # groundtruth.py
-          
+
           echo '::group::piplist'
           echo "$(pip list)"
           echo '::endgroup::'
