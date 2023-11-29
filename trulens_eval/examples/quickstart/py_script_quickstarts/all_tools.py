@@ -13,6 +13,10 @@
 
 # In[ ]:
 
+# ! pip install trulens==0.18.1 openai==1.3.1
+
+# In[ ]:
+
 import os
 
 os.environ["OPENAI_API_KEY"] = "..."
@@ -38,9 +42,9 @@ tru = Tru()
 # ! pip install langchain>=0.0.170
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
-from langchain.prompts.chat import ChatPromptTemplate
-from langchain.prompts.chat import HumanMessagePromptTemplate
-from langchain.prompts.chat import PromptTemplate
+from langchain.prompts import ChatPromptTemplate
+from langchain.prompts import HumanMessagePromptTemplate
+from langchain.prompts import PromptTemplate
 
 # ### Create Simple LLM Application
 #
@@ -277,9 +281,19 @@ tru.get_records_and_feedback(app_ids=[]
 
 # In[ ]:
 
+# ! pip install trulens==0.18.1 chromadb==0.4.18 openai==1.3.1
+
+# In[ ]:
+
 import os
 
-os.environ["OPENAI_API_KEY"] = "..."
+os.environ["OPENAI_API_KEY"] = "sk-..."
+
+# In[ ]:
+
+from openai import OpenAI
+
+oai_client = OpenAI()
 
 # ## Get Data
 #
@@ -301,22 +315,26 @@ including one of the largest library systems in the world.
 
 # In[ ]:
 
+oai_client.embeddings.create(
+    model="text-embedding-ada-002", input=university_info
+)
+
+# In[ ]:
+
 import chromadb
-from chromadb.utils import embedding_functions
+from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
+from openai import OpenAI
 
-default_ef = embedding_functions.DefaultEmbeddingFunction()
-students_embeddings = default_ef([university_info])
+oai_client = OpenAI()
 
-client = chromadb.Client()
-vector_store = client.create_collection(name="Students")
+embedding_function = OpenAIEmbeddingFunction(
+    api_key=os.environ.get('OPENAI_API_KEY'),
+    model_name="text-embedding-ada-002"
+)
 
-vector_store.add(
-    embeddings=students_embeddings,
-    documents=[university_info],
-    metadatas=[{
-        'source': 'university info'
-    }],
-    ids=["id1"]
+chroma_client = chromadb.PersistentClient(path="./chromadb")
+vector_store = chroma_client.get_or_create_collection(
+    name="Universities", embedding_function=embedding_function
 )
 
 # ## Build RAG from scratch
@@ -325,18 +343,10 @@ vector_store.add(
 
 # In[ ]:
 
-tru.reset_database()
-
-# In[ ]:
-
 from trulens_eval import Tru
 from trulens_eval.tru_custom_app import instrument
 
 tru = Tru()
-
-from openai import OpenAI
-
-oai_client = OpenAI()
 
 # In[ ]:
 
@@ -447,6 +457,10 @@ with tru_rag as recording:
 
 # In[ ]:
 
+tru.get_leaderboard(app_ids=["RAG v1"])
+
+# In[ ]:
+
 tru.run_dashboard()
 
 # # Prototype Evals
@@ -459,6 +473,10 @@ tru.run_dashboard()
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/prototype_evals.ipynb)
 
 # ## Import libraries
+
+# In[ ]:
+
+# ! pip install trulens==0.18.1
 
 # In[ ]:
 
@@ -550,6 +568,10 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 
 # In[ ]:
 
+# ! pip install trulens==0.18.1 openai==1.3.1
+
+# In[ ]:
+
 import os
 from pathlib import Path
 import sys
@@ -563,7 +585,7 @@ tru = Tru()
 #
 # For this example, you need an OpenAI key.
 
-# In[3]:
+# In[ ]:
 
 os.environ["OPENAI_API_KEY"] = "..."
 
@@ -571,7 +593,7 @@ os.environ["OPENAI_API_KEY"] = "..."
 #
 # Here we set up a custom application using just an OpenAI chat completion. The process for logging human feedback is the same however you choose to set up your app.
 
-# In[4]:
+# In[ ]:
 
 from openai import OpenAI
 
@@ -606,14 +628,14 @@ tru_app = TruCustomApp(llm_app, app_id='LLM App v1')
 
 # ## Run the app
 
-# In[5]:
+# In[ ]:
 
 with tru_app as recording:
     llm_app.completion("Give me 10 names for a colorful sock company")
 
 # ## Get the `record_id` that you will log human feedback to.
 
-# In[7]:
+# In[ ]:
 
 records, feedback = tru.get_records_and_feedback(app_ids=["LLM App v1"])
 record_id = records.record_id[0]
@@ -622,7 +644,7 @@ record_id = records.record_id[0]
 #
 # Be sure to click an emoji in the record to record `human_feedback` to log.
 
-# In[9]:
+# In[ ]:
 
 from ipywidgets import Button
 from ipywidgets import HBox
@@ -649,7 +671,7 @@ thumbs_down_button.on_click(on_thumbs_down_button_clicked)
 
 HBox([thumbs_up_button, thumbs_down_button])
 
-# In[10]:
+# In[ ]:
 
 # add the human feedback to a particular app and record
 tru.add_feedback(
@@ -661,7 +683,7 @@ tru.add_feedback(
 
 # ## See the result logged with your app.
 
-# In[12]:
+# In[ ]:
 
 tru.get_leaderboard(app_ids=[tru_app.app_id])
 
@@ -675,6 +697,10 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 
 # ### Add API keys
 # For this quickstart, you will need Open AI keys.
+
+# In[ ]:
+
+# ! pip install trulens==0.18.1 openai==1.3.1
 
 # In[2]:
 

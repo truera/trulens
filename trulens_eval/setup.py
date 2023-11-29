@@ -45,18 +45,14 @@ setup(
         f'langchain>={langchain_version}',  # required for cost tracking even outside of langchain
         'typing-inspect>=0.8.0',  # langchain with python < 3.9 fix
         'typing_extensions>=4.5.0',  # langchain with python < 3.9 fix
-
         f'llama_index>={llama_version}',
         # VectorStoreIndex changes need to be taken account for in later versions
-        'html2text>=2020.1.16', # for llama_index example using SimpleWebPageReader
-
+        'html2text>=2020.1.16',  # for llama_index example using SimpleWebPageReader
         'merkle-json>=1.0.0',
         'millify>=0.1.1',
-
         'openai >=1.1.1, <2',
         # NOTE(piotrm): openai v2 likely to break things
-        'httpx >= 0.23.3', # for openai client serialization
-
+        'httpx >= 0.23.3',  # for openai client serialization
         'pinecone-client>=2.2.1',
         'pydantic >=1.10.7, <2',
         # TODO(piotrm): need some migration for pydantic 2

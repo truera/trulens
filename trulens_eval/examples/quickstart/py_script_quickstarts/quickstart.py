@@ -11,9 +11,19 @@
 
 # In[ ]:
 
+# ! pip install trulens==0.18.1 chromadb==0.4.18 openai==1.3.1
+
+# In[ ]:
+
 import os
 
-os.environ["OPENAI_API_KEY"] = "..."
+os.environ["OPENAI_API_KEY"] = "sk-..."
+
+# In[ ]:
+
+from openai import OpenAI
+
+oai_client = OpenAI()
 
 # ## Get Data
 #
@@ -35,22 +45,26 @@ including one of the largest library systems in the world.
 
 # In[ ]:
 
+oai_client.embeddings.create(
+    model="text-embedding-ada-002", input=university_info
+)
+
+# In[ ]:
+
 import chromadb
-from chromadb.utils import embedding_functions
+from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
+from openai import OpenAI
 
-default_ef = embedding_functions.DefaultEmbeddingFunction()
-students_embeddings = default_ef([university_info])
+oai_client = OpenAI()
 
-client = chromadb.Client()
-vector_store = client.create_collection(name="Students")
+embedding_function = OpenAIEmbeddingFunction(
+    api_key=os.environ.get('OPENAI_API_KEY'),
+    model_name="text-embedding-ada-002"
+)
 
-vector_store.add(
-    embeddings=students_embeddings,
-    documents=[university_info],
-    metadatas=[{
-        'source': 'university info'
-    }],
-    ids=["id1"]
+chroma_client = chromadb.PersistentClient(path="./chromadb")
+vector_store = chroma_client.get_or_create_collection(
+    name="Universities", embedding_function=embedding_function
 )
 
 # ## Build RAG from scratch
@@ -59,18 +73,10 @@ vector_store.add(
 
 # In[ ]:
 
-tru.reset_database()
-
-# In[ ]:
-
 from trulens_eval import Tru
 from trulens_eval.tru_custom_app import instrument
 
 tru = Tru()
-
-from openai import OpenAI
-
-oai_client = OpenAI()
 
 # In[ ]:
 
@@ -178,6 +184,10 @@ tru_rag = TruCustomApp(
 
 with tru_rag as recording:
     rag.query("When was the University of Washington founded?")
+
+# In[ ]:
+
+tru.get_leaderboard(app_ids=["RAG v1"])
 
 # In[ ]:
 

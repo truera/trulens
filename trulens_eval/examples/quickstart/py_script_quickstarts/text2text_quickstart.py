@@ -13,6 +13,10 @@
 
 # In[ ]:
 
+# ! pip install trulens==0.18.1 openai==1.3.1
+
+# In[ ]:
+
 import os
 
 os.environ["OPENAI_API_KEY"] = "..."
