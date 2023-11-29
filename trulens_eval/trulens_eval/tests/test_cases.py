@@ -215,8 +215,36 @@ def calculate_expected_score(normalized_metrics_lst, weights_lst):
     )
 
 
-def generate_summeval_groundedness_golden_set(file_path):
 
+def generate_summeval_groundedness_golden_set(file_path):
+    with open(file_path, 'r') as f:
+        data = json.load(f)
+
+    for item in data["rows"]:
+        row = item["row"]
+        print(len(row['machine_summaries']))
+        print(len(row["consistency"]))
+        print(len(row["human_summaries"]))
+        assert (
+            len(row["machine_summaries"]) == len(row["consistency"]) == len(row["human_summaries"])
+        )
+
+        for i in range(len(row["machine_summaries"])):
+            yield {
+                "query":
+                    row["text"],
+                "response":
+                    row["machine_summaries"][i],
+                "expected_score":
+                    calculate_expected_score(
+                        [
+                            row["consistency"][i] / 5,  # normalize to [0, 1]
+                        ],
+                        [1.0] 
+                    )
+            }
+
+def generate_summeval_answer_relevance_golden_set(file_path):
     with open(file_path, 'r') as f:
         data = json.load(f)
 
@@ -224,8 +252,7 @@ def generate_summeval_groundedness_golden_set(file_path):
         row = item["row"]
 
         assert (
-            len(row["machine_summaries"]) == len(row["relevance"]) ==
-            len(row["consistency"])
+            len(row["machine_summaries"]) == len(row["relevance"]) == len(row["human_summaries"])
         )
 
         for i in range(len(row["machine_summaries"])):
@@ -238,8 +265,7 @@ def generate_summeval_groundedness_golden_set(file_path):
                     calculate_expected_score(
                         [
                             row["relevance"][i] / 5,  # normalize to [0, 1]
-                            row["consistency"][i] / 5
                         ],
-                        [1.0, 1.0]  # use uniform weights for now
+                        [1.0] 
                     )
             }
