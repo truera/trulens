@@ -20,6 +20,7 @@ feature information about the encoded object types in the dictionary under the
 util.py:CLASS_INFO key.
 """
 
+from concurrent.futures import Future
 from datetime import datetime
 from enum import Enum
 import logging
@@ -171,11 +172,11 @@ class Record(SerialModel):
     Each instrumented method call produces one of these "record" instances.
     """
 
-    record_id: RecordID
-    app_id: AppID
+    record_id: Any # RecordID
+    app_id: Any # AppID
 
-    cost: Optional[Cost] = None
-    perf: Optional[Perf] = None
+    cost: Any # Optional[Cost] = None
+    perf: Any # Optional[Perf] = None
 
     ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
 
@@ -194,8 +195,8 @@ class Record(SerialModel):
     # Feedback results only filled for records that were just produced. Will not
     # be filled in when read from database. Also, will not fill in when using
     # `FeedbackMode.DEFERRED`.
-    feedback_results: Optional[List['Future[FeedbackResult]']
-                              ] = pydantic.Field(exclude=True)
+    feedback_results: Any = pydantic.Field(None, exclude=True)
+        # Optional[List[Future[FeedbackResult]]] = pydantic.Field(exclude=True)
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
         # Fixed record_id for obj_id_of_id below.

@@ -27,6 +27,8 @@ pp = PrettyPrinter()
 
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
+
+    from langchain.schema.document import Document
     from langchain.agents.agent import BaseMultiActionAgent
     from langchain.agents.agent import BaseSingleActionAgent
     from langchain.chains.base import Chain
@@ -37,7 +39,7 @@ with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     from langchain.schema import BaseMemory  # no methods instrumented
     from langchain.schema import BaseRetriever
     from langchain.schema.language_model import BaseLanguageModel
-    # langchain.load.serializable.Serializable, # this seems to be work in progress over at langchain
+    from langchain.load.serializable import Serializable # this seems to be work in progress over at langchain
     # langchain.adapters.openai.ChatCompletion, # no bases
     from langchain.tools.base import BaseTool
 
@@ -47,8 +49,10 @@ class LangChainInstrument(Instrument):
     class Default:
         MODULES = {"langchain."}
 
-        # Thunk because langchain is optional.
+        # Thunk because langchain is optional. TODO: Not anymore.
         CLASSES = lambda: {
+            Serializable,
+            Document,
             Chain,
             BaseRetriever,
             BaseLLM,

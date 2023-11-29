@@ -216,6 +216,29 @@ def jsonify(
 
         content = temp
 
+    elif isinstance(obj, pydantic.v1.BaseModel):
+        # TODO: DEDUP with pydantic.BaseModel case
+        
+        # Not even trying to use pydantic.dict here.
+
+        temp = {}
+        new_dicted[id(obj)] = temp
+        temp.update(
+            {
+                k: recur(safe_getattr(obj, k))
+                for k, v in obj.__fields__.items()
+                if not v.field_info.exclude and recur_key(k)
+            }
+        )
+
+        # Redact possible secrets based on key name and value.
+        if redact_keys:
+            for k, v in temp.items():
+                temp[k] = redact_value(v=v, k=k)
+
+        content = temp
+
+
     elif isinstance(obj, pydantic.BaseModel):
         # Not even trying to use pydantic.dict here.
 
