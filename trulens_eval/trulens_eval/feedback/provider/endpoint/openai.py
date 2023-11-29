@@ -74,7 +74,9 @@ class OpenAIClient(SerialModel):
                 client = oai.OpenAI()
 
             elif client_kwargs is None or client_cls is None:
-                raise ValueError("`client_kwargs` and `client_cls` are both needed to deserialize an openai.`OpenAI` client.")
+                raise ValueError(
+                    "`client_kwargs` and `client_cls` are both needed to deserialize an openai.`OpenAI` client."
+                )
 
             else:
                 if isinstance(client_cls, dict):
@@ -87,7 +89,6 @@ class OpenAIClient(SerialModel):
                 timeout = client_kwargs.get("timeout")
                 if timeout is not None:
                     client_kwargs['timeout'] = oai.Timeout(**timeout)
-
 
                 client = cls(**client_kwargs)
 
@@ -116,9 +117,7 @@ class OpenAIClient(SerialModel):
             client_cls = Class.of_class(client_class)
 
         super().__init__(
-            client = client,
-            client_cls = client_cls,
-            client_kwargs = client_kwargs
+            client=client, client_cls=client_cls, client_kwargs=client_kwargs
         )
 
     def __getattr__(self, k):
@@ -126,8 +125,10 @@ class OpenAIClient(SerialModel):
         # instance.
         if safe_hasattr(self.client, k):
             return safe_getattr(self.client, k)
-        
-        raise AttributeError(f"No attribute {k} in wrapper OpenAiClient nor the wrapped OpenAI client.")
+
+        raise AttributeError(
+            f"No attribute {k} in wrapper OpenAiClient nor the wrapped OpenAI client."
+        )
 
 
 class OpenAICallback(EndpointCallback):
