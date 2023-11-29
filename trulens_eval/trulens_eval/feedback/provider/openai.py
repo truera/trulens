@@ -7,6 +7,7 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 
 logger = logging.getLogger(__name__)
 
+
 class OpenAI(LLMProvider):
     """Out of the box feedback functions calling OpenAI APIs.
     """

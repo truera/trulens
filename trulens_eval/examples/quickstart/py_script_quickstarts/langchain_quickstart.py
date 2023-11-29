@@ -13,6 +13,10 @@
 
 # In[ ]:
 
+# ! pip install trulens==0.18.1 openai==1.3.1
+
+# In[ ]:
+
 import os
 
 os.environ["OPENAI_API_KEY"] = "..."
@@ -38,9 +42,9 @@ tru = Tru()
 # ! pip install langchain>=0.0.170
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
-from langchain.prompts.chat import ChatPromptTemplate
-from langchain.prompts.chat import HumanMessagePromptTemplate
-from langchain.prompts.chat import PromptTemplate
+from langchain.prompts import ChatPromptTemplate
+from langchain.prompts import HumanMessagePromptTemplate
+from langchain.prompts import PromptTemplate
 
 # ### Create Simple LLM Application
 #
