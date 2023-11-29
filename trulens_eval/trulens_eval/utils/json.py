@@ -44,19 +44,21 @@ mj = MerkleJson()
 
 # Add encoders for some types that pydantic cannot handle but we need.
 
+
 # httpx.URL needed for openai client.
 import httpx
 def encode_httpx_url(obj: httpx.URL):
     return str(obj)
 
-pydantic.json.ENCODERS_BY_TYPE[httpx.URL] = encode_httpx_url
+pydantic.v1.json.ENCODERS_BY_TYPE[httpx.URL] = encode_httpx_url
 
 # Another thing we need for openai client.
 from openai import Timeout
 def encode_openai_timeout(obj: Timeout):
     return obj.as_dict()
 
-pydantic.json.ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
+pydantic.v1.json.ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
+
 
 def obj_id_of_obj(obj: dict, prefix="obj"):
     """
@@ -87,7 +89,7 @@ def json_default(obj: Any) -> str:
     # Try the encoders included with pydantic first (should handle things like
     # Datetime, and our additional encoders above):
     try:
-        return pydantic.json.pydantic_encoder(obj)
+        return pydantic.v1.json.pydantic_encoder(obj)
 
     except:
         # Otherwise give up and indicate a non-serialization.
@@ -167,7 +169,7 @@ def jsonify(
     if isinstance(obj, Path):
         return str(obj)
 
-    if type(obj) in pydantic.json.ENCODERS_BY_TYPE:
+    if type(obj) in pydantic.v1.json.ENCODERS_BY_TYPE:
         return obj
 
     # TODO: should we include duplicates? If so, dicted needs to be adjusted.
@@ -225,8 +227,8 @@ def jsonify(
         temp.update(
             {
                 k: recur(safe_getattr(obj, k))
-                for k, v in obj.__fields__.items()
-                if not v.field_info.exclude and recur_key(k)
+                for k, v in obj.model_fields.items()
+                if not v.exclude and recur_key(k)
             }
         )
 

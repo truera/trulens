@@ -234,8 +234,7 @@ class TruLlama(App):
     app: Union[BaseQueryEngine, BaseChatEngine]
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query),
-        const=True
+        default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query)
     )
 
     def __init__(self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs):
@@ -247,8 +246,6 @@ class TruLlama(App):
         kwargs['instrument'] = LlamaInstrument(app=self)
 
         super().__init__(**kwargs)
-
-        self.post_init()
 
     @classmethod
     def select_source_nodes(cls) -> JSONPath:

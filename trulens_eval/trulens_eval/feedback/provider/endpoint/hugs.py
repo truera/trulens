@@ -1,6 +1,6 @@
 import inspect
 import json
-from typing import Callable, Optional
+from typing import Callable, Optional, Dict, Hashable
 
 import requests
 
@@ -9,7 +9,7 @@ from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.keys import _check_key
 from trulens_eval.keys import get_huggingface_headers
 from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.python import safe_hasattr
+from trulens_eval.utils.python import SingletonPerName, safe_hasattr
 
 
 class HuggingfaceCallback(EndpointCallback):
@@ -40,8 +40,11 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
         return super(Endpoint, cls).__new__(cls, name="huggingface")
 
     def handle_wrapped_call(
-        self, func: Callable, bindings: inspect.BoundArguments,
-        response: requests.Response, callback: Optional[EndpointCallback]
+        self,
+        func: Callable,
+        bindings: inspect.BoundArguments,
+        response: requests.Response,
+        callback: Optional[EndpointCallback]
     ) -> None:
         # Call here can only be requests.post .
 

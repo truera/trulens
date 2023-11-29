@@ -51,22 +51,20 @@ class SerialModel(pydantic.BaseModel):
     """
 
     @classmethod
-    def validate(cls, obj: Any):
+    def model_validate(cls, obj, **kwargs):
         # import hierarchy circle here
         from trulens_eval.utils.pyschema import Class
         from trulens_eval.utils.pyschema import CLASS_INFO
         from trulens_eval.utils.pyschema import WithClassInfo
 
-        if isinstance(obj, Dict):
-            if CLASS_INFO in obj:
+        if isinstance(obj, Dict) and CLASS_INFO in obj:
+            cls = Class(**obj[CLASS_INFO])
+            del obj[CLASS_INFO]
+            model = cls.model_validate(obj, **kwargs)
 
-                cls = Class(**obj[CLASS_INFO])
-                del obj[CLASS_INFO]
-                model = cls.validate(obj=obj)
+            return WithClassInfo.of_model(model=model, cls=cls)
 
-                return WithClassInfo.of_model(model=model, cls=cls)
-
-        return super().validate(obj)
+        return super(SerialModel, cls).model_validate(obj, **kwargs)
 
     def update(self, **d):
         for k, v in d.items():
@@ -88,11 +86,7 @@ class SerialBytes(pydantic.BaseModel):
         super().__init__(data=data)
 
     @classmethod
-    def parse_obj(cls, obj):
-        return cls.validate(obj)
-
-    @classmethod
-    def validate(cls, obj):
+    def model_validate(cls, obj, **kwargs):
         import base64
 
         if isinstance(obj, Dict):
@@ -115,7 +109,7 @@ class Step(pydantic.BaseModel):  #, abc.ABC):
     """
 
     @classmethod
-    def validate(cls, obj):
+    def model_validate(cls, obj, **kwargs):
 
         if isinstance(obj, Step):
             return obj
@@ -462,8 +456,6 @@ class GetItems(Step):
             raise ValueError("Object is not a dictionary.")
 
     def set(self, obj: Any, val: Any) -> Any:
-        # raise NotImplementedError
-
         if obj is None:
             obj = dict()
 
@@ -488,7 +480,10 @@ class ParseException(Exception):
         self.exp_ast = exp_ast
 
     def __str__(self):
-        return f"Failed to parse expression `{self.exp_string}` as a `Lens`.\nAST={dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
+        return (
+            f"Failed to parse expression `{self.exp_string}` as a `Lens`."
+            f"\nAST={dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
+        )
 
 
 class Lens(pydantic.BaseModel):
@@ -514,11 +509,12 @@ class Lens(pydantic.BaseModel):
     path: Tuple[Step, ...]
 
     @classmethod
-    def validate(cls, obj):
+    def model_validate(cls, obj, **kwargs):
+
         if isinstance(obj, str):
             return Lens.of_string(obj)
         else:
-            return super().validate(obj)
+            return super(Lens, cls).model_validate(obj, **kwargs)
 
     def dump(self):  # might be called "model_dump" in pydantic v2
         return str(self)
@@ -938,7 +934,7 @@ def all_queries(obj: Any, query: Lens = None) -> Iterable[Lens]:
     elif isinstance(obj, pydantic.BaseModel):
         yield query
 
-        for k in obj.__fields__:
+        for k in obj.model_fields:
             v = getattr(obj, k)
             sub_query = query[k]
             for res in all_queries(v, sub_query):
@@ -977,7 +973,7 @@ def all_objects(obj: Any, query: Lens = None) -> Iterable[Tuple[Lens, Any]]:
         pass
 
     elif isinstance(obj, pydantic.BaseModel):
-        for k in obj.__fields__:
+        for k in obj.model_fields:
             v = getattr(obj, k)
             sub_query = query[k]
             for res in all_objects(v, sub_query):

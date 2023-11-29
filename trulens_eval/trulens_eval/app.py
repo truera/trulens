@@ -287,7 +287,7 @@ def instrumented_component_views(
     """
 
     for q, o in all_objects(obj):
-        if isinstance(o, pydantic.BaseModel) and CLASS_INFO in o.__fields__:
+        if isinstance(o, pydantic.BaseModel) and CLASS_INFO in o.model_fields:
             yield q, ComponentView.of_json(json=o)
 
         if isinstance(o, Dict) and CLASS_INFO in o:
@@ -398,15 +398,18 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     # `schema.py:App`.
 
     # Feedback functions to evaluate on each record.
-    feedbacks: Sequence[Feedback] = Field(exclude=True)
+    feedbacks: Sequence[Any] = Field(exclude=True, default_factory=list)
+    # Feedback
 
     # Database interfaces for models/records/feedbacks.
     # NOTE: Maybe move to schema.App .
-    tru: Optional[Tru] = Field(exclude=True)
+    tru: Optional[Any] = Field(None, exclude=True)
+    # Tru
 
     # Database interfaces for models/records/feedbacks.
     # NOTE: Maybe move to schema.AppDefinition .
-    db: Optional[DB] = Field(exclude=True)
+    db: Optional[Any] = Field(None, exclude=True)
+    # DB
 
     # The wrapped app.
     app: Any = Field(exclude=True)
@@ -414,18 +417,20 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     # Instrumentation class. This is needed for serialization as it tells us
     # which objects we want to be included in the json representation of this
     # app.
-    instrument: Instrument = Field(exclude=True)
+    instrument: Any = Field(exclude=True)
+    # Instrument 
 
     # Sequnces of records produced by the this class used as a context manager.
     # Using a context var so that context managers can be nested.
-    recording_contexts: contextvars.ContextVar[Sequence[RecordingContext]
-                                              ] = Field(exclude=True)
+    recording_contexts: Any \
+        = Field(exclude=True)
+    # contextvars.ContextVar[Sequence[RecordingContext]] \
 
     # Mapping of instrumented methods (by id(.) of owner object and the
     # function) to their path in this app:
-    instrumented_methods: Dict[int, Dict[Callable, JSONPath]] = Field(
-        exclude=True, default_factory=dict
-    )
+    instrumented_methods: Any = \
+        Field(exclude=True, default_factory=dict)
+    # Dict[int, Dict[Callable, JSONPath]] = \
 
     def __init__(
         self,
@@ -454,10 +459,12 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             obj=self.app, query=Select.Query().app
         )
 
+        self.tru_post_init()
+
     def __hash__(self):
         return hash(id(self))
 
-    def post_init(self):
+    def tru_post_init(self):
         """
         Database-related initialization.
         """
@@ -742,8 +749,6 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 meta=jsonify(record_metadata)
             )
 
-        # tp = TP()
-
         # Finishing record needs to be done in a thread lock, done there:
         record = ctx.finish_record(build_record)
 
@@ -851,11 +856,13 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         res, _ = self.with_record(func, *args, **kwargs)
         return res
 
-    def with_record(self,
-                    func,
-                    *args,
-                    record_metadata: JSON = None,
-                    **kwargs) -> Tuple[Any, Record]:
+    def with_record(
+        self,
+        func,
+        *args,
+        record_metadata: JSON = None,
+        **kwargs
+    ) -> Tuple[Any, Record]:
         """
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.

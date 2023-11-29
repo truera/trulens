@@ -976,7 +976,7 @@ class Instrument(object):
                 # NOTE(piotrm): This will not include private fields like
                 # llama_index's LLMPredictor._llm which might be useful to
                 # include:
-                attrs = obj.__fields__.keys()
+                attrs = obj.model_fields.keys()
 
             elif dataclasses.is_dataclass(type(obj)):
                 attrs = (f.name for f in dataclasses.fields(obj))
@@ -1017,7 +1017,7 @@ class Instrument(object):
                     )
 
                 # TODO: check if we want to instrument anything in langchain not
-                # accessible through __fields__ .
+                # accessible through model_fields .
 
         else:
             logger.debug(

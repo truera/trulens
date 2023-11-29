@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 import sqlite3
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, ClassVar, List, Optional, Sequence, Tuple, Union
 
 from merkle_json import MerkleJson
 import numpy as np
@@ -186,17 +186,17 @@ def for_all_methods(decorator):
 class LocalSQLite(DB):
     filename: Path
 
-    TABLE_META = "meta"
-    TABLE_RECORDS = "records"
-    TABLE_FEEDBACKS = "feedbacks"
-    TABLE_FEEDBACK_DEFS = "feedback_defs"
-    TABLE_APPS = "apps"
+    TABLE_META: ClassVar[str] = "meta"
+    TABLE_RECORDS: ClassVar[str] = "records"
+    TABLE_FEEDBACKS: ClassVar[str] = "feedbacks"
+    TABLE_FEEDBACK_DEFS: ClassVar[str] = "feedback_defs"
+    TABLE_APPS: ClassVar[str] = "apps"
 
-    TYPE_TIMESTAMP = "FLOAT"
-    TYPE_ENUM = "TEXT"
-    TYPE_JSON = "TEXT"
+    TYPE_TIMESTAMP: ClassVar[str] = "FLOAT"
+    TYPE_ENUM: ClassVar[str] = "TEXT"
+    TYPE_JSON: ClassVar[str] = "TEXT"
 
-    TABLES = [TABLE_RECORDS, TABLE_FEEDBACKS, TABLE_FEEDBACK_DEFS, TABLE_APPS]
+    TABLES: ClassVar[List[str]] = [TABLE_RECORDS, TABLE_FEEDBACKS, TABLE_FEEDBACK_DEFS, TABLE_APPS]
 
     def __init__(self, filename: Path, redact_keys: bool = False):
         """

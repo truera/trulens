@@ -53,6 +53,8 @@ class OpenAIClient(SerialModel):
     it were an `openai.OpenAI` instance.
     """
 
+    # TODO(piotrm): check whether we can use openapi-schema-pydantic for this.
+
     class Config:
         arbitrary_types_allowed = True
 

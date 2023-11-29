@@ -44,17 +44,17 @@ pp = pprint.PrettyPrinter()
 class Feedback(FeedbackDefinition):
     # Implementation, not serializable, note that FeedbackDefinition contains
     # `implementation` meant to serialize the below.
-    imp: Optional[ImpCallable] = pydantic.Field(exclude=True)
+    imp: Optional[ImpCallable] = pydantic.Field(None, exclude=True)
 
     # Aggregator method for feedback functions that produce more than one
     # result.
-    agg: Optional[AggCallable] = pydantic.Field(exclude=True)
+    agg: Optional[AggCallable] = pydantic.Field(None, exclude=True)
 
     # An optional name. Only will affect display tables
     supplied_name: Optional[str] = None
 
     # feedback direction
-    higher_is_better: Optional[bool] = pydantic.Field()
+    higher_is_better: Optional[bool] = None
 
     def __init__(
         self,

@@ -298,15 +298,15 @@ class Obj(SerialModel):
     id: int
 
     @classmethod
-    def validate(cls, d) -> 'Obj':
-        if isinstance(d, Obj):
-            return d
-        elif isinstance(d, ObjSerial):
-            return d
-        elif isinstance(d, Dict):
-            return Obj.pick(**d)
+    def model_validate(cls, obj, **kwargs):
+        if isinstance(obj, Obj):
+            return obj
+        elif isinstance(obj, ObjSerial):
+            return obj
+        elif isinstance(obj, Dict):
+            return Obj.pick(**obj)
         else:
-            raise RuntimeError(f"Unhandled Obj source of type {type(d)}.")
+            raise RuntimeError(f"Unhandled Obj source of type {type(obj)}.")
 
     @staticmethod
     def pick(**d):
@@ -462,17 +462,14 @@ class FunctionOrMethod(SerialModel):
         elif 'cls' in kwargs:
             return Function(**kwargs)
 
-    @classmethod
-    def __get_validator__(cls):
-        yield cls.validate
 
     @classmethod
-    def validate(cls, d) -> 'FunctionOrMethod':
+    def model_validate(cls, obj, **kwargs):
 
-        if isinstance(d, Dict):
-            return FunctionOrMethod.pick(**d)
+        if isinstance(obj, Dict):
+            return FunctionOrMethod.pick(**obj)
         else:
-            return d
+            return obj
 
     @staticmethod
     def of_callable(c: Callable, loadable: bool = False) -> 'FunctionOrMethod':
@@ -583,7 +580,7 @@ class Function(FunctionOrMethod):
 
 
 # Key of structure where class information is stored.
-CLASS_INFO = "__tru_class_info"
+CLASS_INFO = "tru_class_info"
 
 
 class WithClassInfo(pydantic.BaseModel):
@@ -594,7 +591,7 @@ class WithClassInfo(pydantic.BaseModel):
 
     # Using this odd key to not pollute attribute names in whatever class we mix
     # this into. Should be the same as CLASS_INFO.
-    __tru_class_info: Class = Field(exclude=False)
+    tru_class_info: Class = Field(exclude=False)
 
     # class_info: Class
 

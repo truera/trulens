@@ -105,7 +105,7 @@ class Cost(SerialModel):
 
     def __add__(self, other: 'Cost') -> 'Cost':
         kwargs = {}
-        for k in self.__fields__.keys():
+        for k in self.model_fields.keys():
             kwargs[k] = getattr(self, k) + getattr(other, k)
         return Cost(**kwargs)
 
@@ -490,40 +490,47 @@ class AppDefinition(SerialModel, WithClassInfo):
     # Serialized fields here whereas app.py:App contains
     # non-serialized fields.
 
-    class Config:
-        arbitrary_types_allowed = True
+    #class Config:
+    #    arbitrary_types_allowed = True
 
-    app_id: AppID
-    tags: Tags
-    metadata: Metadata  # TODO: rename to meta for consistency with other metas
+    app_id: Any # AppID
+    tags: Any # Tags
+    metadata: Any # Metadata  # TODO: rename to meta for consistency with other metas
 
     # Feedback functions to evaluate on each record. Unlike the above, these are
     # meant to be serialized.
-    feedback_definitions: Sequence[FeedbackDefinition] = []
+    feedback_definitions: Sequence[Any] = []
+    # FeedbackDefinition
 
     # NOTE: Custom feedback functions cannot be run deferred and will be run as
     # if "withappthread" was set.
-    feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD
+    feedback_mode: Any = FeedbackMode.WITH_APP_THREAD
+    # FeedbackMode
 
     # Class of the main instrumented object.
-    root_class: Class  # TODO: make classvar
+    root_class: Any # TODO: make classvar
+    # Class
 
     # App's main method. To be filled in by subclass. Want to make this abstract
     # but this causes problems when trying to load an AppDefinition from json.
-    root_callable: ClassVar[FunctionOrMethod]
+    root_callable: ClassVar[Any]
+    # FunctionOrMethod
 
     # Wrapped app in jsonized form.
-    app: JSON
+    app: Any
+    # JSON
 
     # EXPERIMENTAL
     # NOTE: temporary unsafe serialization of function that loads the app:
     # Dump of the initial app before any invocations. Can be used to create a new session.
-    initial_app_loader_dump: Optional[SerialBytes] = None
+    initial_app_loader_dump: Optional[Any] = None
+    # SerialBytes
 
     # Info to store about the app and to display in dashboard. This is useful if
     # app itself cannot be serialized. `app_extra_json`, then, can stand in place for
     # whatever the user might want to see about the app.
-    app_extra_json: JSON
+    app_extra_json: Any
+    # JSON
 
     @staticmethod
     def continue_session(
@@ -559,7 +566,7 @@ class AppDefinition(SerialModel, WithClassInfo):
         if initial_app_loader is None:
             assert serial_bytes_json is not None, "Cannot create new session without `initial_app_loader`."
 
-            serial_bytes = SerialBytes.parse_obj(serial_bytes_json)
+            serial_bytes = SerialBytes.model_validate(serial_bytes_json)
 
             app = dill.loads(serial_bytes.data)()
 

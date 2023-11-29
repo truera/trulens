@@ -59,14 +59,14 @@ class Tru(SingletonPerName):
     # Process of the dashboard app.
     dashboard_proc = None
 
-    def Chain(self, chain, **kwargs):
+    def Chain(__tru_self, chain, **kwargs):
         """
         Create a TruChain with database managed by self.
         """
 
         from trulens_eval.tru_chain import TruChain
 
-        return TruChain(tru=self, app=chain, **kwargs)
+        return TruChain(tru=__tru_self, app=chain, **kwargs)
 
     def Llama(self, engine, **kwargs):
         """

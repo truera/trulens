@@ -7,9 +7,8 @@ from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
 from types import ModuleType
-from typing import (
-    Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
-)
+from typing import (Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple,
+                    Type, TypeVar)
 import warnings
 
 import pydantic

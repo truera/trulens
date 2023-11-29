@@ -108,12 +108,14 @@ class LangChainInstrument(Instrument):
 
 
 class TruChain(App):
-    """Instantiates the Langchain Wrapper.
+    """
+    Instantiates the Langchain Wrapper.
         
         **Usage:**
 
         Langchain Code: [Langchain Quickstart](https://python.langchain.com/docs/get_started/quickstart)
-        ```
+
+        ```python
          # Code snippet taken from langchain 0.0.281 (API subject to change with new versions)
         from langchain.chains import LLMChain
         from langchain.llms import OpenAI
@@ -134,11 +136,10 @@ class TruChain(App):
         llm = OpenAI(temperature=0.9, max_tokens=128)
 
         chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
-
         ```
 
         Trulens Eval Code:
-        ```
+        ```python
         
         from trulens_eval import TruChain
         # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
@@ -159,19 +160,20 @@ class TruChain(App):
             recording.record_metadata="this is different metadata for all records in this context that follow this line"
             chain("Where do I download langchain?")
         ```
+
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
         Args:
             app (Chain): A langchain application.
     """
 
-    app: Chain
+    app: Any # Chain
 
     # TODO: what if _acall is being used instead?
-    root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(TruChain._call),
-        const=True
+    root_callable: ClassVar[Any] = Field(
+        default_factory=lambda: FunctionOrMethod.of_callable(TruChain._call)
     )
+    # FunctionOrMethod
 
     # Normally pydantic does not like positional args but chain here is
     # important enough to make an exception.
@@ -194,8 +196,6 @@ class TruChain(App):
         kwargs['instrument'] = LangChainInstrument(app=self)
 
         super().__init__(**kwargs)
-
-        self.post_init()
 
     # TODEP
     # Chain requirement

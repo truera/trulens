@@ -70,7 +70,7 @@ class JSONTestCase(TestCase):
                 recur(getattr(j1, f.name), getattr(j2, f.name), path[f.name])
 
         elif isinstance(j1, BaseModel):
-            for f in j1.__fields__:
+            for f in j1.model_fields:
                 if f in skips:
                     continue
 

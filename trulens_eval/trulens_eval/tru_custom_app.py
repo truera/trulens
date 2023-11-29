@@ -288,6 +288,10 @@ class TruCustomApp(App):
         Args:
             app (Any): Any class
     """
+
+    class Config:
+        arbitrary_types_allowed = True
+
     app: Any
 
     root_callable: ClassVar[FunctionOrMethod] = Field(None)
@@ -450,8 +454,6 @@ class TruCustomApp(App):
                             }
                         )
 
-        # DB stuff and checks:
-        self.post_init()
 
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped

@@ -82,12 +82,14 @@ class TruBasicApp(App):
         Args:
             text_to_text (Callable): A text to text callable.
     """
+
+    class Config:
+        arbitrary_types_allowed = True
+
     app: TruWrapperApp
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.
-        of_callable(TruWrapperApp._call),
-        const=True
+        default_factory=lambda: FunctionOrMethod.of_callable(TruWrapperApp._call)
     )
 
     def __init__(
@@ -118,8 +120,6 @@ class TruBasicApp(App):
 
         super().__init__(**kwargs)
 
-        # Setup the DB-related things:
-        self.post_init()
 
     def main_call(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.
