@@ -394,22 +394,23 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     Generalization of a wrapped model.
     """
 
+    class Config:
+        # Tru, DB, most of the types on the excluded fields.
+        arbitrary_types_allowed = True
+
     # Non-serialized fields here while the serialized ones are defined in
     # `schema.py:App`.
 
     # Feedback functions to evaluate on each record.
-    feedbacks: Sequence[Any] = Field(exclude=True, default_factory=list)
-    # Feedback
+    feedbacks: List[Feedback] = Field(exclude=True, default_factory=list)
 
     # Database interfaces for models/records/feedbacks.
     # NOTE: Maybe move to schema.App .
-    tru: Optional[Any] = Field(None, exclude=True)
-    # Tru
+    tru: Optional[Tru] = Field(None, exclude=True)
 
     # Database interfaces for models/records/feedbacks.
     # NOTE: Maybe move to schema.AppDefinition .
-    db: Optional[Any] = Field(None, exclude=True)
-    # DB
+    db: Optional[DB] = Field(None, exclude=True)
 
     # The wrapped app.
     app: Any = Field(exclude=True)
@@ -417,20 +418,17 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     # Instrumentation class. This is needed for serialization as it tells us
     # which objects we want to be included in the json representation of this
     # app.
-    instrument: Any = Field(exclude=True)
-    # Instrument 
+    instrument: Instrument = Field(exclude=True)
 
     # Sequnces of records produced by the this class used as a context manager.
     # Using a context var so that context managers can be nested.
-    recording_contexts: Any \
+    recording_contexts: contextvars.ContextVar[Sequence[RecordingContext]] \
         = Field(exclude=True)
-    # contextvars.ContextVar[Sequence[RecordingContext]] \
 
     # Mapping of instrumented methods (by id(.) of owner object and the
     # function) to their path in this app:
-    instrumented_methods: Any = \
+    instrumented_methods: Dict[int, Dict[Callable, JSONPath]] = \
         Field(exclude=True, default_factory=dict)
-    # Dict[int, Dict[Callable, JSONPath]] = \
 
     def __init__(
         self,
