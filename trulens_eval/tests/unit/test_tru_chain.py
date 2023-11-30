@@ -278,8 +278,8 @@ class TestTruChain(JSONTestCase):
         self.assertJSONEqual(async_res, sync_res)
 
         self.assertJSONEqual(
-            async_record.dict(),
-            sync_record.dict(),
+            async_record.model_dump(),
+            sync_record.model_dump(),
             skips=set(
                 ["id", "name", "ts", "start_time", "end_time", "record_id"]
             )
@@ -317,8 +317,8 @@ class TestTruChain(JSONTestCase):
         self.assertJSONEqual(async_res, sync_res)
 
         self.assertJSONEqual(
-            async_record.dict(),
-            sync_record.dict(),
+            async_record.model_dump(),
+            sync_record.model_dump(),
             skips=set(
                 [
                     "id",

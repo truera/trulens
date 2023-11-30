@@ -209,7 +209,7 @@ import os
 from pprint import PrettyPrinter
 import threading as th
 import traceback
-from typing import Callable, Dict, Iterable, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
 import weakref
 
 from pydantic import BaseModel
@@ -218,10 +218,10 @@ from trulens_eval.feedback import Feedback
 from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.schema import Cost
 from trulens_eval.schema import Perf
-from trulens_eval.schema import Query
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordAppCallMethod
+from trulens_eval.schema import Select
 from trulens_eval.utils.containers import dict_merge_with
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import clean_attributes
@@ -231,7 +231,7 @@ from trulens_eval.utils.python import caller_frame
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import safe_signature
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -245,7 +245,7 @@ class WithInstrumentCallbacks:
 
     # Called during instrumentation.
     def _on_method_instrumented(
-        self, obj: object, func: Callable, path: JSONPath
+        self, obj: object, func: Callable, path: Lens
     ):
         """
         Called by instrumentation system for every function requested to be
@@ -257,7 +257,7 @@ class WithInstrumentCallbacks:
         raise NotImplementedError
 
     # Called during invocation.
-    def _get_method_path(self, obj: object, func: Callable) -> JSONPath:
+    def _get_method_path(self, obj: object, func: Callable) -> Lens:
         """
         Get the path of the instrumented function `func`, a member of the class
         of `obj` relative to this app.
@@ -268,7 +268,7 @@ class WithInstrumentCallbacks:
     # WithInstrumentCallbacks requirement
     def _get_methods_for_func(
         self, func: Callable
-    ) -> Iterable[Tuple[int, Callable, JSONPath]]:
+    ) -> Iterable[Tuple[int, Callable, Lens]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
@@ -382,7 +382,7 @@ class Instrument(object):
         self.app = app
 
     def tracked_method_wrapper(
-        self, query: Query, func: Callable, method_name: str, cls: type,
+        self, query: Lens, func: Callable, method_name: str, cls: type,
         obj: object
     ):
         """
@@ -822,7 +822,7 @@ class Instrument(object):
 
         return w
 
-    def instrument_method(self, method_name, obj, query):
+    def instrument_method(self, method_name: str, obj: Any, query: Lens):
         cls = type(obj)
 
         logger.debug(f"{query}: instrumenting {method_name} on obj {obj}")
@@ -883,7 +883,7 @@ class Instrument(object):
 
         cls.__new__ = wrapped_new
 
-    def instrument_object(self, obj, query: Query, done: Set[int] = None):
+    def instrument_object(self, obj, query: Lens, done: Optional[Set[int]] = None):
 
         done = done or set([])
 

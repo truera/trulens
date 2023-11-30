@@ -31,7 +31,7 @@ from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import SerialBytes
 
@@ -164,7 +164,7 @@ def jsonify(
 
     # TODO: remove eventually
     if isinstance(obj, SerialBytes):
-        return obj.dict()
+        return obj.model_dump()
 
     if isinstance(obj, Path):
         return str(obj)
@@ -218,7 +218,7 @@ def jsonify(
 
     elif isinstance(obj, pydantic.v1.BaseModel):
         # TODO: DEDUP with pydantic.BaseModel case
-        
+
         # Not even trying to use pydantic.dict here.
 
         temp = {}
@@ -316,10 +316,10 @@ def jsonify(
     if instrument.to_instrument_object(obj) or isinstance(obj, WithClassInfo):
         content[CLASS_INFO] = Class.of_class(
             cls=obj.__class__, with_bases=True
-        ).dict()
+        ).model_dump()
 
-    if not isinstance(obj, JSONPath) and safe_hasattr(obj, "jsonify_extra"):
-        # Problem with JSONPath and similar objects: they always say they have every attribute.
+    if not isinstance(obj, Lens) and safe_hasattr(obj, "jsonify_extra"):
+        # Problem with Lens and similar objects: they always say they have every attribute.
 
         content = obj.jsonify_extra(content)
 

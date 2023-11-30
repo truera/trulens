@@ -139,4 +139,4 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
 
     @staticmethod
     def of_retriever(retriever: VectorStoreRetriever, **kwargs):
-        return WithFeedbackFilterDocuments(**kwargs, **retriever.dict())
+        return WithFeedbackFilterDocuments(**kwargs, **retriever.model_dump())

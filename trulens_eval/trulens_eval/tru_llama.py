@@ -19,7 +19,7 @@ from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.llama import WithFeedbackFilterNodes
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 
@@ -248,7 +248,7 @@ class TruLlama(App):
         super().__init__(**kwargs)
 
     @classmethod
-    def select_source_nodes(cls) -> JSONPath:
+    def select_source_nodes(cls) -> Lens:
         """
         Get the path to the source nodes in the query output.
         """

@@ -26,8 +26,8 @@ class CATEGORY:
         threshold: float
         color: str
         icon: str
-        direction: Optional[str]
-        compare: Optional[Callable[[float, float], bool]]
+        direction: Optional[str] = None
+        compare: Optional[Callable[[float, float], bool]] = None
 
     class FeedbackDirection(NamedTuple):
         name: str

@@ -65,7 +65,7 @@ def noserio(obj, **extra: Dict) -> dict:
     additional keyword arguments are included.
     """
 
-    inner = Obj.of_object(obj).dict()
+    inner = Obj.of_object(obj).model_dump()
     inner.update(extra)
 
     if isinstance(obj, Sequence):
@@ -334,7 +334,7 @@ class Obj(SerialModel):
         self.cls._check_importable()
 
         raise RuntimeError(
-            f"Trying to load an object without constructor arguments: {pp.pformat(self.dict())}."
+            f"Trying to load an object without constructor arguments: {pp.pformat(self.model_dump())}."
         )
 
 
@@ -402,7 +402,7 @@ class ObjSerial(Obj):
             from trulens_eval.utils.json import jsonify
 
             init_args = ()
-            init_kwargs = obj.dict()
+            init_kwargs = obj.model_dump()
             # init_kwargs = jsonify(obj)
         elif isinstance(obj, Exception):
             init_args = obj.args
@@ -627,4 +627,4 @@ class WithClassInfo(pydantic.BaseModel):
 
     @staticmethod
     def of_model(model: pydantic.BaseModel, cls: Class):
-        return WithClassInfo(class_info=cls, **model.dict())
+        return WithClassInfo(class_info=cls, **model.model_dump())

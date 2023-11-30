@@ -215,7 +215,7 @@ from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
@@ -383,12 +383,12 @@ class TruCustomApp(App):
         # component as per serialized version of this app. If they are not,
         # placeholders are made in `app_extra_json` so that subsequent
         # serialization looks like the components exist.
-        json = self.dict()
+        json = self.model_dump()
 
         for m, path in methods_to_instrument.items():
             method_name = m.__name__
 
-            full_path = JSONPath().app + path
+            full_path = Lens().app + path
 
             self.instrument.instrument_method(
                 method_name=method_name, obj=m.__self__, query=full_path

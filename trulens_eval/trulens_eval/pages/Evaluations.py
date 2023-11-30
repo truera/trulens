@@ -28,7 +28,7 @@ from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
 from trulens_eval.utils.json import jsonify_for_ui
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 from trulens_eval.ux.components import draw_agent_info
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
@@ -356,7 +356,7 @@ else:
             record_json = json.loads(record_str)
             record = Record.parse_obj(record_json)
 
-            classes: Iterable[Tuple[JSONPath, ComponentView]
+            classes: Iterable[Tuple[Lens, ComponentView]
                              ] = list(instrumented_component_views(app_json))
             classes_map = {path: view for path, view in classes}
 

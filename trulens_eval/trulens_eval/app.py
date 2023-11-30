@@ -47,7 +47,7 @@ from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSON_BASES_T
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.threading import TP
 
@@ -279,7 +279,7 @@ class CustomComponent(ComponentView):
 
 def instrumented_component_views(
     obj: object
-) -> Iterable[Tuple[JSONPath, ComponentView]]:
+) -> Iterable[Tuple[Lens, ComponentView]]:
     """
     Iterate over contents of `obj` that are annotated with the CLASS_INFO
     attribute/key. Returns triples with the accessor/selector, the Class object
@@ -381,7 +381,7 @@ class RecordingContext():
 
         with self.lock:
             record = calls_to_record(
-                self.calls, record_metadata=self.record_metadata
+                self.calls, self.record_metadata
             )
             self.calls = []
             self.records.append(record)
@@ -420,24 +420,27 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     # app.
     instrument: Instrument = Field(exclude=True)
 
-    # Sequnces of records produced by the this class used as a context manager.
-    # Using a context var so that context managers can be nested.
-    recording_contexts: contextvars.ContextVar[Sequence[RecordingContext]] \
+    # Sequnces of records produced by the this class used as a context manager
+    # are stpred om a RecordingContext. Using a context var so that context
+    # managers can be nested.
+    recording_contexts: contextvars.ContextVar[RecordingContext] \
         = Field(exclude=True)
 
     # Mapping of instrumented methods (by id(.) of owner object and the
     # function) to their path in this app:
-    instrumented_methods: Dict[int, Dict[Callable, JSONPath]] = \
+    instrumented_methods: Dict[int, Dict[Callable, Lens]] = \
         Field(exclude=True, default_factory=dict)
 
     def __init__(
         self,
         tru: Optional[Tru] = None,
-        feedbacks: Optional[Sequence[Feedback]] = None,
+        feedbacks: Optional[Iterable[Feedback]] = None,
         **kwargs
     ):
-
-        feedbacks = feedbacks or []
+        if feedbacks is not None:
+            feedbacks = list(feedbacks)
+        else:
+            feedbacks = []
 
         # for us:
         kwargs['tru'] = tru
@@ -570,7 +573,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
     # WithInstrumentCallbacks requirement
     def _on_method_instrumented(
-        self, obj: object, func: Callable, path: JSONPath
+        self, obj: object, func: Callable, path: Lens
     ):
         """
         Called by instrumentation system for every function requested to be
@@ -604,7 +607,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     # WithInstrumentCallbacks requirement
     def _get_methods_for_func(
         self, func: Callable
-    ) -> Iterable[Tuple[int, Callable, JSONPath]]:
+    ) -> Iterable[Tuple[int, Callable, Lens]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
@@ -623,7 +626,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                     yield (_id, f, path)
 
     # WithInstrumentCallbacks requirement
-    def _get_method_path(self, obj: object, func: Callable) -> JSONPath:
+    def _get_method_path(self, obj: object, func: Callable) -> Lens:
         """
         Get the path of the instrumented function `method` relative to this app.
         """
@@ -729,7 +732,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         record call list. 
         """
 
-        def build_record(calls, record_metadata):
+        def build_record(calls: Iterable[RecordAppCall], record_metadata: JSON):
+            calls = list(calls)
+
             assert len(calls) > 0, "No information recorded in call."
 
             main_in = self.main_input(func, sig, bindings)
@@ -969,15 +974,15 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         if self.db is None:
             return
 
-    def instrumented(self,) -> Iterable[Tuple[JSONPath, ComponentView]]:
+    def instrumented(self,) -> Iterable[Tuple[Lens, ComponentView]]:
         """
         Enumerate instrumented components and their categories.
         """
 
-        for q, c in instrumented_component_views(self.dict()):
+        for q, c in instrumented_component_views(self.model_dump()):
             # Add the chain indicator so the resulting paths can be specified
             # for feedback selectors.
-            q = JSONPath(
+            q = Lens(
                 path=(GetItemOrAttribute(item_or_attribute="__app__"),) + q.path
             )
             yield q, c
@@ -1011,7 +1016,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         object_strings = []
 
         for t in self.instrumented():
-            path = JSONPath(t[0].path[1:])
+            path = Lens(t[0].path[1:])
             obj = next(iter(path.get(self)))
             object_strings.append(
                 f"\t{type(obj).__name__} ({t[1].__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"

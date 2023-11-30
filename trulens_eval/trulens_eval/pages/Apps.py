@@ -7,7 +7,7 @@ from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Record
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 from trulens_eval.ux.apps import ChatRecord
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
@@ -88,7 +88,7 @@ def draw_selector(
     """
     Draws the UI elements for a selector of type `type` intended to be keyed by
     (type) and `selector_idx` and `record_idx`. The selector represents a
-    JSONPath given as str in `selector`. Includes delete and edit widgets as
+    Lens given as str in `selector`. Includes delete and edit widgets as
     well as the listing of the values attained by the selected path in the given
     ChatRecord `rec`. 
     """
@@ -139,10 +139,10 @@ def draw_selector(
     if type == "record":
         obj = Record(**rec.record_json).layout_calls_as_app()
 
-    # Try to parse the selector as a JSONPath.
+    # Try to parse the selector as a Lens.
     path = None
     try:
-        path = JSONPath.of_string(selector)
+        path = Lens.of_string(selector)
     except Exception as e:
         exp.write(f"parse error: {e}")
 
@@ -273,11 +273,11 @@ def run_record(col):
 
     # Doing this after draw_rec so that the computer output can show up before
     # we start rendering selected values.
-    current_record.record_json = record.dict()
+    current_record.record_json = record.model_dump()
 
     # Add the next ChatRecord that contains the updated app state:
     st.session_state.records.append(
-        ChatRecord(app=tru_app, app_json=tru_app.dict())
+        ChatRecord(app=tru_app, app_json=tru_app.model_dump())
     )
 
 

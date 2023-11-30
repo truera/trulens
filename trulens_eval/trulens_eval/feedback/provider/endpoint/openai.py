@@ -23,7 +23,7 @@ the involved classes will need to be adapted here. The important classes are:
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
@@ -210,8 +210,17 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         counted_something = False
         if hasattr(response, 'usage'):
+            
             counted_something = True
-            usage = response.usage.dict()
+            
+            if isinstance(response.usage, pydantic.BaseModel):
+                usage = response.usage.model_dump()
+            elif isinstance(response.usage, pydantic.v1.BaseModel):
+                usage = response.usage.dict()
+            elif isinstance(response.usage, Dict):
+                usage = response.usage
+            else:
+                usage = None
 
             # See how to construct in langchain.llms.openai.OpenAIChat._generate
             llm_res = LLMResult(
