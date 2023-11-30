@@ -14,7 +14,7 @@ from copy import copy
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple,
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set, Sized, Tuple,
     TypeVar, Union
 )
 
@@ -101,9 +101,9 @@ class SerialBytes(pydantic.BaseModel):
             raise ValueError(obj)
 
 
-# Lens, a container for selector/accessors/setters of data stored in a json
-# structure. Cannot make abstract since pydantic will try to initialize it.
-class Step(pydantic.BaseModel):  #, abc.ABC):
+# NOTE1: Lens, a container for selector/accessors/setters of data stored in a
+# json structure. Cannot make abstract since pydantic will try to initialize it.
+class Step(pydantic.BaseModel, Hashable):
     """
     A step in a selection path.
     """
@@ -137,14 +137,14 @@ class Step(pydantic.BaseModel):  #, abc.ABC):
             f"Do not know how to interpret {obj} as a `Lens` `Step`."
         )
 
-    # @abc.abstractmethod
+    # @abc.abstractmethod # NOTE1
     def get(self, obj: Any) -> Iterable[Any]:
         """
         Get the element of `obj`, indexed by `self`.
         """
         raise NotImplementedError()
 
-    # @abc.abstractmethod
+    # @abc.abstractmethod # NOTE1
     def set(self, obj: Any, val: Any) -> Any:
         """
         Set the value(s) indicated by self in `obj` to value `val`.
@@ -156,13 +156,16 @@ class Collect(Step):
     # Need something for `Step.validate` to tell that it is looking at Collect.
     collect: None = None
 
+    # Hashable requirement.
     def __hash__(self):
         return hash("collect")
 
+    # Step requirement.
     def get(self, obj: Any) -> Iterable[List[Any]]:
         # Needs to be handled in Lens class itself.
         raise NotImplementedError()
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         raise NotImplementedError()
 
@@ -171,7 +174,7 @@ class Collect(Step):
 
 
 class StepItemOrAttribute(Step):
-
+    # NOTE1
     def get_item_or_attribute(self):
         raise NotImplementedError()
 
@@ -179,12 +182,15 @@ class StepItemOrAttribute(Step):
 class GetAttribute(StepItemOrAttribute):
     attribute: str
 
+    # Hashable requirement.
     def __hash__(self):
         return hash(self.attribute)
 
+    # StepItemOrAttribute requirement
     def get_item_or_attribute(self):
         return self.attribute
 
+    # Step requirement
     def get(self, obj: Any) -> Iterable[Any]:
         if hasattr(obj, self.attribute):
             yield getattr(obj, self.attribute)
@@ -193,6 +199,7 @@ class GetAttribute(StepItemOrAttribute):
                 f"Object {obj} does not have attribute: {self.attribute}"
             )
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = Bunch()
@@ -215,9 +222,11 @@ class GetAttribute(StepItemOrAttribute):
 class GetIndex(Step):
     index: int
 
+    # Hashable requirement
     def __hash__(self):
         return hash(self.index)
 
+    # Step requirement
     def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
             if len(obj) > self.index:
@@ -227,6 +236,7 @@ class GetIndex(Step):
         else:
             raise ValueError(f"Object {obj} is not a sequence.")
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = []
@@ -250,12 +260,15 @@ class GetIndex(Step):
 class GetItem(StepItemOrAttribute):
     item: str
 
+    # Hashable requirement
     def __hash__(self):
         return hash(self.item)
 
+    # StepItemOrAttribute requirement
     def get_item_or_attribute(self):
         return self.item
 
+    # Step requirement
     def get(self, obj: Dict[str, T]) -> Iterable[T]:
         if isinstance(obj, Dict):
             if self.item in obj:
@@ -265,6 +278,7 @@ class GetItem(StepItemOrAttribute):
         else:
             raise ValueError(f"Object {obj} is not a dictionary.")
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = dict()
@@ -290,12 +304,15 @@ class GetItemOrAttribute(StepItemOrAttribute):
 
     item_or_attribute: str  # distinct from "item" for deserialization
 
+    # Hashable requirement
     def __hash__(self):
         return hash(self.item_or_attribute)
 
+    # StepItemOrAttribute requirement
     def get_item_or_attribute(self):
         return self.item_or_attribute
 
+    # Step requirement
     def get(self, obj: Dict[str, T]) -> Iterable[T]:
         # Special handling of sequences. See NOTE above.
         if isinstance(obj, Sequence):
@@ -331,6 +348,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
                     f"Object {obj} does not have item or attribute {self.item_or_attribute}."
                 )
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = dict()
@@ -355,9 +373,11 @@ class GetSlice(Step):
     stop: Optional[int]
     step: Optional[int]
 
+    # Hashable requirement
     def __hash__(self):
         return hash((self.start, self.stop, self.step))
 
+    # Step requirement
     def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
             lower, upper, step = slice(self.start, self.stop,
@@ -367,9 +387,8 @@ class GetSlice(Step):
         else:
             raise ValueError("Object is not a sequence.")
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
-        # raise NotImplementedError
-
         if obj is None:
             obj = []
 
@@ -400,14 +419,16 @@ class GetSlice(Step):
 
 
 class GetIndices(Step):
-    indices: Sequence[int]
+    indices: Tuple[int, ...]
 
+    # Hashable requirement
     def __hash__(self):
-        return hash(tuple(self.indices))
+        return hash(self.indices)
 
-    def __init__(self, indices):
+    def __init__(self, indices: Iterable[int]):
         super().__init__(indices=tuple(indices))
 
+    # Step requirement
     def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
             for i in self.indices:
@@ -415,9 +436,8 @@ class GetIndices(Step):
         else:
             raise ValueError("Object is not a sequence.")
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
-        # raise NotImplementedError
-
         if obj is None:
             obj = []
 
@@ -440,14 +460,16 @@ class GetIndices(Step):
 
 
 class GetItems(Step):
-    items: Sequence[str]
+    items: Tuple[str, ...]
 
+    # Hashable requirement
     def __hash__(self):
-        return hash(tuple(self.items))
+        return hash(self.items)
 
-    def __init__(self, items):
+    def __init__(self, items: Iterable[str]):
         super().__init__(items=tuple(items))
 
+    # Step requirement
     def get(self, obj: Dict[str, T]) -> Iterable[T]:
         if isinstance(obj, Dict):
             for i in self.items:
@@ -455,6 +477,7 @@ class GetItems(Step):
         else:
             raise ValueError("Object is not a dictionary.")
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = dict()
@@ -486,7 +509,7 @@ class ParseException(Exception):
         )
 
 
-class Lens(pydantic.BaseModel):
+class Lens(pydantic.BaseModel, Sized, Hashable):
     # Not using SerialModel as we have special handling of serialization to/from
     # strings for this class which interferes with SerialModel mechanisms.
     """
@@ -519,11 +542,11 @@ class Lens(pydantic.BaseModel):
     def dump(self):  # might be called "model_dump" in pydantic v2
         return str(self)
 
-    def __init__(self, path: Optional[Tuple[Step, ...]] = None):
+    def __init__(self, path: Optional[Iterable[Step]] = None):
         if path is None:
             path = ()
 
-        super().__init__(path=path)
+        super().__init__(path=tuple(path))
 
     @staticmethod
     def of_string(s: str) -> 'Lens':
@@ -722,9 +745,11 @@ class Lens(pydantic.BaseModel):
     def __repr__(self):
         return "Lens()" + ("".join(map(repr, self.path)))
 
+    # Hashable requirement
     def __hash__(self):
         return hash(self.path)
 
+    # Sized requirement
     def __len__(self):
         return len(self.path)
 

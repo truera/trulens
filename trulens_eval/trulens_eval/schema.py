@@ -20,13 +20,15 @@ feature information about the encoded object types in the dictionary under the
 util.py:CLASS_INFO key.
 """
 
+from __future__ import annotations
+
 from concurrent.futures import Future
 from datetime import datetime
 from enum import Enum
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, ClassVar, Dict, List, Mapping, Optional, Sequence, Type,
+    TYPE_CHECKING, Any, Callable, ClassVar, Dict, List, Mapping, Optional, Sequence, Type,
     TypeVar, Union
 )
 
@@ -172,13 +174,17 @@ class Record(SerialModel):
     Each instrumented method call produces one of these "record" instances.
     """
 
-    record_id: Any # RecordID
-    app_id: Any # AppID
+    class Config:
+        # for `Future[FeedbackResult]` = `TFeedbackResultFuture`
+        arbitrary_types_allowed = True
 
-    cost: Any # Optional[Cost] = None
-    perf: Any # Optional[Perf] = None
+    record_id: RecordID # str
+    app_id: AppID # str
 
-    ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
+    cost: Optional[Cost] = None
+    perf: Optional[Perf] = None
+
+    ts: datetime = pydantic.Field(default_factory=datetime.now)
 
     tags: Optional[str] = ""
     meta: Optional[JSON] = None
@@ -195,8 +201,10 @@ class Record(SerialModel):
     # Feedback results only filled for records that were just produced. Will not
     # be filled in when read from database. Also, will not fill in when using
     # `FeedbackMode.DEFERRED`.
-    feedback_results: Any = pydantic.Field(None, exclude=True)
-        # Optional[List[Future[FeedbackResult]]] = pydantic.Field(exclude=True)
+
+    
+    feedback_results: Optional[List[TFeedbackResultFuture]] = \
+        pydantic.Field(None, exclude=True)
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
         # Fixed record_id for obj_id_of_id below.
@@ -396,6 +404,11 @@ class FeedbackResult(SerialModel):
             )
 
         self.feedback_result_id = feedback_result_id
+
+if TYPE_CHECKING:
+    TFeedbackResultFuture = Future[FeedbackResult]
+else:
+    TFeedbackResultFuture = Future
 
 
 class FeedbackDefinition(SerialModel, WithClassInfo):
