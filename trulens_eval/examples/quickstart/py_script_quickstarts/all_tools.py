@@ -13,7 +13,7 @@
 
 # In[ ]:
 
-# ! pip install trulens==0.18.1 openai==1.3.1
+# ! pip install trulens_eval==0.18.1 openai==1.3.1
 
 # In[ ]:
 
@@ -166,7 +166,7 @@ tru.get_records_and_feedback(app_ids=[]
 
 # In[ ]:
 
-# pip install trulens-eval==0.18.1 llama_index>=0.8.69 html2text>=2020.1.16
+# pip install trulens_eval==0.18.1 llama_index>=0.8.69 html2text>=2020.1.16
 
 # ### Add API keys
 # For this quickstart, you will need Open AI and Huggingface keys. The OpenAI key is used for embeddings and GPT, and the Huggingface key is used for evaluation.
@@ -281,7 +281,7 @@ tru.get_records_and_feedback(app_ids=[]
 
 # In[ ]:
 
-# ! pip install trulens==0.18.1 chromadb==0.4.18 openai==1.3.1
+# ! pip install trulens_eval==0.18.1 chromadb==0.4.18 openai==1.3.1
 
 # In[ ]:
 
@@ -476,7 +476,7 @@ tru.run_dashboard()
 
 # In[ ]:
 
-# ! pip install trulens==0.18.1
+# ! pip install trulens_eval==0.18.1
 
 # In[ ]:
 
@@ -568,7 +568,7 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 
 # In[ ]:
 
-# ! pip install trulens==0.18.1 openai==1.3.1
+# ! pip install trulens_eval==0.18.1 openai==1.3.1
 
 # In[ ]:
 
@@ -700,7 +700,7 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 
 # In[ ]:
 
-# ! pip install trulens==0.18.1 openai==1.3.1
+# ! pip install trulens_eval==0.18.1 openai==1.3.1
 
 # In[2]:
 
