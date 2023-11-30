@@ -29,7 +29,13 @@ class Provider(SerialModel, WithClassInfo):
 
 class LLMProvider(Provider, ABC):
 
+    # NOTE(piotrm): "model_" prefix for attributes is "protected" by pydantic v2
+    # by default. Need the below adjustment but this means we don't get any
+    # warnings if we try to override some internal pydantic name.
     model_engine: str
+
+    class Config:
+        protected_namespaces = ()
 
     def __init__(self, *args, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
