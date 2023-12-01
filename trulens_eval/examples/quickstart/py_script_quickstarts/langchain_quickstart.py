@@ -2,9 +2,9 @@
 # coding: utf-8
 
 # # Langchain Quickstart
-#
+# 
 # In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.
-#
+# 
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
 
 # ## Setup
@@ -13,28 +13,28 @@
 
 # In[ ]:
 
-# ! pip install trulens_eval==0.18.1 openai==1.3.1
+
+# ! pip install trulens_eval==0.18.2 openai==1.3.1
+
 
 # In[ ]:
 
-import os
 
+import os
 os.environ["OPENAI_API_KEY"] = "..."
 os.environ["HUGGINGFACE_API_KEY"] = "..."
+
 
 # ### Import from LangChain and TruLens
 
 # In[ ]:
 
+
 from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import Feedback
-from trulens_eval import Huggingface
-from trulens_eval import Tru
-from trulens_eval import TruChain
+from trulens_eval import TruChain, Feedback, Huggingface, Tru
 from trulens_eval.schema import FeedbackResult
-
 tru = Tru()
 
 # Imports from langchain to build app. You may need to install langchain first
@@ -42,15 +42,16 @@ tru = Tru()
 # ! pip install langchain>=0.0.170
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
-from langchain.prompts import ChatPromptTemplate
+from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain.prompts import HumanMessagePromptTemplate
-from langchain.prompts import PromptTemplate
+
 
 # ### Create Simple LLM Application
-#
+# 
 # This example uses a LangChain framework and OpenAI LLM
 
 # In[ ]:
+
 
 full_prompt = HumanMessagePromptTemplate(
     prompt=PromptTemplate(
@@ -66,21 +67,27 @@ llm = OpenAI(temperature=0.9, max_tokens=128)
 
 chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
 
+
 # ### Send your first request
 
 # In[ ]:
 
+
 prompt_input = '¿que hora es?'
 
+
 # In[ ]:
+
 
 llm_response = chain(prompt_input)
 
 display(llm_response)
 
+
 # ## Initialize Feedback Function(s)
 
 # In[ ]:
+
 
 # Initialize Huggingface-based feedback function collection class:
 hugs = Huggingface()
@@ -90,33 +97,41 @@ f_lang_match = Feedback(hugs.language_match).on_input_output()
 # By default this will check language match on the main app input and main app
 # output.
 
+
 # ## Instrument chain for logging with TruLens
 
 # In[ ]:
 
-tru_recorder = TruChain(
-    chain, app_id='Chain1_ChatApplication', feedbacks=[f_lang_match]
-)
+
+tru_recorder = TruChain(chain,
+    app_id='Chain1_ChatApplication',
+    feedbacks=[f_lang_match])
+
 
 # In[ ]:
+
 
 with tru_recorder as recording:
     llm_response = chain(prompt_input)
 
 display(llm_response)
 
+
 # ## Retrieve records and feedback
 
 # In[ ]:
 
+
 # The record of the ap invocation can be retrieved from the `recording`:
 
-rec = recording.get()  # use .get if only one record
+rec = recording.get() # use .get if only one record
 # recs = recording.records # use .records if multiple
 
 display(rec)
 
+
 # In[ ]:
+
 
 # The results of the feedback functions can be rertireved from the record. These
 # are `Future` instances (see `concurrent.futures`). You can use `as_completed`
@@ -124,21 +139,24 @@ display(rec)
 
 from concurrent.futures import as_completed
 
-for feedback_future in as_completed(rec.feedback_results):
+for feedback_future in  as_completed(rec.feedback_results):
     feedback, feedback_result = feedback_future.result()
-
+    
     feedback: Feedback
     feedbac_result: FeedbackResult
 
     display(feedback.name, feedback_result.result)
 
+
 # ## Explore in a Dashboard
 
 # In[ ]:
 
-tru.run_dashboard()  # open a local streamlit app to explore
+
+tru.run_dashboard() # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed
+
 
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
@@ -148,5 +166,6 @@ tru.run_dashboard()  # open a local streamlit app to explore
 
 # In[ ]:
 
-tru.get_records_and_feedback(app_ids=[]
-                            )[0]  # pass an empty list of app_ids to get all
+
+tru.get_records_and_feedback(app_ids=[])[0] # pass an empty list of app_ids to get all
+
