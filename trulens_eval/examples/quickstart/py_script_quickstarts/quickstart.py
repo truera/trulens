@@ -19,6 +19,7 @@
 
 
 import os
+
 os.environ["OPENAI_API_KEY"] = "sk-..."
 
 
@@ -65,6 +66,7 @@ oai_client.embeddings.create(
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from openai import OpenAI
+
 oai_client = OpenAI()
 
 embedding_function = OpenAIEmbeddingFunction(api_key=os.environ.get('OPENAI_API_KEY'),
@@ -93,6 +95,7 @@ vector_store.add("uni_info", documents=university_info)
 
 from trulens_eval import Tru
 from trulens_eval.tru_custom_app import instrument
+
 tru = Tru()
 
 
@@ -149,11 +152,12 @@ rag = RAG_from_scratch()
 # In[ ]:
 
 
-from trulens_eval import Feedback, Select
+import numpy as np
+
+from trulens_eval import Feedback
+from trulens_eval import Select
 from trulens_eval.feedback import Groundedness
 from trulens_eval.feedback.provider.openai import OpenAI as fOpenAI
-
-import numpy as np
 
 # Initialize provider class
 fopenai = fOpenAI()
@@ -191,6 +195,7 @@ f_context_relevance = (
 
 
 from trulens_eval import TruCustomApp
+
 tru_rag = TruCustomApp(rag,
     app_id = 'RAG v1',
     feedbacks = [f_groundedness, f_qa_relevance, f_context_relevance])

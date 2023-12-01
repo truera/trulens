@@ -27,6 +27,7 @@
 
 
 import os
+
 os.environ["OPENAI_API_KEY"] = "..."
 
 
@@ -35,7 +36,9 @@ os.environ["OPENAI_API_KEY"] = "..."
 # In[ ]:
 
 
-from trulens_eval import Feedback, Tru, TruLlama
+from trulens_eval import Feedback
+from trulens_eval import Tru
+from trulens_eval import TruLlama
 from trulens_eval.feedback import Groundedness
 from trulens_eval.feedback.provider.openai import OpenAI
 

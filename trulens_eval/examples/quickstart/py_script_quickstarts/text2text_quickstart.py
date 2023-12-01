@@ -21,6 +21,7 @@
 
 
 import os
+
 os.environ["OPENAI_API_KEY"] = "..."
 
 
@@ -30,13 +31,16 @@ os.environ["OPENAI_API_KEY"] = "..."
 
 
 from IPython.display import JSON
-
 # Create openai client
 from openai import OpenAI
+
 client = OpenAI()
 
 # Imports main tools:
-from trulens_eval import Feedback, OpenAI as fOpenAI, Tru
+from trulens_eval import Feedback
+from trulens_eval import OpenAI as fOpenAI
+from trulens_eval import Tru
+
 tru = Tru()
 tru.reset_database()
 
@@ -86,6 +90,7 @@ f_relevance = Feedback(fopenai.relevance).on_input_output()
 
 
 from trulens_eval import TruBasicApp
+
 tru_llm_standalone_recorder = TruBasicApp(llm_standalone, app_id="Happy Bot", feedbacks=[f_relevance])
 
 

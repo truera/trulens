@@ -21,6 +21,7 @@
 
 
 import os
+
 os.environ["OPENAI_API_KEY"] = "..."
 os.environ["HUGGINGFACE_API_KEY"] = "..."
 
@@ -33,8 +34,12 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru
+from trulens_eval import Feedback
+from trulens_eval import Huggingface
+from trulens_eval import Tru
+from trulens_eval import TruChain
 from trulens_eval.schema import FeedbackResult
+
 tru = Tru()
 
 # Imports from langchain to build app. You may need to install langchain first
@@ -42,9 +47,9 @@ tru = Tru()
 # ! pip install langchain>=0.0.170
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
-from langchain.prompts import ChatPromptTemplate, PromptTemplate
+from langchain.prompts import ChatPromptTemplate
 from langchain.prompts import HumanMessagePromptTemplate
-
+from langchain.prompts import PromptTemplate
 
 # ### Create Simple LLM Application
 # 
@@ -196,6 +201,7 @@ tru.get_records_and_feedback(app_ids=[])[0] # pass an empty list of app_ids to g
 
 
 import os
+
 os.environ["OPENAI_API_KEY"] = "..."
 
 
@@ -204,7 +210,9 @@ os.environ["OPENAI_API_KEY"] = "..."
 # In[ ]:
 
 
-from trulens_eval import Feedback, Tru, TruLlama
+from trulens_eval import Feedback
+from trulens_eval import Tru
+from trulens_eval import TruLlama
 from trulens_eval.feedback import Groundedness
 from trulens_eval.feedback.provider.openai import OpenAI
 
@@ -323,6 +331,7 @@ tru.get_records_and_feedback(app_ids=[])[0] # pass an empty list of app_ids to g
 
 
 import os
+
 os.environ["OPENAI_API_KEY"] = "sk-..."
 
 
@@ -369,6 +378,7 @@ oai_client.embeddings.create(
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from openai import OpenAI
+
 oai_client = OpenAI()
 
 embedding_function = OpenAIEmbeddingFunction(api_key=os.environ.get('OPENAI_API_KEY'),
@@ -397,6 +407,7 @@ vector_store.add("uni_info", documents=university_info)
 
 from trulens_eval import Tru
 from trulens_eval.tru_custom_app import instrument
+
 tru = Tru()
 
 
@@ -453,11 +464,12 @@ rag = RAG_from_scratch()
 # In[ ]:
 
 
-from trulens_eval import Feedback, Select
+import numpy as np
+
+from trulens_eval import Feedback
+from trulens_eval import Select
 from trulens_eval.feedback import Groundedness
 from trulens_eval.feedback.provider.openai import OpenAI as fOpenAI
-
-import numpy as np
 
 # Initialize provider class
 fopenai = fOpenAI()
@@ -495,6 +507,7 @@ f_context_relevance = (
 
 
 from trulens_eval import TruCustomApp
+
 tru_rag = TruCustomApp(rag,
     app_id = 'RAG v1',
     feedbacks = [f_groundedness, f_qa_relevance, f_context_relevance])
@@ -556,6 +569,7 @@ tru.run_dashboard()
 
 
 import os
+
 os.environ["OPENAI_API_KEY"] = "..."
 
 
@@ -565,9 +579,11 @@ os.environ["OPENAI_API_KEY"] = "..."
 
 
 from openai import OpenAI
+
 oai_client = OpenAI()
 
 from trulens_eval.tru_custom_app import instrument
+
 
 class APP:
     @instrument
@@ -610,6 +626,7 @@ f_positive_sentiment = Feedback(hugs.positive_sentiment).on_output()
 
 # add trulens as a context manager for llm_app with dummy feedback
 from trulens_eval import TruCustomApp
+
 tru_app = TruCustomApp(llm_app,
                        app_id = 'LLM App v1',
                        feedbacks = [f_positive_sentiment])
@@ -673,9 +690,11 @@ os.environ["OPENAI_API_KEY"] = "..."
 
 
 from openai import OpenAI
+
 oai_client = OpenAI()
 
 from trulens_eval.tru_custom_app import instrument
+
 
 class APP:
     @instrument
@@ -697,6 +716,7 @@ llm_app = APP()
 
 # add trulens as a context manager for llm_app
 from trulens_eval import TruCustomApp
+
 tru_app = TruCustomApp(llm_app, app_id = 'LLM App v1')
 
 
@@ -725,7 +745,9 @@ record_id = records.record_id[0]
 # In[ ]:
 
 
-from ipywidgets import Button, HBox, VBox
+from ipywidgets import Button
+from ipywidgets import HBox
+from ipywidgets import VBox
 
 thumbs_up_button = Button(description='👍')
 thumbs_down_button = Button(description='👎')
@@ -787,6 +809,7 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 
 
 import os
+
 os.environ["OPENAI_API_KEY"] = "..."
 
 
@@ -804,9 +827,11 @@ tru = Tru()
 
 
 from openai import OpenAI
+
 oai_client = OpenAI()
 
 from trulens_eval.tru_custom_app import instrument
+
 
 class APP:
     @instrument
@@ -850,6 +875,7 @@ f_groundtruth = Feedback(GroundTruthAgreement(golden_set).agreement_measure, nam
 
 # add trulens as a context manager for llm_app
 from trulens_eval import TruCustomApp
+
 tru_app = TruCustomApp(llm_app, app_id = 'LLM App v1', feedbacks = [f_groundtruth])
 
 
@@ -1014,7 +1040,11 @@ tru.stop_evaluator()
 # In[ ]:
 
 
-from trulens_eval import Provider, Feedback, Select, Tru
+from trulens_eval import Feedback
+from trulens_eval import Provider
+from trulens_eval import Select
+from trulens_eval import Tru
+
 
 class StandAlone(Provider):
     def custom_feedback(self, my_text_field: str) -> float:
@@ -1075,6 +1105,7 @@ tru.add_feedbacks(feedback_results)
 
 # Aggregators will run on the same dict keys.
 import numpy as np
+
 multi_output_feedback = Feedback(lambda input_param: {'output_key1': 0.1, 'output_key2': 0.9}, name="multi-agg").on(
     input_param=Select.RecordOutput
 ).aggregate(np.mean)
