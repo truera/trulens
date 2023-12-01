@@ -11,7 +11,7 @@
 
 # In[ ]:
 
-# ! pip install trulens==0.18.1 chromadb==0.4.18 openai==1.3.1
+# ! pip install trulens_eval==0.18.1 chromadb==0.4.18 openai==1.3.1
 
 # In[ ]:
 
