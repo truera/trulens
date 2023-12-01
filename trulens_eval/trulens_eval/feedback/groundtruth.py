@@ -78,7 +78,8 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             provider (Provider, optional): Internal Usage for DB serialization.
 
         """
-        provider = OpenAI()
+        if not provider:
+            provider = OpenAI()
         if isinstance(ground_truth, List):
             ground_truth_imp = None
         elif isinstance(ground_truth, FunctionOrMethod):
