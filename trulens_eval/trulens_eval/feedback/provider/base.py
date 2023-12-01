@@ -950,7 +950,7 @@ class LLMProvider(Provider, ABC):
         return self.endpoint.run_me(
             lambda: self._create_chat_completion(
                 prompt=(prompts.AGREEMENT_SYSTEM_PROMPT %
-                        (prompt, response)) + check_response
+                        (prompt, check_response)) + response
             )
         )
 

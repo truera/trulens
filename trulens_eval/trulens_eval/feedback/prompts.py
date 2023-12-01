@@ -18,7 +18,7 @@ For every sentence in the statement, please answer with this template:
 TEMPLATE: 
 Statement Sentence: <Sentence>, 
 Supporting Evidence: <Choose the exact unchanged sentences in the source that can answer the statement, if nothing matches, say NOTHING FOUND>
-Score: <Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping.
+Score: <Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping>
 """
 
 # Keep this in line with the LLM output template as above
