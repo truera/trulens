@@ -33,7 +33,6 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
     region_name: str
 
     def __new__(cls, *args, **kwargs):
-        print("BedrockEndpoint __new__")
         return super().__new__(cls, *args, name="bedrock", **kwargs)
 
     def __init__(self, *args, region_name: str,  **kwargs):
@@ -51,15 +50,13 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
         kwargs['obj'] = self
 
         super().__init__(*args, **kwargs)
-
-        import boto3
-        # The BedrockRuntime class does not exist statically. I believe it is
-        # created from api descriptions. Here we make sure it is created before
-        # we instrument it.
-        # cls = boto3.client("bedrock-runtime").__class__
-        # self._instrument_class(cls, "invoke_model")
         
-        from botocore.client import ClientCreator
+        try:
+            from botocore.client import ClientCreator
+        except ImportError as e:
+            print("boto3 and botocore packages are required to use BedrockEndpoint.")
+            raise e
+
         # Note here was are instrumenting a method that outputs a function which
         # we also want to instrument:
         self._instrument_class_wrapper(
@@ -67,8 +64,6 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
             wrapper_method_name="_create_api_method",
             wrapped_method_name="invoke_model"
         )
-        
-
 
     def handle_wrapped_call(
         self, 
@@ -77,6 +72,7 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
         response: Any,
         callback: Optional[EndpointCallback]
     ) -> None:
+        # TODO: adapt to whatever the Bedrock invoke_model produces.
 
         model_name = ""
         if 'model' in bindings.kwargs:

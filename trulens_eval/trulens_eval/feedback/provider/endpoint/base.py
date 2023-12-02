@@ -116,7 +116,6 @@ class Endpoint(SerialModel, SingletonPerName):
     pace_thread: Thread = pydantic.Field(exclude=True)
 
     def __new__(cls, *args, name: Optional[str] = None, **kwargs):
-        print("Endpoint __new__")
         name = name or cls.__name__
         return super().__new__(
             cls, *args, name=name, **kwargs
@@ -254,6 +253,11 @@ class Endpoint(SerialModel, SingletonPerName):
 
     @classmethod
     def print_instrumented(cls):
+        """
+        Print out all of the methods that have been instrumented for cost
+        tracking. This is organized by the classes/modules containing them.
+        """
+
         for wrapped_thing, wrappers in cls.instrumented_methods.items():
             print(wrapped_thing if wrapped_thing != object else "unknown dynamically generated class")
             for original, wrapped, endpoint in wrappers:
@@ -956,7 +960,7 @@ class DummyEndpoint(Endpoint):
             **kwargs, **locals_except("self", "name", "kwargs", "__class__")
         )
 
-        print(
+        logger.info(
             f"Using DummyEndpoint with {locals_except('self', 'name', 'kwargs', '__class__')}"
         )
 
