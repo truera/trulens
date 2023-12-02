@@ -352,6 +352,8 @@ class SingletonPerName(Generic[T]):
         Create the singleton instance if it doesn't already exist and return it.
         """
 
+        print("SingletonPerName __new__")
+
         k = cls.__name__, name
 
         if k not in cls.instances:

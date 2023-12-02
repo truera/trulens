@@ -19,8 +19,8 @@ class Bedrock(LLMProvider):
     def __init__(
         self,
         *args,
-        model_id="amazon.titan-tg1-large",
-        region_name="us-east-1",
+        model_id: str = "amazon.titan-tg1-large",
+        region_name: str = "us-east-1",
         **kwargs
     ):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
@@ -38,14 +38,20 @@ class Bedrock(LLMProvider):
 
         - All other args/kwargs passed to the boto3 client constructor.
         """
-        # TODO: why was self_kwargs required here independently of kwargs?
+
+        # SingletonPerName
+        if hasattr(self, "region_name"):
+            return
+
+        # Pass kwargs to Endpoint. Self has additional ones.
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
 
         self_kwargs['model_id'] = model_id
         self_kwargs['region_name'] = region_name
+
         self_kwargs['endpoint'] = BedrockEndpoint(
-            region_name=region_name, *args, **kwargs
+             *args, region_name=region_name, **kwargs
         )
 
         super().__init__(
@@ -63,8 +69,16 @@ class Bedrock(LLMProvider):
         # NOTE(joshr): only tested with sso auth
         import json
 
-        import boto3
-        bedrock = boto3.client(service_name='bedrock-runtime')
+        try:
+            import boto3
+        except ImportError as e:
+            print("boto3 package is required to use Bedrock endpoint")
+            raise e
+        
+        bedrock = boto3.client(
+            service_name='bedrock-runtime',
+            region_name=self.region_name
+        )
 
         assert prompt is not None, "Bedrock can only operate on `prompt`, not `messages`."
 

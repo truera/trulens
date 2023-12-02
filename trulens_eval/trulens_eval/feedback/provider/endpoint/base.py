@@ -1,3 +1,6 @@
+from __future__ import annotations
+from collections import defaultdict
+
 import inspect
 import logging
 from pprint import PrettyPrinter
@@ -7,9 +10,8 @@ from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
 from types import ModuleType
-from typing import (
-    Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
-)
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
+                    Sequence, Tuple, Type, TypeVar)
 import warnings
 
 import pydantic
@@ -66,6 +68,16 @@ class Endpoint(SerialModel, SingletonPerName):
     class Config:
         arbitrary_types_allowed = True
 
+    # Dict of classe/module-methods that have been instrumented for cost
+    # tracking along with the wrapper methods and the class that instrumented
+    # them. Key is the class or module owning the instrumented method. Tuple
+    # value has:
+    # - original function,
+    # - wrapped version,
+    # - endpoint that did the wrapping.
+    instrumented_methods: ClassVar[Dict[Any, List[Tuple[Callable, Callable, Type[Endpoint]]]]] \
+        = defaultdict(list) # pydantic.Field([], exclude=True)
+
     # API/endpoint name
     name: str
 
@@ -103,9 +115,11 @@ class Endpoint(SerialModel, SingletonPerName):
     # Thread that fills the queue at the appropriate rate.
     pace_thread: Thread = pydantic.Field(exclude=True)
 
-    def __new__(cls, *args, name: str = None, **kwargs):
-        return super(SingletonPerName, cls).__new__(
-            SerialModel, *args, name=name, **kwargs
+    def __new__(cls, *args, name: Optional[str] = None, **kwargs):
+        print("Endpoint __new__")
+        name = name or cls.__name__
+        return super().__new__(
+            cls, *args, name=name, **kwargs
         )
 
     def __init__(self, *args, name: str, callback_class: Any, **kwargs):
@@ -225,6 +239,8 @@ class Endpoint(SerialModel, SingletonPerName):
             w = self.wrap_function(func)
             setattr(mod, method_name, w)
 
+            Endpoint.instrumented_methods[mod].append((func, w, type(self)))
+
     def _instrument_class(self, cls, method_name: str) -> None:
         if safe_hasattr(cls, method_name):
             logger.debug(
@@ -233,6 +249,53 @@ class Endpoint(SerialModel, SingletonPerName):
             func = getattr(cls, method_name)
             w = self.wrap_function(func)
             setattr(cls, method_name, w)
+
+            Endpoint.instrumented_methods[cls].append((func, w, type(self)))
+
+    @classmethod
+    def print_instrumented(cls):
+        for wrapped_thing, wrappers in cls.instrumented_methods.items():
+            print(wrapped_thing if wrapped_thing != object else "unknown dynamically generated class")
+            for original, wrapped, endpoint in wrappers:
+                print(
+                    f"\t`{original.__name__}` instrumented using "
+                    f"`{wrapped.__name__}` by {endpoint}"
+                )
+
+    def _instrument_class_wrapper(self, cls, wrapper_method_name: str, wrapped_method_name: str) -> None:
+        """
+        Instrument a method `wrapper_method_name` which produces a method so
+        that the produced method gets instrumented. Only instruments the
+        produced methods if they are named `wrapped_method_name`.
+        """
+        if safe_hasattr(cls, wrapper_method_name):
+            logger.debug(
+                f"Instrumenting method creator {cls.__name__}.{wrapper_method_name} "
+                f"created method {wrapped_method_name} for {self.name}"
+            )
+            func = getattr(cls, wrapper_method_name)
+
+            def metawrap(*args, **kwargs):
+
+                produced_func = func(*args, **kwargs)
+
+                if produced_func.__name__ == wrapped_method_name:
+
+                    logger.debug(
+                        f"Instrumenting {produced_func.__name__}"
+                    )
+
+                    instrumented_produced_func = self.wrap_function(produced_func)
+                    Endpoint.instrumented_methods[object].append(
+                        (produced_func, instrumented_produced_func, type(self))
+                    )
+                    return instrumented_produced_func
+                else:
+                    return produced_func
+
+            Endpoint.instrumented_methods[cls].append((func, metawrap, type(self)))
+
+            setattr(cls, wrapper_method_name, metawrap)
 
     def _instrument_module_members(self, mod: ModuleType, method_name: str):
         for m in dir(mod):
