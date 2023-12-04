@@ -427,15 +427,14 @@ class LLMProvider(Provider, ABC):
         )
         return re_0_10_rating(agreement_txt) / 10.0
 
-    def _langchain_evaluate(self, text: str, system_prompt: str) -> float:
+    def _langchain_evaluate(self, text: str, criteria: str) -> float:
         """
         Uses chat completion model. A general function that completes a template
-        to evaluate different aspects of some text. Prompt credit to Langchain
-        Eval.
+        to evaluate different aspects of some text. Prompt credit to Langchain.
 
         Parameters:
             text (str): A prompt to an agent.
-            system_prompt (str): The specific system prompt for evaluation.
+            criteria (str): The specific criteria for evaluation.
 
         Returns:
             float: A value between 0.0 and 1.0, representing the specified
@@ -445,10 +444,38 @@ class LLMProvider(Provider, ABC):
         return re_0_10_rating(
             self.endpoint.
             run_me(lambda: self._create_chat_completion(
-                prompts.LANGCHAIN_PROMPT_TEMPLATE.format(
-                    criteria=system_prompt,
-                    text=text)))
+                prompt = str.format(
+                    prompts.LANGCHAIN_PROMPT_TEMPLATE,
+                    criteria=criteria,
+                    submission=text
+                    )
+                    )
+                )
         ) / 10.0
+
+    def _langchain_evaluate_with_cot_reasons(self, text: str, criteria: str) -> Tuple[float, str]:
+        """
+        Uses chat completion model. A general function that completes a template
+        to evaluate different aspects of some text. Prompt credit to Langchain.
+
+        Parameters:
+            text (str): A prompt to an agent.
+            criteria (str): The specific criteria for evaluation.
+
+        Returns:
+            Tuple[float, str]: A tuple containing a value between 0.0 and 1.0, representing the specified
+            evaluation, and a string containing the reasons for the evaluation.
+        """
+
+        score, reasons = self.endpoint.run_me(lambda: self._extract_score_and_reasons_from_response(
+            str.format(
+                prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS,
+                criteria=criteria,
+                submission=text
+                )
+            )
+        )
+        return re_0_10_rating(str(score)) / 10.0, reasons
 
     def conciseness(self, text: str) -> float:
         """
@@ -472,7 +499,33 @@ class LLMProvider(Provider, ABC):
             float: A value between 0.0 (not concise) and 1.0 (concise).
         """
         return self._langchain_evaluate(
-            text, prompts.LANGCHAIN_CONCISENESS_PROMPT
+            text = text, criteria = prompts.LANGCHAIN_CONCISENESS_PROMPT
+        )
+
+    def conciseness_with_cot_reasons(self, text: str) -> Tuple[float, str]:
+        """
+        Uses chat completion model. A function that completes a template to
+        check the conciseness of some text. Prompt credit to Langchain Eval.
+
+        **Usage:**
+
+        ```python
+        feedback = Feedback(provider.conciseness).on_output() 
+        ```
+
+        The `on_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        Parameters:
+            text (str): A prompt to an agent.
+            response (str): The agent's response to the prompt.
+
+        Returns:
+            Tuple[float, str]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise),
+            and a string containing the reasons for the evaluation.
+        """
+        return self._langchain_evaluate_with_cot_reasons(
+            text = text, criteria = prompts.LANGCHAIN_CONCISENESS_PROMPT
         )
 
     def correctness(self, text: str) -> float:
@@ -493,13 +546,11 @@ class LLMProvider(Provider, ABC):
             response to the prompt.
 
         Returns:
-            float: A value between 0.0 (not correct) and 1.0 (correct).
-        """
-        system_prompt = prompts.LANGCHAIN_CORRECTNESS_PROMPT
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+            flo"""
+        return self._langchain_evaluate(
+            text = text, criteria = prompts.LANGCHAIN_CONCISENESS_PROMPT
         )
-
+        
     def correctness_with_cot_reasons(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -520,11 +571,8 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.0 (not correct) and 1.0 (correct).
         """
-
-        system_prompt = prompts.LANGCHAIN_CORRECTNESS_PROMPT
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate_with_cot_reasons(
+            text = text, criteria = prompts.LANGCHAIN_CONCISENESS_PROMPT
         )
 
     def coherence(self, text: str) -> float:
@@ -546,9 +594,8 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.0 (not coherent) and 1.0 (coherent).
         """
-        system_prompt = prompts.LANGCHAIN_COHERENCE_PROMPT
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate(
+            text = text, criteria = prompts.LANGCHAIN_COHERENCE_PROMPT
         )
 
     def coherence_with_cot_reasons(self, text: str) -> float:
@@ -571,10 +618,8 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.0 (not coherent) and 1.0 (coherent).
         """
-        system_prompt = prompts.LANGCHAIN_COHERENCE_PROMPT
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate_with_cot_reasons(
+            text = text, criteria = prompts.LANGCHAIN_COHERENCE_PROMPT
         )
 
     def harmfulness(self, text: str) -> float:
@@ -597,7 +642,8 @@ class LLMProvider(Provider, ABC):
             float: A value between 0.0 (not harmful) and 1.0 (harmful)".
         """
         return self._langchain_evaluate(
-            text, prompts.LANGCHAIN_HARMFULNESS_PROMPT
+            text = text,
+            criteria = prompts.LANGCHAIN_HARMFULNESS_PROMPT
         )
 
     def harmfulness_with_cot_reasons(self, text: str) -> float:
@@ -617,10 +663,9 @@ class LLMProvider(Provider, ABC):
             float: A value between 0.0 (not harmful) and 1.0 (harmful).
         """
 
-        system_prompt = prompts.LANGCHAIN_HARMFULNESS_PROMPT
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate_with_cot_reasons(
+            text = text,
+            criteria = prompts.LANGCHAIN_HARMFULNESS_PROMPT
         )
 
     def maliciousness(self, text: str) -> float:
@@ -644,7 +689,8 @@ class LLMProvider(Provider, ABC):
         """
 
         return self._langchain_evaluate(
-            text, prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
+            text = text,
+            criteria = prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
         )
 
     def maliciousness_with_cot_reasons(self, text: str) -> float:
@@ -667,11 +713,9 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.0 (not malicious) and 1.0 (malicious).
         """
-
-        system_prompt = prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate_with_cot_reasons(
+            text = text,
+            criteria = prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
         )
 
     def helpfulness(self, text: str) -> float:
@@ -693,10 +737,9 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.0 (not helpful) and 1.0 (helpful).
         """
-
-        system_prompt = prompts.LANGCHAIN_HELPFULNESS_PROMPT
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate(
+            text = text,
+            criteria = prompts.LANGCHAIN_HELPFULNESS_PROMPT
         )
 
     def helpfulness_with_cot_reasons(self, text: str) -> float:
@@ -719,11 +762,9 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.o (not helpful) and 1.0 (helpful).
         """
-
-        system_prompt = prompts.LANGCHAIN_HELPFULNESS_PROMPT
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate_with_cot_reasons(
+            text = text,
+            criteria = prompts.LANGCHAIN_HELPFULNESS_PROMPT
         )
 
     def controversiality(self, text: str) -> float:
@@ -747,9 +788,9 @@ class LLMProvider(Provider, ABC):
             float: A value between 0.0 (not controversial) and 1.0
             (controversial).
         """
-        system_prompt = prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate(
+            text = text,
+            criteria = prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
         )
 
     def controversiality_with_cot_reasons(self, text: str) -> float:
@@ -772,11 +813,9 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.0 (not controversial) and 1.0 (controversial).
         """
-
-        system_prompt = prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate(
+            text = text,
+            criteria = prompts.LANGCHAIN_HELPFULNESS_PROMPT
         )
 
     def misogyny(self, text: str) -> float:
@@ -798,10 +837,9 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).
         """
-
-        system_prompt = prompts.LANGCHAIN_MISOGYNY_PROMPT
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate(
+            text = text,
+            criteria = prompts.LANGCHAIN_MISOGYNY_PROMPT
         )
 
     def misogyny_with_cot_reasons(self, text: str) -> float:
@@ -824,10 +862,9 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).
         """
-        system_prompt = prompts.LANGCHAIN_MISOGYNY_PROMPT
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate_with_cot_reasons(
+            text = text,
+            criteria = prompts.LANGCHAIN_MISOGYNY_PROMPT
         )
 
     def criminality(self, text: str) -> float:
@@ -850,9 +887,9 @@ class LLMProvider(Provider, ABC):
             float: A value between 0.0 (not criminal) and 1.0 (criminal).
 
         """
-        system_prompt = prompts.LANGCHAIN_CRIMINALITY_PROMPT
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate(
+            text = text,
+            criteria = prompts.LANGCHAIN_CRIMINALITY_PROMPT
         )
 
     def criminality_with_cot_reasons(self, text: str) -> float:
@@ -875,11 +912,9 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.0 (not criminal) and 1.0 (criminal).
         """
-
-        system_prompt = prompts.LANGCHAIN_CRIMINALITY_PROMPT
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate_with_cot_reasons(
+            text = text,
+            criteria = prompts.LANGCHAIN_CRIMINALITY_PROMPT
         )
 
     def insensitivity(self, text: str) -> float:
@@ -901,9 +936,9 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.0 (not insensitive) and 1.0 (insensitive).
         """
-        system_prompt = prompts.LANGCHAIN_INSENSITIVITY_PROMPT
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate(
+            text = text,
+            criteria = prompts.LANGCHAIN_INSENSITIVITY_PROMPT
         )
 
     def insensitivity_with_cot_reasons(self, text: str) -> float:
@@ -926,11 +961,9 @@ class LLMProvider(Provider, ABC):
         Returns:
             float: A value between 0.0 (not insensitive) and 1.0 (insensitive).
         """
-
-        system_prompt = prompts.LANGCHAIN_INSENSITIVITY_PROMPT
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
+        return self._langchain_evaluate_with_cot_reasons(
+            text = text,
+            criteria = prompts.LANGCHAIN_INSENSITIVITY_PROMPT
         )
 
     def _get_answer_agreement(
