@@ -26,7 +26,7 @@ class OpenAI(LLMProvider):
 
         **Usage:**
         ```python
-        from trulens_eval.feedback.provider.openxai import OpenAI
+        from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
         ```
 
