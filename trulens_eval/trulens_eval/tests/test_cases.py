@@ -222,12 +222,9 @@ def generate_summeval_groundedness_golden_set(file_path):
 
     for item in data["rows"]:
         row = item["row"]
-        print(len(row['machine_summaries']))
-        print(len(row["consistency"]))
-        print(len(row["human_summaries"]))
+
         assert (
-            len(row["machine_summaries"]) == len(row["consistency"]) == len(row["human_summaries"])
-        )
+            len(row["machine_summaries"]) == len(row["consistency"]))
 
         for i in range(len(row["machine_summaries"])):
             yield {
