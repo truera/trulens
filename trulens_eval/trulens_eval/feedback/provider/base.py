@@ -427,7 +427,6 @@ class LLMProvider(Provider, ABC):
         )
         return re_0_10_rating(agreement_txt) / 10.0
 
-    # TODO: figure out where text is used.
     def _langchain_evaluate(self, text: str, system_prompt: str) -> float:
         """
         Uses chat completion model. A general function that completes a template
@@ -445,7 +444,10 @@ class LLMProvider(Provider, ABC):
 
         return re_0_10_rating(
             self.endpoint.
-            run_me(lambda: self._create_chat_completion(prompt=system_prompt))
+            run_me(lambda: self._create_chat_completion(
+                prompts.LANGCHAIN_PROMPT_TEMPLATE.format(
+                    criteria=system_prompt,
+                    text=text)))
         ) / 10.0
 
     def conciseness(self, text: str) -> float:
