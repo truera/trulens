@@ -165,6 +165,14 @@ else:
     with tab1:
         gridOptions = {"alwaysShowHorizontalScroll": True}
         evaluations_df = app_df
+
+        # By default the cells in the df are unicode-escaped, so we have to reverse it.
+        columns_to_decode = ['input', 'output']
+        evaluations_df[columns_to_decode] = evaluations_df[
+            columns_to_decode].applymap(
+                lambda x: x.encode('utf-8').decode('unicode-escape')
+            )
+
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
         gb.configure_column("type", header_name="App Type")
