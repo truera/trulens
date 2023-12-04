@@ -333,10 +333,12 @@ class Endpoint(SerialModel, SingletonPerName):
             try:
                 e = OpenAIEndpoint()
                 endpoints.append(e)
-            except ApiKeyError:
+                
+            except Exception as e:
                 logger.debug(
-                    "OpenAI API keys are not set. "
-                    "Will not track usage."
+                    "Could not initiallize OpenAIEndpoint. "
+                    "Possibly missing OpenAI API key. "
+                    f"Will not track usage. {e}"
                 )
 
         if with_hugs:
@@ -347,10 +349,12 @@ class Endpoint(SerialModel, SingletonPerName):
             try:
                 e = HuggingfaceEndpoint()
                 endpoints.append(e)
-            except ApiKeyError:
+
+            except Exception as e:
                 logger.debug(
-                    "Huggingface API keys are not set. "
-                    "Will not track usage."
+                    "Could not initiallize HuggingfaceEndpoint. "
+                    "Possibly missing Huggingface API key. "
+                    f"Will not track usage. {e}"
                 )
 
         if with_litellm:
@@ -361,10 +365,12 @@ class Endpoint(SerialModel, SingletonPerName):
             try:
                 e = LiteLLMEndpoint()
                 endpoints.append(e)
-            except ApiKeyError:
+
+            except Exception as e:
                 logger.debug(
-                    "Some API key(s) used by LiteLLM are not set. "
-                    "Will not track usage."
+                    "Could not initialize LiteLLMEndpoint. "
+                    "Possibly missing Some API key(s). "
+                    f"Will not track usage. {e}"
                 )
 
         return Endpoint._track_costs(thunk, with_endpoints=endpoints)
