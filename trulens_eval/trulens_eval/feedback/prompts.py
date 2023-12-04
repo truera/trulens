@@ -18,7 +18,7 @@ For every sentence in the statement, please answer with this template:
 TEMPLATE: 
 Statement Sentence: <Sentence>, 
 Supporting Evidence: <Choose the exact unchanged sentences in the source that can answer the statement, if nothing matches, say NOTHING FOUND>
-Score: <Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping.
+Score: <Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping>
 """
 
 # Keep this in line with the LLM output template as above
@@ -80,7 +80,7 @@ LANGCHAIN_CORRECTNESS_PROMPT = v2.Correctness.prompt.template
 LANGCHAIN_COHERENCE_PROMPT = v2.Coherence.prompt.template
 LANGCHAIN_HARMFULNESS_PROMPT = v2.Harmfulness.prompt.template
 LANGCHAIN_MALICIOUSNESS_PROMPT = v2.Maliciousness.prompt.template
-LANGCHAIN_HELPFULNESS_PROMPT = v2.Harmfulness.prompt.template
+LANGCHAIN_HELPFULNESS_PROMPT = v2.Helpfulness.prompt.template
 LANGCHAIN_CONTROVERSIALITY_PROMPT = v2.Controversiality.prompt.template
 LANGCHAIN_MISOGYNY_PROMPT = v2.Misogyny.prompt.template
 LANGCHAIN_CRIMINALITY_PROMPT = v2.Criminality.prompt.template

@@ -266,10 +266,12 @@ class Endpoint(SerialModel, SingletonPerName):
             try:
                 e = OpenAIEndpoint()
                 endpoints.append(e)
-            except ApiKeyError:
+                
+            except Exception as e:
                 logger.debug(
-                    "OpenAI API keys are not set. "
-                    "Will not track usage."
+                    "Could not initiallize OpenAIEndpoint. "
+                    "Possibly missing OpenAI API key. "
+                    f"Will not track usage. {e}"
                 )
 
         if with_hugs:
@@ -280,10 +282,12 @@ class Endpoint(SerialModel, SingletonPerName):
             try:
                 e = HuggingfaceEndpoint()
                 endpoints.append(e)
-            except ApiKeyError:
+
+            except Exception as e:
                 logger.debug(
-                    "Huggingface API keys are not set. "
-                    "Will not track usage."
+                    "Could not initiallize HuggingfaceEndpoint. "
+                    "Possibly missing Huggingface API key. "
+                    f"Will not track usage. {e}"
                 )
 
         if with_litellm:
@@ -294,10 +298,12 @@ class Endpoint(SerialModel, SingletonPerName):
             try:
                 e = LiteLLMEndpoint()
                 endpoints.append(e)
-            except ApiKeyError:
+
+            except Exception as e:
                 logger.debug(
-                    "Some API key(s) used by LiteLLM are not set. "
-                    "Will not track usage."
+                    "Could not initialize LiteLLMEndpoint. "
+                    "Possibly missing Some API key(s). "
+                    f"Will not track usage. {e}"
                 )
 
         return Endpoint._track_costs(thunk, with_endpoints=endpoints)
@@ -368,6 +374,7 @@ class Endpoint(SerialModel, SingletonPerName):
         with_hugs: bool = True,
         with_litellm: bool = True,
     ) -> Tuple[T, Cost]:
+        # TODO: dedup async/sync
         """
         Track costs of all of the apis we can currently track, over the
         execution of thunk.
@@ -395,6 +402,7 @@ class Endpoint(SerialModel, SingletonPerName):
         with_hugs: bool = True,
         with_litellm: bool = True,
     ) -> Tuple[T, Cost]:
+        # TODO: dedup async/sync
         """
         Track costs of all of the apis we can currently track, over the
         execution of thunk.
@@ -800,12 +808,23 @@ class Endpoint(SerialModel, SingletonPerName):
 
         # Determine which of the wrapper variants to return and to annotate.
 
-        if inspect.isasyncgenfunction(func):
+        # NOTE(piotrm): inspect checkers for async functions do not work on
+        # openai clients, perhaps because they use @typing.overload. Because of
+        # that, we detect them by checking __wrapped__ attribute instead. Note
+        # that the inspect docs suggest they should be able to handle wrapped
+        # functions but perhaps they handle different type of wrapping?
+        # See https://docs.python.org/3/library/inspect.html#inspect.iscoroutinefunction .
+
+        effective_func = func
+        if safe_hasattr(func, "__wrapped__"):
+            effective_func = safe_getattr(func, "__wrapped__")
+
+        if inspect.isasyncgenfunction(effective_func):
             # This is not always accurate hence.
             w = agenwrapper
             w2 = _agenwrapper_completion
 
-        elif inspect.iscoroutinefunction(func):
+        elif inspect.iscoroutinefunction(effective_func):
             # An async coroutine can actually be an async generator so we
             # annotate both the async and async generator wrappers.
             w = awrapper

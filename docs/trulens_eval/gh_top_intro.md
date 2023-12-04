@@ -20,7 +20,7 @@ The best way to support TruLens is to give us a ⭐ on [GitHub](https://www.gith
 
 Fine-grained, stack-agnostic instrumentation and comprehensive evaluations help you to identify failure modes & systematically iterate to improve your application.
 
-Read more about the core concepts behind TruLens including [Feedback Functions](./core_concepts_feedback_functions.md), [The RAG Triad](./core_concepts_rag_triad.md), and [Honest, Harmless and Helpful Evals](./core_concepts_honest_harmless_helpful_evals.md).
+Read more about the core concepts behind TruLens including [Feedback Functions](./trulens_eval/core_concepts_feedback_functions.md), [The RAG Triad](./core_concepts_rag_triad.md), and [Honest, Harmless and Helpful Evals](./core_concepts_honest_harmless_helpful_evals.md).
 
 ## TruLens in the development workflow
 

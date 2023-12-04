@@ -781,8 +781,15 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 )
 
         if not safe_hasattr(func, Instrument.INSTRUMENT):
+            if Instrument.INSTRUMENT in dir(func):
+                # TODO: Need to figure out the __call__ accesses by class
+                # name/object name with relation to this check for
+                # instrumentation because we keep hitting spurious warnings
+                # here. This is a temporary workaround.
+                return
+
             logger.warning(
-                f"Function `{func.__name__}` has not been instrumented. "
+                f"Function {func} has not been instrumented. "
                 f"This may be ok if it will call a function that has been instrumented exactly once. "
                 f"Otherwise unexpected results may follow. "
                 f"You can use `AddInstruments.method` of `trulens_eval.instruments` before you use the `{self.__class__.__name__}` wrapper "
