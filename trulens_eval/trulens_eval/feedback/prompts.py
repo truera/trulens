@@ -86,6 +86,16 @@ LANGCHAIN_MISOGYNY_PROMPT = v2.Misogyny.prompt.template
 LANGCHAIN_CRIMINALITY_PROMPT = v2.Criminality.prompt.template
 LANGCHAIN_INSENSITIVITY_PROMPT = v2.Insensitivity.prompt.template
 
+LANGCHAIN_PROMPT_TEMPLATE = """
+CRITERIA:
+
+{criteria}
+
+SUBMISSION:
+
+{submission}
+"""
+
 STEREOTYPES_PROMPT = v2.Stereotypes.prompt.template
 
 SUMMARIZATION_PROMPT = """
