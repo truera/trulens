@@ -6,27 +6,60 @@ import builtins
 import inspect
 import logging
 from pprint import PrettyPrinter
+from typing import Iterable, Sequence, Union
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
+def format_missing_imports(
+    packages: Union[str, Sequence[str]],
+    purpose: str,
+    throw: Union[bool, Exception] = False
+) -> str:
+    
+    """
+    Format a message indicating the given `packages` are required for `purpose`.
+    Throws an `ImportError` with the formatted message if `throw` flag is set.
+    If `throw` is already an exception, throws that instead after printing the
+    message.
+    """
+
+    if isinstance(packages, str):
+        packages = [packages]
+
+    msg = (
+        f"{','.join(packages)} is/are required for {purpose}. "
+        f"You should be able to install it/them with\n"
+        f"\tpip install {' '.join(packages)}"
+    )
+
+    if isinstance(throw, Exception):
+        print(msg)
+        raise throw
+    
+    elif isinstance(throw, bool):
+        if throw:
+            raise ImportError(msg)
+    
+    return msg
+
+
 llama_version = "0.8.69"
-REQUIREMENT_LLAMA = (
-    f"llama_index {llama_version} or above is required for instrumenting llama_index apps. "
-    f"Please install it before use: `pip install 'llama_index>={llama_version}'`."
+REQUIREMENT_LLAMA = format_missing_imports(
+    f"llama_index>={llama_version}",
+    purpose="instrumenting llama_index apps"
 )
 
 langchain_version = "0.0.335"
-REQUIREMENT_LANGCHAIN = (
-    f"langchain {langchain_version} or above is required for instrumenting langchain apps. "
-    f"Please install it before use: `pip install 'langchain>={langchain_version}'`."
+REQUIREMENT_LANGCHAIN = format_missing_imports(
+    f"langchain>={langchain_version}",
+    purpose="instrumenting langchain apps"
 )
 
-REQUIREMENT_SKLEARN = (
-    f"scikit-learn is required for using embedding vector distances. "
-    f"Please install it before use: `pip install scikit-learn`."
+REQUIREMENT_SKLEARN = format_missing_imports(
+    "scikit-learn",
+    purpose="using embedding vector distances"
 )
-
 
 class Dummy(object):
     """
