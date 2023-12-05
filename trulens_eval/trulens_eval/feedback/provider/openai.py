@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAI(LLMProvider):
-    """Out of the box feedback functions calling OpenAI APIs.
     """
-    # model_engine: str # LLMProvider
+    Out of the box feedback functions calling OpenAI APIs.
+    """
 
     endpoint: Endpoint
 
