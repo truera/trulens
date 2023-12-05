@@ -13,14 +13,16 @@ logger = logging.getLogger(__name__)
 
 
 class Bedrock(LLMProvider):
+    # LLMProvider requirement which we do not use:
+    model_engine: str = "Bedrock"
+
     model_id: str
-    region_name: str
+    endpoint: BedrockEndpoint
 
     def __init__(
         self,
         *args,
         model_id: str = "amazon.titan-tg1-large",
-        region_name: str = "us-east-1",
         **kwargs
     ):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
@@ -33,14 +35,13 @@ class Bedrock(LLMProvider):
 
         - model_id (str, optional): The specific model id. Defaults to
           "amazon.titan-tg1-large".
-        - region_name (str, optional): The specific AWS region name. Defaults to
-          "us-east-1"
 
-        - All other args/kwargs passed to the boto3 client constructor.
+        - All other args/kwargs passed to BedrockEndpoint and subsequently
+          to boto3 client constructor.
         """
 
-        # SingletonPerName
-        if hasattr(self, "region_name"):
+        # SingletonPerName: return singleton unless client provided
+        if hasattr(self, "model_id") and "client" not in kwargs:
             return
 
         # Pass kwargs to Endpoint. Self has additional ones.
@@ -48,10 +49,9 @@ class Bedrock(LLMProvider):
         self_kwargs.update(**kwargs)
 
         self_kwargs['model_id'] = model_id
-        self_kwargs['region_name'] = region_name
 
         self_kwargs['endpoint'] = BedrockEndpoint(
-             *args, region_name=region_name, **kwargs
+             *args, **kwargs
         )
 
         super().__init__(
@@ -65,30 +65,20 @@ class Bedrock(LLMProvider):
         messages: Optional[Sequence[Dict]] = None,
         **kwargs
     ) -> str:
+        assert self.endpoint is not None
+        assert prompt is not None, "Bedrock can only operate on `prompt`, not `messages`."
 
         # NOTE(joshr): only tested with sso auth
         import json
-
-        try:
-            import boto3
-        except ImportError as e:
-            print("boto3 package is required to use Bedrock endpoint")
-            raise e
-        
-        bedrock = boto3.client(
-            service_name='bedrock-runtime',
-            region_name=self.region_name
-        )
-
-        assert prompt is not None, "Bedrock can only operate on `prompt`, not `messages`."
 
         body = json.dumps({"inputText": prompt})
 
         modelId = self.model_id
 
-        response = bedrock.invoke_model(body=body, modelId=modelId)
+        response = self.endpoint.client.invoke_model(body=body, modelId=modelId)
 
-        response_body = json.loads(response.get('body').read()
-                                  ).get('results')[0]["outputText"]
+        response_body = json.loads(
+            response.get('body').read()).get('results')[0]["outputText"]
         # text
+
         return response_body
