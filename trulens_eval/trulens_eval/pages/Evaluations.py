@@ -5,6 +5,7 @@ from typing import Iterable, List, Tuple
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
+import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from st_aggrid import AgGrid
@@ -12,7 +13,7 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
-from ux.add_logo import add_logo
+from ux.add_logo import add_logo_and_style_overrides
 from ux.styles import CATEGORY
 
 from trulens_eval import Tru
@@ -45,7 +46,7 @@ st.title("Evaluations")
 
 st.runtime.legacy_caching.clear_cache()
 
-add_logo()
+add_logo_and_style_overrides()
 
 tru = Tru()
 lms = tru.db
@@ -165,6 +166,17 @@ else:
     with tab1:
         gridOptions = {"alwaysShowHorizontalScroll": True}
         evaluations_df = app_df
+
+        # By default the cells in the df are unicode-escaped, so we have to reverse it.
+        input_array = evaluations_df['input'].to_numpy()
+        output_array = evaluations_df['output'].to_numpy()
+
+        decoded_input = np.vectorize(lambda x: x.encode('utf-8').decode('unicode-escape'))(input_array)
+        decoded_output = np.vectorize(lambda x: x.encode('utf-8').decode('unicode-escape'))(output_array)
+
+        evaluations_df['input'] = decoded_input
+        evaluations_df['output'] = decoded_output
+
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
         gb.configure_column("type", header_name="App Type")

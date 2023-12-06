@@ -1,3 +1,7 @@
+from __future__ import annotations
+from collections import defaultdict
+from dataclasses import dataclass
+
 import inspect
 import logging
 from pprint import PrettyPrinter
@@ -7,9 +11,8 @@ from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
 from types import ModuleType
-from typing import (
-    Any, Awaitable, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar
-)
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
+                    Sequence, Tuple, Type, TypeVar, Union)
 import warnings
 
 import pydantic
@@ -66,6 +69,50 @@ class Endpoint(SerialModel, SingletonPerName):
     class Config:
         arbitrary_types_allowed = True
 
+    @dataclass
+    class EndpointSetup():
+        """
+        Class for storing supported endpoint information. See `track_all_costs`
+        for usage.
+        """
+        arg_flag: str
+        module_name: str
+        class_name: str
+
+    ENDPOINT_SETUPS: ClassVar[List[EndpointSetup]] = [
+        EndpointSetup(
+            arg_flag="with_openai",
+            module_name="trulens_eval.feedback.provider.endpoint.openai",
+            class_name="OpenAIEndpoint"
+        ),
+        EndpointSetup(
+            arg_flag="with_hugs",
+            module_name="trulens_eval.feedback.provider.endpoint.hugs",
+            class_name="HuggingfaceEndpoint"
+        ),
+        EndpointSetup(
+            arg_flag="with_litellm",
+            module_name="trulens_eval.feedback.provider.endpoint.litellm",
+            class_name="LiteLLMEndpoint"
+        ),
+        EndpointSetup(
+            arg_flag="with_bedrock",
+            module_name="trulens_eval.feedback.provider.endpoint.bedrock",
+            class_name="BedrockEndpoint"
+        )
+    ]
+        
+
+    # Dict of classe/module-methods that have been instrumented for cost
+    # tracking along with the wrapper methods and the class that instrumented
+    # them. Key is the class or module owning the instrumented method. Tuple
+    # value has:
+    # - original function,
+    # - wrapped version,
+    # - endpoint that did the wrapping.
+    instrumented_methods: ClassVar[Dict[Any, List[Tuple[Callable, Callable, Type[Endpoint]]]]] \
+        = defaultdict(list) # pydantic.Field([], exclude=True)
+
     # API/endpoint name
     name: str
 
@@ -103,9 +150,10 @@ class Endpoint(SerialModel, SingletonPerName):
     # Thread that fills the queue at the appropriate rate.
     pace_thread: Thread = pydantic.Field(exclude=True)
 
-    def __new__(cls, *args, name: str = None, **kwargs):
-        return super(SingletonPerName, cls).__new__(
-            SerialModel, *args, name=name, **kwargs
+    def __new__(cls, *args, name: Optional[str] = None, **kwargs):
+        name = name or cls.__name__
+        return super().__new__(
+            cls, *args, name=name, **kwargs
         )
 
     def __init__(self, *args, name: str, callback_class: Any, **kwargs):
@@ -223,7 +271,12 @@ class Endpoint(SerialModel, SingletonPerName):
             )
             func = getattr(mod, method_name)
             w = self.wrap_function(func)
+
+            # setattr(w, INSTRUMENT, func) # mark the new method indicating it is our wrapper
+
             setattr(mod, method_name, w)
+
+            Endpoint.instrumented_methods[mod].append((func, w, type(self)))
 
     def _instrument_class(self, cls, method_name: str) -> None:
         if safe_hasattr(cls, method_name):
@@ -232,7 +285,62 @@ class Endpoint(SerialModel, SingletonPerName):
             )
             func = getattr(cls, method_name)
             w = self.wrap_function(func)
+
+            # setattr(w, INSTRUMENT, func) # mark the new method indicating it is our wrapper
+
             setattr(cls, method_name, w)
+
+            Endpoint.instrumented_methods[cls].append((func, w, type(self)))
+
+    @classmethod
+    def print_instrumented(cls):
+        """
+        Print out all of the methods that have been instrumented for cost
+        tracking. This is organized by the classes/modules containing them.
+        """
+
+        for wrapped_thing, wrappers in cls.instrumented_methods.items():
+            print(wrapped_thing if wrapped_thing != object else "unknown dynamically generated class(es)")
+            for original, wrapped, endpoint in wrappers:
+                print(
+                    f"\t`{original.__name__}` instrumented "
+                    f"by {endpoint} at 0x{id(endpoint):x}"
+                )
+
+    def _instrument_class_wrapper(self, cls, wrapper_method_name: str, wrapped_method_filter: Callable[[Callable], bool]) -> None:
+        """
+        Instrument a method `wrapper_method_name` which produces a method so
+        that the produced method gets instrumented. Only instruments the
+        produced methods if they are matched by named `wrapped_method_filter`.
+        """
+        if safe_hasattr(cls, wrapper_method_name):
+            logger.debug(
+                f"Instrumenting method creator {cls.__name__}.{wrapper_method_name} "
+                f"for {self.name}"
+            )
+            func = getattr(cls, wrapper_method_name)
+
+            def metawrap(*args, **kwargs):
+
+                produced_func = func(*args, **kwargs)
+
+                if wrapped_method_filter(produced_func):
+
+                    logger.debug(
+                        f"Instrumenting {produced_func.__name__}"
+                    )
+
+                    instrumented_produced_func = self.wrap_function(produced_func)
+                    Endpoint.instrumented_methods[object].append(
+                        (produced_func, instrumented_produced_func, type(self))
+                    )
+                    return instrumented_produced_func
+                else:
+                    return produced_func
+
+            Endpoint.instrumented_methods[cls].append((func, metawrap, type(self)))
+
+            setattr(cls, wrapper_method_name, metawrap)
 
     def _instrument_module_members(self, mod: ModuleType, method_name: str):
         for m in dir(mod):
@@ -249,7 +357,8 @@ class Endpoint(SerialModel, SingletonPerName):
         thunk: Thunk[T],
         with_openai: bool = True,
         with_hugs: bool = True,
-        with_litellm: bool = True
+        with_litellm: bool = True,
+        with_bedrock: bool = True,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
         Track costs of all of the apis we can currently track, over the
@@ -258,47 +367,23 @@ class Endpoint(SerialModel, SingletonPerName):
 
         endpoints = []
 
-        if with_openai:
-            # TODO: DEPS
-            from trulens_eval.feedback.provider.endpoint.openai import \
-                OpenAIEndpoint
+        # Create each of the supported endpoints. This will also instrument
+        # methods if not already. Note that due to SingletonPerName mechanism,
+        # the produced endpoints might be ones that were constructed earlier.
+        for endpoint in Endpoint.ENDPOINT_SETUPS:
+            if locals().get(endpoint.arg_flag):
+                mod = __import__(endpoint.module_name, fromlist=[endpoint.class_name])
+                cls = safe_getattr(mod, endpoint.class_name)
+                try:
+                    e = cls()
+                    endpoints.append(e)
 
-            try:
-                e = OpenAIEndpoint()
-                endpoints.append(e)
-            except ApiKeyError:
-                logger.debug(
-                    "OpenAI API keys are not set. "
-                    "Will not track usage."
-                )
-
-        if with_hugs:
-            # TODO: DEPS
-            from trulens_eval.feedback.provider.endpoint.hugs import \
-                HuggingfaceEndpoint
-
-            try:
-                e = HuggingfaceEndpoint()
-                endpoints.append(e)
-            except ApiKeyError:
-                logger.debug(
-                    "Huggingface API keys are not set. "
-                    "Will not track usage."
-                )
-
-        if with_litellm:
-            # TODO: DEPS
-            from trulens_eval.feedback.provider.endpoint.litellm import \
-                LiteLLMEndpoint
-
-            try:
-                e = LiteLLMEndpoint()
-                endpoints.append(e)
-            except ApiKeyError:
-                logger.debug(
-                    "Some API key(s) used by LiteLLM are not set. "
-                    "Will not track usage."
-                )
+                except Exception as e:
+                    logger.debug(
+                        f"Could not initiallize endpoint {cls.__name__}. "
+                        "Possibly missing key(s). "
+                        f"trulens_eval will not track costs/usage of this endpoint. {e}"
+                    )
 
         return Endpoint._track_costs(thunk, with_endpoints=endpoints)
 
@@ -309,6 +394,7 @@ class Endpoint(SerialModel, SingletonPerName):
         with_openai: bool = True,
         with_hugs: bool = True,
         with_litellm: bool = True,
+        with_bedrock: bool = True,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
         Track costs of all of the apis we can currently track, over the
@@ -317,47 +403,21 @@ class Endpoint(SerialModel, SingletonPerName):
 
         endpoints = []
 
-        if with_openai:
-            # TODO: DEPS
-            from trulens_eval.feedback.provider.endpoint.openai import \
-                OpenAIEndpoint
+        for endpoint in Endpoint.ENDPOINT_SETUPS:
+            if locals().get(endpoint.arg_flag):
+                print(f"tracking {endpoint.class_name}")
+                mod = __import__(endpoint.module_name, fromlist=[endpoint.class_name])
+                cls = safe_getattr(mod, endpoint.class_name)
+                try:
+                    e = cls()
+                    endpoints.append(e)
 
-            try:
-                e = OpenAIEndpoint()
-                endpoints.append(e)
-            except ApiKeyError:
-                logger.debug(
-                    "OpenAI API keys are not set. "
-                    "Will not track usage."
-                )
-
-        if with_hugs:
-            # TODO: DEPS
-            from trulens_eval.feedback.provider.endpoint.hugs import \
-                HuggingfaceEndpoint
-
-            try:
-                e = HuggingfaceEndpoint()
-                endpoints.append(e)
-            except ApiKeyError:
-                logger.debug(
-                    "Huggingface API keys are not set. "
-                    "Will not track usage."
-                )
-
-        if with_litellm:
-            # TODO: DEPS
-            from trulens_eval.feedback.provider.endpoint.litellm import \
-                LiteLLMEndpoint
-
-            try:
-                e = LiteLLMEndpoint()
-                endpoints.append(e)
-            except ApiKeyError:
-                logger.debug(
-                    "Some API key(s) used by LiteLLM are not set. "
-                    "Will not track usage."
-                )
+                except Exception as e:
+                    logger.debug(
+                        "Could not initiallize endpoint {cls.__name__}. "
+                        "Possibly missing key(s). "
+                        f"trulens_eval will not track costs/usage of this endpoint. {e}"
+                    )
 
         return await Endpoint._atrack_costs(thunk, with_endpoints=endpoints)
 
@@ -367,7 +427,9 @@ class Endpoint(SerialModel, SingletonPerName):
         with_openai: bool = True,
         with_hugs: bool = True,
         with_litellm: bool = True,
+        with_bedrock: bool = True
     ) -> Tuple[T, Cost]:
+        # TODO: dedup async/sync
         """
         Track costs of all of the apis we can currently track, over the
         execution of thunk.
@@ -377,7 +439,8 @@ class Endpoint(SerialModel, SingletonPerName):
             thunk,
             with_openai=with_openai,
             with_hugs=with_hugs,
-            with_litellm=with_litellm
+            with_litellm=with_litellm,
+            with_bedrock=with_bedrock
         )
 
         if len(cbs) == 0:
@@ -394,7 +457,9 @@ class Endpoint(SerialModel, SingletonPerName):
         with_openai: bool = True,
         with_hugs: bool = True,
         with_litellm: bool = True,
+        with_bedrock: bool = True,
     ) -> Tuple[T, Cost]:
+        # TODO: dedup async/sync
         """
         Track costs of all of the apis we can currently track, over the
         execution of thunk.
@@ -404,7 +469,8 @@ class Endpoint(SerialModel, SingletonPerName):
             thunk,
             with_openai=with_openai,
             with_hugs=with_hugs,
-            with_litellm=with_litellm
+            with_litellm=with_litellm,
+            with_bedrock=with_bedrock,
         )
 
         if len(cbs) == 0:
@@ -619,7 +685,7 @@ class Endpoint(SerialModel, SingletonPerName):
         # If INSTRUMENT is not set, create a wrapper method and return it.
 
         # TODO: DEDUP
-        async def _agenwrapper_completion(
+        async def _agenwrapper_part_two(
             responses: AsyncGeneratorType, *args, **kwargs
         ):
 
@@ -629,7 +695,7 @@ class Endpoint(SerialModel, SingletonPerName):
             # Note that we stored this in the INSTRUMENT attribute of the
             # wrapper method.
             registered_callback_classes = getattr(
-                _agenwrapper_completion, INSTRUMENT
+                _agenwrapper_part_two, INSTRUMENT
             )
 
             # Look up the endpoints that are expecting to be notified and the
@@ -682,7 +748,7 @@ class Endpoint(SerialModel, SingletonPerName):
             # Get the result of the wrapped function:
             responses: AsyncGeneratorType = await func(*args, **kwargs)
 
-            return _agenwrapper_completion(responses, *args, **kwargs)
+            return _agenwrapper_part_two(responses, *args, **kwargs)
 
         # TODO: DEDUP async/sync code duplication
         async def awrapper(*args, **kwargs):
@@ -697,7 +763,7 @@ class Endpoint(SerialModel, SingletonPerName):
             # tell statically (via inspect) that a function will produce a
             # generator.
             if inspect.isasyncgen(response_or_generator):
-                return _agenwrapper_completion(
+                return _agenwrapper_part_two(
                     response_or_generator, *args, **kwargs
                 )
 
@@ -800,16 +866,27 @@ class Endpoint(SerialModel, SingletonPerName):
 
         # Determine which of the wrapper variants to return and to annotate.
 
-        if inspect.isasyncgenfunction(func):
+        # NOTE(piotrm): inspect checkers for async functions do not work on
+        # openai clients, perhaps because they use @typing.overload. Because of
+        # that, we detect them by checking __wrapped__ attribute instead. Note
+        # that the inspect docs suggest they should be able to handle wrapped
+        # functions but perhaps they handle different type of wrapping?
+        # See https://docs.python.org/3/library/inspect.html#inspect.iscoroutinefunction .
+
+        effective_func = func
+        if safe_hasattr(func, "__wrapped__"):
+            effective_func = safe_getattr(func, "__wrapped__")
+
+        if inspect.isasyncgenfunction(effective_func):
             # This is not always accurate hence.
             w = agenwrapper
-            w2 = _agenwrapper_completion
+            w2 = _agenwrapper_part_two
 
-        elif inspect.iscoroutinefunction(func):
+        elif inspect.iscoroutinefunction(effective_func):
             # An async coroutine can actually be an async generator so we
             # annotate both the async and async generator wrappers.
             w = awrapper
-            w2 = _agenwrapper_completion
+            w2 = _agenwrapper_part_two
 
         else:
             w = wrapper
@@ -880,7 +957,7 @@ class DummyEndpoint(Endpoint):
             **kwargs, **locals_except("self", "name", "kwargs", "__class__")
         )
 
-        print(
+        logger.info(
             f"Using DummyEndpoint with {locals_except('self', 'name', 'kwargs', '__class__')}"
         )
 

@@ -210,7 +210,7 @@ class Huggingface(Provider):
 
     # TODEP
     @_tci
-    def not_toxic(self, text: str) -> float:
+    def toxic(self, text: str) -> float:
         """
         Uses Huggingface's martin-ha/toxic-comment-model model. A function that
         uses a toxic comment classifier on `text`.
@@ -231,7 +231,7 @@ class Huggingface(Provider):
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "toxic" and 1 being "not
+            float: A value between 0 and 1. 1 being "toxic" and 0 being "not
             toxic".
         """
 
