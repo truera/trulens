@@ -69,6 +69,6 @@ class LiteLLM(LLMProvider):
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
-        assert isinstance(comp, dict)
+        assert isinstance(comp, object)
 
         return comp["choices"][0]["message"]["content"]
