@@ -51,9 +51,9 @@ class LiteLLM(LLMProvider):
         **kwargs
     ) -> str:
 
-        from litellm import completion
+        from litellm import completion as litellm_completion
         if prompt is not None:
-            comp = completion(
+            comp = litellm_completion(
                 model=self.model_engine,
                 messages=[{
                     "role": "system",
@@ -62,7 +62,7 @@ class LiteLLM(LLMProvider):
                 **kwargs
             )
         elif messages is not None:
-            comp = completion(
+            comp = litellm_completion(
                 model=self.model_engine, messages=messages, **kwargs
             )
 
