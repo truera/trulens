@@ -65,9 +65,9 @@ class OpenAIClient(SerialModel):
 
     def __init__(
         self,
-        client: Optional[oai.OpenAI] = None,
+        client: Optional[oai.OpenAI | oai.AzureOpenAI] = None,
         client_cls: Optional[Class] = None,
-        client_kwargs: Optional[dict] = None
+        client_kwargs: Optional[dict] = None,
     ):
         if client is None:
             if client_kwargs is None and client_cls is None:
@@ -104,7 +104,6 @@ class OpenAIClient(SerialModel):
             sig = inspect.signature(client_class.__init__)
 
             for k, _ in sig.parameters.items():
-
                 if k in ['api_key', 'default_headers']:
                     # Skip anything that might have the api_key in it.
                     # default_headers contains the api_key.
@@ -132,7 +131,6 @@ class OpenAIClient(SerialModel):
 
 
 class OpenAICallback(EndpointCallback):
-
     class Config:
         arbitrary_types_allowed = True
 
@@ -141,7 +139,7 @@ class OpenAICallback(EndpointCallback):
     )
 
     chunks: List[Generation] = pydantic.Field(
-        default_factory=list, exclude=True
+        default_factory=list, exclude=True,
     )
 
     def handle_generation_chunk(self, response: Any) -> None:
@@ -152,7 +150,7 @@ class OpenAICallback(EndpointCallback):
         if response.choices[0].finish_reason == 'stop':
             llm_result = LLMResult(
                 llm_output=dict(token_usage=dict(), model_name=response.model),
-                generations=[self.chunks]
+                generations=[self.chunks],
             )
             self.chunks = []
             self.handle_generation(response=llm_result)
@@ -163,14 +161,14 @@ class OpenAICallback(EndpointCallback):
         self.langchain_handler.on_llm_end(response)
 
         for cost_field, langchain_field in [
-            ("cost", "total_cost"), ("n_tokens", "total_tokens"),
+            ("cost", "total_cost"),
+            ("n_tokens", "total_tokens"),
             ("n_successful_requests", "successful_requests"),
             ("n_prompt_tokens", "prompt_tokens"),
-            ("n_completion_tokens", "completion_tokens")
+            ("n_completion_tokens", "completion_tokens"),
         ]:
             setattr(
-                self.cost, cost_field,
-                getattr(self.langchain_handler, langchain_field)
+                self.cost, cost_field, getattr(self.langchain_handler, langchain_field)
             )
 
 
@@ -185,8 +183,11 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         return super(Endpoint, cls).__new__(cls, name="openai")
 
     def handle_wrapped_call(
-        self, func: Callable, bindings: inspect.BoundArguments, response: Any,
-        callback: Optional[EndpointCallback]
+        self,
+        func: Callable,
+        bindings: inspect.BoundArguments,
+        response: Any,
+        callback: Optional[EndpointCallback],
     ) -> None:
         # TODO: cleanup/refactor. This method inspects the results of an
         # instrumented call made by an openai client. As there are multiple
@@ -201,7 +202,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         model_name = ""
         if 'model' in bindings.kwargs:
-            model_name = bindings.kwargs['model']
+            model_name = bindings.kwargs["model"]
 
         results = None
         if "results" in response:
@@ -216,7 +217,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             llm_res = LLMResult(
                 generations=[[]],
                 llm_output=dict(token_usage=usage, model_name=model_name),
-                run=None
+                run=None,
             )
 
             self.global_callback.handle_generation(response=llm_res)
@@ -224,7 +225,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             if callback is not None:
                 callback.handle_generation(response=llm_res)
 
-        if 'choices' in response and 'delta' in response.choices[0]:
+        if "choices" in response and 'delta' in response.choices[0]:
             # Streaming data.
             content = response.choices[0].delta.content
 
@@ -312,16 +313,17 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         else:
             # Convert openai client to our wrapper.
-
             if not isinstance(client, OpenAIClient):
-                assert isinstance(client, oai.OpenAI), "OpenAI client expected"
+                assert isinstance(client, oai.OpenAI) or isinstance(
+                    client, oai.AzureOpenAI
+                ), "OpenAI client expected"
 
                 client = OpenAIClient(client=client)
 
             kwargs['client'] = client
 
         # for WithClassInfo:
-        kwargs['obj'] = self
+        kwargs["obj"] = self
 
         super().__init__(*args, **kwargs)
 
