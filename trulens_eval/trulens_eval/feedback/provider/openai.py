@@ -2,8 +2,10 @@ import logging
 from typing import Dict, Optional, Sequence
 
 from trulens_eval.feedback.provider.base import LLMProvider
-from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
+from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint, OpenAIClient
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
+
+import openai as oai
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +14,8 @@ class OpenAI(LLMProvider):
     """
     Out of the box feedback functions calling OpenAI APIs.
     """
+
+    # model_engine: str # LLMProvider
 
     endpoint: Endpoint
 
@@ -52,7 +56,6 @@ class OpenAI(LLMProvider):
         messages: Optional[Sequence[Dict]] = None,
         **kwargs
     ) -> str:
-
         if 'model' not in kwargs:
             kwargs['model'] = self.model_engine
 
@@ -361,9 +364,8 @@ class AzureOpenAI(OpenAI):
     """Out of the box feedback functions calling AzureOpenAI APIs.
     Has the same functionality as OpenAI out of the box feedback functions.
     """
-    deployment_id: str
 
-    def __init__(self, endpoint=None, **kwargs):
+    def __init__(self, endpoint=None, deployment_name="gpt-35-turbo", **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
@@ -381,20 +383,18 @@ class AzureOpenAI(OpenAI):
         ```
 
         Args:
-            model_engine (str, optional): The specific model version. Defaults
-                to "gpt-35-turbo".
-            deployment_id (str): The specified deployment id
+            deployment_name (str, required): The name of the deployment.
+                Defaults to "gpt-35-turbo".
             endpoint (Endpoint): Internal Usage for DB serialization
         """
 
+        kwargs["client"] = OpenAIClient(client=oai.AzureOpenAI(**kwargs))
         super().__init__(
-            **kwargs
+            endpoint=endpoint, model_engine=deployment_name, **kwargs
         )  # need to include pydantic.BaseModel.__init__
 
     def _create_chat_completion(self, *args, **kwargs):
         """
         We need to pass `engine`
         """
-        return super()._create_chat_completion(
-            *args, deployment_id=self.deployment_id, **kwargs
-        )
+        return super()._create_chat_completion(*args, **kwargs)
