@@ -12,23 +12,14 @@
 # In[ ]:
 
 
-# ! pip install trulens_eval==0.18.2 chromadb==0.4.18 openai==1.3.1
+# ! pip install trulens_eval==0.18.3 chromadb==0.4.18 openai==1.3.7
 
 
 # In[ ]:
 
 
 import os
-
 os.environ["OPENAI_API_KEY"] = "sk-..."
-
-
-# In[ ]:
-
-
-from openai import OpenAI
-
-oai_client = OpenAI()
 
 
 # ## Get Data
@@ -54,6 +45,9 @@ including one of the largest library systems in the world.
 # In[ ]:
 
 
+from openai import OpenAI
+oai_client = OpenAI()
+
 oai_client.embeddings.create(
         model="text-embedding-ada-002",
         input=university_info
@@ -65,15 +59,12 @@ oai_client.embeddings.create(
 
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
-from openai import OpenAI
-
-oai_client = OpenAI()
 
 embedding_function = OpenAIEmbeddingFunction(api_key=os.environ.get('OPENAI_API_KEY'),
                                              model_name="text-embedding-ada-002")
 
 
-chroma_client = chromadb.PersistentClient(path="./chromadb")
+chroma_client = chromadb.Client()
 vector_store = chroma_client.get_or_create_collection(name="Universities",
                                                       embedding_function=embedding_function)
 
@@ -95,7 +86,6 @@ vector_store.add("uni_info", documents=university_info)
 
 from trulens_eval import Tru
 from trulens_eval.tru_custom_app import instrument
-
 tru = Tru()
 
 
@@ -152,12 +142,11 @@ rag = RAG_from_scratch()
 # In[ ]:
 
 
-import numpy as np
-
-from trulens_eval import Feedback
-from trulens_eval import Select
+from trulens_eval import Feedback, Select
 from trulens_eval.feedback import Groundedness
 from trulens_eval.feedback.provider.openai import OpenAI as fOpenAI
+
+import numpy as np
 
 # Initialize provider class
 fopenai = fOpenAI()
@@ -195,7 +184,6 @@ f_context_relevance = (
 
 
 from trulens_eval import TruCustomApp
-
 tru_rag = TruCustomApp(rag,
     app_id = 'RAG v1',
     feedbacks = [f_groundedness, f_qa_relevance, f_context_relevance])
