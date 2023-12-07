@@ -14,14 +14,13 @@
 # In[ ]:
 
 
-# ! pip install trulens_eval==0.18.2 openai==1.3.1
+# ! pip install trulens_eval==0.18.3 openai==1.3.7
 
 
 # In[ ]:
 
 
 import os
-
 os.environ["OPENAI_API_KEY"] = "..."
 os.environ["HUGGINGFACE_API_KEY"] = "..."
 
@@ -34,12 +33,8 @@ os.environ["HUGGINGFACE_API_KEY"] = "..."
 from IPython.display import JSON
 
 # Imports main tools:
-from trulens_eval import Feedback
-from trulens_eval import Huggingface
-from trulens_eval import Tru
-from trulens_eval import TruChain
+from trulens_eval import TruChain, Feedback, Huggingface, Tru
 from trulens_eval.schema import FeedbackResult
-
 tru = Tru()
 
 # Imports from langchain to build app. You may need to install langchain first
@@ -47,9 +42,9 @@ tru = Tru()
 # ! pip install langchain>=0.0.170
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
-from langchain.prompts import ChatPromptTemplate
+from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain.prompts import HumanMessagePromptTemplate
-from langchain.prompts import PromptTemplate
+
 
 # ### Create Simple LLM Application
 # 
