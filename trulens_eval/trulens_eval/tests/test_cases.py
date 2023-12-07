@@ -241,7 +241,7 @@ def generate_summeval_groundedness_golden_set(file_path):
                     )
             }
 
-def generate_summeval_answer_relevance_golden_set(file_path):
+def generate_ms_marco_context_relevance_benchmark(file_path):
     with open(file_path, 'r') as f:
         data = json.load(f)
 
@@ -249,20 +249,16 @@ def generate_summeval_answer_relevance_golden_set(file_path):
         row = item["row"]
 
         assert (
-            len(row["machine_summaries"]) == len(row["relevance"]) == len(row["human_summaries"])
+            len(row["passages"]["is_selected"]) == len(row["passages"]["passage_text"]) 
         )
 
-        for i in range(len(row["machine_summaries"])):
+        assert(sum(row["passages"]["is_selected"]) == 1)
+
+        for i in range(len(row["passages"]["passage_text"])):
             yield {
                 "query":
-                    row["text"],
+                    row["query"],
                 "response":
-                    row["machine_summaries"][i],
-                "expected_score":
-                    calculate_expected_score(
-                        [
-                            row["relevance"][i] / 5,  # normalize to [0, 1]
-                        ],
-                        [1.0] 
-                    )
+                    row["passages"]["passage_text"][i],
+                "relevant_idx": row["passages"]["is_selected"].index(1)
             }
