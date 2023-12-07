@@ -11,12 +11,12 @@ from typing import Iterable, Sequence, Union
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
+
 def format_missing_imports(
     packages: Union[str, Sequence[str]],
     purpose: str,
     throw: Union[bool, Exception] = False
 ) -> str:
-    
     """
     Format a message indicating the given `packages` are required for `purpose`.
     Throws an `ImportError` with the formatted message if `throw` flag is set.
@@ -36,30 +36,28 @@ def format_missing_imports(
     if isinstance(throw, Exception):
         print(msg)
         raise throw
-    
+
     elif isinstance(throw, bool):
         if throw:
             raise ImportError(msg)
-    
+
     return msg
 
 
 llama_version = "0.8.69"
 REQUIREMENT_LLAMA = format_missing_imports(
-    f"llama_index>={llama_version}",
-    purpose="instrumenting llama_index apps"
+    f"llama_index>={llama_version}", purpose="instrumenting llama_index apps"
 )
 
 langchain_version = "0.0.335"
 REQUIREMENT_LANGCHAIN = format_missing_imports(
-    f"langchain>={langchain_version}",
-    purpose="instrumenting langchain apps"
+    f"langchain>={langchain_version}", purpose="instrumenting langchain apps"
 )
 
 REQUIREMENT_SKLEARN = format_missing_imports(
-    "scikit-learn",
-    purpose="using embedding vector distances"
+    "scikit-learn", purpose="using embedding vector distances"
 )
+
 
 class Dummy(object):
     """

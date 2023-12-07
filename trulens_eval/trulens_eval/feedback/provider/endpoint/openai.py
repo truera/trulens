@@ -131,6 +131,7 @@ class OpenAIClient(SerialModel):
 
 
 class OpenAICallback(EndpointCallback):
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -139,7 +140,8 @@ class OpenAICallback(EndpointCallback):
     )
 
     chunks: List[Generation] = pydantic.Field(
-        default_factory=list, exclude=True,
+        default_factory=list,
+        exclude=True,
     )
 
     def handle_generation_chunk(self, response: Any) -> None:
@@ -168,7 +170,8 @@ class OpenAICallback(EndpointCallback):
             ("n_completion_tokens", "completion_tokens"),
         ]:
             setattr(
-                self.cost, cost_field, getattr(self.langchain_handler, langchain_field)
+                self.cost, cost_field,
+                getattr(self.langchain_handler, langchain_field)
             )
 
 
