@@ -6,7 +6,7 @@
 
 Fine-grained, stack-agnostic instrumentation and comprehensive evaluations help you to identify failure modes & systematically iterate to improve your application.
 
-Read more about the core concepts behind TruLens including [Feedback Functions](./trulens_eval/core_concepts_feedback_functions.md), [The RAG Triad](./trulens_eval/core_concepts_rag_triad.md), and [Honest, Harmless and Helpful Evals](./trulens_eval/core_concepts_honest_harmless_helpful_evals.md).
+Read more about the core concepts behind TruLens including [Feedback Functions](https://www.trulens.org/trulens_eval/core_concepts_feedback_functions/), [The RAG Triad](https://www.trulens.org/trulens_eval/core_concepts_rag_triad/), and [Honest, Harmless and Helpful Evals](https://www.trulens.org/trulens_eval/core_concepts_honest_harmless_helpful_evals/).
 
 ## TruLens in the development workflow
 
