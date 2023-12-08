@@ -17,7 +17,7 @@
 # In[ ]:
 
 
-# pip install trulens_eval==0.18.2 llama_index>=0.8.69 html2text>=2020.1.16 
+# pip install trulens_eval==0.18.3 llama_index>=0.8.69 html2text>=2020.1.16 
 
 
 # ### Add API keys
@@ -27,7 +27,6 @@
 
 
 import os
-
 os.environ["OPENAI_API_KEY"] = "..."
 
 
@@ -36,9 +35,7 @@ os.environ["OPENAI_API_KEY"] = "..."
 # In[ ]:
 
 
-from trulens_eval import Feedback
-from trulens_eval import Tru
-from trulens_eval import TruLlama
+from trulens_eval import Feedback, Tru, TruLlama
 from trulens_eval.feedback import Groundedness
 from trulens_eval.feedback.provider.openai import OpenAI
 
