@@ -30,4 +30,4 @@ Walk through how to instrument and evaluate a RAG built from scratch with TruLen
 
 ### 💡 Contributing
 
-Interested in contributing? See our [contribution guide](https://github.com/truera/trulens/tree/main/trulens_eval/CONTRIBUTING.md) for more details.
+Interested in contributing? See our [contribution guide](https://www.trulens.org/trulens_eval/CONTRIBUTING/) for more details.
