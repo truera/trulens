@@ -25,7 +25,7 @@ class javascript_build(build):
 setup(
     name="trulens_eval",
     cmdclass={
-      #  'build': javascript_build,
+        'build': javascript_build,
     },
     include_package_data=True, # includes things specified in MANIFEST.in
     packages=find_namespace_packages(
