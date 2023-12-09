@@ -18,9 +18,7 @@ def requirements_of_file(path: Path) -> Dict[str, pkg_resources.Requirement]:
     reqs = pkg_resources.parse_requirements(
         path.read_text()
     )
-    mapping = dict()
-    for req in reqs:
-        mapping[req.project_name] = req
+    mapping = {req.project_name: req for req in reqs}
 
     return mapping
 
