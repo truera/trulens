@@ -38,6 +38,7 @@ unstructured >= 0.7.1 # for faiss
 
 # Vector DBs
 pinecone-client >= 2.2.1
+chromadb        >= 0.4.18
 
 # Slack bot example
 slack-bolt >= 1.18.0
