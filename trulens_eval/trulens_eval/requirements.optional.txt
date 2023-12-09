@@ -1,0 +1,51 @@
+# Unsorted requirements; TODO: sort
+protobuf
+accelerate
+tiktoken
+requests
+beautifulsoup4
+unstructured
+pypdf
+pdfminer.six
+watchdog
+scikit-learn
+
+# Apps
+## LlamaIndex
+llama-index        >= 0.8.69
+# VectorStoreIndex changes need to be taken account for in later versions
+html2text          >= 2020.1.16 # for llama_index example using SimpleWebPageReader
+
+# Models
+## cohere
+cohere             >= 4.4.1
+## openai
+openai             >= 1.1.1, <2
+httpx              >= 0.23.3 # for openai client serialization
+## bedrock
+boto3
+botocore
+
+# Local models
+transformers       >= 4.10.0
+pyllama
+sentencepiece
+tokenizers
+
+# Local vector stores
+docarray
+hnswlib
+
+# Vector DBs
+pinecone-client    >= 2.2.1
+
+# Slack bot example
+slack-bolt         >= 1.18.0
+slack-sdk          >= 3.21.3
+
+# UI
+ipywidgets         >= 8.0.6 # for some example notebooks
+
+# Datasets
+datasets           >= 2.12.0
+kaggle             >= 1.5.13
