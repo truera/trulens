@@ -340,7 +340,7 @@ class SingletonPerName(Generic[T]):
     """
 
     # Hold singleton instances here.
-    __instances: Dict[Hashable, 'SingletonPerName'] = dict()
+    instances: Dict[Hashable, SingletonPerName] = dict()
 
     def __new__(
         cls: Type[SingletonPerName[T]],

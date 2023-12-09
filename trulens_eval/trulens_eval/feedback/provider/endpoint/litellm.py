@@ -40,18 +40,13 @@ class LiteLLMEndpoint(Endpoint, WithClassInfo):
     ) -> None:
 
         model_name = ""
-        if 'model' in bindings.kwargs:
-            model_name = bindings.kwargs['model']
-
-        results = None
-        if "results" in response:
-            results = response['results']
+        if hasattr(response, 'model'):
+            model_name = response.model
 
         counted_something = False
-
-        if 'usage' in response:
+        if hasattr(response, 'usage'):
             counted_something = True
-            usage = response['usage']
+            usage = response.usage.dict()
 
             self.global_callback.handle_generation(response=usage)
 

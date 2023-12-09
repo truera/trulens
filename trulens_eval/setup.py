@@ -39,18 +39,22 @@ setup(
     },
     install_requires=[
         'numpy              >= 1.23.5',
-        'merkle-json        >= 1.0.0',
         'frozendict         >= 2.3.8',
         'munch              >= 3.0.0',
-        'python-dotenv      >= 1.0.0',
         'pydantic           >=2, <3',
-        # 'nest_asyncio>=1.5.6',
-        # NOTE(piotrm): disabling for now, need more investigation of compatibility issues
 
+        # Secrets/env management.
+        'python-dotenv      >= 1.0.0',
+
+        # Serialization-related
+        'merkle-json        >= 1.0.0',
+
+        # Langchain
         f'langchain         >= {langchain_version}',  # required for cost tracking even outside of langchain
         'typing-inspect     >= 0.8.0',  # fixes bug with langchain on python < 3.9 
         'typing_extensions  >= 4.5.0',  # fixes big with langchain on python < 3.9
 
+        # LlamaIndex
         f'llama_index       >= {llama_version}',
         # VectorStoreIndex changes need to be taken account for in later versions
         'html2text          >= 2020.1.16', # for llama_index example using SimpleWebPageReader
@@ -62,18 +66,20 @@ setup(
         'httpx              >= 0.23.3', # for openai client serialization
 
         # Vector DBs
-        'pinecone-client    >= 2.2.1',
+        'pinecone-client    >= 2.2.1', # used in some examples, TODO: make optional
 
         # UI
         'millify            >= 0.1.1',
         'humanize           >= 4.6.0',
-        'slack-bolt         >= 1.18.0',
-        'slack-sdk          >= 3.21.3',
         'streamlit          >= 1.27.0',
         'streamlit-aggrid   >= 0.3.4.post3',
         'streamlit-extras   >= 0.2.7',
-        'streamlit-javascript   >= 0.1.5',  # for copy to clipboard functionality (in progress)
-        'ipywidgets         >= 8.0.6',
+        # 'streamlit-javascript   >= 0.1.5',  # for copy to clipboard functionality (in progress)
+        'ipywidgets         >= 8.0.6', # used in some examples TODO: make optional
+
+        # for slack bot example, TODO: make optional
+        'slack-bolt         >= 1.18.0',
+        'slack-sdk          >= 3.21.3',
 
         # DB and migration
         'sqlalchemy         >= 2.0.19',
