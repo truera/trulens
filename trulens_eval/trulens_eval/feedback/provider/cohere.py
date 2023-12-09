@@ -5,9 +5,9 @@ from trulens_eval.utils.imports import REQUIREMENT_COHERE, OptionalImports
 
 with OptionalImports(message=REQUIREMENT_COHERE):
     import cohere
-    from cohere import Client as cohereClient
+    from cohere import Client
 
-def get_cohere_agent() -> cohereClient:
+def get_cohere_agent() -> Client:
     """
     Gete a singleton cohere agent. Sets its api key from env var COHERE_API_KEY.
     """
@@ -15,7 +15,7 @@ def get_cohere_agent() -> cohereClient:
     global cohere_agent
     if cohere_agent is None:
         cohere.api_key = os.environ['CO_API_KEY']
-        cohere_agent = cohereClient(cohere.api_key)
+        cohere_agent = Client(cohere.api_key)
 
     return cohere_agent
 
