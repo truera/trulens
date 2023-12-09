@@ -10,9 +10,9 @@ pydantic           >= 1, <2
 merkle-json        >= 1.0.0
 
 # Langchain
-langchain          >= 0.0.335,  # required for cost tracking even outside of langchain
-typing-inspect     >= 0.8.0  # fixes bug with langchain on python < 3.9 
-typing_extensions  >= 4.5.0  # fixes big with langchain on python < 3.9
+langchain          >= 0.0.335 # required for cost tracking even outside of langchain
+typing-inspect     >= 0.8.0   # fixes bug with langchain on python < 3.9 
+typing_extensions  >= 4.5.0   # fixes big with langchain on python < 3.9
 
 # Models
 # All models are optional.
@@ -23,7 +23,7 @@ humanize           >= 4.6.0
 streamlit          >= 1.27.0
 streamlit-aggrid   >= 0.3.4.post3
 streamlit-extras   >= 0.2.7
-# 'streamlit-javascript   >= 0.1.5,  # for copy to clipboard functionality (in progress)
+# 'streamlit-javascript >= 0.1.5,  # for copy to clipboard functionality (in progress)
 
 # DB and migration
 sqlalchemy         >= 2.0.19
