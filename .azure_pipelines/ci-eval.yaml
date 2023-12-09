@@ -87,11 +87,8 @@ jobs:
       - bash: |
           source activate $(condaEnvFileSuffix)
 
-          pip install pytest==7.0.1 pytest-azurepipelines 'langchain>=0.0.230' 'llama_index>=0.8.3'
-          pip install html2text==2020.1.16 # requirement for llama_index VectorStoreIndex local Vector DB
-          pip install docarray hnswlib # requirements for HNSW local Vector DB
-          pip install faiss-cpu unstructured # requirements for FAISS local Vector DB
-          pip install 'bert_score>=0.3.13' 'evaluate>=0.4.0' # groundtruth.py
+          pip install pytest==7.0.1 pytest-azurepipelines
+          pip install -r trulens_eval/requirements.optional.txt
 
           echo '::group::piplist'
           echo "$(pip list)"

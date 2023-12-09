@@ -105,6 +105,15 @@ REQUIREMENT_OPENAI = format_missing_imports(
     purpose="using OpenAI models"
 )
 
+REQUIREMENT_BERT_SCORE = format_missing_imports(
+    "bert-score",
+    purpose="measuring BERT Score"
+)
+
+REQUIREMENT_EVALUATE = format_missing_imports(
+    "evaluate",
+    purpose="using certain metrics"
+)
 
 class Dummy(object):
     """

@@ -6,7 +6,7 @@ munch              >= 3.0.0
 python-dotenv      >= 1.0.0
 
 # Serialization-related
-pydantic           >= 2, <3
+pydantic           >= 1, <2
 merkle-json        >= 1.0.0
 
 # Langchain
