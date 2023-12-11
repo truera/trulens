@@ -1,18 +1,26 @@
 import inspect
 import logging
 import pprint
-import pydantic
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
-from trulens_eval.feedback.provider.endpoint.base import INSTRUMENT, Endpoint
+import pydantic
+
+from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
-from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.imports import format_missing_imports
+from trulens_eval.feedback.provider.endpoint.base import INSTRUMENT
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
 from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.python import safe_hasattr
 
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
+
+with OptionalImports(message=REQUIREMENT_BEDROCK):
+    import boto3
+    from botocore.client import ClientCreator
 
 
 class BedrockCallback(EndpointCallback):
@@ -166,17 +174,6 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
         kwargs['obj'] = self
 
         super().__init__(*args, **kwargs)
-        
-        try:
-            import boto3
-            from botocore.client import ClientCreator
-
-        except ImportError as e:
-            format_missing_imports(
-                ["boto3", "botocore"],
-                purpose="using BedrockEndpoint",
-                throw=e
-            )
 
         # Note here was are instrumenting a method that outputs a function which
         # we also want to instrument:
