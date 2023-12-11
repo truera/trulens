@@ -24,23 +24,22 @@ jobs:
       - checkout: self
         clean: true
 
-      - displayName: Add conda to PATH
-        bash: echo "##vso[task.prependpath]$CONDA/bin"
+      - bash: echo "##vso[task.prependpath]$CONDA/bin"
+        displayName: Add conda to PATH
 
-      - displayName: Create Anaconda environment
-        bash: |
+      - bash: |
           set -e
           conda create  -y --quiet -n $(condaEnvFileSuffix) python=3.11
           conda init bash
+        displayName: Create Anaconda environment
 
-      - displayName: Which Python
-        bash: |
+      - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
           which python
+        displayName: Which Python
 
-      - displayName: Install pip package
-        bash: |
+      - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
           cd ./trulens_eval
@@ -49,16 +48,16 @@ jobs:
           pip install isort==5.10.1
           pip install ipykernel
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
+        displayName: Install pip package
 
-      - displayName: Format Code
-        bash: |
+      - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
           echo Using $(yapf --version) isort $(isort --vn)
           ./format.sh --eval
+        displayName: Format Code
 
-      - displayName: NoDiffCheck
-        bash: |
+      - bash: |
           num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
           if [ $num_changed_files -ne 0 ]; then
             echo "The following files have changed after running format.sh. Please format your code and update the PR."
@@ -66,9 +65,9 @@ jobs:
             echo "\n\nOutputting git diff for checked in files.\n"
             git diff
           fi
+        displayName: NoDiffCheck
 
-      - displayName: Run unit tests
-        bash: |
+      - bash: |
           source activate $(condaEnvFileSuffix)
 
           cd ./trulens_eval
@@ -81,6 +80,7 @@ jobs:
           echo '::endgroup::'
           
           python -m pytest $(testSubdirectory)
+        displayName: Run unit tests
 
         env:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
