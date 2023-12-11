@@ -1,2 +1,5 @@
+include trulens_eval/LICENSE
+include trulens_eval/requirements.txt
+include trulens_eval/requirements.optional.txt
 include trulens_eval/ux/trulens_logo.svg
 recursive-include trulens_eval/react_components/record_viewer/dist  *

@@ -7,24 +7,15 @@ import pydantic
 from trulens_eval.feedback.provider import Provider
 from trulens_eval.feedback.provider.openai import OpenAI
 from trulens_eval.utils.generated import re_0_10_rating
-from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_BERT_SCORE, REQUIREMENT_EVALUATE, OptionalImports
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
-bert_score_version = "0.3.13"
-REQUIREMENT_BERT_SCORE = (
-    f"bert_score {bert_score_version} or above is required to measure BERT Score. "
-    f"Please install it before use: `pip install bert_score>={bert_score_version}`."
-)
+
 with OptionalImports(message=REQUIREMENT_BERT_SCORE):
     from bert_score import BERTScorer
 
-evaluate_version = "0.4.0"
-REQUIREMENT_EVALUATE = (
-    f"evaluate {evaluate_version} or above is required for certain metrics. "
-    f"Please install it before use: `pip install evaluate>={evaluate_version}`."
-)
 with OptionalImports(message=REQUIREMENT_EVALUATE):
     import evaluate
 

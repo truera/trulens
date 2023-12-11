@@ -28,11 +28,12 @@ from typing import Any, Callable, List, Optional, Union
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
 from langchain.schema import LLMResult
-import openai as oai
 import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
@@ -42,6 +43,10 @@ from trulens_eval.utils.serial import SerialModel
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
+
+with OptionalImports(message=REQUIREMENT_OPENAI):
+    import openai as oai
 
 
 class OpenAIClient(SerialModel):
@@ -65,7 +70,7 @@ class OpenAIClient(SerialModel):
 
     def __init__(
         self,
-        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI]]  = None,
+        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI]] = None,
         client_cls: Optional[Class] = None,
         client_kwargs: Optional[dict] = None,
     ):
