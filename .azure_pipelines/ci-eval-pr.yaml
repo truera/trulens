@@ -8,7 +8,6 @@ pr:
       - trulens_eval
       - docs/trulens_eval/*.ipynb
 
-
 jobs:
   - job: PRBranchProtect
     pool:
@@ -24,18 +23,22 @@ jobs:
     steps:
       - checkout: self
         clean: true
+
       - bash: echo "##vso[task.prependpath]$CONDA/bin"
         displayName: Add conda to PATH
+
       - bash: |
           set -e
           conda create  -y --quiet -n $(condaEnvFileSuffix) python=3.11
           conda init bash
         displayName: Create Anaconda environment
+
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
           which python
         displayName: Which Python
+
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
@@ -46,12 +49,14 @@ jobs:
           pip install ipykernel
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
         displayName: Install pip package
+
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
           echo Using $(yapf --version) isort $(isort --vn)
           ./format.sh --eval
         displayName: Format Code
+
       - bash: |
           num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
           if [ $num_changed_files -ne 0 ]; then
@@ -61,19 +66,22 @@ jobs:
             git diff
           fi
         displayName: NoDiffCheck
+
       - bash: |
           source activate $(condaEnvFileSuffix)
 
-          pip install pytest==7.0.1 pytest-azurepipelines 'langchain>=0.0.230' 'llama_index>=0.8.3'
-          pip install html2text==2020.1.16 # requirement for llama_index VectorStoreIndex local Vector DB
-          pip install 'bert_score>=0.3.13' 'evaluate>=0.4.0' # groundtruth.py
+          cd ./trulens_eval
+
+          pip install pytest==7.0.1 pytest-azurepipelines
+          pip install -r trulens_eval/requirements.optional.txt
           
           echo '::group::piplist'
           echo "$(pip list)"
           echo '::endgroup::'
-          cd ./trulens_eval
+          
           python -m pytest $(testSubdirectory)
         displayName: Run unit tests
+
         env:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
           HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
