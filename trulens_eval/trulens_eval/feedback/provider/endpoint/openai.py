@@ -23,7 +23,7 @@ the involved classes will need to be adapted here. The important classes are:
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, Union
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
@@ -65,7 +65,7 @@ class OpenAIClient(SerialModel):
 
     def __init__(
         self,
-        client: Optional[oai.OpenAI | oai.AzureOpenAI] = None,
+        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI]]  = None,
         client_cls: Optional[Class] = None,
         client_kwargs: Optional[dict] = None,
     ):
