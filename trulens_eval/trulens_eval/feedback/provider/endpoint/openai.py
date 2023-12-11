@@ -274,14 +274,14 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
     def __init__(
         self, 
-        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI, OpenAIClient]], 
+        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI, OpenAIClient]] = None, 
         **kwargs
     ):
         """
         Passes `kwargs` to constructor of a new OpenAI client if `client` not provided.
         """
 
-        if safe_hasattr(self, "name") and "client" not in kwargs:
+        if safe_hasattr(self, "name") and client is not None:
             # Already created with SingletonPerName mechanism
             return
 
