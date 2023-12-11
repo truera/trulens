@@ -28,7 +28,7 @@ class LangchainEndpoint(Endpoint, WithClassInfo):
     Langchain endpoint.
     """
 
-    client: Union[BaseLLM, BaseChatModel]
+    chain: Union[BaseLLM, BaseChatModel]
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="langchain")
@@ -45,21 +45,18 @@ class LangchainEndpoint(Endpoint, WithClassInfo):
         if callback is not None:
             callback.handle_generation(response=None)
 
-    def __init__(self, *args, **kwargs):
-        kwargs["name"] = "langchain"
-        kwargs["callback_class"] = LangchainCallback
+    def __init__(self, chain: Union[BaseLLM, BaseChatModel], *args, **kwargs):
+        if chain is None:
+            raise ValueError("`chain` must be specified.")
 
-        client = kwargs.get("client")
-        if client is None:
-            raise ValueError("`client` must be specified.")
-
-        if not (
-            isinstance(client, BaseLLM) or isinstance(client, BaseChatModel)
-        ):
+        if not (isinstance(chain, BaseLLM) or isinstance(chain, BaseChatModel)):
             raise ValueError(
-                f"`client` must be of type {BaseLLM.__name__} or {BaseChatModel.__name__}"
+                f"`chain` must be of type {BaseLLM.__name__} or {BaseChatModel.__name__}"
             )
 
+        kwargs["chain"] = chain
+        kwargs["name"] = "langchain"
+        kwargs["callback_class"] = LangchainCallback
         kwargs["obj"] = self
 
         super().__init__(*args, **kwargs)

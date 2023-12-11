@@ -12,13 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 class Langchain(LLMProvider):
-    """Out of the box feedback functions using Langchain LLMs"""
+    """Out of the box feedback functions using Langchain LLMs and ChatModels"""
 
     endpoint: LangchainEndpoint
 
     def __init__(
         self,
-        client: Union[BaseLLM, BaseChatModel],
+        chain: Union[BaseLLM, BaseChatModel],
         model_engine: str = "",
         *args,
         **kwargs
@@ -32,16 +32,17 @@ class Langchain(LLMProvider):
         from langchain.llms import OpenAI
 
         gpt3_llm = OpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-3.5-turbo-instruct")
-        langchain_provider = Langchain(client = client)
+        langchain_provider = Langchain(chain = chain)
         ```
 
         Args:
-            client (Union[BaseLLM, BaseChatModel]): Langchain LLMs or chat models
+            chain (Union[BaseLLM, BaseChatModel]): Langchain LLMs or chat models
         """
         self_kwargs = kwargs.copy()
-        self_kwargs["client"] = client
-        self_kwargs["model_engine"] = model_engine or type(client).__name__
-        self_kwargs["endpoint"] = LangchainEndpoint(*args, **self_kwargs)
+        self_kwargs["model_engine"] = model_engine or type(chain).__name__
+        self_kwargs["endpoint"] = LangchainEndpoint(
+            *args, chain=chain, **kwargs.copy()
+        )
 
         super().__init__(**self_kwargs)
 
@@ -52,11 +53,11 @@ class Langchain(LLMProvider):
         **kwargs
     ) -> str:
         if prompt is not None:
-            predict = self.endpoint.client.predict(prompt, **kwargs)
+            predict = self.endpoint.chain.predict(prompt, **kwargs)
 
         elif messages is not None:
             prompt = json.dumps(messages)
-            predict = self.endpoint.client.predict(prompt, **kwargs)
+            predict = self.endpoint.chain.predict(prompt, **kwargs)
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
