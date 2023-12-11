@@ -76,7 +76,7 @@ def memory_suggestions(*settings, device=None):
     )
 
 
-def gradient(scalar, wrt):
+def gradient(scalar: Tensor, wrt: Tensor):
     """
     gradient Gradient of a function with respect to a tensor.
 
@@ -99,7 +99,7 @@ def gradient(scalar, wrt):
     return list(grads)
 
 
-def as_array(t, dtype=None):
+def as_array(t: Tensor, dtype=None):
     """
     as_array Convert tensor to numpy array
 
@@ -117,6 +117,13 @@ def as_array(t, dtype=None):
 
     if isinstance(t, np.ndarray):
         return t if dtype is None else t.astype(dtype)
+    
+    numpy_dtype_compat_cast = {
+        torch.bfloat16: lambda x: x.float(),
+    }
+
+    if t.dtype in numpy_dtype_compat_cast:
+        t = numpy_dtype_compat_cast[t.dtype](t)
 
     return (
         t.cpu().detach().numpy()
