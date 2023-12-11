@@ -42,3 +42,6 @@ credentials.toml
 # trulens_eval/generated_files/*.{py,md,ipynb}
 
 **/*.sqlite
+
+# Virtual environment
+.venv
