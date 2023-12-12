@@ -19,7 +19,6 @@ from typing import (
     TypeVar, Union
 )
 
-from pydantic_core import core_schema
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
@@ -520,7 +519,6 @@ class ParseException(Exception):
             f"\nAST={dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
         )
 
-# _Lens = ForwardRef("Lens")
 
 class Lens(pydantic.BaseModel, Sized, Hashable):
     # Not using SerialModel as we have special handling of serialization to/from
