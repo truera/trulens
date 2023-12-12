@@ -31,8 +31,8 @@ class Langchain(LLMProvider):
         from trulens_eval.feedback.provider.langchain import Langchain
         from langchain.llms import OpenAI
 
-        gpt3_llm = OpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-3.5-turbo-instruct")
-        langchain_provider = Langchain(chain = chain)
+        gpt3_llm = OpenAI(model="gpt-3.5-turbo-instruct")
+        langchain_provider = Langchain(chain = gpt3_llm)
         ```
 
         Args:
