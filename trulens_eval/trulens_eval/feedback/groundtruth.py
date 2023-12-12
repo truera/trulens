@@ -80,7 +80,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ground_truth = FunctionOrMethod.of_callable(ground_truth)
         elif isinstance(ground_truth, Dict):
             # Serialized FunctionOrMethod?
-            ground_truth = FunctionOrMethod.pick(**ground_truth)
+            ground_truth = FunctionOrMethod.model_validate(ground_truth)
             ground_truth_imp = ground_truth.load()
         else:
             raise RuntimeError(

@@ -74,11 +74,7 @@ class SerialModel(pydantic.BaseModel):
         from trulens_eval.utils.pyschema import WithClassInfo
 
         if isinstance(obj, Dict) and CLASS_INFO in obj:
-            cls = Class.model_validate(obj[CLASS_INFO])
-            del obj[CLASS_INFO]
-            model = cls.model_validate(obj, **kwargs)
-
-            return WithClassInfo.of_model(model=model, cls=cls)
+            return WithClassInfo.model_validate(obj)
 
         return super(SerialModel, cls).model_validate(obj, **kwargs)
 

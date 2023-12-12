@@ -103,7 +103,7 @@ class OpenAIClient(SerialModel):
                 if isinstance(client_cls, dict):
                     # TODO: figure out proper pydantic way of doing these things. I
                     # don't think we should be required to parse args like this.
-                    client_cls = Class(**client_cls)
+                    client_cls = Class.model_validate(client_cls)
 
                 cls = client_cls.load()
 

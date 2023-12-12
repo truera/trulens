@@ -109,8 +109,8 @@ def constructor_of_class(cls: Class) -> Type[app.LlamaIndexComponent]:
     raise TypeError(f"Unknown llama_index component type with class {cls}")
 
 
-def component_of_json(json: JSON) -> app.LlamaIndexComponent:
-    cls = Class.of_json(json)
+def component_of_json(json: dict) -> app.LlamaIndexComponent:
+    cls = Class.of_class_info(json)
 
     view = constructor_of_class(cls)
 

@@ -40,7 +40,6 @@ from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import callable_name
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
-from trulens_eval.utils.pyschema import ObjSerial
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import all_objects
 from trulens_eval.utils.serial import GetItemOrAttribute
@@ -68,7 +67,7 @@ class ComponentView(ABC):
 
     def __init__(self, json: JSON):
         self.json = json
-        self.cls = Class.of_json(json)
+        self.cls = Class.of_class_info(json)
 
     @staticmethod
     def of_json(json: JSON) -> 'ComponentView':
@@ -76,7 +75,7 @@ class ComponentView(ABC):
         Sort the given json into the appropriate component view type.
         """
 
-        cls = Class.of_json(json)
+        cls = Class.of_class_info(json)
 
         if LangChainComponent.class_is(cls):
             return LangChainComponent.of_json(json)
@@ -115,9 +114,9 @@ class ComponentView(ABC):
 
     @staticmethod
     def innermost_base(
-        bases: Sequence[Class],
+        bases: Optional[Sequence[Class]] = None,
         among_modules=set(["langchain", "llama_index", "trulens_eval"])
-    ) -> str:
+    ) -> Optional[str]:
         """
         Given a sequence of classes, return the first one which comes from one
         of the `among_modules`. You can use this to determine where ultimately
@@ -125,6 +124,8 @@ class ComponentView(ABC):
         trulens_eval even in cases they extend each other's classes. Returns
         None if no module from `among_modules` is named in `bases`.
         """
+        if bases is None:
+            return None
 
         for base in bases:
             if "." in base.module.module_name:
@@ -173,6 +174,7 @@ class TrulensComponent(ComponentView):
     Components provided in trulens.
     """
 
+    @staticmethod
     def class_is(cls: Class) -> bool:
         if ComponentView.innermost_base(cls.bases) == "trulens_eval":
             return True
@@ -261,7 +263,7 @@ class CustomComponent(ComponentView):
 
     @staticmethod
     def component_of_json(json: JSON) -> 'CustomComponent':
-        cls = Class.of_json(json)
+        cls = Class.of_class_info(json)
 
         view = CustomComponent.constructor_of_class(cls)
 
@@ -691,7 +693,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             self, *args, instrument=self.instrument, **kwargs
         )
 
-    def dict(self):
+    def model_dump(self):
         # Same problem as in json.
         return jsonify(self, instrument=self.instrument)
 

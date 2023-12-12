@@ -212,7 +212,8 @@ import traceback
 from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
 import weakref
 
-from pydantic import BaseModel
+import pydantic
+
 
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback.provider.endpoint import Endpoint
@@ -904,7 +905,7 @@ class Instrument(object):
         done.add(id(obj))
 
         # NOTE: We cannot instrument chain directly and have to instead
-        # instrument its class. The pydantic BaseModel does not allow instance
+        # instrument its class. The pydantic.BaseModel does not allow instance
         # attributes that are not fields:
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
@@ -972,11 +973,14 @@ class Instrument(object):
                     )
 
         if self.to_instrument_object(obj):
-            if isinstance(obj, BaseModel):
+            if isinstance(obj, pydantic.BaseModel):
                 # NOTE(piotrm): This will not include private fields like
                 # llama_index's LLMPredictor._llm which might be useful to
                 # include:
                 attrs = obj.model_fields.keys()
+
+            if isinstance(obj, pydantic.v1.BaseModel):
+                attrs = obj.__fields__.keys()
 
             elif dataclasses.is_dataclass(type(obj)):
                 attrs = (f.name for f in dataclasses.fields(obj))

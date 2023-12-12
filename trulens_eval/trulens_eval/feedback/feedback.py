@@ -100,8 +100,8 @@ class Feedback(FeedbackDefinition):
 
         else:
             if "implementation" in kwargs:
-                imp: ImpCallable = FunctionOrMethod.pick(
-                    **(kwargs['implementation'])
+                imp: ImpCallable = FunctionOrMethod.model_validate(
+                    kwargs['implementation']
                 ).load() if kwargs['implementation'] is not None else None
 
         # Similarly with agg and aggregator.
@@ -123,8 +123,8 @@ class Feedback(FeedbackDefinition):
                     pass
         else:
             if kwargs.get('aggregator') is not None:
-                agg: AggCallable = FunctionOrMethod.pick(
-                    **(kwargs['aggregator'])
+                agg: AggCallable = FunctionOrMethod.model_validate(
+                    kwargs['aggregator']
                 ).load()
             else:
                 # Default aggregator if neither serialized `aggregator` or
@@ -247,6 +247,7 @@ class Feedback(FeedbackDefinition):
             app_json = row.app_json
 
             feedback = Feedback.model_validate(row.feedback_json)
+
             return feedback, feedback.run_and_log(
                 record=record,
                 app=app_json,
@@ -334,8 +335,8 @@ class Feedback(FeedbackDefinition):
         imp_func = implementation.load()
         agg_func = aggregator.load()
 
-        return Feedback(
-            imp=imp_func, agg=agg_func, name=supplied_name, **f.model_dump()
+        return Feedback.model_validate(
+            dict(imp=imp_func, agg=agg_func, name=supplied_name, **f.model_dump())
         )
 
     def _next_unselected_arg_name(self):

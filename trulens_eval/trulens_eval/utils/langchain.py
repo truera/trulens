@@ -78,7 +78,7 @@ def constructor_of_class(cls: Class) -> Type[app.LangChainComponent]:
 
 
 def component_of_json(json: JSON) -> app.LangChainComponent:
-    cls = Class.of_json(json)
+    cls = Class.of_class_info(json)
 
     view = constructor_of_class(cls)
 
