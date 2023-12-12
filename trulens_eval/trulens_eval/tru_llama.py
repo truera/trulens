@@ -41,7 +41,7 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.schema import BaseComponent
 
     # LLMs
-    from llama_index.llms.base import LLM  # subtype of BaseComponent
+    from llama_index.llms.base import BaseLLM  # subtype of BaseComponent
 
     # misc
     from llama_index.indices.query.base import BaseQueryEngine
@@ -82,7 +82,7 @@ class LlamaInstrument(Instrument):
         # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
             BaseComponent,
-            LLM,
+            BaseLLM,
             BaseQueryEngine,
             BaseRetriever,
             BaseIndex,
@@ -112,13 +112,13 @@ class LlamaInstrument(Instrument):
             {
                 # LLM:
                 "complete":
-                    lambda o: isinstance(o, LLM),
+                    lambda o: isinstance(o, BaseLLM),
                 "stream_complete":
-                    lambda o: isinstance(o, LLM),
+                    lambda o: isinstance(o, BaseLLM),
                 "acomplete":
-                    lambda o: isinstance(o, LLM),
+                    lambda o: isinstance(o, BaseLLM),
                 "astream_complete":
-                    lambda o: isinstance(o, LLM),
+                    lambda o: isinstance(o, BaseLLM),
 
                 # BaseTool/AsyncBaseTool:
                 "__call__":
@@ -146,13 +146,13 @@ class LlamaInstrument(Instrument):
 
                 # BaseChatEngine/LLM:
                 "chat":
-                    lambda o: isinstance(o, (LLM, BaseChatEngine)),
+                    lambda o: isinstance(o, (BaseLLM, BaseChatEngine)),
                 "achat":
-                    lambda o: isinstance(o, (LLM, BaseChatEngine)),
+                    lambda o: isinstance(o, (BaseLLM, BaseChatEngine)),
                 "stream_chat":
-                    lambda o: isinstance(o, (LLM, BaseChatEngine)),
+                    lambda o: isinstance(o, (BaseLLM, BaseChatEngine)),
                 "astream_achat":
-                    lambda o: isinstance(o, (LLM, BaseChatEngine)),
+                    lambda o: isinstance(o, (BaseLLM, BaseChatEngine)),
 
                 # BaseRetriever/BaseQueryEngine:
                 "retrieve":
