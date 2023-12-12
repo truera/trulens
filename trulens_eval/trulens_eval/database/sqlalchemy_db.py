@@ -419,8 +419,7 @@ class AppsExtractor:
                 for col in self.app_cols:
                     if col == "type":
                         df[col] = str(
-                            schema.AppDefinition.parse_raw(_app.app_json
-                                                          ).root_class
+                            schema.AppDefinition.model_validate_json(_app.app_json).root_class
                         )
                     else:
                         df[col] = getattr(_app, col)

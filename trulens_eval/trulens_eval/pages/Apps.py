@@ -137,7 +137,7 @@ def draw_selector(
     # Get the relevant JSON to path into.
     obj = rec.app_json
     if type == "record":
-        obj = Record(**rec.record_json).layout_calls_as_app()
+        obj = Record.model_validate(rec.record_json).layout_calls_as_app()
 
     # Try to parse the selector as a Lens.
     path = None

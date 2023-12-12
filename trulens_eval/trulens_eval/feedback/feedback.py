@@ -242,11 +242,11 @@ class Feedback(FeedbackDefinition):
 
         def prepare_feedback(row):
             record_json = row.record_json
-            record = Record(**record_json)
+            record = Record.model_validate(record_json)
 
             app_json = row.app_json
 
-            feedback = Feedback(**row.feedback_json)
+            feedback = Feedback.model_validate(row.feedback_json)
             return feedback, feedback.run_and_log(
                 record=record,
                 app=app_json,

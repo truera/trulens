@@ -11,13 +11,15 @@ import ast
 from ast import dump
 from ast import parse
 from copy import copy
+import json
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set, Sized, Tuple,
+    Any, Callable, Dict, ForwardRef, Hashable, Iterable, List, Optional, Sequence, Set, Sized, Tuple,
     TypeVar, Union
 )
 
+from pydantic_core import core_schema
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
@@ -44,6 +46,20 @@ JSON_STRICT = Dict[str, JSON]
 mj = MerkleJson()
 
 
+def model_dump(obj: Union[pydantic.BaseModel, pydantic.v1.BaseModel]) -> dict:
+    """
+    Return the dict/model_dump of the given pydantic instance regardless of it
+    being v2 or v1.
+    """
+
+    if isinstance(obj, pydantic.BaseModel):
+        return obj.model_dump()
+    elif isinstance(obj, pydantic.v1.BaseModel):
+        return obj.dict()
+    else:
+        raise ValueError("Not a pydantic.BaseModel.")
+
+
 class SerialModel(pydantic.BaseModel):
     """
     Trulens-specific additions on top of pydantic models. Includes utilities to
@@ -58,7 +74,7 @@ class SerialModel(pydantic.BaseModel):
         from trulens_eval.utils.pyschema import WithClassInfo
 
         if isinstance(obj, Dict) and CLASS_INFO in obj:
-            cls = Class(**obj[CLASS_INFO])
+            cls = Class.model_validate(obj[CLASS_INFO])
             del obj[CLASS_INFO]
             model = cls.model_validate(obj, **kwargs)
 
@@ -508,6 +524,7 @@ class ParseException(Exception):
             f"\nAST={dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
         )
 
+# _Lens = ForwardRef("Lens")
 
 class Lens(pydantic.BaseModel, Sized, Hashable):
     # Not using SerialModel as we have special handling of serialization to/from
@@ -531,15 +548,19 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
     path: Tuple[Step, ...]
 
+    @pydantic.model_validator(mode='wrap')
     @classmethod
-    def model_validate(cls, obj, **kwargs):
+    def validate_from_string(cls, obj, handler):
+        # `mode="before"` validators currently cannot return something of a type
+        # different than obj. Might be a pydantic oversight/bug.
 
         if isinstance(obj, str):
             return Lens.of_string(obj)
         else:
-            return super(Lens, cls).model_validate(obj, **kwargs)
+            return handler(obj)
 
-    def dump(self):  # might be called "model_dump" in pydantic v2
+    @pydantic.model_serializer
+    def dump_as_string(self, **kwargs):
         return str(self)
 
     def __init__(self, path: Optional[Iterable[Step]] = None):
@@ -549,7 +570,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         super().__init__(path=tuple(path))
 
     @staticmethod
-    def of_string(s: str) -> 'Lens':
+    def of_string(s: str) -> Lens:
         """
         Convert a string representing a python expression into a Lens.
         """
@@ -753,15 +774,15 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     def __len__(self):
         return len(self.path)
 
-    def __add__(self, other: Lens):
+    def __add__(self, other: 'Lens'):
         return Lens(path=self.path + other.path)
 
-    def is_immediate_prefix_of(self, other: Lens):
+    def is_immediate_prefix_of(self, other: 'Lens'):
         return self.is_prefix_of(other) and len(self.path) + 1 == len(
             other.path
         )
 
-    def is_prefix_of(self, other: Lens):
+    def is_prefix_of(self, other: 'Lens'):
         p = self.path
         pother = other.path
 
@@ -873,12 +894,12 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                 for last_selection in last_step.get(start_selection):
                     yield last_selection
 
-    def _append(self, step: Step) -> Lens:
+    def _append(self, step: Step) -> 'Lens':
         return Lens(path=self.path + (step,))
 
     def __getitem__(
-        self, item: int | str | slice | Sequence[int] | Sequence[str]
-    ) -> Lens:
+        self, item: Union[int, str, slice, Sequence[int], Sequence[str]]
+    ) -> 'Lens':
         if isinstance(item, int):
             return self._append(GetIndex(index=item))
         if isinstance(item, str):
@@ -901,7 +922,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         raise TypeError(f"Unhandled item type {type(item)}.")
 
-    def __getattr__(self, attr: str) -> Lens:
+    def __getattr__(self, attr: str) -> 'Lens':
         if attr == "_ipython_canary_method_should_not_exist_":
             # NOTE(piotrm): when displaying objects, ipython checks whether they
             # have overwritten __getattr__ by looking up this attribute. If it
@@ -914,6 +935,8 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
             return 0xdead
 
         return self._append(GetItemOrAttribute(item_or_attribute=attr))
+
+Lens.update_forward_refs()
 
 
 # TODO: Deprecate old name.

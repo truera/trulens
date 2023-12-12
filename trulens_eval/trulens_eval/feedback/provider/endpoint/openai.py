@@ -34,7 +34,7 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
-from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import CLASS_INFO, Class
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
@@ -297,8 +297,12 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
         self_kwargs = dict(
             name="openai", # for SingletonPerName
             callback_class = OpenAICallback,
-            obj = self # for WithClassInfo:
+            obj = self, # for WithClassInfo:
+            **kwargs
         )
+
+        if CLASS_INFO in kwargs:
+            del kwargs[CLASS_INFO]
 
         if client is None:
             # Pass kwargs to client. 

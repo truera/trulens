@@ -311,9 +311,9 @@ class Obj(SerialModel):
     @staticmethod
     def pick(**d):
         if 'init_bindings' in d:
-            return ObjSerial(**d)
+            return ObjSerial.model_validate(d)
         else:
-            return Obj(**d)
+            return Obj.model_validate(d)
 
     @staticmethod
     def of_object(
@@ -404,6 +404,7 @@ class ObjSerial(Obj):
             init_args = ()
             init_kwargs = obj.model_dump()
             # init_kwargs = jsonify(obj)
+
         elif isinstance(obj, Exception):
             init_args = obj.args
             init_kwargs = {}
@@ -593,8 +594,6 @@ class WithClassInfo(pydantic.BaseModel):
     # this into. Should be the same as CLASS_INFO.
     tru_class_info: Class = Field(exclude=False)
 
-    # class_info: Class
-
     def __init__(
         self,
         *args,
@@ -614,8 +613,8 @@ class WithClassInfo(pydantic.BaseModel):
         super().__init__(*args, **kwargs)
 
     @staticmethod
-    def get_class(obj_json: JSON):
-        return Class(**obj_json[CLASS_INFO]).load()
+    def get_class(obj_json: Dict):
+        return Class.model_validate(obj_json[CLASS_INFO]).load()
 
     @staticmethod
     def of_object(obj: object):
