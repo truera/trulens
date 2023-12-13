@@ -88,9 +88,10 @@ class Feedback(FeedbackDefinition):
                     kwargs['implementation'] = FunctionOrMethod.of_callable(
                         imp, loadable=True
                     )
-                except ImportError as e:
+
+                except Exception as e:
                     logger.warning(
-                        f"Feedback implementation {imp} cannot be serialized: {e}. "
+                        f"Feedback implementation {imp} cannot be serialized: {e} "
                         f"This may be ok unless you are using the deferred feedback mode."
                     )
 
@@ -120,7 +121,11 @@ class Feedback(FeedbackDefinition):
                         f"If you are not using FeedbackMode.DEFERRED, you can safely ignore this warning. "
                         f"{e}"
                     )
-                    pass
+                    # These are for serialization to/from json and for db storage.
+                    kwargs['aggregator'] = FunctionOrMethod.of_callable(
+                        agg, loadable=False
+                    )
+
         else:
             if kwargs.get('aggregator') is not None:
                 agg: AggCallable = FunctionOrMethod.model_validate(
@@ -169,7 +174,8 @@ class Feedback(FeedbackDefinition):
         Returns a new Feedback object with this specification.
         """
 
-        ret = Feedback.parse_obj(self)
+        ret = Feedback.model_copy(self)
+
         ret._default_selectors()
 
         return ret

@@ -651,15 +651,15 @@ class LocalSQLite(DB):
             rows, columns=[description[0] for description in c.description]
         )
 
-        apps = df_records['app_json'].apply(AppDefinition.parse_raw)
+        apps = df_records['app_json'].apply(AppDefinition.model_validate_json)
         df_records['type'] = apps.apply(lambda row: str(row.root_class))
 
-        cost = df_records['cost_json'].map(Cost.parse_raw)
+        cost = df_records['cost_json'].map(Cost.model_validate_json)
         df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
         df_records['total_cost'] = cost.map(lambda v: v.cost)
 
         perf = df_records['perf_json'].apply(
-            lambda perf_json: Perf.parse_raw(perf_json)
+            lambda perf_json: Perf.model_validate_json(perf_json)
             if perf_json != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
         )
 

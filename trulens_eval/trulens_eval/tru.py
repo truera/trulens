@@ -195,7 +195,7 @@ class Tru(SingletonPerName):
         self.db: DB
 
         if app is None:
-            app = AppDefinition.parse_obj(self.db.get_app(app_id=app_id))
+            app = AppDefinition.model_validate_json(self.db.get_app(app_id=app_id))
             if app is None:
                 raise RuntimeError(
                     "App {app_id} not present in db. "

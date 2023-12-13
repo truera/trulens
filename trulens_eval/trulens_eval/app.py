@@ -498,7 +498,10 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 # Try to load each of the feedback implementations. Deferred
                 # mode will do this but we want to fail earlier at app
                 # constructor here.
-                f.implementation.load()
+                try:
+                    f.implementation.load()
+                except Exception as e:
+                    raise Exception(f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}")
 
     def main_call(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.

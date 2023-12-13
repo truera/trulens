@@ -586,7 +586,7 @@ class AppDefinition(SerialModel, WithClassInfo):
 
         cls: Type[App] = WithClassInfo.get_class(app_definition_json)
 
-        return cls.parse_obj(app_definition_json)
+        return cls.model_validate_json(app_definition_json)
 
     def jsonify_extra(self, content):
         # Called by jsonify for us to add any data we might want to add to the

@@ -19,6 +19,7 @@ from __future__ import annotations
 import importlib
 import inspect
 import logging
+import dill
 from pprint import PrettyPrinter
 from types import ModuleType
 from typing import (
@@ -232,9 +233,13 @@ class Class(SerialModel):
             bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__))
             if with_bases else None
         )
-        if loadable:
-            ret._check_importable()
 
+        if loadable:
+            if "<locals>" in repr(cls): # TODO: figure out a better way to check this
+                raise ImportError(f"Class {cls} is not globally importable.")
+
+            ret._check_importable()
+            
         return ret
 
     @staticmethod
@@ -323,6 +328,7 @@ class Obj(SerialModel):
             cls = obj.__class__
 
         bindings = None
+
         if loadable:
             # Constructor arguments for some common types.
             if isinstance(obj, pydantic.BaseModel):
@@ -336,6 +342,7 @@ class Obj(SerialModel):
             elif isinstance(obj, Exception):
                 init_args = obj.args
                 init_kwargs = {}
+
             else:
                 # For unknown types, check if the constructor for cls expect
                 # arguments and fail if so as we don't know where to get them. If
@@ -366,19 +373,19 @@ class Obj(SerialModel):
             bindings = Bindings.of_bound_arguments(b)
 
         cls_serial = Class.of_class(cls)
+
         if loadable:
             cls_serial._check_importable()
-
+            
         return Obj(cls=cls_serial, id=id(obj), init_bindings=bindings)
 
     def load(self) -> object:
         if self.init_bindings is None:
             raise RuntimeError(
-                "Cannot load object unless `init_bindings` are set."
+                "Cannot load object unless `init_bindings` is set."
             )
 
         cls = self.cls.load()
-
         sig = _safe_init_sig(cls)
         bindings = self.init_bindings.load(sig)
 
@@ -483,9 +490,9 @@ class Method(FunctionOrMethod):
                 # normal method, self is instance of cls
                 cls = obj.__class__
 
-        obj_json = Obj.of_object(obj, cls=cls, loadable=loadable)
-
-        return Method(obj=obj_json, name=meth.__name__)
+        obj_model = Obj.of_object(obj, cls=cls, loadable=loadable)
+    
+        return Method(obj=obj_model, name=meth.__name__)
 
     def load(self) -> Callable:
         obj = self.obj.load()

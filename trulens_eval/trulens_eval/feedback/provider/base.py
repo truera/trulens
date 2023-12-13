@@ -18,7 +18,7 @@ class Provider(SerialModel, WithClassInfo):
     class Config:
         arbitrary_types_allowed = True
 
-    endpoint: Optional[Endpoint]
+    endpoint: Optional[Endpoint] = None
 
     def __init__(self, name: str = None, **kwargs):
         # for WithClassInfo:
