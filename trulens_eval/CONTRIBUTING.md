@@ -36,7 +36,7 @@ New contributors may want to start with issues tagged with good first issue.
 Please feel free to open an issue and/or assign an issue to yourself.
 
 ## 🎉 Add Usage Examples
-If you have applied TruLens to track and evalaute a unique use-case, we would love your contribution in the form of an example notebook: e.g. [Evaluating Pinecone Configuration Choices on Downstream App Performance](https://github.com/truera/trulens/blob/main/trulens_eval/examples/vector-dbs/pinecone/constructing_optimal_pinecone.ipynb)
+If you have applied TruLens to track and evalaute a unique use-case, we would love your contribution in the form of an example notebook: e.g. [Evaluating Pinecone Configuration Choices on Downstream App Performance](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/expositional/vector-dbs/pinecone/pinecone_evals_build_better_rags.ipynb)
 
 All example notebooks are expected to:
 
