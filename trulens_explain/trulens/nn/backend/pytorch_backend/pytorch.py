@@ -117,7 +117,7 @@ def as_array(t: Tensor, dtype=None):
 
     if isinstance(t, np.ndarray):
         return t if dtype is None else t.astype(dtype)
-
+    
     numpy_dtype_compat_cast = {
         torch.bfloat16: lambda x: x.float(),
     }
