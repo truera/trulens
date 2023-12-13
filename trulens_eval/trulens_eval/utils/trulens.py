@@ -7,7 +7,6 @@ from typing import Type
 
 from trulens_eval import app
 from trulens_eval.utils.pyschema import Class
-from trulens_eval.utils.serial import JSON
 
 
 class Other(app.Other, app.TrulensComponent):

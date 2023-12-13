@@ -22,14 +22,13 @@ import logging
 from pprint import PrettyPrinter
 from types import ModuleType
 from typing import (
-    Any, Callable, ClassVar, Dict, Optional, Sequence, Tuple, Union
+    Any, Callable, Dict, Optional, Sequence, Tuple
 )
 
 import pydantic
 from pydantic import Field
 
 from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
@@ -271,7 +270,7 @@ class Class(SerialModel):
         return False
 
 
-Class.update_forward_refs()
+Class.model_rebuild()
 
 
 # inspect.signature does not work on builtin type constructors but they are used

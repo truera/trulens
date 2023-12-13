@@ -5,20 +5,15 @@ Generalized root type for various libraries like llama_index and langchain .
 from abc import ABC
 from abc import abstractmethod
 from concurrent import futures
-from concurrent.futures import as_completed
 import contextvars
-import inspect
 from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
 from threading import Lock
-from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
-    Tuple, Type
-)
+from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
+                    Sequence, Set, Tuple, Type)
 
-import dill
 import pydantic
 from pydantic import Field
 
@@ -48,7 +43,6 @@ from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSON_BASES_T
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
 

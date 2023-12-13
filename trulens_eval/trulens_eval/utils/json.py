@@ -11,8 +11,7 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, TypeVar,
-    Union
+    Any, Dict, Optional, Sequence, Set, TypeVar
 )
 
 from merkle_json import MerkleJson
@@ -231,7 +230,7 @@ def jsonify(
         temp.update(
             {
                 k: recur(safe_getattr(obj, k))
-                for k, v in obj.model_fields.items()
+                for k, v in obj.__fields__.items()
                 if not v.field_info.exclude and recur_key(k)
             }
         )

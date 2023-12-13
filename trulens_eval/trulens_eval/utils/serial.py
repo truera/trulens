@@ -14,7 +14,7 @@ from copy import copy
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence,
     Sized, Tuple, TypeVar, Union
 )
 
@@ -930,7 +930,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         return self._append(GetItemOrAttribute(item_or_attribute=attr))
 
 
-Lens.update_forward_refs()
+Lens.model_rebuild()
 
 # TODO: Deprecate old name.
 JSONPath = Lens

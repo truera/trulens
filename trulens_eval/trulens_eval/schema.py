@@ -28,7 +28,7 @@ from enum import Enum
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, ClassVar, Dict, List, Mapping, Optional, Sequence, Type,
+    Any, Callable, ClassVar, Dict, List, Optional, Sequence, Type,
     TYPE_CHECKING, TypeVar, Union
 )
 

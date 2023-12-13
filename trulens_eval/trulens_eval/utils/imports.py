@@ -7,7 +7,7 @@ import inspect
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Dict, Iterable, Sequence, Union
+from typing import Dict, Sequence, Union
 
 import pkg_resources
 

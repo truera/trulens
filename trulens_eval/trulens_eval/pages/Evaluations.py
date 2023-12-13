@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Iterable, List, Tuple
+from typing import Iterable, Tuple
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())

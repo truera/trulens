@@ -194,8 +194,6 @@ class TruChain(App):
         - More args in WithClassInfo
         """
 
-        super().update_forward_refs()
-
         # TruChain specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
@@ -348,3 +346,5 @@ class TruChain(App):
         ret, _ = await self.awith_(self.app.acall, *args, **kwargs)
 
         return ret
+
+TruChain.model_rebuild()

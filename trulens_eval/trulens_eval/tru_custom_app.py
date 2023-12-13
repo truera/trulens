@@ -199,12 +199,10 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
   solution as needed.
 """
 
-from asyncio import sleep
-import inspect
 from inspect import signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Optional, Set, Union
+from typing import Any, Callable, ClassVar, Optional, Set
 
 from pydantic import Field
 

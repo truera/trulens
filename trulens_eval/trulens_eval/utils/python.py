@@ -11,7 +11,7 @@ from pprint import PrettyPrinter
 from queue import Queue
 from typing import (
     Any, Callable, Dict, Generic, Hashable, Iterator, Optional, Sequence, Type,
-    TypeVar, Union
+    TypeVar
 )
 
 logger = logging.getLogger(__name__)

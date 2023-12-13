@@ -238,8 +238,6 @@ class TruLlama(App):
     )
 
     def __init__(self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs):
-        super().update_forward_refs()
-
         # TruLlama specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)  # TODO: make class property
@@ -498,3 +496,6 @@ class TruLlama(App):
         )
 
         return await self.awith_record(self.app.astream_chat, *args, **kwargs)
+
+
+TruLlama.model_rebuild()

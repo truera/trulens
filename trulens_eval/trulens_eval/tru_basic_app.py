@@ -109,7 +109,6 @@ class TruBasicApp(App):
         - More args in WithClassInfo
         """
 
-        super().update_forward_refs()
         if text_to_text is not None:
             app = TruWrapperApp(text_to_text)
         else:
@@ -165,3 +164,5 @@ class TruBasicApp(App):
         self._with_dep_message(method="call", is_async=False, with_record=True)
 
         return self.with_record(self.app._call, *args, **kwargs)
+
+TruBasicApp.model_rebuild()

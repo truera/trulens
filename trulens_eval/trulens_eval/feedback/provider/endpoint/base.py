@@ -13,14 +13,13 @@ from types import AsyncGeneratorType
 from types import ModuleType
 from typing import (
     Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
-    Type, TypeVar, Union
+    Type, TypeVar
 )
 import warnings
 
 import pydantic
 import requests
 
-from trulens_eval.keys import ApiKeyError
 from trulens_eval.schema import Cost
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.python import get_first_local_in_call_stack
