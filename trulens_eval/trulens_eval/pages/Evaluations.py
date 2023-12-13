@@ -1,12 +1,12 @@
 import asyncio
 import json
-from typing import Iterable, List, Tuple
+from typing import Iterable, Tuple
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
@@ -29,7 +29,7 @@ from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
 from trulens_eval.utils.json import jsonify_for_ui
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 from trulens_eval.ux.components import draw_agent_info
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
@@ -56,12 +56,13 @@ df_results, feedback_cols = lms.get_records_and_feedback([])
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {
     (
-        row.feedback_json.get("supplied_name", "") or
-        row.feedback_json["implementation"]["name"]
-    ): (
-        "HIGHER_IS_BETTER" if row.feedback_json.get("higher_is_better", True)
-        else "LOWER_IS_BETTER"
-    ) for _, row in lms.get_feedback_defs().iterrows()
+        row.feedback_json.get("supplied_name", "") or row.feedback_json["implementation"]["name"]
+    ):
+        (
+            "HIGHER_IS_BETTER"
+            if row.feedback_json.get("higher_is_better", True) else
+            "LOWER_IS_BETTER"
+        ) for _, row in lms.get_feedback_defs().iterrows()
 }
 default_direction = "HIGHER_IS_BETTER"
 
@@ -171,8 +172,12 @@ else:
         input_array = evaluations_df['input'].to_numpy()
         output_array = evaluations_df['output'].to_numpy()
 
-        decoded_input = np.vectorize(lambda x: x.encode('utf-8').decode('unicode-escape'))(input_array)
-        decoded_output = np.vectorize(lambda x: x.encode('utf-8').decode('unicode-escape'))(output_array)
+        decoded_input = np.vectorize(
+            lambda x: x.encode('utf-8').decode('unicode-escape')
+        )(input_array)
+        decoded_output = np.vectorize(
+            lambda x: x.encode('utf-8').decode('unicode-escape')
+        )(output_array)
 
         evaluations_df['input'] = decoded_input
         evaluations_df['output'] = decoded_output
@@ -366,9 +371,9 @@ else:
 
             record_str = selected_rows["record_json"][0]
             record_json = json.loads(record_str)
-            record = Record.parse_obj(record_json)
+            record = Record.model_validate(record_json)
 
-            classes: Iterable[Tuple[JSONPath, ComponentView]
+            classes: Iterable[Tuple[Lens, ComponentView]
                              ] = list(instrumented_component_views(app_json))
             classes_map = {path: view for path, view in classes}
 

@@ -8,7 +8,7 @@ bert-score   >= 0.3.13 # groundtruth.py
 evaluate     >= 0.4.0  # same
 
 # Apps: LlamaIndex
-llama-index >= 0.8.69
+llama-index >= v0.9.14.post3
 html2text   >= 2020.1.16 # for llama_index example using SimpleWebPageReader
 
 # Models: cohere

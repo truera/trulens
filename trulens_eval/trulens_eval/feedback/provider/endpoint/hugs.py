@@ -1,6 +1,6 @@
 import inspect
 import json
-from typing import Callable, Optional
+from typing import Callable, Dict, Hashable, Optional
 
 import requests
 
@@ -10,6 +10,7 @@ from trulens_eval.keys import _check_key
 from trulens_eval.keys import get_huggingface_headers
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
+from trulens_eval.utils.python import SingletonPerName
 
 
 class HuggingfaceCallback(EndpointCallback):

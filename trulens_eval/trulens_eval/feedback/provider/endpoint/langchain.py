@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class LangchainCallback(EndpointCallback):
+
     class Config:
         arbitrary_types_allowed = True
 
